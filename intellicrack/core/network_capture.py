@@ -30,12 +30,12 @@ logger = logging.getLogger(__name__)
 def capture_with_scapy(interface: str = 'any', filter_str: str = '', count: int = 100) -> Dict[str, Any]:
     """
     Capture network packets using Scapy for real-time traffic analysis.
-    
+
     Args:
         interface: Network interface to capture on ('any' for all)
         filter_str: BPF filter string (e.g., 'tcp port 80')
         count: Maximum number of packets to capture
-    
+
     Returns:
         Dictionary with capture results and statistics
     """
@@ -167,10 +167,10 @@ def capture_with_scapy(interface: str = 'any', filter_str: str = '', count: int 
 def analyze_pcap_with_pyshark(pcap_file: str) -> Dict[str, Any]:
     """
     Analyze PCAP file using PyShark for deep packet inspection.
-    
+
     Args:
         pcap_file: Path to PCAP file to analyze
-    
+
     Returns:
         Dictionary with analysis results
     """
@@ -301,10 +301,10 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> Dict[str, Any]:
 def parse_pcap_with_dpkt(pcap_file: str) -> Dict[str, Any]:
     """
     Parse PCAP file using dpkt for low-level binary analysis.
-    
+
     Args:
         pcap_file: Path to PCAP file to parse
-    
+
     Returns:
         Dictionary with parsing results and statistics
     """

@@ -63,10 +63,10 @@ except ImportError:
 
     def get_logger(name):
         """Create a logger instance with the given name.
-        
+
         Args:
             name: The name for the logger instance
-            
+
         Returns:
             A logging.Logger instance
         """
@@ -187,10 +187,10 @@ class ProtectionAnalysisWorkflow:
     def _run_supplemental_analysis(self, file_path: str) -> Dict[str, Any]:
         """
         Run supplemental analysis with YARA, Binwalk, and Volatility3
-        
+
         Args:
             file_path: Path to the binary file
-            
+
         Returns:
             Dictionary containing supplemental analysis results
         """
@@ -277,10 +277,10 @@ class ProtectionAnalysisWorkflow:
     def _is_memory_dump(self, file_path: str) -> bool:
         """
         Check if file appears to be a memory dump
-        
+
         Args:
             file_path: Path to file
-            
+
         Returns:
             True if file appears to be a memory dump
         """
@@ -368,10 +368,10 @@ class ProtectionAnalysisWorkflow:
     def _generate_supplemental_recommendations(self, supplemental_data: Dict[str, Any]) -> List[str]:
         """
         Generate recommendations based on supplemental analysis results
-        
+
         Args:
             supplemental_data: Results from YARA, Binwalk, and Volatility3
-            
+
         Returns:
             List of recommendations based on supplemental findings
         """

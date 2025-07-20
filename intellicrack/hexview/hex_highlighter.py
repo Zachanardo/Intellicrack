@@ -48,28 +48,28 @@ class HexHighlight:
 
     def __init__(self, start: int, end: int, highlight_type: HighlightType,
              color: str = "#FFFF00", alpha: int = 128, priority: int = 0):
-    """Initialize the HexHighlight with start, end, type, color, alpha, and priority."""
-    self.start = start
-    self.end = end
-    self.highlight_type = highlight_type
-    self.color = color
-    self.alpha = alpha
-    self.priority = priority
-    self.description = ""
+        """Initialize the HexHighlight with start, end, type, color, alpha, and priority."""
+        self.start = start
+        self.end = end
+        self.highlight_type = highlight_type
+        self.color = color
+        self.alpha = alpha
+        self.priority = priority
+        self.description = ""
 
-    # Validate color format
-    if not color.startswith("#"):
-        raise ValueError("Color must be in hex format (e.g., #FFFF00)")
-    
-    # Validate alpha range
-    if not (0 <= alpha <= 255):
-        raise ValueError("Alpha must be between 0 and 255")
-    
-    # Validate range
-    if start < 0 or end < 0 or start >= end:
-        raise ValueError("Invalid range: start must be >= 0 and end must be > start")
+        # Validate color format
+        if not color.startswith("#"):
+            raise ValueError("Color must be in hex format (e.g., #FFFF00)")
 
-    logger.debug(f"Created highlight: 0x{start:X}-0x{end:X} type={highlight_type} color={color}")
+        # Validate alpha range
+        if not (0 <= alpha <= 255):
+            raise ValueError("Alpha must be between 0 and 255")
+
+        # Validate range
+        if start < 0 or end < 0 or start >= end:
+            raise ValueError("Invalid range: start must be >= 0 and end must be > start")
+
+        logger.debug(f"Created highlight: 0x{start:X}-0x{end:X} type={highlight_type} color={color}")
 
     @property
     def size(self) -> int:
@@ -133,9 +133,9 @@ class HexHighlighter:
     """
 
     def __init__(self):
-    """Initialize the HexHighlighter with default settings."""
-    self.highlights: List[Highlight] = []
-    self.bookmarks: List[Bookmark] = []   # For generating unique IDs
+        """Initialize the HexHighlighter with default settings."""
+        self.highlights: List[HexHighlight] = []
+        self.bookmarks: List[Dict[str, Any]] = []   # For generating unique IDs
 
     def add_highlight(self, start: int, end: int, highlight_type: HighlightType = HighlightType.CUSTOM,
                      color: str = "#FFFF00", alpha: float = 0.3, description: str = "",

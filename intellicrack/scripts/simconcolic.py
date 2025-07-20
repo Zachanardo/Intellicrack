@@ -1,5 +1,5 @@
 """
-SimConcolic - A simple binary analysis framework 
+SimConcolic - A simple binary analysis framework
 
 Copyright (C) 2025 Zachary Flint
 

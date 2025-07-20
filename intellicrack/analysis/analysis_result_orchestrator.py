@@ -47,7 +47,7 @@ class AnalysisResultOrchestrator(QObject):
 
     def __init__(self, parent=None):
         """Initialize the analysis result orchestrator.
-        
+
         Args:
             parent: Optional parent widget for Qt integration.
         """
@@ -71,7 +71,7 @@ class AnalysisResultOrchestrator(QObject):
 
     def unregister_handler(self, handler: QObject):
         """Remove a handler from the registry.
-        
+
         Args:
             handler: The QObject handler to remove from the registry
         """
@@ -149,10 +149,10 @@ class AnalysisResultOrchestrator(QObject):
 
     def validate_icp_result(self, result: 'ICPScanResult') -> bool:
         """Validate an ICP scan result for consistency and completeness.
-        
+
         Args:
             result: ICPScanResult to validate
-            
+
         Returns:
             True if valid, False otherwise
         """
@@ -185,11 +185,11 @@ class AnalysisResultOrchestrator(QObject):
 
     def merge_icp_with_unified_result(self, icp_result: 'ICPScanResult', unified_result: Optional[UnifiedProtectionResult] = None) -> UnifiedProtectionResult:
         """Merge ICP scan results with unified protection result.
-        
+
         Args:
             icp_result: ICPScanResult to merge
             unified_result: Existing UnifiedProtectionResult or None
-            
+
         Returns:
             Updated UnifiedProtectionResult
         """
@@ -230,10 +230,10 @@ class AnalysisResultOrchestrator(QObject):
 
     def extract_icp_recommendations(self, result: 'ICPScanResult') -> list:
         """Extract bypass recommendations from ICP scan result.
-        
+
         Args:
             result: ICPScanResult containing analysis data
-            
+
         Returns:
             List of recommendation strings
         """

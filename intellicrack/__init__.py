@@ -140,20 +140,19 @@ except ImportError as e:
 
 def get_version():
     """Return the current version of Intellicrack.
-    
+
     This function provides a programmatic way to access the version string
     of the Intellicrack package, useful for version checking, logging,
     and compatibility verification.
-    
     Returns:
         str: The version string in semantic versioning format (e.g., "1.0.0")
-    
+
     Example:
         >>> from intellicrack import get_version
         >>> version = get_version()
         >>> print(f"Running Intellicrack v{version}")
         Running Intellicrack v1.0.0
-        
+
     """
     return __version__
 
@@ -162,27 +161,27 @@ def get_version():
 
 def create_app():
     """Create and return a new Intellicrack application instance.
-    
+
     This factory function creates a fresh instance of the IntellicrackApp,
     which is the main GUI application class. It ensures that all required
     dependencies are available before attempting to create the instance.
-    
+
     Returns:
         IntellicrackApp: A new instance of the main application
-    
+
     Raises:
         ImportError: If IntellicrackApp is not available due to missing
                     dependencies (typically PyQt5 or other UI components)
-    
+
     Example:
         >>> from intellicrack import create_app
         >>> app = create_app()
         >>> app.show()
-    
+
     Note:
         This function checks if the UI module was successfully imported
         before attempting to create the application instance.
-        
+
     """
     if IntellicrackApp is None:
         raise ImportError("IntellicrackApp not available. Check dependencies.")
@@ -191,28 +190,28 @@ def create_app():
 
 def run_app():
     """Run the Intellicrack application.
-    
+
     This convenience function provides a simple way to launch the complete
     Intellicrack application, handling all initialization, GPU detection,
     and UI setup automatically.
-    
+
     Returns:
         int: Exit code from the application (0 for success, non-zero for errors)
-    
+
     Raises:
         ImportError: If the main function is not available due to missing
                     dependencies or import failures
-    
+
     Example:
         >>> from intellicrack import run_app
         >>> exit_code = run_app()
         >>> sys.exit(exit_code)
-    
+
     Note:
         This function wraps the main() function from intellicrack.main,
         which handles all application initialization including GPU detection,
         configuration loading, and UI setup.
-        
+
     """
     if main is None:
         raise ImportError("Main function not available. Check dependencies.")
@@ -221,20 +220,20 @@ def run_app():
 
 def get_default_device():
     """Get the default compute device detected at startup.
-    
+
     This function returns the device that was detected during module
     initialization. It can be useful for ensuring consistent device usage
     across the application.
-    
+
     Returns:
         str: The device string (e.g., 'cuda:0', 'cpu', 'mps')
-    
+
     Example:
         >>> from intellicrack import get_default_device
         >>> device = get_default_device()
         >>> print(f"Using device: {device}")
         Using device: cuda:0
-    
+
     """
     return _default_device
 

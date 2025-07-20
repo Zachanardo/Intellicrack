@@ -64,7 +64,7 @@ logger = get_logger(__name__)
 
 class IntellicrackMainWindow(QMainWindow):
     """Main application window for Intellicrack.
-    
+
     A comprehensive reverse engineering and security analysis framework.
 
     This class provides the primary user interface with multiple tabs for different

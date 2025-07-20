@@ -118,7 +118,7 @@ class PerformanceOptimizer:
 
     def __init__(self):
         """Initialize the performance optimizer.
-        
+
         Sets up caching, execution profiling, optimization rules, and resource management
         for AI operation performance optimization.
         """
@@ -432,7 +432,7 @@ class ResourceManager:
 
     def __init__(self):
         """Initialize the resource manager.
-        
+
         Sets up resource pools, allocation tracking, system limits detection,
         and initializes resource management for optimal system utilization.
         """
@@ -587,7 +587,7 @@ class ParallelExecutor:
 
     def __init__(self):
         """Initialize the parallel executor for AI operations.
-        
+
         Sets up execution statistics tracking for monitoring parallel vs sequential
         execution performance and calculating speedup metrics.
         """
@@ -719,7 +719,7 @@ class CacheManager:
 
     def __init__(self, max_size_mb: int = 100):
         """Initialize the cache manager for AI operations.
-        
+
         Args:
             max_size_mb: Maximum cache size in megabytes.
         """
@@ -854,7 +854,7 @@ class PerformanceOptimizationLayer:
 
     def __init__(self):
         """Initialize the performance optimization layer.
-        
+
         Sets up the optimizer, resource manager, parallel executor, and cache manager
         components, then starts background optimization processes.
         """

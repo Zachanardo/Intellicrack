@@ -39,6 +39,17 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable GPU for TensorFlow
 os.environ['MKL_THREADING_LAYER'] = 'GNU'  # Fix PyTorch + TensorFlow import conflict
 
+# Import security enforcement early to apply patches
+try:
+    from intellicrack.core import security_enforcement
+    # Initialize security enforcement before running the application
+    security_enforcement.initialize_security()
+    security_status = security_enforcement.get_security_status()
+    if security_status.get("initialized"):
+        print(f"Security enforcement initialized: {security_status.get('patches_applied', {})}")
+except ImportError:
+    pass  # Security enforcement is optional
+
 from .main import main
 
 # Set Qt to offscreen mode for WSL/headless environments if no display

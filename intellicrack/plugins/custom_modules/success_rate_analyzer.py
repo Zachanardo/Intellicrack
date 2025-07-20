@@ -566,8 +566,8 @@ class EventTracker:
                 cursor = conn.cursor()
 
                 cursor.execute("""
-                    INSERT OR REPLACE INTO events 
-                    (event_id, event_type, outcome, protection_category, component, 
+                    INSERT OR REPLACE INTO events
+                    (event_id, event_type, outcome, protection_category, component,
                      timestamp, duration, metadata, error_details)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (

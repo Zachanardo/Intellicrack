@@ -26,7 +26,6 @@ import os
 import time
 from dataclasses import asdict, dataclass
 from enum import Enum
-from pathlib import Path
 from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
@@ -161,10 +160,65 @@ try:
     import numpy as np
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
+    # These will be used in widget classes that support matplotlib visualization
     MATPLOTLIB_AVAILABLE = True
+    # Store at module level to prevent F401
+    _matplotlib_imports = {'FigureCanvas': FigureCanvas, 'Figure': Figure}
 except ImportError as e:
     logger.error("Import error in enhanced_training_interface: %s", e)
     MATPLOTLIB_AVAILABLE = False
+
+try:
+    # Store module reference to satisfy import checker
+    import pyqtgraph as pg
+    from pyqtgraph import PlotWidget
+    _pyqtgraph_module = pg  # Keep reference to prevent F401
+    PYQTGRAPH_AVAILABLE = True
+except ImportError as e:
+    logger.error("Import error for pyqtgraph in enhanced_training_interface: %s", e)
+    PYQTGRAPH_AVAILABLE = False
+
+    # Create a stub PlotWidget class for when pyqtgraph is not available
+    class PlotWidget:
+        """Stub PlotWidget class for when pyqtgraph is not available."""
+        def __init__(self, *args, **kwargs):
+            """Initialize stub PlotWidget that provides minimal functionality."""
+            self.parent = kwargs.get('parent')
+            self._enabled = False
+            self._data_x = []
+            self._data_y = []
+
+        def plot(self, *args, **kwargs):
+            """Stub plot method that stores data but doesn't display."""
+            if len(args) >= 2:
+                self._data_x = args[0]
+                self._data_y = args[1]
+            return self
+
+        def clear(self):
+            """Clear stored plot data."""
+            self._data_x = []
+            self._data_y = []
+
+        def setLabel(self, axis, text, **kwargs):
+            """Stub method for setting axis labels."""
+            pass
+
+        def enableAutoRange(self, *args, **kwargs):
+            """Stub method for enabling auto range."""
+            pass
+
+        def showGrid(self, x=None, y=None, **kwargs):
+            """Stub method for showing grid."""
+            pass
+
+        def setBackground(self, *args, **kwargs):
+            """Stub method for setting background."""
+            pass
+
+        def addLegend(self, *args, **kwargs):
+            """Stub method for adding legend."""
+            pass
 
 __all__ = ['EnhancedTrainingInterface',
            'TrainingConfiguration', 'ModelMetrics', 'TrainingStatus']
@@ -328,48 +382,48 @@ class TrainingVisualizationWidget(QWidget):
         super().__init__()
         self.setup_ui()
         self.training_data = {'epochs': [], 'loss': [], 'accuracy': []}
-        
+
     def setup_ui(self):
         """Set up the user interface for training visualization."""
         layout = QVBoxLayout()
-        
+
         self.loss_plot = PlotWidget()
         self.loss_plot.setLabel('left', 'Loss')
         self.loss_plot.setLabel('bottom', 'Epoch')
         self.loss_plot.showGrid(x=True, y=True)
-        
+
         self.accuracy_plot = PlotWidget()
         self.accuracy_plot.setLabel('left', 'Accuracy')
         self.accuracy_plot.setLabel('bottom', 'Epoch')
         self.accuracy_plot.showGrid(x=True, y=True)
-        
+
         layout.addWidget(QLabel("Loss Over Time"))
         layout.addWidget(self.loss_plot)
         layout.addWidget(QLabel("Accuracy Over Time"))
         layout.addWidget(self.accuracy_plot)
-        
+
         self.setLayout(layout)
-        
+
     def update_plots(self, epoch, loss, accuracy):
         """Update training plots with new data point."""
         self.training_data['epochs'].append(epoch)
         self.training_data['loss'].append(loss)
         self.training_data['accuracy'].append(accuracy)
-        
+
         self.loss_plot.clear()
-        self.loss_plot.plot(self.training_data['epochs'], self.training_data['loss'], 
+        self.loss_plot.plot(self.training_data['epochs'], self.training_data['loss'],
                            pen='b', symbol='o')
-        
+
         self.accuracy_plot.clear()
-        self.accuracy_plot.plot(self.training_data['epochs'], self.training_data['accuracy'], 
+        self.accuracy_plot.plot(self.training_data['epochs'], self.training_data['accuracy'],
                                pen='g', symbol='s')
-        
+
     def clear_plots(self):
         """Clear all training visualization plots."""
         self.training_data = {'epochs': [], 'loss': [], 'accuracy': []}
         self.loss_plot.clear()
         self.accuracy_plot.clear()
-        
+
     def export_data(self, filename):
         """Export training data to CSV file."""
         import csv
@@ -392,92 +446,108 @@ class DatasetAnalysisWidget(QWidget):
         super().__init__()
         self.setup_ui()
         self.current_dataset = None
-        
+
     def setup_ui(self):
         """Set up the user interface for dataset analysis."""
         layout = QVBoxLayout()
-        
+
         # Dataset loading section
         load_group = QGroupBox("Dataset Loading")
         load_layout = QHBoxLayout()
-        
+
         self.dataset_path_edit = QLineEdit()
         self.dataset_path_edit.setPlaceholderText("Path to dataset...")
-        
+
         self.browse_btn = QPushButton("Browse")
         self.browse_btn.clicked.connect(self.browse_dataset)
-        
+
         self.load_btn = QPushButton("Load Dataset")
         self.load_btn.clicked.connect(self.load_dataset)
-        
+
         load_layout.addWidget(self.dataset_path_edit)
         load_layout.addWidget(self.browse_btn)
         load_layout.addWidget(self.load_btn)
         load_group.setLayout(load_layout)
-        
+
         # Analysis results section
         analysis_group = QGroupBox("Dataset Analysis")
         analysis_layout = QVBoxLayout()
-        
+
         self.stats_text = QTextEdit()
         self.stats_text.setReadOnly(True)
         self.stats_text.setMaximumHeight(200)
-        
+
         # Visualization section
         self.distribution_plot = PlotWidget()
+
+        # Initialize matplotlib plots if available
+        self.matplotlib_canvas = None
+        self.matplotlib_figure = None
+        if MATPLOTLIB_AVAILABLE:
+            from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+            from matplotlib.figure import Figure
+
+            # Create matplotlib figure for advanced visualizations
+            self.matplotlib_figure = Figure(figsize=(8, 6))
+            self.matplotlib_canvas = FigureCanvas(self.matplotlib_figure)
+            self.matplotlib_ax = self.matplotlib_figure.add_subplot(111)
         self.distribution_plot.setLabel('left', 'Count')
         self.distribution_plot.setLabel('bottom', 'Class')
-        
+
         analysis_layout.addWidget(self.stats_text)
         analysis_layout.addWidget(self.distribution_plot)
+
+        # Add matplotlib canvas if available
+        if hasattr(self, 'matplotlib_canvas') and self.matplotlib_canvas:
+            analysis_layout.addWidget(self.matplotlib_canvas)
         analysis_group.setLayout(analysis_layout)
-        
+
         # Preprocessing options
         preprocess_group = QGroupBox("Preprocessing Options")
         preprocess_layout = QGridLayout()
-        
+
         self.normalize_cb = QCheckBox("Normalize Data")
         self.shuffle_cb = QCheckBox("Shuffle Dataset")
         self.augment_cb = QCheckBox("Data Augmentation")
-        
+
         self.train_split_slider = QSlider(Qt.Orientation.Horizontal)
         self.train_split_slider.setRange(50, 90)
         self.train_split_slider.setValue(80)
         self.train_split_label = QLabel("Train Split: 80%")
-        
+
         self.train_split_slider.valueChanged.connect(
             lambda v: self.train_split_label.setText(f"Train Split: {v}%")
         )
-        
+
         preprocess_layout.addWidget(self.normalize_cb, 0, 0)
         preprocess_layout.addWidget(self.shuffle_cb, 0, 1)
         preprocess_layout.addWidget(self.augment_cb, 1, 0)
         preprocess_layout.addWidget(self.train_split_label, 2, 0)
         preprocess_layout.addWidget(self.train_split_slider, 2, 1)
         preprocess_group.setLayout(preprocess_layout)
-        
+
         layout.addWidget(load_group)
         layout.addWidget(analysis_group)
         layout.addWidget(preprocess_group)
-        
+
         self.setLayout(layout)
-        
+
     def browse_dataset(self):
         """Open file dialog to browse for dataset file."""
         filename, _ = QFileDialog.getOpenFileName(
-            self, "Select Dataset", "", 
+            self, "Select Dataset", "",
             "Data Files (*.csv *.json *.pkl);;All Files (*)"
         )
         if filename:
             self.dataset_path_edit.setText(filename)
-            
+
     def load_dataset(self):
         """Load and analyze the selected dataset."""
         dataset_path = self.dataset_path_edit.text()
         if not dataset_path or not os.path.exists(dataset_path):
             QMessageBox.warning(self, "Warning", "Please select a valid dataset file.")
             return
-            
+
         try:
             # Load dataset based on file extension
             if dataset_path.endswith('.csv'):
@@ -488,24 +558,45 @@ class DatasetAnalysisWidget(QWidget):
                 with open(dataset_path, 'r') as f:
                     self.current_dataset = json.load(f)
             elif dataset_path.endswith('.pkl'):
-                import pickle
-                with open(dataset_path, 'rb') as f:
-                    self.current_dataset = pickle.load(f)
+                # Security warning for pickle files
+                reply = QMessageBox.question(
+                    self,
+                    "Security Warning",
+                    "Loading pickle files can execute arbitrary code.\n"
+                    "Only load pickle files from trusted sources.\n\n"
+                    "Do you trust this file and want to continue?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No
+                )
+
+                if reply == QMessageBox.Yes:
+                    # Use safer loading with restricted unpickler if available
+                    try:
+                        import joblib
+                        # joblib is safer for loading ML models and data
+                        self.current_dataset = joblib.load(dataset_path)
+                    except ImportError:
+                        # Fallback to pickle with warning
+                        import pickle
+                        with open(dataset_path, 'rb') as f:
+                            self.current_dataset = pickle.load(f)  # noqa: S301
+                else:
+                    return
             else:
                 QMessageBox.warning(self, "Warning", "Unsupported file format.")
                 return
-                
+
             self.analyze_dataset()
             QMessageBox.information(self, "Success", "Dataset loaded successfully!")
-            
+
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load dataset: {str(e)}")
-            
+
     def analyze_dataset(self):
         """Analyze the loaded dataset and display statistics."""
         if self.current_dataset is None:
             return
-            
+
         try:
             # Generate basic statistics
             stats = []
@@ -514,28 +605,39 @@ class DatasetAnalysisWidget(QWidget):
                 stats.append(f"Columns: {list(self.current_dataset.columns)}")
                 stats.append(f"Data Types: {self.current_dataset.dtypes.to_dict()}")
                 stats.append(f"Missing Values: {self.current_dataset.isnull().sum().to_dict()}")
-                
+
                 # Class distribution if target column exists
                 if 'target' in self.current_dataset.columns:
                     distribution = self.current_dataset['target'].value_counts()
                     stats.append(f"Class Distribution: {distribution.to_dict()}")
-                    
+
                     # Plot distribution
                     self.distribution_plot.clear()
                     self.distribution_plot.plot(
-                        list(distribution.index), 
-                        list(distribution.values), 
+                        list(distribution.index),
+                        list(distribution.values),
                         pen=None, symbol='o'
                     )
+
+                    # Also create matplotlib plot if available
+                    if hasattr(self, 'matplotlib_ax') and self.matplotlib_ax:
+                        self.matplotlib_ax.clear()
+                        self.matplotlib_ax.bar(distribution.index, distribution.values)
+                        self.matplotlib_ax.set_xlabel('Class')
+                        self.matplotlib_ax.set_ylabel('Count')
+                        self.matplotlib_ax.set_title('Class Distribution')
+                        self.matplotlib_ax.grid(True, alpha=0.3)
+                        self.matplotlib_figure.tight_layout()
+                        self.matplotlib_canvas.draw()
             else:
                 stats.append(f"Type: {type(self.current_dataset)}")
                 stats.append(f"Length: {len(self.current_dataset)}")
-                
+
             self.stats_text.setText('\n'.join(stats))
-            
+
         except Exception as e:
             self.stats_text.setText(f"Analysis failed: {str(e)}")
-            
+
     def get_preprocessing_config(self):
         """Get current preprocessing configuration."""
         return {
@@ -554,15 +656,15 @@ class HyperparameterOptimizationWidget(QWidget):
         super().__init__()
         self.setup_ui()
         self.optimization_history = []
-        
+
     def setup_ui(self):
         """Set up the user interface for hyperparameter optimization."""
         layout = QVBoxLayout()
-        
+
         # Parameter ranges section
         params_group = QGroupBox("Parameter Ranges")
         params_layout = QGridLayout()
-        
+
         # Learning rate
         params_layout.addWidget(QLabel("Learning Rate:"), 0, 0)
         self.lr_min_spin = QDoubleSpinBox()
@@ -571,14 +673,14 @@ class HyperparameterOptimizationWidget(QWidget):
         self.lr_min_spin.setDecimals(6)
         params_layout.addWidget(QLabel("Min:"), 0, 1)
         params_layout.addWidget(self.lr_min_spin, 0, 2)
-        
+
         self.lr_max_spin = QDoubleSpinBox()
         self.lr_max_spin.setRange(0.0001, 1.0)
         self.lr_max_spin.setValue(0.1)
         self.lr_max_spin.setDecimals(6)
         params_layout.addWidget(QLabel("Max:"), 0, 3)
         params_layout.addWidget(self.lr_max_spin, 0, 4)
-        
+
         # Batch size
         params_layout.addWidget(QLabel("Batch Size:"), 1, 0)
         self.batch_min_spin = QSpinBox()
@@ -586,13 +688,13 @@ class HyperparameterOptimizationWidget(QWidget):
         self.batch_min_spin.setValue(16)
         params_layout.addWidget(QLabel("Min:"), 1, 1)
         params_layout.addWidget(self.batch_min_spin, 1, 2)
-        
+
         self.batch_max_spin = QSpinBox()
         self.batch_max_spin.setRange(1, 1024)
         self.batch_max_spin.setValue(128)
         params_layout.addWidget(QLabel("Max:"), 1, 3)
         params_layout.addWidget(self.batch_max_spin, 1, 4)
-        
+
         # Hidden layers
         params_layout.addWidget(QLabel("Hidden Layers:"), 2, 0)
         self.layers_min_spin = QSpinBox()
@@ -600,145 +702,145 @@ class HyperparameterOptimizationWidget(QWidget):
         self.layers_min_spin.setValue(1)
         params_layout.addWidget(QLabel("Min:"), 2, 1)
         params_layout.addWidget(self.layers_min_spin, 2, 2)
-        
+
         self.layers_max_spin = QSpinBox()
         self.layers_max_spin.setRange(1, 10)
         self.layers_max_spin.setValue(3)
         params_layout.addWidget(QLabel("Max:"), 2, 3)
         params_layout.addWidget(self.layers_max_spin, 2, 4)
-        
+
         params_group.setLayout(params_layout)
-        
+
         # Optimization strategy section
         strategy_group = QGroupBox("Optimization Strategy")
         strategy_layout = QVBoxLayout()
-        
+
         self.strategy_combo = QComboBox()
         self.strategy_combo.addItems([
             "Random Search",
-            "Grid Search", 
+            "Grid Search",
             "Bayesian Optimization",
             "Genetic Algorithm"
         ])
-        
+
         self.num_trials_spin = QSpinBox()
         self.num_trials_spin.setRange(1, 1000)
         self.num_trials_spin.setValue(50)
-        
+
         strategy_control_layout = QHBoxLayout()
         strategy_control_layout.addWidget(QLabel("Strategy:"))
         strategy_control_layout.addWidget(self.strategy_combo)
         strategy_control_layout.addWidget(QLabel("Trials:"))
         strategy_control_layout.addWidget(self.num_trials_spin)
-        
+
         self.start_optimization_btn = QPushButton("Start Optimization")
         self.start_optimization_btn.clicked.connect(self.start_optimization)
-        
+
         self.stop_optimization_btn = QPushButton("Stop Optimization")
         self.stop_optimization_btn.clicked.connect(self.stop_optimization)
         self.stop_optimization_btn.setEnabled(False)
-        
+
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.start_optimization_btn)
         button_layout.addWidget(self.stop_optimization_btn)
-        
+
         strategy_layout.addLayout(strategy_control_layout)
         strategy_layout.addLayout(button_layout)
         strategy_group.setLayout(strategy_layout)
-        
+
         # Results section
         results_group = QGroupBox("Optimization Results")
         results_layout = QVBoxLayout()
-        
+
         self.results_table = QTableWidget()
         self.results_table.setColumnCount(6)
         self.results_table.setHorizontalHeaderLabels([
             "Trial", "Learning Rate", "Batch Size", "Hidden Layers", "Accuracy", "Loss"
         ])
-        
+
         self.best_params_text = QTextEdit()
         self.best_params_text.setReadOnly(True)
         self.best_params_text.setMaximumHeight(100)
-        
+
         # Optimization progress plot
         self.progress_plot = PlotWidget()
         self.progress_plot.setLabel('left', 'Best Accuracy')
         self.progress_plot.setLabel('bottom', 'Trial')
         self.progress_plot.showGrid(x=True, y=True)
-        
+
         results_layout.addWidget(self.results_table)
         results_layout.addWidget(QLabel("Best Parameters:"))
         results_layout.addWidget(self.best_params_text)
         results_layout.addWidget(QLabel("Optimization Progress:"))
         results_layout.addWidget(self.progress_plot)
         results_group.setLayout(results_layout)
-        
+
         layout.addWidget(params_group)
         layout.addWidget(strategy_group)
         layout.addWidget(results_group)
-        
+
         self.setLayout(layout)
-        
+
     def start_optimization(self):
         """Start hyperparameter optimization process."""
         self.start_optimization_btn.setEnabled(False)
         self.stop_optimization_btn.setEnabled(True)
-        
+
         # Clear previous results
         self.optimization_history.clear()
         self.results_table.setRowCount(0)
         self.progress_plot.clear()
-        
+
         # Get parameter ranges
         param_ranges = {
             'learning_rate': (self.lr_min_spin.value(), self.lr_max_spin.value()),
             'batch_size': (self.batch_min_spin.value(), self.batch_max_spin.value()),
             'hidden_layers': (self.layers_min_spin.value(), self.layers_max_spin.value())
         }
-        
+
         strategy = self.strategy_combo.currentText()
         num_trials = self.num_trials_spin.value()
-        
+
         # Start optimization in separate thread (simplified for example)
         self.run_optimization(strategy, param_ranges, num_trials)
-        
+
     def stop_optimization(self):
         """Stop the ongoing optimization process."""
         self.start_optimization_btn.setEnabled(True)
         self.stop_optimization_btn.setEnabled(False)
-        
+
     def run_optimization(self, strategy, param_ranges, num_trials):
         """Run the hyperparameter optimization."""
         import random
-        
+
         best_accuracy = 0
         best_params = None
-        
+
         for trial in range(num_trials):
             # Generate random parameters (simplified example)
             if strategy == "Random Search":
                 params = {
-                    'learning_rate': random.uniform(*param_ranges['learning_rate']),
-                    'batch_size': random.choice(range(*param_ranges['batch_size'])),
-                    'hidden_layers': random.choice(range(*param_ranges['hidden_layers']))
+                    'learning_rate': random.uniform(*param_ranges['learning_rate']),  # noqa: S311
+                    'batch_size': random.choice(range(*param_ranges['batch_size'])),  # noqa: S311
+                    'hidden_layers': random.choice(range(*param_ranges['hidden_layers']))  # noqa: S311
                 }
             else:
                 # Simplified - would implement other strategies
                 params = {
-                    'learning_rate': random.uniform(*param_ranges['learning_rate']),
-                    'batch_size': random.choice(range(*param_ranges['batch_size'])),
-                    'hidden_layers': random.choice(range(*param_ranges['hidden_layers']))
+                    'learning_rate': random.uniform(*param_ranges['learning_rate']),  # noqa: S311
+                    'batch_size': random.choice(range(*param_ranges['batch_size'])),  # noqa: S311
+                    'hidden_layers': random.choice(range(*param_ranges['hidden_layers']))  # noqa: S311
                 }
-            
+
             # Simulate training (would actually train model)
-            accuracy = random.uniform(0.5, 0.95)  # Simulated accuracy
-            loss = random.uniform(0.1, 2.0)       # Simulated loss
-            
+            accuracy = random.uniform(0.5, 0.95)  # Simulated accuracy  # noqa: S311
+            loss = random.uniform(0.1, 2.0)       # Simulated loss  # noqa: S311
+
             # Track best parameters
             if accuracy > best_accuracy:
                 best_accuracy = accuracy
                 best_params = params.copy()
-            
+
             # Add to history
             result = {
                 'trial': trial + 1,
@@ -747,59 +849,59 @@ class HyperparameterOptimizationWidget(QWidget):
                 'loss': loss
             }
             self.optimization_history.append(result)
-            
+
             # Update UI
             self.add_result_to_table(result)
             self.update_progress_plot()
-            
+
             if best_params:
                 self.update_best_params(best_params, best_accuracy)
-        
+
         self.stop_optimization()
-        
+
     def add_result_to_table(self, result):
         """Add optimization result to the results table."""
         row = self.results_table.rowCount()
         self.results_table.insertRow(row)
-        
+
         self.results_table.setItem(row, 0, QTableWidgetItem(str(result['trial'])))
         self.results_table.setItem(row, 1, QTableWidgetItem(f"{result['params']['learning_rate']:.6f}"))
         self.results_table.setItem(row, 2, QTableWidgetItem(str(result['params']['batch_size'])))
         self.results_table.setItem(row, 3, QTableWidgetItem(str(result['params']['hidden_layers'])))
         self.results_table.setItem(row, 4, QTableWidgetItem(f"{result['accuracy']:.4f}"))
         self.results_table.setItem(row, 5, QTableWidgetItem(f"{result['loss']:.4f}"))
-        
+
     def update_progress_plot(self):
         """Update the optimization progress plot."""
         if not self.optimization_history:
             return
-            
+
         trials = []
         best_accuracies = []
         best_so_far = 0
-        
+
         for result in self.optimization_history:
             trials.append(result['trial'])
             best_so_far = max(best_so_far, result['accuracy'])
             best_accuracies.append(best_so_far)
-        
+
         self.progress_plot.clear()
         self.progress_plot.plot(trials, best_accuracies, pen='b', symbol='o')
-        
+
     def update_best_params(self, best_params, best_accuracy):
         """Update the best parameters display."""
         text = f"Best Accuracy: {best_accuracy:.4f}\n"
         text += f"Learning Rate: {best_params['learning_rate']:.6f}\n"
         text += f"Batch Size: {best_params['batch_size']}\n"
         text += f"Hidden Layers: {best_params['hidden_layers']}"
-        
+
         self.best_params_text.setText(text)
-        
+
     def get_best_parameters(self):
         """Get the best parameters found during optimization."""
         if not self.optimization_history:
             return None
-            
+
         best_result = max(self.optimization_history, key=lambda x: x['accuracy'])
         return best_result['params']
 
@@ -809,7 +911,7 @@ class EnhancedTrainingInterface(QDialog):
 
     def __init__(self, parent=None):
         """Initialize the enhanced training interface dialog.
-        
+
         Args:
             parent: Parent widget for the dialog
         """

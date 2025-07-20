@@ -462,7 +462,7 @@ class GPUAccelerator(GPUAccelerationManager):
 def create_gpu_acceleration_manager():
     """
     Factory function to create a GPU acceleration manager.
-    
+
     Returns:
         GPUAccelerationManager: Configured GPU acceleration manager instance
     """
@@ -476,7 +476,7 @@ def create_gpu_acceleration_manager():
 def create_gpu_accelerator():
     """
     Factory function to create a GPU accelerator.
-    
+
     Returns:
         GPUAccelerator: Configured GPU accelerator instance
     """
@@ -490,7 +490,7 @@ def create_gpu_accelerator():
 def is_gpu_acceleration_available():
     """
     Check if GPU acceleration is available on this system.
-    
+
     Returns:
         bool: True if GPU acceleration is available, False otherwise
     """

@@ -456,11 +456,11 @@ class LoRAAdapterManager:
 
     def compare_adapter_configs(self, config1_path: Union[str, Path], config2_path: Union[str, Path]) -> Dict[str, Any]:
         """Compare two PEFT adapter configurations.
-        
+
         Args:
             config1_path: Path to first adapter config
             config2_path: Path to second adapter config
-            
+
         Returns:
             Comparison results with differences
         """
@@ -515,7 +515,7 @@ class LoRAAdapterManager:
                         val = getattr(config1, attr)
                         if not callable(val):
                             results["config1_details"][attr] = str(val)
-                    except:
+                    except (AttributeError, ValueError, TypeError):
                         pass
 
             for attr in dir(config2):
@@ -524,7 +524,7 @@ class LoRAAdapterManager:
                         val = getattr(config2, attr)
                         if not callable(val):
                             results["config2_details"][attr] = str(val)
-                    except:
+                    except (AttributeError, ValueError, TypeError):
                         pass
 
         except Exception as e:
@@ -628,10 +628,10 @@ class LoRAAdapterManager:
 
     def validate_adapter_config(self, config_path: Union[str, Path]) -> Dict[str, Any]:
         """Validate a PEFT adapter configuration file.
-        
+
         Args:
             config_path: Path to adapter_config.json
-            
+
         Returns:
             Validation results with any issues found
         """

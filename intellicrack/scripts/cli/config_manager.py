@@ -484,7 +484,7 @@ You can modify core analysis, AI backend, and export preferences.
 
     def _configure_category_interactive(self, console: Console, category: str) -> None:
         """Configure a specific category interactively.
-        
+
         Args:
             console: Rich console instance
             category: Configuration category to configure
@@ -652,11 +652,11 @@ You can modify core analysis, AI backend, and export preferences.
 
     def get_category_options(self, category: str, include_advanced: bool = True) -> List[ConfigOption]:
         """Get configuration options for a specific category.
-        
+
         Args:
             category: Category name
             include_advanced: Whether to include advanced options
-            
+
         Returns:
             List of ConfigOption objects in the category
         """

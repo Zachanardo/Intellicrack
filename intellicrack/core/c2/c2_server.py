@@ -16,6 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import asyncio
+import logging
+import os
+import queue
+import time
+from typing import Any, Callable, Dict, List, Optional
+
 """
 Command and Control Server
 
@@ -23,16 +30,9 @@ Main C2 server implementation with multi-protocol support,
 encryption, and session management.
 """
 
-import asyncio
-import logging
-import os
-import time
-from typing import Any, Callable, Dict, List, Optional
-
+from flask import Flask
 from .base_c2 import BaseC2
-from .beacon_manager import BeaconManager
-from .encryption_manager import EncryptionManager
-from .session_manager import SessionManager
+from ...utils.logger import get_logger
 
 logger = logging.getLogger(__name__)
 
@@ -59,55 +59,7 @@ class C2Server(BaseC2):
             'command_received': [],
             'message_received': []
         }
-    """Initialize the C2 server with host and port configuration.
-    
-    Args:
-        host: The host address to bind the server to.
-        port: The port number to bind the server to.
-    """
-    super().__init__()
-    
-    self.host = host
-    self.port = port
-    self.app = Flask(__name__)
-    self.server_thread = None
-    self.running = False
-    self.logger = get_logger(__name__)
-    
-    # Session management
-    self.active_sessions = {}
-    self.command_queue = {}
-    self.response_queue = {}
-    
-    # Request statistics
-    self.stats = {
-        'requests': 0,
-        'unique_agents': set(),
-        'start_time': None,
-        'last_request': None
-    }
-    
-    # Setup routes
-    self._setup_routes()
-    
-    # Configure Flask for C2 (disable logging for stealth)
-    import logging
-    logging.getLogger('werkzeug').setLevel(logging.ERROR)
-    
-    # Security headers for better OPSEC
-    @self.app.after_request
-    def add_security_headers(response):
-        # Mimic common server headers
-        response.headers['Server'] = 'nginx/1.18.0'
-        response.headers['X-Powered-By'] = 'PHP/7.4.3'
-        
-        # Basic security headers
-        response.headers['X-Content-Type-Options'] = 'nosniff'
-        response.headers['X-Frame-Options'] = 'DENY'
-        
-        return response
-    
-    self.logger.info(f"C2Server initialized on {host}:{port}")
+
 
     def _initialize_protocols(self):
         """Initialize all supported communication protocols."""
@@ -184,7 +136,7 @@ class C2Server(BaseC2):
             num_tokens = self.config.get('auth_token_count', 5)
             new_tokens = []
 
-            for i in range(num_tokens):
+            for _i in range(num_tokens):
                 token = secrets.token_hex(32)
                 self.auth_tokens.add(token)
                 new_tokens.append(token)

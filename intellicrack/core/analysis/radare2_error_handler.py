@@ -98,7 +98,7 @@ class R2ErrorHandler:
 
     def __init__(self, max_errors_per_session: int = 100):
         """Initialize the Radare2 error handler.
-        
+
         Args:
             max_errors_per_session: Maximum number of errors to track per session.
         """

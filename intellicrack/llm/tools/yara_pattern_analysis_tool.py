@@ -457,11 +457,11 @@ class YARAPatternAnalysisTool:
     def analyze_custom_patterns(self, file_path: str, custom_rules_text: str) -> Dict[str, Any]:
         """
         Analyze file with custom YARA rules provided as text
-        
+
         Args:
             file_path: Path to file to analyze
             custom_rules_text: YARA rules as text string
-            
+
         Returns:
             Analysis results
         """

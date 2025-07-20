@@ -16,13 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Debugger Detection
-
-Implements multiple techniques to detect debuggers including
-user-mode and kernel-mode debuggers.
-"""
-
 import ctypes
 import ctypes.util
 import logging
@@ -32,6 +25,13 @@ import time
 from typing import Any, Dict, List, Tuple
 
 from .base_detector import BaseDetector
+
+"""
+Debugger Detection
+
+Implements multiple techniques to detect debuggers including
+user-mode and kernel-mode debuggers.
+"""
 
 # Linux ptrace constants
 PTRACE_TRACEME = 0

@@ -36,7 +36,7 @@ class PayloadResultHandler:
 
     def __init__(self, storage_path: Optional[str] = None):
         """Initialize the payload result handler.
-        
+
         Args:
             storage_path: Optional path to store results
         """
@@ -45,11 +45,11 @@ class PayloadResultHandler:
 
     def handle_result(self, payload_info: Dict[str, Any], result: Dict[str, Any]) -> Dict[str, Any]:
         """Handle the result of a payload execution.
-        
+
         Args:
             payload_info: Information about the payload
             result: Execution result
-            
+
         Returns:
             Processed result dictionary
         """
@@ -77,10 +77,10 @@ class PayloadResultHandler:
 
     def get_results(self, payload_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """Get stored results, optionally filtered by payload ID.
-        
+
         Args:
             payload_id: Optional payload ID to filter by
-            
+
         Returns:
             List of result dictionaries
         """
@@ -95,10 +95,10 @@ class PayloadResultHandler:
 
     def save_results(self, filename: Optional[str] = None) -> str:
         """Save results to file.
-        
+
         Args:
             filename: Optional filename to save to
-            
+
         Returns:
             Path to saved file
         """

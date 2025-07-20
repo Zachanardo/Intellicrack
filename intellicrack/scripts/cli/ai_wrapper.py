@@ -1,5 +1,5 @@
 """
-AI-Controllable CLI Wrapper for Intellicrack. 
+AI-Controllable CLI Wrapper for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -80,6 +80,7 @@ class ConfirmationManager:
     """Manages user confirmations for AI actions."""
 
     def __init__(self, auto_approve_low_risk: bool = False):
+        """Initialize confirmation manager with action tracking and approval settings."""
         self.pending_actions: Dict[str, PendingAction] = {}
         self.action_history: List[Dict[str, Any]] = []
         self.auto_approve_low_risk = auto_approve_low_risk
@@ -184,6 +185,7 @@ class IntellicrackAIInterface:
     }
 
     def __init__(self, confirmation_manager: Optional[ConfirmationManager] = None):
+        """Initialize Intellicrack AI interface with confirmation management and session handling."""
         self.confirmation_manager = confirmation_manager or ConfirmationManager()
         self.cli_path = os.path.join(script_dir, "main.py")
         self.current_analysis = {}

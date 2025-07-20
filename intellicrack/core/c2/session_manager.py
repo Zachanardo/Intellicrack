@@ -23,15 +23,14 @@ Manages C2 sessions, task queuing, file transfers,
 and session persistence for command and control operations.
 """
 
-import asyncio
 import json
 import logging
 import os
 import shutil
 import sqlite3
+import threading
 import time
 import uuid
-from collections import defaultdict, deque
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -79,7 +78,7 @@ class Session:
         self.data_sent = 0
         self.data_received = 0
         self.logger = logging.getLogger(__name__)
-        
+
         # Session metadata
         self.metadata = {
             'os': connection_info.get('os', 'unknown'),
@@ -90,15 +89,15 @@ class Session:
             'ip_address': connection_info.get('ip', 'unknown'),
             'user_agent': connection_info.get('user_agent', 'unknown')
         }
-        
+
         # Command history
         self.command_history: List[Dict[str, Any]] = []
-        
+
         # Active tasks
         self.active_tasks: Dict[str, Any] = {}
-        
+
         self.logger.info(f"New session created: {session_id}")
-        
+
         # Update last seen
         self.update_last_seen()
 
@@ -164,15 +163,15 @@ class SessionManager:
             os.path.dirname(__file__), '..', '..', 'data', 'sessions.db'
         )
         self.logger = logging.getLogger(__name__)
-        
+
         # Ensure database directory exists
         db_dir = os.path.dirname(self.db_path)
         if not os.path.exists(db_dir):
             os.makedirs(db_dir, exist_ok=True)
-        
+
         # Active sessions
         self.sessions: Dict[str, Session] = {}
-        
+
         # Session configuration
         self.config = {
             'session_timeout': 3600,  # 1 hour
@@ -181,12 +180,12 @@ class SessionManager:
             'heartbeat_interval': 60,  # 1 minute
             'max_command_history': 100
         }
-        
+
         # Threading
         self.lock = threading.RLock()
         self.cleanup_thread = None
         self.running = False
-        
+
         # Statistics
         self.stats = {
             'total_sessions': 0,
@@ -194,16 +193,16 @@ class SessionManager:
             'expired_sessions': 0,
             'total_commands': 0
         }
-        
+
         # Initialize database
         self._initialize_database()
-        
+
         # Load existing sessions
         self._load_sessions()
-        
+
         # Start cleanup thread
         self.start_cleanup()
-        
+
         self.logger.info(f"Session manager initialized with database: {self.db_path}")
 
     def _ensure_directories(self):

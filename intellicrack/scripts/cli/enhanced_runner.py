@@ -54,6 +54,7 @@ class EnhancedCLIRunner:
     """Enhanced CLI runner with progress visualization"""
 
     def __init__(self):
+        """Initialize enhanced CLI runner with console, progress management, and logging."""
         self.console = Console()
         self.progress_manager = ProgressManager()
         self.results = {}
@@ -115,7 +116,7 @@ class EnhancedCLIRunner:
 
         results = {}
 
-        for step, progress in steps:
+        for _step, progress in steps:
             # Simulate work
             time.sleep(0.5)
 
@@ -188,7 +189,7 @@ class EnhancedCLIRunner:
             "Collecting behavioral data"
         ]
 
-        for i, step in enumerate(steps):
+        for i, _step in enumerate(steps):
             progress = int((i + 1) / len(steps) * 100)
             time.sleep(0.4)
             self.progress_manager.update_progress(

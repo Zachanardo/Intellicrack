@@ -525,7 +525,7 @@ class USBDongleDriver:
         """Find USB dongles matching criteria"""
         found = []
 
-        for device_id, dongle in self.dongles.items():
+        for _device_id, dongle in self.dongles.items():
             if vendor_id and dongle.spec.vendor_id != vendor_id:
                 continue
             if product_id and dongle.spec.product_id != product_id:

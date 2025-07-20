@@ -527,7 +527,7 @@ class DemoPlugin(BasePlugin):
             patchable_locations = []
 
             # Look for actual patchable patterns in the binary
-            for i, byte_val in enumerate(data[:-4]):
+            for i, _byte_val in enumerate(data[:-4]):
                 # Look for NOP instructions (0x90) - safe to patch
                 if data[i:i+4] == b'\x90\x90\x90\x90':
                     patchable_locations.append({

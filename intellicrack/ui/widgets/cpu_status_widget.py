@@ -7,7 +7,7 @@ import platform
 from typing import Any, Dict, List
 
 import psutil
-from PyQt6.QtCore import QObject, QThread, pyqtSignal
+from PyQt6.QtCore import QObject, QThread, Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QGridLayout,

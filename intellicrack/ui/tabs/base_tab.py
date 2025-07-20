@@ -15,8 +15,8 @@ class BaseTab(QWidget):
     """
 
     def __init__(self, shared_context=None, parent=None):
-    """Initialize base tab with shared application context and parent widget."""
-    super().__init__(parent)
+        """Initialize base tab with shared application context and parent widget."""
+        super().__init__(parent)
 
     def setup_loading_ui(self):
         """Setup initial loading state UI"""

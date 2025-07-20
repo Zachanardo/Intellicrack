@@ -28,6 +28,8 @@ from typing import Any, Dict, List, Optional
 from PyQt6.QtCore import QObject, QSettings, pyqtSignal
 from PyQt6.QtWidgets import QDialog, QMessageBox
 
+from ...utils.logger import get_logger
+
 logger = logging.getLogger(__name__)
 
 class ScriptExecutionManager(QObject):
@@ -69,12 +71,12 @@ class ScriptExecutionManager(QObject):
     def execute_script(self, script_type: str, script_content: str,
                       target_binary: str, options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Execute a script with optional QEMU testing.
-        
+
         Args:
             script_type: Type of script ('frida', 'ghidra', 'ida', etc.)
             script_content: The actual script content
             target_binary: Path to the target binary
-            options: Additional execution options            
+            options: Additional execution options
         Returns:
             Execution results dictionary
         """

@@ -1125,7 +1125,7 @@ Interceptor.attach(Tbsi_Submit_Command, {
 """
         else:
             return """
-// TPM 1.2 Bypass Hook Script  
+// TPM 1.2 Bypass Hook Script
 var tbs = Process.getModuleByName('tbs.dll');
 
 // Hook legacy TPM functions

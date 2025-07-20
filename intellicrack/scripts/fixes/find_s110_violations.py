@@ -92,7 +92,7 @@ def main():
     all_violations = defaultdict(list)
 
     # Find all Python files
-    for root, dirs, files in os.walk(intellicrack_dir):
+    for root, _dirs, files in os.walk(intellicrack_dir):
         for file in files:
             if file.endswith('.py'):
                 file_path = Path(root) / file

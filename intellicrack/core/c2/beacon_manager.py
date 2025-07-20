@@ -16,17 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
+import time
+from collections import defaultdict
+from typing import Any, Dict, List, Optional
+
 """
 Beacon Manager for C2 Infrastructure
 
 Manages beacon intervals, session health monitoring,
 and communication scheduling for C2 operations.
 """
-
-import logging
-import time
-from collections import defaultdict
-from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

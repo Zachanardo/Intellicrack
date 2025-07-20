@@ -16,13 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Virtual Machine Detection
-
-Implements multiple techniques to detect virtualized environments
-including VMware, VirtualBox, Hyper-V, QEMU, and others.
-"""
-
 import logging
 import os
 import platform
@@ -30,6 +23,13 @@ import subprocess
 from typing import Any, Dict, List, Tuple
 
 from .base_detector import BaseDetector
+
+"""
+Virtual Machine Detection
+
+Implements multiple techniques to detect virtualized environments
+including VMware, VirtualBox, Hyper-V, QEMU, and others.
+"""
 
 
 class VMDetector(BaseDetector):

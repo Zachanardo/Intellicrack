@@ -105,7 +105,7 @@ class YaraScanResult:
 class YaraPatternEngine:
     """
     Advanced YARA pattern matching engine for binary analysis.
-    
+
     Provides comprehensive detection of protections, packers, licensing schemes,
     and other patterns relevant to security analysis. Integrates with ICP backend
     to provide supplemental pattern-based detection alongside die-python analysis.
@@ -114,7 +114,7 @@ class YaraPatternEngine:
     def __init__(self, custom_rules_path: Optional[str] = None):
         """
         Initialize YARA pattern engine
-        
+
         Args:
             custom_rules_path: Optional path to custom YARA rules directory
         """
@@ -179,13 +179,13 @@ rule VMProtect_Detection
         category = "protection"
         confidence = 0.9
         description = "Detects VMProtect virtualization protection"
-        
+
     strings:
         $vmp1 = ".vmp0" ascii
         $vmp2 = ".vmp1" ascii
         $vmp3 = "VMProtect" ascii nocase
         $vmp4 = { 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 04 }
-        
+
     condition:
         any of them
 }
@@ -196,13 +196,13 @@ rule Themida_Detection
         category = "protection"
         confidence = 0.85
         description = "Detects Themida/WinLicense protection"
-        
+
     strings:
         $tmd1 = ".themida" ascii
         $tmd2 = "Themida" ascii nocase
         $tmd3 = "WinLicense" ascii nocase
         $tmd4 = { 8B 85 ?? ?? ?? ?? 03 85 ?? ?? ?? ?? 89 85 }
-        
+
     condition:
         any of them
 }
@@ -213,12 +213,12 @@ rule Enigma_Protector
         category = "protection"
         confidence = 0.8
         description = "Detects Enigma Protector"
-        
+
     strings:
         $enig1 = ".enigma1" ascii
         $enig2 = ".enigma2" ascii
         $enig3 = "Enigma Protector" ascii nocase
-        
+
     condition:
         any of them
 }
@@ -232,12 +232,12 @@ rule UPX_Packer
         category = "packer"
         confidence = 0.95
         description = "Detects UPX packer"
-        
+
     strings:
         $upx1 = "UPX!" ascii
         $upx2 = "$Info: This file is packed with the UPX executable packer" ascii
         $upx3 = { 55 50 58 21 }
-        
+
     condition:
         any of them
 }
@@ -248,12 +248,12 @@ rule ASPack_Packer
         category = "packer"
         confidence = 0.9
         description = "Detects ASPack packer"
-        
+
     strings:
         $asp1 = ".aspack" ascii
         $asp2 = "ASPack" ascii nocase
         $asp3 = { 60 E8 03 00 00 00 E9 EB 04 5D 45 55 C3 E8 01 }
-        
+
     condition:
         any of them
 }
@@ -264,12 +264,12 @@ rule PECompact_Packer
         category = "packer"
         confidence = 0.85
         description = "Detects PECompact packer"
-        
+
     strings:
         $pec1 = "PECompact2" ascii
         $pec2 = ".pec1" ascii
         $pec3 = ".pec2" ascii
-        
+
     condition:
         any of them
 }
@@ -283,14 +283,14 @@ rule FlexLM_License
         category = "licensing"
         confidence = 0.9
         description = "Detects FlexLM licensing system"
-        
+
     strings:
         $flex1 = "FlexLM" ascii nocase
         $flex2 = "lm_checkout" ascii
         $flex3 = "VENDOR_NAME" ascii
         $flex4 = "license.dat" ascii nocase
         $flex5 = "lmgrd" ascii
-        
+
     condition:
         any of them
 }
@@ -301,14 +301,14 @@ rule HASP_Dongle
         category = "licensing"
         confidence = 0.85
         description = "Detects HASP/Sentinel dongle protection"
-        
+
     strings:
         $hasp1 = "hasp_login" ascii
         $hasp2 = "HASP HL" ascii
         $hasp3 = "Sentinel" ascii nocase
         $hasp4 = "aksusb" ascii
         $hasp5 = "hardlock.sys" ascii nocase
-        
+
     condition:
         any of them
 }
@@ -319,13 +319,13 @@ rule CodeMeter_License
         category = "licensing"
         confidence = 0.8
         description = "Detects CodeMeter licensing"
-        
+
     strings:
         $cm1 = "CodeMeter" ascii nocase
         $cm2 = "CmContainer" ascii
         $cm3 = "WibuCm" ascii
         $cm4 = ".WibuCm" ascii
-        
+
     condition:
         any of them
 }
@@ -336,7 +336,7 @@ rule Generic_License_Patterns
         category = "licensing"
         confidence = 0.6
         description = "Generic licensing patterns"
-        
+
     strings:
         $lic1 = "license key" ascii nocase
         $lic2 = "serial number" ascii nocase
@@ -344,7 +344,7 @@ rule Generic_License_Patterns
         $lic4 = "trial expired" ascii nocase
         $lic5 = "registration required" ascii nocase
         $lic6 = /License.*[Vv]iolation/ ascii
-        
+
     condition:
         any of them
 }
@@ -358,14 +358,14 @@ rule Anti_Debug_API
         category = "anti_debug"
         confidence = 0.8
         description = "Detects anti-debugging API calls"
-        
+
     strings:
         $api1 = "IsDebuggerPresent" ascii
         $api2 = "CheckRemoteDebuggerPresent" ascii
         $api3 = "NtQueryInformationProcess" ascii
         $api4 = "OutputDebugString" ascii
         $api5 = "GetTickCount" ascii
-        
+
     condition:
         any of them
 }
@@ -376,11 +376,11 @@ rule Anti_Debug_PEB
         category = "anti_debug"
         confidence = 0.75
         description = "Detects PEB-based anti-debugging"
-        
+
     strings:
         $peb1 = { 64 8B 30 8B 76 0C 8B 76 1C }  // PEB access
         $peb2 = { 65 8B 00 8B 40 ?? 8A 40 02 }  // BeingDebugged flag
-        
+
     condition:
         any of them
 }
@@ -391,7 +391,7 @@ rule Anti_VM_Detection
         category = "anti_vm"
         confidence = 0.7
         description = "Detects anti-VM techniques"
-        
+
     strings:
         $vm1 = "VMware" ascii nocase
         $vm2 = "VirtualBox" ascii nocase
@@ -399,7 +399,7 @@ rule Anti_VM_Detection
         $vm4 = "Xen" ascii nocase
         $vm5 = "vbox" ascii nocase
         $vm6 = { 0F 01 0D 00 00 00 00 }  // SIDT instruction
-        
+
     condition:
         any of them
 }
@@ -413,12 +413,12 @@ rule MSVC_Compiler
         category = "compiler"
         confidence = 0.9
         description = "Microsoft Visual C++ compiler"
-        
+
     strings:
         $msvc1 = "Microsoft (R) 32-bit C/C++ Optimizing Compiler" ascii
         $msvc2 = "MSVCR" ascii
         $msvc3 = ".rdata$zzz" ascii
-        
+
     condition:
         any of them
 }
@@ -429,12 +429,12 @@ rule Delphi_Compiler
         category = "compiler"
         confidence = 0.85
         description = "Borland Delphi compiler"
-        
+
     strings:
         $delphi1 = "Borland" ascii
         $delphi2 = "@AbstractError" ascii
         $delphi3 = "Controls.TControl" ascii
-        
+
     condition:
         any of them
 }
@@ -445,12 +445,12 @@ rule GCC_Compiler
         category = "compiler"
         confidence = 0.8
         description = "GNU GCC compiler"
-        
+
     strings:
         $gcc1 = "GCC: " ascii
         $gcc2 = "__gmon_start__" ascii
         $gcc3 = ".eh_frame" ascii
-        
+
     condition:
         any of them
 }
@@ -472,10 +472,10 @@ rule Basic_PE_Detection
         category = "compiler"
         confidence = 0.5
         description = "Basic PE file detection"
-        
+
     strings:
         $pe = { 4D 5A }  // MZ header
-        
+
     condition:
         $pe at 0
 }
@@ -506,11 +506,11 @@ rule Basic_PE_Detection
     def scan_file(self, file_path: str, timeout: int = 60) -> YaraScanResult:
         """
         Scan a file with YARA rules
-        
+
         Args:
             file_path: Path to file to scan
             timeout: Scan timeout in seconds
-            
+
         Returns:
             YaraScanResult with all matches
         """
@@ -688,11 +688,11 @@ rule Basic_PE_Detection
     def scan_memory(self, process_id: int, timeout: int = 60) -> YaraScanResult:
         """
         Scan process memory with YARA rules
-        
+
         Args:
             process_id: Process ID to scan
             timeout: Scan timeout in seconds
-            
+
         Returns:
             YaraScanResult with memory matches
         """
@@ -752,11 +752,11 @@ rule Basic_PE_Detection
     def create_custom_rule(self, rule_content: str, rule_name: str) -> bool:
         """
         Create a custom YARA rule
-        
+
         Args:
             rule_content: YARA rule content
             rule_name: Name for the rule file
-            
+
         Returns:
             True if rule was created successfully
         """
@@ -816,10 +816,10 @@ rule Basic_PE_Detection
     def generate_icp_supplemental_data(self, scan_result: YaraScanResult) -> Dict[str, Any]:
         """
         Generate supplemental data for ICP backend integration
-        
+
         Args:
             scan_result: YARA scan results
-            
+
         Returns:
             Dictionary with supplemental pattern data for ICP
         """

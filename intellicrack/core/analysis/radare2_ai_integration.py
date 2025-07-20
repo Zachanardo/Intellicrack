@@ -207,7 +207,7 @@ class R2AIEngine:
             'file_size': float(binary_info.get('bin', {}).get('size', 0)),
             'entry_point': float(binary_info.get('bin', {}).get('baddr', 0)),
             'architecture_bits': float(binary_info.get('bin', {}).get('bits', 32)),
-            'has_symbols': float(1 if binary_info.get('bin', {}).get('stripped', True) == False else 0),
+            'has_symbols': float(1 if not binary_info.get('bin', {}).get('stripped', True) else 0),
             'has_debug': float(1 if binary_info.get('bin', {}).get('dbg_file', '') else 0),
             'is_pie': float(1 if binary_info.get('bin', {}).get('pic', False) else 0),
             'has_nx': float(1 if binary_info.get('bin', {}).get('nx', False) else 0),

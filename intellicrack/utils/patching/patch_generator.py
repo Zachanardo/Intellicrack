@@ -71,6 +71,7 @@ class PatchGenerator:
     """Patch generator class for advanced patch operations."""
 
     def __init__(self):
+        """Initialize patch generator with logger for binary patching operations."""
         self.logger = logging.getLogger("IntellicrackLogger.PatchGenerator")
 
     def generate_binary_patch(self, target_path: str, patch_type: str = 'license_bypass') -> Dict[str, Any]:

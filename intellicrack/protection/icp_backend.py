@@ -180,12 +180,12 @@ class ICPScanResult:
     @classmethod
     def from_die_text(cls, file_path: str, die_text: str) -> 'ICPScanResult':
         """Create from die-python text output
-        
+
         Args:
             file_path: Path to the analyzed file
             die_text: Text output from die.scan_file()
                      Format: "PE64\n    Unknown: Unknown\n    Packer: UPX"
-        
+
         Returns:
             ICPScanResult with parsed detections
         """
@@ -259,31 +259,31 @@ class ICPEngineError(Exception):
 
 class ICPBackend:
     """Native die-python wrapper providing comprehensive ICP Engine functionality.
-    
+
     This class serves as the core backend for Intellicrack's protection analysis,
     replacing external executable dependencies with native Python integration.
     It provides all the functionality previously available through separate
     ICP engine executables, but with better performance, reliability, and
     integration.
-    
+
     Core Capabilities:
     - File type detection and analysis
-    - Packer and protector identification  
+    - Packer and protector identification
     - Shannon entropy calculation and analysis
     - String extraction with offset mapping
     - PE section analysis with detailed metadata
     - Comprehensive binary analysis reports
-    
+
     The backend supports multiple scan modes from quick analysis to deep
     investigation, and can process files asynchronously to maintain UI
     responsiveness in GUI applications.
-    
+
     Example:
         backend = ICPBackend()
         result = await backend.analyze_file("target.exe", ScanMode.DEEP)
         if result.is_packed:
             print(f"File is packed with: {', '.join(result.all_detections)}")
-        
+
         # Or use synchronous detailed analysis
         analysis = backend.get_detailed_analysis("target.exe")
         print(f"Entropy: {analysis['entropy']:.4f}")
@@ -501,10 +501,10 @@ class ICPBackend:
 
     def get_file_type(self, file_path: str) -> str:
         """Get file type using native die-python analysis.
-        
+
         Args:
             file_path: Path to the file to analyze
-            
+
         Returns:
             str: File type (e.g., "PE64", "ELF64", "Unknown")
         """
@@ -518,14 +518,14 @@ class ICPBackend:
 
     def get_file_entropy(self, file_path: str) -> float:
         """Calculate Shannon entropy of file contents.
-        
+
         Entropy is a measure of randomness/unpredictability in data.
         High entropy (>7.5) often indicates encryption or compression.
         Low entropy (<4.0) indicates normal code/text.
-        
+
         Args:
             file_path: Path to the file to analyze
-            
+
         Returns:
             float: Entropy value between 0.0 and 8.0
         """
@@ -555,14 +555,14 @@ class ICPBackend:
 
     def extract_strings(self, file_path: str, min_length: int = 4) -> List[Dict[str, any]]:
         """Extract printable ASCII strings from binary file.
-        
+
         Searches for sequences of printable ASCII characters that could
         indicate hardcoded strings, API names, error messages, etc.
-        
+
         Args:
             file_path: Path to the file to analyze
             min_length: Minimum string length to extract (default: 4)
-            
+
         Returns:
             List[Dict]: List of dictionaries containing:
                 - offset: File offset where string was found
@@ -610,13 +610,13 @@ class ICPBackend:
 
     def get_file_sections(self, file_path: str) -> List[Dict[str, any]]:
         """Extract file sections with detailed information.
-        
+
         Attempts to parse PE file sections using pefile if available,
         otherwise provides basic file information as a single section.
-        
+
         Args:
             file_path: Path to the file to analyze
-            
+
         Returns:
             List[Dict]: List of section dictionaries containing:
                 - name: Section name
@@ -669,13 +669,13 @@ class ICPBackend:
 
     def detect_packers(self, file_path: str) -> List[str]:
         """Detect packers and protectors using native die-python analysis.
-        
+
         Scans the file and extracts any detections that are classified
         as packers or protectors based on the detection type.
-        
+
         Args:
             file_path: Path to the file to analyze
-            
+
         Returns:
             List[str]: List of detected packer/protector names
         """
@@ -701,11 +701,11 @@ class ICPBackend:
 
     def add_supplemental_data(self, scan_result: ICPScanResult, supplemental_data: Dict[str, Any]) -> ICPScanResult:
         """Add supplemental analysis data to an ICP scan result
-        
+
         Args:
             scan_result: Existing ICP scan result
             supplemental_data: Additional analysis data from external engines
-            
+
         Returns:
             Updated ICPScanResult with merged supplemental data
         """
@@ -800,13 +800,13 @@ class ICPBackend:
                                    firmware_data: Optional[Dict[str, Any]] = None,
                                    memory_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Merge data from all analysis engines into a unified report
-        
+
         Args:
             file_path: Path to the analyzed file
             yara_data: YARA pattern analysis results
             firmware_data: Binwalk firmware analysis results
             memory_data: Volatility3 memory forensics results
-            
+
         Returns:
             Unified analysis report with all engine data
         """
@@ -1001,18 +1001,18 @@ class ICPBackend:
                              firmware_data: Optional[Dict[str, Any]] = None,
                              memory_data: Optional[Dict[str, Any]] = None) -> Dict[str, any]:
         """Perform comprehensive file analysis combining all ICP backend capabilities.
-        
+
         This is the main analysis method that combines file type detection,
         entropy analysis, section parsing, string extraction, and packer
         detection into a single comprehensive report.
-        
+
         Args:
             file_path: Path to the file to analyze
             include_supplemental: Whether to include supplemental analysis data
             yara_data: Optional YARA analysis results
             firmware_data: Optional firmware analysis results
             memory_data: Optional memory forensics results
-            
+
         Returns:
             Dict[str, any]: Comprehensive analysis containing:
                 - file_path: Original file path
@@ -1062,10 +1062,10 @@ class ICPBackend:
     async def _run_supplemental_analysis(self, file_path: str) -> Dict[str, Any]:
         """
         Run supplemental analysis using YARA, Binwalk, and Volatility3 engines
-        
+
         Args:
             file_path: Path to file to analyze
-            
+
         Returns:
             Merged supplemental data from all available engines
         """
@@ -1173,7 +1173,7 @@ class ICPBackend:
     def get_supplemental_engines_status(self) -> Dict[str, Any]:
         """
         Get status of supplemental analysis engines
-        
+
         Returns:
             Dictionary with engine availability and status
         """
@@ -1196,11 +1196,11 @@ class ICPBackend:
     ) -> ICPScanResult:
         """
         Convenience method to analyze file with all available engines
-        
+
         Args:
             file_path: Path to file to analyze
             scan_mode: ICP scan mode to use
-            
+
         Returns:
             Complete analysis results with supplemental data
         """

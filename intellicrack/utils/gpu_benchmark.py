@@ -31,11 +31,11 @@ logger = logging.getLogger(__name__)
 def run_gpu_accelerated_analysis(app, binary_data: bytes) -> Dict[str, Any]:
     """
     Run GPU-accelerated binary analysis using available frameworks.
-    
+
     Args:
         app: Application instance with update_output signal
         binary_data: Binary data to analyze
-        
+
     Returns:
         Dictionary with analysis results
     """
@@ -166,11 +166,11 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> Dict[str, Any]:
 def benchmark_gpu_frameworks(app, test_sizes: List[int] = None) -> Dict[str, Any]:
     """
     Benchmark available GPU frameworks.
-    
+
     Args:
         app: Application instance
         test_sizes: List of test data sizes in bytes
-        
+
     Returns:
         Dictionary with benchmark results
     """

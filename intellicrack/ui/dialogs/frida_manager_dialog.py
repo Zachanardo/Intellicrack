@@ -175,35 +175,35 @@ class FridaManagerDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Frida Manager")
         self.setMinimumSize(1000, 700)
-        
+
         # State management
         self.frida_session = None
         self.attached_process = None
         self.active_scripts = {}
         self.process_list = []
-        
+
         # Worker threads
         self.process_worker = None
         self.frida_worker = None
-        
+
         # Script templates
         self.script_templates = self._load_script_templates()
-        
+
         # Setup UI
         self.setup_ui()
         self.setup_connections()
-        
+
         # Start monitoring
         self.start_process_monitoring()
-        
+
         # Load saved settings
         self.load_settings()
-        
+
         # Update process list
         self.refresh_process_list()
-        
+
         logger.info("Frida Manager Dialog initialized")
-        
+
         # Check Frida availability
         self.check_frida_availability()
 
@@ -2256,7 +2256,7 @@ class FridaManagerDialog(QDialog):
         """Connect to structured message handlers from FridaManager"""
         if hasattr(self.frida_manager, '_ui_message_callback'):
             return
-        
+
         self.frida_manager._ui_message_callback = self.display_structured_message
 
     def display_structured_message(self, message_type: str, session_id: str, script_name: str, payload: dict):
@@ -2265,9 +2265,9 @@ class FridaManagerDialog(QDialog):
         target = payload.get('target', '')
         action = payload.get('action', '')
         data = payload.get('data', {})
-        
+
         formatted_text = self._format_structured_message(message_type, script_name, message, target, action, data)
-        
+
         if message_type == 'error':
             self.log_console.append_error(formatted_text)
         elif message_type == 'warning':
@@ -2278,46 +2278,46 @@ class FridaManagerDialog(QDialog):
             self.log_console.append_info(formatted_text)
         else:
             self.log_console.append_output(formatted_text, message_type.upper())
-        
+
         if message_type == 'detection':
             self._update_protection_display(payload)
 
     def _format_structured_message(self, msg_type: str, script_name: str, message: str, target: str, action: str, data: dict) -> str:
         """Format structured message for console display"""
         parts = [f"[{script_name}]" if script_name else "[FRIDA]"]
-        
+
         if target:
             parts.append(f"Target: {target}")
-        
+
         if action:
             parts.append(f"Action: {action}")
-        
+
         parts.append(message)
-        
+
         if data:
             if isinstance(data, dict) and data:
                 data_str = ", ".join(f"{k}: {v}" for k, v in data.items() if v)
                 if data_str:
                     parts.append(f"({data_str})")
-        
+
         return " | ".join(parts)
 
     def _update_protection_display(self, payload: dict):
         """Update protection detection display when detection messages are received"""
         protection_name = payload.get('data', {}).get('protection', '')
         evidence = payload.get('data', {}).get('evidence', [])
-        
+
         if protection_name:
             for i in range(self.protection_grid.rowCount()):
                 prot_item = self.protection_grid.item(i, 0)
                 if prot_item and protection_name.lower() in prot_item.text().lower():
                     self.protection_grid.item(i, 1).setText("DETECTED")
                     self.protection_grid.item(i, 1).setForeground(QColor("#ff6b6b"))
-                    
+
                     if evidence:
                         evidence_text = ", ".join(evidence[:3])
                         self.protection_grid.item(i, 2).setText(evidence_text)
-                    
+
                     btn = self.protection_grid.cellWidget(i, 3)
                     if btn:
                         btn.setEnabled(True)

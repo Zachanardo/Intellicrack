@@ -29,14 +29,14 @@ from enum import Enum
 class ProtectionType(Enum):
     """
     Classification of protection techniques.
-    
+
     Enumerates common software protection mechanisms that can be
     detected and bypassed using Frida. Each protection type has
     specific bypass strategies and detection methods.
-    
+
     The enum values are human-readable descriptions used in UI
     and reporting. The enum names are used programmatically.
-    
+
     Categories:
     - Debugging: ANTI_DEBUG, ANTI_ATTACH
     - Environment: ANTI_VM, ROOT_DETECTION
@@ -67,18 +67,18 @@ class ProtectionType(Enum):
 class HookCategory(Enum):
     """
     Categories for hook batching.
-    
+
     Defines priority levels for Frida hooks to optimize performance
     and minimize detection. Higher priority hooks are applied
     immediately while lower priority ones can be batched.
-    
+
     Batching Strategy:
     - CRITICAL: Applied immediately, no batching
     - HIGH: Applied within 100ms
     - MEDIUM: Batched up to 500ms
     - LOW: Batched up to 2000ms
     - MONITORING: Passive hooks, lowest priority
-    
+
     Use Cases:
     - CRITICAL: Anti-debug bypass, time-sensitive hooks
     - HIGH: License checks, integrity validation

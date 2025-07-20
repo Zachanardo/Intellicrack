@@ -16,13 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Sandbox Detection
-
-Implements techniques to detect analysis sandboxes including
-Cuckoo, VMRay, Joe Sandbox, and others.
-"""
-
 import ctypes
 import logging
 import os
@@ -33,6 +26,13 @@ import time
 from typing import Any, Dict, List, Tuple
 
 from .base_detector import BaseDetector
+
+"""
+Sandbox Detection
+
+Implements techniques to detect analysis sandboxes including
+Cuckoo, VMRay, Joe Sandbox, and others.
+"""
 
 
 class SandboxDetector(BaseDetector):

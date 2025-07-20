@@ -341,9 +341,9 @@ class ModelCache:
 
     def __init__(self, cache_dir: str = None, max_cache_size: int = 5):
         """Initialize the model cache system.
-        
+
         Args:
-            cache_dir: Directory for storing cached models. 
+            cache_dir: Directory for storing cached models.
                       Defaults to ~/.intellicrack/model_cache if not provided.
             max_cache_size: Maximum number of models to keep in cache.
         """
@@ -426,7 +426,7 @@ class ModelManager:
 
     def __init__(self, models_dir: str = None, cache_size: int = 5):
         """Initialize the AI model manager.
-        
+
         Args:
             models_dir: Directory containing AI models. If None, defaults to
                         ../models relative to this file
@@ -940,11 +940,11 @@ class ModelManager:
 
                     # Define simple neural network
                     class SimpleNN(nn.Module):
-                    """Simple neural network for basic classification tasks."""
-                    
+                        """Simple neural network for basic classification tasks."""
+
                     def __init__(self, input_size, num_classes):
                         """Initialize simple neural network with specified input size and number of classes.
-                        
+
                         Args:
                             input_size: Number of input features
                             num_classes: Number of output classes
@@ -954,7 +954,7 @@ class ModelManager:
                         self.fc2 = nn.Linear(128, 64)
                         self.fc3 = nn.Linear(64, num_classes)
                         self.dropout = nn.Dropout(0.2)
-                        
+
                     def forward(self, x):
                         x = torch.relu(self.fc1(x))
                         x = self.dropout(x)
@@ -1245,14 +1245,14 @@ class ModelManager:
 
     def evaluate_model_with_split(self, model_id: str, data: Any, labels: Any, test_size: float = 0.2, random_state: int = 42) -> Dict[str, Any]:
         """Evaluate a model using train_test_split for proper validation.
-        
+
         Args:
             model_id: Model identifier
             data: Input features
             labels: Target labels
             test_size: Proportion of data to use for testing
             random_state: Random seed for reproducibility
-            
+
         Returns:
             Dictionary with evaluation metrics
         """
@@ -1368,7 +1368,7 @@ class AsyncModelManager:
 
     def __init__(self, model_manager: ModelManager):
         """Initialize the asynchronous model manager wrapper.
-        
+
         Args:
             model_manager: The underlying ModelManager instance to wrap with async capabilities.
         """
@@ -1448,7 +1448,7 @@ class ModelFineTuner:
 
     def __init__(self, model_manager: ModelManager):
         """Initialize the model fine-tuner.
-        
+
         Args:
             model_manager: The ModelManager instance for accessing and managing models.
         """

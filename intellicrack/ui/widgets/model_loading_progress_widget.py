@@ -42,6 +42,7 @@ class ModelLoadingItemWidget(QWidget):
     cancelled = pyqtSignal(str)  # model_id
 
     def __init__(self, model_id: str, parent=None):
+        """Initialize model loading item widget with model ID and parent widget."""
         super().__init__(parent)
         self.model_id = model_id
         self.init_ui()
@@ -141,6 +142,7 @@ class ModelLoadingProgressWidget(QWidget):
     model_loaded = pyqtSignal(str)  # model_id
 
     def __init__(self, parent=None):
+        """Initialize model loading progress widget with LLM manager, progress callbacks, and UI components."""
         super().__init__(parent)
         self.llm_manager = get_llm_manager()
         self.progress_callback = QueuedProgressCallback()

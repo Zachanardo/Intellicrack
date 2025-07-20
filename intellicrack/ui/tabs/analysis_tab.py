@@ -23,7 +23,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ...core.analysis.analysis_orchestrator import AnalysisOrchestrator, AnalysisPhase
+from ...core.analysis.analysis_orchestrator import AnalysisPhase
 from ..widgets.entropy_visualizer import EntropyVisualizerWidget
 from ..widgets.structure_visualizer import StructureVisualizerWidget
 from .base_tab import BaseTab
@@ -40,8 +40,8 @@ class AnalysisTab(BaseTab):
     protection_detected = pyqtSignal(str, str)
 
     def __init__(self, shared_context=None, parent=None):
-    """Initialize analysis tab with binary analysis and reverse engineering tools."""
-    super().__init__(shared_context, parent)
+        """Initialize analysis tab with binary analysis and reverse engineering tools."""
+        super().__init__(shared_context, parent)
 
     def setup_content(self):
         """Setup the complete Analysis tab content"""

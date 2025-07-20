@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""Script execution management module."""
-
 from .script_execution_manager import ScriptExecutionManager
+
+"""Script execution management module."""
 
 __all__ = ['ScriptExecutionManager']

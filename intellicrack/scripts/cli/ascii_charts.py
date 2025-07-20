@@ -259,7 +259,7 @@ class ASCIIChartGenerator:
 
     def display_chart_rich(self, chart_content: str, title: str = "Analysis Chart") -> None:
         """Display chart with rich formatting and alignment.
-        
+
         Args:
             chart_content: ASCII chart content to display
             title: Chart title
@@ -289,7 +289,7 @@ class ASCIIChartGenerator:
     def create_styled_legend(self, data: Dict[str, Union[int, float]],
                            title: str = "Legend") -> None:
         """Create a styled legend for chart data using rich Text formatting.
-        
+
         Args:
             data: Dictionary of label -> value pairs
             title: Legend title

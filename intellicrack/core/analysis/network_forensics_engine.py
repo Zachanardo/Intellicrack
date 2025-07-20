@@ -38,10 +38,10 @@ class NetworkForensicsEngine:
     def analyze_capture(self, capture_path: Union[str, Path]) -> Dict[str, Any]:
         """
         Analyze a network capture file for forensic artifacts.
-        
+
         Args:
             capture_path: Path to the network capture file
-            
+
         Returns:
             Network forensics analysis results
         """
@@ -119,11 +119,11 @@ class NetworkForensicsEngine:
     def analyze_live_traffic(self, interface: str, duration: int = 60) -> Dict[str, Any]:
         """
         Analyze live network traffic for forensic artifacts.
-        
+
         Args:
             interface: Network interface to monitor
             duration: Analysis duration in seconds
-            
+
         Returns:
             Live traffic analysis results
         """
@@ -208,10 +208,10 @@ class NetworkForensicsEngine:
     def extract_artifacts(self, traffic_data: bytes) -> List[Dict[str, Any]]:
         """
         Extract forensic artifacts from network traffic data.
-        
+
         Args:
             traffic_data: Raw network traffic data
-            
+
         Returns:
             List of extracted artifacts
         """
@@ -357,10 +357,10 @@ class NetworkForensicsEngine:
     def detect_protocols(self, packet_data: bytes) -> List[str]:
         """
         Detect network protocols in packet data.
-        
+
         Args:
             packet_data: Raw packet data
-            
+
         Returns:
             List of detected protocols
         """

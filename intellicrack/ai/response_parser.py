@@ -16,13 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from typing import Dict, List, Optional, Tuple
+
 """
 Common AI response parsing utilities.
 
 This module provides shared functions for parsing AI responses across different AI modules.
 """
-
-from typing import Dict, List, Optional, Tuple
 
 
 def parse_ai_response_sections(response: str, section_keywords: Dict[str, List[str]]) -> Dict[str, List[str]]:

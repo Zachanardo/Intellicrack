@@ -83,11 +83,11 @@ class HexViewerWidget(QAbstractScrollArea):
 
     def __init__(self, parent=None):
         """Initialize the hex viewer widget.
-        
+
         Sets up the hexadecimal file viewer with support for multiple view modes,
         file handling, editing capabilities, and AI-driven analysis integration.
         Configures the scrollable interface and rendering components.
-        
+
         Args:
             parent: Parent widget for the hex viewer.
         """

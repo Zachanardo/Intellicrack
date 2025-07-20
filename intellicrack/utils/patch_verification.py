@@ -21,10 +21,10 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 from .patching.patch_verification import (
     apply_parsed_patch_instructions_with_validation,
     rewrite_license_functions_with_parsing,
-    simulate_patch_and_verify,
+    test_patch_and_verify,
     verify_patches,
 )
 
-__all__ = ['verify_patches', 'simulate_patch_and_verify',
+__all__ = ['verify_patches', 'test_patch_and_verify',
            'apply_parsed_patch_instructions_with_validation',
            'rewrite_license_functions_with_parsing']

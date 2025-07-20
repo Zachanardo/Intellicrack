@@ -76,7 +76,7 @@ class AnalysisOrchestrator(QObject):
 
     def __init__(self):
         """Initialize the analysis orchestrator.
-        
+
         Sets up all analysis engines including binary analyzer, entropy analyzer,
         multi-format analyzer, dynamic analyzer, vulnerability engine, YARA pattern
         engine, and radare2 integration for comprehensive binary analysis orchestration.
@@ -99,11 +99,11 @@ class AnalysisOrchestrator(QObject):
     def analyze_binary(self, binary_path: str, phases: Optional[List[AnalysisPhase]] = None) -> OrchestrationResult:
         """
         Perform orchestrated analysis on a binary
-        
+
         Args:
             binary_path: Path to the binary file
             phases: Optional list of phases to run (runs all if None)
-            
+
         Returns:
             OrchestrationResult with all analysis data
         """

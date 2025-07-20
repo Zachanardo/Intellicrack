@@ -16,13 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import re
+from typing import Callable, Dict, List, Optional
+
 """
 AI Response Parsing Utilities
 
 Shared utilities for parsing AI responses to eliminate code duplication.
 """
-
-from typing import Callable, Dict, List, Optional
 
 
 class ResponseLineParser:
@@ -129,8 +130,6 @@ class ResponseLineParser:
         Returns:
             List of dictionaries containing matched content
         """
-        import re
-
         extracted = []
         lines = response.split('\n')
         current_section = 'content'
@@ -197,8 +196,6 @@ class ResponseLineParser:
         Returns:
             List of cleaned and filtered lines
         """
-        import re
-
         cleaned = []
 
         for line in lines:

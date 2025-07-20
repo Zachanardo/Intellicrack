@@ -463,6 +463,7 @@ class PerformanceMonitor:
     """Main performance monitoring controller."""
 
     def __init__(self):
+        """Initialize the performance monitor with widget and file handler references."""
         self.widget = None
         self.file_handler = None
 

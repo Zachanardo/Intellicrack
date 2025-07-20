@@ -1200,7 +1200,7 @@ class NetworkAnalysisPlugin:
     def monitor_traffic(self, target_process=None):
         """Monitor network traffic for a process or system-wide."""
         results = []
-        
+
         try:
             # Windows implementation using WinPcap/Npcap if available
             if sys.platform == "win32":
@@ -1208,25 +1208,25 @@ class NetworkAnalysisPlugin:
             else:
                 # Linux/Unix implementation
                 results.extend(self._monitor_unix_traffic(target_process))
-                
+
         except Exception as e:
             logger.error(f"Network monitoring error: {e}")
             results.append(f"Error: {str(e)}")
             results.append("Fallback: Using netstat-based monitoring")
             results.extend(self._fallback_network_monitor(target_process))
-        
+
         return results
-    
+
     def _monitor_windows_traffic(self, target_process=None):
         """Monitor network traffic on Windows."""
         results = []
-        
+
         try:
             # Try to use pypcap or scapy if available
             try:
                 from scapy.all import sniff, IP, TCP, UDP
                 results.append("Using Scapy for packet capture")
-                
+
                 # Get process connections first
                 if target_process:
                     pid = self._get_process_pid(target_process)
@@ -1234,13 +1234,13 @@ class NetworkAnalysisPlugin:
                         results.append(f"Monitoring traffic for PID: {pid}")
                         connections = self._get_process_connections(pid)
                         results.extend(connections)
-                
+
                 # Capture packets (limited to prevent blocking)
                 def packet_callback(packet):
                     if IP in packet:
                         src_ip = packet[IP].src
                         dst_ip = packet[IP].dst
-                        
+
                         if TCP in packet:
                             src_port = packet[TCP].sport
                             dst_port = packet[TCP].dport
@@ -1249,34 +1249,34 @@ class NetworkAnalysisPlugin:
                             src_port = packet[UDP].sport
                             dst_port = packet[UDP].dport
                             results.append(f"UDP: {src_ip}:{src_port} -> {dst_ip}:{dst_port}")
-                
+
                 # Capture 10 packets as example
                 packets = sniff(count=10, prn=packet_callback, timeout=5)
                 results.append(f"Captured {len(packets)} packets")
-                
+
             except ImportError:
                 # Fallback to WMI for connection monitoring
                 results.append("Using WMI for connection monitoring")
                 results.extend(self._monitor_wmi_connections(target_process))
-                
+
         except Exception as e:
             results.append(f"Windows monitoring error: {e}")
-            
+
         return results
-    
+
     def _monitor_unix_traffic(self, target_process=None):
         """Monitor network traffic on Unix/Linux."""
         results = []
-        
+
         try:
             # Check if we have permissions
             import os
             if os.geteuid() != 0:
                 results.append("Warning: Root privileges required for packet capture")
-            
+
             # Try to use tcpdump or similar
             import subprocess
-            
+
             if target_process:
                 pid = self._get_process_pid(target_process)
                 if pid:
@@ -1288,7 +1288,7 @@ class NetworkAnalysisPlugin:
                         results.extend(output.strip().split('\n')[1:])  # Skip header
                     except:
                         pass
-            
+
             # Try to capture some traffic
             try:
                 cmd = "tcpdump -c 10 -n -i any"
@@ -1300,27 +1300,27 @@ class NetworkAnalysisPlugin:
             except:
                 # Fallback to netstat
                 results.extend(self._get_netstat_connections(target_process))
-                
+
         except Exception as e:
             results.append(f"Unix monitoring error: {e}")
-            
+
         return results
-    
+
     def _fallback_network_monitor(self, target_process=None):
         """Fallback network monitoring using netstat/ss."""
         results = []
-        
+
         try:
             import subprocess
-            
+
             if sys.platform == "win32":
                 cmd = "netstat -ano"
             else:
                 cmd = "ss -tunap 2>/dev/null || netstat -tunap 2>/dev/null"
-            
+
             output = subprocess.check_output(cmd, shell=True, text=True)
             lines = output.strip().split('\n')
-            
+
             if target_process:
                 pid = self._get_process_pid(target_process)
                 if pid:
@@ -1333,12 +1333,12 @@ class NetworkAnalysisPlugin:
                 # Show first 20 connections
                 for line in lines[1:21]:  # Skip header, limit output
                     results.append(line.strip())
-                    
+
         except Exception as e:
             results.append(f"Fallback monitoring error: {e}")
-            
+
         return results
-    
+
     def _get_process_pid(self, process_name):
         """Get PID from process name."""
         try:
@@ -1363,72 +1363,72 @@ class NetworkAnalysisPlugin:
             except:
                 pass
         return None
-    
+
     def _get_process_connections(self, pid):
         """Get network connections for a specific PID."""
         results = []
-        
+
         try:
             import psutil
             process = psutil.Process(pid)
             connections = process.connections(kind='inet')
-            
+
             results.append(f"Process {pid} has {len(connections)} connections:")
             for conn in connections:
                 laddr = f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "N/A"
                 raddr = f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "N/A"
                 status = conn.status if hasattr(conn, 'status') else "N/A"
                 results.append(f"  {conn.type.name} {laddr} -> {raddr} [{status}]")
-                
+
         except Exception as e:
             results.append(f"Error getting connections: {e}")
-            
+
         return results
-    
+
     def _monitor_wmi_connections(self, target_process=None):
         """Monitor connections using WMI on Windows."""
         results = []
-        
+
         try:
             import wmi
             c = wmi.WMI()
-            
+
             # Get network connections
             for conn in c.Win32_PerfRawData_Tcpip_TCPv4():
                 results.append(f"TCP Connections: {conn.ConnectionsActive}")
                 results.append(f"Connection Failures: {conn.ConnectionFailures}")
                 break  # Just show summary
-            
+
             # Get process-specific info if requested
             if target_process:
                 for process in c.Win32_Process(Name=target_process):
                     results.append(f"Process {process.Name} (PID: {process.ProcessId})")
                     # Note: Direct connection mapping requires additional APIs
-                    
+
         except Exception as e:
             results.append(f"WMI error: {e}")
-            
+
         return results
-    
+
     def _get_netstat_connections(self, target_process=None):
         """Get connections using netstat."""
         results = []
-        
+
         try:
             import subprocess
-            
+
             cmd = "netstat -tunap 2>/dev/null | grep -E 'tcp|udp'"
             output = subprocess.check_output(cmd, shell=True, text=True)
-            
+
             lines = output.strip().split('\n')
             results.append("Active connections:")
-            
+
             for line in lines[:20]:  # Limit output
                 results.append(line.strip())
-                
+
         except Exception as e:
             results.append(f"Netstat error: {e}")
-            
+
         return results
 
 def register():

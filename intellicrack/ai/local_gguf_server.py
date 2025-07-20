@@ -86,7 +86,7 @@ class LocalGGUFServer:
 
     def __init__(self, host: str = "127.0.0.1", port: int = 8000):
         """Initialize the local GGUF model server.
-        
+
         Args:
             host: The host address to bind the server to.
             port: The port number to run the server on.
@@ -690,7 +690,7 @@ class GGUFModelManager:
 
     def __init__(self, models_directory: Optional[str] = None):
         """Initialize the GGUF model manager.
-        
+
         Args:
             models_directory: Directory path for storing GGUF models.
                             Defaults to ~/.intellicrack/models if not provided.

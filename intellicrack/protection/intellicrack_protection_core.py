@@ -71,23 +71,23 @@ class ProtectionAnalysis:
 class IntellicrackProtectionCore:
     """
     Main class for detecting protections using native ICP Engine integration.
-    
+
     This class provides comprehensive protection detection capabilities by integrating
     with the native die-python library instead of relying on external executables.
     It can detect packers, protectors, compilers, licensing schemes, and other
     binary protection mechanisms.
-    
+
     The class serves as the primary interface for protection analysis throughout
     Intellicrack, providing consistent results and comprehensive bypass
     recommendations for detected protections.
-    
+
     Key Features:
     - Native die-python integration (no external processes)
     - Comprehensive protection database with bypass strategies
     - Support for PE, ELF, and other binary formats
     - Entropy analysis and section-level detection
     - Detailed metadata and confidence scoring
-    
+
     Example:
         detector = IntellicrackProtectionCore()
         analysis = detector.detect_protections("target.exe")
@@ -276,15 +276,15 @@ class IntellicrackProtectionCore:
 
     def _convert_icp_result(self, icp_result: ICPScanResult) -> ProtectionAnalysis:
         """Convert native ICPScanResult to ProtectionAnalysis format.
-        
+
         This method bridges the gap between the native die-python ICP backend
         and the existing ProtectionAnalysis data structure used throughout
         Intellicrack. It preserves all detection information while converting
         to the expected format.
-        
+
         Args:
             icp_result: ICPScanResult from native die-python analysis
-            
+
         Returns:
             ProtectionAnalysis: Converted analysis in standard format
         """
@@ -564,7 +564,7 @@ class IntellicrackProtectionCore:
         extensions = ['.exe', '.dll', '.sys', '.ocx', '.scr', '.com']
 
         if recursive:
-            for root, dirs, files in os.walk(directory):
+            for root, _dirs, files in os.walk(directory):
                 for file in files:
                     if any(file.lower().endswith(ext) for ext in extensions):
                         file_path = os.path.join(root, file)

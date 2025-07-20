@@ -53,7 +53,7 @@ class UnifiedAnalysisThread(QThread):
 
     def __init__(self, file_path: str, deep_scan: bool = True):
         """Initialize unified analysis thread.
-        
+
         Args:
             file_path: Path to file for analysis
             deep_scan: Whether to perform deep scanning analysis
@@ -98,6 +98,7 @@ class ProtectionCard(QFrame):
     clicked = pyqtSignal(dict)  # Emit protection data when clicked
 
     def __init__(self, protection_data: Dict[str, Any], parent=None):
+        """Initialize protection card widget with analysis data and UI setup."""
         super().__init__(parent)
         self.protection_data = protection_data
         self.init_ui()
@@ -187,7 +188,7 @@ class UnifiedProtectionWidget(QWidget):
 
     def __init__(self, parent=None):
         """Initialize the unified protection analysis widget.
-        
+
         Args:
             parent: Parent widget or None for top-level widget
         """
@@ -888,13 +889,13 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
 
     def show_icp_features_dialog(self):
         """Display native ICP Engine features in a comprehensive dialog.
-        
+
         Opens a tabbed dialog showing detailed ICP analysis including:
         - Signature analysis with packer detection
-        - Section analysis with entropy per section  
+        - Section analysis with entropy per section
         - Overall entropy analysis with interpretation
         - String extraction with offsets
-        
+
         The analysis runs in a background thread to avoid blocking the UI.
         """
         if not hasattr(self, '_current_file_path') or not self._current_file_path:
@@ -922,13 +923,13 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
 
     def _show_inline_icp_features(self):
         """Display comprehensive native ICP analysis in tabbed dialog.
-        
+
         Creates a modal dialog with four analysis tabs:
         1. Signature Analysis - File type, packers, and protection status
-        2. Section Analysis - PE sections with addresses and characteristics  
+        2. Section Analysis - PE sections with addresses and characteristics
         3. Entropy Analysis - Shannon entropy with interpretation
         4. String Analysis - Extracted strings with file offsets
-        
+
         All analysis is performed using the native ICP backend in a background
         thread to maintain UI responsiveness.
         """

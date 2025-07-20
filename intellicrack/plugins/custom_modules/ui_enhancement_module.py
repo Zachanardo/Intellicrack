@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 UI Enhancement Module
 
 Advanced UI enhancement system for Intellicrack's three-panel interface
-providing real-time visualization, interactive analysis tools, and 
+providing real-time visualization, interactive analysis tools, and
 comprehensive reporting capabilities for all protection analysis modules.
 
 Author: Intellicrack Framework
@@ -89,11 +89,11 @@ class UIConfig:
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize UI configuration to a dictionary.
-        
+
         Converts all configuration settings into a dictionary format
         suitable for JSON serialization or storage. Includes theme,
         font settings, refresh options, and panel layout weights.
-        
+
         Returns:
             Dict containing all UI configuration parameters with
             string keys and JSON-serializable values
@@ -113,14 +113,14 @@ class UIConfig:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'UIConfig':
         """Create UIConfig instance from dictionary data.
-        
+
         Deserializes configuration data from a dictionary, typically
         loaded from JSON storage. Provides default values for any
         missing configuration parameters.
-        
+
         Args:
             data: Dictionary containing UI configuration parameters
-            
+
         Returns:
             UIConfig instance with settings from the dictionary
         """
@@ -2228,20 +2228,20 @@ class UIEnhancementModule:
 
 Java.perform(function() {{
     console.log("[+] Starting license bypass for {Path(target).name}");
-    
+
     // Hook common license validation functions
     var targetClass = Java.use("com.example.LicenseValidator");
-    
+
     targetClass.isValid.implementation = function() {{
         console.log("[+] License validation bypassed");
         return true;
     }};
-    
+
     targetClass.checkExpiry.implementation = function() {{
         console.log("[+] Expiry check bypassed");
         return false;
     }};
-    
+
     console.log("[+] License bypass hooks installed");
 }});''',
 
@@ -2250,13 +2250,13 @@ Java.perform(function() {{
 
 Java.perform(function() {{
     console.log("[+] Starting API hooks for {Path(target).name}");
-    
+
     // Hook target APIs
     var targetModule = Process.getModuleByName("{Path(target).name}");
-    
+
     if (targetModule) {{
         console.log("[+] Target module found: " + targetModule.base);
-        
+
         // Add your API hooks here
         Interceptor.attach(targetModule.base.add(0x1000), {{
             onEnter: function(args) {{
@@ -2283,29 +2283,29 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.address.*;
 
 public class LicenseAnalysis extends GhidraScript {{
-    
+
     @Override
     public void run() throws Exception {{
         println("Starting license analysis for {Path(target).name}");
-        
+
         // Search for license-related strings
         String[] licenseStrings = {{"license", "valid", "expired", "trial"}};
-        
+
         for (String searchString : licenseStrings) {{
             findAndAnalyzeString(searchString);
         }}
-        
+
         // Analyze potential license validation functions
         analyzeLicenseFunctions();
-        
+
         println("License analysis complete");
     }}
-    
+
     private void findAndAnalyzeString(String searchString) {{
         // Implementation would search for strings and analyze references
         println("Searching for: " + searchString);
     }}
-    
+
     private void analyzeLicenseFunctions() {{
         // Implementation would identify potential license validation functions
         println("Analyzing license validation functions");
@@ -2325,32 +2325,32 @@ import r2pipe
 
 def analyze_license_protection(binary_path):
     """Analyze license protection in binary"""
-    
+
     # Open binary in radare2
     r2 = r2pipe.open(binary_path)
-    
+
     print(f"[+] Analyzing {{binary_path}}")
-    
+
     # Analyze binary
     r2.cmd("aaa")
-    
+
     # Search for license-related strings
     license_strings = ["license", "valid", "expired", "trial", "activation"]
-    
+
     for string in license_strings:
         results = r2.cmd(f"/ {{string}}")
         if results:
             print(f"[+] Found '{{string}}' references:")
             print(results)
-    
+
     # Find potential license validation functions
     functions = r2.cmdj("aflj")
-    
+
     for func in functions:
         name = func.get("name", "")
         if any(keyword in name.lower() for keyword in ["license", "valid", "check"]):
             print(f"[+] Potential license function: {{name}}")
-    
+
     r2.quit()
 
 if __name__ == "__main__":
@@ -2659,7 +2659,7 @@ Ctrl+Tab        Switch between tabs
         """Show about dialog"""
         about_text = """Intellicrack UI Enhancement Module v2.0.0
 
-Advanced binary analysis and exploitation platform with 
+Advanced binary analysis and exploitation platform with
 AI-driven capabilities and enhanced user interface.
 
 Features:

@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 class AppContext(QObject):
     """
     Centralized application state manager.
-    
+
     Manages global application state and provides signals for state changes,
     enabling decoupled communication between UI components.
     """
@@ -44,7 +44,7 @@ class AppContext(QObject):
 
     def __init__(self):
         """Initialize the application context.
-        
+
         Sets up the application context with state management for binaries,
         projects, analysis results, plugins, models, settings, and active
         tasks. Initializes signal-slot connections and observer patterns

@@ -227,10 +227,10 @@ class AdvancedExporter:
 
     def export_html_report(self, output_path: str) -> bool:
         """Export analysis results as interactive HTML report.
-        
+
         Args:
             output_path: Output file path
-            
+
         Returns:
             True if export successful
         """
@@ -261,14 +261,14 @@ class AdvancedExporter:
         <p>File: {{ metadata.get('Binary File', 'Unknown') }}</p>
         <p>Generated: {{ metadata.get('Export Time', 'Unknown') }}</p>
     </div>
-    
+
     <div class="summary">
         <div class="metric">
             <h3>Analysis Results</h3>
             <p>{{ analysis_count }} findings</p>
         </div>
     </div>
-    
+
     <h2>Analysis Details</h2>
     <table>
         <thead>

@@ -1,5 +1,5 @@
 """
-Interactive REPL Mode for Intellicrack CLI 
+Interactive REPL Mode for Intellicrack CLI
 
 Copyright (C) 2025 Zachary Flint
 
@@ -93,6 +93,7 @@ class AdvancedProgressManager:
     """Advanced progress manager for complex multi-stage operations."""
 
     def __init__(self, console):
+        """Initialize advanced progress manager with console and operation tracking."""
         self.console = console
         self.current_operation = None
         self.start_time = None
@@ -193,7 +194,7 @@ class IntellicrackShell(cmd.Cmd):
 ║              🚀 Intellicrack Interactive Mode v2.2               ║
 ║                                                                  ║
 ║  Professional CLI with tutorials, monitoring, and full workflow ║
-║  Type 'tutorial list' for guided learning | 'help' for commands ║  
+║  Type 'tutorial list' for guided learning | 'help' for commands ║
 ║  Use TAB for auto-completion | Type 'exit' to quit              ║
 ╚══════════════════════════════════════════════════════════════════╝
     """
@@ -201,6 +202,7 @@ class IntellicrackShell(cmd.Cmd):
     prompt = '🔍 intellicrack> '
 
     def __init__(self):
+        """Initialize interactive shell with console, binary analysis state, and readline setup."""
         super().__init__()
         self.console = Console() if RICH_AVAILABLE else None
         self.current_binary = None
@@ -2116,7 +2118,7 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
                 progress.update(main_task, description=f"[bold blue]{step_desc}...")
 
                 # Simulate step execution with micro-progress
-                for micro_step in range(step_weight):
+                for _micro_step in range(step_weight):
                     time.sleep(0.05)  # Realistic timing
                     progress.update(main_task, advance=1)
                     current_progress += 1
@@ -2494,7 +2496,7 @@ Let's start by loading a binary file!""",
 
                     # Simulate realistic scanning time
                     step_time = step_weight * 0.02  # 2ms per percent
-                    for micro_step in range(step_weight):
+                    for _micro_step in range(step_weight):
                         time.sleep(step_time / step_weight)
                         progress.update(task, advance=1)
 
@@ -2555,13 +2557,13 @@ Let's start by loading a binary file!""",
                     if "Exploring" in step_desc:
                         # Simulate path exploration with periodic updates
                         paths_explored = 0
-                        for micro_step in range(step_weight):
+                        for _micro_step in range(step_weight):
                             time.sleep(0.1)  # Longer delays for realistic timing
                             paths_explored += 1
                             progress.update(task, advance=1, status=f"Paths explored: {paths_explored}")
                     else:
                         step_time = step_weight * 0.05  # 50ms per percent
-                        for micro_step in range(step_weight):
+                        for _micro_step in range(step_weight):
                             time.sleep(step_time / step_weight)
                             progress.update(task, advance=1)
 
@@ -2601,7 +2603,7 @@ Let's start by loading a binary file!""",
             task = progress.add_task("Analyzing control flow...", total=100)
 
             try:
-                for i in range(0, 100, 33):
+                for _i in range(0, 100, 33):
                     progress.update(task, advance=33)
                     time.sleep(0.2)
 

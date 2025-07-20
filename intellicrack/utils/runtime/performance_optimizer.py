@@ -45,6 +45,7 @@ class MemoryManager:
     """Manages memory usage during large binary analysis."""
 
     def __init__(self, max_memory_mb: int = 2048):
+        """Initialize memory manager with specified memory limit and usage tracking."""
         self.max_memory_mb = max_memory_mb
         self.max_memory_bytes = max_memory_mb * 1024 * 1024
         self.current_usage = 0
@@ -103,6 +104,7 @@ class BinaryChunker:
     """Efficiently processes large binaries in chunks."""
 
     def __init__(self, memory_manager: MemoryManager):
+        """Initialize binary chunker with memory manager for efficient data processing."""
         self.memory_manager = memory_manager
 
     def chunk_binary(self, file_path: str, chunk_size: Optional[int] = None) -> List[Dict[str, Any]]:
@@ -209,6 +211,7 @@ class CacheManager:
     """Manages caching of analysis results for performance."""
 
     def __init__(self, cache_dir: str = "cache"):
+        """Initialize cache manager with directory setup and threading synchronization."""
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(exist_ok=True)
         self.memory_cache = {}
@@ -294,6 +297,7 @@ class AdaptiveAnalyzer:
     """Provides adaptive analysis strategies based on binary characteristics."""
 
     def __init__(self, memory_manager: MemoryManager, cache_manager: CacheManager):
+        """Initialize adaptive analyzer with memory and cache management for optimized binary analysis."""
         self.memory_manager = memory_manager
         self.cache_manager = cache_manager
 
@@ -399,7 +403,7 @@ class PerformanceOptimizer:
 
     def __init__(self, max_memory_mb: int = 2048, cache_dir: str = "cache"):
         """Initialize the performance optimizer.
-        
+
         Args:
             max_memory_mb: Maximum memory limit in MB
             cache_dir: Directory for cache storage

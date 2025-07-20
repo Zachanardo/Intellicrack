@@ -171,7 +171,7 @@ class ModelPerformanceMonitor:
                     self.gpu_count = pynvml.nvmlDeviceGetCount()
                 else:
                     raise ImportError("pynvml not available")
-            except:
+            except (ImportError, OSError, Exception):
                 self.has_nvidia_ml = False
         else:
             self.has_nvidia_ml = False
@@ -362,7 +362,7 @@ class ModelPerformanceMonitor:
                     return torch.cuda.memory_allocated() / (1024 * 1024)
                 else:
                     return 0.0
-        except:
+        except (AttributeError, RuntimeError, OSError):
             return 0
 
     def _get_gpu_utilization(self) -> float:
@@ -393,7 +393,7 @@ class ModelPerformanceMonitor:
                     return (used_mem / total_mem) * 100 if total_mem > 0 else 0
                 else:
                     return 0.0
-        except:
+        except (RuntimeError, AttributeError):
             return 0
 
     def _update_benchmark(self, model_id: str, metrics: PerformanceMetrics):
@@ -568,10 +568,10 @@ class ModelPerformanceMonitor:
 
     def optimize_for_monitoring(self, model: Any) -> Any:
         """Optimize model for performance monitoring.
-        
+
         Args:
             model: Model to optimize
-            
+
         Returns:
             Optimized model
         """

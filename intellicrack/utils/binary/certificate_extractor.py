@@ -88,6 +88,7 @@ class CertificateExtractor:
     """Extract and analyze certificates from PE files"""
 
     def __init__(self):
+        """Initialize certificate extractor with empty PE file and path state."""
         self.pe = None
         self.file_path = None
 

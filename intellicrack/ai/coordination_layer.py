@@ -22,6 +22,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import hashlib
 import logging
+import tempfile
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -466,12 +467,46 @@ class AICoordinationLayer:
 
                 # Try to get file type info
                 try:
+                    import shlex
+                    import shutil
                     import subprocess
-                    result = subprocess.run(['file', request.binary_path],
-                                            capture_output=True, text=True, timeout=5, check=False)
-                    if result.returncode == 0:
-                        binary_info.append(
-                            f"File type: {result.stdout.strip()}")
+
+                    # Validate binary path to prevent security issues
+                    if request.binary_path and os.path.isabs(request.binary_path):
+                        real_path = os.path.realpath(request.binary_path)
+
+                        # Check if file exists and is within allowed directories
+                        allowed_dirs = [
+                            os.path.realpath(os.getcwd()),
+                            os.path.realpath(os.path.expanduser("~")),
+                            os.path.realpath(tempfile.gettempdir())
+                        ]
+
+                        if (os.path.exists(real_path) and
+                            os.path.isfile(real_path) and
+                            any(real_path.startswith(allowed_dir) for allowed_dir in allowed_dirs)):
+
+                            # Find full path to file command
+                            file_cmd = shutil.which('file')
+                            if file_cmd and os.path.isfile(file_cmd):
+                                # Use full path to file command and avoid shell injection
+                                # Use shlex.quote to properly escape the binary path
+                                safe_path = shlex.quote(request.binary_path)
+                                logger.debug(f"Running file command with safe path: {safe_path}")
+                                result = subprocess.run([file_cmd, request.binary_path],
+                                                        capture_output=True, text=True, timeout=5,
+                                                        check=False, shell=False)
+                                if result.returncode == 0:
+                                    binary_info.append(
+                                        f"File type: {result.stdout.strip()}")
+                            else:
+                                logger.debug("file command not found in PATH")
+                                binary_info.append("File type: Detection unavailable")
+                        else:
+                            logger.warning("Invalid or unauthorized binary path: %s", request.binary_path)
+                            binary_info.append("File type: Invalid path")
+                    else:
+                        binary_info.append("File type: Invalid path")
                 except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError) as e:
                     logger.debug("File type detection failed: %s", e)
                     binary_info.append("File type: Detection unavailable")

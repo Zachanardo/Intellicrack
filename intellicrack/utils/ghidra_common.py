@@ -262,7 +262,7 @@ public class BasicAnalysis extends GhidraScript {
             Symbol symbol = iter.next();
             importCount++;
             if (importCount <= 10) {
-                println("Import: " + symbol.getName() + " from " + 
+                println("Import: " + symbol.getName() + " from " +
                        symbol.getParentNamespace().getName());
             }
         }
@@ -356,7 +356,7 @@ public class LicenseAnalysis extends GhidraScript {
 
                         for (String keyword : licenseKeywords) {
                             if (stringValue.contains(keyword)) {
-                                println("License String: " + data.getDefaultValueRepresentation() + 
+                                println("License String: " + data.getDefaultValueRepresentation() +
                                        " @ " + data.getAddress());
                                 foundCount++;
                                 break;
@@ -678,7 +678,7 @@ public class StringAnalysis extends GhidraScript {
     }
 
     private boolean isFilePath(String str) {
-        return str.contains("\\\\") || str.contains("/") || 
+        return str.contains("\\\\") || str.contains("/") ||
                str.matches(".*\\\\.[a-zA-Z]{2,4}$") ||
                str.startsWith("C:") || str.startsWith("/");
     }
@@ -701,7 +701,7 @@ public class StringAnalysis extends GhidraScript {
 
                         for (String keyword : errorKeywords) {
                             if (stringValue.contains(keyword)) {
-                                println("Error Message: " + data.getDefaultValueRepresentation() + 
+                                println("Error Message: " + data.getDefaultValueRepresentation() +
                                        " @ " + data.getAddress());
                                 errorCount++;
                                 break;

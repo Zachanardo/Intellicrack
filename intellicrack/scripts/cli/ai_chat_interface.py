@@ -325,7 +325,7 @@ class AITerminalChat:
         # Binary analysis questions
         if any(word in user_lower for word in ['analyze', 'analysis', 'binary', 'file']):
             if self.binary_path:
-                return f"""I can see you're working with {os.path.basename(self.binary_path)}. 
+                return f"""I can see you're working with {os.path.basename(self.binary_path)}.
 
 Based on the analysis results, here's what I found:
 • File type detection and format analysis
@@ -485,7 +485,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
         with Live(layout, refresh_per_second=10, console=self.console) as live:
             import time
             # Simulate typing effect by updating the display
-            for i in range(5):  # 5 refresh cycles
+            for _i in range(5):  # 5 refresh cycles
                 live.update(layout)
                 time.sleep(0.1)  # Brief display effect
 

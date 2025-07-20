@@ -43,7 +43,7 @@ except ImportError:
 
     class GhidraScript:
         """Base class for Ghidra scripts when running outside Ghidra environment.
-        
+
         This implementation provides the necessary interface for scripts that
         can run both inside and outside the Ghidra environment.
         """
@@ -58,7 +58,7 @@ except ImportError:
 
         def run(self):
             """Execute the script logic.
-            
+
             This method should be overridden by subclasses to implement
             the actual script functionality.
             """
@@ -66,7 +66,7 @@ except ImportError:
 
         def println(self, message):
             """Print a message to the console.
-            
+
             Args:
                 message: The message to print
 
@@ -75,7 +75,7 @@ except ImportError:
 
         def printerr(self, message):
             """Print an error message to the console.
-            
+
             Args:
                 message: The error message to print
 
@@ -84,11 +84,11 @@ except ImportError:
 
         def askYesNo(self, title, question):
             """Ask a yes/no question (returns False in non-interactive mode).
-            
+
             Args:
                 title: The dialog title
                 question: The question to ask
-                
+
             Returns:
                 bool: Always False in non-Ghidra environment
 
@@ -98,12 +98,12 @@ except ImportError:
 
         def askString(self, title, prompt, default_value=""):
             """Ask for string input.
-            
+
             Args:
                 title: Dialog title
                 prompt: The prompt message
                 default_value: Default value
-                
+
             Returns:
                 str: The default value in non-interactive mode
             """
@@ -112,12 +112,12 @@ except ImportError:
 
         def askInt(self, title, prompt, default_value=0):
             """Ask for integer input.
-            
+
             Args:
-                title: Dialog title  
+                title: Dialog title
                 prompt: The prompt message
                 default_value: Default value
-                
+
             Returns:
                 int: The default value in non-interactive mode
             """
@@ -126,7 +126,7 @@ except ImportError:
 
         def getScriptName(self):
             """Get the name of this script.
-            
+
             Returns:
                 str: The script class name
 
@@ -135,7 +135,7 @@ except ImportError:
 
         def getScriptArgs(self):
             """Get script arguments.
-            
+
             Returns:
                 list: Script arguments
             """
@@ -143,7 +143,7 @@ except ImportError:
 
         def setScriptArgs(self, args):
             """Set script arguments.
-            
+
             Args:
                 args: List of arguments
             """
@@ -151,7 +151,7 @@ except ImportError:
 
         def getScriptFile(self):
             """Get the script file path.
-            
+
             Returns:
                 str: Path to the script file
             """
@@ -159,7 +159,7 @@ except ImportError:
 
         def getScriptDir(self):
             """Get the script directory.
-            
+
             Returns:
                 str: Directory containing the script
             """
@@ -167,7 +167,7 @@ except ImportError:
 
         def popup(self, message):
             """Show a popup message.
-            
+
             Args:
                 message: Message to display
             """
@@ -175,7 +175,7 @@ except ImportError:
 
         def isRunningHeadless(self):
             """Check if running in headless mode.
-            
+
             Returns:
                 bool: True when not in Ghidra environment
             """
@@ -185,6 +185,7 @@ except ImportError:
         """Represents the state of a script execution."""
 
         def __init__(self):
+            """Initialize the script state with empty variables and environment."""
             self._variables = {}
             self._environment = {}
 
@@ -208,6 +209,7 @@ except ImportError:
         """Monitor for long-running tasks."""
 
         def __init__(self):
+            """Initialize the task monitor with default progress tracking state."""
             self._cancelled = False
             self._message = ""
             self._progress = 0
@@ -274,7 +276,7 @@ def get_current_program():
 
 class AntiAnalysisDetector(GhidraScript):
     """Ghidra script to detect anti-analysis techniques in binaries.
-    
+
     Identifies various anti-debugging, anti-VM, and anti-analysis patterns
     by scanning for suspicious API calls, timing checks, exception handling,
     and other evasion techniques commonly used by malware and protected software.
@@ -331,11 +333,11 @@ class AntiAnalysisDetector(GhidraScript):
 
     def run(self):
         """Execute anti-analysis detection scan on the current program.
-        
+
         Performs comprehensive analysis to identify anti-debugging, anti-VM,
         and other anti-analysis techniques. Scans for suspicious API imports,
         timing checks, hardware breakpoint detection, and VM detection patterns.
-        
+
         Results are printed to the Ghidra console with detailed findings
         for each category of anti-analysis technique detected.
         """

@@ -26,6 +26,31 @@ import hmac
 
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
+class RestrictedUnpickler(pickle.Unpickler):
+    """Restricted unpickler that only allows safe classes."""
+
+    def find_class(self, module, name):
+        """Override find_class to restrict allowed classes."""
+        # Allow only safe modules and classes
+        ALLOWED_MODULES = {
+            'numpy', 'numpy.core.multiarray', 'numpy.core.numeric',
+            'pandas', 'pandas.core.frame', 'pandas.core.series',
+            'sklearn', 'torch', 'tensorflow',
+            '__builtin__', 'builtins',
+            'collections', 'collections.abc',
+            'datetime'
+        }
+
+        # Allow model classes from our own modules
+        if module.startswith('intellicrack.'):
+            return super().find_class(module, name)
+
+        # Check if module is in allowed list
+        if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
+            return super().find_class(module, name)
+
+        # Deny everything else
+        raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
 
 def secure_pickle_dump(obj, file_path):
     """Securely dump object with integrity check."""
@@ -42,6 +67,14 @@ def secure_pickle_dump(obj, file_path):
 
 def secure_pickle_load(file_path):
     """Securely load object with integrity verification."""
+    try:
+        # Try joblib first as it's safer for ML models
+        import joblib
+        return joblib.load(file_path)
+    except (ImportError, ValueError):
+        # Fallback to pickle with restricted unpickler
+        pass
+
     with open(file_path, 'rb') as f:
         # Read MAC
         stored_mac = f.read(32)  # SHA256 produces 32 bytes
@@ -52,8 +85,9 @@ def secure_pickle_load(file_path):
     if not hmac.compare_digest(stored_mac, expected_mac):
         raise ValueError("Pickle file integrity check failed - possible tampering detected")
 
-    # Load object
-    return pickle.loads(data)
+    # Load object using RestrictedUnpickler
+    import io
+    return RestrictedUnpickler(io.BytesIO(data)).load()  # noqa: S301
 
 
 @dataclass

@@ -660,7 +660,7 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
 
     def show_analysis_progress(self, operation_name: str, total_steps: int, current_step: int) -> None:
         """Show analysis progress using Progress bars.
-        
+
         Args:
             operation_name: Name of the current operation
             total_steps: Total number of steps
@@ -681,7 +681,7 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
 
     def display_activity_with_status(self, activity_title: str, activities: List[str]) -> None:
         """Display recent activities with status using Status.
-        
+
         Args:
             activity_title: Title for the activity section
             activities: List of recent activities
@@ -704,7 +704,7 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
 
     def create_system_overview_table(self) -> None:
         """Create system overview using Table.
-        
+
         Displays current system state in a formatted table.
         """
         if not RICH_AVAILABLE or not self.console:
@@ -737,7 +737,7 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
 
     def display_project_tree_view(self, project_data: Dict[str, Any]) -> None:
         """Display project structure as tree using Tree.
-        
+
         Args:
             project_data: Dictionary containing project information
         """

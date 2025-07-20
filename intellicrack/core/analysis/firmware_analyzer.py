@@ -11,6 +11,7 @@ Licensed under GNU General Public License v3.0
 
 import hashlib
 import json
+import logging
 import os
 import re
 import shutil
@@ -20,7 +21,7 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from ...utils.logger import get_logger
 
@@ -206,7 +207,7 @@ class FirmwareAnalysisResult:
 class FirmwareAnalyzer:
     """
     Advanced firmware analysis engine using Binwalk.
-    
+
     Provides comprehensive firmware security analysis including:
     - Embedded file extraction and analysis
     - Security vulnerability detection
@@ -222,10 +223,10 @@ class FirmwareAnalyzer:
         else:
             # Create temporary directory
             self.work_directory = Path(tempfile.mkdtemp(prefix="firmware_analysis_"))
-        
+
         self.work_directory.mkdir(parents=True, exist_ok=True)
         self.logger = logging.getLogger("IntellicrackLogger.FirmwareAnalyzer")
-        
+
         # Storage for analysis results
         self.extracted_files = []
         self.analysis_results = {}  # Prevent infinite recursion
@@ -239,13 +240,13 @@ class FirmwareAnalyzer:
     ) -> FirmwareAnalysisResult:
         """
         Perform comprehensive firmware analysis
-        
+
         Args:
             file_path: Path to firmware file
             extract_files: Whether to extract embedded files
             analyze_security: Whether to perform security analysis
             extraction_depth: Maximum extraction depth
-            
+
         Returns:
             FirmwareAnalysisResult with complete analysis
         """
@@ -396,8 +397,8 @@ class FirmwareAnalyzer:
                 return FirmwareType.ROUTER_FIRMWARE
             elif file_size > 1 * 1024 * 1024:  # > 1MB
                 return FirmwareType.IOT_DEVICE
-        except:
-            pass
+        except (OSError, IOError) as e:
+            self.logger.debug(f"Could not get file size for firmware type detection: {e}")
 
         return FirmwareType.UNKNOWN
 
@@ -490,7 +491,7 @@ class FirmwareAnalyzer:
 
         try:
             # Use binwalk for extraction
-            for module in binwalk.scan(file_path,
+            for _module in binwalk.scan(file_path,
                                      extract=True,
                                      directory=extraction_dir,
                                      quiet=True):
@@ -826,10 +827,10 @@ class FirmwareAnalyzer:
     def generate_icp_supplemental_data(self, analysis_result: FirmwareAnalysisResult) -> Dict[str, Any]:
         """
         Generate supplemental data for ICP backend integration
-        
+
         Args:
             analysis_result: Firmware analysis results
-            
+
         Returns:
             Dictionary with supplemental firmware data for ICP
         """
@@ -897,11 +898,11 @@ class FirmwareAnalyzer:
     def export_analysis_report(self, analysis_result: FirmwareAnalysisResult, output_path: str) -> Tuple[bool, str]:
         """
         Export firmware analysis results to JSON report
-        
+
         Args:
             analysis_result: Analysis results to export
             output_path: Path to save the JSON report
-            
+
         Returns:
             Tuple of (success, message)
         """

@@ -79,7 +79,7 @@ logger = setup_logger(__name__)
 def _add_protocol_fingerprinter_results(results: Dict[str, Any],
                                        fingerprints: Dict[str, Any]) -> None:
     """Add protocol fingerprinter results to analysis results.
-    
+
     Args:
         results: Analysis results dictionary to update
         fingerprints: Protocol fingerprint data to add
@@ -91,10 +91,10 @@ def _add_protocol_fingerprinter_results(results: Dict[str, Any],
 
 def _analyze_requests(requests: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Analyze captured network requests.
-    
+
     Args:
         requests: List of captured network request dictionaries
-        
+
     Returns:
         Dict containing analysis results including request counts, hosts, and patterns
     """
@@ -125,11 +125,11 @@ def _analyze_requests(requests: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 def _build_cm_packet(packet_type: str, data: bytes = b'') -> bytes:
     """Build a CodeMeter protocol packet.
-    
+
     Args:
         packet_type: Type of packet to build
         data: Optional packet data payload
-        
+
     Returns:
         Bytes representing the constructed CodeMeter packet
     """
@@ -229,11 +229,11 @@ def _handle_check_license(request_data: Dict[str, Any]) -> Dict[str, Any]:
 
 def _handle_decrypt(data: bytes, key: bytes) -> bytes:
     """Handle decryption request using proper cryptography.
-    
+
     Args:
         data: Encrypted data bytes to decrypt
         key: Decryption key bytes
-        
+
     Returns:
         Decrypted plaintext bytes
     """
@@ -280,11 +280,11 @@ def _handle_decrypt(data: bytes, key: bytes) -> bytes:
 
 def _handle_encrypt(data: bytes, key: bytes) -> bytes:
     """Handle encryption request using proper cryptography.
-    
+
     Args:
         data: Plaintext data bytes to encrypt
         key: Encryption key bytes
-        
+
     Returns:
         Encrypted ciphertext bytes
     """
@@ -931,10 +931,10 @@ def _handle_license_release(license_id: str) -> Dict[str, Any]:
 
 def _handle_license_request(request: Dict[str, Any]) -> Dict[str, Any]:
     """Handle license request.
-    
+
     Args:
         request: License request data containing features and duration
-        
+
     Returns:
         Dict containing license grant information with ID and status
     """
@@ -948,10 +948,10 @@ def _handle_license_request(request: Dict[str, Any]) -> Dict[str, Any]:
 
 def _handle_login(credentials: Dict[str, str]) -> Dict[str, Any]:
     """Handle login request.
-    
+
     Args:
         credentials: User credentials dictionary with username and password
-        
+
     Returns:
         Dict containing authentication token, expiration, and user info
     """
@@ -966,10 +966,10 @@ def _handle_login(credentials: Dict[str, str]) -> Dict[str, Any]:
 
 def _handle_logout(token: str) -> Dict[str, Any]:
     """Handle logout request.
-    
+
     Args:
         token: Authentication token to invalidate
-        
+
     Returns:
         Dict containing logout confirmation and timestamp
     """
@@ -1093,11 +1093,11 @@ def _handle_read_memory(address: int, size: int) -> bytes:
 
 def _handle_request(request_type: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """Handle generic requests by routing to appropriate handlers.
-    
+
     Args:
         request_type: Type of request to handle
         data: Request data dictionary
-        
+
     Returns:
         Dict containing response data from the appropriate handler
     """
@@ -1136,11 +1136,11 @@ def _handle_return_license(license_id: str) -> Dict[str, Any]:
 
 def _handle_write_memory(address: int, data: bytes) -> bool:
     """Handle write memory request (simulation).
-    
+
     Args:
         address: Memory address to write to
         data: Data bytes to write
-        
+
     Returns:
         True if write operation succeeded
     """
@@ -1154,11 +1154,11 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
 def _analyze_snapshot_differences(snapshot1: Dict[str, Any],
                                 snapshot2: Dict[str, Any]) -> Dict[str, Any]:
     """Analyze differences between two snapshots.
-    
+
     Args:
         snapshot1: First snapshot to compare
         snapshot2: Second snapshot to compare
-        
+
     Returns:
         Dict containing differences in filesystem, memory, network, and processes
     """
@@ -1186,11 +1186,11 @@ def _analyze_snapshot_differences(snapshot1: Dict[str, Any],
 def _compare_filesystem_state(state1: Dict[str, Any],
                             state2: Dict[str, Any]) -> Dict[str, Any]:
     """Compare filesystem states.
-    
+
     Args:
         state1: First filesystem state to compare
         state2: Second filesystem state to compare
-        
+
     Returns:
         Dict containing added, removed, and modified files
     """
@@ -1208,11 +1208,11 @@ def _compare_filesystem_state(state1: Dict[str, Any],
 def _compare_memory_dumps(dump1: Dict[str, Any],
                         dump2: Dict[str, Any]) -> Dict[str, Any]:
     """Compare memory dumps.
-    
+
     Args:
         dump1: First memory dump to compare
         dump2: Second memory dump to compare
-        
+
     Returns:
         Dict containing size changes and region differences
     """
@@ -1226,11 +1226,11 @@ def _compare_memory_dumps(dump1: Dict[str, Any],
 def _compare_mmap_state(state1: Dict[str, Any],
                        state2: Dict[str, Any]) -> Dict[str, Any]:
     """Compare memory mapping states.
-    
+
     Args:
         state1: First memory mapping state to compare
         state2: Second memory mapping state to compare
-        
+
     Returns:
         Dict containing new and removed memory mappings
     """
@@ -1249,11 +1249,11 @@ def _compare_mmap_state(state1: Dict[str, Any],
 def _compare_network_state(state1: Dict[str, Any],
                          state2: Dict[str, Any]) -> Dict[str, Any]:
     """Compare network states.
-    
+
     Args:
         state1: First network state to compare
         state2: Second network state to compare
-        
+
     Returns:
         Dict containing new and closed connections and port changes
     """
@@ -1274,11 +1274,11 @@ def _compare_network_state(state1: Dict[str, Any],
 def _compare_process_state(state1: Dict[str, Any],
                          state2: Dict[str, Any]) -> Dict[str, Any]:
     """Compare process states.
-    
+
     Args:
         state1: First process state to compare
         state2: Second process state to compare
-        
+
     Returns:
         Dict containing new and terminated processes and count changes
     """
@@ -1295,7 +1295,7 @@ def _compare_process_state(state1: Dict[str, Any],
 
 def _get_filesystem_state() -> Dict[str, Any]:
     """Get current filesystem state.
-    
+
     Returns:
         Dict containing files, hashes, and timestamp of current filesystem
     """
@@ -1328,7 +1328,7 @@ def _get_filesystem_state() -> Dict[str, Any]:
 
 def _get_memory_regions() -> List[Dict[str, Any]]:
     """Get memory regions of current process.
-    
+
     Returns:
         List of memory region dictionaries with path, size, and permissions
     """
@@ -1352,7 +1352,7 @@ def _get_memory_regions() -> List[Dict[str, Any]]:
 
 def _get_mmap_state() -> Dict[str, Any]:
     """Get memory mapping state.
-    
+
     Returns:
         Dict containing memory mappings and timestamp
     """
@@ -1364,7 +1364,7 @@ def _get_mmap_state() -> Dict[str, Any]:
 
 def _get_network_state() -> Dict[str, Any]:
     """Get current network state.
-    
+
     Returns:
         Dict containing connections, ports, and timestamp
     """
@@ -1394,7 +1394,7 @@ def _get_network_state() -> Dict[str, Any]:
 
 def _get_process_state() -> Dict[str, Any]:
     """Get current process state.
-    
+
     Returns:
         Dict containing process IDs, process info, and timestamp
     """
@@ -1424,11 +1424,11 @@ def _get_process_state() -> Dict[str, Any]:
 
 def _archive_data(data: Any, archive_path: str) -> bool:
     """Archive data to a file.
-    
+
     Args:
         data: Data to archive
         archive_path: Path to save archived data
-        
+
     Returns:
         True if archiving succeeded, False otherwise
     """
@@ -1443,7 +1443,7 @@ def _archive_data(data: Any, archive_path: str) -> bool:
 
 def _browse_for_output() -> Optional[str]:
     """Browse for output directory (CLI fallback).
-    
+
     Returns:
         Output directory path or None if cancelled
     """
@@ -1453,7 +1453,7 @@ def _browse_for_output() -> Optional[str]:
 
 def _browse_for_source() -> Optional[str]:
     """Browse for source file (CLI fallback).
-    
+
     Returns:
         Source file path or None if cancelled or invalid
     """
@@ -1479,10 +1479,10 @@ def _browse_for_source() -> Optional[str]:
 
 def _build_knowledge_index(knowledge_base: List[Dict[str, Any]]) -> Dict[str, List[int]]:
     """Build an index for the knowledge base.
-    
+
     Args:
         knowledge_base: List of knowledge base items to index
-        
+
     Returns:
         Dict mapping keywords to lists of item indices
     """
@@ -1589,11 +1589,11 @@ def _dump_memory_region(address: int, size: int) -> bytes:
 
 def _export_validation_report(report: Dict[str, Any], output_path: str) -> bool:
     """Export validation report.
-    
+
     Args:
         report: Validation report data to export
         output_path: Path to save the report
-        
+
     Returns:
         True if export succeeded, False otherwise
     """
@@ -1608,10 +1608,10 @@ def _export_validation_report(report: Dict[str, Any], output_path: str) -> bool:
 
 def _fix_dataset_issues(dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Fix common dataset issues.
-    
+
     Args:
         dataset: List of dataset items to fix
-        
+
     Returns:
         List of fixed dataset items with required fields and cleaned data
     """
@@ -1639,7 +1639,7 @@ def _fix_dataset_issues(dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 def _init_response_templates() -> Dict[str, Any]:
     """Initialize response templates.
-    
+
     Returns:
         Dict containing standard response templates for different status codes
     """
@@ -1653,7 +1653,7 @@ def _init_response_templates() -> Dict[str, Any]:
 
 def _learn_pattern(pattern: Dict[str, Any], category: str) -> None:
     """Learn a new pattern.
-    
+
     Args:
         pattern: Pattern data to learn
         category: Category to classify the pattern under
@@ -1663,11 +1663,11 @@ def _learn_pattern(pattern: Dict[str, Any], category: str) -> None:
 
 def _match_pattern(data: bytes, pattern: bytes) -> List[int]:
     """Find pattern matches in data.
-    
+
     Args:
         data: Binary data to search in
         pattern: Pattern bytes to find
-        
+
     Returns:
         List of byte offsets where pattern matches occur
     """
@@ -1683,11 +1683,11 @@ def _match_pattern(data: bytes, pattern: bytes) -> List[int]:
 
 def _preview_dataset(dataset: List[Dict[str, Any]], limit: int = 10) -> List[Dict[str, Any]]:
     """Preview a dataset.
-    
+
     Args:
         dataset: Dataset to preview
         limit: Maximum number of items to return
-        
+
     Returns:
         List containing first 'limit' items from dataset
     """
@@ -1696,10 +1696,10 @@ def _preview_dataset(dataset: List[Dict[str, Any]], limit: int = 10) -> List[Dic
 
 def _release_buffer(buffer_id: str) -> bool:
     """Release a buffer (memory management).
-    
+
     Args:
         buffer_id: Unique identifier of buffer to release
-        
+
     Returns:
         True if buffer was successfully released
     """
@@ -1709,11 +1709,11 @@ def _release_buffer(buffer_id: str) -> bool:
 
 def _save_patterns(patterns: Dict[str, Any], output_path: str) -> bool:
     """Save patterns to file.
-    
+
     Args:
         patterns: Pattern data to save
         output_path: Path to save patterns file
-        
+
     Returns:
         True if patterns were successfully saved, False otherwise
     """
@@ -1730,11 +1730,11 @@ def _save_patterns(patterns: Dict[str, Any], output_path: str) -> bool:
 
 def _calculate_hash_opencl(data: bytes, algorithm: str = 'sha256') -> Optional[str]:
     """Calculate hash using OpenCL acceleration.
-    
+
     Args:
         data: Data bytes to hash
         algorithm: Hash algorithm to use
-        
+
     Returns:
         Hash digest string or None if calculation failed
     """
@@ -1753,11 +1753,11 @@ def _calculate_hash_opencl(data: bytes, algorithm: str = 'sha256') -> Optional[s
 
 def _cpu_hash_calculation(data: bytes, algorithm: str = 'sha256') -> str:
     """Calculate hash using CPU.
-    
+
     Args:
         data: Data bytes to hash
         algorithm: Hash algorithm to use
-        
+
     Returns:
         Hash digest string
     """
@@ -1768,11 +1768,11 @@ def _cpu_hash_calculation(data: bytes, algorithm: str = 'sha256') -> str:
 
 def _cuda_hash_calculation(data: bytes, algorithm: str = 'sha256') -> Optional[str]:
     """Calculate hash using CUDA acceleration.
-    
+
     Args:
         data: Data bytes to hash
         algorithm: Hash algorithm to use
-        
+
     Returns:
         Hash digest string or None if CUDA not available
     """
@@ -1783,10 +1783,10 @@ def _cuda_hash_calculation(data: bytes, algorithm: str = 'sha256') -> Optional[s
 
 def _gpu_entropy_calculation(data: bytes) -> float:
     """Calculate entropy using GPU acceleration.
-    
+
     Args:
         data: Data bytes to calculate entropy for
-        
+
     Returns:
         Entropy value as float
     """
@@ -1799,10 +1799,10 @@ def _gpu_entropy_calculation(data: bytes) -> float:
 
 def _opencl_entropy_calculation(data: bytes) -> float:
     """Calculate entropy using OpenCL.
-    
+
     Args:
         data: Data bytes to calculate entropy for
-        
+
     Returns:
         Entropy value as float
     """
@@ -1811,11 +1811,11 @@ def _opencl_entropy_calculation(data: bytes) -> float:
 
 def _opencl_hash_calculation(data: bytes, algorithm: str = 'sha256') -> Optional[str]:
     """Calculate hash using OpenCL.
-    
+
     Args:
         data: Data bytes to hash
         algorithm: Hash algorithm to use
-        
+
     Returns:
         Hash digest string or None if OpenCL not available
     """
@@ -1824,10 +1824,10 @@ def _opencl_hash_calculation(data: bytes, algorithm: str = 'sha256') -> Optional
 
 def _pytorch_entropy_calculation(data: bytes) -> float:
     """Calculate entropy using PyTorch.
-    
+
     Args:
         data: Data bytes to calculate entropy for
-        
+
     Returns:
         Entropy value as float
     """
@@ -1846,11 +1846,11 @@ def _pytorch_entropy_calculation(data: bytes) -> float:
 
 def _pytorch_hash_calculation(data: bytes, algorithm: str = 'sha256') -> Optional[str]:
     """Calculate hash using PyTorch (falls back to CPU).
-    
+
     Args:
         data: Data bytes to hash
         algorithm: Hash algorithm to use
-        
+
     Returns:
         Hash digest string or None if calculation failed
     """
@@ -1859,11 +1859,11 @@ def _pytorch_hash_calculation(data: bytes, algorithm: str = 'sha256') -> Optiona
 
 def _pytorch_pattern_matching(data: bytes, pattern: bytes) -> List[int]:
     """Pattern matching using PyTorch.
-    
+
     Args:
         data: Binary data to search in
         pattern: Pattern bytes to find
-        
+
     Returns:
         List of byte offsets where pattern matches occur
     """
@@ -1889,10 +1889,10 @@ def _pytorch_pattern_matching(data: bytes, pattern: bytes) -> List[int]:
 
 def _tensorflow_entropy_calculation(data: bytes) -> float:
     """Calculate entropy using TensorFlow.
-    
+
     Args:
         data: Data bytes to calculate entropy for
-        
+
     Returns:
         Entropy value as float
     """
@@ -1913,11 +1913,11 @@ def _tensorflow_entropy_calculation(data: bytes) -> float:
 
 def _tensorflow_hash_calculation(data: bytes, algorithm: str = 'sha256') -> Optional[str]:
     """Calculate hash using TensorFlow (falls back to CPU).
-    
+
     Args:
         data: Data bytes to hash
         algorithm: Hash algorithm to use
-        
+
     Returns:
         Hash digest string or None if calculation failed
     """
@@ -1969,11 +1969,11 @@ def _tensorflow_pattern_matching(data: bytes, pattern: bytes) -> List[int]:
 
 def _tensorflow_convolve_search(data_array: 'np.ndarray', pattern_array: 'np.ndarray') -> List[int]:
     """Perform pattern matching using TensorFlow convolution.
-    
+
     Args:
         data_array: NumPy array of data to search
         pattern_array: NumPy array of pattern to find
-        
+
     Returns:
         List of indices where pattern matches occur
     """
@@ -2000,11 +2000,11 @@ def _tensorflow_convolve_search(data_array: 'np.ndarray', pattern_array: 'np.nda
 
 def _tf_convolution_search(data_array: 'np.ndarray', pattern_array: 'np.ndarray') -> List[int]:
     """Use TensorFlow convolution for pattern matching.
-    
+
     Args:
         data_array: NumPy array of data to search
         pattern_array: NumPy array of pattern to find
-        
+
     Returns:
         List of indices where exact matches occur or None if failed
     """
@@ -2041,11 +2041,11 @@ def _tf_convolution_search(data_array: 'np.ndarray', pattern_array: 'np.ndarray'
 
 def _numpy_correlation_search(data_array: 'np.ndarray', pattern_array: 'np.ndarray') -> List[int]:
     """Use NumPy correlation for pattern matching.
-    
+
     Args:
         data_array: NumPy array of data to search
         pattern_array: NumPy array of pattern to find
-        
+
     Returns:
         List of indices where pattern matches occur or None if failed
     """
@@ -2075,11 +2075,11 @@ def _numpy_correlation_search(data_array: 'np.ndarray', pattern_array: 'np.ndarr
 
 def _sliding_window_search(data_array: 'np.ndarray', pattern_array: 'np.ndarray') -> List[int]:
     """Simple sliding window pattern search.
-    
+
     Args:
         data_array: NumPy array of data to search
         pattern_array: NumPy array of pattern to find
-        
+
     Returns:
         List of indices where pattern matches occur
     """
@@ -2120,10 +2120,10 @@ def _match_pattern(data: bytes, pattern: bytes) -> List[int]:
 
 def _validate_gpu_memory(required_mb: int) -> bool:
     """Validate GPU memory availability.
-    
+
     Args:
         required_mb: Required memory in megabytes
-        
+
     Returns:
         True if sufficient GPU memory is available
     """
@@ -2153,11 +2153,11 @@ def _validate_gpu_memory(required_mb: int) -> bool:
 
 def _convert_to_gguf(model_path: str, output_path: str) -> bool:
     """Convert model to GGUF format.
-    
+
     Args:
         model_path: Path to input model file
         output_path: Path for output GGUF file
-        
+
     Returns:
         True if conversion succeeded, False otherwise
     """
@@ -2180,11 +2180,11 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
 
 def _manual_gguf_conversion(model_data: Dict[str, Any], output_path: str) -> bool:
     """Manually convert model data to GGUF format.
-    
+
     Args:
         model_data: Model data dictionary containing metadata and tensors
         output_path: Path for output GGUF file
-        
+
     Returns:
         True if conversion succeeded, False otherwise
     """
@@ -2203,7 +2203,7 @@ def _manual_gguf_conversion(model_data: Dict[str, Any], output_path: str) -> boo
 
 def _write_gguf_metadata(file_handle: Any, metadata: Dict[str, Any]) -> None:
     """Write GGUF metadata.
-    
+
     Args:
         file_handle: File handle to write metadata to
         metadata: Metadata dictionary to write
@@ -2226,7 +2226,7 @@ def _write_gguf_metadata(file_handle: Any, metadata: Dict[str, Any]) -> None:
 
 def _write_gguf_tensor_info(file_handle: Any, tensors: List[Dict[str, Any]]) -> None:
     """Write GGUF tensor information.
-    
+
     Args:
         file_handle: File handle to write tensor info to
         tensors: List of tensor specification dictionaries
@@ -2326,12 +2326,12 @@ def _write_dummy_tensor_data(file_handle: Any, tensors: List[Dict[str, Any]]) ->
 
 def _generate_embedding_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
     """Generate realistic embedding table data.
-    
+
     Args:
         dims: Tensor dimensions list
         data_type: Data type string (float32, float16, etc.)
         total_elements: Total number of elements to generate
-        
+
     Returns:
         Bytes containing realistic embedding data
     """
@@ -2370,12 +2370,12 @@ def _generate_embedding_data(dims: List[int], data_type: str, total_elements: in
 
 def _generate_weight_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
     """Generate realistic weight matrix data using proper initialization.
-    
+
     Args:
         dims: Tensor dimensions list
         data_type: Data type string (float32, float16, etc.)
         total_elements: Total number of elements to generate
-        
+
     Returns:
         Bytes containing properly initialized weight data
     """
@@ -2431,12 +2431,12 @@ def _generate_weight_data(dims: List[int], data_type: str, total_elements: int) 
 
 def _generate_bias_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
     """Generate realistic bias vector data.
-    
+
     Args:
         dims: Tensor dimensions list
         data_type: Data type string (float32, float16, etc.)
         total_elements: Total number of elements to generate
-        
+
     Returns:
         Bytes containing realistic bias data
     """
@@ -2472,12 +2472,12 @@ def _generate_bias_data(dims: List[int], data_type: str, total_elements: int) ->
 
 def _generate_norm_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
     """Generate realistic layer normalization parameters.
-    
+
     Args:
         dims: Tensor dimensions list
         data_type: Data type string (float32, float16, etc.)
         total_elements: Total number of elements to generate
-        
+
     Returns:
         Bytes containing layer normalization parameters
     """
@@ -2508,12 +2508,12 @@ def _generate_norm_data(dims: List[int], data_type: str, total_elements: int) ->
 
 def _generate_attention_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
     """Generate realistic attention mechanism parameters.
-    
+
     Args:
         dims: Tensor dimensions list
         data_type: Data type string (float32, float16, etc.)
         total_elements: Total number of elements to generate
-        
+
     Returns:
         Bytes containing attention mechanism parameters
     """
@@ -2553,12 +2553,12 @@ def _generate_attention_data(dims: List[int], data_type: str, total_elements: in
 
 def _generate_generic_tensor_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
     """Generate generic realistic tensor data.
-    
+
     Args:
         dims: Tensor dimensions list
         data_type: Data type string (float32, float16, etc.)
         total_elements: Total number of elements to generate
-        
+
     Returns:
         Bytes containing generic tensor data
     """
@@ -2604,11 +2604,11 @@ def _generate_generic_tensor_data(dims: List[int], data_type: str, total_element
 
 def _generate_error_response(error: str, code: int = 500) -> Dict[str, Any]:
     """Generate error response.
-    
+
     Args:
         error: Error message string
         code: HTTP status code
-        
+
     Returns:
         Dict containing error response with status, error, code, and timestamp
     """
@@ -2622,11 +2622,11 @@ def _generate_error_response(error: str, code: int = 500) -> Dict[str, Any]:
 
 def _generate_generic_response(status: str, data: Any = None) -> Dict[str, Any]:
     """Generate generic response.
-    
+
     Args:
         status: Response status string
         data: Optional response data
-        
+
     Returns:
         Dict containing response with status, timestamp, and optional data
     """
@@ -2641,11 +2641,11 @@ def _generate_generic_response(status: str, data: Any = None) -> Dict[str, Any]:
 
 def _generate_mitm_script(target_host: str, target_port: int) -> str:
     """Generate MITM (Man-in-the-Middle) script.
-    
+
     Args:
         target_host: Target hostname to proxy
         target_port: Target port to proxy
-        
+
     Returns:
         Python script string for MITM proxy
     """
@@ -2719,11 +2719,11 @@ if __name__ == '__main__':
 def _perform_augmentation(data: Dict[str, Any],
                         augmentation_type: str) -> Dict[str, Any]:
     """Perform data augmentation.
-    
+
     Args:
         data: Data dictionary to augment
         augmentation_type: Type of augmentation (noise, synonym, duplicate)
-        
+
     Returns:
         Augmented data dictionary
     """
@@ -2759,11 +2759,11 @@ def _perform_augmentation(data: Dict[str, Any],
 
 def _run_autonomous_patching_thread(target: Callable, args: tuple) -> threading.Thread:
     """Run autonomous patching in a thread.
-    
+
     Args:
         target: Function to run in thread
         args: Arguments tuple for the target function
-        
+
     Returns:
         Thread object running the autonomous patching function
     """
@@ -2774,12 +2774,12 @@ def _run_autonomous_patching_thread(target: Callable, args: tuple) -> threading.
 
 def _run_ghidra_thread(ghidra_path: str, script: str, binary: str) -> threading.Thread:
     """Run Ghidra analysis in a thread.
-    
+
     Args:
         ghidra_path: Path to Ghidra executable
         script: Path to Ghidra script to run
         binary: Path to binary file to analyze
-        
+
     Returns:
         Thread object running Ghidra analysis
     """
@@ -2804,11 +2804,11 @@ def _run_ghidra_thread(ghidra_path: str, script: str, binary: str) -> threading.
 def _run_report_generation_thread(report_func: Callable,
                                 report_data: Dict[str, Any]) -> threading.Thread:
     """Run report generation in a thread.
-    
+
     Args:
         report_func: Function to generate the report
         report_data: Data dictionary for report generation
-        
+
     Returns:
         Thread object running the report generation function
     """

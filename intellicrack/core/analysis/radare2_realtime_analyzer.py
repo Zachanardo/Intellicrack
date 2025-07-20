@@ -150,7 +150,7 @@ class R2RealtimeAnalyzer:
                  update_interval: float = 30.0,
                  max_concurrent_analyses: int = 3):
         """Initialize the Radare2 real-time analyzer.
-        
+
         Args:
             update_mode: The update strategy for real-time analysis.
             update_interval: The interval in seconds between analysis updates.

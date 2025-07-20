@@ -29,7 +29,7 @@ import time
 from datetime import datetime
 from typing import Any, Dict
 
-from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QAction, QBrush, QColor, QFont
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -140,19 +140,19 @@ class C2ManagementDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("C2 Server Management")
         self.setMinimumSize(900, 600)
-        
+
         # Server management
         self.server_thread = None
         self.servers = {}
         self.active_connections = []
-        
+
         # Setup UI
         self.setup_ui()
         self.setup_connections()
-        
+
         # Load server configurations
         self.load_server_configs()
-        
+
         logger.info("C2 Management Dialog initialized")
 
     @staticmethod

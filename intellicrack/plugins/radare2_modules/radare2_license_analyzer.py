@@ -497,7 +497,7 @@ class R2LicenseAnalyzer:
 
         # Update license functions with crypto info
         for lic_func in self.license_functions:
-            for crypto_type, locations in self.crypto_locations.items():
+            for _crypto_type, locations in self.crypto_locations.items():
                 if any(lic_func.address <= loc <= lic_func.address + lic_func.size
                       for loc in locations):
                     lic_func.type = LicenseType.CRYPTO_SIGNATURE

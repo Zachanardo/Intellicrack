@@ -47,7 +47,7 @@ except ImportError:
 
         def __init__(self, *_args, **_kwargs):
             """Initialize the fallback QEMU test manager.
-            
+
             Args:
                 *_args: Ignored positional arguments
                 **_kwargs: Ignored keyword arguments
@@ -118,7 +118,7 @@ class IntegrationManager:
 
     def __init__(self, llm_manager: Optional[LLMManager] = None):
         """Initialize the integration manager.
-        
+
         Args:
             llm_manager: Optional LLM manager for AI components
         """

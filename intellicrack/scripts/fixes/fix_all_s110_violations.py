@@ -214,7 +214,7 @@ def process_file(file_path: Path) -> Dict[str, any]:
 def find_files_with_exceptions(root_dir: Path) -> List[Path]:
     """Find all Python files that contain exception handling."""
     files = []
-    for root, dirs, filenames in os.walk(root_dir):
+    for root, _dirs, filenames in os.walk(root_dir):
         for filename in filenames:
             if filename.endswith('.py'):
                 file_path = Path(root) / filename

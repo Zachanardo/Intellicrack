@@ -602,12 +602,12 @@ class QuantizationManager:
 
     def quantize_model_with_bnb(self, model: Any, quantization_bits: int = 8, **kwargs) -> Optional[Any]:
         """Quantize a model using bitsandbytes (bnb) library.
-        
+
         Args:
             model: Model to quantize
             quantization_bits: Number of bits (8 or 4)
             **kwargs: Additional quantization parameters
-            
+
         Returns:
             Quantized model or None
         """
@@ -694,12 +694,12 @@ class QuantizationManager:
 
     def create_gptq_config(self, bits: int = 4, group_size: int = 128, **kwargs) -> Optional[Any]:
         """Create a GPTQ configuration using BaseQuantizeConfig.
-        
+
         Args:
             bits: Number of bits for quantization
             group_size: Group size for quantization
             **kwargs: Additional configuration parameters
-            
+
         Returns:
             GPTQ configuration or None
         """
@@ -730,12 +730,12 @@ class QuantizationManager:
 
     def prepare_model_for_gptq_quantization(self, model_path: Union[str, Path], config: Any = None, **kwargs) -> Optional[Any]:
         """Prepare a model for GPTQ quantization using GPTQConfig.
-        
+
         Args:
             model_path: Path to model
             config: BaseQuantizeConfig instance or None
             **kwargs: Additional parameters
-            
+
         Returns:
             Model prepared for GPTQ quantization or None
         """

@@ -34,10 +34,10 @@ except ImportError:
 
     def get_logger(name):
         """Create a logger instance with the given name.
-        
+
         Args:
             name: The name for the logger instance
-            
+
         Returns:
             A logging.Logger instance
         """
@@ -59,7 +59,7 @@ class LLMAnalysisWorker(QRunnable):
 
     def __init__(self, operation: str, analysis_result: UnifiedProtectionResult, **kwargs):
         """Initialize the LLM analysis worker.
-        
+
         Args:
             operation: The type of LLM operation to perform.
             analysis_result: The unified protection result to analyze.
@@ -205,7 +205,7 @@ class LLMHandler(QObject):
 
     def __init__(self, parent=None):
         """Initialize the LLM handler.
-        
+
         Args:
             parent: Optional parent widget for Qt integration.
         """

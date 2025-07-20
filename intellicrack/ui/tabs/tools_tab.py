@@ -1085,25 +1085,25 @@ class {plugin_name}Plugin:
         self.name = "{plugin_name}"
         self.version = "1.0.0"
         self.description = "{plugin_name} plugin description"
-    
+
     def initialize(self):
         """Initialize the plugin"""
         print(f"[+] {{self.name}} plugin initialized")
         return True
-    
+
     def execute(self, *args, **kwargs):
         """Execute plugin functionality"""
         print(f"[+] Executing {{self.name}} plugin")
-        
+
         # Add your plugin logic here
         result = {{
             'status': 'success',
             'message': f'{{self.name}} executed successfully',
             'data': {{}}
         }}
-        
+
         return result
-    
+
     def cleanup(self):
         """Cleanup plugin resources"""
         print(f"[+] {{self.name}} plugin cleaned up")

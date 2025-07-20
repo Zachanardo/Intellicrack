@@ -50,18 +50,18 @@ logger = logging.getLogger(__name__)
 class FridaOperationLogger:
     """
     Comprehensive logging system for Frida operations.
-    
+
     Provides structured logging for all Frida operations with separate
     log files for different operation types. Maintains in-memory buffers
     for real-time analysis and tracks comprehensive statistics.
-    
+
     Features:
     - Separate log files for operations, hooks, performance, and bypasses
     - In-memory circular buffers for recent activity analysis
     - Real-time statistics tracking
     - Performance metrics collection
     - Log export functionality
-    
+
     Attributes:
         log_dir: Directory for log files
         operation_buffer: Circular buffer for recent operations
@@ -73,11 +73,11 @@ class FridaOperationLogger:
     def __init__(self, log_dir: str = None):
         """
         Initialize the Frida operation logger.
-        
+
         Args:
             log_dir: Optional custom log directory. If not provided,
                     uses default from plugin_paths.get_frida_logs_dir()
-                    
+
         Side Effects:
             - Creates log directory if it doesn't exist
             - Initializes multiple log files with timestamp suffix
@@ -118,15 +118,15 @@ class FridaOperationLogger:
     def _init_loggers(self):
         """
         Initialize separate loggers for different operation types.
-        
+
         Creates four specialized loggers:
         - Operation logger: General Frida operations and errors
         - Hook logger: Individual hook executions and modifications
         - Performance logger: Performance metrics and measurements
         - Bypass logger: Protection bypass attempts and results
-        
+
         Each logger has its own file handler with appropriate formatting.
-        
+
         Complexity:
             Time: O(1)
             Space: O(1)
@@ -171,10 +171,10 @@ class FridaOperationLogger:
                      success: bool = True, error: str = None):
         """
         Log a Frida operation with comprehensive details.
-        
+
         Records operation details to both file and in-memory buffer,
         updates statistics, and provides structured logging for analysis.
-        
+
         Args:
             operation: Name of the operation (e.g., 'attach', 'hook_install')
             details: Dictionary with operation details including:
@@ -183,13 +183,13 @@ class FridaOperationLogger:
                     - Additional operation-specific data
             success: Whether the operation succeeded
             error: Error message if operation failed
-            
+
         Side Effects:
             - Appends entry to operation_buffer
             - Increments total_operations counter
             - Writes to operation log file
             - Logs details as JSON for parsing
-            
+
         Example:
             logger.log_operation('attach', {
                 'pid': 1234,
@@ -228,23 +228,23 @@ class FridaOperationLogger:
                  return_value: Any = None, modified: bool = False):
         """
         Log individual hook executions.
-        
+
         Records details of each hook invocation for monitoring and
         debugging. Truncates long arguments/return values to prevent
         log bloat.
-        
+
         Args:
             function_name: Name of the hooked function
             module: Module containing the function (e.g., 'kernel32.dll')
             arguments: List of function arguments (truncated to 200 chars)
             return_value: Function return value (truncated to 100 chars)
             modified: Whether the return value was modified by the hook
-            
+
         Side Effects:
             - Appends to hook_buffer
             - Increments successful_hooks counter
             - Writes to hook log file with appropriate level
-            
+
         Note:
             Uses INFO level for modified returns, DEBUG for monitoring.
         """
@@ -274,24 +274,24 @@ class FridaOperationLogger:
                        unit: str = "ms", metadata: Dict = None):
         """
         Log performance metrics.
-        
+
         Records performance measurements for analysis and optimization.
         Maintains running statistics for CPU time and memory usage.
-        
+
         Args:
             metric_name: Name of the metric (e.g., 'hook_execution_time')
             value: Numeric value of the measurement
             unit: Unit of measurement (default: "ms")
             metadata: Optional additional context information
-            
+
         Side Effects:
             - Appends value to performance_metrics[metric_name]
             - Updates total_cpu_time if metric is 'cpu_time'
             - Updates total_memory_used if metric is 'memory_used'
             - Writes JSON entry to performance log
-            
+
         Example:
-            logger.log_performance('hook_execution_time', 1.5, 'ms', 
+            logger.log_performance('hook_execution_time', 1.5, 'ms',
                                  {'function': 'IsDebuggerPresent'})
         """
         timestamp = datetime.now()
@@ -322,23 +322,23 @@ class FridaOperationLogger:
                           details: Dict[str, Any] = None):
         """
         Log bypass attempts with classification.
-        
+
         Records protection bypass attempts with detailed classification
         by protection type and technique used.
-        
+
         Args:
             protection_type: Type of protection being bypassed (from enum)
             technique: Name/description of bypass technique used
             success: Whether the bypass succeeded
             details: Optional additional context (e.g., error messages,
                     timing information, verification results)
-                    
+
         Side Effects:
             - Increments bypasses_attempted counter
             - Increments bypasses_successful if success=True
             - Writes JSON entry to bypass log
             - Logs with INFO level for success, WARNING for failure
-            
+
         Example:
             logger.log_bypass_attempt(
                 ProtectionType.ANTI_DEBUG,
@@ -374,10 +374,10 @@ class FridaOperationLogger:
     def get_statistics(self) -> Dict[str, Any]:
         """
         Get current statistics.
-        
+
         Calculates and returns comprehensive statistics including
         success rates and performance averages.
-        
+
         Returns:
             Dictionary containing:
             - Basic counters from self.stats
@@ -386,7 +386,7 @@ class FridaOperationLogger:
             - avg_<metric>: Average value for each performance metric
             - max_<metric>: Maximum value for each performance metric
             - min_<metric>: Minimum value for each performance metric
-            
+
         Complexity:
             Time: O(n) where n is number of performance metrics
             Space: O(m) where m is unique metric names
@@ -417,23 +417,23 @@ class FridaOperationLogger:
     def export_logs(self, output_dir: str = None) -> str:
         """
         Export all logs to a directory.
-        
+
         Creates a complete export of all logs, statistics, and buffers
         for offline analysis or archiving.
-        
+
         Args:
             output_dir: Optional output directory path. If not provided,
                        creates timestamped directory 'frida_export_YYYYMMDD_HHMMSS'
-                       
+
         Returns:
             Path to the export directory as string
-            
+
         Side Effects:
             - Creates export directory
             - Copies all log files to export directory
             - Writes statistics.json with current stats
             - Writes buffers.json with operation/hook buffers
-            
+
         Example:
             export_path = logger.export_logs('/path/to/exports')
             print(f"Logs exported to: {export_path}")
@@ -473,18 +473,18 @@ class FridaOperationLogger:
 class ProtectionDetector:
     """
     Real-time protection detection and classification.
-    
+
     Analyzes API calls, strings, and behavior patterns to identify
     protection mechanisms in real-time. Maintains a signature database
     for known protection techniques and supports adaptation callbacks.
-    
+
     Features:
     - API call pattern matching
     - String-based detection
     - Registry and WMI monitoring
     - Real-time classification
     - Adaptation system for dynamic response
-    
+
     Attributes:
         detected_protections: Map of protection types to detected indicators
         protection_signatures: Database of known protection signatures
@@ -494,9 +494,9 @@ class ProtectionDetector:
     def __init__(self):
         """
         Initialize the protection detector.
-        
+
         Sets up signature database and prepares detection system.
-        
+
         Side Effects:
             - Loads protection signatures
             - Initializes empty detection maps
@@ -509,17 +509,17 @@ class ProtectionDetector:
     def _load_signatures(self) -> Dict[ProtectionType, List[Dict]]:
         """
         Load protection signatures for classification.
-        
+
         Returns a comprehensive database of signatures for detecting
         various protection mechanisms. Each signature can be:
         - API call patterns (module + function name)
         - String patterns (with case sensitivity options)
         - Registry key patterns
         - WMI query patterns
-        
+
         Returns:
             Dictionary mapping ProtectionType to list of signature dicts
-            
+
         Signature Format:
             {
                 'api': 'FunctionName',      # API function name
@@ -589,29 +589,29 @@ class ProtectionDetector:
                         args: List[Any]) -> Set[ProtectionType]:
         """
         Analyze an API call to detect protection types.
-        
+
         Matches the API call against known protection signatures and
         analyzes function arguments for additional indicators.
-        
+
         Args:
             module: Module name (e.g., 'kernel32.dll')
             function: Function name (e.g., 'IsDebuggerPresent')
             args: List of function arguments to analyze
-            
+
         Returns:
             Set of detected ProtectionType enums
-            
+
         Side Effects:
             - Updates detected_protections map
             - May trigger adaptation callbacks
-            
+
         Complexity:
             Time: O(n*m) where n is protection types, m is signatures per type
             Space: O(1)
-            
+
         Example:
             detected = detector.analyze_api_call(
-                'kernel32.dll', 
+                'kernel32.dll',
                 'IsDebuggerPresent',
                 []
             )
@@ -683,17 +683,17 @@ class ProtectionDetector:
 class HookBatcher:
     """
     Batch hooks for improved performance.
-    
+
     Groups hook installations by priority category to reduce overhead
     and minimize detection. Uses a background thread to process hooks
     in batches based on their category timing requirements.
-    
+
     Features:
     - Priority-based batching with configurable timeouts
     - Background thread processing
     - Category-specific delays (CRITICAL=0ms, HIGH=100ms, etc.)
     - Automatic batch flushing on size or timeout
-    
+
     Attributes:
         max_batch_size: Maximum hooks per batch
         batch_timeout_ms: Default timeout for batching
@@ -707,11 +707,11 @@ class HookBatcher:
                  batch_timeout_ms: int = 100):
         """
         Initialize the hook batcher.
-        
+
         Args:
             max_batch_size: Maximum number of hooks to batch together
             batch_timeout_ms: Default timeout in milliseconds for batching
-            
+
         Side Effects:
             - Initializes thread-safe queue
             - Prepares for background thread
@@ -727,17 +727,17 @@ class HookBatcher:
     def add_hook(self, category: HookCategory, hook_spec: Dict[str, Any]):
         """
         Add a hook to the batch queue.
-        
+
         Timestamps the hook and queues it for batch processing based
         on its priority category.
-        
+
         Args:
             category: Hook priority category (CRITICAL, HIGH, etc.)
             hook_spec: Dictionary containing hook details:
                       - target: Function to hook
                       - script: Hook script code
                       - session: Frida session reference
-                      
+
         Side Effects:
             - Adds timestamp to hook_spec
             - Adds category to hook_spec
@@ -804,18 +804,18 @@ class HookBatcher:
 class FridaPerformanceOptimizer:
     """
     Optimize Frida operations for performance.
-    
+
     Monitors resource usage and makes intelligent decisions about
     hook installation to balance functionality with performance.
     Tracks hook call rates and provides optimization recommendations.
-    
+
     Features:
     - Resource usage monitoring (CPU, memory, threads)
     - Selective hook installation based on importance
     - Hook call rate tracking
     - Script optimization with caching and batching
     - Performance history tracking
-    
+
     Attributes:
         process: psutil Process object for monitoring
         baseline_memory: Initial memory usage for comparison
@@ -829,7 +829,7 @@ class FridaPerformanceOptimizer:
     def __init__(self):
         """
         Initialize the performance optimizer.
-        
+
         Side Effects:
             - Creates psutil Process object
             - Initializes performance tracking structures
@@ -860,25 +860,25 @@ class FridaPerformanceOptimizer:
                            importance: HookCategory) -> bool:
         """
         Determine if a function should be hooked based on performance.
-        
+
         Makes intelligent decisions about hook installation based on
         current resource usage and hook importance. Critical hooks
         are always installed.
-        
+
         Args:
             module: Module containing the function
             function: Function name to potentially hook
             importance: Hook priority category
-            
+
         Returns:
             True if function should be hooked, False to skip
-            
+
         Decision Criteria:
             - CRITICAL hooks: Always installed
             - High memory (>500MB): Only CRITICAL and HIGH
             - High CPU (>80%): Only CRITICAL
             - High call rate (>1000/sec): Only CRITICAL and HIGH
-            
+
         Complexity:
             Time: O(1)
             Space: O(1)
@@ -1012,11 +1012,11 @@ class FridaPerformanceOptimizer:
 class FridaManager:
     """
     Main Frida management class with all advanced features.
-    
+
     Comprehensive Frida management system that integrates logging,
     protection detection, performance optimization, and hook batching.
     Provides high-level interface for all Frida operations.
-    
+
     Features:
     - Process attachment and session management
     - Script loading and execution
@@ -1025,7 +1025,7 @@ class FridaManager:
     - Hook batching for efficiency
     - Comprehensive operation logging
     - Multi-session support
-    
+
     Attributes:
         logger: FridaOperationLogger instance
         detector: ProtectionDetector instance
@@ -1041,14 +1041,14 @@ class FridaManager:
     def __init__(self, log_dir: str = None, script_dir: str = None):
         """
         Initialize the Frida manager.
-        
+
         Args:
             log_dir: Optional custom directory for logs
             script_dir: Optional custom directory for scripts
-            
+
         Raises:
             ImportError: If Frida is not available
-            
+
         Side Effects:
             - Creates all subsystem instances
             - Ensures script directory exists
@@ -1103,29 +1103,29 @@ class FridaManager:
     def attach_to_process(self, process_identifier: Union[int, str]) -> bool:
         """
         Attach to a process with comprehensive logging.
-        
+
         Establishes a Frida session with the target process and logs
         all operations. Handles both PID and process name attachment.
-        
+
         Args:
             process_identifier: Process ID (int) or process name (str)
-            
+
         Returns:
             True if attachment succeeded, False otherwise
-            
+
         Side Effects:
             - Creates Frida session
             - Stores session in self.sessions
             - Logs operation details
             - Logs performance metrics
-            
+
         Example:
             # Attach by PID
             success = manager.attach_to_process(1234)
-            
+
             # Attach by name
             success = manager.attach_to_process("target.exe")
-            
+
         Complexity:
             Time: O(1) + Frida attachment overhead
             Space: O(1)
@@ -1442,7 +1442,7 @@ class FridaManager:
         """Handle messages from Frida scripts including binary data"""
         msg_type = message.get('type')
         payload = message.get('payload', {})
-        
+
         # Handle new structured messages from updated Frida scripts
         if msg_type == 'send' and isinstance(payload, dict):
             structured_type = payload.get('type')
@@ -2390,13 +2390,13 @@ class FridaManager:
         # Clear collections
         self.sessions.clear()
         self.scripts.clear()
-    
+
     def _handle_structured_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
         """Handle structured messages from updated Frida scripts"""
         msg_type = payload.get('type')
         target = payload.get('target', script_name)
         action = payload.get('action', 'unknown')
-        
+
         # Route message based on type
         if msg_type == 'info':
             self._handle_info_message(session_id, script_name, payload)
@@ -2414,7 +2414,7 @@ class FridaManager:
             self._handle_detection_message(session_id, script_name, payload)
         elif msg_type == 'notification':
             self._handle_notification_message(session_id, script_name, payload)
-        
+
         # Always log structured message for debugging
         self.logger.log_operation(
             f"structured_{msg_type}:{script_name}",
@@ -2426,12 +2426,12 @@ class FridaManager:
             },
             success=True
         )
-    
+
     def _handle_info_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
         """Handle informational messages"""
         target = payload.get('target', script_name)
         action = payload.get('action', 'info')
-        
+
         # Log as informational operation
         self.logger.log_operation(
             f"info:{target}",
@@ -2442,19 +2442,19 @@ class FridaManager:
             },
             success=True
         )
-        
+
         # Call UI callback if available
         if hasattr(self, '_ui_message_callback') and self._ui_message_callback:
             self._ui_message_callback('info', session_id, script_name, payload)
-    
+
     def _handle_warning_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
         """Handle warning messages"""
         target = payload.get('target', script_name)
         action = payload.get('action', 'warning')
-        
+
         # Log as warning
         logger.warning(f"[{target}] {action}: {payload}")
-        
+
         self.logger.log_operation(
             f"warning:{target}",
             {
@@ -2464,20 +2464,20 @@ class FridaManager:
             },
             success=True
         )
-        
+
         # Call UI callback if available
         if hasattr(self, '_ui_message_callback') and self._ui_message_callback:
             self._ui_message_callback('warning', session_id, script_name, payload)
-    
+
     def _handle_error_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
         """Handle error messages"""
         target = payload.get('target', script_name)
         action = payload.get('action', 'error')
         error_details = payload.get('error', 'Unknown error')
-        
+
         # Log as error
         logger.error(f"[{target}] {action}: {error_details}")
-        
+
         self.logger.log_operation(
             f"error:{target}",
             {
@@ -2489,17 +2489,17 @@ class FridaManager:
             success=False,
             error=str(error_details)
         )
-        
+
         # Call UI callback if available
         if hasattr(self, '_ui_message_callback') and self._ui_message_callback:
             self._ui_message_callback('error', session_id, script_name, payload)
-    
+
     def _handle_status_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
         """Handle status messages"""
         target = payload.get('target', script_name)
         action = payload.get('action', 'status')
         status = payload.get('status', 'unknown')
-        
+
         # Log as status update
         self.logger.log_operation(
             f"status:{target}",
@@ -2511,21 +2511,21 @@ class FridaManager:
             },
             success=True
         )
-        
+
         # Call UI callback if available
         if hasattr(self, '_ui_message_callback') and self._ui_message_callback:
             self._ui_message_callback('status', session_id, script_name, payload)
-    
+
     def _handle_bypass_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
         """Handle bypass attempt messages"""
         target = payload.get('target', script_name)
         action = payload.get('action', 'bypass_attempt')
         technique = payload.get('technique', action)
         success = payload.get('success', True)
-        
+
         # Determine protection type from target or action
         protection_type = self._infer_protection_type(target, action, payload)
-        
+
         # Log bypass attempt
         self.logger.log_bypass_attempt(
             protection_type,
@@ -2538,7 +2538,7 @@ class FridaManager:
                 'details': {k: v for k, v in payload.items() if k not in ['type', 'target', 'action', 'technique', 'success']}
             }
         )
-        
+
         # Notify protection detector if bypass was successful
         if success:
             self.detector.notify_protection_detected(
@@ -2550,16 +2550,16 @@ class FridaManager:
                     'details': payload
                 }
             )
-        
+
         # Call UI callback if available
         if hasattr(self, '_ui_message_callback') and self._ui_message_callback:
             self._ui_message_callback('bypass', session_id, script_name, payload)
-    
+
     def _handle_success_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
         """Handle success messages"""
         target = payload.get('target', script_name)
         action = payload.get('action', 'success')
-        
+
         # Log as successful operation
         self.logger.log_operation(
             f"success:{target}",
@@ -2570,20 +2570,20 @@ class FridaManager:
             },
             success=True
         )
-        
+
         # Call UI callback if available
         if hasattr(self, '_ui_message_callback') and self._ui_message_callback:
             self._ui_message_callback('success', session_id, script_name, payload)
-    
+
     def _handle_detection_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
         """Handle detection messages"""
         target = payload.get('target', script_name)
         action = payload.get('action', 'detection')
         detected_item = payload.get('detected', 'unknown')
-        
+
         # Determine protection type from detection
         protection_type = self._infer_protection_type(target, action, payload)
-        
+
         # Log detection
         self.logger.log_operation(
             f"detection:{target}",
@@ -2595,7 +2595,7 @@ class FridaManager:
             },
             success=True
         )
-        
+
         # Notify protection detector
         self.detector.notify_protection_detected(
             protection_type,
@@ -2606,16 +2606,16 @@ class FridaManager:
                 'details': payload
             }
         )
-        
+
         # Call UI callback if available
         if hasattr(self, '_ui_message_callback') and self._ui_message_callback:
             self._ui_message_callback('detection', session_id, script_name, payload)
-    
+
     def _handle_notification_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
         """Handle notification messages"""
         target = payload.get('target', script_name)
         action = payload.get('action', 'notification')
-        
+
         # Log as notification
         self.logger.log_operation(
             f"notification:{target}",
@@ -2626,17 +2626,17 @@ class FridaManager:
             },
             success=True
         )
-        
+
         # Call UI callback if available
         if hasattr(self, '_ui_message_callback') and self._ui_message_callback:
             self._ui_message_callback('notification', session_id, script_name, payload)
-    
+
     def _infer_protection_type(self, target: str, action: str, payload: Dict[str, Any]) -> ProtectionType:
         """Infer protection type from message context"""
         # Check target module name for protection type hints
         target_lower = target.lower()
         action_lower = action.lower()
-        
+
         # Map common targets to protection types
         if 'debug' in target_lower or 'debug' in action_lower:
             return ProtectionType.ANTI_DEBUG

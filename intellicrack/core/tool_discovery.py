@@ -431,7 +431,7 @@ class AdvancedToolDiscovery:
                 continue
 
             # Search recursively in installation directory
-            for root, dirs, files in os.walk(search_path):
+            for root, dirs, _files in os.walk(search_path):
                 for executable in executables:
                     potential_path = os.path.join(root, executable)
                     if os.path.exists(potential_path) and os.access(potential_path, os.X_OK):

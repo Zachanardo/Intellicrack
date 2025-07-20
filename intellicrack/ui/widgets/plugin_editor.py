@@ -91,6 +91,7 @@ class PluginEditor(QWidget):
     saveRequested = pyqtSignal(str)  # Emits file path
 
     def __init__(self, parent=None):
+        """Initialize plugin editor with validation and UI setup."""
         super().__init__(parent)
         self.current_file = None
         self.validator = PluginValidator()

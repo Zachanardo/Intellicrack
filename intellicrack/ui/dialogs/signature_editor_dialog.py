@@ -1,7 +1,7 @@
 """
 ICP Signature Editor Dialog
 
-Provides comprehensive signature creation and editing capabilities for the 
+Provides comprehensive signature creation and editing capabilities for the
 Intellicrack Protection Engine (ICP). Allows users to create custom signatures,
 modify existing ones, and test signatures against sample files.
 

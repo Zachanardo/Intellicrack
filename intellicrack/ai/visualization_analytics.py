@@ -115,7 +115,7 @@ class DataCollector:
 
     def __init__(self):
         """Initialize the data collector for visualization.
-        
+
         Sets up metric storage, collection functions, and automated
         data gathering from various AI components for real-time
         visualization and analytics.
@@ -429,7 +429,7 @@ class ChartGenerator:
 
     def __init__(self, data_collector: DataCollector):
         """Initialize the chart generator.
-        
+
         Args:
             data_collector: Data collector instance providing
                 metrics and data for visualization.
@@ -630,7 +630,7 @@ class DashboardManager:
 
     def __init__(self, data_collector: DataCollector):
         """Initialize the dashboard manager for real-time visualization.
-        
+
         Args:
             data_collector: Data collector instance providing
                 metrics for dashboard visualization.
@@ -839,7 +839,7 @@ class AnalyticsEngine:
 
     def __init__(self, data_collector: DataCollector):
         """Initialize the analytics engine.
-        
+
         Args:
             data_collector: Data collector instance providing
                 metrics for analysis and reporting.
@@ -1067,7 +1067,7 @@ class VisualizationAnalytics:
 
     def __init__(self):
         """Initialize the visualization and analytics system.
-        
+
         Creates and initializes the data collector, dashboard manager, and
         analytics engine components to provide comprehensive visualization
         and analytics capabilities for AI operations.

@@ -111,7 +111,7 @@ class RuntimeMonitor:
 
     def __init__(self):
         """Initialize the real-time monitoring system.
-        
+
         Monitors system metrics, detects anomalies, and triggers adaptation
         rules in response to performance issues.
         """
@@ -371,7 +371,7 @@ class AnomalyDetector:
 
     def __init__(self, metric_name: str, sensitivity: float = 2.0):
         """Initialize the anomaly detector for a specific metric.
-        
+
         Args:
             metric_name: Name of the metric to monitor for anomalies.
             sensitivity: Detection sensitivity factor (default: 2.0).
@@ -431,7 +431,7 @@ class DynamicHookManager:
 
     def __init__(self):
         """Initialize the dynamic hook manager.
-        
+
         Sets up hook tracking structures for active hooks, registry,
         and statistics collection. Manages dynamic code hooks for
         runtime adaptation.
@@ -645,7 +645,7 @@ class LiveDebuggingSystem:
 
     def __init__(self, runtime_monitor: RuntimeMonitor):
         """Initialize the AI-assisted live debugging system.
-        
+
         Args:
             runtime_monitor: Runtime monitor instance to subscribe to
                 for receiving metrics and performance data.
@@ -865,7 +865,7 @@ class RealTimeAdaptationEngine:
 
     def __init__(self):
         """Initialize the real-time adaptation engine.
-        
+
         Provides comprehensive real-time adaptation capabilities including
         runtime monitoring, dynamic code hooking, live debugging, and automated
         adaptation based on system performance metrics.

@@ -1345,7 +1345,7 @@ class AntiAntiDebugSuite:
 
     def __init__(self):
         """Initialize the anti-anti-debug suite.
-        
+
         Sets up the comprehensive anti-debugging detection bypass system.
         Initializes all component modules including API hookers, PEB manipulation,
         hardware debug protection, timing normalization, and environment sanitization.

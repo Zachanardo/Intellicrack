@@ -40,7 +40,7 @@ class GhidraScript:
 
     def __init__(self, path: str):
         """Initialize Ghidra script with metadata extraction.
-        
+
         Args:
             path: Path to the Ghidra script file
         """

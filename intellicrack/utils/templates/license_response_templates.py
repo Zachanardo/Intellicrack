@@ -204,13 +204,13 @@ def get_jetbrains_response_templates():
     """Get JetBrains response templates with real validation logic."""
     import datetime
     import os
-    import random
 
     # Real license validation logic for JetBrains
     current_time = datetime.datetime.now()
 
     # Generate realistic license ID
-    license_id = str(random.randint(1000000000, 9999999999))
+    import secrets
+    license_id = str(secrets.randbelow(9999999999 - 1000000000) + 1000000000)
 
     # Check for actual JetBrains installations
     detected_products = []

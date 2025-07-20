@@ -831,11 +831,11 @@ def run_pdf_report_generator(analysis_results: Dict[str, Any],
 
 def _default_chunk_processor(data: bytes, chunk_info: Dict[str, Any]) -> Dict[str, Any]:
     """Calculate basic statistics for a data chunk.
-    
+
     Args:
         data: Byte data from the chunk
         chunk_info: Dictionary containing chunk metadata
-        
+
     Returns:
         Dict containing size, offset, and non-zero byte count
     """
@@ -848,10 +848,10 @@ def _default_chunk_processor(data: bytes, chunk_info: Dict[str, Any]) -> Dict[st
 
 def _default_aggregation(results: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Aggregate results from multiple chunk processing operations.
-    
+
     Args:
         results: List of chunk processing results
-        
+
     Returns:
         Dict containing aggregated totals and processing counts
     """
@@ -872,10 +872,10 @@ def _default_aggregation(results: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 def _aggregate_chunk_results(chunk_results: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Aggregate results from chunk processing operations.
-    
+
     Args:
         chunk_results: List of chunk processing results
-        
+
     Returns:
         Dict containing aggregated results or error if no successful chunks
     """
@@ -890,11 +890,11 @@ def _aggregate_chunk_results(chunk_results: List[Dict[str, Any]]) -> Dict[str, A
 def _distributed_string_extraction(binary_path: str,
                                  config: Dict[str, Any]) -> Dict[str, Any]:
     """Extract strings from binary using distributed processing.
-    
+
     Args:
         binary_path: Path to the binary file
         config: Configuration dict with processing parameters
-        
+
     Returns:
         Dict containing extracted strings and statistics
     """
@@ -955,11 +955,11 @@ def _distributed_string_extraction(binary_path: str,
 def _distributed_hash_calculation(binary_path: str,
                                 config: Dict[str, Any]) -> Dict[str, Any]:
     """Calculate multiple hash algorithms using distributed processing.
-    
+
     Args:
         binary_path: Path to the binary file
         config: Configuration dict with hash algorithms and parameters
-        
+
     Returns:
         Dict containing calculated hashes for each algorithm
     """
@@ -1003,7 +1003,7 @@ def _distributed_hash_calculation(binary_path: str,
 
 def _check_gpu_backends() -> Dict[str, Any]:
     """Check for available GPU acceleration backends.
-    
+
     Returns:
         Dict containing GPU availability and device information
     """
@@ -1045,11 +1045,11 @@ def _check_gpu_backends() -> Dict[str, Any]:
 
 def _run_cpu_fallback(task_type: str, data: Any) -> Dict[str, Any]:
     """Execute CPU fallback processing when GPU is unavailable.
-    
+
     Args:
         task_type: Type of processing task
         data: Input data for processing
-        
+
     Returns:
         Dict containing CPU processing results
     """
@@ -1101,11 +1101,11 @@ def _run_cpu_fallback(task_type: str, data: Any) -> Dict[str, Any]:
 
 def _gpu_pattern_matching(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
     """Execute GPU-accelerated pattern matching operations.
-    
+
     Args:
         data: Input data containing search content
         config: Configuration with patterns and processing parameters
-        
+
     Returns:
         Dict containing pattern matching results and performance metrics
     """
@@ -1189,11 +1189,11 @@ def _gpu_pattern_matching(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[
 
 def _gpu_crypto_operations(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
     """Execute GPU-accelerated cryptographic operations.
-    
+
     Args:
         data: Input data for cryptographic processing
         config: Configuration with operation type and parameters
-        
+
     Returns:
         Dict containing cryptographic results and performance metrics
     """
@@ -1243,11 +1243,11 @@ def _gpu_crypto_operations(data: Dict[str, Any], config: Dict[str, Any]) -> Dict
 
 def _gpu_ml_inference(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
     """Execute GPU-accelerated machine learning inference.
-    
+
     Args:
         data: Input data containing features for inference
         config: Configuration with model path and inference parameters
-        
+
     Returns:
         Dict containing predictions, confidence scores and performance metrics
     """
@@ -1333,13 +1333,13 @@ def run_dask_distributed_analysis(binary_path: str, analysis_func: Callable,
                                  n_partitions: Optional[int] = None) -> Dict[str, Any]:
     """
     Run distributed binary analysis using Dask for large-scale processing.
-    
+
     Args:
         binary_path: Path to the binary file
         analysis_func: Function to apply to each chunk
         chunk_size: Size of each chunk in bytes
         n_partitions: Number of partitions for Dask
-    
+
     Returns:
         Dictionary with analysis results
     """
@@ -1458,13 +1458,13 @@ def run_celery_distributed_analysis(binary_path: str, task_name: str = 'binary_a
                                    queue_name: str = 'intellicrack') -> Dict[str, Any]:
     """
     Run distributed binary analysis using Celery task queue.
-    
+
     Args:
         binary_path: Path to the binary file
         task_name: Name of the Celery task to execute
         chunk_size: Size of each chunk in bytes
         queue_name: Celery queue name
-    
+
     Returns:
         Dictionary with analysis results
     """
@@ -1563,13 +1563,13 @@ def run_joblib_parallel_analysis(binary_path: str, analysis_funcs: List[Callable
                                n_jobs: int = -1, backend: str = 'threading') -> Dict[str, Any]:
     """
     Run parallel binary analysis using joblib for multi-core processing.
-    
+
     Args:
         binary_path: Path to the binary file
         analysis_funcs: List of analysis functions to run in parallel
         n_jobs: Number of parallel jobs (-1 for all cores)
         backend: Joblib backend ('threading', 'multiprocessing', 'loky')
-    
+
     Returns:
         Dictionary with parallel analysis results
     """
@@ -1647,13 +1647,13 @@ def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096,
                            step_size: int = 1024, n_jobs: int = -1) -> Dict[str, Any]:
     """
     Run memory-mapped parallel analysis using joblib for efficient large file processing.
-    
+
     Args:
         binary_path: Path to the binary file
         window_size: Size of sliding window for analysis
         step_size: Step size for sliding window
         n_jobs: Number of parallel jobs
-    
+
     Returns:
         Dictionary with memory-mapped analysis results
     """

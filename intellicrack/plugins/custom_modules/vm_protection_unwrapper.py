@@ -33,7 +33,6 @@ import json
 import logging
 import struct
 import time
-from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -41,7 +40,6 @@ from typing import Any, Dict, List, Optional
 
 import keystone
 import numpy as np
-import unicorn
 from unicorn import x86_const
 
 

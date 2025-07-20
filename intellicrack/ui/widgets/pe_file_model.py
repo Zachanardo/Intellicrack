@@ -87,6 +87,7 @@ class BinaryFileModel(ABC):
     """Abstract base class for binary file models"""
 
     def __init__(self, file_path: str):
+        """Initialize binary file model with file path validation and basic file information."""
         self.file_path = Path(file_path)
         if not self.file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
@@ -124,6 +125,7 @@ class PEFileModel(BinaryFileModel):
     """PE file model with comprehensive structure parsing"""
 
     def __init__(self, file_path: str):
+        """Initialize PE file model with comprehensive analysis of Portable Executable structure."""
         super().__init__(file_path)
 
         if not PEFILE_AVAILABLE:

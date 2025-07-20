@@ -480,25 +480,25 @@ class ConcolicExecutionEngine:
         self.max_iterations = max_iterations
         self.timeout = timeout
         self.logger = logging.getLogger("IntellicrackLogger.ConcolicExecution")
-        
+
         # Analysis configuration
         self.exploration_depth = 10
         self.memory_limit = 1024 * 1024 * 1024  # 1GB memory limit
-        
+
         # Results storage
         self.execution_paths = []
         self.discovered_bugs = []
         self.code_coverage = {}
         self.symbolic_variables = []
-        
+
         # Check if binary exists
         if not os.path.exists(binary_path):
             raise FileNotFoundError(f"Binary file not found: {binary_path}")
-        
+
         # Initialize execution engine based on availability
         self.engine = None
         self._initialize_execution_engine()
-        
+
         self.logger.info(f"Concolic execution engine initialized for {binary_path}")
 
     def explore_paths(self, target_address: Optional[int] = None, avoid_addresses: Optional[List[int]] = None) -> Dict[str, Any]:
@@ -947,7 +947,7 @@ class ConcolicExecutionEngine:
                             if hasattr(insn, 'operands') and insn.operands:
                                 try:
                                     call_target = insn.operands[0].value
-                                except:
+                                except (AttributeError, IndexError, TypeError):
                                     pass
 
                             vuln = {

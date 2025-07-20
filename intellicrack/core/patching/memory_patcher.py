@@ -50,13 +50,13 @@ def _get_wintypes():
             class DWORD:
                 """Mock DWORD type."""
                 def __init__(self):
-    """Initialize DWORD mock type with default value."""
-    self.value = 0
+                    """Initialize DWORD mock type with default value."""
+                    self.value = 0
             class BOOL:
                 """Mock BOOL type."""
                 def __init__(self):
-    """Initialize BOOL mock type with default value."""
-    self.value = 0
+                    """Initialize BOOL mock type with default value."""
+                    self.value = 0
         return MockWintypes(), False
 
 # Windows memory protection constants

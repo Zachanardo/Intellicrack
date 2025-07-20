@@ -6,6 +6,12 @@ import sys
 # Initialize logger before it's used
 logger = logging.getLogger(__name__)
 
+# Import security enforcement early to apply patches
+try:
+    from intellicrack.core import security_enforcement
+except ImportError as e:
+    logger.warning(f"Security enforcement not available: {e}")
+
 # Configure TensorFlow to prevent GPU initialization issues with Intel Arc B580
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable GPU for TensorFlow
@@ -73,12 +79,12 @@ if os.name == 'nt':
 def main() -> int:
     """
     Main entry point for the Intellicrack application.
-    
+
     This function performs the following operations:
     1. Executes startup checks and auto-configuration
     2. Imports and launches the GUI application
     3. Handles import errors and other exceptions gracefully
-    
+
     The function includes verbose logging for debugging startup issues
     and provides helpful error messages for missing dependencies.
 
@@ -86,15 +92,26 @@ def main() -> int:
         int: Application exit code
              - 0: Successful execution
              - 1: Error during startup or execution
-             
+
     Raises:
         No exceptions are raised; all errors are caught and logged
-        
+
     Example:
         >>> import sys
         >>> sys.exit(main())
     """
     try:
+        # Initialize security enforcement if available
+        try:
+            security_enforcement.initialize_security()
+            security_status = security_enforcement.get_security_status()
+            if security_status.get("initialized"):
+                logger.info(f"Security enforcement initialized: {security_status}")
+                print("Security enforcement enabled.")
+        except NameError:
+            # security_enforcement was not imported successfully
+            logger.debug("Security enforcement module not available")
+
         # Perform startup checks and auto-configuration
         from intellicrack.core.startup_checks import perform_startup_checks
         print("Initializing Intellicrack...")

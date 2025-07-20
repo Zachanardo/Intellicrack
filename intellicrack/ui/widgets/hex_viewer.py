@@ -2,7 +2,7 @@
 import math
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QFontMetrics, QKeyEvent, QPainter
+from PyQt6.QtGui import QColor, QFont, QKeyEvent, QPainter
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -28,7 +28,7 @@ class HexViewerWidget(QWidget):
         self.selected_end = -1
         self.bytes_per_row = 16
         self.current_offset = 0
-        
+
         self.setup_ui()
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
@@ -194,18 +194,18 @@ class HexDisplay(QWidget):
         self.selected_start = -1
         self.selected_end = -1
         self.current_offset = 0
-        
+
         # Use monospace font for proper alignment
         font = QFont('Courier', 10)
         font.setStyleHint(QFont.StyleHint.TypeWriter)
         self.setFont(font)
-        
+
         # Set minimum size
         self.setMinimumSize(600, 400)
-        
+
         # Enable mouse tracking for hover effects
         self.setMouseTracking(True)
-        
+
         # Set background color
         self.setStyleSheet("background-color: #2b2b2b; color: #ffffff;")
 

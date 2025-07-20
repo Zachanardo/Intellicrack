@@ -68,7 +68,7 @@ class AIModelManager(QObject):
 
     def __init__(self):
         """Initialize the AI model manager.
-        
+
         Sets up the model management system with empty model registries
         and initializes available AI model providers (OpenAI, Anthropic,
         Groq, etc.) for intelligent code generation and analysis.
@@ -106,10 +106,10 @@ class AIModelManager(QObject):
     def register_model(self, config: ModelConfig) -> bool:
         """
         Register a new AI model
-        
+
         Args:
             config: Model configuration
-            
+
         Returns:
             bool: Success status
         """
@@ -124,10 +124,10 @@ class AIModelManager(QObject):
     def load_model(self, model_name: str) -> bool:
         """
         Load and initialize a registered model
-        
+
         Args:
             model_name: Name of the model to load
-            
+
         Returns:
             bool: Success status
         """
@@ -477,13 +477,13 @@ class AIModelManager(QObject):
                        target: str, requirements: str) -> Optional[str]:
         """
         Generate a script using the specified model
-        
+
         Args:
             model_name: Name of the model to use
             script_type: Type of script (frida, ghidra, etc.)
             target: Target binary or function
             requirements: Additional requirements
-            
+
         Returns:
             Generated script or None on error
         """
@@ -639,9 +639,9 @@ Generate complete, working code with proper error handling and documentation."""
 
 Java.perform(function() {{
     console.log("[+] Starting hooks for {target}");
-    
+
     // Add your hooks here
-    
+
     console.log("[+] Hooks installed");
 }});""",
 
@@ -743,11 +743,11 @@ if __name__ == "__main__":
     def analyze_binary(self, model_name: str, binary_path: str) -> Optional[Dict[str, Any]]:
         """
         Analyze a binary using AI model with comprehensive feature extraction
-        
+
         Args:
             model_name: Name of the model to use
             binary_path: Path to the binary
-            
+
         Returns:
             Analysis results or None on error
         """

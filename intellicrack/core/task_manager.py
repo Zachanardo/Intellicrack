@@ -8,6 +8,7 @@ import traceback
 import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
+from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
@@ -15,6 +16,15 @@ from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
 from intellicrack.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+class TaskStatus(Enum):
+    """Task execution status."""
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
 
 
 class TaskSignals(QObject):
@@ -31,7 +41,7 @@ class BaseTask(QRunnable, ABC):
 
     def __init__(self, task_id: Optional[str] = None, description: str = ""):
         """Initialize the base task with ID, description, and status tracking.
-        
+
         Args:
             task_id: Optional unique identifier for the task
             description: Description of what the task does
@@ -104,7 +114,7 @@ class CallableTask(BaseTask):
     def __init__(self, func: Callable, args: tuple = (), kwargs: dict = None,
                  task_id: Optional[str] = None, description: str = ""):
         """Initialize the callable task with function, arguments, and task metadata.
-        
+
         Args:
             func: The callable function to execute
             args: Positional arguments for the function
@@ -138,11 +148,11 @@ class TaskManager(QObject):
 
     def __init__(self, max_thread_count: Optional[int] = None):
         """Initialize the task manager.
-        
+
         Sets up the Qt thread pool-based task management system for handling
         concurrent background operations. Configures thread pool settings,
         task tracking, and signal connections for progress monitoring.
-        
+
         Args:
             max_thread_count: Maximum number of concurrent threads. If None, uses Qt default.
         """
@@ -282,7 +292,7 @@ class LongRunningTask(BaseTask):
 
     def __init__(self, duration: int = 10, task_id: Optional[str] = None):
         """Initialize the long running task with specified duration.
-        
+
         Args:
             duration: Task duration in seconds
             task_id: Optional unique identifier for the task

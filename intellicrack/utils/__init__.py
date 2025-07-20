@@ -230,7 +230,7 @@ try:
     from .patching.patch_verification import (
         apply_parsed_patch_instructions_with_validation,
         rewrite_license_functions_with_parsing,
-        simulate_patch_and_verify,
+        test_patch_and_verify,
         verify_patches,
     )
 except ImportError as e:
@@ -600,7 +600,7 @@ __all__ = [
     'detect_tpm_protection', 'get_system_processes', 'run_command',
 
     # From patch_verification
-    'verify_patches', 'simulate_patch_and_verify',
+    'verify_patches', 'test_patch_and_verify',
     'apply_parsed_patch_instructions_with_validation',
     'rewrite_license_functions_with_parsing',
 

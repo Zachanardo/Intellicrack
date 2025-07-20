@@ -19,7 +19,7 @@ class ScriptGenerationTool:
 
     def __init__(self):
         """Initialize the script generation tool.
-        
+
         Sets up the AI-powered script generation system for creating Frida
         and Ghidra analysis scripts. Loads template libraries and configures
         generation parameters for automated reverse engineering workflows.
@@ -319,7 +319,7 @@ var targetModule = Process.enumerateModules().filter(function(m) {{
 if (targetModule) {{
     var exports = targetModule.enumerateExports();
     var targetFunctions = {target_functions};
-    
+
     exports.forEach(function(exp) {{
         var shouldHook = targetFunctions.some(func => exp.name.toLowerCase().indexOf(func) !== -1);
         if (shouldHook) {{
@@ -367,7 +367,7 @@ if (targetModule) {{
 
         # Add protection-specific tracing
         if protection_info:
-            for protection_type, details in protection_info.items():
+            for protection_type, _details in protection_info.items():
                 if protection_type.lower() in ['licensing', 'trial', 'serial']:
                     script_parts.append("// License-related API tracing")
                     license_apis = [
@@ -515,7 +515,7 @@ if (targetModule) {{
     modules.forEach(function(module) {
         var exports = module.enumerateExports();
         exports.forEach(function(exp) {
-            if (exp.name.toLowerCase().indexOf('license') !== -1 || 
+            if (exp.name.toLowerCase().indexOf('license') !== -1 ||
                 exp.name.toLowerCase().indexOf('registration') !== -1 ||
                 exp.name.toLowerCase().indexOf('validate') !== -1) {
                 console.log('[*] Patching: ' + exp.name);
@@ -555,7 +555,7 @@ if (targetModule) {{
                 onEnter: function(args) {
                     if (funcName.indexOf("MessageBox") !== -1) {
                         var message = args[1].readUtf16String();
-                        if (message && (message.toLowerCase().indexOf("trial") !== -1 || 
+                        if (message && (message.toLowerCase().indexOf("trial") !== -1 ||
                                       message.toLowerCase().indexOf("register") !== -1)) {
                             console.log("[*] Suppressing nag popup: " + message);
                             this.replace = true;
@@ -622,7 +622,7 @@ Interceptor.attach(targetAddr, {
         patch_code_parts = []
 
         if protection_info:
-            for protection_type, details in protection_info.items():
+            for protection_type, _details in protection_info.items():
                 if protection_type.lower() in ['anti_debug', 'debugger']:
                     patch_code_parts.append('''    // Patch anti-debug checks
     var antiDebugOpcodes = [0x33, 0xC0, 0xC3]; // xor eax, eax; ret
@@ -1306,7 +1306,7 @@ var suspiciousFuncs = ["detect", "check", "verify", "protect", "guard"];
 Process.enumerateModules().forEach(function(module) {{
     module.enumerateExports().forEach(function(exp) {{
         suspiciousFuncs.forEach(function(pattern) {{
-            if (exp.name.toLowerCase().indexOf(pattern) !== -1 && 
+            if (exp.name.toLowerCase().indexOf(pattern) !== -1 &&
                 exp.name.toLowerCase().indexOf("{protection_type.lower().replace('_', '')}") !== -1) {{
                 console.log("[+] Found protection function: " + exp.name);
                 Interceptor.attach(exp.address, {{

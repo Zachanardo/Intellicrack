@@ -365,11 +365,11 @@ class CodeAnalyzer:
 
     def analyze_code(self, code: str, language: str = "auto") -> Dict[str, Any]:
         """Analyze generic code using AI assistant.
-        
+
         Args:
             code: Source code to analyze
             language: Programming language (auto-detect if not specified)
-            
+
         Returns:
             Analysis results from AI assistant
         """
@@ -481,11 +481,11 @@ class CodeAnalyzer:
 
     def ask_ai_about_analysis(self, question: str, context: Dict[str, Any] = None) -> str:
         """Ask AI assistant about the analysis results.
-        
+
         Args:
             question: Question to ask about the analysis
             context: Optional analysis context/results
-            
+
         Returns:
             AI assistant's response
         """
@@ -513,10 +513,10 @@ class CodeAnalyzer:
 
     def get_analysis_suggestions(self, analysis_result: Dict[str, Any]) -> List[str]:
         """Get AI-powered suggestions based on analysis results.
-        
+
         Args:
             analysis_result: Results from analyze_binary or analyze_assembly
-            
+
         Returns:
             List of actionable suggestions
         """
@@ -709,7 +709,7 @@ class CodeAnalyzer:
             - Format: {basic_result.get('metadata', {}).get('format', 'Unknown')}
             - Size: {basic_result.get('file_size', 0)} bytes
             - Current findings: {'; '.join(basic_result.get('findings', []))}
-            
+
             What security risks, protection mechanisms, and analysis recommendations do you have?
             """
             ai_response = self.ai_assistant.ask_question(question)

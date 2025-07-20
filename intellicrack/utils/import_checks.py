@@ -29,9 +29,9 @@ class ImportChecker:
     """
 
     def __init__(self):
-    """Initialize the import checker with empty caches."""
-    self._import_cache = {}
-    self._failed_imports = set()
+        """Initialize the import checker with empty caches."""
+        self._import_cache = {}
+        self._failed_imports = set()
 
     def check_import(self, module_name: str, package_name: Optional[str] = None) -> bool:
         """
@@ -334,7 +334,7 @@ def get_fallback_implementations() -> Dict[str, Any]:
                 def uniform(low, high):
                     """Generate uniform random value."""
                     import random
-                    return random.uniform(low, high)
+                    return random.uniform(low, high)  # noqa: S311
 
                 @staticmethod
                 def normal(loc=0.0, scale=1.0):
@@ -347,8 +347,8 @@ def get_fallback_implementations() -> Dict[str, Any]:
                     """Random choice from array."""
                     import random
                     if p is not None:
-                        return random.choices(a, weights=p, k=1)[0]
-                    return random.choice(a)
+                        return random.choices(a, weights=p, k=1)[0]  # noqa: S311
+                    return random.choice(a)  # noqa: S311
             @staticmethod
             def array(data):
                 """Convert data to array-like structure."""

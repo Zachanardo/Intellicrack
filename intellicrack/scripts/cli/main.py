@@ -1,5 +1,5 @@
 """
-Comprehensive Command-Line Interface for Intellicrack. 
+Comprehensive Command-Line Interface for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -179,6 +179,7 @@ class IntellicrackCLI:
     """Enhanced CLI handler with all features."""
 
     def __init__(self, args):
+        """Initialize enhanced CLI handler with comprehensive configuration and performance monitoring."""
         self.args = args
         self.results = {}
         self.binary_path = args.binary

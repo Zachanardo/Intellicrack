@@ -126,11 +126,11 @@ class GPUAccelerator:
     def parallel_pattern_search(self, data: bytes, pattern: bytes) -> Dict[str, Any]:
         """
         GPU-accelerated pattern search in binary data.
-        
+
         Args:
             data: Binary data to search in
             pattern: Pattern to search for
-            
+
         Returns:
             Dictionary with match count and positions
         """
@@ -348,11 +348,11 @@ class GPUAccelerator:
     def entropy_calculation(self, data: bytes, block_size: int = 1024) -> Dict[str, Any]:
         """
         GPU-accelerated entropy calculation.
-        
+
         Args:
             data: Binary data to analyze
             block_size: Size of blocks for entropy calculation
-            
+
         Returns:
             Dictionary with entropy values
         """
@@ -484,11 +484,11 @@ class GPUAccelerator:
     def hash_computation(self, data: bytes, algorithms: List[str] = None) -> Dict[str, Any]:
         """
         GPU-accelerated hash computation.
-        
+
         Args:
             data: Binary data to hash
             algorithms: List of hash algorithms to compute
-            
+
         Returns:
             Dictionary with hash values
         """

@@ -416,11 +416,11 @@ class MemoryForensicsTool:
     def analyze_specific_process(self, dump_path: str, process_id: int) -> Dict[str, Any]:
         """
         Analyze a specific process from memory dump
-        
+
         Args:
             dump_path: Path to memory dump
             process_id: Process ID to analyze
-            
+
         Returns:
             Process-specific analysis results
         """

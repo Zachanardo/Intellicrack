@@ -3,32 +3,33 @@
 This module provides the AI-powered assistant interface for code generation,
 analysis assistance, and intelligent suggestions within the application.
 """
+
 from datetime import datetime
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QListWidget,
-    QMessageBox,
-    QProgressBar,
-    QPushButton,
-    QSlider,
-    QSpinBox,
-    QSplitter,
-    QTableWidget,
-    QTabWidget,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
+QCheckBox,
+QComboBox,
+QGroupBox,
+QHBoxLayout,
+QLabel,
+QLineEdit,
+QListWidget,
+QMessageBox,
+QProgressBar,
+QPushButton,
+QSlider,
+QSpinBox,
+QSplitter,
+QTableWidget,
+QTabWidget,
+QTextEdit,
+QVBoxLayout,
+QWidget,
 )
 
-from ...core.ai_model_manager import AIModelManager, ModelConfig, ModelProvider
+from ...core.ai_model_manager import ModelConfig, ModelProvider
 from .base_tab import BaseTab
 
 
@@ -44,8 +45,8 @@ class AIAssistantTab(BaseTab):
     model_loaded = pyqtSignal(str, bool)
 
     def __init__(self, shared_context=None, parent=None):
-    """Initialize AI assistant tab with code analysis and generation capabilities."""
-    super().__init__(shared_context, parent)
+        """Initialize AI assistant tab with code analysis and generation capabilities."""
+        super().__init__(shared_context, parent)
 
     def setup_content(self):
         """Setup the complete AI Assistant tab content"""
@@ -121,10 +122,9 @@ class AIAssistantTab(BaseTab):
         provider_selection_layout = QHBoxLayout()
         provider_selection_layout.addWidget(QLabel("Provider:"))
         self.provider_combo = QComboBox()
-        self.provider_combo.addItems([
-            "OpenAI", "Anthropic", "Local (Ollama)", "Hugging Face",
-            "Google Gemini", "Cohere", "Azure OpenAI"
-        ])
+        self.provider_combo.addItems(
+            ["OpenAI", "Anthropic", "Local (Ollama)", "Hugging Face", "Google Gemini", "Cohere", "Azure OpenAI"]
+        )
         self.provider_combo.currentTextChanged.connect(self.on_provider_changed)
         provider_selection_layout.addWidget(self.provider_combo)
 
@@ -225,11 +225,18 @@ class AIAssistantTab(BaseTab):
         focus_layout = QHBoxLayout()
         focus_layout.addWidget(QLabel("Analysis Focus:"))
         self.analysis_focus_combo = QComboBox()
-        self.analysis_focus_combo.addItems([
-            "General Analysis", "License Detection", "Protection Analysis",
-            "Vulnerability Research", "Malware Analysis", "Code Quality",
-            "Performance Analysis", "Security Audit"
-        ])
+        self.analysis_focus_combo.addItems(
+            [
+                "General Analysis",
+                "License Detection",
+                "Protection Analysis",
+                "Vulnerability Research",
+
+                "Code Quality",
+                "Performance Analysis",
+                "Security Audit",
+            ]
+        )
         focus_layout.addWidget(self.analysis_focus_combo)
 
         target_layout.addLayout(binary_layout)
@@ -243,9 +250,7 @@ class AIAssistantTab(BaseTab):
         depth_layout = QHBoxLayout()
         depth_layout.addWidget(QLabel("Analysis Depth:"))
         self.analysis_depth_combo = QComboBox()
-        self.analysis_depth_combo.addItems([
-            "Quick Scan", "Standard Analysis", "Deep Analysis", "Comprehensive"
-        ])
+        self.analysis_depth_combo.addItems(["Quick Scan", "Standard Analysis", "Deep Analysis", "Comprehensive"])
         options_layout.addLayout(depth_layout)
 
         # Include options
@@ -299,11 +304,18 @@ class AIAssistantTab(BaseTab):
         type_layout = QHBoxLayout()
         type_layout.addWidget(QLabel("Script Type:"))
         self.script_type_combo = QComboBox()
-        self.script_type_combo.addItems([
-            "Frida Hook Script", "Ghidra Analysis Script", "Python Automation",
-            "License Bypass Script", "API Hook Script", "Memory Scanner",
-            "Custom Payload", "Debugging Script"
-        ])
+        self.script_type_combo.addItems(
+            [
+                "Frida Hook Script",
+                "Ghidra Analysis Script",
+                "Python Automation",
+
+                "API Hook Script",
+                "Memory Scanner",
+
+                "Debugging Script",
+            ]
+        )
         type_layout.addWidget(self.script_type_combo)
 
         # Target specification
@@ -324,9 +336,7 @@ class AIAssistantTab(BaseTab):
         template_layout = QHBoxLayout()
         template_layout.addWidget(QLabel("Template:"))
         self.template_combo = QComboBox()
-        self.template_combo.addItems([
-            "Basic Template", "Advanced Template", "Custom Template", "No Template"
-        ])
+        self.template_combo.addItems(["Basic Template", "Advanced Template", "Custom Template", "No Template"])
         template_layout.addWidget(self.template_combo)
 
         # Options checkboxes
@@ -353,11 +363,7 @@ class AIAssistantTab(BaseTab):
 
         self.requirements_edit = QTextEdit()
         self.requirements_edit.setPlaceholderText(
-            "Describe specific requirements for the script:\n"
-            "- Hook specific functions\n"
-            "- Bypass certain protections\n"
-            "- Extract specific data\n"
-            "- Custom behavior requirements"
+            "Describe specific requirements for the script:\n- Hook specific functions\n- Bypass certain protections\n- Extract specific data\n- Custom behavior requirements"
         )
         self.requirements_edit.setMaximumHeight(100)
         requirements_layout.addWidget(self.requirements_edit)
@@ -383,7 +389,6 @@ class AIAssistantTab(BaseTab):
 
         return tab
 
-
     def create_training_tab(self):
         """Create model training and fine-tuning controls"""
         tab = QWidget()
@@ -397,10 +402,9 @@ class AIAssistantTab(BaseTab):
         data_source_layout = QHBoxLayout()
         data_source_layout.addWidget(QLabel("Data Source:"))
         self.data_source_combo = QComboBox()
-        self.data_source_combo.addItems([
-            "Analysis History", "Custom Dataset", "Binary Samples",
-            "Script Templates", "Public Datasets"
-        ])
+        self.data_source_combo.addItems(
+            ["Analysis History", "Custom Dataset", "Binary Samples", "Script Templates", "Public Datasets"]
+        )
         data_source_layout.addWidget(self.data_source_combo)
 
         # Data path
@@ -425,9 +429,9 @@ class AIAssistantTab(BaseTab):
         training_type_layout = QHBoxLayout()
         training_type_layout.addWidget(QLabel("Training Type:"))
         self.training_type_combo = QComboBox()
-        self.training_type_combo.addItems([
-            "Fine-tuning", "Transfer Learning", "Custom Training", "Reinforcement Learning"
-        ])
+        self.training_type_combo.addItems(
+            ["Fine-tuning", "Transfer Learning", "Custom Training", "Reinforcement Learning"]
+        )
         training_type_layout.addWidget(self.training_type_combo)
 
         # Epochs
@@ -581,7 +585,7 @@ class AIAssistantTab(BaseTab):
 
         return panel
 
-    # Method implementations
+# Method implementations
     def on_provider_changed(self, provider):
         """Update model list based on selected provider"""
         self.model_combo.clear()
@@ -605,7 +609,7 @@ class AIAssistantTab(BaseTab):
 
         self.model_combo.addItems(models)
 
-        # Update API key placeholder
+                # Update API key display
         if provider in ["OpenAI", "Anthropic", "Cohere", "Azure OpenAI"]:
             self.api_key_edit.setPlaceholderText(f"Enter {provider} API key")
         else:
@@ -638,7 +642,7 @@ class AIAssistantTab(BaseTab):
                 "Anthropic": ModelProvider.ANTHROPIC,
                 "Local (Ollama)": ModelProvider.OLLAMA,
                 "Google Gemini": ModelProvider.GOOGLE,
-                "Groq": ModelProvider.GROQ
+                "Groq": ModelProvider.GROQ,
             }
 
             provider_enum = provider_map.get(provider, ModelProvider.LOCAL)
@@ -650,7 +654,7 @@ class AIAssistantTab(BaseTab):
                 model_id=model,
                 api_key=api_key if api_key else None,
                 temperature=self.temperature_slider.value() / 100.0,
-                max_tokens=self.max_tokens_spin.value()
+                max_tokens=self.max_tokens_spin.value(),
             )
 
             # Register and load model
@@ -685,9 +689,8 @@ class AIAssistantTab(BaseTab):
         from PyQt6.QtWidgets import QFileDialog
 
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Binary for AI Analysis", "",
-            "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)"
-        )
+            self, "Select Binary for AI Analysis", "", "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)"
+)
 
         if file_path:
             self.analysis_binary_edit.setText(file_path)
@@ -714,206 +717,1592 @@ class AIAssistantTab(BaseTab):
             # Start analysis
             self.analysis_started.emit(binary_path)
 
-            # Simulate AI analysis
-            self._simulate_ai_analysis(binary_path, focus, depth)
+            # Perform real AI analysis
+            self._perform_real_ai_analysis(binary_path, focus, depth)
 
         except Exception as e:
             self.log_ai_message(f"Error starting AI analysis: {str(e)}", "error")
 
-    def _simulate_ai_analysis(self, binary_path, focus, depth):
-        """Simulate AI analysis process"""
+    def _perform_real_ai_analysis(self, binary_path, focus, depth):
+        """Perform comprehensive AI-enhanced binary analysis using advanced techniques."""
         try:
+            import hashlib
             import os
 
-            # Generate analysis based on focus and depth
-            analysis_text = f"AI Analysis Results for {os.path.basename(binary_path)}\n"
-            analysis_text += "=" * 60 + "\n\n"
-            analysis_text += f"Analysis Focus: {focus}\n"
-            analysis_text += f"Analysis Depth: {depth}\n"
-            analysis_text += f"AI Model: {self.current_model}\n\n"
+            # Initialize enhanced analyzers
+            from ...core.analysis.binary_analyzer import BinaryAnalyzer
+            from ...core.analysis.dynamic_analyzer import DynamicAnalyzer
+            from ...core.analysis.firmware_analyzer import FirmwareAnalyzer
+            from ...utils.pe_analyzer import PEAnalyzer
+            from ...utils.string_extractor import StringExtractor
 
+            # Create comprehensive analyzer instances
+            binary_analyzer = BinaryAnalyzer()
+            dynamic_analyzer = DynamicAnalyzer()
+            firmware_analyzer = FirmwareAnalyzer()
+            pe_analyzer = PEAnalyzer()
+            string_extractor = StringExtractor()
+
+            analysis_text = f"[*] Enhanced AI Binary Analysis for {os.path.basename(binary_path)}\n"
+            analysis_text += "=" * 80 + "\n\n"
+            analysis_text += "[+] Analysis Configuration:\n"
+            analysis_text += f"  - Focus: {focus}\n"
+            analysis_text += f"  - Depth: {depth}\n"
+            analysis_text += f"  - AI Model: {self.current_model or 'Fallback Analysis'}\n"
+            analysis_text += f"  - Binary Size: {os.path.getsize(binary_path):,} bytes\n\n"
+
+            # File hash and metadata
+            with open(binary_path, "rb") as f:
+                file_data = f.read()
+                md5_hash = hashlib.md5(file_data).hexdigest()
+                sha1_hash = hashlib.sha1(file_data).hexdigest()
+                sha256_hash = hashlib.sha256(file_data).hexdigest()
+
+            analysis_text += "[#] File Hashes:\n"
+            analysis_text += f"  - MD5:{md5_hash}\n"
+            analysis_text += f"  - SHA1:   {sha1_hash}\n"
+            analysis_text += f"  - SHA256: {sha256_hash}\n\n"
+
+            # Comprehensive binary analysis
+            try:
+                binary_info = binary_analyzer.analyze_binary(binary_path)
+                if binary_info:
+                    analysis_text += "[+] Binary Architecture Analysis:\n"
+                    analysis_text += f"  - Format: {binary_info.get('format', 'Unknown')}\n"
+                    analysis_text += f"  - Architecture: {binary_info.get('architecture', 'Unknown')}\n"
+                    analysis_text += f"  - Endianness: {binary_info.get('endianness', 'Unknown')}\n"
+                    analysis_text += f"  - Entry Point: {binary_info.get('entry_point', 'Unknown')}\n"
+                    analysis_text += f"  - Sections: {len(binary_info.get('sections', []))}\n\n"
+
+                # Section analysis
+                if binary_info.get("sections"):
+                    analysis_text += "[+] Section Analysis:\n"
+                    for i, section in enumerate(binary_info["sections"][:10]):
+                        perms = section.get("permissions", "Unknown")
+                        size = section.get("size", 0)
+                        entropy = section.get("entropy", 0.0)
+                        analysis_text += f"  - [{i+1}] {section.get('name', 'Unknown')}: {perms} ({size:,} bytes, entropy: {entropy:.2f})\n"
+                    analysis_text += "\n"
+            except Exception as e:
+                logger.debug(f"Binary analyzer failed: {e}")
+                analysis_text += f"[!] Binary analysis unavailable: {str(e)}\n\n"
+
+            # Enhanced PE analysis with advanced features
+            try:
+                import pefile
+                
+                pe = pefile.PE(binary_path)
+
+                analysis_text += "[+] Enhanced PE Analysis:\n"
+                analysis_text += f"  - Machine Type: {hex(pe.FILE_HEADER.Machine)} ({self._get_machine_name(pe.FILE_HEADER.Machine)})\n"
+                analysis_text += f"  - Characteristics: {hex(pe.FILE_HEADER.Characteristics)}\n"
+                analysis_text += f"  - Subsystem: {pe.OPTIONAL_HEADER.Subsystem} ({self._get_subsystem_name(pe.OPTIONAL_HEADER.Subsystem)})\n"
+                analysis_text += f"  - Image Base: {hex(pe.OPTIONAL_HEADER.ImageBase)}\n"
+                analysis_text += f"  - Entry Point: {hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint)}\n"
+                analysis_text += f"  - Sections: {pe.FILE_HEADER.NumberOfSections}\n\n"
+
+                # Security features analysis
+                dll_characteristics = pe.OPTIONAL_HEADER.DllCharacteristics
+                analysis_text += "[+] Security Features:\n"
+                analysis_text += f"  - ASLR: {'[+] Enabled' if dll_characteristics & 0x0040 else '[-] Disabled'}\n"
+                analysis_text += f"  - DEP/NX: {'[+] Enabled' if dll_characteristics & 0x0100 else '[-] Disabled'}\n"
+                analysis_text += f"  - SEH: {'[+] Enabled' if not (dll_characteristics & 0x0400) else '[-] Disabled'}\n"
+                analysis_text += f"  - CFG: {'[+] Enabled' if dll_characteristics & 0x4000 else '[-] Disabled'}\n"
+                analysis_text += (
+                    f"  - Isolation: {'[+] Enabled' if not (dll_characteristics & 0x0200) else '[-] Disabled'}\n\n"
+                )
+
+            except Exception as e:
+                logger.debug(f"PE parsing failed: {e}")
+                analysis_text += "[!] PE Format: Analysis failed (may be packed/obfuscated)\n\n"
+
+            # Dynamic analysis capabilities
+            if depth in ["Deep Analysis", "Comprehensive"]:
+                try:
+                    dynamic_results = dynamic_analyzer.quick_analysis(binary_path)
+                    if dynamic_results:
+                        analysis_text += "[+] Dynamic Analysis Summary:\n"
+                        analysis_text += f"  - API Calls Detected: {len(dynamic_results.get('api_calls', []))}\n"
+                        analysis_text += (
+                            f"  - Network Activity: {'Yes' if dynamic_results.get('network_activity') else 'No'}\n"
+                        )
+                        analysis_text += f"  - File Operations: {len(dynamic_results.get('file_operations', []))}\n"
+                        analysis_text += (
+                            f"  - Registry Access: {'Yes' if dynamic_results.get('registry_access') else 'No'}\n"
+                        )
+                        analysis_text += (
+                            f"  - Suspicious Behavior: {len(dynamic_results.get('suspicious_behaviors', []))}\n\n"
+                        )
+                except Exception as e:
+                    logger.debug(f"Dynamic analysis failed: {e}")
+
+            # Enhanced string analysis with categorization
+            strings = string_extractor.extract_strings(binary_path)
+            categorized_strings = self._categorize_strings(strings)
+
+            analysis_text += f"📝 String Analysis ({len(strings)} total strings):\n"
+            for category, cat_strings in categorized_strings.items():
+                if cat_strings:
+                    analysis_text += f"  - {category}: {len(cat_strings)} strings\n"
+                    for s in cat_strings[:3]:  # Show first 3 of each category
+                        display_str = s[:60] + "..." if len(s) > 60 else s
+                        analysis_text += f"│    - {display_str}\n"
+            analysis_text += "\n"
+
+            # Focus-specific enhanced analysis
             if focus == "License Detection":
-                analysis_text += "License Protection Analysis:\n"
-                analysis_text += "- Detected potential license validation functions\n"
-                analysis_text += "- Found string references to licensing systems\n"
-                analysis_text += "- Identified possible bypass targets\n\n"
-                analysis_text += "Recommended approach:\n"
-                analysis_text += "1. Hook license validation functions\n"
-                analysis_text += "2. Patch return values to simulate valid license\n"
-                analysis_text += "3. Monitor network traffic for license servers\n"
-
+                analysis_text += self._perform_license_detection_analysis(pe, strings, file_data)
             elif focus == "Protection Analysis":
-                analysis_text += "Protection Mechanism Analysis:\n"
-                analysis_text += "- Anti-debugging techniques detected\n"
-                analysis_text += "- Code obfuscation patterns identified\n"
-                analysis_text += "- Packing/encryption analysis\n\n"
-                analysis_text += "Bypass strategies:\n"
-                analysis_text += "1. Use Frida to bypass anti-debug checks\n"
-                analysis_text += "2. Implement memory dumping for unpacking\n"
-                analysis_text += "3. Hook critical API calls\n"
-
+                analysis_text += self._perform_protection_analysis(pe, strings, file_data, binary_path)
             elif focus == "Vulnerability Research":
-                analysis_text += "Vulnerability Analysis:\n"
-                analysis_text += "- Buffer overflow potential detected\n"
-                analysis_text += "- Unsafe API usage identified\n"
-                analysis_text += "- Input validation weaknesses found\n\n"
-                analysis_text += "Exploitation vectors:\n"
-                analysis_text += "1. Stack-based buffer overflow in input handler\n"
-                analysis_text += "2. Format string vulnerability in logging\n"
-                analysis_text += "3. Integer overflow in size calculations\n"
-
+                analysis_text += self._perform_vulnerability_analysis(pe, strings, file_data)
+            elif focus == "Security Audit":
+                analysis_text += self._perform_security_audit_analysis(pe, strings, file_data)
             else:
-                analysis_text += "General Binary Analysis:\n"
-                analysis_text += "- Architecture: x86-64\n"
-                analysis_text += "- Compilation: MSVC with optimizations\n"
-                analysis_text += "- Dependencies: Standard libraries + custom DLLs\n"
-                analysis_text += "- Entry points: 3 main functions identified\n\n"
-                analysis_text += "Key findings:\n"
-                analysis_text += "1. Interesting string patterns suggesting commercial software\n"
-                analysis_text += "2. Network communication capabilities\n"
-                analysis_text += "3. Registry access for configuration storage\n"
+                analysis_text += self._perform_general_enhanced_analysis(pe, strings, file_data)
+
+            # AI-powered insights (if model available)
+            if self.current_model and hasattr(self, "ai_model_manager"):
+                try:
+                    ai_context = {
+                        "file_size": len(file_data),
+                        "strings_count": len(strings),
+                        "focus": focus,
+                        "depth": depth,
+                        "interesting_strings": categorized_strings.get("Interesting", [])[:20],
+                    }
+
+                    ai_analysis = self.ai_model_manager.analyze_binary(
+                        self.current_model, binary_path, focus=focus.lower().replace(" ", "_"), context=ai_context
+                    )
+
+                    if ai_analysis:
+                        analysis_text += "[+] AI-Generated Insights:\n"
+                        analysis_text += f"{ai_analysis}\n\n"
+                except Exception as e:
+                    logger.debug(f"AI analysis failed: {e}")
+
+            # Recommendations based on analysis
+            recommendations = self._generate_analysis_recommendations(focus, depth)
+            if recommendations:
+                analysis_text += "[+] Analysis Recommendations:\n"
+                for i, rec in enumerate(recommendations, 1):
+                    analysis_text += f"{i}. {rec}\n"
+                analysis_text += "\n"
 
             # Display results
             self.analysis_results.setPlainText(analysis_text)
 
-            # Add to history
-            self.analysis_history.append({
-                'binary': binary_path,
-                'focus': focus,
-                'depth': depth,
-                'results': analysis_text
-            })
+            # Store analysis in history with enhanced metadata
+            analysis_record = {
+                "binary": binary_path,
+                "focus": focus,
+                "depth": depth,
+                "timestamp": datetime.now().isoformat(),
+                "file_hash": sha256_hash,
+                "file_size": len(file_data),
+                "results": analysis_text,
+                "ai_model": self.current_model,
+            }
 
-            self.log_ai_message("AI analysis completed successfully", "success")
+            if not hasattr(self, "analysis_history"):
+                self.analysis_history = []
+            self.analysis_history.append(analysis_record)
+
+            self.log_ai_message("Enhanced AI analysis completed successfully", "success")
             self.analysis_completed.emit(binary_path, "success")
 
         except Exception as e:
-            self.log_ai_message(f"Error in AI analysis: {str(e)}", "error")
+            error_msg = f"Error in enhanced AI analysis: {str(e)}"
+            self.log_ai_message(error_msg, "error")
+            self.analysis_results.setPlainText(f"Analysis Error:\n{error_msg}")
             self.analysis_completed.emit(binary_path, "failed")
+
+    def _get_machine_name(self, machine_type):
+        """Convert PE machine type to readable name."""
+        machine_types = {
+            0x014C: "Intel 386",
+            0x0162: "MIPS R3000",
+            0x0166: "MIPS R4000",
+            0x0168: "MIPS R10000",
+            0x0169: "MIPS WCE v2",
+            0x0184: "Alpha AXP",
+            0x01A2: "Hitachi SH3",
+            0x01A3: "Hitachi SH3 DSP",
+            0x01A6: "Hitachi SH4",
+            0x01A8: "Hitachi SH5",
+            0x01C0: "ARM little endian",
+            0x01C2: "ARM Thumb",
+            0x01C4: "ARM Thumb-2",
+            0x01D3: "Matsushita AM33",
+            0x01F0: "PowerPC little endian",
+            0x01F1: "PowerPC with FPU",
+            0x0200: "Intel Itanium",
+            0x0266: "MIPS16",
+            0x0284: "Alpha AXP 64-bit",
+            0x0366: "MIPS with FPU",
+            0x0466: "MIPS16 with FPU",
+            0x0520: "Infineon TriCore",
+            0x0CEF: "CEF",
+            0x0EBC: "EFI Byte Code",
+            0x8664: "x64 (AMD64/Intel 64)",
+            0x9041: "Mitsubishi M32R",
+            0xAA64: "ARM64 little endian",
+            0xC0EE: "CEE",
+        }
+        return machine_types.get(machine_type, f"Unknown (0x{machine_type:04x})")
+
+    def _get_subsystem_name(self, subsystem):
+        """Convert PE subsystem code to readable name."""
+        subsystems = {
+            0: "Unknown",
+            1: "Native",
+            2: "Windows GUI",
+            3: "Windows Console",
+            5: "OS/2 Console",
+            7: "POSIX Console",
+            8: "Native Win9x Driver",
+            9: "Windows CE GUI",
+            10: "EFI Application",
+            11: "EFI Boot Service Driver",
+            12: "EFI Runtime Driver",
+            13: "EFI ROM",
+            14: "Xbox",
+            16: "Windows Boot Application",
+        }
+        return subsystems.get(subsystem, f"Unknown ({subsystem})")
+
+    def _categorize_strings(self, strings):
+        """Categorize extracted strings into different types."""
+        import re
+
+        categorized = {
+            "URLs": [],
+            "File Paths": [],
+            "Registry Keys": [],
+            "IP Addresses": [],
+            "Email Addresses": [],
+            "Crypto/Hashes": [],
+            "API Functions": [],
+            "Error Messages": [],
+            "User Agents": [],
+            "Interesting": [],
+            "Other": [],
+        }
+
+        # Patterns for categorization
+        url_pattern = re.compile(r'https?://[^\s<>"{}|\\^`\[\]]+', re.IGNORECASE)
+        ip_pattern = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
+        email_pattern = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
+        file_path_pattern = re.compile(r'[A-Z]:\\\\[^<>:"|?*\n\r]+|/[^<>:"|?*\n\r]+', re.IGNORECASE)
+        registry_pattern = re.compile(r'HKEY_[A-Z_]+\\\\[^<>:"|?*\n\r]+', re.IGNORECASE)
+        crypto_pattern = re.compile(r"\b[A-Fa-f0-9]{32,128}\b")
+        api_pattern = re.compile(r"\b[A-Z][a-zA-Z0-9]*[A-Z][a-zA-Z0-9]*\b")
+        error_pattern = re.compile(r"\b(error|exception|failed|failure|invalid|denied|forbidden)\b", re.IGNORECASE)
+        useragent_pattern = re.compile(r"Mozilla/|User-Agent|Chrome/|Firefox/", re.IGNORECASE)
+
+        for string in strings:
+            if len(string) < 4:  # Skip very short strings
+                continue
+
+            categorized_flag = False
+
+            # Check each category
+            if url_pattern.search(string):
+                categorized["URLs"].append(string)
+                categorized_flag = True
+            elif ip_pattern.search(string):
+                categorized["IP Addresses"].append(string)
+                categorized_flag = True
+            elif email_pattern.search(string):
+                categorized["Email Addresses"].append(string)
+                categorized_flag = True
+            elif file_path_pattern.search(string):
+                categorized["File Paths"].append(string)
+                categorized_flag = True
+            elif registry_pattern.search(string):
+                categorized["Registry Keys"].append(string)
+                categorized_flag = True
+            elif crypto_pattern.search(string):
+                categorized["Crypto/Hashes"].append(string)
+                categorized_flag = True
+            elif useragent_pattern.search(string):
+                categorized["User Agents"].append(string)
+                categorized_flag = True
+            elif error_pattern.search(string):
+                categorized["Error Messages"].append(string)
+                categorized_flag = True
+            elif api_pattern.search(string) and len(string) < 50:
+                categorized["API Functions"].append(string)
+                categorized_flag = True
+
+            # Interesting strings (potential indicators)
+            if not categorized_flag:
+                if any(
+                    keyword in string.lower()
+                    for keyword in [
+                        "password",
+                        "secret",
+                        "key",
+                        "token",
+                        "auth",
+                        "login",
+                        "admin",
+                        "root",
+                        "config",
+                        "debug",
+                        "test",
+                        "license",
+                        "serial",
+                        "crack",
+                        "patch",
+                        "bypass",
+                        "hook",
+                        "inject",
+                    ]
+                ):
+                    categorized["Interesting"].append(string)
+                else:
+                    categorized["Other"].append(string)
+
+        # Limit each category to prevent overwhelming output
+        for category in categorized:
+            categorized[category] = categorized[category][:20]
+
+        return categorized
+
+    def _perform_license_detection_analysis(self, pe, strings, file_data):
+        """Enhanced license detection analysis."""
+        analysis = "[+] Enhanced License Detection Analysis:\n"
+
+        # License-related strings
+        license_indicators = []
+        for string in strings:
+            if any(
+                keyword in string.lower()
+                for keyword in [
+                    "license",
+                    "copyright",
+                    "trial",
+                    "demo",
+                    "evaluation",
+                    "registration",
+                    "serial",
+                    "key",
+                    "activation",
+                    "expir",
+                ]
+            ):
+                license_indicators.append(string)
+
+        if license_indicators:
+            analysis += f"  - License Strings Found: {len(license_indicators)}\n"
+            for indicator in license_indicators[:5]:
+                display_str = indicator[:60] + "..." if len(indicator) > 60 else indicator
+                analysis += f"│    - {display_str}\n"
+        else:
+            analysis += "  - No obvious license strings detected\n"
+
+        # Check for common protection signatures
+        protection_signatures = {
+            "Themida": [b"Themida", b"WinLicense"],
+            "VMProtect": [b"VMProtect", b"VMP"],
+            "UPX": [b"UPX!", b"UPX0", b"UPX1"],
+            "ASPack": [b"aPSPack", b"ASPack"],
+            "PECompact": [b"PECompact", b"pec1", b"pec2"],
+            "Armadillo": [b"Armadillo", b"ARMADILLOv"],
+            "SafeNet": [b"SafeNet", b"Sentinel"],
+            "FlexLM": [b"FlexLM", b"FLEXLM"],
+            "Dongle": [b"HASP", b"SuperPro", b"Wibu"],
+        }
+
+        detected_protections = []
+        for protection, signatures in protection_signatures.items():
+            for sig in signatures:
+                if sig in file_data:
+                    detected_protections.append(protection)
+                    break
+
+        if detected_protections:
+            analysis += f"  - Protection Systems: {', '.join(detected_protections)}\n"
+        else:
+            analysis += "  - No known protection systems detected\n"
+
+        # License bypass recommendations
+        analysis += "  - Recommendations:\n"
+        if detected_protections:
+            analysis += "     - Consider virtualization bypass techniques\n"
+            analysis += "     - Analyze license validation routines\n"
+            analysis += "     - Look for hardware fingerprinting\n"
+        else:
+            analysis += "     - Search for license validation functions\n"
+            analysis += "     - Analyze network license checks\n"
+            analysis += "     - Check for time-based restrictions\n"
+
+        return analysis + "\n"
+
+    def _perform_protection_analysis(self, pe, strings, file_data, binary_path):
+        """Enhanced protection mechanism analysis with comprehensive detection."""
+        analysis = "[+] Enhanced Protection Analysis:\n"
+
+        # Run comprehensive protection detection
+        protections = self._detect_advanced_protections(pe, strings, file_data, binary_path)
+        pe_anomalies = self._analyze_pe_anomalies(pe)
+        runtime_indicators = self._detect_runtime_packers(binary_path)
+        anti_analysis = self._detect_anti_analysis_strings(strings)
+
+        # Generate comprehensive protection report
+        comprehensive_report = self._generate_protection_report(
+            protections, pe_anomalies, runtime_indicators, anti_analysis
+        )
+
+        # Add the comprehensive report to analysis
+        analysis += comprehensive_report
+
+        # Legacy analysis for backwards compatibility
+        analysis += "\n" + "=" * 60 + "\n"
+        analysis += "📋 Legacy Analysis Summary:\n\n"
+
+        # Anti-debugging techniques (legacy)
+        antidebug_indicators = []
+        antidebug_strings = [
+            "IsDebuggerPresent",
+            "CheckRemoteDebuggerPresent",
+            "OutputDebugString",
+            "FindWindow",
+            "ollydbg",
+            "x32dbg",
+            "x64dbg",
+            "wireshark",
+            "procmon",
+        ]
+
+        for string in strings:
+            if any(indicator.lower() in string.lower() for indicator in antidebug_strings):
+                antidebug_indicators.append(string)
+
+        analysis += f"  - Legacy Anti-Debug Indicators: {len(antidebug_indicators)}\n"
+        for indicator in antidebug_indicators[:3]:
+            analysis += f"│    - {indicator}\n"
+
+        # Anti-VM techniques (legacy)
+        antivm_indicators = []
+        antivm_strings = ["vmware", "virtualbox", "qemu", "sandboxie", "wine", "vbox", "vmtoolsd", "vmmouse", "vmhgfs"]
+
+        for string in strings:
+            if any(indicator.lower() in string.lower() for indicator in antivm_strings):
+                antivm_indicators.append(string)
+
+        analysis += f"  - Legacy Anti-VM Indicators: {len(antivm_indicators)}\n"
+        for indicator in antivm_indicators[:3]:
+            analysis += f"│    - {indicator}\n"
+
+        # Packing/obfuscation detection (legacy)
+        try:
+            entropy_analysis = self._calculate_section_entropy(pe)
+            high_entropy_sections = [s for s in entropy_analysis if s["entropy"] > 7.0]
+
+            analysis += f"  - Legacy High Entropy Sections: {len(high_entropy_sections)}\n"
+            for section in high_entropy_sections[:3]:
+                analysis += f"│    - {section['name']}: {section['entropy']:.2f}\n"
+        except Exception as e:
+            analysis += f"  - Legacy entropy analysis failed: {str(e)}\n"
+
+        # Code injection indicators (legacy)
+        injection_apis = [
+            "VirtualAlloc",
+            "VirtualProtect",
+            "WriteProcessMemory",
+            "CreateRemoteThread",
+            "SetWindowsHookEx",
+            "DllInject",
+        ]
+
+        injection_indicators = []
+        for string in strings:
+            if any(api.lower() in string.lower() for api in injection_apis):
+                injection_indicators.append(string)
+
+        analysis += f"  - Legacy Code Injection APIs: {len(injection_indicators)}\n"
+        for indicator in injection_indicators[:3]:
+            analysis += f"│    - {indicator}\n"
+
+        # Final recommendations
+        analysis += "\n[+] Final Protection Analysis Recommendations:\n"
+
+        total_protections = sum(len(prots) for prots in protections.values() if isinstance(prots, list))
+
+        if total_protections >= 5:
+            analysis += "  - HIGH PROTECTION: Multiple layers detected\n"
+            analysis += "  - Recommend commercial unpacking tools\n"
+            analysis += "  - Use hardware-based analysis environment\n"
+            analysis += "  - Consider kernel-mode debugging\n"
+        elif total_protections >= 2:
+            analysis += "  - MEDIUM PROTECTION: Some protection detected\n"
+            analysis += "  - Standard unpacking tools should work\n"
+            analysis += "  - Dynamic analysis recommended\n"
+        else:
+            analysis += "  - LOW PROTECTION: Minimal protection detected\n"
+            analysis += "  - Standard reverse engineering approaches\n"
+
+        if antidebug_indicators or anti_analysis["debugger_detection"]:
+            analysis += "  - Implement anti-anti-debug patches\n"
+        if antivm_indicators or anti_analysis["vm_detection"]:
+            analysis += "  - Use physical machine for analysis\n"
+        if pe_anomalies:
+            analysis += "  - PE structure requires manual reconstruction\n"
+        if runtime_indicators:
+            analysis += "  - Runtime unpacking required\n"
+
+        analysis += "  - Multiple analysis techniques recommended\n"
+
+        return analysis + "\n"
+
+    def _calculate_section_entropy(self, pe):
+        """Calculate entropy for PE sections."""
+        import math
+        from collections import Counter
+
+        sections = []
+        for section in pe.sections:
+            try:
+                data = section.get_data()
+                if len(data) == 0:
+                    continue
+
+                # Calculate entropy
+                byte_counts = Counter(data)
+                entropy = 0
+                for count in byte_counts.values():
+                    freq = count / len(data)
+                    entropy -= freq * math.log2(freq)
+
+                sections.append({"name": section.Name.decode().rstrip("\x00"), "entropy": entropy, "size": len(data)})
+            except Exception:
+                continue
+
+        return sections
+
+    def _perform_vulnerability_analysis(self, pe, strings, file_data):
+        """Enhanced vulnerability analysis."""
+        analysis = "[+] Enhanced Vulnerability Analysis:\n"
+
+        # Buffer overflow indicators
+        dangerous_functions = [
+            "strcpy",
+            "strcat",
+            "sprintf",
+            "gets",
+            "scanf",
+            "memcpy",
+            "memmove",
+            "strncpy",
+            "strncat",
+        ]
+
+        vuln_functions = []
+        for string in strings:
+            if any(func in string for func in dangerous_functions):
+                vuln_functions.append(string)
+
+        analysis += f"  - Dangerous Functions: {len(vuln_functions)}\n"
+        for func in vuln_functions[:5]:
+            analysis += f"│    - {func}\n"
+
+        # Format string vulnerabilities
+        format_indicators = []
+        for string in strings:
+            if "%" in string and any(fmt in string for fmt in ["%s", "%d", "%x", "%n"]):
+                format_indicators.append(string)
+
+        analysis += f"  - Format String Candidates: {len(format_indicators)}\n"
+        for indicator in format_indicators[:3]:
+            display_str = indicator[:40] + "..." if len(indicator) > 40 else indicator
+            analysis += f"│    - {display_str}\n"
+
+        # Network vulnerability indicators
+        network_functions = [
+            "send",
+            "recv",
+            "accept",
+            "connect",
+            "bind",
+            "listen",
+            "WSASend",
+            "WSARecv",
+            "InternetOpen",
+        ]
+
+        network_indicators = []
+        for string in strings:
+            if any(func in string for func in network_functions):
+                network_indicators.append(string)
+
+        analysis += f"  - Network Functions: {len(network_indicators)}\n"
+        for indicator in network_indicators[:3]:
+            analysis += f"│    - {indicator}\n"
+
+        # Privilege escalation indicators
+        privesc_indicators = []
+        privesc_strings = [
+            "SeDebugPrivilege",
+            "SeBackupPrivilege",
+            "SeRestorePrivilege",
+            "SeTakeOwnershipPrivilege",
+            "SeLoadDriverPrivilege",
+        ]
+
+        for string in strings:
+            if any(priv in string for priv in privesc_strings):
+                privesc_indicators.append(string)
+
+        analysis += f"  - Privilege Escalation: {len(privesc_indicators)}\n"
+        for indicator in privesc_indicators[:3]:
+            analysis += f"│    - {indicator}\n"
+
+        analysis += "  - Research Recommendations:\n"
+        if vuln_functions:
+            analysis += "     - Analyze input validation routines\n"
+        if network_indicators:
+            analysis += "     - Test network input handling\n"
+        if format_indicators:
+            analysis += "     - Examine format string usage\n"
+        analysis += "     - Consider fuzzing approaches\n"
+
+        return analysis + "\n"
+
+
+
+    def _perform_security_audit(self, pe, strings, file_data):
+        """Security audit analysis."""
+analysis = "[+] Enhanced Security Audit:\n"
+
+# Cryptographic functions
+crypto_functions = []
+crypto_strings = [
+"CryptGenKey",
+"CryptEncrypt",
+"CryptDecrypt",
+"CryptHashData",
+"BCryptGenRandom",
+"BCryptEncrypt",
+"BCryptDecrypt",
+"AES",
+"DES",
+"RSA",
+"SHA",
+"MD5",
+]
+
+for string in strings:
+if any(crypto in string for crypto in crypto_strings):
+crypto_functions.append(string)
+
+analysis += f"  - Cryptographic Functions: {len(crypto_functions)}\n"
+for func in crypto_functions[:5]:
+analysis += f"│    - {func}\n"
+
+# Authentication mechanisms
+auth_indicators = []
+auth_strings = ["password", "username", "login", "authenticate", "credential", "token", "session", "cookie"]
+
+for string in strings:
+if any(auth.lower() in string.lower() for auth in auth_strings):
+auth_indicators.append(string)
+
+analysis += f"  - Authentication Elements: {len(auth_indicators)}\n"
+for indicator in auth_indicators[:3]:
+display_str = indicator[:40] + "..." if len(indicator) > 40 else indicator
+analysis += f"│    - {display_str}\n"
+
+# Input validation
+validation_functions = []
+validation_strings = ["validate", "sanitize", "filter", "escape", "strlen", "strnlen", "wcslen", "wcsnlen"]
+
+for string in strings:
+if any(val in string.lower() for val in validation_strings):
+validation_functions.append(string)
+
+analysis += f"  - Input Validation: {len(validation_functions)}\n"
+for func in validation_functions[:3]:
+analysis += f"│    - {func}\n"
+
+# Secure coding practices
+secure_indicators = []
+secure_strings = [
+"SecureZeroMemory",
+"CryptProtectData",
+"CryptUnprotectData",
+"GetSecurityInfo",
+"SetSecurityInfo",
+]
+
+for string in strings:
+if any(secure in string for secure in secure_strings):
+secure_indicators.append(string)
+
+analysis += f"  - Secure APIs: {len(secure_indicators)}\n"
+for indicator in secure_indicators[:3]:
+analysis += f"│    - {indicator}\n"
+
+analysis += "  - Security Recommendations:\n"
+if not crypto_functions:
+analysis += "     - Consider adding encryption for sensitive data\n"
+if not validation_functions:
+analysis += "     - Implement input validation\n"
+if not secure_indicators:
+analysis += "     - Use secure memory management APIs\n"
+analysis += "     - Regular security testing recommended\n"
+
+return analysis + "\n"
+
+    def _perform_enhanced_analysis(self, pe, strings, file_data):
+        """General enhanced analysis."""
+analysis = "[+] General Enhanced Analysis:\n"
+
+# File operations
+file_ops = []
+file_strings = [
+"CreateFile",
+"ReadFile",
+"WriteFile",
+"DeleteFile",
+"FindFirstFile",
+"FindNextFile",
+"GetFileAttributes",
+]
+
+for string in strings:
+if any(op in string for op in file_strings):
+file_ops.append(string)
+
+analysis += f"  - File Operations: {len(file_ops)}\n"
+for op in file_ops[:3]:
+analysis += f"│    - {op}\n"
+
+# Registry operations
+registry_ops = []
+registry_strings = [
+"RegOpenKey",
+"RegCreateKey",
+"RegSetValue",
+"RegQueryValue",
+"RegDeleteKey",
+"RegDeleteValue",
+"RegEnumKey",
+]
+
+for string in strings:
+if any(op in string for op in registry_strings):
+registry_ops.append(string)
+
+analysis += f"  - Registry Operations: {len(registry_ops)}\n"
+for op in registry_ops[:3]:
+analysis += f"│    - {op}\n"
+
+# Process operations
+process_ops = []
+process_strings = [
+"CreateProcess",
+"TerminateProcess",
+"OpenProcess",
+"GetCurrentProcess",
+"WaitForSingleObject",
+]
+
+for string in strings:
+if any(op in string for op in process_strings):
+process_ops.append(string)
+
+analysis += f"  - Process Operations: {len(process_ops)}\n"
+for op in process_ops[:3]:
+analysis += f"│    - {op}\n"
+
+# Threading operations
+thread_ops = []
+thread_strings = [
+"CreateThread",
+"ExitThread",
+"SuspendThread",
+"ResumeThread",
+"GetThreadContext",
+"SetThreadContext",
+]
+
+for string in strings:
+if any(op in string for op in thread_strings):
+thread_ops.append(string)
+
+analysis += f"  - Threading Operations: {len(thread_ops)}\n"
+for op in thread_ops[:3]:
+analysis += f"     - {op}\n"
+
+return analysis + "\n"
+
+    def _generate_analysis_recommendations(self, focus, depth):
+        """Generate actionable recommendations based on analysis."""
+recommendations = []
+
+if focus == "License Detection":
+recommendations.extend(
+[
+"Use dynamic analysis to trace license validation routines",
+"Monitor registry access during license checks",
+"Analyze network communication for online license validation",
+"Check for hardware fingerprinting in license mechanism",
+]
+)
+elif focus == "Protection Analysis":
+recommendations.extend(
+[
+"Consider unpacking if high entropy sections detected",
+"Use anti-anti-debug techniques for protected binaries",
+"Analyze in isolated VM environment",
+"Monitor API calls during execution",
+]
+)
+elif focus == "Vulnerability Research":
+recommendations.extend(
+[
+"Focus on input validation in identified dangerous functions",
+"Test network input handling for buffer overflows",
+"Examine format string vulnerabilities",
+"Consider targeted fuzzing for specific components",
+]
+)
+
+elif focus == "Security Audit":
+recommendations.extend(
+[
+"Review cryptographic implementations",
+"Assess input validation mechanisms",
+"Check authentication and authorization",
+"Evaluate secure coding practices",
+]
+)
+else:
+recommendations.extend(
+[
+"Start with static analysis of imports and strings",
+"Use dynamic analysis to understand runtime behavior",
+"Focus on interesting strings and API calls",
+"Consider reverse engineering specific functions",
+]
+)
+
+# Add depth-specific recommendations
+if depth in ["Deep Analysis", "Comprehensive"]:
+recommendations.extend(
+[
+"Perform control flow graph analysis",
+"Use symbolic execution for path exploration",
+"Apply machine learning for pattern recognition",
+]
+)
+
+return recommendations[:8]  # Limit to 8 recommendations
+
+    def _detect_advanced_protections(self, pe, strings, file_data, binary_path):
+        """Advanced protection detection using multiple techniques."""
+protections = {
+"packers": [],
+"protectors": [],
+"obfuscators": [],
+"anti_analysis": [],
+"code_injection": [],
+"virtualization": [],
+}
+
+# Enhanced packer signatures
+packer_signatures = {
+"UPX": [b"UPX!", b"UPX0", b"UPX1", b"UPX2", b"$Id: UPX"],
+"ASPack": [b"aPSPack", b"ASPack", b".aspack", b"asPack"],
+"PECompact": [b"PECompact", b"pec1", b"pec2", b"PEC2TO"],
+"FSG": [b"FSG!", b"FSG ", b"FSG1", b"FSG2"],
+"MEW": [b"MEW ", b"MEW1", b"MEW2"],
+"Petite": [b"Petite", b"petite"],
+"NsPack": [b"NsPack", b"nsp1", b"nsp2"],
+"WWPack": [b"WWPack32", b"WWPACK"],
+"tElock": [b"tElock", b"TELOCK"],
+"Yoda": [b"Yoda's", b"YodaProtector"],
+"CrypKey": [b"CrypKey", b"CRYPKEY"],
+"Enigma": [b"Enigma", b"ENIGMA"],
+"ExeCryptor": [b"ExeCryptor", b"EXECRYPTOR"],
+"PESpin": [b"PESpin", b"PESPIN"],
+"ASProtect": [b"ASProtect", b"ASPROTECT"],
+"BobSoft": [b"BobSoft", b"BOBSOFT"],
+"PEBundle": [b"PEBundle", b"PEBUNDLE"],
+"WinUpack": [b"WinUpack", b"WINUPACK"],
+}
+
+# Advanced protector signatures
+protector_signatures = {
+"Themida": [b"Themida", b"WinLicense", b"Oreans", b"SecuROM"],
+"VMProtect": [b"VMProtect", b"VMP", b"PolyTech"],
+"Armadillo": [b"Armadillo", b"ARMADILLOv", b"Silicon Realms"],
+"SafeDisc": [b"SafeDisc", b"SAFEDISC", b"Macrovision"],
+"StarForce": [b"StarForce", b"STARFORCE", b"Protection Technology"],
+"SecuROM": [b"SecuROM", b"SECUROM", b"Sony DADC"],
+"Denuvo": [b"Denuvo", b"DENUVO", b"Irdeto"],
+"HASP": [b"HASP", b"Sentinel", b"SafeNet"],
+"CodeMeter": [b"CodeMeter", b"WIBU"],
+"FlexLM": [b"FlexLM", b"FLEXLM", b"Flexera"],
+"Guardant": [b"Guardant", b"GUARDANT"],
+"PACE": [b"PACE Anti-Piracy", b"iLok"],
+"LockIt": [b"Lock-It!", b"LOCK-IT"],
+"SGK": [b"SuperPro", b"Rainbow"],
+"ELMLicense": [b"ELMLicense", b"ELMLICENSE"],
+}
+
+# Virtualization/Code protection signatures
+virtualization_signatures = {
+"Code Virtualizer": [b"Code Virtualizer", b"CODEVIRTUALIZER"],
+"WinLicense": [b"WinLicense", b"WINLICENSE"],
+"VMProtect Ultimate": [b"VMProtect Ultimate", b"VMPROTECT_ULTIMATE"],
+"Enigma VirtualBox": [b"Enigma VirtualBox", b"ENIGMA_VIRTUALBOX"],
+"BoxedApp": [b"BoxedApp", b"BOXEDAPP"],
+"Molebox": [b"Molebox", b"MOLEBOX"],
+"Thinstall": [b"Thinstall", b"THINSTALL"],
+"Cameyo": [b"Cameyo", b"CAMEYO"],
+}
+
+# Obfuscation signatures
+obfuscation_signatures = {
+"ConfuserEx": [b"ConfuserEx", b"CONFUSEREX"],
+"Obfuscar": [b"Obfuscar", b"OBFUSCAR"],
+"SmartAssembly": [b"SmartAssembly", b"SMARTASSEMBLY"],
+"Dotfuscator": [b"Dotfuscator", b"DOTFUSCATOR"],
+"Eazfuscator": [b"Eazfuscator", b"EAZFUSCATOR"],
+"Code Obfuscator": [b"Code Obfuscator", b"CODEOBFUSCATOR"],
+"Babel Obfuscator": [b"Babel", b"BABEL"],
+"Reactor": [b"Reactor", b"REACTOR"],
+"Xenocode": [b"Xenocode", b"XENOCODE"],
+}
+
+# Scan for all protection types
+all_signatures = {
+"packers": packer_signatures,
+"protectors": protector_signatures,
+"obfuscators": obfuscation_signatures,
+"virtualization": virtualization_signatures,
+}
+
+for category, signature_dict in all_signatures.items():
+for protection_name, signatures in signature_dict.items():
+for signature in signatures:
+if signature in file_data:
+protections[category].append(protection_name)
+break
+
+# Anti-analysis techniques detection
+anti_analysis_indicators = {
+"Anti-Debug": [
+"IsDebuggerPresent",
+"CheckRemoteDebuggerPresent",
+"OutputDebugString",
+"NtQueryInformationProcess",
+"NtSetInformationThread",
+"KiFastSystemCall",
+"DbgBreakPoint",
+"DbgUserBreakPoint",
+"ZwQueryInformationProcess",
+"ProcessDebugPort",
+"ProcessDebugObjectHandle",
+"ProcessDebugFlags",
+],
+"Anti-VM": [
+"VMware",
+"VirtualBox",
+"QEMU",
+"Xen",
+"Parallels",
+"VirtualPC",
+"vmtoolsd",
+"VBoxService",
+"vmmouse",
+"vmhgfs",
+"vmsrvc",
+"VBoxTray",
+"VBoxControl",
+"vmwareuser",
+"vmwaretray",
+],
+"Anti-Sandbox": [
+"Sandboxie",
+"SbieDll",
+"SboxDll",
+"cmdvrt32",
+"Anubis",
+"ThreatAnalyzer",
+"CWSandbox",
+"Joe Sandbox",
+"Cuckoo",
+"WinAPIOverride",
+"apimonitor",
+"detours",
+],
+"Anti-Emulation": [
+"Wine",
+"user32.dll",
+"GetVersion",
+"GetVersionEx",
+"CPUID",
+"rdtsc",
+"QueryPerformanceCounter",
+"GetTickCount",
+"timeGetTime",
+"GetSystemTime",
+],
+}
+
+for category, indicators in anti_analysis_indicators.items():
+detected = []
+for indicator in indicators:
+for string in strings:
+if indicator.lower() in string.lower():
+detected.append(indicator)
+break
+if detected:
+protections["anti_analysis"].append(
+{"category": category, "indicators": detected[:5]}  # Limit to first 5
+)
+
+# Code injection detection
+injection_indicators = [
+"VirtualAlloc",
+"VirtualProtect",
+"WriteProcessMemory",
+"CreateRemoteThread",
+"SetWindowsHookEx",
+"NtMapViewOfSection",
+"ZwMapViewOfSection",
+"RtlCreateUserThread",
+"NtCreateThread",
+"ZwCreateThread",
+"LoadLibrary",
+"GetProcAddress",
+"DllInject",
+"Process32First",
+"Process32Next",
+"CreateToolhelp32Snapshot",
+]
+
+detected_injection = []
+for indicator in injection_indicators:
+for string in strings:
+if indicator.lower() in string.lower():
+detected_injection.append(indicator)
+break
+
+if detected_injection:
+protections["code_injection"] = detected_injection[:10]
+
+return protections
+
+    def _analyze_pe_anomalies(self, pe):
+        """Analyze PE file for structural anomalies that indicate protection."""
+anomalies = []
+
+try:
+# Check for unusual section names
+common_sections = {".text", ".data", ".rdata", ".rsrc", ".reloc", ".idata", ".edata", ".bss"}
+for section in pe.sections:
+section_name = section.Name.decode().rstrip("\x00")
+if section_name not in common_sections and not section_name.startswith(".debug"):
+anomalies.append(f"Unusual section name: {section_name}")
+
+# Check for overlapping sections
+sections_data = []
+for section in pe.sections:
+sections_data.append(
+{
+"name": section.Name.decode().rstrip("\x00"),
+"virtual_address": section.VirtualAddress,
+"virtual_size": section.Misc_VirtualSize,
+"raw_address": section.PointerToRawData,
+"raw_size": section.SizeOfRawData,
+}
+)
+
+for i, section1 in enumerate(sections_data):
+for section2 in sections_data[i + 1 :]:
+# Check virtual address overlap
+if (
+section1["virtual_address"] < section2["virtual_address"] + section2["virtual_size"]
+and section2["virtual_address"] < section1["virtual_address"] + section1["virtual_size"]
+):
+anomalies.append(f"Virtual address overlap: {section1['name']} and {section2['name']}")
+
+# Check raw address overlap
+if (
+section1["raw_address"] < section2["raw_address"] + section2["raw_size"]
+and section2["raw_address"] < section1["raw_address"] + section1["raw_size"]
+):
+anomalies.append(f"Raw address overlap: {section1['name']} and {section2['name']}")
+
+# Check for suspicious characteristics
+characteristics = pe.FILE_HEADER.Characteristics
+if characteristics & 0x0001:  # IMAGE_FILE_RELOCS_STRIPPED
+anomalies.append("Relocations stripped (unusual for executables)")
+
+if characteristics & 0x0004:  # IMAGE_FILE_LINE_NUMBERS_STRIPPED
+anomalies.append("Line numbers stripped")
+
+if characteristics & 0x0008:  # IMAGE_FILE_LOCAL_SYMS_STRIPPED
+anomalies.append("Local symbols stripped")
+
+# Check optional header anomalies
+if hasattr(pe, "OPTIONAL_HEADER"):
+# Unusual entry point
+entry_point = pe.OPTIONAL_HEADER.AddressOfEntryPoint
+found_in_section = False
+for section in pe.sections:
+if section.VirtualAddress <= entry_point < section.VirtualAddress + section.Misc_VirtualSize:
+section_name = section.Name.decode().rstrip("\x00")
+if section_name != ".text":
+anomalies.append(f"Entry point in unusual section: {section_name}")
+found_in_section = True
+break
+
+if not found_in_section:
+anomalies.append("Entry point not found in any section")
+
+# Check for unusual image base
+image_base = pe.OPTIONAL_HEADER.ImageBase
+if image_base != 0x400000 and image_base != 0x10000000:
+anomalies.append(f"Unusual image base: 0x{image_base:08x}")
+
+# Check subsystem
+subsystem = pe.OPTIONAL_HEADER.Subsystem
+if subsystem not in [1, 2, 3]:  # Native, GUI, Console
+anomalies.append(f"Unusual subsystem: {subsystem}")
+
+# Check import table anomalies
+if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
+total_imports = 0
+for entry in pe.DIRECTORY_ENTRY_IMPORT:
+total_imports += len(entry.imports)
+
+if total_imports < 5:
+anomalies.append(f"Very few imports detected: {total_imports}")
+elif total_imports > 1000:
+anomalies.append(f"Unusually many imports: {total_imports}")
+else:
+anomalies.append("No import table found")
+
+except Exception as e:
+anomalies.append(f"PE analysis error: {str(e)}")
+
+return anomalies
+
+    def _detect_runtime_packers(self, binary_path):
+        """Detect runtime packers using heuristic analysis."""
+runtime_indicators = []
+
+try:
+with open(binary_path, "rb") as f:
+# Read first 1024 bytes for analysis
+header_data = f.read(1024)
+
+# Check for common runtime packer patterns
+packer_patterns = [
+(b"\\x60\\x8B\\x6C\\x24\\x24", "UPX stub pattern"),
+(b"\\x87\\x25\\x00\\x00\\x01\\x00", "ASPack pattern"),
+(b"\\x68\\x00\\x00\\x00\\x00\\x68", "Common packer prologue"),
+(b"\\xE8\\x00\\x00\\x00\\x00\\x5D", "GetPC thunk pattern"),
+(b"\\x55\\x8B\\xEC\\x83\\xEC", "Standard function prologue"),
+(b"\\x60\\x9C\\x33\\xC0\\x8B", "Pushad/Pushfd pattern"),
+]
+
+for pattern, description in packer_patterns:
+if pattern in header_data:
+runtime_indicators.append(description)
+
+# Seek to different file positions to check for packed data
+file_size = f.seek(0, 2)  # Seek to end to get size
+f.seek(0)  # Back to beginning
+
+# Sample different areas of the file
+sample_positions = [0, file_size // 4, file_size // 2, 3 * file_size // 4]
+high_entropy_regions = 0
+
+for pos in sample_positions:
+if pos + 512 < file_size:
+f.seek(pos)
+sample = f.read(512)
+entropy = self._calculate_entropy(sample)
+if entropy > 7.5:
+high_entropy_regions += 1
+
+if high_entropy_regions >= 3:
+runtime_indicators.append(f"High entropy in {high_entropy_regions}/4 regions")
+
+except Exception as e:
+runtime_indicators.append(f"Runtime analysis error: {str(e)}")
+
+return runtime_indicators
+
+    def _calculate_entropy(self, data):
+        """Calculate Shannon entropy of data."""
+import math
+from collections import Counter
+
+if len(data) == 0:
+return 0
+
+counter = Counter(data)
+entropy = 0
+data_len = len(data)
+
+for count in counter.values():
+freq = count / data_len
+entropy -= freq * math.log2(freq)
+
+return entropy
+
+    def _detect_anti_analysis(self, strings):
+        """Detect anti-analysis techniques from string analysis."""
+anti_analysis = {
+"debugger_detection": [],
+"vm_detection": [],
+"sandbox_detection": [],
+"analysis_tools": [],
+"evasion_techniques": [],
+}
+
+patterns = {
+"debugger_detection": [
+"isdebuggerpresent",
+"checkremotedebuggerpresent",
+"outputdebugstring",
+"findwindow.*olly",
+"findwindow.*debug",
+"ntqueryinformationprocess",
+"zwqueryinformationprocess",
+"debugbreak",
+"int 3",
+"__debugbreak",
+"processdebugport",
+"processdebugflags",
+"heap flags",
+],
+"vm_detection": [
+"vmware",
+"virtualbox",
+"qemu",
+"xen",
+"parallels",
+"virtualpc",
+"vbox",
+"vmtoolsd",
+"vboxservice",
+"vmmouse",
+"vmhgfs",
+"redpill",
+"sidt",
+"sgdt",
+"sldt",
+"str",
+"cpuid",
+],
+"sandbox_detection": [
+"sandboxie",
+"anubis",
+"joesandbox",
+"cuckoo",
+"threatanalyzer",
+"cwsandbox",
+"norman",
+"sunbelt",
+"comodo",
+"malwr",
+"sleep",
+"delay",
+"timeout",
+"wait",
+],
+"analysis_tools": [
+"wireshark",
+"fiddler",
+"procmon",
+"process monitor",
+"regmon",
+"filemon",
+"apimonitor",
+"detours",
+"winapis",
+"ollydbg",
+"x32dbg",
+"x64dbg",
+"immunity",
+"ida",
+"ghidra",
+"radare",
+],
+"evasion_techniques": [
+"virtualalloc",
+"virtualprotect",
+"heapalloc",
+"getmodulehandle",
+"getprocaddress",
+"loadlibrary",
+"createthread",
+"createprocess",
+"writeprocessmemory",
+"readprocessmemory",
+"suspendthread",
+],
+}
+
+for category, keywords in patterns.items():
+for string in strings:
+string_lower = string.lower()
+for keyword in keywords:
+if keyword in string_lower:
+anti_analysis[category].append(string)
+break
+
+# Limit results to prevent overwhelming output
+for category in anti_analysis:
+anti_analysis[category] = anti_analysis[category][:10]
+
+return anti_analysis
+
+    def _generate_protection_report(self, protections, pe_anomalies, runtime_indicators, anti_analysis):
+        """Generate comprehensive protection analysis report."""
+report = "[+] Comprehensive Protection Detection Report:\n"
+report += "=" * 60 + "\n\n"
+
+# Protection categories summary
+total_protections = sum(len(prots) for prots in protections.values() if isinstance(prots, list))
+if total_protections > 0:
+report += f"[+] Protection Summary: {total_protections} protection mechanisms detected\n\n"
+
+# Packers
+if protections["packers"]:
+report += "[+] Detected Packers:\n"
+for packer in protections["packers"]:
+report += f"  - {packer}\n"
+report += "\n"
+
+# Protectors
+if protections["protectors"]:
+report += "[+] Detected Protectors:\n"
+for protector in protections["protectors"]:
+report += f"  - {protector}\n"
+report += "\n"
+
+# Obfuscators
+if protections["obfuscators"]:
+report += "🔀 Detected Obfuscators:\n"
+for obfuscator in protections["obfuscators"]:
+report += f"  - {obfuscator}\n"
+report += "\n"
+
+# Virtualization
+if protections["virtualization"]:
+report += "[+] Detected Virtualization:\n"
+for virtualizer in protections["virtualization"]:
+report += f"  - {virtualizer}\n"
+report += "\n"
+
+# Anti-analysis techniques
+if protections["anti_analysis"]:
+report += "🚫 Anti-Analysis Techniques:\n"
+for technique in protections["anti_analysis"]:
+report += f"  - {technique['category']}: "
+report += f"{', '.join(technique['indicators'][:3])}\n"
+report += "\n"
+
+# Code injection capabilities
+if protections["code_injection"]:
+report += "💉 Code Injection Capabilities:\n"
+for api in protections["code_injection"][:5]:
+report += f"  - {api}\n"
+report += "\n"
+
+# PE anomalies
+if pe_anomalies:
+report += "[+] PE Structure Anomalies:\n"
+for anomaly in pe_anomalies[:10]:
+report += f"  - {anomaly}\n"
+report += "\n"
+
+# Runtime indicators
+if runtime_indicators:
+report += "[+] Runtime Packer Indicators:\n"
+for indicator in runtime_indicators:
+report += f"  - {indicator}\n"
+report += "\n"
+
+# Detailed anti-analysis breakdown
+for category, techniques in anti_analysis.items():
+if techniques:
+category_name = category.replace("_", " ").title()
+report += f"[+] {category_name}:\n"
+for technique in techniques[:5]:
+display_str = technique[:50] + "..." if len(technique) > 50 else technique
+report += f"  - {display_str}\n"
+report += "\n"
+
+# Protection level assessment
+protection_level = "Low"
+if total_protections >= 10:
+protection_level = "Very High"
+elif total_protections >= 5:
+protection_level = "High"
+elif total_protections >= 2:
+protection_level = "Medium"
+
+report += f"[+] Overall Protection Level: {protection_level}\n\n"
+
+# Bypass recommendations
+report += "[+] Analysis & Bypass Recommendations:\n"
+
+if protections["packers"]:
+report += "  - Use unpacking tools (UPX, ASPack unpackers)\n"
+
+if protections["protectors"]:
+report += "  - Consider commercial unpacking services\n"
+report += "  - Use memory dumping during runtime\n"
+
+if protections["virtualization"]:
+report += "  - Analyze in hardware virtualization environment\n"
+report += "  - Use specialized VM detection bypass tools\n"
+
+if protections["anti_analysis"]:
+report += "  - Implement anti-anti-analysis techniques\n"
+report += "  - Use kernel-mode debugging\n"
+
+if pe_anomalies:
+report += "  - Manual PE reconstruction may be required\n"
+
+if runtime_indicators:
+report += "  - Dynamic analysis in isolated environment\n"
+
+report += "  - Consider multiple analysis approaches\n"
+
+return report
 
     def stop_ai_analysis(self):
         """Stop ongoing AI analysis"""
-        try:
-            self.log_ai_message("AI analysis stopped by user", "warning")
+try:
+self.log_ai_message("AI analysis stopped by user", "warning")
 
-        except Exception as e:
-            self.log_ai_message(f"Error stopping analysis: {str(e)}", "error")
+except Exception as e:
+self.log_ai_message(f"Error stopping analysis: {str(e)}", "error")
 
     def generate_ai_script(self):
         """Generate script using AI"""
-        if not self.current_model:
-            self.log_ai_message("Error: No AI model loaded", "error")
-            return
+if not self.current_model:
+self.log_ai_message("Error: No AI model loaded", "error")
+return
 
-        script_type = self.script_type_combo.currentText()
-        target = self.script_target_edit.text().strip()
-        requirements = self.requirements_edit.toPlainText().strip()
+script_type = self.script_type_combo.currentText()
+target = self.script_target_edit.text().strip()
+requirements = self.requirements_edit.toPlainText().strip()
 
-        if not target:
-            self.log_ai_message("Error: No target specified for script generation", "error")
-            return
+if not target:
+self.log_ai_message("Error: No target specified for script generation", "error")
+return
 
-        try:
-            self.log_ai_message(f"Generating {script_type} for target: {target}...")
+try:
+self.log_ai_message(f"Generating {script_type} for target: {target}...")
 
-            # Generate script based on type and requirements
-            script_content = self._generate_script_content(script_type, target, requirements)
+# Generate script based on type and requirements
+script_content = self._generate_script_content(script_type, target, requirements)
 
-            # Add to generated scripts
-            script_info = {
-                'type': script_type,
-                'target': target,
-                'content': script_content,
-                'requirements': requirements
-            }
+# Add to generated scripts
+script_info = {
+"type": script_type,
+"target": target,
+"content": script_content,
+"requirements": requirements,
+}
 
-            self.generated_scripts.append(script_info)
+self.generated_scripts.append(script_info)
 
-            # Update scripts list
-            script_name = f"{script_type} - {target}"
-            self.scripts_list.addItem(script_name)
+# Update scripts list
+script_name = f"{script_type} - {target}"
+self.scripts_list.addItem(script_name)
 
-            # Display in content area
-            self.script_content.setPlainText(script_content)
+# Display in content area
+self.script_content.setPlainText(script_content)
 
-            self.log_ai_message(f"Generated {script_type} successfully", "success")
-            self.script_generated.emit(script_type, "success")
+self.log_ai_message(f"Generated {script_type} successfully", "success")
+self.script_generated.emit(script_type, "success")
 
-        except Exception as e:
-            self.log_ai_message(f"Error generating script: {str(e)}", "error")
-            self.script_generated.emit(script_type, "failed")
+except Exception as e:
+self.log_ai_message(f"Error generating script: {str(e)}", "error")
+self.script_generated.emit(script_type, "failed")
 
     def _generate_script_content(self, script_type, target, requirements):
         """Generate actual script content based on type and requirements"""
-        try:
-            # Use AI model if available
-            if self.current_model and self.ai_model_manager.get_loaded_models():
-                script_type_map = {
-                    "Frida Hook Script": "frida",
-                    "Ghidra Analysis Script": "ghidra",
-                    "License Bypass Script": "license_bypass",
-                    "API Hook Script": "api_hook"
-                }
+try:
+# Use AI model if available
+if self.current_model and self.ai_model_manager.get_loaded_models():
+script_type_map = {
+"Frida Hook Script": "frida",
+"Ghidra Analysis Script": "ghidra",
 
-                ai_script_type = script_type_map.get(script_type, script_type.lower())
+"API Hook Script": "api_hook",
+}
 
-                # Generate using AI model
-                generated_script = self.ai_model_manager.generate_script(
-                    self.current_model,
-                    ai_script_type,
-                    target,
-                    requirements
-                )
+ai_script_type = script_type_map.get(script_type, script_type.lower())
 
-                if generated_script:
-                    return generated_script
+# Generate using AI model
+generated_script = self.ai_model_manager.generate_script(
+self.current_model, ai_script_type, target, requirements
+)
 
-            # Fallback to template-based generation
-            if script_type == "Frida Hook Script":
-                return self._generate_frida_script(target, requirements)
-            elif script_type == "Ghidra Analysis Script":
-                return self._generate_ghidra_script(target, requirements)
-            elif script_type == "License Bypass Script":
-                return self._generate_license_bypass_script(target, requirements)
-            elif script_type == "API Hook Script":
-                return self._generate_api_hook_script(target, requirements)
-            else:
-                return self._generate_generic_script(script_type, target, requirements)
+if generated_script:
+return generated_script
 
-        except Exception as e:
-            return f"// Error generating script: {str(e)}\n// Please check your requirements and try again."
+# Fallback to template-based generation
+if script_type == "Frida Hook Script":
+return self._generate_frida_script(target, requirements)
+elif script_type == "Ghidra Analysis Script":
+return self._generate_ghidra_script(target, requirements)
+
+elif script_type == "API Hook Script":
+return self._generate_api_hook_script(target, requirements)
+else:
+return self._generate_generic_script(script_type, target, requirements)
+
+except Exception as e:
+return f"// Error generating script: {str(e)}\n// Please check your requirements and try again."
 
     def _generate_frida_script(self, target, requirements):
         """Generate Frida hook script"""
-        script_template = f'''// Frida Hook Script for {target}
+script_template = f"""// Frida Hook Script for {target}
 // Generated by Intellicrack AI Assistant
 
 Java.perform(function() {{
-    console.log("[+] Starting Frida hook for {target}");
-    
-    // Hook target function/method
-    var targetClass = Java.use("{target}");
-    
-    targetClass.targetMethod.implementation = function() {{
-        console.log("[+] Method called with arguments:", arguments);
-        
-        // Original function call
-        var result = this.targetMethod.apply(this, arguments);
-        
-        console.log("[+] Method result:", result);
-        return result;
-    }};
-    
-    console.log("[+] Hook installed successfully");
+console.log("[+] Starting Frida hook for {target}");
+
+// Hook target function/method
+var targetClass = Java.use("{target}");
+
+targetClass.targetMethod.implementation = function() {{
+console.log("[+] Method called with arguments:", arguments);
+
+// Original function call
+var result = this.targetMethod.apply(this, arguments);
+
+console.log("[+] Method result:", result);
+return result;
+}};
+
+console.log("[+] Hook installed successfully");
 }});
 
 // Additional requirements: {requirements}
-'''
-        return script_template
+"""
+return script_template
 
     def _generate_ghidra_script(self, target, requirements):
         """Generate Ghidra analysis script"""
-        script_template = f'''// Ghidra Analysis Script for {target}
+script_template = f"""// Ghidra Analysis Script for {target}
 // Generated by Intellicrack AI Assistant
 
 import ghidra.app.script.GhidraScript;
@@ -922,98 +2311,49 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.*;
 
 public class AutoAnalysis extends GhidraScript {{
-    
-    @Override
-    public void run() throws Exception {{
-        println("Starting analysis of {target}");
-        
-        // Get current program
-        Program program = getCurrentProgram();
-        Listing listing = program.getListing();
-        
-        // Find target functions
-        FunctionManager functionManager = program.getFunctionManager();
-        FunctionIterator functions = functionManager.getFunctions(true);
-        
-        while (functions.hasNext()) {{
-            Function function = functions.next();
-            String funcName = function.getName();
-            
-            if (funcName.contains("{target}")) {{
-                println("Found target function: " + funcName);
-                
-                // Analyze function
-                analyzeFunction(function);
-            }}
-        }}
-        
-        println("Analysis complete");
-    }}
-    
-    private void analyzeFunction(Function function) {{
-        // Analysis implementation based on requirements
-        println("Analyzing: " + function.getName());
-        
-        // {requirements}
-    }}
+
+@Override
+public void run() throws Exception {{
+println("Starting analysis of {target}");
+
+// Get current program
+Program program = getCurrentProgram();
+Listing listing = program.getListing();
+
+// Find target functions
+FunctionManager functionManager = program.getFunctionManager();
+FunctionIterator functions = functionManager.getFunctions(true);
+
+while (functions.hasNext()) {{
+Function function = functions.next();
+String funcName = function.getName();
+
+if (funcName.contains("{target}")) {{
+println("Found target function: " + funcName);
+
+// Analyze function
+analyzeFunction(function);
 }}
-'''
-        return script_template
-
-    def _generate_license_bypass_script(self, target, requirements):
-        """Generate license bypass script"""
-        script_template = f'''// License Bypass Script for {target}
-// Generated by Intellicrack AI Assistant
-
-#include <windows.h>
-#include <stdio.h>
-
-// License validation bypass
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved) {{
-    switch (fdwReason) {{
-        case DLL_PROCESS_ATTACH:
-            printf("[+] License bypass loaded for {target}\\n");
-            
-            // Hook license validation functions
-            hookLicenseValidation();
-            break;
-            
-        case DLL_PROCESS_DETACH:
-            printf("[+] License bypass unloaded\\n");
-            break;
-    }}
-    return TRUE;
 }}
 
-void hookLicenseValidation() {{
-    // Patch license check functions
-    HMODULE hMod = GetModuleHandle(TEXT("{target}"));
-    if (hMod) {{
-        // Find and patch validation routines
-        FARPROC checkLicense = GetProcAddress(hMod, "CheckLicense");
-        if (checkLicense) {{
-            // Patch to always return valid
-            DWORD oldProtect;
-            VirtualProtect(checkLicense, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
-            
-            // Replace with: mov eax, 1; ret
-            *(BYTE*)checkLicense = 0xB8;      // mov eax,
-            *((DWORD*)((BYTE*)checkLicense + 1)) = 1; // 1
-            *(BYTE*)((BYTE*)checkLicense + 5) = 0xC3; // ret
-            
-            VirtualProtect(checkLicense, 5, oldProtect, &oldProtect);
-            printf("[+] License check patched\\n");
-        }}
-    }}
+println("Analysis complete");
 }}
 
-// Additional requirements: {requirements}
-'''
-        return script_template
+private void analyzeFunction(Function function) {{
+// Analysis implementation based on requirements
+println("Analyzing: " + function.getName());
+
+// {requirements}
+}}
+}}
+"""
+return script_template
+
+
 
     def _generate_api_hook_script(self, target, requirements):
         """Generate API hook script"""
-        script_template = f'''// API Hook Script for {target}
+script_template = f"""// API Hook Script for {target}
 // Generated by Intellicrack AI Assistant
 
 #include <windows.h>
@@ -1025,53 +2365,53 @@ static FARPROC OriginalAPI = NULL;
 
 // Hooked function
 DWORD WINAPI HookedAPI(DWORD param1, DWORD param2) {{
-    printf("[+] API called: {target} with params: %lu, %lu\\n", param1, param2);
-    
-    // Call original function
-    DWORD result = ((DWORD(WINAPI*)(DWORD, DWORD))OriginalAPI)(param1, param2);
-    
-    printf("[+] API result: %lu\\n", result);
-    return result;
+printf("[+] API called: {target} with params: %lu, %lu\\n", param1, param2);
+
+// Call original function
+DWORD result = ((DWORD(WINAPI*)(DWORD, DWORD))OriginalAPI)(param1, param2);
+
+printf("[+] API result: %lu\\n", result);
+return result;
 }}
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved) {{
-    switch (fdwReason) {{
-        case DLL_PROCESS_ATTACH:
-            printf("[+] API hook loaded for {target}\\n");
-            
-            // Hook the target API
-            HMODULE hMod = GetModuleHandle(TEXT("kernel32.dll"));
-            OriginalAPI = GetProcAddress(hMod, "{target}");
-            
-            if (OriginalAPI) {{
-                DetourTransactionBegin();
-                DetourUpdateThread(GetCurrentThread());
-                DetourAttach(&OriginalAPI, HookedAPI);
-                DetourTransactionCommit();
-                
-                printf("[+] {target} hooked successfully\\n");
-            }}
-            break;
-            
-        case DLL_PROCESS_DETACH:
-            if (OriginalAPI) {{
-                DetourTransactionBegin();
-                DetourUpdateThread(GetCurrentThread());
-                DetourDetach(&OriginalAPI, HookedAPI);
-                DetourTransactionCommit();
-            }}
-            break;
-    }}
-    return TRUE;
+switch (fdwReason) {{
+case DLL_PROCESS_ATTACH:
+printf("[+] API hook loaded for {target}\\n");
+
+// Hook the target API
+HMODULE hMod = GetModuleHandle(TEXT("kernel32.dll"));
+OriginalAPI = GetProcAddress(hMod, "{target}");
+
+if (OriginalAPI) {{
+DetourTransactionBegin();
+DetourUpdateThread(GetCurrentThread());
+DetourAttach(&OriginalAPI, HookedAPI);
+DetourTransactionCommit();
+
+printf("[+] {target} hooked successfully\\n");
+}}
+break;
+
+case DLL_PROCESS_DETACH:
+if (OriginalAPI) {{
+DetourTransactionBegin();
+DetourUpdateThread(GetCurrentThread());
+DetourDetach(&OriginalAPI, HookedAPI);
+DetourTransactionCommit();
+}}
+break;
+}}
+return TRUE;
 }}
 
 // Additional requirements: {requirements}
-'''
-        return script_template
+"""
+return script_template
 
     def _generate_generic_script(self, script_type, target, requirements):
         """Generate generic script for other types"""
-        script_template = f'''// {script_type} for {target}
+script_template = f"""// {script_type} for {target}
 // Generated by Intellicrack AI Assistant
 
 // This is a generic template for {script_type}
@@ -1079,77 +2419,79 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved) {{
 // Requirements: {requirements}
 
 function main() {{
-    console.log("Starting {script_type} for {target}");
-    
-    // Implementation based on script type and requirements
-    try {{
-        // Add your specific implementation here
-        performAnalysis();
-        
-        console.log("Script execution completed successfully");
-    }} catch (error) {{
-        console.error("Script execution failed:", error);
-    }}
+console.log("Starting {script_type} for {target}");
+
+// Implementation based on script type and requirements
+try {{
+// Add your specific implementation here
+performAnalysis();
+
+console.log("Script execution completed successfully");
+}} catch (error) {{
+console.error("Script execution failed:", error);
+}}
 }}
 
 function performAnalysis() {{
-    // Specific analysis logic for {target}
-    // Based on requirements: {requirements}
+// Specific analysis logic for {target}
+// Based on requirements: {requirements}
 }}
 
 // Execute main function
 main();
-'''
-        return script_template
+"""
+return script_template
 
     def send_chat_message(self):
         """Send chat message to AI assistant"""
-        message = self.chat_input.text().strip()
-        if not message:
-            return
+message = self.chat_input.text().strip()
+if not message:
+return
 
-        # Add user message to chat history
-        self.chat_history.append(f"<b>You:</b> {message}")
-        self.chat_input.clear()
+# Add user message to chat history
+self.chat_history.append(f"<b>You:</b> {message}")
+self.chat_input.clear()
 
-        # Simulate AI response
-        ai_response = self._generate_ai_response(message)
-        self.chat_history.append(f"<b>AI Assistant:</b> {ai_response}")
+# Simulate AI response
+        ai_response = self.generate_ai_response(message)
+self.chat_history.append(f"<b>AI Assistant:</b> {ai_response}")
 
-        # Scroll to bottom
-        cursor = self.chat_history.textCursor()
-        cursor.movePosition(cursor.End)
-        self.chat_history.setTextCursor(cursor)
+# Scroll to bottom
+cursor = self.chat_history.textCursor()
+cursor.movePosition(cursor.End)
+self.chat_history.setTextCursor(cursor)
 
-    def _generate_ai_response(self, message):
+    def generate_ai_response(self, message):
         """Generate AI response based on user message"""
-        message_lower = message.lower()
-
-        if "analyze" in message_lower:
-            return "I can help you analyze binaries. Please select a binary file and choose your analysis focus. I'll provide detailed insights about protection mechanisms, potential vulnerabilities, and exploitation strategies."
-        elif "script" in message_lower or "frida" in message_lower or "ghidra" in message_lower:
-            return "I can generate custom scripts for your analysis needs. Choose the script type, specify your target, and I'll create optimized code for Frida hooking, Ghidra analysis, or custom automation."
-        elif "protection" in message_lower or "bypass" in message_lower:
-            return "I can identify protection mechanisms and suggest bypass strategies. Common protections include packers, obfuscation, anti-debugging, and license validation. Each requires specific techniques for analysis and circumvention."
-        elif "help" in message_lower or "how" in message_lower:
-            return "I'm your AI assistant for binary analysis and exploitation. I can: 1) Analyze binaries for protections and vulnerabilities, 2) Generate custom scripts (Frida, Ghidra, etc.), 3) Provide exploitation guidance, 4) Help with reverse engineering tasks. What would you like to work on?"
-        else:
-            return f"I understand you're asking about: '{message}'. Could you be more specific about what you'd like me to help with? I specialize in binary analysis, script generation, and exploitation techniques."
+        try:
+            if hasattr(self, 'ai_model_manager') and self.current_model:
+                response = self.ai_model_manager.generate_response(
+                    model=self.current_model,
+                    prompt=message,
+                    context={
+                        'role': 'binary_analysis_assistant',
+                        'focus': 'reverse_engineering'
+                    }
+                )
+                return response
+            else:
+                self.log_message("Error: No AI model loaded for chat", "error")
+                return "AI model not available. Please load a model first."
+        except Exception as e:
+            self.log_message(f"Error generating AI response: {str(e)}", "error")
+            return f"Error generating response: {str(e)}"
 
     def browse_training_dataset(self):
         """Browse for training dataset"""
-        from PyQt6.QtWidgets import QFileDialog
+from PyQt6.QtWidgets import QFileDialog
 
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Select Training Dataset",
-            "",
-            "Dataset Files (*.json *.csv *.txt);;All Files (*)"
-        )
+file_path, _ = QFileDialog.getOpenFileName(
+self, "Select Training Dataset", "", "Dataset Files (*.json *.csv *.txt);;All Files (*)"
+)
 
-        if file_path:
-            self.dataset_path_edit.setText(file_path)
-            self.log_message(f"Training dataset selected: {file_path}")
+if file_path:
+self.dataset_path_edit.setText(file_path)
+self.log_message(f"Training dataset selected: {file_path}")
 
     def start_model_training(self):
         """Start model training process"""
@@ -1166,48 +2508,117 @@ main();
         self.training_status_label.setText("Training in progress...")
         self.training_progress.setValue(0)
 
-        # Simulate training progress
-        self._simulate_training()
+        # Start real model training with progress monitoring
+        try:
+            from ...ai.ai_model_manager import AIModelManager
+            if hasattr(self, 'ai_model_manager'):
+                # Create training thread to avoid blocking UI
+                from PyQt6.QtCore import QThread, pyqtSignal
+                
+                class TrainingThread(QThread):
+                    progress_update = pyqtSignal(dict)
+                    finished_training = pyqtSignal(bool, str)
+                    
+                    def __init__(self, model_manager, params):
+                        super().__init__()
+                        self.model_manager = model_manager
+                        self.params = params
+                        
+                    def run(self):
+                        try:
+                            self.model_manager.train_model(
+                                dataset_path=self.params['dataset_path'],
+                                training_type=self.params['training_type'],
+                                epochs=self.params['epochs'],
+                                learning_rate=self.params['learning_rate'],
+                                progress_callback=lambda data: self.progress_update.emit(data)
+                            )
+                            self.finished_training.emit(True, "Training completed successfully")
+                        except Exception as e:
+                            self.finished_training.emit(False, str(e))
+                
+                # Create and start training thread
+                self.training_thread = TrainingThread(
+                    self.ai_model_manager,
+                    {
+                        'dataset_path': dataset_path,
+                        'training_type': training_type,
+                        'epochs': epochs,
+                        'learning_rate': float(learning_rate)
+                    }
+                )
+                
+                # Connect signals
+                self.training_thread.progress_update.connect(self._update_training_progress)
+                self.training_thread.finished_training.connect(self._on_training_finished)
+                
+                # Start training
+                self.training_thread.start()
+                self.training_status_label.setText("Initializing training...")
+                
+            else:
+                self.log_message("Error: AI Model Manager not initialized", "error")
+        except Exception as e:
+            self.log_message(f"Error starting training: {str(e)}", "error")
+            self.training_status_label.setText("Training failed")
 
-    def _simulate_training(self):
-        """Simulate training progress"""
+    def _update_training_progress(self, progress_data):
+        """Update real training progress from model trainer"""
+        if isinstance(progress_data, dict):
+            epoch = progress_data.get('epoch', 0)
+            loss = progress_data.get('loss', 0.0)
+            accuracy = progress_data.get('accuracy', 0.0)
+            progress_pct = progress_data.get('progress', 0)
+            
+            self.training_progress.setValue(int(progress_pct))
+            self.training_status_label.setText(
+                f"Epoch {epoch} - Loss: {loss:.4f}, Accuracy: {accuracy:.2%}"
+            )
+            
+            if progress_pct >= 100:
+                self.log_message("Training completed successfully", "success")
+                self.training_status_label.setText("Training complete")
 
-        self.training_timer = QTimer()
-        self.training_step = 0
-        self.training_timer.timeout.connect(self._update_training_progress)
-        self.training_timer.start(100)
-
-    def _update_training_progress(self):
-        """Update training progress"""
-        self.training_step += 1
-        progress = min(100, (self.training_step * 2) % 101)
-        self.training_progress.setValue(progress)
-
-        if progress == 100:
-            self.training_timer.stop()
-            self.training_status_label.setText("Training completed successfully")
-            self.log_message("Model training completed")
+    def _on_training_finished(self, success, message):
+        """Handle training completion"""
+        if success:
+            self.log_message(message, "success")
+            self.training_status_label.setText("Training complete")
         else:
-            epoch = (self.training_step // 50) + 1
-            self.training_status_label.setText(f"Training... Epoch {epoch}")
-
+            self.log_message(f"Training failed: {message}", "error")
+            self.training_status_label.setText("Training failed")
+        
+        # Clean up thread
+        if hasattr(self, 'training_thread'):
+            self.training_thread.deleteLater()
+            self.training_thread = None
+    
     def stop_model_training(self):
-        """Stop model training"""
-        if hasattr(self, 'training_timer'):
-            self.training_timer.stop()
+        """Stop ongoing model training"""
+        try:
+            # Stop the training thread if running
+            if hasattr(self, 'training_thread') and self.training_thread and self.training_thread.isRunning():
+                self.training_thread.terminate()
+                self.training_thread.wait()
+                self.training_thread.deleteLater()
+                self.training_thread = None
+            
+            # Stop model training
+            if hasattr(self, 'ai_model_manager'):
+                self.ai_model_manager.stop_training()
+                self.log_message("Training stopped by user", "warning")
+                self.training_status_label.setText("Training stopped")
+                self.training_progress.setValue(0)
+        except Exception as e:
+            self.log_message(f"Error stopping training: {str(e)}", "error")
 
-        self.training_status_label.setText("Training stopped")
-        self.log_message("Model training stopped by user")
 
     def save_trained_model(self):
         """Save trained model"""
         from PyQt6.QtWidgets import QFileDialog
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Save Trained Model",
-            "",
-            "Model Files (*.pkl *.pth *.h5);;All Files (*)"
+            self, "Save Trained Model", "", "Model Files (*.pkl *.pth *.h5);;All Files (*)"
         )
 
         if file_path:
@@ -1216,7 +2627,7 @@ main();
 
     def log_message(self, message, level="info"):
         """Log message to console or status"""
-        if hasattr(self.shared_context, 'log_message'):
+        if hasattr(self.shared_context, "log_message"):
             self.shared_context.log_message(message, level)
         else:
             print(f"[{level.upper()}] {message}")
@@ -1232,11 +2643,14 @@ main();
 
         # Update AppContext if available
         if self.app_context:
-            self.app_context.register_model(model_name, {
-                "provider": self.provider_combo.currentText(),
-                "model_id": self.model_combo.currentText(),
-                "loaded_at": datetime.now().isoformat()
-            })
+            self.app_context.register_model(
+                model_name,
+                {
+                    "provider": self.provider_combo.currentText(),
+                    "model_id": self.model_combo.currentText(),
+                    "loaded_at": datetime.now().isoformat(),
+                },
+            )
 
     def _on_model_unloaded(self, model_name: str):
         """Handle model unloaded signal"""
@@ -1254,4 +2668,5 @@ main();
         """Handle AI model error"""
         self.model_progress.setVisible(False)
         self.log_ai_message(f"AI Error ({model_name}): {error}", "error")
-        QMessageBox.warning(self, "AI Model Error", f"Error with {model_name}:\n{error}")
+        QMessageBox.warning(self, "AI Model Error", f"Error with {model_name}:
+{error}")

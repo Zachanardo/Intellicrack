@@ -144,10 +144,10 @@ class FileMetadataWidget(QWidget):
     def analyze_file(self, file_path: str) -> dict:
         """
         Analyze a file and update the display.
-        
+
         Args:
             file_path: Path to the file to analyze
-            
+
         Returns:
             Dictionary containing file metadata
         """
@@ -305,10 +305,10 @@ class FileMetadataWidget(QWidget):
     def _format_size(self, size: int) -> str:
         """
         Format file size in human-readable format.
-        
+
         Args:
             size: Size in bytes
-            
+
         Returns:
             Formatted size string
         """
@@ -329,10 +329,10 @@ class FileTimestampTracker:
     def track_file(self, file_path: str) -> dict:
         """
         Start tracking a file's timestamps.
-        
+
         Args:
             file_path: Path to the file to track
-            
+
         Returns:
             Dictionary with initial timestamp data
         """
@@ -355,10 +355,10 @@ class FileTimestampTracker:
     def check_file(self, file_path: str) -> dict:
         """
         Check if a tracked file has changed.
-        
+
         Args:
             file_path: Path to the file to check
-            
+
         Returns:
             Dictionary with change information
         """
@@ -396,10 +396,10 @@ class FileTimestampTracker:
     def get_file_history(self, file_path: str) -> dict:
         """
         Get the tracking history for a file.
-        
+
         Args:
             file_path: Path to the file
-            
+
         Returns:
             Dictionary with tracking history
         """
@@ -411,7 +411,7 @@ class FileTimestampTracker:
     def stop_tracking(self, file_path: str):
         """
         Stop tracking a file.
-        
+
         Args:
             file_path: Path to the file to stop tracking
         """

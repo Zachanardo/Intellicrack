@@ -61,7 +61,8 @@ except ImportError as e:
     # Fallback for environments without PyQt5
     QDialog = object
     QThread = object
-    pyqtSignal = lambda *args: lambda x: x
+    def pyqtSignal(*args):
+        return lambda x: x
 
 # Local imports
 try:

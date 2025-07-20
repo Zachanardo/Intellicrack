@@ -61,6 +61,7 @@ class EntropyGraphWidget(QWidget):
     section_clicked = pyqtSignal(str, float)  # section_name, entropy_value
 
     def __init__(self, parent=None):
+        """Initialize entropy graph widget with data storage and UI setup."""
         super().__init__(parent)
         self.entropy_data = []
         self.init_ui()
@@ -283,7 +284,7 @@ class EntropyGraphWidget(QWidget):
         bars = self.ax.bar(x_pos, entropies, color=colors, alpha=0.8)
 
         # Add value labels on bars
-        for i, (bar, entropy) in enumerate(zip(bars, entropies, strict=False)):
+        for _i, (bar, entropy) in enumerate(zip(bars, entropies, strict=False)):
             height = bar.get_height()
             self.ax.text(
                 bar.get_x() + bar.get_width()/2.,

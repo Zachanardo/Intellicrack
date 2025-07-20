@@ -16,18 +16,18 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Enhanced QEMU Test Manager with Real Data Capture
-
-Captures actual execution data from QEMU VMs.
-"""
-
 import json
 import os
 import subprocess
 from typing import Any, Callable, Dict
 
 from ..utils.logger import get_logger
+
+"""
+Enhanced QEMU Test Manager with Real Data Capture
+
+Captures actual execution data from QEMU VMs.
+"""
 
 logger = get_logger(__name__)
 
@@ -58,7 +58,7 @@ call_counts = {{}}
 def on_message(message, data):
     if message['type'] == 'send':
         payload = message['payload']
-        
+
         # Track real memory changes
         if 'memory_change' in payload:
             memory_changes.append({{
@@ -67,7 +67,7 @@ def on_message(message, data):
                 'patched': payload['patched'],
                 'timestamp': time.time()
             }})
-            
+
         # Track real API calls
         if 'api_call' in payload:
             api_name = payload['api_name']
@@ -78,7 +78,7 @@ def on_message(message, data):
                 'return': payload.get('return_value'),
                 'timestamp': time.time()
             }})
-            
+
         # Output for real-time display
         print(payload.get('message', str(payload)))
         sys.stdout.flush()
@@ -128,7 +128,7 @@ print(f"[*] Binary directory: {{target_dir}}")
 # Add monitoring to user script
 if session:
     session.on('message', on_message)
-    
+
     # Inject binary-specific targeting into script
     binary_targeting = f"""
 // Target specific binary: {{target_name}}
@@ -140,19 +140,19 @@ Process.enumerateModules().forEach(module => {{{{
     }}}}
 }}}});
 """
-    
+
     script = session.create_script(monitoring_script + "\\n" + binary_targeting + "\\n" + user_script)
     script.load()
-    
+
     # Wait and collect data
     time.sleep(30)
-    
+
     # Output summary
     print(f"\\n=== REAL EXECUTION SUMMARY ===")
     print(f"Memory changes: {{len(memory_changes)}}")
     print(f"API calls intercepted: {{len(api_calls)}}")
     print(f"Call frequency: {{json.dumps(call_counts, indent=2)}}")
-    
+
     # Save detailed data
     with open('/tmp/qemu_test_data.json', 'w') as f:
         json.dump({{
@@ -246,7 +246,7 @@ Process.enumerateModules().forEach(module => {{{{
             # Clean up temporary script file
             try:
                 os.unlink(script_path)
-            except:
+            except (OSError, FileNotFoundError):
                 pass
 
     def analyze_binary_for_vm(self, binary_path: str) -> Dict[str, Any]:
@@ -305,7 +305,7 @@ PID={process_id}
 # CPU usage
 CPU=$(ps -p $PID -o %cpu | tail -1)
 
-# Memory usage  
+# Memory usage
 MEM=$(ps -p $PID -o %mem | tail -1)
 
 # Open files

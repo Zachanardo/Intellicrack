@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
+import logging
 import subprocess
 import time
 from pathlib import Path
@@ -39,11 +40,11 @@ class AdvancedDynamicAnalyzer:
         """Initialize the advanced dynamic analyzer with binary path configuration."""
         self.binary_path = Path(binary_path)
         self.logger = logging.getLogger("IntellicrackLogger.DynamicAnalyzer")
-        
+
         # Ensure the binary file exists
         if not self.binary_path.exists() or not self.binary_path.is_file():
             raise FileNotFoundError(f"Binary file not found: {self.binary_path}")
-        
+
         # Analysis results storage
         self.api_calls = []
         self.memory_access = []

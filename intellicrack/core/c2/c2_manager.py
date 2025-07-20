@@ -21,12 +21,10 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import logging
 from typing import Any, Dict
 
 from .c2_server import C2Server
-from .encryption_manager import EncryptionManager
-from .session_manager import SessionManager
+from ...utils.logger import get_logger
 
 
 class C2Manager:
@@ -37,11 +35,6 @@ class C2Manager:
         self.protocols = {}
         self.sessions = {}
         self.logger = get_logger(__name__)
-    """Initialize the C2 manager with protocol and session management."""
-    self.protocols = {}
-    self.sessions = {}
-    self.logger = get_logger(__name__)
-
     def start_server(self, config):
         """Start C2 server with given configuration."""
         try:

@@ -42,6 +42,7 @@ class ICPAnalysisThread(QThread):
     progress_update = pyqtSignal(str)
 
     def __init__(self, file_path: str, scan_mode: ScanMode):
+        """Initialize ICP analysis thread with file path, scan mode, and backend."""
         super().__init__()
         self.file_path = file_path
         self.scan_mode = scan_mode
@@ -82,7 +83,7 @@ class ICPAnalysisWidget(QWidget):
 
     def __init__(self, parent=None):
         """Initialize the ICP analysis widget.
-        
+
         Args:
             parent: Parent widget or None for top-level widget
         """

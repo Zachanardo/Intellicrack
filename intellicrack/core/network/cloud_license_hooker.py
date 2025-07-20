@@ -1587,11 +1587,11 @@ class CloudLicenseResponseGenerator:
 
     def _generate_vendor_string(self) -> str:
         """Generate vendor string for FlexLM."""
-        return f"VENDOR_DATA_{random.randint(1000, 9999)}"
+        return f"VENDOR_DATA_{random.randint(1000, 9999)}"  # noqa: S311
 
     def _generate_checksum(self) -> str:
         """Generate checksum for FlexLM."""
-        return f"{random.randint(100, 999)}"
+        return f"{random.randint(100, 999)}"  # noqa: S311
 
     def _generate_product_key(self) -> str:
         """Generate Microsoft-style product key."""

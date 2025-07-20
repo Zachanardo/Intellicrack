@@ -111,7 +111,7 @@ class AISharedContext:
 
     def __init__(self):
         """Initialize the shared context for AI workflows.
-        
+
         Creates a thread-safe context store for sharing data between AI components,
         including binary metadata, analysis results, model predictions, and workflow state.
         """
@@ -168,7 +168,7 @@ class AIEventBus:
 
     def __init__(self):
         """Initialize the AI event bus for component communication.
-        
+
         Creates a thread-safe publish-subscribe system for AI components
         to communicate through events.
         """
@@ -246,7 +246,7 @@ class AIOrchestrator:
 
     def __init__(self):
         """Initialize the AI orchestrator.
-        
+
         Sets up the shared context, event bus, task queue, and starts the task processing
         thread for coordinating AI component workflows.
         """

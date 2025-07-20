@@ -48,6 +48,7 @@ class HexViewerThread(QThread):
     error_occurred = pyqtSignal(str)
 
     def __init__(self, file_path: str, offset: int = 0, size: Optional[int] = None):
+        """Initialize hex viewer thread with file path, offset, and optional size parameters."""
         super().__init__()
         self.file_path = file_path
         self.offset = offset
@@ -99,6 +100,7 @@ class HexViewerWidget(QWidget):
     region_highlighted = pyqtSignal(int, int)  # Start, end offsets
 
     def __init__(self, parent=None):
+        """Initialize hex viewer widget with file data, PE analysis components, and UI setup."""
         super().__init__(parent)
         self.file_path: Optional[str] = None
         self.file_data: Optional[bytes] = None
@@ -672,17 +674,17 @@ class HexViewerWidget(QWidget):
 
         # Get selected text
         selected_text = cursor.selectedText()
-        
+
         # Parse hex values from selected text
         try:
             hex_bytes = []
             lines = selected_text.split('\n')
-            
+
             for line in lines:
                 # Skip empty lines
                 if not line.strip():
                     continue
-                    
+
                 # Find the colon that separates offset from hex data
                 colon_pos = line.find(':')
                 if colon_pos == -1:
@@ -691,10 +693,10 @@ class HexViewerWidget(QWidget):
                 else:
                     # Skip offset and extract hex part
                     hex_part = line[colon_pos + 1:]
-                
+
                 # Remove all spaces and extract hex pairs
                 hex_part = hex_part.replace(' ', '')
-                
+
                 # Process hex pairs (2 characters at a time)
                 for i in range(0, len(hex_part), 2):
                     if i + 1 < len(hex_part):
@@ -702,14 +704,14 @@ class HexViewerWidget(QWidget):
                         # Validate hex characters
                         if all(c in '0123456789ABCDEFabcdef' for c in hex_pair):
                             hex_bytes.append(hex_pair)
-            
+
             if not hex_bytes:
                 QMessageBox.warning(self, "No Valid Data", "No valid hex data found in selection")
                 return
-            
+
             # Convert hex strings to bytes
             binary_data = bytes.fromhex(''.join(hex_bytes))
-            
+
             # Get save file path
             file_path, _ = QFileDialog.getSaveFileName(
                 self,
@@ -722,17 +724,17 @@ class HexViewerWidget(QWidget):
                 # Write bytes to file
                 with open(file_path, 'wb') as f:
                     f.write(binary_data)
-                
+
                 # Show success message
                 QMessageBox.information(
                     self,
                     "Export Successful",
                     f"Exported {len(binary_data)} bytes to:\n{file_path}"
                 )
-                
+
                 # Log the export
                 self.logger.info(f"Exported {len(binary_data)} bytes to {file_path}")
-                
+
         except ValueError as e:
             QMessageBox.critical(
                 self,

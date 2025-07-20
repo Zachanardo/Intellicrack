@@ -44,7 +44,7 @@ class ScriptGenerationPrompts:
 
     def __init__(self):
         """Initialize the script generation prompts manager.
-        
+
         Sets up prompts for various script generation tasks including
         Frida, Ghidra, and other dynamic analysis tools.
         """
@@ -114,7 +114,7 @@ CRITICAL REQUIREMENTS:
 Advanced capabilities to utilize:
 - Memory scanning and pattern matching
 - Dynamic code patching and replacement
-- Multi-stage hooking strategies  
+- Multi-stage hooking strategies
 - Process and module enumeration
 - Advanced debugging evasion
 - Cryptographic function replacement
@@ -251,7 +251,7 @@ Return ONLY the complete advanced Ghidra Python script code."""
 
 Analyze binary data and identify:
 - License validation schemes
-- Trial timer implementations  
+- Trial timer implementations
 - Network-based validations
 - Anti-debugging techniques
 - VM detection methods

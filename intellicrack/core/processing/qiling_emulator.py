@@ -211,7 +211,7 @@ class QilingEmulator:
     def map_file_to_fs(self, host_path: str, guest_path: str):
         """
         Map a host file or directory to the emulated filesystem.
-        
+
         Args:
             host_path: Path on the host system
             guest_path: Path in the emulated filesystem
@@ -726,7 +726,7 @@ class QilingEmulator:
     def detect_binary_format(self) -> Dict[str, Any]:
         """
         Detect binary format using architecture and OS information.
-        
+
         Returns:
             Dictionary with format details including:
             - format: PE/ELF/Mach-O/etc

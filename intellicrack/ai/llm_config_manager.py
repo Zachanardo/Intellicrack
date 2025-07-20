@@ -37,7 +37,7 @@ class LLMConfigManager:
         """Initialize the LLM configuration manager.
 
         Args:
-            config_dir: Directory to store configuration files. 
+            config_dir: Directory to store configuration files.
                        Defaults to ~/.intellicrack/llm_configs
         """
         if config_dir is None:

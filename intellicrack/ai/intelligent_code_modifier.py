@@ -111,7 +111,7 @@ class CodeAnalyzer:
 
     def __init__(self):
         """Initialize the code analyzer.
-        
+
         Sets up supported file extensions and their corresponding
         programming languages for code analysis.
         """
@@ -427,7 +427,7 @@ class IntelligentCodeModifier:
 
     def __init__(self, llm_manager: Optional[LLMManager] = None):
         """Initialize the intelligent code modifier.
-        
+
         Args:
             llm_manager: Optional LLM manager for AI-powered code modifications
         """

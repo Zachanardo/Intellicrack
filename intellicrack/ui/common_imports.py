@@ -375,11 +375,11 @@ except ImportError as e:
         """Create rectangle for exploit visualization bounds."""
         class Rect:
             def __init__(self, x, y, width, height):
-        """Initialize rectangle with position and dimensions."""
-        self.x = int(x)
-        self.y = int(y)
-        self.width = int(width)
-        self.height = int(height)
+                """Initialize rectangle with position and dimensions."""
+                self.x = int(x)
+                self.y = int(y)
+                self.width = int(width)
+                self.height = int(height)
             def contains(self, point):
                 return (self.x <= point.x <= self.x + self.width and
                         self.y <= point.y <= self.y + self.height)
@@ -394,9 +394,9 @@ except ImportError as e:
         """Create size object for exploit analysis UI components."""
         class Size:
             def __init__(self, width, height):
-        """Initialize size with width and height dimensions."""
-        self.width = int(width)
-        self.height = int(height)
+                """Initialize size with width and height dimensions."""
+                self.width = int(width)
+                self.height = int(height)
             def area(self):
                 return self.width * self.height
             def scale(self, factor):
@@ -427,13 +427,12 @@ except ImportError as e:
 
     def create_icon_from_file(path):
         """Create icon for exploit tool UI from file."""
-        import os
         class Icon:
             def __init__(self, path):
-        """Initialize icon from file path."""
-        self.path = path
-        self.icon_data = None
-        self.size = (16, 16)  # Default icon size
+                """Initialize icon from file path."""
+                self.path = path
+                self.icon_data = None
+                self.size = (16, 16)  # Default icon size
             def isValid(self):
                 return self.valid
             def actualSize(self):
@@ -444,11 +443,11 @@ except ImportError as e:
         """Create pixmap for exploit visualization rendering."""
         class Pixmap:
             def __init__(self, width, height):
-        """Initialize pixmap with specified dimensions."""
-        self.width = width
-        self.height = height
-        self.format = "RGBA"
-        self.data = None
+                """Initialize pixmap with specified dimensions."""
+                self.width = width
+                self.height = height
+                self.format = "RGBA"
+                self.data = None
             def fill(self, color):
                 r = (color >> 16) & 0xFF
                 g = (color >> 8) & 0xFF
@@ -467,12 +466,12 @@ except ImportError as e:
         """Create pen for exploit analysis drawing operations."""
         class Pen:
             def __init__(self, style=1, width=1, color=None):
-        """Initialize pen with style, width, and color."""
-        self.style = style
-        self.width = width
-        self.color = color or (0, 0, 0, 255)
-        self.join_style = 'miter'
-        self.cap_style = 'square'
+                """Initialize pen with style, width, and color."""
+                self.style = style
+                self.width = width
+                self.color = color or (0, 0, 0, 255)
+                self.join_style = 'miter'
+                self.cap_style = 'square'
             def setStyle(self, style):
                 self.style = style
             def setCapStyle(self, cap):
@@ -482,20 +481,20 @@ except ImportError as e:
         return Pen(color, width)
     def handle_key_event(event):
         """Extract key information from a key event in fallback mode.
-        
+
         Args:
             event: Key event object (unused in fallback)
-            
+
         Returns:
             tuple: Default values (0, 0, '') representing key code, modifiers, and text
         """
         return (0, 0, '')
     def handle_mouse_event(event):
         """Extract mouse information from a mouse event in fallback mode.
-        
+
         Args:
             event: Mouse event object (unused in fallback)
-            
+
         Returns:
             tuple: Default values (0, 0, 0, 0) representing x, y, button, and buttons state
         """
@@ -546,10 +545,10 @@ except ImportError as e:
             pass
     def handle_resize_event(event):
         """Extract size information from resize event in fallback mode.
-        
+
         Args:
             event: Resize event object (unused in fallback)
-            
+
         Returns:
             tuple: Default values (0, 0, 0, 0) for new width/height and old width/height
         """
@@ -558,15 +557,15 @@ except ImportError as e:
         """Create standard action for exploit tool menus."""
         class Action:
             def __init__(self, icon=None, text="", parent=None):
-        """Initialize action with optional icon, text, and parent."""
-        self.icon = icon
-        self.text = text
-        self.parent = parent
-        self.shortcut = None
-        self.enabled = True
-        self.visible = True
-        self.checkable = False
-        self.checked = False
+                """Initialize action with optional icon, text, and parent."""
+                self.icon = icon
+                self.text = text
+                self.parent = parent
+                self.shortcut = None
+                self.enabled = True
+                self.visible = True
+                self.checkable = False
+                self.checked = False
 
             def setEnabled(self, enabled):
                 self.enabled = bool(enabled)
@@ -612,12 +611,12 @@ except ImportError as e:
         """Create button group for exploit option selection."""
         class ButtonGroup:
             def __init__(self, parent=None):
-        """Initialize button group with optional parent."""
-        self.parent = parent
-        self.buttons = []
-        self.exclusive = True
-        self.checked_button = None
-        self.id_counter = 0
+                """Initialize button group with optional parent."""
+                self.parent = parent
+                self.buttons = []
+                self.exclusive = True
+                self.checked_button = None
+                self.id_counter = 0
 
             def addButton(self, button, id=-1):
                 if id == -1:
@@ -666,7 +665,7 @@ except ImportError as e:
         return group
     def get_desktop_geometry():
         """Get desktop geometry in fallback mode.
-        
+
         Returns:
             tuple: Default screen resolution (1920, 1080)
         """
@@ -675,12 +674,12 @@ except ImportError as e:
         """Create styled frame for exploit analysis UI."""
         class Frame:
             def __init__(self, parent=None, style=None):
-        """Initialize frame with optional parent and style."""
-        self.parent = parent
-        self.style = style or 'box'
-        self.line_width = 1
-        self.midline_width = 0
-        self.shadow = 'raised'
+                """Initialize frame with optional parent and style."""
+                self.parent = parent
+                self.style = style or 'box'
+                self.line_width = 1
+                self.midline_width = 0
+                self.shadow = 'raised'
 
             def setFrameStyle(self, style):
                 self.style = style
@@ -699,7 +698,7 @@ except ImportError as e:
 
             def frameWidth(self):
                 """Calculate total frame width from line widths.
-                
+
                 Returns:
                     int: Sum of line width and mid-line width
                 """
@@ -708,13 +707,13 @@ except ImportError as e:
         return Frame()
     def prompt_for_input(parent, title, label, default=""):
         """Prompt for input in fallback mode (no actual dialog).
-        
+
         Args:
             parent: Parent widget (unused)
             title: Dialog title (unused)
             label: Input label (unused)
             default: Default text value (unused)
-            
+
         Returns:
             tuple: Empty string and False (no input provided)
         """
@@ -723,11 +722,11 @@ except ImportError as e:
         """Create context menu for exploit tool interactions."""
         class ContextMenu:
             def __init__(self, parent=None):
-        """Initialize context menu with optional parent."""
-        self.parent = parent
-        self.actions = []
-        self.separators = []
-        self.title = ""
+                """Initialize context menu with optional parent."""
+                self.parent = parent
+                self.actions = []
+                self.separators = []
+                self.title = ""
 
             def addAction(self, action):
                 self.actions.append(action)
@@ -755,11 +754,11 @@ except ImportError as e:
         return menu
     def create_radio_button_set(labels, parent=None):
         """Create radio button set in fallback mode.
-        
+
         Args:
             labels: List of button labels (unused)
             parent: Parent widget (unused)
-            
+
         Returns:
             list: Empty list (no buttons created in fallback)
         """
@@ -768,11 +767,11 @@ except ImportError as e:
         """Create scrollable area for exploit data display."""
         class ScrollArea:
             def __init__(self, parent=None):
-        """Initialize scroll area with optional parent."""
-        self.parent = parent
-        self.widget = None
-        self.horizontal_scrollbar_policy = 'as_needed'
-        self.vertical_scrollbar_policy = 'as_needed'
+                """Initialize scroll area with optional parent."""
+                self.parent = parent
+                self.widget = None
+                self.horizontal_scrollbar_policy = 'as_needed'
+                self.vertical_scrollbar_policy = 'as_needed'
 
             def setWidget(self, widget):
                 self.widget = widget
@@ -799,14 +798,14 @@ except ImportError as e:
         """Create slider for exploit parameter adjustment."""
         class Slider:
             def __init__(self, orientation='horizontal', parent=None):
-        """Initialize slider with orientation and optional parent."""
-        self.orientation = orientation
-        self.parent = parent
-        self.minimum = 0
-        self.maximum = 100
-        self.value = 0
-        self.single_step = 1
-        self.page_step = 10
+                """Initialize slider with orientation and optional parent."""
+                self.orientation = orientation
+                self.parent = parent
+                self.minimum = 0
+                self.maximum = 100
+                self.value = 0
+                self.single_step = 1
+                self.page_step = 10
 
             def setMinimum(self, val):
                 self.minimum = int(val)
@@ -847,11 +846,11 @@ except ImportError as e:
         """Create splash screen for exploit tool startup."""
         class SplashScreen:
             def __init__(self, pixmap=None, flags=None):
-        """Initialize splash screen with optional pixmap and flags."""
-        self.pixmap = pixmap
-        self.flags = flags
-        self.message = ""
-        self.alignment = 'center'
+                """Initialize splash screen with optional pixmap and flags."""
+                self.pixmap = pixmap
+                self.flags = flags
+                self.message = ""
+                self.alignment = 'center'
 
             def show(self):
                 self.visible = True
@@ -871,13 +870,13 @@ except ImportError as e:
         """Create toolbar for exploit tool actions."""
         class ToolBar:
             def __init__(self, title="", parent=None):
-        """Initialize toolbar with optional title and parent."""
-        self.title = title
-        self.parent = parent
-        self.actions = []
-        self.orientation = 'horizontal'
-        self.icon_size = (24, 24)
-        self.movable = True
+                """Initialize toolbar with optional title and parent."""
+                self.title = title
+                self.parent = parent
+                self.actions = []
+                self.orientation = 'horizontal'
+                self.icon_size = (24, 24)
+                self.movable = True
 
             def addAction(self, action):
                 self.actions.append(action)
@@ -907,11 +906,11 @@ except ImportError as e:
         """Create wizard for exploit configuration."""
         class Wizard:
             def __init__(self, parent=None, flags=None):
-        """Initialize wizard with optional parent and flags."""
-        self.parent = parent
-        self.flags = flags
-        self.pages = []
-        self.current_page = 0
+                """Initialize wizard with optional parent and flags."""
+                self.parent = parent
+                self.flags = flags
+                self.pages = []
+                self.current_page = 0
 
             def addPage(self, page):
                 self.pages.append(page)
@@ -954,12 +953,12 @@ except ImportError as e:
         """Create wizard page for exploit setup steps."""
         class WizardPage:
             def __init__(self, parent=None):
-        """Initialize wizard page with optional parent."""
-        self.parent = parent
-        self.title = ""
-        self.subtitle = ""
-        self.layout = None
-        self.widgets = []
+                """Initialize wizard page with optional parent."""
+                self.parent = parent
+                self.title = ""
+                self.subtitle = ""
+                self.layout = None
+                self.widgets = []
 
             def setTitle(self, title):
                 self.title = title
@@ -982,11 +981,11 @@ except ImportError as e:
         return WizardPage(title, subtitle)
     def configure_abstract_item_view(view, selection_mode=None):
         """Configure item view in fallback mode.
-        
+
         Args:
             view: View to configure (returned unchanged)
             selection_mode: Selection mode (unused)
-            
+
         Returns:
             The same view object passed in
         """
@@ -994,12 +993,12 @@ except ImportError as e:
 
     def configure_abstract_scroll_area(area, h_policy=None, v_policy=None):
         """Configure scroll area in fallback mode.
-        
+
         Args:
             area: Scroll area to configure (returned unchanged)
             h_policy: Horizontal scrollbar policy (unused)
             v_policy: Vertical scrollbar policy (unused)
-            
+
         Returns:
             The same scroll area object passed in
         """
@@ -1013,8 +1012,8 @@ except ImportError as e:
         PyQt5 installed, returning itself for any attribute access or calls.
         """
         def __init__(self, *args, **kwargs):
-        """Initialize mock Qt class with any arguments."""
-        pass
+            """Initialize mock Qt class with any arguments."""
+            pass
         def __call__(self, *args, **kwargs):
             return self
         def __getattr__(self, name):

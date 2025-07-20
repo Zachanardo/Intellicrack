@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
+from typing import Any, Dict, List, Optional
+
 """
 Concolic Execution Engine for Precise Path Exploration
 
@@ -24,9 +27,6 @@ This module provides a unified interface for symbolic execution using:
 2. manticore (secondary, Linux-only)
 3. simconcolic (fallback)
 """
-
-import logging
-from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -81,11 +81,11 @@ class ConcolicExecutionEngine:
 
     def __init__(self, binary_path: str, max_iterations: int = 100, timeout: int = 300):
         """Initialize the concolic execution engine.
-        
+
         Sets up the unified concolic execution engine with support for multiple
         symbolic execution backends including angr, manticore, and simconcolic.
         Automatically selects the best available engine for the platform.
-        
+
         Args:
             binary_path: Path to the binary to analyze
             max_iterations: Maximum number of exploration iterations

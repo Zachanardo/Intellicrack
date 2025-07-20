@@ -29,7 +29,6 @@ import sys
 from pathlib import Path
 
 from ...utils.system.file_resolution import file_resolver
-from ...utils.system.program_discovery import ProgramDiscoveryEngine
 from .common_imports import (
     HAS_PYQT,
     QCheckBox,
@@ -61,7 +60,8 @@ else:
     # Fallback definitions when PyQt is not available
     QThread = object
     QTimer = object
-    pyqtSignal = lambda *args: lambda x: x
+    def pyqtSignal(*args):
+        return lambda x: x
 
 
 logger = logging.getLogger(__name__)
@@ -141,15 +141,15 @@ class ProgramSelectorDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Select Program to Analyze")
         self.setMinimumSize(800, 600)
-        
+
         # State management
         self.selected_program = None
         self.discovered_programs = []
         self.analysis_results = {}
-        
+
         # Threading
         self.discovery_thread = None
-        
+
         # Filters and search
         self.file_filters = {
             'All Executables': ['*.exe', '*.dll', '*.so', '*.dylib', '*.bin'],
@@ -157,7 +157,7 @@ class ProgramSelectorDialog(QDialog):
             'Linux': ['*.so', '*.bin'],
             'macOS': ['*.dylib', '*.app']
         }
-        
+
         # Setup UI
         self.setup_ui()
         self.setup_connections()
@@ -699,7 +699,7 @@ Description: {program_data.get('description', 'No description available')}"""
             ]
 
             # Search for licensing-related files with advanced detection
-            for root, dirs, files in os.walk(folder_path):
+            for root, _dirs, files in os.walk(folder_path):
                 # Limit depth if not including subdirs
                 if not self.include_subdirs_checkbox.isChecked():
                     if root != folder_path:

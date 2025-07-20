@@ -115,7 +115,7 @@ class FeatureExtractor:
 
     def __init__(self):
         """Initialize the feature extractor for predictive modeling.
-        
+
         Sets up feature caching, importance tracking, and connects to the learning engine
         for intelligent feature extraction from binary analysis data.
         """
@@ -263,7 +263,7 @@ class FeatureExtractor:
                     features["disk_activity"] = min(
                         (disk_io.read_bytes + disk_io.write_bytes) / (1024**3), 1.0
                     )
-            except:
+            except (AttributeError, OSError):
                 features["disk_activity"] = 0.1
 
             return features
@@ -369,7 +369,7 @@ class PredictiveModel:
 
     def __init__(self, model_name: str):
         """Initialize the base predictive model.
-        
+
         Args:
             model_name: Name identifier for the predictive model.
         """
@@ -419,7 +419,7 @@ class LinearRegressionModel(PredictiveModel):
 
     def __init__(self, model_name: str):
         """Initialize the linear regression model.
-        
+
         Args:
             model_name: Name identifier for the model.
         """
@@ -518,7 +518,7 @@ class SuccessProbabilityPredictor:
 
     def __init__(self):
         """Initialize the success probability predictor.
-        
+
         Sets up a linear regression model and feature extractor for predicting
         the likelihood of successful exploitation operations.
         """
@@ -540,23 +540,23 @@ class SuccessProbabilityPredictor:
 
             if NUMPY_AVAILABLE:
                 features = {
-                    "operation_complexity": np.random.uniform(complexity_base, 1.5),
-                    "system_load": np.random.uniform(0.1, 0.9),
-                    "historical_success_rate": np.random.uniform(0.6, 0.95),
-                    "input_size": np.random.uniform(0.1, 1.0),
-                    "cpu_usage": np.random.uniform(0.2, 0.8),
-                    "memory_usage": np.random.uniform(0.3, 0.9)
+                    "operation_complexity": np.random.uniform(complexity_base, 1.5),  # noqa: S311
+                    "system_load": np.random.uniform(0.1, 0.9),  # noqa: S311
+                    "historical_success_rate": np.random.uniform(0.6, 0.95),  # noqa: S311
+                    "input_size": np.random.uniform(0.1, 1.0),  # noqa: S311
+                    "cpu_usage": np.random.uniform(0.2, 0.8),  # noqa: S311
+                    "memory_usage": np.random.uniform(0.3, 0.9)  # noqa: S311
                 }
             else:
                 # Fallback random values when numpy is not available
                 import random
                 features = {
-                    "operation_complexity": random.uniform(complexity_base, 1.5),
-                    "system_load": random.uniform(0.1, 0.9),
-                    "historical_success_rate": random.uniform(0.6, 0.95),
-                    "input_size": random.uniform(0.1, 1.0),
-                    "cpu_usage": random.uniform(0.2, 0.8),
-                    "memory_usage": random.uniform(0.3, 0.9)
+                    "operation_complexity": random.uniform(complexity_base, 1.5),  # noqa: S311
+                    "system_load": random.uniform(0.1, 0.9),  # noqa: S311
+                    "historical_success_rate": random.uniform(0.6, 0.95),  # noqa: S311
+                    "input_size": random.uniform(0.1, 1.0),  # noqa: S311
+                    "cpu_usage": random.uniform(0.2, 0.8),  # noqa: S311
+                    "memory_usage": random.uniform(0.3, 0.9)  # noqa: S311
                 }
 
             # Calculate synthetic target based on realistic relationships
@@ -677,7 +677,7 @@ class ExecutionTimePredictor:
 
     def __init__(self):
         """Initialize the execution time predictor.
-        
+
         Sets up a linear regression model and feature extractor for predicting
         operation execution times based on binary characteristics.
         """
@@ -697,20 +697,20 @@ class ExecutionTimePredictor:
 
             if NUMPY_AVAILABLE:
                 features = {
-                    "operation_complexity": np.random.uniform(complexity_factor, 2.0),
-                    "input_size": np.random.uniform(0.1, 1.0),
-                    "system_load": np.random.uniform(0.1, 0.9),
-                    "cpu_usage": np.random.uniform(0.2, 0.8),
-                    "historical_success_rate": np.random.uniform(0.6, 0.95)
+                    "operation_complexity": np.random.uniform(complexity_factor, 2.0),  # noqa: S311
+                    "input_size": np.random.uniform(0.1, 1.0),  # noqa: S311
+                    "system_load": np.random.uniform(0.1, 0.9),  # noqa: S311
+                    "cpu_usage": np.random.uniform(0.2, 0.8),  # noqa: S311
+                    "historical_success_rate": np.random.uniform(0.6, 0.95)  # noqa: S311
                 }
             else:
                 import random
                 features = {
-                    "operation_complexity": random.uniform(complexity_factor, 2.0),
-                    "input_size": random.uniform(0.1, 1.0),
-                    "system_load": random.uniform(0.1, 0.9),
-                    "cpu_usage": random.uniform(0.2, 0.8),
-                    "historical_success_rate": random.uniform(0.6, 0.95)
+                    "operation_complexity": random.uniform(complexity_factor, 2.0),  # noqa: S311
+                    "input_size": random.uniform(0.1, 1.0),  # noqa: S311
+                    "system_load": random.uniform(0.1, 0.9),  # noqa: S311
+                    "cpu_usage": random.uniform(0.2, 0.8),  # noqa: S311
+                    "historical_success_rate": random.uniform(0.6, 0.95)  # noqa: S311
                 }
 
             # Execution time correlates with complexity and system load
@@ -793,14 +793,10 @@ class VulnerabilityPredictor:
 
     def __init__(self):
         """Initialize the vulnerability discovery predictor.
-        
+
         Sets up the predictor for estimating vulnerability discovery likelihood
         in target binaries based on code patterns and historical data.
         """
-        super().__init__(
-            "vulnerability_discovery",
-            "Predict vulnerability discovery likelihood"
-        )
         self.vulnerability_patterns = []
         self.pattern_weights = {}
         self.discovery_history = []
@@ -812,28 +808,28 @@ class VulnerabilityPredictor:
         for vuln_sample_idx in range(300):
             # File characteristics with variation based on sample index
             if NUMPY_AVAILABLE:
-                file_type_risk = np.random.choice(
+                file_type_risk = np.random.choice(  # noqa: S311
                     [0.3, 0.5, 0.7, 0.9], p=[0.3, 0.3, 0.3, 0.1])
-                size_risk = np.random.uniform(0.1, 1.0)
-                complexity = np.random.uniform(0.2, 1.0)
-                entropy = np.random.uniform(0.3, 1.0)
+                size_risk = np.random.uniform(0.1, 1.0)  # noqa: S311
+                complexity = np.random.uniform(0.2, 1.0)  # noqa: S311
+                entropy = np.random.uniform(0.3, 1.0)  # noqa: S311
             else:
                 import random
-                file_type_risk = random.choices(
+                file_type_risk = random.choices(  # noqa: S311
                     [0.3, 0.5, 0.7, 0.9], weights=[0.3, 0.3, 0.3, 0.1])[0]
-                size_risk = random.uniform(0.1, 1.0)
-                complexity = random.uniform(0.2, 1.0)
-                entropy = random.uniform(0.3, 1.0)
+                size_risk = random.uniform(0.1, 1.0)  # noqa: S311
+                complexity = random.uniform(0.2, 1.0)  # noqa: S311
+                entropy = random.uniform(0.3, 1.0)  # noqa: S311
 
             # Add some pattern based on index for model diversity
             if vuln_sample_idx % 20 == 0:
                 entropy *= 1.2  # Increase entropy for every 20th sample
 
             if NUMPY_AVAILABLE:
-                compiler_risk = np.random.uniform(0.2, 0.8)
+                compiler_risk = np.random.uniform(0.2, 0.8)  # noqa: S311
             else:
                 import random
-                compiler_risk = random.uniform(0.2, 0.8)
+                compiler_risk = random.uniform(0.2, 0.8)  # noqa: S311
 
             features = {
                 "file_type_risk": file_type_risk,

@@ -54,7 +54,7 @@ class BinarySimilaritySearch:
         self.hash_functions = []
         self.feature_extractors = []
         self.logger = logging.getLogger("IntellicrackLogger.BinarySearch")
-        
+
         self.load_database()
 
     def _load_database(self) -> Dict[str, Any]:

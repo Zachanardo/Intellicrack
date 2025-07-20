@@ -523,6 +523,7 @@ class AdvancedSearchDialog(QDialog if PYQT5_AVAILABLE else object):
     """Advanced search dialog with comprehensive search options."""
 
     def __init__(self, parent=None, search_engine: SearchEngine = None):
+        """Initialize the advanced search dialog with parent widget and search engine."""
         if not PYQT5_AVAILABLE:
             return
 

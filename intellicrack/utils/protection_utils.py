@@ -718,8 +718,8 @@ def backup_registry():
 def apply_hwid_spoof():
     # Apply registry modifications
     try:
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, 
-                           r'SOFTWARE\\Microsoft\\Cryptography', 
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
+                           r'SOFTWARE\\Microsoft\\Cryptography',
                            0, winreg.KEY_WRITE)
         winreg.SetValueEx(key, 'MachineGuid', 0, winreg.REG_SZ, '{hwid_uuid}')
         winreg.CloseKey(key)

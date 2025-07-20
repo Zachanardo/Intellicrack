@@ -23,7 +23,7 @@ Radare2 Keygen Assistant Module
 Advanced keygen generation assistant for Radare2 that analyzes cryptographic
 validation routines and generates working keygen source code in multiple languages.
 
-Author: Intellicrack Framework  
+Author: Intellicrack Framework
 Version: 2.0.0
 License: GPL v3
 """

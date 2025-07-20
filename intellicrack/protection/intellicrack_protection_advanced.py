@@ -134,6 +134,7 @@ class AdvancedProtectionAnalysis(ProtectionAnalysis):
                  heuristic_detections: Optional[List[DetectionResult]] = None,
                  similarity_hash: Optional[str] = None,
                  file_format_details: Optional[Dict[str, Any]] = None):
+        """Initialize advanced protection analysis with comprehensive binary analysis data."""
         super().__init__(
             file_path=file_path,
             file_type=file_type,

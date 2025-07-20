@@ -52,6 +52,31 @@ from sklearn.cluster import DBSCAN
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
 
+class RestrictedUnpickler(pickle.Unpickler):
+    """Restricted unpickler that only allows safe classes."""
+    
+    def find_class(self, module, name):
+        """Override find_class to restrict allowed classes."""
+        # Allow only safe modules and classes
+        ALLOWED_MODULES = {
+            'numpy', 'numpy.core.multiarray', 'numpy.core.numeric',
+            'pandas', 'pandas.core.frame', 'pandas.core.series',
+            'sklearn', 'torch', 'tensorflow',
+            '__builtin__', 'builtins',
+            'collections', 'collections.abc'
+        }
+        
+        # Allow model classes from our own modules
+        if module.startswith('intellicrack.'):
+            return super().find_class(module, name)
+            
+        # Check if module is in allowed list
+        if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
+            return super().find_class(module, name)
+            
+        # Deny everything else
+        raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
+
 def secure_pickle_dumps(obj):
     """Securely serialize object with integrity check."""
     # Serialize object
@@ -74,8 +99,9 @@ def secure_pickle_loads(data):
     if not hmac.compare_digest(stored_mac, expected_mac):
         raise ValueError("Pickle data integrity check failed - possible tampering detected")
 
-    # Deserialize object
-    return pickle.loads(obj_data)
+    # Deserialize object using RestrictedUnpickler
+    import io
+    return RestrictedUnpickler(io.BytesIO(obj_data)).load()  # noqa: S301
 
 
 class PatternType(Enum):
@@ -315,6 +341,7 @@ class QLearningAgent:
                  epsilon: float = 1.0,
                  epsilon_decay: float = 0.995,
                  epsilon_min: float = 0.01):
+        """Initialize the Q-learning agent with specified parameters and experience buffer."""
         self.state_size = state_size
         self.action_size = action_size
         self.learning_rate = learning_rate
@@ -378,6 +405,7 @@ class PatternStorage:
     """SQLite-based pattern storage with versioning"""
 
     def __init__(self, db_path: str = "pattern_evolution.db"):
+        """Initialize pattern storage with SQLite database and thread safety."""
         self.db_path = db_path
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
         self.lock = threading.Lock()
@@ -561,6 +589,7 @@ class PatternMatcher:
     """Fast pattern matching engine using Bloom filters and optimized algorithms"""
 
     def __init__(self, bloom_size: int = 1000000, num_hashes: int = 7):
+        """Initialize pattern matcher with bloom filter and pattern caching."""
         self.bloom_size = bloom_size
         self.num_hashes = num_hashes
         self.bloom_filter = np.zeros(bloom_size, dtype=bool)

@@ -312,10 +312,10 @@ def run_autonomous_crack(binary_path: str, target_type: Optional[str] = None) ->
 
         results["patching_phase"]["patches"] = patches
 
-        # Phase 3: Apply patches (simulation only for safety)
+        # Phase 3: Verify patches (validation only for safety)
         if patches.get("suggested_patches"):
-            from ..exploitation.exploitation import run_simulate_patch
-            simulation = run_simulate_patch(binary_path, patches["suggested_patches"])
+            from ..exploitation.exploitation import verify_patches_without_applying
+            simulation = verify_patches_without_applying(binary_path, patches["suggested_patches"])
             results["patching_phase"]["simulation"] = simulation
 
             if simulation.get("summary", {}).get("valid_patches", 0) > 0:
@@ -1032,7 +1032,7 @@ def get_target_process_pid(process_name: str) -> Optional[int]:
 
 def _detect_usb_dongles() -> List[Dict[str, Any]]:
     """Detect USB dongles by enumerating USB devices.
-    
+
     Returns:
         List of dictionaries containing detected USB dongle information
     """
@@ -1085,7 +1085,7 @@ def _detect_usb_dongles() -> List[Dict[str, Any]]:
 
 def _detect_windows_usb_dongles() -> List[Dict[str, Any]]:
     """Detect USB dongles on Windows using WMI.
-    
+
     Returns:
         List of dictionaries containing Windows USB dongle information
     """
@@ -1127,7 +1127,7 @@ def _detect_windows_usb_dongles() -> List[Dict[str, Any]]:
 
 def _detect_linux_usb_dongles() -> List[Dict[str, Any]]:
     """Detect USB dongles on Linux using lsusb.
-    
+
     Returns:
         List of dictionaries containing Linux USB dongle information
     """
@@ -1158,7 +1158,7 @@ def _detect_linux_usb_dongles() -> List[Dict[str, Any]]:
 
 def _detect_dongle_processes() -> List[Dict[str, Any]]:
     """Detect dongle-related processes.
-    
+
     Returns:
         List of dictionaries containing detected dongle process information
     """
@@ -1202,7 +1202,7 @@ def _detect_dongle_processes() -> List[Dict[str, Any]]:
 
 def _detect_dongle_drivers() -> List[Dict[str, Any]]:
     """Detect dongle-related drivers.
-    
+
     Returns:
         List of dictionaries containing detected dongle driver information
     """
@@ -1226,7 +1226,7 @@ def _detect_dongle_drivers() -> List[Dict[str, Any]]:
 
 def _detect_windows_dongle_drivers() -> List[Dict[str, Any]]:
     """Detect dongle drivers on Windows.
-    
+
     Returns:
         List of dictionaries containing Windows dongle driver information
     """
@@ -1264,7 +1264,7 @@ def _detect_windows_dongle_drivers() -> List[Dict[str, Any]]:
 
 def _detect_linux_dongle_drivers() -> List[Dict[str, Any]]:
     """Detect dongle drivers on Linux.
-    
+
     Returns:
         List of dictionaries containing Linux dongle driver information
     """
@@ -1295,7 +1295,7 @@ def _detect_linux_dongle_drivers() -> List[Dict[str, Any]]:
 
 def _detect_license_dongles() -> List[Dict[str, Any]]:
     """Detect software-based license dongles.
-    
+
     Returns:
         List of dictionaries containing detected license file information
     """
@@ -1338,7 +1338,7 @@ def _detect_license_dongles() -> List[Dict[str, Any]]:
 
 def _detect_network_dongles() -> List[Dict[str, Any]]:
     """Detect network-based dongles.
-    
+
     Returns:
         List of dictionaries containing detected network dongle information
     """
@@ -1514,10 +1514,10 @@ def run_local_protection_scan(binary_path: str) -> Dict[str, Any]:
 
 def _generate_analysis_summary(analyses: Dict[str, Any]) -> Dict[str, Any]:
     """Generate summary from analysis results.
-    
+
     Args:
         analyses: Dictionary containing analysis results
-        
+
     Returns:
         Dictionary containing analysis summary
     """
@@ -1543,10 +1543,10 @@ def _generate_analysis_summary(analyses: Dict[str, Any]) -> Dict[str, Any]:
 
 def _generate_bypass_suggestions(pattern_results: Dict[str, Any]) -> List[str]:
     """Generate bypass suggestions based on patterns found.
-    
+
     Args:
         pattern_results: Dictionary containing pattern analysis results
-        
+
     Returns:
         List of bypass suggestion strings
     """
@@ -1573,10 +1573,10 @@ def _generate_bypass_suggestions(pattern_results: Dict[str, Any]) -> List[str]:
 
 def _determine_target_type(analysis: Dict[str, Any]) -> str:
     """Determine target type from analysis.
-    
+
     Args:
         analysis: Dictionary containing analysis results
-        
+
     Returns:
         Target type string (license, trial, or protection)
     """
@@ -1683,10 +1683,10 @@ def _verify_crack(binary_path: str) -> Dict[str, Any]:
 
 def _verify_static_analysis(binary_path: str) -> Dict[str, Any]:
     """Verify crack through static analysis.
-    
+
     Args:
         binary_path: Path to binary file
-        
+
     Returns:
         Dictionary containing static analysis verification results
     """
@@ -1743,10 +1743,10 @@ def _verify_static_analysis(binary_path: str) -> Dict[str, Any]:
 
 def _verify_execution_testing(binary_path: str) -> Dict[str, Any]:
     """Verify crack through controlled execution testing.
-    
+
     Args:
         binary_path: Path to binary file
-        
+
     Returns:
         Dictionary containing execution testing verification results
     """
@@ -1864,10 +1864,10 @@ def _verify_execution_testing(binary_path: str) -> Dict[str, Any]:
 
 def _verify_protection_bypass(binary_path: str) -> Dict[str, Any]:
     """Verify that protection mechanisms have been bypassed.
-    
+
     Args:
         binary_path: Path to binary file
-        
+
     Returns:
         Dictionary containing protection bypass verification results
     """
@@ -1946,10 +1946,10 @@ def _verify_protection_bypass(binary_path: str) -> Dict[str, Any]:
 
 def _verify_license_bypass(binary_path: str) -> Dict[str, Any]:
     """Verify that license checks have been bypassed.
-    
+
     Args:
         binary_path: Path to binary file
-        
+
     Returns:
         Dictionary containing license bypass verification results
     """
@@ -2030,10 +2030,10 @@ def _verify_license_bypass(binary_path: str) -> Dict[str, Any]:
 
 def _verify_patch_integrity(binary_path: str) -> Dict[str, Any]:
     """Verify the integrity and validity of applied patches.
-    
+
     Args:
         binary_path: Path to binary file
-        
+
     Returns:
         Dictionary containing patch integrity verification results
     """
@@ -2122,7 +2122,7 @@ def _verify_patch_integrity(binary_path: str) -> Dict[str, Any]:
 
 def _find_ghidra_installation() -> Optional[str]:
     """Find Ghidra installation path.
-    
+
     Returns:
         Ghidra installation path or None if not found
     """
@@ -2273,10 +2273,10 @@ def _is_license_check_pattern(cfg: Dict[str, Any]) -> bool:
 
 def _identify_license_related_calls(function_calls: List[str]) -> int:
     """Identify license-related function calls.
-    
+
     Args:
         function_calls: List of function call names
-        
+
     Returns:
         Number of license-related function calls identified
     """
@@ -2300,10 +2300,10 @@ def _identify_license_related_calls(function_calls: List[str]) -> int:
 
 def _count_license_strings(string_refs: List[str]) -> int:
     """Count license-related string references.
-    
+
     Args:
         string_refs: List of string references
-        
+
     Returns:
         Number of license-related strings found
     """
@@ -2327,11 +2327,11 @@ def _count_license_strings(string_refs: List[str]) -> int:
 
 def _parse_tool_output(tool_name: str, output: str) -> Dict[str, Any]:
     """Parse tool-specific output.
-    
+
     Args:
         tool_name: Name of the tool
         output: Tool output string
-        
+
     Returns:
         Dictionary containing parsed tool output
     """

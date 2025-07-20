@@ -70,7 +70,8 @@ except ImportError as e:
     QWidget = object
     QApplication = object
     QThread = object
-    pyqtSignal = lambda *args: None
+    def pyqtSignal(*args):
+        return None
     QTimer = object
     QIcon = object
     QPixmap = object

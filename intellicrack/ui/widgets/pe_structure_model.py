@@ -19,6 +19,7 @@ class PEStructureItem:
     """Tree item representing a PE structure element"""
 
     def __init__(self, data: Union[FileStructure, SectionInfo, str], parent=None):
+        """Initialize PE structure item with hierarchical data representation."""
         self.parent_item = parent
         self.item_data = data
         self.child_items = []
@@ -84,6 +85,7 @@ class PEStructureModel(QAbstractItemModel):
     rva_selected = pyqtSignal(int)  # RVA address
 
     def __init__(self, pe_model: Optional[PEFileModel] = None, parent=None):
+        """Initialize PE structure model with optional PE file data for tree representation."""
         super().__init__(parent)
         self.pe_model = pe_model
         self.root_item = PEStructureItem("PE Structure")

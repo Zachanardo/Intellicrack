@@ -52,9 +52,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ...ai.ai_assistant_enhanced import IntellicrackAIAssistant
-from ...ai.ai_tools import AIAssistant
-from ...ai.llm_backends import LLMManager
 from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -514,24 +511,24 @@ class AICodingAssistantDialog(QDialog):
         self.setWindowTitle("AI Coding Assistant")
         self.setMinimumSize(1200, 800)
         self.resize(1400, 900)
-        
+
         # Main state
         self.current_project_dir = None
         self.current_file = None
         self.llm_enabled = True
-        
+
         # Threading
         self.worker_thread = None
         self.generation_thread = None
-        
+
         # Setup UI
         self.setup_ui()
         self.setup_connections()
         self.setup_shortcuts()
-        
+
         # Load initial state
         self.load_initial_project()
-        
+
         logger.info("AI Coding Assistant Dialog initialized")
 
     def setup_ui(self):

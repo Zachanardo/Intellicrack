@@ -16,19 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Timing Attack Defense
-
-Implements defense mechanisms against timing-based analysis
-including anti-sleep acceleration and execution delays.
-"""
-
 import ctypes
 import logging
 import random
 import threading
 import time
 from typing import Callable, Optional
+
+import psutil
+
+"""
+Timing Attack Defense
+
+Implements defensive mechanisms against timing-based attacks
+and provides tools for analyzing timing characteristics.
+"""
 
 
 class TimingAttackDefense:
@@ -161,9 +163,12 @@ class TimingAttackDefense:
 
                 iterations += 1
 
-                # Add some randomness
-                if random.random() < 0.1:
-                    time.sleep(0.001)  # Brief pause
+                # Add timing variations based on actual CPU load
+                current_cpu = psutil.cpu_percent(interval=0)
+                if current_cpu > 80:  # High CPU load
+                    time.sleep(0.001)  # Brief pause when CPU is busy
+                elif iterations % 1000 == 0:  # Periodic pause
+                    time.sleep(0.0001)  # Micro-pause for realistic behavior
 
             elapsed = time.perf_counter() - start_time
             self.logger.debug(f"Stalling completed: {elapsed:.2f}s, {iterations} iterations")

@@ -293,7 +293,7 @@ You autonomously: detect_protections() → analyze_each_mechanism() → research
 ## Expert-Level Execution
 
 - Execute tasks with the same competency regardless of user skill level (novice or expert)
-- Take initiative to solve problems completely, not just provide suggestions  
+- Take initiative to solve problems completely, not just provide suggestions
 - Chain multiple analysis tools to build comprehensive understanding
 - Provide expert-level autonomous execution like Claude Code does for programming
 

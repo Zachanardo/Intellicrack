@@ -34,7 +34,7 @@ def count_logger_calls():
     total_logger_errors = 0
     files_with_logger = 0
 
-    for root, dirs, files in os.walk(intellicrack_dir):
+    for root, _dirs, files in os.walk(intellicrack_dir):
         for file in files:
             if file.endswith('.py'):
                 file_path = Path(root) / file

@@ -50,6 +50,7 @@ class ProtectionAnalysisThread(QThread):
     analysis_progress = pyqtSignal(str)
 
     def __init__(self, file_path: str):
+        """Initialize protection analysis thread with file path and detection components."""
         super().__init__()
         self.file_path = file_path
         self.detector = IntellicrackProtectionCore()
@@ -57,12 +58,12 @@ class ProtectionAnalysisThread(QThread):
 
     def run(self):
         """Analyze binary file for protections in a background thread.
-        
+
         Performs protection detection analysis on the specified file,
         emitting progress signals during the process. If license-based
         protections are detected, automatically searches for associated
         license files in the directory.
-        
+
         Emits:
             analysis_progress: Progress messages during analysis
             analysis_complete: Final ProtectionAnalysis results
@@ -118,6 +119,7 @@ class IntellicrackProtectionWidget(QWidget):
     analysis_requested = pyqtSignal(str)  # file_path
 
     def __init__(self, parent=None):
+        """Initialize protection widget with parent widget, AI assistant components, and UI setup."""
         super().__init__(parent)
         self.current_analysis: Optional[ProtectionAnalysis] = None
         self.analysis_thread: Optional[ProtectionAnalysisThread] = None

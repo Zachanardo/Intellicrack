@@ -3,11 +3,10 @@
 This module provides a widget for displaying GPU usage, memory,
 and compute capabilities in the system monitoring interface.
 """
-import platform
 import subprocess
 from typing import Any, Dict, List
 
-from PyQt6.QtCore import QObject, QThread, pyqtSignal
+from PyQt6.QtCore import QObject, QThread, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QGridLayout,
@@ -289,7 +288,7 @@ class GPUStatusWidget(QWidget):
         self.gpu_combo.clear()
 
         if data.get("gpus"):
-            for i, gpu in enumerate(data["gpus"]):
+            for _i, gpu in enumerate(data["gpus"]):
                 self.gpu_combo.addItem(f"{gpu['vendor']} - {gpu['name']}")
 
             # Try to restore previous selection

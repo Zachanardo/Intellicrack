@@ -10,14 +10,14 @@ Licensed under GNU General Public License v3.0
 """
 
 import json
+import logging
 import os
 import subprocess
-import tempfile
 import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from ...utils.logger import get_logger
 
@@ -162,7 +162,7 @@ class MemoryAnalysisResult:
 class MemoryForensicsEngine:
     """
     Advanced memory forensics analysis engine using Volatility3.
-    
+
     Provides comprehensive memory dump analysis including:
     - Process and thread analysis
     - Network connection forensics
@@ -176,20 +176,20 @@ class MemoryForensicsEngine:
     def __init__(self, cache_directory: Optional[str] = None):
         """Initialize the memory forensics engine with cache configuration and plugin detection."""
         self.logger = logging.getLogger("IntellicrackLogger.MemoryForensics")
-        
+
         # Set up cache directory
         if cache_directory:
             self.cache_directory = Path(cache_directory)
         else:
             self.cache_directory = Path("./cache/memory_forensics")
-        
+
         self.cache_directory.mkdir(parents=True, exist_ok=True)
-        
+
         # Initialize Volatility if available
-        self.volatility_available = VOLATILITY_AVAILABLE
+        self.volatility_available = VOLATILITY3_AVAILABLE
         if not self.volatility_available:
             self.logger.warning("Volatility not available - memory analysis will be limited")
-        
+
         # Results storage
         self.analysis_results = {}
 
@@ -223,12 +223,12 @@ class MemoryForensicsEngine:
     ) -> MemoryAnalysisResult:
         """
         Analyze a memory dump file for forensic artifacts
-        
+
         Args:
             dump_path: Path to the memory dump file
             profile: Memory analysis profile to use
             deep_analysis: Whether to perform deep analysis
-            
+
         Returns:
             Complete memory forensics analysis results
         """
@@ -916,11 +916,11 @@ class MemoryForensicsEngine:
     def analyze_process_memory(self, process_id: int, dump_path: Optional[str] = None) -> Dict[str, Any]:
         """
         Analyze live process memory or specific process from dump
-        
+
         Args:
             process_id: Process ID to analyze
             dump_path: Optional memory dump path
-            
+
         Returns:
             Process-specific memory analysis results
         """
@@ -1328,11 +1328,11 @@ class MemoryForensicsEngine:
     def extract_strings(self, memory_data: bytes, min_length: int = 4) -> List[str]:
         """
         Extract ASCII strings from memory data
-        
+
         Args:
             memory_data: Binary memory data
             min_length: Minimum string length to extract
-            
+
         Returns:
             List of extracted strings
         """
@@ -1361,10 +1361,10 @@ class MemoryForensicsEngine:
     def generate_icp_supplemental_data(self, analysis_result: MemoryAnalysisResult) -> Dict[str, Any]:
         """
         Generate supplemental data for ICP backend integration
-        
+
         Args:
             analysis_result: Memory analysis results
-            
+
         Returns:
             Dictionary with supplemental memory forensics data for ICP
         """
@@ -1451,11 +1451,11 @@ class MemoryForensicsEngine:
     def export_analysis_report(self, analysis_result: MemoryAnalysisResult, output_path: str) -> Tuple[bool, str]:
         """
         Export memory analysis results to JSON report
-        
+
         Args:
             analysis_result: Analysis results to export
             output_path: Path to save the JSON report
-            
+
         Returns:
             Tuple of (success, message)
         """

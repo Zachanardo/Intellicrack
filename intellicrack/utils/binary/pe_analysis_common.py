@@ -72,11 +72,11 @@ def get_pe_sections_info(pe) -> List[Dict]:
 def extract_pe_icon(pe_path: str, output_path: Optional[str] = None) -> Optional[Image.Image]:
     """
     Extract icon from PE file.
-    
+
     Args:
         pe_path: Path to PE file
         output_path: Optional path to save extracted icon
-    
+
     Returns:
         PIL Image object or None if no icon found
     """
@@ -111,10 +111,10 @@ def extract_pe_icon(pe_path: str, output_path: Optional[str] = None) -> Optional
 def extract_icon_from_resources(pe) -> Optional[bytes]:
     """
     Extract icon data from PE resources.
-    
+
     Args:
         pe: pefile.PE object
-    
+
     Returns:
         Icon data bytes or None
     """
@@ -164,7 +164,7 @@ def extract_icon_from_resources(pe) -> Optional[bytes]:
 
             # Find largest icon
             offset = 6
-            for i in range(count):
+            for _i in range(count):
                 if offset + 14 <= len(group_data):
                     # GRPICONDIRENTRY structure
                     width, height, colors, _, planes, bits, size, icon_id = struct.unpack(
@@ -193,10 +193,10 @@ def extract_icon_from_resources(pe) -> Optional[bytes]:
 def create_image_from_icon_data(icon_data: bytes) -> Optional[Image.Image]:
     """
     Create PIL Image from icon data.
-    
+
     Args:
         icon_data: Raw icon data bytes
-    
+
     Returns:
         PIL Image object or None
     """
@@ -237,7 +237,7 @@ def create_image_from_icon_data(icon_data: bytes) -> Optional[Image.Image]:
                 return img
 
         # Try other formats
-        for fmt in ['PNG', 'JPEG', 'GIF']:
+        for _fmt in ['PNG', 'JPEG', 'GIF']:
             try:
                 icon_io = io.BytesIO(icon_data)
                 img = Image.open(icon_io)
@@ -255,11 +255,11 @@ def create_image_from_icon_data(icon_data: bytes) -> Optional[Image.Image]:
 def extract_all_pe_icons(pe_path: str, output_dir: str) -> List[str]:
     """
     Extract all icons from PE file.
-    
+
     Args:
         pe_path: Path to PE file
         output_dir: Directory to save extracted icons
-    
+
     Returns:
         List of saved icon file paths
     """
@@ -317,10 +317,10 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> List[str]:
 def get_pe_icon_info(pe_path: str) -> Dict[str, any]:
     """
     Get information about icons in PE file.
-    
+
     Args:
         pe_path: Path to PE file
-    
+
     Returns:
         Dictionary with icon information
     """

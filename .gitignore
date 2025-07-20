@@ -561,4 +561,28 @@ docker-compose.override.yml
 
 # JSON results and reports
 *_integration_test_report*.json
-*_scan_results*.json
+*_scan_results*.json# ==============================================================================
+# ENVIRONMENT ACTIVATION
+# ==============================================================================
+# Direnv
+.direnv/
+.envrc.local
+
+# Activation helpers
+activate_intellicrack.bat
+activate.sh
+activate.ps1
+
+# ==============================================================================
+# UV PACKAGE MANAGER
+# ==============================================================================
+# UV cache
+.uv/
+uv-cache/
+
+# ==============================================================================
+# CONDA/MAMBA ENVIRONMENTS
+# ==============================================================================
+# Local environment copies (some users might create these)
+envs/
+conda-meta/

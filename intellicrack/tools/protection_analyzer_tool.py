@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 Protection Analyzer Tool
 
-A tool that can be called by users or LLMs to thoroughly analyze 
+A tool that can be called by users or LLMs to thoroughly analyze
 software protection schemes and provide detailed findings using Intellicrack's protection detection engine.
 """
 
@@ -51,6 +51,7 @@ class ProtectionAnalyzerTool:
     """
 
     def __init__(self):
+        """Initialize protection analyzer tool with detector, AI assistant, and file tools."""
         self.detector = get_protection_detector()
         self.ai_assistant = IntellicrackAIAssistant()
         self.ai_file_tools = get_ai_file_tools()

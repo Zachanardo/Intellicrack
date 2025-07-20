@@ -68,6 +68,7 @@ class AdvancedAnalysisThread(QThread):
 
     def __init__(self, file_path: str, scan_mode: ScanMode,
                  enable_heuristic: bool, extract_strings: bool):
+        """Initialize advanced analysis thread with file path, scan configuration, and analysis options."""
         super().__init__()
         self.file_path = file_path
         self.scan_mode = scan_mode
@@ -102,6 +103,7 @@ class EntropyGraphWidget(FigureCanvas):
     """Widget for displaying entropy graph"""
 
     def __init__(self, parent=None):
+        """Initialize entropy graph widget with matplotlib figure and parent widget."""
         self.figure = Figure(figsize=(8, 4))
         super().__init__(self.figure)
         self.setParent(parent)
@@ -163,6 +165,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
     analysis_requested = pyqtSignal(str)  # file_path
 
     def __init__(self, parent=None):
+        """Initialize advanced protection widget with parent widget and UI components."""
         super().__init__(parent)
         self.current_analysis: Optional[AdvancedProtectionAnalysis] = None
         self.analysis_thread: Optional[AdvancedAnalysisThread] = None

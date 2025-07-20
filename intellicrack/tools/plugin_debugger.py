@@ -79,6 +79,7 @@ class PluginDebugger:
     """Advanced debugger for Intellicrack plugins"""
 
     def __init__(self):
+        """Initialize plugin debugger with state tracking, breakpoints, and trace monitoring."""
         self.logger = logger  # Use the imported logger from line 1
         self.breakpoints: Dict[int, Breakpoint] = {}
         self.next_breakpoint_id = 1
@@ -659,6 +660,7 @@ class DebuggerThread(threading.Thread):
 
     def __init__(self, debugger: PluginDebugger, plugin_path: str,
                  binary_path: str = None, options: Dict[str, Any] = None):
+        """Initialize debugger thread with plugin path, binary path, and execution options."""
         super().__init__()
         self.debugger = debugger
         self.plugin_path = plugin_path

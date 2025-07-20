@@ -306,7 +306,7 @@ def get_tooltip_definitions() -> Dict[str, str]:
 def apply_tooltips_to_all_elements(parent_widget):
     """
     Apply tooltips to all UI elements in a widget hierarchy.
-    Now supports: QPushButton, QLabel, QLineEdit, QComboBox, QCheckBox, 
+    Now supports: QPushButton, QLabel, QLineEdit, QComboBox, QCheckBox,
     QSpinBox, QDoubleSpinBox, QTabWidget, and other common UI elements.
 
     Args:
@@ -442,7 +442,7 @@ def apply_tooltips_to_all_elements(parent_widget):
 def get_enhanced_tooltip_definitions() -> Dict[str, str]:
     """
     Enhanced tooltip definitions for all UI element types.
-    
+
     Returns:
         Dictionary mapping UI element identifiers to tooltip descriptions
     """
@@ -649,10 +649,10 @@ def get_enhanced_tooltip_definitions() -> Dict[str, str]:
 def _get_contextual_tooltip(text: str) -> str:
     """
     Generate contextual tooltips for common UI patterns.
-    
+
     Args:
         text: The UI element text to analyze
-        
+
     Returns:
         Contextual tooltip or empty string if no match
     """
@@ -695,7 +695,7 @@ def _get_contextual_tooltip(text: str) -> str:
 def apply_tooltips_to_buttons(parent_widget):
     """
     Backward compatibility wrapper for apply_tooltips_to_all_elements.
-    
+
     Args:
         parent_widget: The parent widget to search for UI elements
     """

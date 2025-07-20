@@ -84,7 +84,7 @@ class BatchAnalysisWorker(QThread):
 
     def __init__(self, file_paths: List[str], max_workers: int = 4, deep_scan: bool = False):
         """Initialize batch analysis thread.
-        
+
         Args:
             file_paths: List of file paths to analyze
             max_workers: Maximum number of worker threads for parallel processing
@@ -445,7 +445,7 @@ class BatchAnalysisWidget(QWidget):
         target_extensions = extensions.get(filter_type)
 
         try:
-            for root, dirs, filenames in os.walk(folder_path):
+            for root, _dirs, filenames in os.walk(folder_path):
                 for filename in filenames:
                     file_path = os.path.join(root, filename)
 

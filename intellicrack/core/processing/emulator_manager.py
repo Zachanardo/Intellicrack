@@ -1,7 +1,6 @@
 """Emulator manager for coordinating different emulation engines."""
 import logging
 import os
-import threading
 from typing import Any, Callable, Dict, Optional
 
 from intellicrack.logger import logger

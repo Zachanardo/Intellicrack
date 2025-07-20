@@ -16,18 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Communication Protocols for C2 Infrastructure
-
-Implements multiple communication protocols including HTTPS, DNS, and TCP
-with encryption and stealth capabilities.
-"""
-
 import asyncio
 import base64
 import json
 import logging
 import socket
+import threading
+from typing import Callable
 import ssl
 import time
 from typing import Any, Dict, List, Optional
@@ -217,28 +212,7 @@ class HttpsProtocol(BaseProtocol):
             'max_redirects': 5,
             'chunk_size': 8192
         })
-    """Initialize the HTTPS protocol with SSL/TLS configuration.
-    
-    Args:
-        host: The host address for HTTPS communication.
-        port: The port number for HTTPS communication.
-        ssl_cert: Path to SSL certificate file for server mode.
-        ssl_key: Path to SSL private key file for server mode.
-        ssl_verify: Whether to verify SSL certificates in client mode.
-        encryption_manager: Optional encryption manager for additional security.
-    """
-    super().__init__(host, port, encryption_manager)
-    self.ssl_cert = ssl_cert
-    self.ssl_key = ssl_key
-    self.ssl_verify = ssl_verify
-    self.server = None
-    self.session = None
-    self.endpoints = {
-        '/beacon': self._handle_beacon,
-        '/task': self._handle_task,
-        '/upload': self._handle_upload,
-        '/download': self._handle_download
-    }
+
 
     def _create_response(self, body=None, status=200):
         """Create HTTP response, handling missing aiohttp gracefully."""

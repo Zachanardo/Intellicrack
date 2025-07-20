@@ -148,7 +148,7 @@ class IntellicrackProject:
         """Get total project size in bytes."""
         total_size = 0
         try:
-            for root, dirs, files in os.walk(self.path):
+            for root, _dirs, files in os.walk(self.path):
                 for file in files:
                     file_path = os.path.join(root, file)
                     if os.path.exists(file_path):
@@ -339,7 +339,7 @@ class ProjectManager:
 
     def _get_available_templates(self) -> List[str]:
         """Get list of available project templates.
-        
+
         Returns:
             List of template names
         """
@@ -544,7 +544,7 @@ class ProjectManager:
 
             # Count total files first for progress tracking
             total_files = 0
-            for root, dirs, files in os.walk(project.path):
+            for root, _dirs, files in os.walk(project.path):
                 for file in files:
                     file_path = os.path.join(root, file)
                     if not include_binaries and "binaries" in file_path:
@@ -570,7 +570,7 @@ class ProjectManager:
                         zipf.writestr("project.json", json.dumps(project_data, indent=2))
 
                         # Add project files with progress
-                        for root, dirs, files in os.walk(project.path):
+                        for root, _dirs, files in os.walk(project.path):
                             for file in files:
                                 file_path = os.path.join(root, file)
 
@@ -592,7 +592,7 @@ class ProjectManager:
                     zipf.writestr("project.json", json.dumps(project_data, indent=2))
 
                     # Add project files
-                    for root, dirs, files in os.walk(project.path):
+                    for root, _dirs, files in os.walk(project.path):
                         for file in files:
                             file_path = os.path.join(root, file)
 
@@ -709,7 +709,7 @@ class ProjectManager:
         """Get directory size in bytes."""
         total_size = 0
         try:
-            for root, dirs, files in os.walk(path):
+            for root, _dirs, files in os.walk(path):
                 for file in files:
                     file_path = os.path.join(root, file)
                     if os.path.exists(file_path):
@@ -778,7 +778,7 @@ class ProjectManager:
 
     def display_project_tree(self, project: IntellicrackProject) -> None:
         """Display project structure as a tree.
-        
+
         Args:
             project: Project to display
         """

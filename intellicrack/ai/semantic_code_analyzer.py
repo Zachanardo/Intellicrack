@@ -135,7 +135,7 @@ class NLPCodeProcessor:
 
     def __init__(self):
         """Initialize the NLP code processor.
-        
+
         Sets up vocabulary, semantic patterns, intent keywords,
         and business keywords for natural language processing
         of code analysis tasks.
@@ -404,7 +404,7 @@ class SemanticCodeAnalyzer:
 
     def __init__(self, llm_manager: Optional[LLMManager] = None):
         """Initialize the semantic code analyzer.
-        
+
         Args:
             llm_manager: Optional language model manager instance.
                 If not provided, creates a new instance.
@@ -1148,7 +1148,7 @@ class SemanticKnowledgeBase:
 
     def __init__(self):
         """Initialize the semantic knowledge base.
-        
+
         Sets up pattern storage, rule definitions, and anti-pattern
         tracking for semantic code analysis and pattern recognition.
         """

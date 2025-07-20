@@ -151,7 +151,7 @@ class LLMBackend:
 
     def __init__(self, config: LLMConfig):
         """Initialize the LLM backend with configuration.
-        
+
         Args:
             config: LLM configuration object
         """
@@ -198,7 +198,7 @@ class OpenAIBackend(LLMBackend):
 
     def __init__(self, config: LLMConfig):
         """Initialize OpenAI backend with configuration.
-        
+
         Args:
             config: LLM configuration object
         """
@@ -295,7 +295,7 @@ class AnthropicBackend(LLMBackend):
 
     def __init__(self, config: LLMConfig):
         """Initialize Anthropic backend with configuration.
-        
+
         Args:
             config: LLM configuration object
         """
@@ -384,7 +384,7 @@ class LlamaCppBackend(LLMBackend):
 
     def __init__(self, config: LLMConfig):
         """Initialize llama.cpp backend with configuration.
-        
+
         Args:
             config: LLM configuration object
         """
@@ -522,7 +522,7 @@ class OllamaBackend(LLMBackend):
 
     def __init__(self, config: LLMConfig):
         """Initialize Ollama backend with configuration.
-        
+
         Args:
             config: LLM configuration object
         """
@@ -621,7 +621,7 @@ class LocalGGUFBackend(LLMBackend):
 
     def __init__(self, config: LLMConfig):
         """Initialize Local GGUF backend with configuration.
-        
+
         Args:
             config: LLM configuration object
         """
@@ -772,7 +772,7 @@ class PyTorchLLMBackend(LLMBackend):
 
     def __init__(self, config: LLMConfig):
         """Initialize PyTorch backend with configuration.
-        
+
         Args:
             config: LLM configuration object
         """
@@ -986,7 +986,7 @@ class TensorFlowLLMBackend(LLMBackend):
 
     def __init__(self, config: LLMConfig):
         """Initialize TensorFlow backend with configuration.
-        
+
         Args:
             config: LLM configuration object
         """
@@ -1136,7 +1136,7 @@ class ONNXLLMBackend(LLMBackend):
 
     def __init__(self, config: LLMConfig):
         """Initialize ONNX backend with configuration.
-        
+
         Args:
             config: LLM configuration object
         """
@@ -1275,7 +1275,7 @@ class SafetensorsBackend(LLMBackend):
 
     def __init__(self, config: LLMConfig):
         """Initialize Safetensors backend with configuration.
-        
+
         Args:
             config: LLM configuration object
         """
@@ -1462,7 +1462,7 @@ class GPTQBackend(LLMBackend):
 
     def __init__(self, config: LLMConfig):
         """Initialize GPTQ backend with configuration.
-        
+
         Args:
             config: LLM configuration object
         """
@@ -1606,7 +1606,7 @@ class HuggingFaceLocalBackend(LLMBackend):
 
     def __init__(self, config: LLMConfig):
         """Initialize Hugging Face Local backend with configuration.
-        
+
         Args:
             config: LLM configuration object
         """
@@ -1829,7 +1829,7 @@ class LLMManager:
 
     def __init__(self, enable_lazy_loading: bool = True, enable_background_loading: bool = True):
         """Initialize LLM Manager with lazy and background loading options.
-        
+
         Args:
             enable_lazy_loading: Whether to enable lazy loading of models
             enable_background_loading: Whether to enable background loading

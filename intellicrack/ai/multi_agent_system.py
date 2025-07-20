@@ -136,7 +136,7 @@ class BaseAgent(ABC):
 
     def __init__(self, agent_id: str, role: AgentRole, llm_manager: Optional[LLMManager] = None):
         """Initialize the base agent.
-        
+
         Args:
             agent_id: Unique identifier for the agent
             role: Role of the agent from AgentRole enum
@@ -928,7 +928,7 @@ class MultiAgentSystem:
 
     def __init__(self, llm_manager: Optional[LLMManager] = None):
         """Initialize the multi-agent collaboration system.
-        
+
         Args:
             llm_manager: Optional LLM manager instance. If None, creates a new
                         default LLMManager
@@ -1323,7 +1323,7 @@ class TaskDistributor:
 
     def __init__(self, multi_agent_system: MultiAgentSystem):
         """Initialize the task distributor.
-        
+
         Args:
             multi_agent_system: The parent multi-agent system that manages
                               agents and coordination

@@ -16,13 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Intellicrack Command Line Interface
-
-Provides comprehensive CLI for all Intellicrack functionality including
-payload generation, C2 management, and exploitation operations.
-"""
-
 import asyncio
 import json
 import logging
@@ -36,6 +29,13 @@ from intellicrack.logger import logger
 from intellicrack.utils.analysis.binary_analysis import analyze_binary
 from intellicrack.utils.exploitation.exploitation import exploit
 from intellicrack.utils.patching.patch_generator import generate_patch
+
+"""
+Intellicrack Command Line Interface
+
+Provides comprehensive CLI for all Intellicrack functionality including
+payload generation, C2 management, and exploitation operations.
+"""
 
 try:
     import click

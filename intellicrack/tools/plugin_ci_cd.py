@@ -38,6 +38,7 @@ class CICDPipeline:
     """CI/CD pipeline for Intellicrack plugins"""
 
     def __init__(self, plugin_path: str):
+        """Initialize CI/CD pipeline with plugin path, configuration, and results tracking."""
         self.plugin_path = plugin_path
         self.plugin_dir = os.path.dirname(plugin_path)
         self.plugin_name = os.path.basename(plugin_path).replace('.py', '').replace('.js', '')

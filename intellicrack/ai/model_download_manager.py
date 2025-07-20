@@ -269,10 +269,10 @@ class ModelDownloadManager:
 
     def get_model_card(self, model_id: str) -> Optional[Dict[str, Any]]:
         """Fetch and parse the model card for a given model.
-        
+
         Args:
             model_id: Hugging Face model ID
-            
+
         Returns:
             Dictionary containing model card content or None
         """
@@ -316,10 +316,10 @@ class ModelDownloadManager:
 
     def get_model_readme(self, model_id: str) -> Optional[str]:
         """Get the README content from a model's card.
-        
+
         Args:
             model_id: Hugging Face model ID
-            
+
         Returns:
             README content as string or None
         """

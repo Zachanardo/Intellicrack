@@ -41,6 +41,7 @@ class ConfigProfile:
     """Represents a saved configuration profile"""
 
     def __init__(self, name: str, description: str = ""):
+        """Initialize configuration profile with settings and metadata."""
         self.name = name
         self.description = description
         self.created_at = datetime.now()
@@ -84,6 +85,7 @@ class ProfileManager:
     """Manages configuration profiles"""
 
     def __init__(self, profile_dir: Optional[str] = None):
+        """Initialize profile manager with directory setup and profile loading."""
         self.console = Console()
 
         # Set profile directory

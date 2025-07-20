@@ -358,11 +358,11 @@ class VirtualizationDetectionBypass:
                                     // Parse SYSTEM_PROCESS_INFORMATION structure
                                     var offset = 0;
                                     var filteredProcesses = [];
-                                    
+
                                     while (offset < this.length) {
                                         var nextEntryOffset = this.buffer.add(offset).readU32();
                                         var processName = '';
-                                        
+
                                         try {
                                             // Read ImageName (UNICODE_STRING at offset 0x3C for typical structure)
                                             var imageNamePtr = this.buffer.add(offset + 0x3C);
@@ -376,7 +376,7 @@ class VirtualizationDetectionBypass:
                                         } catch (e) {
                                             // Continue if name reading fails
                                         }
-                                        
+
                                         // Check if process should be hidden for research purposes
                                         var shouldHide = false;
                                         for (var i = 0; i < vmProcesses.length; i++) {
@@ -386,15 +386,15 @@ class VirtualizationDetectionBypass:
                                                 break;
                                             }
                                         }
-                                        
+
                                         if (!shouldHide) {
                                             filteredProcesses.push(offset);
                                         }
-                                        
+
                                         if (nextEntryOffset === 0) break;
                                         offset += nextEntryOffset;
                                     }
-                                    
+
                                     console.log("[VM Research] Process filtering completed for analysis");
                                 }
                             }

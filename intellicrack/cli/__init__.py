@@ -16,12 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from .cli import cli, main
+
 """
 Intellicrack CLI Package
 
 Provides command-line interface for Intellicrack functionality.
 """
-
-from .cli import cli, main
 
 __all__ = ['cli', 'main']

@@ -138,6 +138,7 @@ class ConsoleWidget(QWidget):
     commandEntered = pyqtSignal(str)
 
     def __init__(self, parent=None, enable_input=False):
+        """Initialize console widget with input capability, command history, and UI setup."""
         super().__init__(parent)
         self.enable_input = enable_input
         self.command_history = []

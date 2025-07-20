@@ -84,9 +84,9 @@ class OptimizationManager:
 
     def __init__(self, config: Optional[PerformanceConfig] = None):
         """Initialize the optimization manager.
-        
+
         Args:
-            config: Performance configuration settings. 
+            config: Performance configuration settings.
                    Uses default configuration if not provided.
         """
         self.config = config or self._create_default_config()

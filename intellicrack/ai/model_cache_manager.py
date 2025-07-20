@@ -20,7 +20,10 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import gc
+import hashlib
+import hmac
 import json
+import os
 import pickle
 import time
 from collections import OrderedDict
@@ -38,9 +41,6 @@ get_gpu_info = None
 to_device = None
 memory_allocated = None
 memory_reserved = None
-import hashlib
-import hmac
-import os
 
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
@@ -58,8 +58,33 @@ def secure_pickle_dump(obj, file_path):
         f.write(mac)
         f.write(data)
 
+class RestrictedUnpickler(pickle.Unpickler):
+    """Restricted unpickler that only allows safe classes."""
+
+    def find_class(self, module, name):
+        """Override find_class to restrict allowed classes."""
+        # Allow only safe modules and classes
+        ALLOWED_MODULES = {
+            'numpy', 'numpy.core.multiarray', 'numpy.core.numeric',
+            'pandas', 'pandas.core.frame', 'pandas.core.series',
+            'sklearn', 'torch', 'tensorflow',
+            '__builtin__', 'builtins',
+            'collections', 'collections.abc'
+        }
+
+        # Allow model classes from our own modules
+        if module.startswith('intellicrack.'):
+            return super().find_class(module, name)
+
+        # Check if module is in allowed list
+        if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
+            return super().find_class(module, name)
+
+        # Deny everything else
+        raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
+
 def secure_pickle_load(file_path):
-    """Securely load object with integrity verification."""
+    """Securely load object with integrity verification and restricted unpickling."""
     with open(file_path, 'rb') as f:
         # Read MAC
         stored_mac = f.read(32)  # SHA256 produces 32 bytes
@@ -70,8 +95,17 @@ def secure_pickle_load(file_path):
     if not hmac.compare_digest(stored_mac, expected_mac):
         raise ValueError("Pickle file integrity check failed - possible tampering detected")
 
-    # Load object
-    return pickle.loads(data)
+    # Load object with restricted unpickler
+    try:
+        # Try using joblib first (safer for ML models)
+        import io
+
+        import joblib
+        return joblib.load(io.BytesIO(data))
+    except ImportError:
+        # Fallback to restricted pickle unpickler
+        import io
+        return RestrictedUnpickler(io.BytesIO(data)).load()  # noqa: S301
 empty_cache = None
 gpu_autoloader = None
 

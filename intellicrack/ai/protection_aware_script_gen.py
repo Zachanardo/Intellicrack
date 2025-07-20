@@ -17,18 +17,18 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
+from typing import Any, Dict, List
+
+from ..models.protection_knowledge_base import get_protection_knowledge_base
+from ..protection.unified_protection_engine import get_unified_engine
+
 """
 Protection-Aware AI Script Generation
 
 This module enhances AI script generation by using ML-detected protection
 information to generate targeted bypass scripts.
 """
-
-import logging
-from typing import Any, Dict, List
-
-from ..models.protection_knowledge_base import get_protection_knowledge_base
-from ..protection.unified_protection_engine import get_unified_engine
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class ProtectionAwareScriptGenerator:
 
     def __init__(self):
         """Initialize the protection-aware script generator.
-        
+
         Sets up the generator with protection-specific script templates
         for various software protection systems including Sentinel HASP,
         FlexLM, WinLicense, Steam CEG, VMProtect, Denuvo, and Microsoft
@@ -735,7 +735,7 @@ var regOpenKeyEx = Module.findExportByName("advapi32.dll", "RegOpenKeyExW");
 Interceptor.attach(regOpenKeyEx, {
     onEnter: function(args) {
         var keyName = Memory.readUtf16String(args[1]);
-        if (keyName.includes("SoftwareProtectionPlatform") || 
+        if (keyName.includes("SoftwareProtectionPlatform") ||
             keyName.includes("ProductOptions")) {
             console.log("[MS-Activation] Registry access: " + keyName);
         }

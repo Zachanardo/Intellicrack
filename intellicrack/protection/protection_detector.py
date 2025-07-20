@@ -114,7 +114,7 @@ class ProtectionDetector:
         extensions = ['.exe', '.dll', '.sys', '.ocx', '.scr', '.com', '.so', '.dylib']
 
         if recursive:
-            for root, dirs, files in os.walk(directory):
+            for root, _dirs, files in os.walk(directory):
                 for file in files:
                     if any(file.lower().endswith(ext) for ext in extensions):
                         file_path = os.path.join(root, file)

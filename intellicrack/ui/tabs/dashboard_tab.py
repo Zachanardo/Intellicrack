@@ -8,7 +8,6 @@ import json
 import mimetypes
 import os
 from datetime import datetime
-from pathlib import Path
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QFont
@@ -52,8 +51,8 @@ class DashboardTab(BaseTab):
     project_closed = pyqtSignal()
 
     def __init__(self, shared_context=None, parent=None):
-    """Initialize dashboard tab with system overview and status monitoring."""
-    super().__init__(shared_context, parent)
+        """Initialize dashboard tab with system overview and status monitoring."""
+        super().__init__(shared_context, parent)
 
     def setup_content(self):
         """Setup the project workspace tab content"""
@@ -294,13 +293,13 @@ class DashboardTab(BaseTab):
             self.current_project = project_name
             self.project_files = []  # Initialize empty project files list
             self.analysis_results = {}  # Reset analysis results
-            
+
             self.current_project_label.setText(f"Project: {project_name}")
             self.current_project_label.setStyleSheet("color: #0078d4; padding: 5px; font-weight: bold;")
-            
+
             # Clear and refresh the file tree
             self.populate_file_tree()
-            
+
             self.log_activity(f"Created new project: {project_name}")
             self.project_opened.emit(project_name)
 
@@ -318,34 +317,34 @@ class DashboardTab(BaseTab):
                 # Load project data from JSON
                 with open(project_file, 'r', encoding='utf-8') as f:
                     project_data = json.load(f)
-                
+
                 # Validate project data structure
                 if not isinstance(project_data, dict) or 'name' not in project_data:
                     raise ValueError("Invalid project file format")
-                
+
                 # Set project information
                 self.current_project = project_data.get('name', 'Untitled')
                 self.current_binary = project_data.get('binary', None)
                 self.project_files = project_data.get('files', [])
                 self.analysis_results = project_data.get('analysis_results', {})
-                
+
                 # Validate file existence and update metadata
                 self._validate_project_files()
-                
+
                 # Update UI
                 self.current_project_label.setText(f"Project: {self.current_project}")
                 self.current_project_label.setStyleSheet("color: #0078d4; padding: 5px; font-weight: bold;")
-                
+
                 # Refresh file tree with actual project files
                 self.populate_file_tree()
-                
+
                 self.log_activity(f"Opened project: {self.current_project}")
                 self.project_opened.emit(project_file)
-                
+
                 # Update binary info if available
                 if self.current_binary and os.path.exists(self.current_binary):
                     self.on_binary_loaded(self.current_binary)
-                
+
             except json.JSONDecodeError as e:
                 QMessageBox.critical(
                     self,
@@ -384,11 +383,11 @@ class DashboardTab(BaseTab):
                     "analysis_results": self.analysis_results,
                     "version": "1.0"
                 }
-                
+
                 # Write JSON with pretty formatting
                 with open(project_file, 'w', encoding='utf-8') as f:
                     json.dump(project_data, f, indent=2, ensure_ascii=False)
-                
+
                 self.log_activity(f"Saved project: {self.current_project}")
                 QMessageBox.information(
                     self,
@@ -671,7 +670,7 @@ class DashboardTab(BaseTab):
                 size = file_info.get('size', '0 B')
                 modified = file_info.get('modified', '')
                 exists = file_info.get('exists', True)
-                
+
                 # Format modified date for display
                 if modified:
                     try:
@@ -679,21 +678,21 @@ class DashboardTab(BaseTab):
                         modified = mod_date.strftime('%Y-%m-%d %H:%M')
                     except:
                         pass
-                
+
                 # Create tree item
                 item = QTreeWidgetItem([name, file_type, size, modified])
-                
+
                 # Style missing files differently
                 if not exists:
                     for i in range(4):
                         item.setForeground(i, Qt.GlobalColor.red)
                     item.setToolTip(0, "File not found at original location")
-                
+
                 # Store full path in item data for context menu actions
                 item.setData(0, Qt.ItemDataRole.UserRole, file_info.get('path', ''))
-                
+
                 self.file_tree.addTopLevelItem(item)
-            
+
             # Auto-resize columns
             for i in range(4):
                 self.file_tree.resizeColumnToContents(i)
@@ -716,7 +715,7 @@ class DashboardTab(BaseTab):
             if file_path and os.path.exists(file_path):
                 # Open file based on type
                 file_ext = os.path.splitext(file_path)[1].lower()
-                
+
                 if file_ext in ['.exe', '.dll', '.so', '.bin']:
                     # Load as binary for analysis
                     self.binary_path_edit.setText(file_path)
@@ -744,7 +743,7 @@ class DashboardTab(BaseTab):
         if current_item:
             file_name = current_item.text(0)
             file_path = current_item.data(0, Qt.ItemDataRole.UserRole)
-            
+
             reply = QMessageBox.question(
                 self,
                 "Remove from Project",
@@ -756,7 +755,7 @@ class DashboardTab(BaseTab):
             if reply == QMessageBox.StandardButton.Yes:
                 # Remove from project_files list
                 self.project_files = [f for f in self.project_files if f.get('path') != file_path]
-                
+
                 # Remove from tree
                 self.file_tree.takeTopLevelItem(self.file_tree.indexOfTopLevelItem(current_item))
                 self.log_activity(f"Removed from project: {file_name}")
@@ -863,7 +862,7 @@ class DashboardTab(BaseTab):
             stat = os.stat(file_path)
             file_size = stat.st_size
             modified_time = datetime.fromtimestamp(stat.st_mtime).isoformat()
-            
+
             # Determine file type
             mime_type, _ = mimetypes.guess_type(file_path)
             if mime_type:
@@ -884,10 +883,10 @@ class DashboardTab(BaseTab):
                     '.gpr': 'Ghidra Project'
                 }
                 file_type = type_mapping.get(ext, 'File')
-            
+
             # Calculate MD5 hash for deduplication
             md5_hash = self._calculate_file_hash(file_path)
-            
+
             return {
                 'path': os.path.abspath(file_path),
                 'name': os.path.basename(file_path),
@@ -901,7 +900,7 @@ class DashboardTab(BaseTab):
         except Exception as e:
             self.logger.error(f"Error getting metadata for {file_path}: {e}")
             return None
-    
+
     def _calculate_file_hash(self, file_path: str, chunk_size: int = 8192) -> str:
         """Calculate MD5 hash of a file"""
         md5 = hashlib.md5()
@@ -912,7 +911,7 @@ class DashboardTab(BaseTab):
             return md5.hexdigest()
         except Exception:
             return ""
-    
+
     def _format_file_size(self, size_bytes: int) -> str:
         """Format file size in human-readable format"""
         for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
@@ -922,7 +921,7 @@ class DashboardTab(BaseTab):
                 return f"{size_bytes:.1f} {unit}"
             size_bytes /= 1024.0
         return f"{size_bytes:.1f} PB"
-    
+
     def _validate_project_files(self):
         """Validate that project files still exist and update metadata"""
         valid_files = []
@@ -941,7 +940,7 @@ class DashboardTab(BaseTab):
                 file_info['type'] = file_info.get('type', 'Missing')
                 valid_files.append(file_info)
                 self.log_activity(f"File missing: {file_info.get('name', 'Unknown')}")
-        
+
         self.project_files = valid_files
 
     def _show_file_context_menu(self, position):
@@ -949,36 +948,36 @@ class DashboardTab(BaseTab):
         item = self.file_tree.itemAt(position)
         if not item:
             return
-            
+
         menu = QMenu(self)
-        
+
         # Get file info
         file_path = item.data(0, Qt.ItemDataRole.UserRole)
         file_exists = os.path.exists(file_path) if file_path else False
-        
+
         # Add menu actions
         open_action = menu.addAction("Open")
         open_action.setEnabled(file_exists)
         open_action.triggered.connect(self.open_selected_file)
-        
+
         menu.addSeparator()
-        
+
         refresh_action = menu.addAction("Refresh Metadata")
         refresh_action.setEnabled(file_exists)
         refresh_action.triggered.connect(lambda: self._refresh_file_metadata(item))
-        
+
         show_in_explorer_action = menu.addAction("Show in Explorer")
         show_in_explorer_action.setEnabled(file_exists)
         show_in_explorer_action.triggered.connect(lambda: self._show_in_explorer(file_path))
-        
+
         menu.addSeparator()
-        
+
         remove_action = menu.addAction("Remove from Project")
         remove_action.triggered.connect(self.delete_selected_file)
-        
+
         # Show menu at cursor position
         menu.exec(self.file_tree.mapToGlobal(position))
-    
+
     def _refresh_file_metadata(self, item):
         """Refresh metadata for a single file"""
         file_path = item.data(0, Qt.ItemDataRole.UserRole)
@@ -992,11 +991,11 @@ class DashboardTab(BaseTab):
                         updated_info['added'] = file_info.get('added', updated_info['modified'])
                         self.project_files[i] = updated_info
                         break
-            
+
             # Refresh the tree
             self.populate_file_tree()
             self.log_activity(f"Refreshed metadata for: {os.path.basename(file_path)}")
-    
+
     def _show_in_explorer(self, file_path):
         """Show file in system file explorer"""
         if file_path and os.path.exists(file_path):
@@ -1014,12 +1013,12 @@ class DashboardTab(BaseTab):
 
         added_count = 0
         existing_paths = {f['path'] for f in self.project_files}
-        
+
         for file_path in file_paths:
             # Skip if file already in project
             if file_path in existing_paths:
                 continue
-                
+
             try:
                 # Get file metadata
                 file_info = self._get_file_metadata(file_path)
@@ -1031,7 +1030,7 @@ class DashboardTab(BaseTab):
                 self.log_activity(f"Error adding file {file_path}: {str(e)}")
 
         self.refresh_file_tree()
-        
+
         if added_count > 0:
             QMessageBox.information(
                 self,

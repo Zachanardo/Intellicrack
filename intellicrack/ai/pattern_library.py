@@ -60,7 +60,7 @@ class AdvancedPatternLibrary:
 
     def __init__(self):
         """Initialize the advanced pattern library.
-        
+
         Sets up pattern storage, success tracking, and learning data structures
         for AI-driven pattern recognition and exploitation.
         """
@@ -92,7 +92,7 @@ stringFuncs.forEach(funcName => {{
                 try {{
                     this.str1 = args[0].readCString() || "";
                     this.str2 = args[1].readCString() || "";
-                    this.isLicense = ["license", "trial", "demo"].some(k => 
+                    this.isLicense = ["license", "trial", "demo"].some(k =>
                         this.str1.toLowerCase().includes(k) || this.str2.toLowerCase().includes(k));
                 }} catch(e) {{ this.isLicense = false; }}
             }},
@@ -303,7 +303,7 @@ regFuncs.forEach(funcName => {{
             onEnter: function(args) {{
                 if (funcName.includes("RegQueryValueEx")) {{
                     try {{
-                        const valueName = funcName.includes("W") ? 
+                        const valueName = funcName.includes("W") ?
                             args[1].readUtf16String() : args[1].readCString();
                         this.isLicenseQuery = ["license", "serial", "key", "activation"]
                             .some(k => valueName.toLowerCase().includes(k));
@@ -347,7 +347,7 @@ for reg_func in registry_functions:
             frida_template='''
 // Anti-debugging bypass
 const debugFuncs = [
-    "IsDebuggerPresent", "CheckRemoteDebuggerPresent", 
+    "IsDebuggerPresent", "CheckRemoteDebuggerPresent",
     "NtQueryInformationProcess", "OutputDebugStringA"
 ];
 
@@ -489,7 +489,7 @@ cryptoFuncs.forEach(funcName => {{
 // Hook OpenSSL functions if present
 const opensslFuncs = ["EVP_VerifyFinal", "RSA_verify"];
 opensslFuncs.forEach(funcName => {{
-    const addr = Module.findExportByName("libssl.so", funcName) || 
+    const addr = Module.findExportByName("libssl.so", funcName) ||
                  Module.findExportByName("libeay32.dll", funcName);
     if (addr) {{
         Interceptor.attach(addr, {{

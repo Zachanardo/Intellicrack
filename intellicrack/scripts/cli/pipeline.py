@@ -74,6 +74,7 @@ class PipelineStage(ABC):
     """Base class for pipeline stages"""
 
     def __init__(self, name: str):
+        """Initialize pipeline stage with name and console."""
         self.name = name
         self.console = Console()
 
@@ -142,6 +143,7 @@ class AnalysisStage(PipelineStage):
     """Run binary analysis"""
 
     def __init__(self):
+        """Initialize analysis stage for binary analysis processing."""
         super().__init__("analysis")
 
     def process(self, input_data: PipelineData) -> PipelineData:
@@ -185,6 +187,7 @@ class FilterStage(PipelineStage):
     """Filter data based on criteria"""
 
     def __init__(self, filter_expr: str):
+        """Initialize filter stage with filter expression for data processing."""
         super().__init__("filter")
         self.filter_expr = filter_expr
 
@@ -242,6 +245,7 @@ class TransformStage(PipelineStage):
     """Transform data format"""
 
     def __init__(self, output_format: str):
+        """Initialize transform stage with output format for data transformation."""
         super().__init__("transform")
         self.output_format = output_format
 
@@ -362,6 +366,7 @@ class OutputStage(PipelineStage):
     """Output data to file or stdout"""
 
     def __init__(self, output_path: Optional[str] = None):
+        """Initialize output stage with optional output path for data export."""
         super().__init__("output")
         self.output_path = output_path
 
@@ -395,6 +400,7 @@ class Pipeline:
     """Pipeline executor"""
 
     def __init__(self):
+        """Initialize pipeline with empty stages list and console."""
         self.stages: List[PipelineStage] = []
         self.console = Console()
 

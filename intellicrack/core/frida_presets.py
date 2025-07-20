@@ -487,15 +487,15 @@ QUICK_TEMPLATES = {
 def get_preset_by_software(software_name: str) -> dict:
     """
     Get preset configuration by software name (fuzzy matching).
-    
+
     Searches through FRIDA_PRESETS dictionary to find a matching
     configuration based on the software name. Uses case-insensitive
     fuzzy matching against both preset names and target fields.
-    
+
     Args:
         software_name: Name of the software to find preset for
                       (e.g., "Adobe", "Photoshop", "Office")
-                      
+
     Returns:
         Dictionary containing preset configuration with:
         - description: Preset description
@@ -504,15 +504,15 @@ def get_preset_by_software(software_name: str) -> dict:
         - protections: List of protection types
         - options: Configuration options
         - hooks: List of hooks to install
-        
+
     Example:
         >>> preset = get_preset_by_software("photoshop")
         >>> print(preset['description'])
         'Comprehensive bypass for Adobe CC applications'
-        
+
     Note:
         Falls back to "Minimal Bypass" preset if no match found.
-        
+
     Complexity:
         Time: O(n) where n is number of presets
         Space: O(1)
@@ -534,11 +534,11 @@ def get_preset_by_software(software_name: str) -> dict:
 def get_wizard_config(mode: str = "balanced") -> dict:
     """
     Get wizard configuration by mode.
-    
+
     Retrieves predefined wizard configuration based on the selected
     operating mode. Each mode has different aggressiveness levels
     and feature settings.
-    
+
     Args:
         mode: Wizard mode name. Options:
               - "safe": Minimal risk, basic bypasses
@@ -546,7 +546,7 @@ def get_wizard_config(mode: str = "balanced") -> dict:
               - "aggressive": Maximum bypass attempts
               - "stealth": Focus on avoiding detection
               - "analysis": Information gathering only
-              
+
     Returns:
         Dictionary containing wizard configuration with:
         - description: Mode description
@@ -555,15 +555,15 @@ def get_wizard_config(mode: str = "balanced") -> dict:
         - retry_failed: Whether to retry failed bypasses
         - adaptive: Whether to adapt based on detections
         - priority: List of prioritized protection types
-        
+
     Example:
         >>> config = get_wizard_config("aggressive")
         >>> print(config['max_scripts'])
         30
-        
+
     Note:
         Falls back to "balanced" mode if mode not found.
-        
+
     Complexity:
         Time: O(1)
         Space: O(1)
@@ -573,11 +573,11 @@ def get_wizard_config(mode: str = "balanced") -> dict:
 def get_scripts_for_protection(protection_type: str) -> list:
     """
     Get recommended scripts for a specific protection type.
-    
+
     Returns a list of script names that are effective against
     the specified protection mechanism. These scripts can be
     loaded to bypass the protection.
-    
+
     Args:
         protection_type: Type of protection to bypass. Options:
                         - "LICENSE": License verification
@@ -590,21 +590,21 @@ def get_scripts_for_protection(protection_type: str) -> list:
                         - "KERNEL": Kernel-mode protections
                         - "MEMORY": Memory protections
                         - "DRM": Digital rights management
-                        
+
     Returns:
         List of script names (strings) to load for bypassing
         the specified protection. Returns empty list if
         protection type is not recognized.
-        
+
     Example:
         >>> scripts = get_scripts_for_protection("LICENSE")
         >>> print(scripts)
         ['cloud_licensing_bypass', 'registry_monitor']
-        
+
     Note:
         Script names correspond to files in the scripts/frida directory
         or built-in script templates.
-        
+
     Complexity:
         Time: O(1)
         Space: O(1)

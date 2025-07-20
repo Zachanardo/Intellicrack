@@ -72,7 +72,7 @@ class PerformanceMonitor:
 
     def __init__(self, max_history: int = 1000):
         """Initialize the performance monitoring system.
-        
+
         Args:
             max_history: Maximum number of metrics and profiles to retain
                         in history
@@ -547,7 +547,7 @@ class AsyncPerformanceMonitor:
 
     def __init__(self, base_monitor: PerformanceMonitor):
         """Initialize the async performance monitor.
-        
+
         Args:
             base_monitor: Base performance monitor to delegate synchronous
                          operations to

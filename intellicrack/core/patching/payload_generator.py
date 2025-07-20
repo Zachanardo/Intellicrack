@@ -45,7 +45,7 @@ class PayloadGenerator:
 
     def __init__(self):
         """Initialize the payload generator.
-        
+
         Sets up the payload generation system with support for various
         exploit payloads including shellcode, ROP chains, code caves,
         NOP sleds, and bypass techniques for exploitation scenarios.
@@ -591,14 +591,14 @@ class AdvancedPayloadGenerator:
         poly_payload = b''
         nop_variants = [b'\x90', b'\x87\xc0', b'\x87\xdb', b'\x89\xc0']
 
-        for i in range(random.randint(5, 15)):
-            poly_payload += random.choice(nop_variants)
+        for _i in range(random.randint(5, 15)):  # noqa: S311
+            poly_payload += random.choice(nop_variants)  # noqa: S311
 
         poly_payload += base_payload
 
         # Add random suffix
-        for i in range(random.randint(3, 8)):
-            poly_payload += random.choice(nop_variants)
+        for _i in range(random.randint(3, 8)):  # noqa: S311
+            poly_payload += random.choice(nop_variants)  # noqa: S311
 
         return poly_payload
 
@@ -642,7 +642,7 @@ class AdvancedPayloadGenerator:
 
         # Interleave payload with junk
         for byte in payload:
-            obfuscated += random.choice(junk_ops)
+            obfuscated += random.choice(junk_ops)  # noqa: S311
             obfuscated += bytes([byte])
 
         return obfuscated
@@ -1714,7 +1714,7 @@ class AdvancedPayloadGenerator:
             """
         ]
 
-        template = random.choice(manipulation_templates)
+        template = random.choice(manipulation_templates)  # noqa: S311
         return self._assemble_x86_64(template)
 
     def _license_validation_bypass(self, strategy: Dict[str, Any]) -> Optional[bytes]:
@@ -1751,7 +1751,7 @@ class AdvancedPayloadGenerator:
             """
         ]
 
-        template = random.choice(bypass_techniques)
+        template = random.choice(bypass_techniques)  # noqa: S311
         return self._assemble_x86_64(template)
 
     def _crypto_bypass_payload(self, strategy: Dict[str, Any]) -> Optional[bytes]:
@@ -1784,7 +1784,7 @@ class AdvancedPayloadGenerator:
             """
         ]
 
-        template = random.choice(crypto_bypass_techniques)
+        template = random.choice(crypto_bypass_techniques)  # noqa: S311
         return self._assemble_x86_64(template)
 
     def _generic_bypass_payload(self, strategy: Dict[str, Any]) -> Optional[bytes]:
@@ -1815,7 +1815,7 @@ class AdvancedPayloadGenerator:
             """
         ]
 
-        template = random.choice(generic_techniques)
+        template = random.choice(generic_techniques)  # noqa: S311
         return self._assemble_x86_64(template)
 
     def _assemble_x86_64(self, assembly_code: str) -> Optional[bytes]:

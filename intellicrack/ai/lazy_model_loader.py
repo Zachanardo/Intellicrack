@@ -77,7 +77,7 @@ class SmartLoadingStrategy(ModelLoadingStrategy):
                  small_model_threshold_mb: int = 100,
                  preload_api_models: bool = True):
         """Initialize the smart loading strategy with configurable preloading options.
-        
+
         Args:
             preload_small_models: Whether to preload models below the size threshold.
             small_model_threshold_mb: Size threshold in MB for considering a model "small".
@@ -137,7 +137,7 @@ class LazyModelWrapper:
                  preload: bool = False,
                  load_callback: Optional[Callable[[str, bool], None]] = None):
         """Initialize a lazy-loading wrapper for an LLM backend.
-        
+
         Args:
             backend_class: The LLM backend class to instantiate lazily.
             config: Configuration for the LLM backend.
@@ -314,7 +314,7 @@ class LazyModelManager:
 
     def __init__(self, loading_strategy: Optional[ModelLoadingStrategy] = None):
         """Initialize the lazy model manager with optional loading strategy.
-        
+
         Args:
             loading_strategy: Strategy for determining model loading behavior.
                             Defaults to DefaultLoadingStrategy if not provided.
@@ -395,7 +395,7 @@ class LazyModelManager:
     def unload_all(self):
         """Unload all models."""
         with self._access_lock:
-            for model_id, wrapper in self.models.items():
+            for _, wrapper in self.models.items():
                 wrapper.unload()
             logger.info("Unloaded all models")
 

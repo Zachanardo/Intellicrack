@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 def add_file_metadata_to_app(app_instance):
     """
     Add file metadata display functionality to the main application.
-    
+
     Args:
         app_instance: Main application instance
     """
@@ -73,7 +73,7 @@ def add_file_metadata_to_app(app_instance):
 def update_status_with_timestamp(app_instance, message: str):
     """
     Update application status with timestamp.
-    
+
     Args:
         app_instance: Main application instance
         message: Status message to display
@@ -94,7 +94,7 @@ def update_status_with_timestamp(app_instance, message: str):
 def track_binary_modifications(app_instance):
     """
     Track modifications to the loaded binary file.
-    
+
     Args:
         app_instance: Main application instance
     """
@@ -120,7 +120,7 @@ def track_binary_modifications(app_instance):
 def display_pe_timestamps(app_instance, pe_file):
     """
     Display PE file timestamps using QDateTime.
-    
+
     Args:
         app_instance: Main application instance
         pe_file: pefile.PE object
@@ -166,10 +166,10 @@ def display_pe_timestamps(app_instance, pe_file):
 def get_file_metadata_summary(file_path: str) -> str:
     """
     Get a formatted summary of file metadata.
-    
+
     Args:
         file_path: Path to the file
-        
+
     Returns:
         Formatted metadata summary string
     """
@@ -216,7 +216,7 @@ def _format_size(size: int) -> str:
 def integrate_file_metadata_display(app):
     """
     Example integration function for main_app.py
-    
+
     This function shows how to integrate the file metadata functionality
     into the main application.
     """

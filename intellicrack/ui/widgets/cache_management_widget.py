@@ -169,6 +169,7 @@ class CacheManagementWidget(QWidget):
     cache_cleaned = pyqtSignal(int)
 
     def __init__(self, parent=None):
+        """Initialize cache management widget with engine, cache, UI, and refresh timer."""
         super().__init__(parent)
         self.engine = get_unified_engine()
         self.cache = get_analysis_cache()

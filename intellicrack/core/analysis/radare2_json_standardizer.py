@@ -61,7 +61,7 @@ class R2JSONStandardizer:
 
     def __init__(self):
         """Initialize the Radare2 JSON standardizer.
-        
+
         Sets up a unique analysis ID and timestamp for result tracking.
         """
         self.logger = logger

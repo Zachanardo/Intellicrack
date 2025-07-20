@@ -149,8 +149,8 @@ class FridaTemplates:
 
                             // Detect license-related comparisons
                             const licenseKeywords = ["license", "trial", "demo", "expire", "activate", "register", "serial", "key"];
-                            this.isLicenseCheck = licenseKeywords.some(keyword => 
-                                this.str1.toLowerCase().includes(keyword) || 
+                            this.isLicenseCheck = licenseKeywords.some(keyword =>
+                                this.str1.toLowerCase().includes(keyword) ||
                                 this.str2.toLowerCase().includes(keyword)
                             );
 
@@ -190,7 +190,7 @@ class FridaTemplates:
 
     exports.forEach(function(exp) {{
         const funcName = exp.name.toLowerCase();
-        const isLicenseFunc = licensePatterns.some(pattern => 
+        const isLicenseFunc = licensePatterns.some(pattern =>
             funcName.includes(pattern.toLowerCase())
         );
 
@@ -447,7 +447,7 @@ class FridaTemplates:
 
                                 // Check if it's license-related
                                 const licenseKeywords = ["license", "serial", "key", "activation", "register", "product"];
-                                this.isLicenseRelated = licenseKeywords.some(keyword => 
+                                this.isLicenseRelated = licenseKeywords.some(keyword =>
                                     this.valueName.toLowerCase().includes(keyword)
                                 );
 
@@ -898,7 +898,7 @@ class ScriptTemplateEngine:
 
     def __init__(self):
         """Initialize the script template engine.
-        
+
         Sets up template managers for Frida and Ghidra script
         generation with dynamic content rendering capabilities.
         """

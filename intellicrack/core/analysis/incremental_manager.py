@@ -6,9 +6,12 @@ import logging
 import os
 import pickle
 import time
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from intellicrack.logger import logger
+
+import hmac
 
 """
 Incremental Analysis Manager for avoiding reprocessing unchanged code.
@@ -48,8 +51,6 @@ except ImportError as e:
     logger.error("Import error in incremental_manager: %s", e)
     PYQT_AVAILABLE = False
 
-import hmac
-
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
 
@@ -66,8 +67,42 @@ def secure_pickle_dump(obj, file_path):
         f.write(mac)
         f.write(data)
 
+class RestrictedUnpickler(pickle.Unpickler):
+    """Restricted unpickler that only allows safe classes."""
+
+    def find_class(self, module, name):
+        """Override find_class to restrict allowed classes."""
+        # Allow only safe modules and classes
+        ALLOWED_MODULES = {
+            'numpy', 'numpy.core.multiarray', 'numpy.core.numeric',
+            'pandas', 'pandas.core.frame', 'pandas.core.series',
+            'sklearn', 'torch', 'tensorflow',
+            '__builtin__', 'builtins',
+            'collections', 'collections.abc',
+            'datetime'
+        }
+
+        # Allow classes from our own modules
+        if module.startswith('intellicrack.'):
+            return super().find_class(module, name)
+
+        # Check if module is in allowed list
+        if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
+            return super().find_class(module, name)
+
+        # Deny everything else
+        raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
+
 def secure_pickle_load(file_path):
     """Securely load object with integrity verification."""
+    try:
+        # Try joblib first as it's safer for ML models
+        import joblib
+        return joblib.load(file_path)
+    except (ImportError, ValueError):
+        # Fallback to pickle with restricted unpickler
+        pass
+
     with open(file_path, 'rb') as f:
         # Read MAC
         stored_mac = f.read(32)  # SHA256 produces 32 bytes
@@ -78,8 +113,9 @@ def secure_pickle_load(file_path):
     if not hmac.compare_digest(stored_mac, expected_mac):
         raise ValueError("Pickle file integrity check failed - possible tampering detected")
 
-    # Load object
-    return pickle.loads(data)
+    # Load object using RestrictedUnpickler
+    import io
+    return RestrictedUnpickler(io.BytesIO(data)).load()  # noqa: S301
 
 
 class IncrementalAnalysisManager:
@@ -102,32 +138,32 @@ class IncrementalAnalysisManager:
         """Initialize the incremental analysis manager with configuration and cache setup."""
         self.config = config or {}
         self.logger = logging.getLogger("IntellicrackLogger.IncrementalAnalysis")
-        
+
         # Set default configuration
         self.cache_dir = Path(self.config.get('cache_dir', './cache/incremental'))
         self.chunk_size = self.config.get('chunk_size', 1024 * 1024)  # 1MB chunks
         self.max_cache_size = self.config.get('max_cache_size', 100)  # 100 files
         self.enable_compression = self.config.get('enable_compression', True)
-        
+
         # Create cache directory
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Initialize cache
         self.analysis_cache = {}
         self.file_hashes = {}
         self.chunk_cache = {}
-        
+
         # Statistics
         self.cache_hits = 0
         self.cache_misses = 0
-        
+
         try:
             self._load_cache_metadata()
         except Exception as e:
             self.logger.warning(f"Failed to load cache metadata: {e}")
             # Initialize empty metadata
             self._init_empty_cache()
-        
+
         self.logger.info(f"Incremental analysis manager initialized with cache dir: {self.cache_dir}")
 
     def _validate_cache_file(self, file_path: str) -> bool:

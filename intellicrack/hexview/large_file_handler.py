@@ -205,11 +205,11 @@ class MemoryMonitor:
     """Monitors system memory usage and adjusts caching strategy."""
 
     def __init__(self, config: MemoryConfig):
-    """Initialize the MemoryMonitor with memory configuration."""
-    self.config = config
-    self.callbacks: List[Callable[[float], None]] = []
-    self.monitoring = False
-    self.thread: Optional[threading.Thread] = None
+        """Initialize the MemoryMonitor with memory configuration."""
+        self.config = config
+        self.callbacks: List[Callable[[float], None]] = []
+        self.monitoring = False
+        self.thread: Optional[threading.Thread] = None
 
     def add_callback(self, callback: Callable[[float], None]):
         """Add a callback for memory usage changes."""
@@ -281,18 +281,18 @@ class BackgroundLoader(QThread if PYQT5_AVAILABLE else threading.Thread):
     error_occurred = pyqtSignal(str) if PYQT5_AVAILABLE else None
 
     def __init__(self, file_path: str, cache: FileCache, config: MemoryConfig):
-    """Initialize the BackgroundLoader with file path, cache, and configuration."""
-    if PYQT5_AVAILABLE:
-        super().__init__()
-    else:
-        super().__init__(daemon=True)
+        """Initialize the BackgroundLoader with file path, cache, and configuration."""
+        if PYQT5_AVAILABLE:
+            super().__init__()
+        else:
+            super().__init__(daemon=True)
 
-    self.file_path = file_path
-    self.cache = cache
-    self.config = config
-    self.load_queue: List[Tuple[int, int]] = []
-    self.queue_lock = threading.Lock()
-    self.should_stop = False
+        self.file_path = file_path
+        self.cache = cache
+        self.config = config
+        self.load_queue: List[Tuple[int, int]] = []
+        self.queue_lock = threading.Lock()
+        self.should_stop = False
 
     def queue_load(self, offset: int, size: int):
         """Queue a region for loading."""
@@ -351,30 +351,30 @@ class LargeFileHandler:
     """Enhanced file handler optimized for large files."""
 
     def __init__(self, file_path: str, read_only: bool = True, config: Optional[MemoryConfig] = None):
-    """Initialize the LargeFileHandler with file path, read-only mode, and configuration."""
-    self.file_path = file_path
-    self.read_only = read_only
-    self.config = config or MemoryConfig()
+        """Initialize the LargeFileHandler with file path, read-only mode, and configuration."""
+        self.file_path = file_path
+        self.read_only = read_only
+        self.config = config or MemoryConfig()
 
-    # Initialize components
-    self.cache = FileCache(self.config)
-    self.memory_monitor = MemoryMonitor(self.config)
-    self.background_loader: Optional[BackgroundLoader] = None
+        # Initialize components
+        self.cache = FileCache(self.config)
+        self.memory_monitor = MemoryMonitor(self.config)
+        self.background_loader: Optional[BackgroundLoader] = None
 
-    # File information
-    self.file_size = 0
-    self.memory_strategy = MemoryStrategy.HYBRID
-    self.loading_strategy = LoadingStrategy.PROGRESSIVE
+        # File information
+        self.file_size = 0
+        self.memory_strategy = MemoryStrategy.HYBRID
+        self.loading_strategy = LoadingStrategy.PROGRESSIVE
 
-    # Memory mapped file (for medium-sized files)
-    self.mmap_file: Optional[mmap.mmap] = None
-    self.file_handle: Optional[object] = None
+        # Memory mapped file (for medium-sized files)
+        self.mmap_file: Optional[mmap.mmap] = None
+        self.file_handle: Optional[object] = None
 
-    # Performance tracking
-    self.access_patterns: List[Tuple[int, int, float]] = []  # offset, size, timestamp
+        # Performance tracking
+        self.access_patterns: List[Tuple[int, int, float]] = []  # offset, size, timestamp
 
-    # Initialize the file
-    self._initialize_file()
+        # Initialize the file
+        self._initialize_file()
 
     def _initialize_file(self):
         """Initialize file access based on size and available memory."""

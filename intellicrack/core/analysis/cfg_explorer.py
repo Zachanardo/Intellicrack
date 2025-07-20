@@ -497,7 +497,7 @@ class CFGExplorer:
             complexity1 = len(list(nx.simple_cycles(graph1))) + 1
             complexity2 = len(list(nx.simple_cycles(graph2))) + 1
             complexity_ratio = min(complexity1, complexity2) / max(complexity1, complexity2)
-        except:
+        except (nx.NetworkXError, ValueError, TypeError):
             complexity_ratio = 1.0
 
         return (node_ratio + edge_ratio + complexity_ratio) / 3.0
@@ -884,7 +884,7 @@ class CFGExplorer:
             # For a single function, P = 1
             complexity = edges - nodes + 2
             return max(1, complexity)  # Minimum complexity is 1
-        except:
+        except (AttributeError, TypeError):
             return 1
 
     def get_cross_reference_analysis(self) -> Dict[str, Any]:

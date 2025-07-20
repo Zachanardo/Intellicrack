@@ -575,7 +575,7 @@ class StructureVisualizerWidget(QWidget):
 
         if "imports" in self.structure_data:
             imports = self.structure_data["imports"]
-            for dll, funcs in imports.items():
+            for _dll, funcs in imports.items():
                 for func in funcs:
                     if self._is_suspicious_import(func.get("name", "")):
                         suspicious.append(f"Suspicious import: {func.get('name', '')}")

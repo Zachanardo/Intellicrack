@@ -214,7 +214,8 @@ class DistributedProcessingManager:
 
         if process_func is None:
             # Default processing function (just returns basic info about the chunk)
-            process_func = lambda chunk, offset: {"offset": offset, "size": len(chunk)}
+            def process_func(chunk, offset):
+                return {"offset": offset, "size": len(chunk)}
 
         # Get file size
         file_size = os.path.getsize(self.binary_path)

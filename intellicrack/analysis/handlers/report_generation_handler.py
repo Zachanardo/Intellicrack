@@ -41,10 +41,10 @@ except ImportError:
 
     def get_logger(name):
         """Create a logger instance with the given name.
-        
+
         Args:
             name: The name for the logger instance
-            
+
         Returns:
             A logging.Logger instance
         """
@@ -67,7 +67,7 @@ class ReportGeneratorWorker(QRunnable):
     def __init__(self, result: UnifiedProtectionResult, format_type: str,
                  output_path: str, options: dict):
         """Initialize the report generator worker.
-        
+
         Args:
             result: The unified protection result to generate a report for.
             format_type: The format type for the report (e.g., 'pdf', 'html').
@@ -127,7 +127,7 @@ class ReportOptionsDialog(QDialog):
 
     def __init__(self, parent=None):
         """Initialize the report options dialog.
-        
+
         Args:
             parent: Optional parent widget for Qt integration.
         """
@@ -239,7 +239,7 @@ class ReportGenerationHandler(QObject):
 
     def __init__(self, parent=None):
         """Initialize the report generation handler.
-        
+
         Args:
             parent: Optional parent widget for Qt integration.
         """

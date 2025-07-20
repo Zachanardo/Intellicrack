@@ -16,17 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Base Detector for Anti-Analysis Modules
-
-Shared functionality for detection implementations to eliminate code duplication.
-"""
-
 import logging
 import platform
 import subprocess
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Tuple
+
+"""
+Base Detector for Anti-Analysis Modules
+
+Shared functionality for detection implementations to eliminate code duplication.
+"""
 
 
 class BaseDetector(ABC):

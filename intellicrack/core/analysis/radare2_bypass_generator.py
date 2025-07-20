@@ -872,13 +872,13 @@ class R2BypassGenerator:
 
     def _generate_license_value(self) -> str:
         """Generate fake license value."""
-        import random
+        import secrets
         import string
 
         # Generate realistic license key format
         segments = []
         for _ in range(4):
-            segment = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+            segment = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4))
             segments.append(segment)
 
         return '-'.join(segments)
@@ -1005,7 +1005,7 @@ Valid=True"""
 
         return f'''
 // Registry Hook Implementation for {app_name}
-LONG WINAPI HookedRegQueryValueEx(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, 
+LONG WINAPI HookedRegQueryValueEx(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved,
                                   LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData) {{
     if ({check_condition}) {{
         // Return fake license data for {app_name}
@@ -1058,16 +1058,16 @@ LONG WINAPI HookedRegQueryValueEx(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReser
 
         # Add additional parameters based on access pattern
         if access_pattern == 'write':
-            additional_params = '''DWORD dwDesiredAccess, DWORD dwShareMode, 
-                            LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, 
+            additional_params = '''DWORD dwDesiredAccess, DWORD dwShareMode,
+                            LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
                             DWORD dwFlagsAndAttributes, HANDLE hTemplateFile'''
-            call_params = '''dwDesiredAccess, dwShareMode, lpSecurityAttributes, 
+            call_params = '''dwDesiredAccess, dwShareMode, lpSecurityAttributes,
                          dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile'''
         else:
-            additional_params = '''DWORD dwDesiredAccess, DWORD dwShareMode, 
-                            LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, 
+            additional_params = '''DWORD dwDesiredAccess, DWORD dwShareMode,
+                            LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
                             DWORD dwFlagsAndAttributes, HANDLE hTemplateFile'''
-            call_params = '''GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 
+            call_params = '''GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
                          FILE_ATTRIBUTE_NORMAL, NULL'''
 
         return f'''
@@ -1081,7 +1081,7 @@ HANDLE WINAPI HookedCreateFile(LPCSTR lpFileName, {additional_params}) {{
         strcat(fakePath, "{fake_file}");
 
         // Ensure fake file exists with valid content
-        HANDLE hFake = CreateFile(fakePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 
+        HANDLE hFake = CreateFile(fakePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                                  FILE_ATTRIBUTE_NORMAL, NULL);
         if (hFake != INVALID_HANDLE_VALUE) {{
             char fakeContent[] = "Licensed=1\\nSerial={app_name.upper()}-VALID-KEY\\nValid=True\\n";

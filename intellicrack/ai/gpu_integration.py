@@ -29,20 +29,20 @@ except ImportError:
     # Fallback implementations
     def get_device():
         """Get the compute device (CPU when GPU not available).
-        
+
         Returns:
             torch.device: CPU device instance.
-            
+
         """
         import torch
         return torch.device('cpu')
 
     def get_gpu_info():
         """Get GPU information (fallback to CPU info).
-        
+
         Returns:
             dict: Device info indicating CPU-only mode.
-            
+
         """
         return {
             'available': False,
@@ -54,25 +54,25 @@ except ImportError:
 
     def to_device(tensor_or_model):
         """Move tensor or model to device (no-op for CPU).
-        
+
         Args:
             tensor_or_model: PyTorch tensor or model.
-            
+
         Returns:
             Same tensor or model unchanged.
-            
+
         """
         return tensor_or_model
 
     def optimize_for_gpu(model):
         """Optimize model for GPU (no-op for CPU).
-        
+
         Args:
             model: PyTorch model.
-            
+
         Returns:
             Same model unchanged.
-            
+
         """
         return model
 

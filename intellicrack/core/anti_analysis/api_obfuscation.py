@@ -16,19 +16,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-API Obfuscation
-
-Implements techniques to obfuscate API calls and evade
-API monitoring and hooking.
-"""
-
 import ctypes
 import logging
 import random
 import struct
 import zlib
 from typing import Any, Optional
+
+"""
+API Obfuscation
+
+Implements techniques to obfuscate API calls and evade
+API monitoring and hooking.
+"""
 
 
 class APIObfuscator:
@@ -39,7 +39,7 @@ class APIObfuscator:
     def __init__(self):
         """Initialize the API obfuscation system."""
         self.logger = logging.getLogger("IntellicrackLogger.APIObfuscator")
-        
+
         # Import resolution techniques
         self.import_resolution_methods = {
             'hash_resolution': self._resolve_by_hash,
@@ -48,7 +48,7 @@ class APIObfuscator:
             'api_redirection': self._resolve_redirected_apis,
             'delayed_loading': self._resolve_delayed_imports
         }
-        
+
         # API call obfuscation methods
         self.call_obfuscation_methods = {
             'indirect_calls': self._generate_indirect_calls,
@@ -56,18 +56,18 @@ class APIObfuscator:
             'encrypted_payloads': self._generate_encrypted_payloads,
             'polymorphic_wrappers': self._generate_polymorphic_wrappers
         }
-        
+
         # Known API hash databases
         self.api_hash_db = {}
         self.encrypted_strings_db = {}
-        
+
         # Load known hash databases
         self._load_api_databases()
-        
+
         # Statistics
         self.resolved_apis = 0
         self.failed_resolutions = 0
-        
+
         self.logger.info("API obfuscation system initialized")
 
     def obfuscate_api_calls(self, code: str, method: str = 'hash_lookup') -> str:

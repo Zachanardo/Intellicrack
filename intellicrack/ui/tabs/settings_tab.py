@@ -4,6 +4,7 @@ This module provides the settings interface for application configuration,
 preferences, and system settings management.
 """
 import json
+import logging
 import os
 
 from PyQt6.QtCore import Qt, pyqtSignal

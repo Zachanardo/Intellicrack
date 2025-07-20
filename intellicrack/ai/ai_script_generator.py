@@ -185,14 +185,14 @@ class ScriptValidator:
 
     def _validate_syntax(self, content: str, language: str) -> List[str]:
         """Validate basic syntax.
-        
+
         Args:
             content: The script content to validate
             language: The programming language of the script
-            
+
         Returns:
             List of syntax error messages, empty if no errors
-            
+
         """
         errors = []
 
@@ -399,7 +399,7 @@ Interceptor.attach(Module.findExportByName("advapi32.dll", "RegQueryValueExW"), 
 
 class AIScriptGenerator:
     """Main AI script generator that creates real, functional Frida and Ghidra scripts.
-    
+
     NO PLACEHOLDERS - all generated code must be immediately executable.
     """
 
@@ -1214,15 +1214,15 @@ class AIScriptGenerator:
 
     def generate_frida_script(self, binary_path: str, protection_info: Dict, output_format: str = 'script') -> Dict:
         """Generate Frida script using AI assistant - UI interface method.
-        
+
         Args:
             binary_path: Path to the binary
             protection_info: Dictionary with protection information
             output_format: Output format ('script', 'json', etc.)
-            
+
         Returns:
             Dict with script and metadata for UI compatibility
-            
+
         """
         start_time = time.time()
 
@@ -1337,15 +1337,15 @@ class AIScriptGenerator:
 
     def generate_ghidra_script(self, binary_path: str, protection_info: Dict, script_type: str = 'bypass') -> Dict:
         """Generate Ghidra script using AI assistant - UI interface method.
-        
+
         Args:
             binary_path: Path to the binary
             protection_info: Dictionary with protection information
             script_type: Type of script to generate
-            
+
         Returns:
             Dict with script and metadata for UI compatibility
-            
+
         """
         start_time = time.time()
 
@@ -1656,13 +1656,13 @@ This script was generated to bypass the following protection mechanisms:
 
 Java.perform(function() {{
     console.log("[+] Starting license bypass...");
-    
+
     // Hook common license check functions
     const licenseChecks = [
         'checkLicense', 'validateLicense', 'isLicensed',
         'verifyLicense', 'getLicenseStatus', 'isValid'
     ];
-    
+
     // Intercept license file operations
     const File = Java.use('java.io.File');
     File.exists.implementation = function() {{
@@ -1673,7 +1673,7 @@ Java.perform(function() {{
         }}
         return this.exists();
     }};
-    
+
     // Hook license validation methods
     Java.enumerateLoadedClasses({{
         onMatch: function(className) {{
@@ -1718,7 +1718,7 @@ const EXTENDED_TIME = FROZEN_TIME + (TRIAL_DAYS * 24 * 60 * 60 * 1000 / 2); // M
 if (Process.platform === 'windows') {{
     // Windows time functions
     const kernel32 = Module.load('kernel32.dll');
-    
+
     // GetSystemTime
     const GetSystemTime = kernel32.getExportByName('GetSystemTime');
     if (GetSystemTime) {{
@@ -1743,7 +1743,7 @@ if (Process.platform === 'windows') {{
             }}
         }});
     }}
-    
+
     // GetLocalTime
     const GetLocalTime = kernel32.getExportByName('GetLocalTime');
     if (GetLocalTime) {{
@@ -1768,7 +1768,7 @@ if (Process.platform === 'windows') {{
             }}
         }});
     }}
-    
+
     // GetTickCount/GetTickCount64
     ['GetTickCount', 'GetTickCount64'].forEach(function(funcName) {{
         const func = kernel32.getExportByName(funcName);
@@ -1781,7 +1781,7 @@ if (Process.platform === 'windows') {{
             }});
         }}
     }});
-    
+
     // QueryPerformanceCounter - high-resolution timer
     const QueryPerformanceCounter = kernel32.getExportByName('QueryPerformanceCounter');
     if (QueryPerformanceCounter) {{
@@ -1811,7 +1811,7 @@ else {{
             }}
         }});
     }}
-    
+
     // gettimeofday()
     const gettimeofday = Module.findExportByName(null, 'gettimeofday');
     if (gettimeofday) {{
@@ -1829,7 +1829,7 @@ else {{
             }}
         }});
     }}
-    
+
     // clock_gettime() - multiple clock types
     const clock_gettime = Module.findExportByName(null, 'clock_gettime');
     if (clock_gettime) {{
@@ -1853,32 +1853,32 @@ else {{
 if (Java.available) {{
     Java.perform(function() {{
         console.log("[+] Starting Java time bypass...");
-        
+
         // System.currentTimeMillis()
         const System = Java.use('java.lang.System');
         System.currentTimeMillis.implementation = function() {{
             console.log("[+] System.currentTimeMillis() -> " + EXTENDED_TIME);
             return EXTENDED_TIME;
         }};
-        
+
         // System.nanoTime() - often used for duration measurements
         System.nanoTime.implementation = function() {{
             console.log("[+] System.nanoTime() -> fixed value");
             return 1000000000; // 1 second in nanoseconds
         }};
-        
+
         // Date class
         const Date = Java.use('java.util.Date');
         Date.$init.overload().implementation = function() {{
             console.log("[+] new Date() -> frozen time");
             this.$init(EXTENDED_TIME);
         }};
-        
+
         Date.getTime.implementation = function() {{
             console.log("[+] Date.getTime() -> " + EXTENDED_TIME);
             return EXTENDED_TIME;
         }};
-        
+
         // Calendar manipulation
         const Calendar = Java.use('java.util.Calendar');
         Calendar.getInstance.overload().implementation = function() {{
@@ -1887,7 +1887,7 @@ if (Java.available) {{
             console.log("[+] Calendar.getInstance() -> frozen time");
             return cal;
         }};
-        
+
         // Instant (Java 8+)
         try {{
             const Instant = Java.use('java.time.Instant');
@@ -1898,7 +1898,7 @@ if (Java.available) {{
         }} catch(e) {{
             // Java 8 time API not available
         }}
-        
+
         // LocalDateTime (Java 8+)
         try {{
             const LocalDateTime = Java.use('java.time.LocalDateTime');
@@ -1911,16 +1911,16 @@ if (Java.available) {{
         }} catch(e) {{
             // Java 8 time API not available
         }}
-        
+
         // SharedPreferences - often used to store trial start date
         try {{
             const SharedPreferencesImpl = Java.use('android.app.SharedPreferencesImpl');
             const SharedPreferencesEditor = Java.use('android.app.SharedPreferencesImpl$EditorImpl');
-            
+
             // Intercept getLong to return trial-friendly values
             SharedPreferencesImpl.getLong.implementation = function(key, defValue) {{
                 const result = this.getLong(key, defValue);
-                if (key.toLowerCase().includes('trial') || 
+                if (key.toLowerCase().includes('trial') ||
                     key.toLowerCase().includes('expire') ||
                     key.toLowerCase().includes('install') ||
                     key.toLowerCase().includes('first')) {{
@@ -1929,10 +1929,10 @@ if (Java.available) {{
                 }}
                 return result;
             }};
-            
+
             // Prevent trial date from being updated
             SharedPreferencesEditor.putLong.implementation = function(key, value) {{
-                if (key.toLowerCase().includes('trial') || 
+                if (key.toLowerCase().includes('trial') ||
                     key.toLowerCase().includes('expire') ||
                     key.toLowerCase().includes('install')) {{
                     console.log("[+] Blocking SharedPreferences.putLong('" + key + "')");
@@ -1943,7 +1943,7 @@ if (Java.available) {{
         }} catch(e) {{
             console.log("[-] SharedPreferences hooks failed: " + e);
         }}
-        
+
         console.log("[+] Java time-based protections bypassed");
     }});
 }}
@@ -1954,13 +1954,13 @@ if (Process.platform === 'windows') {{
         const clr = Module.findBaseAddress('clr.dll') || Module.findBaseAddress('coreclr.dll');
         if (clr) {{
             console.log("[+] .NET runtime detected, hooking DateTime.Now");
-            
+
             // This is a simplified approach - real .NET hooking would be more complex
             const patterns = [
                 '48 8D 0D', // lea rcx, [DateTime.Now]
                 '48 8B 05'  // mov rax, [DateTime.Now]
             ];
-            
+
             // Search for DateTime access patterns
             patterns.forEach(function(pattern) {{
                 Memory.scan(clr, 0x1000000, pattern, {{
@@ -1989,7 +1989,7 @@ statFuncs.forEach(function(funcName) {{
                 if (retval.toInt32() === 0 && this.statbuf) {{
                     // Modify file timestamps to appear older
                     const timeValue = Math.floor(FROZEN_TIME / 1000);
-                    
+
                     // Offsets vary by platform, but typically:
                     // st_atime, st_mtime, st_ctime
                     try {{
@@ -2033,12 +2033,12 @@ const FAKE_HWID = {{
 // Windows hardware ID spoofing
 if (Process.platform === 'windows') {{
     console.log("[+] Windows platform detected - hooking hardware functions");
-    
+
     // WMI queries interception
     const ole32 = Module.load('ole32.dll');
     const kernel32 = Module.load('kernel32.dll');
     const advapi32 = Module.load('advapi32.dll');
-    
+
     // GetVolumeInformation - disk serial
     const GetVolumeInformationW = kernel32.getExportByName('GetVolumeInformationW');
     if (GetVolumeInformationW) {{
@@ -2054,7 +2054,7 @@ if (Process.platform === 'windows') {{
             }}
         }});
     }}
-    
+
     // Registry key interception for hardware IDs
     const RegQueryValueExW = advapi32.getExportByName('RegQueryValueExW');
     if (RegQueryValueExW) {{
@@ -2071,10 +2071,10 @@ if (Process.platform === 'windows') {{
                         "ProcessorNameString", "Identifier", "SystemBiosVersion",
                         "SystemProductName", "BaseBoardProduct", "MachineGuid"
                     ];
-                    
+
                     if (hwIdValues.includes(this.lpValueName)) {{
                         console.log("[+] Intercepting registry value: " + this.lpValueName);
-                        
+
                         if (this.lpValueName === "MachineGuid") {{
                             const fakeGuid = Memory.allocUtf16String(FAKE_HWID.systemUuid);
                             Memory.copy(this.lpData, fakeGuid, FAKE_HWID.systemUuid.length * 2);
@@ -2087,7 +2087,7 @@ if (Process.platform === 'windows') {{
             }}
         }});
     }}
-    
+
     // DeviceIoControl - for disk/CPU queries
     const DeviceIoControl = kernel32.getExportByName('DeviceIoControl');
     if (DeviceIoControl) {{
@@ -2116,7 +2116,7 @@ if (Process.platform === 'windows') {{
             }}
         }});
     }}
-    
+
     // WMI query interception
     try {{
         const wbemprox = Module.load('wbemprox.dll');
@@ -2126,7 +2126,7 @@ if (Process.platform === 'windows') {{
                 '48 89 5C 24 08 48 89 74 24 10', // Common function prologue
                 '40 53 48 83 EC 20'               // Alternative prologue
             ];
-            
+
             patterns.forEach(function(pattern) {{
                 Memory.scan(wbemprox.base, wbemprox.size, pattern, {{
                     onMatch: function(address, size) {{
@@ -2149,7 +2149,7 @@ if (Process.platform === 'windows') {{
     }} catch(e) {{
         console.log("[-] WMI hooking failed: " + e);
     }}
-    
+
     // CPUID instruction hooking for CPU serial
     if (Process.arch === 'x64') {{
         // Find CPUID usage patterns
@@ -2192,11 +2192,11 @@ if (Process.platform === 'windows') {{
 // Linux hardware ID spoofing
 else if (Process.platform === 'linux') {{
     console.log("[+] Linux platform detected - hooking hardware functions");
-    
+
     // DMI/SMBIOS reading
     const open = Module.findExportByName(null, 'open');
     const read = Module.findExportByName(null, 'read');
-    
+
     if (open) {{
         Interceptor.attach(open, {{
             onEnter: function(args) {{
@@ -2225,7 +2225,7 @@ else if (Process.platform === 'linux') {{
             }}
         }});
     }}
-    
+
     if (read) {{
         Interceptor.attach(read, {{
             onEnter: function(args) {{
@@ -2255,7 +2255,7 @@ else if (Process.platform === 'linux') {{
             }}
         }});
     }}
-    
+
     // ioctl for network interfaces
     const ioctl = Module.findExportByName(null, 'ioctl');
     if (ioctl) {{
@@ -2263,7 +2263,7 @@ else if (Process.platform === 'linux') {{
             onEnter: function(args) {{
                 this.request = args[1].toInt32();
                 this.argp = args[2];
-                
+
                 // SIOCGIFHWADDR - get hardware address
                 if (this.request === 0x8927) {{
                     this.isMacRequest = true;
@@ -2288,7 +2288,7 @@ else if (Process.platform === 'linux') {{
 if (Java.available) {{
     Java.perform(function() {{
         console.log("[+] Starting Java/Android hardware bypass...");
-        
+
         // Build class - device info
         const Build = Java.use('android.os.Build');
         Build.SERIAL.value = FAKE_HWID.biosSerial;
@@ -2300,12 +2300,12 @@ if (Java.available) {{
         Build.MODEL.value = "SDK";
         Build.MANUFACTURER.value = "Generic";
         Build.PRODUCT.value = "sdk";
-        
+
         // Build.VERSION
         const Build_VERSION = Java.use('android.os.Build$VERSION');
         Build_VERSION.RELEASE.value = "10";
         Build_VERSION.SDK_INT.value = 29;
-        
+
         // Settings.Secure - Android ID
         const Settings_Secure = Java.use('android.provider.Settings$Secure');
         Settings_Secure.getString.implementation = function(resolver, name) {{
@@ -2315,26 +2315,26 @@ if (Java.available) {{
             }}
             return this.getString(resolver, name);
         }};
-        
+
         // TelephonyManager - IMEI, SIM info
         try {{
             const TelephonyManager = Java.use('android.telephony.TelephonyManager');
-            
+
             TelephonyManager.getDeviceId.overload().implementation = function() {{
                 console.log("[+] IMEI requested - returning fake");
                 return "353627073247392";
             }};
-            
+
             TelephonyManager.getImei.overload().implementation = function() {{
                 console.log("[+] IMEI requested - returning fake");
                 return "353627073247392";
             }};
-            
+
             TelephonyManager.getSimSerialNumber.implementation = function() {{
                 console.log("[+] SIM serial requested - returning fake");
                 return "89014103211118510720";
             }};
-            
+
             TelephonyManager.getSubscriberId.implementation = function() {{
                 console.log("[+] IMSI requested - returning fake");
                 return "310260000000000";
@@ -2342,14 +2342,14 @@ if (Java.available) {{
         }} catch(e) {{
             console.log("[-] TelephonyManager hooks failed: " + e);
         }}
-        
+
         // NetworkInterface - MAC address
         const NetworkInterface = Java.use('java.net.NetworkInterface');
         NetworkInterface.getHardwareAddress.implementation = function() {{
             console.log("[+] MAC address requested - returning fake");
             return Java.array('byte', [0x00, 0x11, 0x22, 0x33, 0x44, 0x55]);
         }};
-        
+
         // WifiInfo - MAC and SSID
         try {{
             const WifiInfo = Java.use('android.net.wifi.WifiInfo');
@@ -2360,7 +2360,7 @@ if (Java.available) {{
         }} catch(e) {{
             console.log("[-] WifiInfo hooks failed: " + e);
         }}
-        
+
         // BluetoothAdapter - Bluetooth MAC
         try {{
             const BluetoothAdapter = Java.use('android.bluetooth.BluetoothAdapter');
@@ -2371,7 +2371,7 @@ if (Java.available) {{
         }} catch(e) {{
             console.log("[-] BluetoothAdapter hooks failed: " + e);
         }}
-        
+
         // SystemProperties - various hardware properties
         try {{
             const SystemProperties = Java.use('android.os.SystemProperties');
@@ -2388,7 +2388,7 @@ if (Java.available) {{
                 "gsm.version.baseband": "no modem",
                 "ro.build.fingerprint": "generic/sdk/generic:10/QSR1.190920.001/5891938:user/release-keys"
             }};
-            
+
             SystemProperties.get.overload('java.lang.String').implementation = function(key) {{
                 if (propOverrides.hasOwnProperty(key)) {{
                     console.log("[+] SystemProperty override: " + key + " -> " + propOverrides[key]);
@@ -2396,7 +2396,7 @@ if (Java.available) {{
                 }}
                 return this.get(key);
             }};
-            
+
             SystemProperties.get.overload('java.lang.String', 'java.lang.String').implementation = function(key, defaultValue) {{
                 if (propOverrides.hasOwnProperty(key)) {{
                     console.log("[+] SystemProperty override: " + key + " -> " + propOverrides[key]);
@@ -2407,7 +2407,7 @@ if (Java.available) {{
         }} catch(e) {{
             console.log("[-] SystemProperties hooks failed: " + e);
         }}
-        
+
         console.log("[+] Hardware identifiers comprehensively spoofed");
     }});
 }}
@@ -2426,7 +2426,7 @@ const fopen = Module.findExportByName(null, 'fopen');
 if (fopen) {{
     const fakeFds = {{}};
     let nextFakeFd = 0x1337;
-    
+
     Interceptor.attach(fopen, {{
         onEnter: function(args) {{
             this.pathname = args[0].readCString();
@@ -2445,7 +2445,7 @@ if (fopen) {{
             }}
         }}
     }});
-    
+
     // Hook fread to return our fake content
     const fread = Module.findExportByName(null, 'fread');
     if (fread) {{
@@ -2461,7 +2461,7 @@ if (fopen) {{
                     const fakeFile = fakeFds[this.stream];
                     const remaining = fakeFile.content.length - fakeFile.position;
                     const toRead = Math.min(remaining, this.size * this.nmemb);
-                    
+
                     if (toRead > 0) {{
                         const data = fakeFile.content.substr(fakeFile.position, toRead);
                         this.ptr.writeUtf8String(data);
@@ -2494,7 +2494,7 @@ console.log("[*] Initializing comprehensive anti-tamper bypass...");
 if (Process.platform === 'windows') {{
     const kernel32 = Module.load('kernel32.dll');
     const ntdll = Module.load('ntdll.dll');
-    
+
     // IsDebuggerPresent bypass
     const IsDebuggerPresent = kernel32.getExportByName('IsDebuggerPresent');
     if (IsDebuggerPresent) {{
@@ -2505,7 +2505,7 @@ if (Process.platform === 'windows') {{
             }}
         }});
     }}
-    
+
     // CheckRemoteDebuggerPresent bypass
     const CheckRemoteDebuggerPresent = kernel32.getExportByName('CheckRemoteDebuggerPresent');
     if (CheckRemoteDebuggerPresent) {{
@@ -2522,7 +2522,7 @@ if (Process.platform === 'windows') {{
             }}
         }});
     }}
-    
+
     // NtQueryInformationProcess for ProcessDebugPort
     const NtQueryInformationProcess = ntdll.getExportByName('NtQueryInformationProcess');
     if (NtQueryInformationProcess) {{
@@ -2553,7 +2553,7 @@ if (Process.platform === 'windows') {{
             }}
         }});
     }}
-    
+
     // PEB manipulation - hide debugger
     const peb = Process.enumerateModules()[0].base.add(ptr(Process.pointerSize === 8 ? 0x60 : 0x30)).readPointer();
     if (peb) {{
@@ -2563,7 +2563,7 @@ if (Process.platform === 'windows') {{
         peb.add(Process.pointerSize === 8 ? 0xBC : 0x68).writeU32(0);
         console.log("[+] PEB anti-debug flags cleared");
     }}
-    
+
     // OutputDebugString bypass
     const OutputDebugStringA = kernel32.getExportByName('OutputDebugStringA');
     const OutputDebugStringW = kernel32.getExportByName('OutputDebugStringW');
@@ -2577,7 +2577,7 @@ if (Process.platform === 'windows') {{
             }});
         }}
     }});
-    
+
     // Debug register checks (DR0-DR7)
     const GetThreadContext = kernel32.getExportByName('GetThreadContext');
     if (GetThreadContext) {{
@@ -2633,7 +2633,7 @@ else {{
             }}
         }});
     }}
-    
+
     // /proc/self/status TracerPid bypass
     const fopen = Module.findExportByName(null, 'fopen');
     if (fopen) {{
@@ -2651,7 +2651,7 @@ else {{
             }}
         }});
     }}
-    
+
     // Intercept fgets to modify TracerPid line
     const fgets = Module.findExportByName(null, 'fgets');
     if (fgets) {{
@@ -2711,13 +2711,13 @@ if (Process.platform === 'windows') {{
     const CryptCreateHash = advapi32.getExportByName('CryptCreateHash');
     const CryptHashData = advapi32.getExportByName('CryptHashData');
     const CryptGetHashParam = advapi32.getExportByName('CryptGetHashParam');
-    
+
     const validHashes = {{
         MD5: '098f6bcd4621d373cade4e832627b4f6', // "test"
         SHA1: 'a94a8fe5ccb19ba61c4c0873d391e987982fbbd3',
         SHA256: '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
     }};
-    
+
     if (CryptGetHashParam) {{
         Interceptor.attach(CryptGetHashParam, {{
             onEnter: function(args) {{
@@ -2729,11 +2729,11 @@ if (Process.platform === 'windows') {{
                     // Replace with known good hash
                     const hashLen = this.pdwDataLen.readU32();
                     let validHash;
-                    
+
                     if (hashLen === 16) validHash = validHashes.MD5;
                     else if (hashLen === 20) validHash = validHashes.SHA1;
                     else if (hashLen === 32) validHash = validHashes.SHA256;
-                    
+
                     if (validHash) {{
                         const bytes = [];
                         for (let i = 0; i < validHash.length; i += 2) {{
@@ -2784,7 +2784,7 @@ if (Process.arch === 'x64' || Process.arch === 'ia32') {{
             Memory.scan(range.base, range.size, '0f a2', {{
                 onMatch: function(address, size) {{
                     console.log("[*] Found CPUID at: " + address);
-                    
+
                     // Hook CPUID instruction
                     Interceptor.attach(address, {{
                         onEnter: function(args) {{
@@ -2818,7 +2818,7 @@ if (Process.platform === 'windows') {{
     const RegOpenKeyExW = advapi32.getExportByName('RegOpenKeyExW');
     const RegQueryValueExA = advapi32.getExportByName('RegQueryValueExA');
     const RegQueryValueExW = advapi32.getExportByName('RegQueryValueExW');
-    
+
     const vmKeys = [
         'SYSTEM\\\\CurrentControlSet\\\\Services\\\\VBoxGuest',
         'SYSTEM\\\\CurrentControlSet\\\\Services\\\\VBoxMouse',
@@ -2827,14 +2827,14 @@ if (Process.platform === 'windows') {{
         'SYSTEM\\\\CurrentControlSet\\\\Services\\\\VMTools',
         'SOFTWARE\\\\VMware, Inc.\\\\VMware Tools'
     ];
-    
+
     [RegOpenKeyExA, RegOpenKeyExW].forEach(func => {{
         if (func) {{
             Interceptor.attach(func, {{
                 onEnter: function(args) {{
-                    const keyName = func.name.endsWith('W') ? 
+                    const keyName = func.name.endsWith('W') ?
                         args[1].readUtf16String() : args[1].readUtf8String();
-                    
+
                     if (keyName && vmKeys.some(k => keyName.includes(k))) {{
                         console.log("[+] Blocking VM registry key: " + keyName);
                         args[1] = ptr(0); // NULL key name
@@ -2857,19 +2857,19 @@ if (Process.platform === 'windows') {{
     const CreateToolhelp32Snapshot = kernel32.getExportByName('CreateToolhelp32Snapshot');
     const Process32First = kernel32.getExportByName('Process32First');
     const Process32Next = kernel32.getExportByName('Process32Next');
-    
+
     const blacklistedProcesses = [
         'vmtoolsd.exe', 'vmwaretray.exe', 'vmwareuser.exe',
         'vboxservice.exe', 'vboxtray.exe', 'xenservice.exe',
         'qemu-ga.exe', 'prl_tools.exe', 'prl_cc.exe'
     ];
-    
+
     if (Process32Next) {{
         Interceptor.attach(Process32Next, {{
             onLeave: function(retval) {{
                 if (retval.toInt32() !== 0 && this.lppe) {{
                     const exeFile = this.lppe.add(36).readUtf16String();
-                    if (exeFile && blacklistedProcesses.some(p => 
+                    if (exeFile && blacklistedProcesses.some(p =>
                         exeFile.toLowerCase().includes(p.toLowerCase()))) {{
                         // Skip this entry
                         retval.replace(0);
@@ -2888,7 +2888,7 @@ if (Process.platform === 'windows') {{
     const kernel32 = Module.load('kernel32.dll');
     const VirtualProtect = kernel32.getExportByName('VirtualProtect');
     const VirtualProtectEx = kernel32.getExportByName('VirtualProtectEx');
-    
+
     [VirtualProtect, VirtualProtectEx].forEach(func => {{
         if (func) {{
             Interceptor.attach(func, {{
@@ -2916,41 +2916,41 @@ if (Java.available) {{
                 console.log("[+] Debug.isDebuggerConnected bypassed");
                 return false;
             }};
-            
+
             Debug.waitingForDebugger.implementation = function() {{
                 console.log("[+] Debug.waitingForDebugger bypassed");
                 return false;
             }};
         }} catch(e) {{}}
-        
+
         // Application info manipulation
         try {{
             const ApplicationInfo = Java.use('android.content.pm.ApplicationInfo');
             const FLAG_DEBUGGABLE = 0x2;
-            
+
             ApplicationInfo.$init.overload('android.os.Parcel').implementation = function(parcel) {{
                 this.$init(parcel);
                 this.flags.value = this.flags.value & ~FLAG_DEBUGGABLE;
                 return this;
             }};
         }} catch(e) {{}}
-        
+
         // Signature verification bypass
         try {{
             const Signature = Java.use('android.content.pm.Signature');
             const validSignature = '{valid_signature}';
-            
+
             Signature.hashCode.implementation = function() {{
                 console.log("[+] Signature hashCode bypassed");
                 return parseInt(validSignature, 16);
             }};
-            
+
             Signature.toCharsString.implementation = function() {{
                 console.log("[+] Signature toCharsString bypassed");
                 return validSignature;
             }};
         }} catch(e) {{}}
-        
+
         // Root detection bypass
         try {{
             const File = Java.use('java.io.File');
@@ -2960,7 +2960,7 @@ if (Java.available) {{
                 '/system/sd/xbin/su', '/system/bin/failsafe/su',
                 '/data/local/su', '/su/bin/su'
             ];
-            
+
             File.exists.implementation = function() {{
                 const path = this.getAbsolutePath();
                 if (rootPaths.includes(path)) {{
@@ -2970,21 +2970,21 @@ if (Java.available) {{
                 return this.exists();
             }};
         }} catch(e) {{}}
-        
+
         // Package manager hooks
         try {{
             const PackageManager = Java.use('android.content.pm.PackageManager');
             const GET_SIGNATURES = 0x40;
-            
-            PackageManager.getPackageInfo.overload('java.lang.String', 'int').implementation = 
+
+            PackageManager.getPackageInfo.overload('java.lang.String', 'int').implementation =
                 function(packageName, flags) {{
                     const result = this.getPackageInfo(packageName, flags);
-                    
+
                     if ((flags & GET_SIGNATURES) !== 0) {{
                         // Return valid signatures
                         console.log("[+] Package signature request intercepted");
                     }}
-                    
+
                     return result;
                 }};
         }} catch(e) {{}}
@@ -3044,14 +3044,14 @@ Process.enumerateModules().forEach(module => {{
         module.enumerateExports().forEach(exp => {{
             const name = exp.name;
             if (!name) return;
-            
+
             // Check if function name matches validation patterns
-            const isValidationFunc = validationPatterns.some(pattern => 
+            const isValidationFunc = validationPatterns.some(pattern =>
                 pattern.test(name));
-            
+
             if (isValidationFunc) {{
                 console.log("[*] Hooking suspicious function: " + name);
-                
+
                 Interceptor.attach(exp.address, {{
                     onEnter: function(args) {{
                         this.funcName = name;
@@ -3067,7 +3067,7 @@ Process.enumerateModules().forEach(module => {{
                         const ret = retval.toInt32();
                         let shouldModify = false;
                         let newValue = ret;
-                        
+
                         // Heuristics for determining return value
                         if (name.toLowerCase().includes('islicensed') ||
                             name.toLowerCase().includes('isvalid') ||
@@ -3092,10 +3092,10 @@ Process.enumerateModules().forEach(module => {{
                             shouldModify = FAILURE_VALUES.includes(ret);
                             newValue = 0; // Common success value
                         }}
-                        
+
                         if (shouldModify) {{
                             retval.replace(newValue);
-                            console.log("[+] Modified " + this.funcName + 
+                            console.log("[+] Modified " + this.funcName +
                                        " return: " + ret + " -> " + newValue);
                         }}
                     }}
@@ -3124,22 +3124,22 @@ stringCompare.forEach(funcName => {{
                     const isWide = funcName.includes('wcs') || funcName.endsWith('W');
                     this.str1 = isWide ? args[0].readUtf16String() : args[0].readUtf8String();
                     this.str2 = isWide ? args[1].readUtf16String() : args[1].readUtf8String();
-                    
+
                     // License key patterns
                     const licensePatterns = [
                         /^[A-Z0-9]{{4}}-[A-Z0-9]{{4}}-[A-Z0-9]{{4}}-[A-Z0-9]{{4}}$/,
                         /^[A-F0-9]{{32}}$/i,
                         /license|serial|key|code/i
                     ];
-                    
+
                     // Check if comparing license-related strings
-                    const isLicenseCompare = 
+                    const isLicenseCompare =
                         licensePatterns.some(p => p.test(this.str1)) ||
                         licensePatterns.some(p => p.test(this.str2));
-                    
+
                     if (isLicenseCompare) {{
                         this.shouldIntercept = true;
-                        console.log("[*] License comparison detected: " + 
+                        console.log("[*] License comparison detected: " +
                                    this.str1 + " vs " + this.str2);
                     }}
                 }} catch(e) {{}}
@@ -3162,7 +3162,7 @@ if (Process.platform === 'windows') {{
     // Windows CryptoAPI
     const advapi32 = Module.load('advapi32.dll');
     const bcrypt = Module.load('bcrypt.dll');
-    
+
     // BCrypt hash functions (newer API)
     const BCryptFinishHash = bcrypt.getExportByName('BCryptFinishHash');
     if (BCryptFinishHash) {{
@@ -3178,7 +3178,7 @@ if (Process.platform === 'windows') {{
                         0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0,
                         0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88
                     ];
-                    
+
                     for (let i = 0; i < Math.min(this.cbOutput, goodHash.length); i++) {{
                         this.pbOutput.add(i).writeU8(goodHash[i]);
                     }}
@@ -3189,13 +3189,13 @@ if (Process.platform === 'windows') {{
     }}
 }} else {{
     // OpenSSL functions (Linux/macOS)
-    const libcrypto = Process.findModuleByName('libcrypto.so') || 
+    const libcrypto = Process.findModuleByName('libcrypto.so') ||
                      Process.findModuleByName('libcrypto.dylib');
-    
+
     if (libcrypto) {{
         const SHA256_Final = Module.findExportByName(libcrypto.name, 'SHA256_Final');
         const MD5_Final = Module.findExportByName(libcrypto.name, 'MD5_Final');
-        
+
         [SHA256_Final, MD5_Final].forEach(func => {{
             if (func) {{
                 Interceptor.attach(func, {{
@@ -3230,7 +3230,7 @@ if (getaddrinfo) {{
                 'license.', 'activation.', 'validate.', 'auth.',
                 'register.', 'verify.'
             ];
-            
+
             // Check if it's a license server
             if (hostname && licenseServers.some(s => hostname.includes(s))) {{
                 console.log("[*] Blocking license server: " + hostname);
@@ -3252,12 +3252,12 @@ if (getaddrinfo) {{
 if (Process.platform === 'windows') {{
     const wininet = Module.load('wininet.dll');
     const winhttp = Module.load('winhttp.dll');
-    
+
     // WinINet
     const HttpSendRequestA = wininet.getExportByName('HttpSendRequestA');
     const HttpSendRequestW = wininet.getExportByName('HttpSendRequestW');
     const InternetReadFile = wininet.getExportByName('InternetReadFile');
-    
+
     [HttpSendRequestA, HttpSendRequestW].forEach(func => {{
         if (func) {{
             Interceptor.attach(func, {{
@@ -3274,7 +3274,7 @@ if (Process.platform === 'windows') {{
             }});
         }}
     }});
-    
+
     // Fake server responses
     if (InternetReadFile) {{
         Interceptor.attach(InternetReadFile, {{
@@ -3288,7 +3288,7 @@ if (Process.platform === 'windows') {{
                     // Inject fake license response
                     const fakeResponse = '{{"status":"licensed","expiry":"2099-12-31","type":"pro"}}';
                     const bytesToWrite = Math.min(fakeResponse.length, this.dwNumberOfBytesToRead);
-                    
+
                     this.lpBuffer.writeUtf8String(fakeResponse.substring(0, bytesToWrite));
                     if (this.lpdwNumberOfBytesRead) {{
                         this.lpdwNumberOfBytesRead.writeU32(bytesToWrite);
@@ -3312,11 +3312,11 @@ socket_funcs.forEach(funcName => {{
                     try {{
                         const sockaddr = args[1];
                         const family = sockaddr.readU16();
-                        
+
                         if (family === 2) {{ // AF_INET
                             const port = sockaddr.add(2).readU16();
                             const addr = sockaddr.add(4).readU32();
-                            
+
                             // Common license server ports
                             const licensePorts = [443, 8443, 9443, 1947, 5053];
                             if (licensePorts.includes(port)) {{
@@ -3354,12 +3354,12 @@ file_funcs.forEach(funcName => {{
                     }} else {{
                         path = args[0].readUtf8String();
                     }}
-                    
+
                     const licenseFiles = [
                         'license.', '.lic', 'registration.', '.key',
                         'activation.', '.dat'
                     ];
-                    
+
                     if (path && licenseFiles.some(f => path.toLowerCase().includes(f))) {{
                         console.log("[*] License file access: " + path);
                         this.isLicenseFile = true;
@@ -3384,24 +3384,24 @@ file_funcs.forEach(funcName => {{
 
 if (Process.platform === 'windows') {{
     const advapi32 = Module.load('advapi32.dll');
-    
+
     // Registry value queries
     const RegQueryValueExA = advapi32.getExportByName('RegQueryValueExA');
     const RegQueryValueExW = advapi32.getExportByName('RegQueryValueExW');
-    
+
     [RegQueryValueExA, RegQueryValueExW].forEach(func => {{
         if (func) {{
             Interceptor.attach(func, {{
                 onEnter: function(args) {{
                     const valueName = func.name.endsWith('W') ?
                         args[1].readUtf16String() : args[1].readUtf8String();
-                    
+
                     const licenseValues = [
                         'License', 'Serial', 'Key', 'Activation',
                         'Registration', 'ProductID', 'InstallDate'
                     ];
-                    
-                    if (valueName && licenseValues.some(v => 
+
+                    if (valueName && licenseValues.some(v =>
                         valueName.toLowerCase().includes(v.toLowerCase()))) {{
                         this.isLicenseValue = true;
                         this.lpData = args[4];
@@ -3433,56 +3433,56 @@ if (Java.available) {{
         try {{
             const SharedPreferences = Java.use('android.content.SharedPreferences');
             const Editor = Java.use('android.content.SharedPreferences$Editor');
-            
+
             // Hook getString for license checks
             SharedPreferences.getString.implementation = function(key, defValue) {{
                 const result = this.getString(key, defValue);
-                
+
                 const licenseKeys = ['license', 'serial', 'activation', 'premium'];
                 if (key && licenseKeys.some(k => key.toLowerCase().includes(k))) {{
                     console.log("[+] SharedPreferences license query: " + key);
                     return "VALID-LICENSE-KEY";
                 }}
-                
+
                 return result;
             }};
-            
+
             // Hook getBoolean for feature flags
             SharedPreferences.getBoolean.implementation = function(key, defValue) {{
                 const result = this.getBoolean(key, defValue);
-                
+
                 const premiumKeys = ['isPro', 'isPremium', 'isLicensed', 'fullVersion'];
                 if (key && premiumKeys.some(k => key.toLowerCase().includes(k.toLowerCase()))) {{
                     console.log("[+] Premium feature check: " + key + " -> true");
                     return true;
                 }}
-                
+
                 return result;
             }};
         }} catch(e) {{}}
-        
+
         // In-app purchase bypass
         try {{
             const BillingClient = Java.use('com.android.billingclient.api.BillingClient');
             const Purchase = Java.use('com.android.billingclient.api.Purchase');
-            
+
             // Always return purchased state
             Purchase.getPurchaseState.implementation = function() {{
                 console.log("[+] Purchase state check bypassed");
                 return 1; // PURCHASED
             }};
-            
+
             Purchase.isAcknowledged.implementation = function() {{
                 console.log("[+] Purchase acknowledged check bypassed");
                 return true;
             }};
         }} catch(e) {{}}
-        
+
         // License verification library
         try {{
             const LicenseChecker = Java.use('com.google.android.vending.licensing.LicenseChecker');
             const Policy = Java.use('com.google.android.vending.licensing.Policy');
-            
+
             Policy.allowAccess.implementation = function() {{
                 console.log("[+] License policy check bypassed");
                 return true;

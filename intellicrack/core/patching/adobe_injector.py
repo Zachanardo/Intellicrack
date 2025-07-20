@@ -172,55 +172,55 @@ console.log("[*] Advanced Adobe license bypass initiated");
 const ADOBE_PROTECTION_TARGETS = {
     // Core Adobe License Manager (Enhanced 2024+ versions)
     "AdobeLM.dll": [
-        "IsActivated", "IsLicenseValid", "GetLicenseStatus", "GetSerialNumber", 
-        "CheckSubscription", "ValidateLicense", "GetActivationStatus", 
+        "IsActivated", "IsLicenseValid", "GetLicenseStatus", "GetSerialNumber",
+        "CheckSubscription", "ValidateLicense", "GetActivationStatus",
         "IsTrialExpired", "GetDaysRemaining", "ValidateSubscriptionToken",
         "CheckLicenseIntegrity", "ValidateDeviceBinding", "GetLicenseHash",
         "CheckActivationLimit", "ValidateRegionalLicense", "GetSubscriptionTier"
     ],
-    
+
     // Adobe Genuine Service (Anti-piracy enforcement)
     "AdobeGenuineService.exe": [
         "PerformGenuineCheck", "ReportNonGenuineSoftware", "ValidateInstallation",
         "CheckSoftwareIntegrity", "InitiateComplianceCheck", "GetComplianceStatus",
         "StartBackgroundValidation", "ScheduleGenuineCheck"
     ],
-    
+
     // Creative Cloud Desktop Application
     "Creative Cloud.exe": [
         "CCLicenseCheck", "CCSubscriptionValidate", "CCGetUserInfo",
         "CCCheckConnectivity", "CCValidateSession", "CCRefreshToken",
         "CCCheckQuota", "CCValidateCloudSync", "CCGetSubscriptionPlan"
     ],
-    
+
     // Adobe Common File Installer (License enforcement)
     "AdobePIP.exe": [
         "ValidateProductLicense", "CheckInstallationRights", "VerifySubscription",
         "ValidateRegionalCompliance", "CheckEducationalLicense"
     ],
-    
+
     // Adobe Application Manager (License coordination)
     "AAMUpdater.exe": [
         "SynchronizeLicenses", "ValidateInstalledProducts", "CheckSubscriptionStatus",
         "RefreshActivationData", "ValidateCloudServices"
     ],
-    
+
     // Adobe IPC Broker (Inter-process licensing communication)
     "AdobeIPCBroker.exe": [
         "ValidateLicenseRequest", "ProcessActivationMessage", "CheckLicenseCache",
         "ValidateProcessLicense", "AuthorizeFeatureAccess"
     ],
-    
+
     // Adobe Crash Reporter (Contains anti-tamper telemetry)
     "AdobeCrashReporter.exe": [
         "ReportTamperingDetected", "SendLicenseViolation", "LogSuspiciousActivity"
     ],
-    
+
     // Adobe CEF Helper (Embedded browser for licensing UI)
     "AdobeCEFHelper.exe": [
         "ValidateWebLicense", "ProcessOAuthToken", "CheckWebSubscription"
     ],
-    
+
     // Individual Creative Cloud Applications
     "Photoshop.exe": ["CheckPhotoshopLicense", "ValidatePSSubscription", "InitializeLicensing"],
     "Illustrator.exe": ["CheckIllustratorLicense", "ValidateAISubscription", "InitializeLicensing"],
@@ -229,7 +229,7 @@ const ADOBE_PROTECTION_TARGETS = {
     "Premiere Pro.exe": ["CheckPremiereLicense", "ValidatePRSubscription", "InitializeLicensing"],
     "Lightroom.exe": ["CheckLightroomLicense", "ValidateLRSubscription", "InitializeLicensing"],
     "Acrobat.exe": ["CheckAcrobatLicense", "ValidatePDFSubscription", "InitializeLicensing"],
-    
+
     // Adobe Licensing Web Helper (Browser-based activation)
     "AdobeLicensingWebHelper.exe": [
         "ProcessWebActivation", "ValidateOAuthFlow", "HandleSSOCallback",
@@ -241,32 +241,32 @@ const ADOBE_PROTECTION_TARGETS = {
 const ADOBE_LICENSE_ENDPOINTS = [
     // Core licensing and activation servers
     "lcs-cops.adobe.io",
-    "cc-api-cp.adobe.io", 
+    "cc-api-cp.adobe.io",
     "activation.adobe.com",
     "practivate.adobe.com",
     "genuine.adobe.com",
     "lm.licenses.adobe.com",
-    
+
     // Adobe Identity Management System (IMS)
     "ims-na1.adobelogin.com",
     "ims-na1-stg1.adobelogin.com",
     "auth.services.adobe.com",
     "ims-prod06.adobelogin.com",
-    
+
     // Creative Cloud subscription services
     "cc-api-storage.adobe.io",
     "cc-api-behance.adobe.io",
     "cc-api-assets.adobe.io",
     "creative.adobe.com",
     "assets.adobe.com",
-    
+
     // Adobe Analytics and Telemetry
     "adobe.demdex.net",
     "dpm.demdex.net",
     "analytics.adobe.com",
     "omniture.adobe.com",
     "sc.omtrdc.net",
-    
+
     // License validation and anti-piracy
     "antipiracy.adobe.com",
     "ereg.adobe.com",
@@ -274,31 +274,31 @@ const ADOBE_LICENSE_ENDPOINTS = [
     "wip3.adobe.com",
     "3dns-3.adobe.com",
     "3dns-2.adobe.com",
-    
+
     // Regional licensing servers
     "lcs-cops-apac.adobe.io",
     "lcs-cops-emea.adobe.io",
     "ims-apac.adobelogin.com",
     "ims-emea.adobelogin.com",
-    
+
     // Enterprise/Education licensing
     "adminconsole.adobe.com",
     "licensing.adobe.com",
     "etla.adobe.com",
     "vip.adobe.com",
-    
+
     // Update and patch verification
     "swupmf.adobe.com",
     "swupdl.adobe.com",
     "download.adobe.com",
     "ardownload.adobe.com",
-    
+
     // License enforcement
     "adobe-dns.adobe.com",
     "adobe-dns-2.adobe.com",
     "adobe-dns-3.adobe.com",
     "adobe-dns-4.adobe.com",
-    
+
     // Mobile and web licensing
     "mobile-licensing.adobe.com",
     "web-licensing.adobe.com",
@@ -308,13 +308,13 @@ const ADOBE_LICENSE_ENDPOINTS = [
 // Adobe-Specific Advanced Protection Bypasses
 function bypassAdobeLicenseValidation() {
     console.log("[*] Targeting Adobe-specific licensing protection schemes...");
-    
+
     // Hook Adobe's comprehensive licensing infrastructure
     Object.keys(ADOBE_PROTECTION_TARGETS).forEach(target => {
         const module = Process.findModuleByName(target);
         if (module) {
             console.log(`[+] Found Adobe component: ${target} at ${module.base}`);
-            
+
             ADOBE_PROTECTION_TARGETS[target].forEach(funcName => {
                 try {
                     const addr = Module.findExportByName(target, funcName);
@@ -329,7 +329,7 @@ function bypassAdobeLicenseValidation() {
                     try {
                         const baseAddr = module.base;
                         const moduleSize = module.size;
-                        
+
                         // Search for function patterns in Adobe modules
                         const pattern = Memory.scanSync(baseAddr, moduleSize, "55 8B EC 83 EC ?? 56 57"); // Common function prologue
                         if (pattern.length > 0) {
@@ -354,7 +354,7 @@ function bypassAdobeLicenseValidation() {
 
 function bypassAdobeGenuineService() {
     console.log("[*] Targeting Adobe Genuine Service anti-piracy enforcement...");
-    
+
     // Hook Adobe Genuine Service specifically
     const agsModule = Process.findModuleByName("AdobeGenuineService.exe");
     if (agsModule) {
@@ -366,7 +366,7 @@ function bypassAdobeGenuineService() {
                 return 0; // Return "genuine" status
             }, 'int', []));
         }
-        
+
         // Block telemetry reporting
         const reportFunc = Module.findExportByName("AdobeGenuineService.exe", "ReportNonGenuineSoftware");
         if (reportFunc) {
@@ -376,7 +376,7 @@ function bypassAdobeGenuineService() {
             }, 'int', ['pointer']));
         }
     }
-    
+
     // Kill AGS process if running
     try {
         const agsProcess = Process.findModuleByName("AdobeGenuineService.exe");
@@ -391,7 +391,7 @@ function bypassAdobeGenuineService() {
 
 function bypassAdobeNetworkValidation() {
     console.log("[*] Blocking Adobe's comprehensive licensing network infrastructure...");
-    
+
     // Hook all HTTP request functions used by Adobe
     const httpFunctions = [
         { dll: "winhttp.dll", func: "WinHttpSendRequest" },
@@ -401,14 +401,14 @@ function bypassAdobeNetworkValidation() {
         { dll: "wininet.dll", func: "InternetOpenA" },
         { dll: "wininet.dll", func: "InternetOpenW" }
     ];
-    
+
     httpFunctions.forEach(({dll, func}) => {
         const funcAddr = Module.findExportByName(dll, func);
         if (funcAddr) {
             Interceptor.attach(funcAddr, {
                 onEnter: function(args) {
                     let urlFound = false;
-                    
+
                     // Check for Adobe licensing endpoints in various argument positions
                     for (let i = 0; i < args.length && i < 8; i++) {
                         try {
@@ -442,7 +442,7 @@ function bypassAdobeNetworkValidation() {
                             }
                         }
                     }
-                    
+
                     if (urlFound) {
                         // Return error to prevent network call
                         this.replace(ptr(0)); // Return failure
@@ -451,7 +451,7 @@ function bypassAdobeNetworkValidation() {
             });
         }
     });
-    
+
     // Block Adobe's custom HTTP libraries
     const adobeHttpLibs = ["AdobeHTTP.dll", "AdobeWebKit.dll", "libcurl.dll"];
     adobeHttpLibs.forEach(lib => {
@@ -483,7 +483,7 @@ function bypassCertificateValidation() {
             return 1; // CERT_E_OK
         }, 'int', ['pointer', 'pointer', 'pointer']));
     }
-    
+
     // Hook digital signature verification
     const WinVerifyTrust = Module.findExportByName("wintrust.dll", "WinVerifyTrust");
     if (WinVerifyTrust) {
@@ -509,7 +509,7 @@ function bypassHardwareFingerprinting() {
             }
         });
     }
-    
+
     // Hook MAC address retrieval
     const GetAdaptersInfo = Module.findExportByName("iphlpapi.dll", "GetAdaptersInfo");
     if (GetAdaptersInfo) {
@@ -528,16 +528,16 @@ function bypassAntiTamper() {
     // Hook file integrity checks
     const CreateFileW = Module.findExportByName("kernel32.dll", "CreateFileW");
     const originalCreateFile = CreateFileW;
-    
+
     Interceptor.replace(CreateFileW, new NativeCallback(function (fileName, access, share, security, creation, flags, template) {
         const path = Memory.readUtf16String(fileName);
-        
+
         // Redirect access to Adobe license files
         if (path.includes("Adobe") && (path.includes(".lic") || path.includes("licenses"))) {
             console.log(`[!] Redirected license file access: ${path}`);
             // Could redirect to fake license file here
         }
-        
+
         return originalCreateFile(fileName, access, share, security, creation, flags, template);
     }, 'pointer', ['pointer', 'uint32', 'uint32', 'pointer', 'uint32', 'uint32', 'pointer']));
 }
@@ -549,7 +549,7 @@ function bypassCloudConnectivity() {
         Interceptor.attach(getaddrinfo, {
             onEnter: function(args) {
                 const hostname = Memory.readUtf8String(args[0]);
-                
+
                 NETWORK_ENDPOINTS.forEach(endpoint => {
                     if (hostname.includes(endpoint)) {
                         console.log(`[!] Blocked DNS resolution for ${hostname}`);
@@ -579,7 +579,7 @@ function bypassRegistryChecks() {
         Interceptor.attach(RegQueryValueExW, {
             onEnter: function(args) {
                 const valueName = Memory.readUtf16String(args[1]);
-                
+
                 // Intercept Adobe license key queries
                 if (valueName && (valueName.includes("Adobe") || valueName.includes("License"))) {
                     console.log(`[!] Intercepted registry query: ${valueName}`);
@@ -595,14 +595,14 @@ console.log("[*] Initializing advanced Adobe bypass...");
 
 try {
     bypassLicenseValidation();
-    bypassNetworkValidation(); 
+    bypassNetworkValidation();
     bypassCertificateValidation();
     bypassHardwareFingerprinting();
     bypassAntiTamper();
     bypassCloudConnectivity();
     enableOfflineMode();
     bypassRegistryChecks();
-    
+
     console.log("[✓] All bypass mechanisms activated successfully");
 } catch (e) {
     console.log(`[!] Bypass initialization error: ${e}`);
@@ -623,7 +623,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
     def __init__(self):
         """Initialize the Adobe injector system.
-        
+
         Sets up the Adobe Creative Suite license bypass injector with Frida
         script injection capabilities. Monitors running Adobe processes and
         manages injection state tracking for Creative Cloud applications.

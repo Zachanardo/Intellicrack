@@ -31,6 +31,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import numpy as np
+
 from .performance_monitor_simple import profile_ai_operation
 
 logger = logging.getLogger(__name__)
@@ -90,7 +92,7 @@ class AILearningDatabase:
 
     def __init__(self, db_path: Optional[Path] = None):
         """Initialize the AI learning database.
-        
+
         Args:
             db_path: Optional path to the database file. If not provided,
                      defaults to ~/.intellicrack/ai_learning.db
@@ -171,7 +173,7 @@ class AILearningDatabase:
         with self.lock:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute("""
-                    INSERT OR REPLACE INTO learning_records VALUES 
+                    INSERT OR REPLACE INTO learning_records VALUES
                     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     record.record_id,
@@ -196,7 +198,7 @@ class AILearningDatabase:
         with self.lock:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute("""
-                    INSERT OR REPLACE INTO pattern_rules VALUES 
+                    INSERT OR REPLACE INTO pattern_rules VALUES
                     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     rule.rule_id,
@@ -217,7 +219,7 @@ class AILearningDatabase:
         with self.lock:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute("""
-                    INSERT OR REPLACE INTO failure_analyses VALUES 
+                    INSERT OR REPLACE INTO failure_analyses VALUES
                     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     analysis.failure_id,
@@ -347,7 +349,7 @@ class PatternEvolutionEngine:
 
     def __init__(self, database: AILearningDatabase):
         """Initialize the pattern evolution engine.
-        
+
         Args:
             database: AI learning database instance for storing and retrieving patterns
         """
@@ -762,7 +764,7 @@ class FailureAnalysisEngine:
 
     def __init__(self, database: AILearningDatabase):
         """Initialize the failure analysis engine.
-        
+
         Args:
             database: AI learning database instance for storing failure analyses
         """
@@ -1124,7 +1126,7 @@ class AILearningEngine:
 
     def __init__(self, db_path: Optional[Path] = None):
         """Initialize the AI learning engine.
-        
+
         Args:
             db_path: Optional path to the database file. If not provided,
                      defaults to ~/.intellicrack/ai_learning.db
@@ -1184,10 +1186,14 @@ class AILearningEngine:
             # Model states
             self.models_trained = False
             self.training_data = {
-                'features': [],
-                'labels': [],
+                'features': np.array([]),
+                'labels': np.array([]),
                 'metadata': []
             }
+            # Initialize feature dimensions
+            self.feature_dim = None
+            self.min_features = np.array([np.inf] * 20)  # Track min values for normalization
+            self.max_features = np.array([-np.inf] * 20)  # Track max values for normalization
 
             logger.info("ML models initialized successfully")
 
@@ -1332,7 +1338,7 @@ class AILearningEngine:
 
     def learn(self, min_samples: int = 50):
         """Perform actual machine learning based on collected data.
-        
+
         Args:
             min_samples: Minimum number of samples required to train models
         """
@@ -1403,7 +1409,7 @@ class AILearningEngine:
             self.training_data['metadata'] = metadata
 
             # Update learning stats
-            self.learning_stats['records_processed'] += len(records)
+            self.learning_stats['records_processed'] += len(recent_records)
 
             # Discover new patterns
             self._discover_patterns(X_scaled, y, metadata)
@@ -1418,10 +1424,10 @@ class AILearningEngine:
 
     def _extract_features(self, record: Dict[str, Any]) -> Optional[List[float]]:
         """Extract numerical features from a learning record.
-        
+
         Args:
             record: Learning record containing exploit data
-            
+
         Returns:
             Feature vector or None if extraction fails
         """
@@ -1468,10 +1474,10 @@ class AILearningEngine:
 
     def _calculate_protection_score(self, exploit_data: Dict[str, Any]) -> float:
         """Calculate a protection score based on exploit data.
-        
+
         Args:
             exploit_data: Dictionary containing exploit information
-            
+
         Returns:
             Protection score (0.0 to 10.0)
         """
@@ -1493,10 +1499,10 @@ class AILearningEngine:
 
     def _encode_technique(self, technique: str) -> List[float]:
         """Encode exploit technique as numerical features.
-        
+
         Args:
             technique: Exploit technique name
-            
+
         Returns:
             One-hot encoded vector
         """
@@ -1513,10 +1519,10 @@ class AILearningEngine:
 
     def _encode_target_type(self, target_type: str) -> List[float]:
         """Encode target type as numerical features.
-        
+
         Args:
             target_type: Target application type
-            
+
         Returns:
             One-hot encoded vector
         """
@@ -1533,7 +1539,7 @@ class AILearningEngine:
 
     def _discover_patterns(self, X: np.ndarray, y: np.ndarray, metadata: List[Dict]):
         """Discover new patterns from trained models.
-        
+
         Args:
             X: Feature matrix
             y: Labels
@@ -1578,10 +1584,10 @@ class AILearningEngine:
 
     def predict_success(self, exploit_data: Dict[str, Any]) -> Dict[str, float]:
         """Predict the success probability of an exploit.
-        
+
         Args:
             exploit_data: Dictionary containing exploit information
-            
+
         Returns:
             Dictionary with prediction results from different models
         """
@@ -1623,11 +1629,11 @@ class AILearningEngine:
 
     def _calculate_confidence(self, rf_prob: float, nn_prob: float) -> float:
         """Calculate confidence based on model agreement.
-        
+
         Args:
             rf_prob: Random Forest probability
             nn_prob: Neural Network probability
-            
+
         Returns:
             Confidence score (0.0 to 1.0)
         """

@@ -1,5 +1,5 @@
 """
-Command-line interface for Intellicrack binary analysis. 
+Command-line interface for Intellicrack binary analysis.
 
 Copyright (C) 2025 Zachary Flint
 

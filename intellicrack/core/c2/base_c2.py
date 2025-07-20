@@ -16,15 +16,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
+import time
+from typing import Any, Dict, List
+
 """
 Base C2 Module
 
 Provides common functionality for C2 client and server components.
 """
-
-import logging
-import time
-from typing import Any, Dict, List
 
 
 class BaseC2:

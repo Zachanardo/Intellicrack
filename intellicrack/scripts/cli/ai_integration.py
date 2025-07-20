@@ -1,5 +1,5 @@
 """
-AI Integration Module for Intellicrack. 
+AI Integration Module for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -49,6 +49,7 @@ class AIModelAdapter(ABC):
     """Abstract base class for AI model adapters."""
 
     def __init__(self, intellicrack_interface: IntellicrackAIInterface):
+        """Initialize AI model adapter with Intellicrack interface and tool definitions."""
         self.interface = intellicrack_interface
         self.tools = self._create_tool_definitions()
 
@@ -280,6 +281,7 @@ class LangChainIntegration:
     """Integration for LangChain-based AI applications."""
 
     def __init__(self, intellicrack_interface: IntellicrackAIInterface):
+        """Initialize LangChain integration with Intellicrack interface."""
         self.interface = intellicrack_interface
 
     def create_tools(self):
@@ -349,6 +351,7 @@ class IntellicrackAIServer:
     """Server for AI model interactions."""
 
     def __init__(self, auto_approve_low_risk: bool = False):
+        """Initialize AI server with confirmation manager and multiple AI adapters."""
         self.confirmation_manager = ConfirmationManager(auto_approve_low_risk)
         self.interface = IntellicrackAIInterface(self.confirmation_manager)
         self.adapters = {

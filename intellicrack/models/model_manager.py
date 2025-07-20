@@ -60,6 +60,7 @@ except ImportError:
     class ModelInfo:
         """Fallback model information container."""
         def __init__(self, *args, **kwargs):
+            """Initialize fallback ModelInfo with default values and debug logging."""
             logger.debug(f"ModelInfo fallback initialized with {len(args)} args and {len(kwargs)} kwargs")
             self.name = "unknown"
             self.size = 0
@@ -67,11 +68,13 @@ except ImportError:
     class ModelRepositoryInterface:
         """Fallback model repository interface."""
         def __init__(self, *args, **kwargs):
+            """Initialize the abstract model repository interface."""
             pass
 
     class LocalFileRepository:
         """Fallback local file repository."""
         def __init__(self, *args, **kwargs):
+            """Initialize the local file repository for model storage."""
             pass
 
 

@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Intellicrack Core Engine
 
 Main integration engine that orchestrates all components of the Intellicrack framework.
-Provides unified workflow management, plugin coordination, and real-time analysis 
+Provides unified workflow management, plugin coordination, and real-time analysis
 orchestration for binary analysis and license bypass operations.
 
 Author: Intellicrack Framework

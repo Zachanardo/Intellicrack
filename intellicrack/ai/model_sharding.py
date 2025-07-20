@@ -118,7 +118,7 @@ class ModelShardingManager:
                             props = torch.xpu.get_device_properties(i)
                             if hasattr(props, 'total_memory'):
                                 self.device_properties[i]["total_memory"] = props.total_memory
-                        except:
+                        except (AttributeError, RuntimeError):
                             pass
 
             logger.info(f"Initialized sharding manager with {self.device_count} {self.gpu_type} devices")
@@ -634,7 +634,7 @@ class ModelShardingManager:
 
         # Count modules per device
         device_counts = {}
-        for module, device in device_map.items():
+        for _module, device in device_map.items():
             if isinstance(device, int):
                 device_counts[device] = device_counts.get(device, 0) + 1
 

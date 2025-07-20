@@ -1129,7 +1129,7 @@ class CacheManager:
         try:
             conn = sqlite3.connect(':memory:')  # In-memory database for this example
             cursor = conn.cursor()
-            cursor.execute('''CREATE TABLE IF NOT EXISTS cache 
+            cursor.execute('''CREATE TABLE IF NOT EXISTS cache
                              (key TEXT PRIMARY KEY, data TEXT, timestamp REAL)''')
             cursor.execute('INSERT OR REPLACE INTO cache VALUES (?, ?, ?)',
                           (cache_key, encoded_data, time.time()))
@@ -1248,7 +1248,7 @@ class CacheManager:
                 expired_keys = []
 
                 with self.cache_lock:
-                    for key, (response, timestamp) in self.cache.items():
+                    for key, (_response, timestamp) in self.cache.items():
                         if current_time - timestamp >= self.config.cache_ttl:
                             expired_keys.append(key)
 
@@ -1431,11 +1431,11 @@ class CloudLicenseInterceptor:
 
     def __init__(self, config: InterceptorConfig = None):
         """Initialize the cloud license interceptor.
-        
+
         Sets up the comprehensive cloud license interception and bypass system.
         Configures certificate management, request classification, authentication
         handling, response modification, and local license server components.
-        
+
         Args:
             config: Interceptor configuration. Uses default if None.
         """

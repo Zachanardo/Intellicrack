@@ -57,7 +57,7 @@ class MultiFormatBinaryAnalyzer:
 
     def __init__(self):
         """Initialize the multi-format binary analyzer.
-        
+
         Sets up the multi-format binary analyzer with support for PE, ELF,
         Mach-O, DEX, APK, JAR, MSI, and COM files. Initializes format detection
         capabilities and available analysis backends for comprehensive binary
@@ -1083,10 +1083,10 @@ class MultiFormatBinaryAnalyzer:
     def analyze(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
         """
         Analyze a binary file and extract structure information.
-        
+
         Args:
             binary_path: Path to the binary file
-            
+
         Returns:
             Dictionary containing structure analysis results
         """

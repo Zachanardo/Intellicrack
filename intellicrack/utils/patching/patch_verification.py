@@ -150,33 +150,33 @@ def verify_patches(app: Any, patched_path: str, instructions: List[Dict[str, Any
         return [f"Error during patch verification: {e}"]
 
 
-def simulate_patch_and_verify(binary_path: str, patches: List[Dict[str, Any]]) -> List[str]:
+def test_patch_and_verify(binary_path: str, patches: List[Dict[str, Any]]) -> List[str]:
     """
-    Simulate patch application and verify results.
+    Test patch application in isolated environment and verify results.
 
-    Creates a temporary copy of the binary, applies patches, and verifies
-    the resulting file integrity.
+    Creates a temporary copy of the binary, applies patches, and performs
+    comprehensive verification including sandbox testing.
 
     Args:
         binary_path: Path to the original binary
         patches: List of patch instructions
 
     Returns:
-        List[str]: Simulation results messages
+        List[str]: Test results messages
     """
-    results = [f"Simulating {len(patches)} patches on {binary_path}..."]
+    results = [f"Testing {len(patches)} patches on {binary_path}..."]
 
     if not pefile:
-        results.append("Error: pefile module not available for patch simulation")
+        results.append("Error: pefile module not available for patch testing")
         return results
 
     try:
-        # Create a temporary copy of the binary to simulate patching
-        temp_dir = tempfile.mkdtemp(prefix="intellicrack_sim_")
+        # Create a temporary directory for isolated testing
+        temp_dir = tempfile.mkdtemp(prefix="intellicrack_test_")
         temp_path = os.path.join(temp_dir, os.path.basename(binary_path))
         shutil.copy2(binary_path, temp_path)
 
-        results.append(f"Created temporary copy at {temp_path}")
+        results.append(f"Created test environment at {temp_dir}")
 
         # Apply patches to the temporary copy
         pe = pefile.PE(temp_path)
@@ -880,7 +880,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
 # Export all patch verification functions
 __all__ = [
     'verify_patches',
-    'simulate_patch_and_verify',
+    'test_patch_and_verify',
     'apply_parsed_patch_instructions_with_validation',
     'rewrite_license_functions_with_parsing'
 ]

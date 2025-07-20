@@ -36,7 +36,7 @@ class BinaryAnalyzer:
 
     def __init__(self):
         """Initialize the binary analyzer.
-        
+
         Sets up the core binary analysis engine with support for multiple
         executable formats including PE, ELF, Mach-O, DEX, and archives.
         Initializes format detection capabilities and analysis components.
@@ -63,10 +63,10 @@ class BinaryAnalyzer:
     def analyze(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
         """
         Perform comprehensive binary analysis.
-        
+
         Args:
             binary_path: Path to the binary file
-            
+
         Returns:
             Analysis results dictionary
         """
@@ -161,7 +161,7 @@ class BinaryAnalyzer:
                         return 'XML'
                     elif text.startswith(('{', '[')):
                         return 'JSON'
-            except:
+            except (UnicodeDecodeError, AttributeError):
                 pass
 
             return 'Unknown'
@@ -367,7 +367,7 @@ class BinaryAnalyzer:
             })
 
             # Parse load commands (limit to prevent excessive parsing)
-            for i in range(min(ncmds, 50)):
+            for _i in range(min(ncmds, 50)):
                 if offset + 8 > len(data):
                     break
 
@@ -442,7 +442,7 @@ class BinaryAnalyzer:
                                 if pos + length <= len(data):
                                     string = data[pos:pos+length].decode('utf-8', errors='ignore')
                                     dex_info['strings'].append(string)
-                    except:
+                    except (UnicodeDecodeError, IndexError, struct.error):
                         continue
 
             return dex_info
@@ -474,7 +474,7 @@ class BinaryAnalyzer:
                     archive_info['type'] = 'JAR'
 
                 # Analyze files (limit to first 20)
-                for i, file_info in enumerate(zf.filelist[:20]):
+                for _i, file_info in enumerate(zf.filelist[:20]):
                     archive_info['files'].append({
                         'filename': file_info.filename,
                         'compressed_size': file_info.compress_size,

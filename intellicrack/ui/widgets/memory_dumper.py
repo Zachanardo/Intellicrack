@@ -24,6 +24,7 @@ class MemoryDumperWidget(QWidget):
     """Widget for dumping and analyzing process memory."""
 
     def __init__(self, parent=None):
+        """Initialize memory dumper widget with parent widget and process tracking components."""
         super().__init__(parent)
         self.current_process = None
         self.dump_thread = None
@@ -508,6 +509,7 @@ class MemoryDumpThread(QThread):
     log = pyqtSignal(str)
 
     def __init__(self, pid, rows, table, output_dir, options):
+        """Initialize memory dump thread with process ID, table data, output directory, and dump options."""
         super().__init__()
         self.pid = pid
         self.rows = rows

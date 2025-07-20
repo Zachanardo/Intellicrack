@@ -23,7 +23,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import os
 import re
-from typing import Optional
 
 # Import common PyQt5 components
 from .common_imports import (
@@ -242,31 +241,35 @@ class TextEditorDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setMinimumSize(800, 600)
-        
+
         # Editor state
         self.current_file = None
         self.is_modified = False
         self.syntax_mode = syntax
         self.find_replace_dialog = None
-        
+
+        # File watcher for external changes
+        self.file_watcher = QFileSystemWatcher()
+        self.file_watcher.fileChanged.connect(self.on_file_changed_externally)
+
         # Setup UI
         self.setup_ui()
         self.setup_connections()
         self.setup_shortcuts()
-        
+
         # Set content and syntax highlighting
         self.set_content(content)
         self.set_syntax_highlighting(syntax)
-        
+
         # Configure editor
         self.configure_editor()
-        
+
         # Load settings
         self.load_settings()
-        
+
         # Track modifications
         self.text_edit.textChanged.connect(self.on_text_changed)
-        
+
         logger.info(f"Text Editor Dialog initialized with syntax: {syntax}")
 
     def setup_ui(self):
@@ -317,6 +320,16 @@ class TextEditorDialog(QDialog):
 
         main_layout.addLayout(button_layout)
         self.setLayout(main_layout)
+
+    def setup_connections(self):
+        """Set up signal connections."""
+        # Connect text editor signals
+        self.text_edit.textChanged.connect(self.on_content_changed)
+        self.text_edit.cursorPositionChanged.connect(self.update_cursor_position)
+
+        # Connect action signals (already connected in setup_actions)
+        # File watcher is already connected in __init__
+        pass
 
     def setup_actions(self):
         """Set up keyboard shortcuts and actions."""
@@ -737,7 +750,7 @@ class TextEditorDialog(QDialog):
     def _export_to_pdf(self, file_path, content, include_highlighting, include_line_numbers):
         """Export content to PDF format."""
         try:
-            from PyQt6.QtGui import QTextCursor, QTextDocument
+            from PyQt6.QtGui import QTextDocument
             from PyQt6.QtPrintSupport import QPrinter
 
             printer = QPrinter(QPrinter.PrinterMode.HighResolution)

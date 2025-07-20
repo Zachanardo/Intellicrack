@@ -122,11 +122,11 @@ def run_network_license_server(app_instance=None, **kwargs) -> Dict[str, Any]:
 def run_ssl_tls_interceptor(app_instance=None, **kwargs) -> Dict[str, Any]:
     """
     Run the SSL/TLS interceptor for network traffic analysis.
-    
+
     Args:
         app_instance: Application instance for output updates
         **kwargs: Configuration options including 'target_host', 'target_port', 'certificate_path'
-        
+
     Returns:
         Dict containing status, message and interceptor configuration
     """
@@ -189,11 +189,11 @@ def run_ssl_tls_interceptor(app_instance=None, **kwargs) -> Dict[str, Any]:
 def run_protocol_fingerprinter(app_instance=None, **kwargs) -> Dict[str, Any]:
     """
     Run the protocol fingerprinter for network traffic analysis.
-    
+
     Args:
         app_instance: Application instance for output updates
         **kwargs: Configuration options including 'traffic_data', 'interface', 'timeout'
-        
+
     Returns:
         Dict containing status, message and fingerprinting results
     """
@@ -340,12 +340,12 @@ def run_cloud_license_hooker(app_instance=None, **kwargs) -> Dict[str, Any]:
 def run_cfg_explorer(app_instance=None, binary_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
     """
     Run the control flow graph explorer for binary analysis.
-    
+
     Args:
         app_instance: Application instance for output updates
         binary_path: Path to binary file to analyze
         **kwargs: Additional configuration options
-        
+
     Returns:
         Dict containing status, message and CFG analysis data
     """
@@ -377,12 +377,12 @@ def run_cfg_explorer(app_instance=None, binary_path: Optional[str] = None, **kwa
 def run_concolic_execution(app_instance=None, binary_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
     """
     Run concolic execution analysis on binary.
-    
+
     Args:
         app_instance: Application instance for output updates
         binary_path: Path to binary file to analyze
         **kwargs: Additional configuration options
-        
+
     Returns:
         Dict containing status, message and execution analysis results
     """
@@ -2475,13 +2475,13 @@ def run_frida_script(app_instance=None, binary_path: Optional[str] = None,
                     script_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
     """
     Run a Frida script on a binary or process.
-    
+
     Args:
         app_instance: Application instance for output updates
         binary_path: Path to binary file to analyze
         script_path: Path to Frida script file
         **kwargs: Additional arguments including 'target', 'spawn', 'script'
-        
+
     Returns:
         Dict containing status, message and execution results
     """

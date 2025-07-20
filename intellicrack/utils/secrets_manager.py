@@ -409,11 +409,11 @@ class SecretsManager:
 
     def generate_key_from_password(self, password: str, salt: Optional[bytes] = None) -> bytes:
         """Generate a key from password using PBKDF2HMAC and hashes.
-        
+
         Args:
             password: The password to derive key from
             salt: Optional salt bytes (random salt generated if None)
-            
+
         Returns:
             Derived key bytes
         """
@@ -436,7 +436,7 @@ class SecretsManager:
 
     def find_env_file_location(self) -> Optional[str]:
         """Find .env file location using find_dotenv.
-        
+
         Returns:
             Path to .env file or None if not found
         """
@@ -459,12 +459,12 @@ class SecretsManager:
 
     def verify_password_hash(self, password: str, stored_hash: bytes, salt: bytes) -> bool:
         """Verify password against stored hash using hashes.
-        
+
         Args:
             password: Password to verify
             stored_hash: Stored hash bytes
             salt: Salt used for hashing
-            
+
         Returns:
             True if password matches, False otherwise
         """

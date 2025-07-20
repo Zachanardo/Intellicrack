@@ -1,7 +1,7 @@
 """
 String Extraction Widget for Protection Analysis
 
-Provides string extraction and analysis capabilities integrated with 
+Provides string extraction and analysis capabilities integrated with
 the Intellicrack Protection Engine. Helps identify hardcoded values,
 license keys, and other important strings.
 
@@ -50,6 +50,7 @@ class StringExtractionThread(QThread):
 
     def __init__(self, file_path: str, min_length: int = 4,
                  extract_unicode: bool = True, extract_ascii: bool = True):
+        """Initialize string extraction thread with file path and extraction parameters."""
         super().__init__()
         self.file_path = file_path
         self.min_length = min_length
@@ -59,14 +60,14 @@ class StringExtractionThread(QThread):
 
     def run(self):
         """Extract readable strings from binary file in background thread.
-        
+
         Reads the binary file and extracts both ASCII and Unicode strings
         based on the configured settings. Filters strings by minimum length
         and emits progress updates during extraction.
-        
+
         The extraction process handles large files efficiently and categorizes
         strings by their encoding type (ASCII, UTF-16LE, UTF-16BE).
-        
+
         Emits:
             status_update: Progress messages during extraction
             strings_extracted: List of tuples (offset, string, encoding)
@@ -142,6 +143,7 @@ class StringExtractionWidget(QWidget):
     strings_exported = pyqtSignal(str)  # export path
 
     def __init__(self, parent=None):
+        """Initialize string extraction widget with empty state and UI setup."""
         super().__init__(parent)
         self.file_path: Optional[str] = None
         self.all_strings: List[Tuple[int, str, str]] = []  # offset, string, encoding

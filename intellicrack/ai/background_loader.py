@@ -55,7 +55,7 @@ class QueuedProgressCallback(ProgressCallback):
 
     def __init__(self):
         """Initialize the queue-based progress callback.
-        
+
         Sets up queues for progress updates and completion notifications
         for thread-safe communication with GUI components.
         """
@@ -102,7 +102,7 @@ class LoadingTask:
                  priority: int = 0,
                  callback: Optional[ProgressCallback] = None):
         """Initialize a model loading task.
-        
+
         Args:
             model_id: Unique identifier for the model
             backend_class: Backend class to instantiate for this model
@@ -179,7 +179,7 @@ class BackgroundModelLoader:
 
     def __init__(self, max_concurrent_loads: int = 2):
         """Initialize the background model loader.
-        
+
         Args:
             max_concurrent_loads: Maximum number of models to load simultaneously
         """
@@ -410,7 +410,7 @@ class IntegratedBackgroundLoader:
 
     def __init__(self, llm_manager, max_concurrent_loads: int = 2):
         """Initialize the integrated background loader.
-        
+
         Args:
             llm_manager: LLM manager instance for model registration
             max_concurrent_loads: Maximum number of concurrent model loads

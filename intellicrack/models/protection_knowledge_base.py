@@ -87,6 +87,7 @@ class ProtectionKnowledgeBase:
     """Knowledge base for software protection schemes"""
 
     def __init__(self):
+        """Initialize the protection knowledge base with schemes, strategies, and workflows."""
         self.protection_schemes = self._initialize_protection_schemes()
         self.bypass_strategies = self._initialize_bypass_strategies()
         self.analysis_workflows = self._initialize_analysis_workflows()

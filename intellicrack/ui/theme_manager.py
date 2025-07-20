@@ -13,8 +13,23 @@ class ThemeManager:
     """Manages application themes and dynamic stylesheet switching"""
 
     def __init__(self):
-    """Initialize theme manager with default themes and UI styling options."""
-    self.themes = {
+        """Initialize theme manager with default themes and UI styling options."""
+        self.themes = {
+            "dark": "dark_theme.qss",
+            "light": "light_theme.qss"
+        }
+
+        # Directory for theme files
+        self.styles_dir = os.path.join(os.path.dirname(__file__), "styles")
+
+        # Settings for persistence
+        self.settings = QSettings("Intellicrack", "ThemeManager")
+
+        # Initialize with saved or default theme
+        self.current_theme = self.load_theme_preference()
+
+        # Apply the initial theme
+        self._apply_theme()
 
     def get_current_theme(self):
         """Get the currently active theme name"""
@@ -31,7 +46,7 @@ class ThemeManager:
     def set_theme(self, theme_name):
         """
         Set the application theme
-        
+
         Args:
             theme_name: Name of the theme ("dark" or "light")
         """

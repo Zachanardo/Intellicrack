@@ -1,7 +1,7 @@
 """
 Script Generation Handler
 
-Manages the generation of bypass scripts (Frida/Ghidra) based on 
+Manages the generation of bypass scripts (Frida/Ghidra) based on
 detected protections using the ProtectionAwareScriptGenerator.
 
 Copyright (C) 2025 Zachary Flint
@@ -39,10 +39,10 @@ except ImportError:
 
     def get_logger(name):
         """Create a logger instance with the given name.
-        
+
         Args:
             name: The name for the logger instance
-            
+
         Returns:
             A logging.Logger instance
         """
@@ -64,7 +64,7 @@ class ScriptGenerationWorker(QRunnable):
 
     def __init__(self, file_path: str, script_type: str, protections: list):
         """Initialize the script generation worker.
-        
+
         Args:
             file_path: Path to the file being analyzed.
             script_type: Type of script to generate (e.g., 'frida', 'ghidra').
@@ -112,7 +112,7 @@ class ScriptDisplayDialog(QDialog):
 
     def __init__(self, script_data: dict, parent=None):
         """Initialize the script display dialog.
-        
+
         Args:
             script_data: Dictionary containing the generated script data and metadata.
             parent: Optional parent widget for Qt integration.
@@ -323,7 +323,7 @@ class ScriptGenerationHandler(QObject):
 
     def __init__(self, parent=None):
         """Initialize the script generation handler.
-        
+
         Args:
             parent: Optional parent widget for Qt integration.
         """

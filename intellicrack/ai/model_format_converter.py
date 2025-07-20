@@ -204,8 +204,8 @@ class ModelFormatConverter:
                 initial_allocated = memory_allocated()
                 initial_reserved = memory_reserved()
                 logger.info(f"GPU memory before conversion - Allocated: {initial_allocated / (1024**2):.1f}MB, Reserved: {initial_reserved / (1024**2):.1f}MB")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Unable to get GPU memory stats: {e}")
 
         # Perform conversion
         converter_method = f"_convert_{source_format}_to_{target_format}"
@@ -218,8 +218,8 @@ class ModelFormatConverter:
                     try:
                         empty_cache()
                         logger.debug("Cleared GPU cache after conversion")
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"Failed to clear GPU cache: {e}")
 
                 # Log final GPU memory if available
                 if GPU_AUTOLOADER_AVAILABLE and memory_allocated and memory_reserved:
@@ -227,8 +227,8 @@ class ModelFormatConverter:
                         final_allocated = memory_allocated()
                         final_reserved = memory_reserved()
                         logger.info(f"GPU memory after conversion - Allocated: {final_allocated / (1024**2):.1f}MB, Reserved: {final_reserved / (1024**2):.1f}MB")
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"Unable to get final GPU memory stats: {e}")
 
                 return result
             except Exception as e:
@@ -830,11 +830,11 @@ class ModelFormatConverter:
 
     def load_model_for_conversion(self, model_path: Union[str, Path], model_type: str = "auto") -> Optional[Any]:
         """Load a model using appropriate AutoModel class based on type.
-        
+
         Args:
             model_path: Path to model
             model_type: Type of model (auto, base, causal_lm, seq2seq, classification, etc.)
-            
+
         Returns:
             Loaded model or None
         """
@@ -877,10 +877,10 @@ class ModelFormatConverter:
 
     def analyze_model_architecture(self, model_path: Union[str, Path]) -> Optional[Dict[str, Any]]:
         """Analyze model architecture using AutoModel to determine conversion requirements.
-        
+
         Args:
             model_path: Path to model
-            
+
         Returns:
             Dictionary with architecture details or None
         """
@@ -930,13 +930,13 @@ class ModelFormatConverter:
 
     def convert_model_with_automodel(self, source_path: Union[str, Path], target_format: str, model_type: str = "auto", **kwargs) -> Optional[Path]:
         """Convert a model using AutoModel for flexible model loading.
-        
+
         Args:
             source_path: Path to source model
             target_format: Target format
             model_type: Type of model for loading
             **kwargs: Additional conversion parameters
-            
+
         Returns:
             Path to converted model or None
         """

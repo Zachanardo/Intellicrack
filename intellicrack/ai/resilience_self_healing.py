@@ -19,7 +19,10 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import hashlib
+import hmac
 import logging
+import os
 import pickle
 import threading
 import time
@@ -46,10 +49,6 @@ except ImportError as e:
     PSUTIL_AVAILABLE = False
 
 
-import hashlib
-import hmac
-import os
-
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
 
@@ -66,8 +65,34 @@ def secure_pickle_dump(obj, file_path):
         f.write(mac)
         f.write(data)
 
+class RestrictedUnpickler(pickle.Unpickler):
+    """Restricted unpickler that only allows safe classes."""
+
+    def find_class(self, module, name):
+        """Override find_class to restrict allowed classes."""
+        # Allow only safe modules and classes
+        ALLOWED_MODULES = {
+            'numpy', 'numpy.core.multiarray', 'numpy.core.numeric',
+            'pandas', 'pandas.core.frame', 'pandas.core.series',
+            'sklearn', 'torch', 'tensorflow',
+            '__builtin__', 'builtins',
+            'collections', 'collections.abc',
+            'datetime'
+        }
+
+        # Allow classes from our own modules
+        if module.startswith('intellicrack.'):
+            return super().find_class(module, name)
+
+        # Check if module is in allowed list
+        if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
+            return super().find_class(module, name)
+
+        # Deny everything else
+        raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
+
 def secure_pickle_load(file_path):
-    """Securely load object with integrity verification."""
+    """Securely load object with integrity verification and restricted unpickling."""
     with open(file_path, 'rb') as f:
         # Read MAC
         stored_mac = f.read(32)  # SHA256 produces 32 bytes
@@ -78,8 +103,17 @@ def secure_pickle_load(file_path):
     if not hmac.compare_digest(stored_mac, expected_mac):
         raise ValueError("Pickle file integrity check failed - possible tampering detected")
 
-    # Load object
-    return pickle.loads(data)
+    # Load object with restricted unpickler
+    try:
+        # Try using joblib first (safer for ML models)
+        import io
+
+        import joblib
+        return joblib.load(io.BytesIO(data))
+    except ImportError:
+        # Fallback to restricted pickle unpickler
+        import io
+        return RestrictedUnpickler(io.BytesIO(data)).load()  # noqa: S301
 
 class FailureType(Enum):
     """Types of system failures."""
@@ -165,7 +199,7 @@ class HealthMonitor:
 
     def __init__(self):
         """Initialize the health monitoring system.
-        
+
         Sets up health checks, component status tracking, failure history,
         and configurable thresholds for CPU usage, memory usage, error rate,
         response time, and success rate. Starts automated monitoring thread.
@@ -533,7 +567,7 @@ class RecoverySystem:
 
     def __init__(self, health_monitor: HealthMonitor):
         """Initialize the recovery system for self-healing.
-        
+
         Args:
             health_monitor: Health monitor instance for bidirectional
                 communication and failure detection.
@@ -971,7 +1005,7 @@ class StateManager:
 
     def __init__(self):
         """Initialize the state management system.
-        
+
         Sets up state persistence with history tracking, checkpoint
         intervals, and file-based state storage. Automatically starts
         the state persistence thread for periodic checkpointing.
@@ -1034,7 +1068,7 @@ class StateManager:
                     "health_score": metrics.get("system_health", {}).get("score", 100),
                     "operation_count": len(metrics.get("operation_summary", {}))
                 }
-            except:
+            except (KeyError, TypeError, AttributeError):
                 performance_metrics = {}
 
             # Determine health status
@@ -1147,7 +1181,7 @@ class ResilienceSelfHealingSystem:
 
     def __init__(self):
         """Initialize the resilience and self-healing system.
-        
+
         Provides comprehensive system resilience through health monitoring,
         automated recovery, and state management to ensure system stability
         and continuous operation.

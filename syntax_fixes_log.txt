@@ -1,0 +1,12 @@
+Fixed syntax errors in pattern_evolution_tracker.py:
+- Removed all noqa comments that were breaking syntax
+- Fixed random.choice(patterns_pool)) to random.choice(patterns_pool)
+- Fixed random.choice(list(MutationType))) to random.choice(list(MutationType))
+
+Fixed major syntax errors in vulnerability_research_dialog.py:
+- Fixed class BinaryDiffer indentation and all methods
+- Fixed compare_binaries method and all sub-methods
+- Fixed _ssdeep_compare, _tlsh_compare, _sdhash_compare methods
+- Fixed _imphash_compare, _fallback_compare methods
+- Fixed _calculate_entropy and _find_exploitable_diffs methods
+- Fixed class FuzzingEngine indentation and __init__ method

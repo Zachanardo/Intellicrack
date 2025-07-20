@@ -16,19 +16,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Process Hollowing
-
-Implements process hollowing technique for stealthy execution
-and evasion of process-based detection.
-"""
-
 import ctypes
 import logging
 import struct
 from typing import Any, Dict, Optional, Tuple
 
 from ...utils.system.windows_common import WindowsConstants
+
+"""
+Process Hollowing
+
+Implements process hollowing technique for stealthy execution
+and evasion of process-based detection.
+"""
 
 logger = logging.getLogger(__name__)
 

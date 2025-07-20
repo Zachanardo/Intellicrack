@@ -153,7 +153,7 @@ class R2PerformanceOptimizer:
 
     def __init__(self, strategy: OptimizationStrategy = OptimizationStrategy.BALANCED):
         """Initialize the Radare2 performance optimizer.
-        
+
         Args:
             strategy: The optimization strategy to use for resource management.
         """

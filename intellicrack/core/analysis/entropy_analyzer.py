@@ -40,10 +40,10 @@ class EntropyAnalyzer:
     def calculate_entropy(self, data: bytes) -> float:
         """
         Calculate Shannon entropy of binary data.
-        
+
         Args:
             data: Binary data to analyze
-            
+
         Returns:
             Entropy value (0.0 to 8.0)
         """
@@ -67,10 +67,10 @@ class EntropyAnalyzer:
     def analyze_entropy(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
         """
         Analyze entropy characteristics of a binary file.
-        
+
         Args:
             binary_path: Path to the binary file
-            
+
         Returns:
             Entropy analysis results
         """

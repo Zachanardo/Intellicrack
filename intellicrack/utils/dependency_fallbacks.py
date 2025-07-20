@@ -192,11 +192,11 @@ def create_numpy_fallback():
                 """Generate random uniform distribution [0, 1)."""
                 import random
                 if len(shape) == 0:
-                    return random.random()
+                    return random.random()  # noqa: S311
                 elif len(shape) == 1:
-                    return [random.random() for _ in range(shape[0])]
+                    return [random.random() for _ in range(shape[0])]  # noqa: S311
                 elif len(shape) == 2:
-                    return [[random.random() for _ in range(shape[1])] for _ in range(shape[0])]
+                    return [[random.random() for _ in range(shape[1])] for _ in range(shape[0])]  # noqa: S311
                 else:
                     raise ValueError("Too many dimensions for fallback rand")
 
@@ -205,9 +205,9 @@ def create_numpy_fallback():
                 """Generate random integers."""
                 import random
                 if size is None:
-                    return random.randint(low, high - 1)
+                    return random.randint(low, high - 1)  # noqa: S311
                 elif isinstance(size, int):
-                    return [random.randint(low, high - 1) for _ in range(size)]
+                    return [random.randint(low, high - 1) for _ in range(size)]  # noqa: S311
                 else:
                     raise ValueError("Complex sizes not supported in fallback")
 
@@ -216,9 +216,9 @@ def create_numpy_fallback():
                 """Generate uniform random values."""
                 import random
                 if size is None:
-                    return random.uniform(low, high)
+                    return random.uniform(low, high)  # noqa: S311
                 elif isinstance(size, int):
-                    return [random.uniform(low, high) for _ in range(size)]
+                    return [random.uniform(low, high) for _ in range(size)]  # noqa: S311
                 else:
                     raise ValueError("Complex sizes not supported in fallback")
 
@@ -240,23 +240,23 @@ def create_numpy_fallback():
                 if p is not None:
                     # Weighted choice
                     if size is None:
-                        return random.choices(a, weights=p, k=1)[0]
+                        return random.choices(a, weights=p, k=1)[0]  # noqa: S311
                     else:
-                        return random.choices(a, weights=p, k=size)
+                        return random.choices(a, weights=p, k=size)  # noqa: S311
                 else:
                     if size is None:
-                        return random.choice(a)
+                        return random.choice(a)  # noqa: S311
                     else:
-                        return [random.choice(a) for _ in range(size)]
+                        return [random.choice(a) for _ in range(size)]  # noqa: S311
 
             @staticmethod
             def random(size=None):
                 """Generate random floats [0, 1)."""
                 import random
                 if size is None:
-                    return random.random()
+                    return random.random()  # noqa: S311
                 elif isinstance(size, int):
-                    return [random.random() for _ in range(size)]
+                    return [random.random() for _ in range(size)]  # noqa: S311
                 else:
                     raise ValueError("Complex sizes not supported in fallback")
 
@@ -388,6 +388,7 @@ class SafeModuleReplacer:
     """Replaces problematic modules with safe fallbacks."""
 
     def __init__(self):
+        """Initialize safe module replacer with empty tracking state."""
         self.original_modules = {}
         self.replaced_modules = set()
 

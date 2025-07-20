@@ -38,7 +38,7 @@ def read_file_with_ai_tools(
 ) -> Tuple[Optional[Union[str, bytes]], bool]:
     """
     Read a file using AIFileTools with fallback to direct file reading.
-    
+
     Args:
         file_path: Path to the file to read
         purpose: Purpose of reading the file (for AIFileTools approval dialog)
@@ -46,7 +46,7 @@ def read_file_with_ai_tools(
         mode: 'text' or 'binary' reading mode
         encoding: Encoding for text mode (default: utf-8)
         max_bytes: Maximum bytes to read (for binary mode)
-    
+
     Returns:
         Tuple of (content, used_ai_tools) where:
         - content: File content as string (text mode) or bytes (binary mode), or None if failed
@@ -119,13 +119,13 @@ def read_binary_header(
 ) -> Optional[bytes]:
     """
     Read the header of a binary file.
-    
+
     Args:
         file_path: Path to the binary file
         header_size: Number of bytes to read from the beginning
         purpose: Purpose for AIFileTools
         app_instance: Application instance
-    
+
     Returns:
         Binary header as bytes, or None if failed
     """
@@ -147,13 +147,13 @@ def read_text_file(
 ) -> Optional[str]:
     """
     Read a text file with encoding support.
-    
+
     Args:
         file_path: Path to the text file
         purpose: Purpose for AIFileTools
         app_instance: Application instance
         encoding: Text encoding
-    
+
     Returns:
         File content as string, or None if failed
     """
@@ -170,7 +170,7 @@ def read_text_file(
 class FileReadingMixin:
     """
     Mixin class to add AIFileTools integration to AI components.
-    
+
     Classes using this mixin should have an 'app_instance' attribute.
     """
 
@@ -184,14 +184,14 @@ class FileReadingMixin:
     ) -> Optional[Union[str, bytes]]:
         """
         Read a file using AIFileTools with fallback.
-        
+
         Args:
             file_path: Path to the file
             purpose: Purpose of reading
             mode: 'text' or 'binary'
             encoding: Text encoding
             max_bytes: Max bytes for binary mode
-        
+
         Returns:
             File content or None
         """

@@ -12,9 +12,7 @@ set QT_D3D_ADAPTER_INDEX=1
 set QT_QUICK_BACKEND=software
 set QT_QPA_PLATFORM=windows
 
-REM Use your existing UV environment
-call .venv_windows\Scripts\activate.bat
-
+REM Environment is auto-activated via .env file configuration
 echo Starting Intellicrack with Intel GPU support...
-python launch_intellicrack.py
+C:\Intellicrack\mamba_env\python.exe launch_intellicrack.py
 pause

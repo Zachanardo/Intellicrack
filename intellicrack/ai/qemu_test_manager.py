@@ -22,18 +22,38 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import os
 import shutil
+import socket
 import subprocess
 import tempfile
+import threading
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
+from collections import defaultdict
+from io import StringIO
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
+import paramiko
+from paramiko import AutoAddPolicy, RSAKey, SSHClient
+
+from ..core.logging.audit_logger import (
+    AuditEvent,
+    AuditEventType,
+    AuditSeverity,
+    get_audit_logger,
+    log_credential_access,
+    log_tool_execution,
+    log_vm_operation,
+)
+from ..core.resources.resource_manager import VMResource, get_resource_manager
 from ..utils.logger import get_logger
+from ..utils.secrets_manager import get_secret, set_secret
 from .autonomous_agent import ExecutionResult
 
 logger = get_logger(__name__)
+audit_logger = get_audit_logger()
+resource_manager = get_resource_manager()
 
 try:
     # Try to import existing QEMU emulator
@@ -74,7 +94,7 @@ class QEMUTestManager:
 
     def __init__(self):
         """Initialize the QEMU test manager.
-        
+
         Sets up QEMU snapshots, base images for Windows and Linux,
         and integrates with existing QEMU emulator if available.
         Creates a working directory for test operations.
@@ -89,6 +109,25 @@ class QEMUTestManager:
         self.working_dir = Path(tempfile.gettempdir()) / \
             "intellicrack_qemu_tests"
         self.working_dir.mkdir(exist_ok=True)
+
+        # SSH configuration
+        self.ssh_clients = {}  # vm_name -> SSHClient
+        self.ssh_keys = {}     # vm_name -> RSAKey
+        self.ssh_lock = threading.RLock()
+        self.ssh_timeout = 30
+        self.ssh_retry_count = 3
+        self.ssh_retry_delay = 2
+
+        # Initialize or load SSH keys
+        self._init_ssh_keys()
+
+        # SSH connection pool
+        self.ssh_connection_pool = {}  # (vm_name, port) -> SSHClient
+
+        # Circuit breaker for SSH connections
+        self.ssh_circuit_breaker = {}  # vm_name -> {'failures': int, 'last_failure': datetime, 'open': bool}
+        self.circuit_breaker_threshold = 5  # failures before opening circuit
+        self.circuit_breaker_timeout = 60  # seconds before trying again
 
         # Integration with existing QEMU emulator if available
         self.qemu_emulator = None
@@ -128,6 +167,50 @@ class QEMUTestManager:
                     f"Could not initialize existing QEMU emulator: {e}")
                 self.qemu_emulator = None
 
+    def _init_ssh_keys(self):
+        """Initialize or load SSH keys for VM access."""
+        try:
+            # Get or generate SSH key from secrets manager
+            ssh_private_key = get_secret('QEMU_SSH_PRIVATE_KEY')
+            ssh_public_key = get_secret('QEMU_SSH_PUBLIC_KEY')
+
+            if not ssh_private_key or not ssh_public_key:
+                logger.info("Generating new SSH key pair for QEMU VMs")
+
+                # Generate new RSA key
+                key = RSAKey.generate(2048)
+
+                # Save private key to string
+                private_key_str = StringIO()
+                key.write_private_key(private_key_str)
+                ssh_private_key = private_key_str.getvalue()
+
+                # Generate public key string
+                ssh_public_key = f"ssh-rsa {key.get_base64()} intellicrack@qemu"
+
+                # Store in secrets manager
+                set_secret('QEMU_SSH_PRIVATE_KEY', ssh_private_key)
+                set_secret('QEMU_SSH_PUBLIC_KEY', ssh_public_key)
+
+                # Log credential access
+                log_credential_access('SSH_KEY', 'QEMU VM access key generation', success=True)
+
+                logger.info("SSH key pair generated and stored securely")
+            else:
+                logger.info("Loaded existing SSH keys from secrets manager")
+                log_credential_access('SSH_KEY', 'QEMU VM access key retrieval', success=True)
+
+            # Parse the private key for use
+            self.master_ssh_key = RSAKey.from_private_key(StringIO(ssh_private_key))
+            self.ssh_public_key = ssh_public_key
+
+        except Exception as e:
+            logger.error(f"Failed to initialize SSH keys: {e}")
+            log_credential_access('SSH_KEY', 'QEMU VM access key initialization', success=False)
+            # Generate temporary key as fallback
+            self.master_ssh_key = RSAKey.generate(2048)
+            self.ssh_public_key = f"ssh-rsa {self.master_ssh_key.get_base64()} intellicrack@qemu"
+
     def _find_qemu_executable(self) -> str:
         """Find QEMU executable on the system."""
         possible_paths = [
@@ -144,6 +227,160 @@ class QEMUTestManager:
 
         logger.warning("QEMU not found in standard locations")
         return "qemu-system-x86_64"  # Default assumption
+
+    def _get_ssh_connection(self, snapshot: QEMUSnapshot, retries: Optional[int] = None) -> Optional[SSHClient]:
+        """Get or create SSH connection to VM with retry logic and circuit breaker."""
+        retries = retries or self.ssh_retry_count
+        pool_key = (snapshot.vm_name, snapshot.ssh_port)
+
+        with self.ssh_lock:
+            # Check circuit breaker
+            if self._is_circuit_open(snapshot.vm_name):
+                logger.warning(f"Circuit breaker open for {snapshot.vm_name}, skipping connection attempt")
+                return None
+            # Check if we have an active connection in the pool
+            if pool_key in self.ssh_connection_pool:
+                client = self.ssh_connection_pool[pool_key]
+                try:
+                    # Test if connection is still alive
+                    transport = client.get_transport()
+                    if transport and transport.is_active():
+                        return client
+                    else:
+                        # Connection is dead, remove from pool
+                        del self.ssh_connection_pool[pool_key]
+                        client.close()
+                except Exception:
+                    # Connection is invalid, remove from pool
+                    if pool_key in self.ssh_connection_pool:
+                        del self.ssh_connection_pool[pool_key]
+                    try:
+                        client.close()
+                    except:
+                        pass
+
+            # Create new connection with retries
+            for attempt in range(retries):
+                try:
+                    client = SSHClient()
+                    client.set_missing_host_key_policy(AutoAddPolicy())
+
+                    # Connect using our SSH key
+                    client.connect(
+                        hostname='localhost',
+                        port=snapshot.ssh_port,
+                        username='test',
+                        pkey=self.master_ssh_key,
+                        timeout=self.ssh_timeout,
+                        banner_timeout=self.ssh_timeout,
+                        auth_timeout=self.ssh_timeout
+                    )
+
+                    # Store in connection pool
+                    self.ssh_connection_pool[pool_key] = client
+
+                    # Reset circuit breaker on success
+                    self._reset_circuit_breaker(snapshot.vm_name)
+
+                    logger.info(f"SSH connection established to {snapshot.vm_name} on port {snapshot.ssh_port}")
+                    return client
+
+                except socket.timeout as e:
+                    logger.warning(f"SSH connection timeout (attempt {attempt + 1}/{retries}): {e}")
+                    self._record_connection_failure(snapshot.vm_name)
+                except paramiko.AuthenticationException as e:
+                    logger.error(f"SSH authentication failed for {snapshot.vm_name}: {e}")
+                    self._record_connection_failure(snapshot.vm_name)
+                    break  # No point retrying auth failures
+                except paramiko.SSHException as e:
+                    logger.warning(f"SSH connection error (attempt {attempt + 1}/{retries}): {e}")
+                    self._record_connection_failure(snapshot.vm_name)
+                except Exception as e:
+                    logger.error(f"Unexpected SSH connection error: {e}")
+                    self._record_connection_failure(snapshot.vm_name)
+
+                if attempt < retries - 1:
+                    time.sleep(self.ssh_retry_delay)
+
+            logger.error(f"Failed to establish SSH connection to {snapshot.vm_name} after {retries} attempts")
+            return None
+
+    def _inject_ssh_key(self, snapshot: QEMUSnapshot):
+        """Inject our SSH public key into the VM for password-less access."""
+        try:
+            # Create .ssh directory if it doesn't exist
+            self._execute_command_in_vm(snapshot, "mkdir -p ~/.ssh && chmod 700 ~/.ssh")
+
+            # Add our public key to authorized_keys
+            escaped_key = self.ssh_public_key.replace('"', '\\"')
+            append_cmd = f'echo "{escaped_key}" >> ~/.ssh/authorized_keys'
+            self._execute_command_in_vm(snapshot, append_cmd)
+
+            # Set proper permissions
+            self._execute_command_in_vm(snapshot, "chmod 600 ~/.ssh/authorized_keys")
+
+            logger.info(f"SSH key injected into VM {snapshot.vm_name}")
+        except Exception as e:
+            logger.warning(f"Failed to inject SSH key: {e}")
+
+    def _is_circuit_open(self, vm_name: str) -> bool:
+        """Check if circuit breaker is open for a VM."""
+        if vm_name not in self.ssh_circuit_breaker:
+            return False
+
+        breaker = self.ssh_circuit_breaker[vm_name]
+        if not breaker['open']:
+            return False
+
+        # Check if timeout has expired
+        time_since_failure = (datetime.now() - breaker['last_failure']).total_seconds()
+        if time_since_failure > self.circuit_breaker_timeout:
+            # Try to close circuit
+            breaker['open'] = False
+            breaker['failures'] = 0
+            logger.info(f"Circuit breaker closed for {vm_name} after timeout")
+            return False
+
+        return True
+
+    def _record_connection_failure(self, vm_name: str):
+        """Record a connection failure for circuit breaker."""
+        if vm_name not in self.ssh_circuit_breaker:
+            self.ssh_circuit_breaker[vm_name] = {
+                'failures': 0,
+                'last_failure': datetime.now(),
+                'open': False
+            }
+
+        breaker = self.ssh_circuit_breaker[vm_name]
+        breaker['failures'] += 1
+        breaker['last_failure'] = datetime.now()
+
+        if breaker['failures'] >= self.circuit_breaker_threshold:
+            breaker['open'] = True
+            logger.warning(f"Circuit breaker opened for {vm_name} after {breaker['failures']} failures")
+
+    def _reset_circuit_breaker(self, vm_name: str):
+        """Reset circuit breaker on successful connection."""
+        if vm_name in self.ssh_circuit_breaker:
+            self.ssh_circuit_breaker[vm_name] = {
+                'failures': 0,
+                'last_failure': datetime.now(),
+                'open': False
+            }
+
+    def _close_ssh_connection(self, snapshot: QEMUSnapshot):
+        """Close and remove SSH connection from pool."""
+        pool_key = (snapshot.vm_name, snapshot.ssh_port)
+
+        with self.ssh_lock:
+            if pool_key in self.ssh_connection_pool:
+                try:
+                    self.ssh_connection_pool[pool_key].close()
+                except Exception as e:
+                    logger.debug(f"Error closing SSH connection: {e}")
+                finally:
+                    del self.ssh_connection_pool[pool_key]
 
     def create_script_test_snapshot(self, binary_path: str, platform: str = "windows") -> str:
         """Create a QEMU snapshot specifically for script testing."""
@@ -194,7 +431,7 @@ class QEMUTestManager:
         return snapshot_id
 
     def _start_vm_for_snapshot(self, snapshot: QEMUSnapshot):
-        """Start QEMU VM for a specific snapshot."""
+        """Start QEMU VM for a specific snapshot with resource management."""
         logger.info(f"Starting VM for snapshot: {snapshot.snapshot_id}")
 
         # QEMU command for starting VM
@@ -212,6 +449,7 @@ class QEMUTestManager:
         ]
 
         try:
+            # Start the VM process
             process = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -221,8 +459,16 @@ class QEMUTestManager:
             # Check if process is still running
             if process.poll() is None or process.returncode == 0:
                 snapshot.vm_process = process
+
+                # Register VM with resource manager
+                vm_resource = VMResource(snapshot.vm_name, process)
+                resource_manager.register_resource(vm_resource)
+
                 logger.info(
                     f"VM started successfully for snapshot: {snapshot.snapshot_id}")
+
+                # Log VM operation
+                log_vm_operation('start', snapshot.vm_name, success=True)
 
                 # Wait for VM to be ready
                 self._wait_for_vm_ready(snapshot)
@@ -230,10 +476,12 @@ class QEMUTestManager:
                 stdout, stderr = process.communicate()
                 logger.debug(f"VM startup stdout: {stdout.decode()}")
                 logger.error(f"Failed to start VM: {stderr.decode()}")
+                log_vm_operation('start', snapshot.vm_name, success=False, error=stderr.decode())
                 raise RuntimeError(f"VM startup failed: {stderr.decode()}")
 
         except Exception as e:
             logger.error(f"Error starting VM: {e}")
+            log_vm_operation('start', snapshot.vm_name, success=False, error=str(e))
             raise
 
     def _wait_for_vm_ready(self, snapshot: QEMUSnapshot, timeout: int = 60):
@@ -242,29 +490,21 @@ class QEMUTestManager:
 
         start_time = time.time()
         while time.time() - start_time < timeout:
-            try:
-                # Try to connect via SSH to check if VM is ready
-                test_cmd = [
-                    "ssh", "-o", "ConnectTimeout=5",
-                    "-o", "StrictHostKeyChecking=no",
-                    "-p", str(snapshot.ssh_port),
-                    "test@localhost", "echo ready"
-                ]
+            # Try to establish SSH connection
+            ssh_client = self._get_ssh_connection(snapshot, retries=1)
+            if ssh_client:
+                try:
+                    # Test command execution
+                    result = self._execute_command_in_vm(snapshot, "echo ready", timeout=5)
+                    if result['exit_code'] == 0 and "ready" in result['stdout']:
+                        logger.info(f"VM is ready: {snapshot.snapshot_id}")
 
-                result = subprocess.run(
-                    test_cmd,
-                    capture_output=True,
-                    text=True,
-                    timeout=10
-                )
+                        # Inject SSH public key for future connections
+                        self._inject_ssh_key(snapshot)
 
-                if result.returncode == 0 and "ready" in result.stdout:
-                    logger.info(f"VM is ready: {snapshot.snapshot_id}")
-                    return True
-
-            except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
-                logger.error("Error in qemu_test_manager: %s", e)
-                pass
+                        return True
+                except Exception as e:
+                    logger.debug(f"VM not ready yet: {e}")
 
             time.sleep(2)
 
@@ -274,87 +514,100 @@ class QEMUTestManager:
 
     def _upload_file_to_vm(self, snapshot: QEMUSnapshot, content: str, remote_path: str):
         """Upload text content to VM as a file."""
-        # Create temporary file locally
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-            f.write(content)
-            local_path = f.name
+        # Get SSH connection
+        ssh_client = self._get_ssh_connection(snapshot)
+        if not ssh_client:
+            raise RuntimeError("Failed to establish SSH connection for file upload")
 
         try:
-            # Upload via SCP
-            scp_cmd = [
-                "scp", "-o", "StrictHostKeyChecking=no",
-                "-P", str(snapshot.ssh_port),
-                local_path, f"test@localhost:{remote_path}"
-            ]
+            # Create SFTP client
+            sftp = ssh_client.open_sftp()
 
-            result = subprocess.run(
-                scp_cmd,
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
+            # Ensure remote directory exists
+            remote_dir = os.path.dirname(remote_path)
+            if remote_dir and remote_dir != '/':
+                try:
+                    sftp.stat(remote_dir)
+                except FileNotFoundError:
+                    # Create directory recursively
+                    self._execute_command_in_vm(snapshot, f"mkdir -p {remote_dir}")
 
-            if result.returncode != 0:
-                raise RuntimeError(f"Failed to upload file: {result.stderr}")
+            # Write content directly to remote file
+            with sftp.file(remote_path, 'w') as remote_file:
+                remote_file.write(content)
 
+            sftp.close()
             logger.debug(f"Uploaded file to VM: {remote_path}")
 
-        finally:
-            # Cleanup local temp file
-            try:
-                os.unlink(local_path)
-            except Exception as e:
-                logger.debug(f"Could not cleanup temp file {local_path}: {e}")
+        except Exception as e:
+            logger.error(f"Failed to upload file via SFTP: {e}")
+            raise RuntimeError(f"Failed to upload file: {e}")
 
     def _upload_binary_to_vm(self, snapshot: QEMUSnapshot, local_binary: str, remote_path: str):
         """Upload binary file to VM."""
-        # Upload via SCP
-        scp_cmd = [
-            "scp", "-o", "StrictHostKeyChecking=no",
-            "-P", str(snapshot.ssh_port),
-            local_binary, f"test@localhost:{remote_path}"
-        ]
+        # Get SSH connection
+        ssh_client = self._get_ssh_connection(snapshot)
+        if not ssh_client:
+            raise RuntimeError("Failed to establish SSH connection for binary upload")
 
-        result = subprocess.run(
-            scp_cmd,
-            capture_output=True,
-            text=True,
-            timeout=60
-        )
+        try:
+            # Create SFTP client
+            sftp = ssh_client.open_sftp()
 
-        if result.returncode != 0:
-            raise RuntimeError(f"Failed to upload binary: {result.stderr}")
+            # Ensure remote directory exists
+            remote_dir = os.path.dirname(remote_path)
+            if remote_dir and remote_dir != '/':
+                try:
+                    sftp.stat(remote_dir)
+                except FileNotFoundError:
+                    # Create directory recursively
+                    self._execute_command_in_vm(snapshot, f"mkdir -p {remote_dir}")
 
-        # Make executable
-        chmod_cmd = f"chmod +x {remote_path}"
-        self._execute_command_in_vm(snapshot, chmod_cmd)
+            # Upload binary file
+            sftp.put(local_binary, remote_path)
 
-        logger.debug(f"Uploaded binary to VM: {remote_path}")
+            # Make executable
+            sftp.chmod(remote_path, 0o755)
+
+            sftp.close()
+            logger.debug(f"Uploaded binary to VM: {remote_path}")
+
+        except Exception as e:
+            logger.error(f"Failed to upload binary via SFTP: {e}")
+            raise RuntimeError(f"Failed to upload binary: {e}")
 
     def _execute_command_in_vm(self, snapshot: QEMUSnapshot, command: str, timeout: int = 30) -> Dict[str, Any]:
         """Execute a command in the VM via SSH."""
-        ssh_cmd = [
-            "ssh", "-o", "StrictHostKeyChecking=no",
-            "-o", "ConnectTimeout=10",
-            "-p", str(snapshot.ssh_port),
-            "test@localhost", command
-        ]
-
-        try:
-            result = subprocess.run(
-                ssh_cmd,
-                capture_output=True,
-                text=True,
-                timeout=timeout
-            )
-
+        # Get SSH connection
+        ssh_client = self._get_ssh_connection(snapshot)
+        if not ssh_client:
             return {
-                "exit_code": result.returncode,
-                "stdout": result.stdout,
-                "stderr": result.stderr
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": "Failed to establish SSH connection"
             }
 
-        except subprocess.TimeoutExpired:
+        try:
+            # Log the command execution
+            log_tool_execution("SSH_COMMAND", command, success=True)
+
+            # Execute command with timeout
+            stdin, stdout, stderr = ssh_client.exec_command(command, timeout=timeout)
+
+            # Get exit status
+            exit_code = stdout.channel.recv_exit_status()
+
+            # Read output
+            stdout_data = stdout.read().decode('utf-8', errors='replace')
+            stderr_data = stderr.read().decode('utf-8', errors='replace')
+
+            return {
+                "exit_code": exit_code,
+                "stdout": stdout_data,
+                "stderr": stderr_data
+            }
+
+        except socket.timeout:
             logger.warning(f"Command timed out after {timeout}s: {command}")
             return {
                 "exit_code": -1,
@@ -363,6 +616,7 @@ class QEMUTestManager:
             }
         except Exception as e:
             logger.error(f"Failed to execute command in VM: {e}")
+            log_tool_execution("SSH_COMMAND", command, success=False, error=str(e))
             return {
                 "exit_code": -1,
                 "stdout": "",
@@ -455,6 +709,8 @@ class QEMUTestManager:
         logger.info(f"Cleaning up snapshot: {snapshot_id}")
 
         try:
+            # Close SSH connections first
+            self._close_ssh_connection(snapshot)
             # Stop VM process if running
             if snapshot.vm_process:
                 try:
@@ -501,10 +757,20 @@ class QEMUTestManager:
             # Remove from tracking
             del self.snapshots[snapshot_id]
 
+            # Release from resource manager
+            try:
+                resource_manager.release_resource(snapshot.vm_name)
+            except Exception as e:
+                logger.debug(f"Could not release VM resource: {e}")
+
+            # Log VM operation
+            log_vm_operation('stop', snapshot.vm_name, success=True)
+
             logger.info(f"Snapshot cleanup complete: {snapshot_id}")
 
         except Exception as e:
             logger.error(f"Error during snapshot cleanup: {e}")
+            log_vm_operation('stop', snapshot.vm_name, success=False, error=str(e))
 
     def _stop_vm_for_snapshot(self, snapshot: QEMUSnapshot):
         """Stop VM for a specific snapshot."""
@@ -558,6 +824,16 @@ class QEMUTestManager:
     def __del__(self):
         """Cleanup on destruction."""
         try:
+            # Close all SSH connections first
+            with self.ssh_lock:
+                for client in self.ssh_connection_pool.values():
+                    try:
+                        client.close()
+                    except:
+                        pass
+                self.ssh_connection_pool.clear()
+
+            # Then cleanup snapshots
             self.cleanup_all_snapshots()
         except Exception as e:
             logger.debug(f"Error during destructor cleanup: {e}")
@@ -837,9 +1113,8 @@ fi
             runner_script.write_text(runner_content)
             runner_script.chmod(0o755)
 
-            # Execute script in VM via SSH (simulated)
-            # In a real implementation, this would use SSH or guest agent
-            result = self._execute_in_vm_simulated(snapshot, runner_content)
+            # Execute script in VM via SSH
+            result = self._execute_in_vm_real(snapshot, runner_content)
 
             runtime_ms = int((time.time() - start_time) * 1000)
 
@@ -914,7 +1189,7 @@ fi
             runner_script.chmod(0o755)
 
             # Execute script in VM
-            result = self._execute_in_vm_simulated(snapshot, runner_content)
+            result = self._execute_in_vm_real(snapshot, runner_content)
 
             runtime_ms = int((time.time() - start_time) * 1000)
 
@@ -937,54 +1212,47 @@ fi
                 runtime_ms=runtime_ms
             )
 
-    def _execute_in_vm_simulated(self, snapshot: QEMUSnapshot, script_content: str) -> Dict[str, Any]:
-        """Simulate script execution in VM."""
-        # For demonstration purposes, simulate execution
-        # Real implementation would use SSH, guest agent, or similar
+    def _execute_in_vm_real(self, snapshot: QEMUSnapshot, script_content: str) -> Dict[str, Any]:
+        """Execute script in VM using real SSH connection."""
+        logger.info(f"Executing script in VM {snapshot.vm_name} via SSH")
 
-        logger.info(f"Simulating script execution in VM {snapshot.vm_name}")
+        # Create temporary script file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(script_content)
+            local_script = f.name
 
-        # Simulate execution delay
-        time.sleep(2)
+        remote_script = "/tmp/test_script.sh"
 
-        # Analyze script content for simulated results
-        if "frida" in script_content.lower():
-            # Simulate Frida execution
-            if "Interceptor.attach" in script_content:
-                return {
-                    'exit_code': 0,
-                    'stdout': "Frida script executed successfully\nHooks installed\nTarget process monitored",
-                    'stderr': ""
-                }
-            else:
-                return {
-                    'exit_code': 1,
-                    'stdout': "Frida script failed",
-                    'stderr': "No valid hooks found in script"
-                }
+        try:
+            # Upload script to VM
+            self._upload_file_to_vm(snapshot, script_content, remote_script)
 
-        elif "ghidra" in script_content.lower() or "python" in script_content.lower():
-            # Simulate Ghidra execution
-            if "def run" in script_content and "GhidraScript" in script_content:
-                return {
-                    'exit_code': 0,
-                    'stdout': "Ghidra script executed successfully\nAnalysis complete\nPatches applied",
-                    'stderr': ""
-                }
-            else:
-                return {
-                    'exit_code': 1,
-                    'stdout': "Ghidra script failed",
-                    'stderr': "Invalid Ghidra script structure"
-                }
+            # Make script executable
+            chmod_result = self._execute_command_in_vm(snapshot, f"chmod +x {remote_script}")
+            if chmod_result['exit_code'] != 0:
+                logger.error(f"Failed to make script executable: {chmod_result['stderr']}")
 
-        else:
-            # Generic execution
+            # Execute script
+            exec_result = self._execute_command_in_vm(snapshot, f"bash {remote_script}", timeout=60)
+
+            # Clean up remote script
+            self._execute_command_in_vm(snapshot, f"rm -f {remote_script}")
+
+            return exec_result
+
+        except Exception as e:
+            logger.error(f"Failed to execute script in VM: {e}")
             return {
-                'exit_code': 0,
-                'stdout': "Script executed successfully",
-                'stderr': ""
+                'exit_code': -1,
+                'stdout': "",
+                'stderr': f"VM execution error: {str(e)}"
             }
+        finally:
+            # Clean up local temp file
+            try:
+                os.unlink(local_script)
+            except Exception:
+                pass
 
     def create_versioned_snapshot(self, parent_snapshot_id: str, binary_path: str) -> str:
         """Create a new snapshot version based on an existing snapshot."""
@@ -1006,14 +1274,34 @@ fi
         cmd = [
             "qemu-img", "create", "-f", "qcow2",
             "-b", parent_snapshot.disk_path,
+            "-F", "qcow2",  # Specify backing file format
             str(snapshot_disk)
         ]
 
         try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)
-            logger.info(f"Created versioned snapshot disk: {snapshot_disk}")
-        except subprocess.CalledProcessError as e:
+            # Use resource manager for temporary directory
+            with resource_manager.temp_directory(prefix=f"snapshot_{snapshot_id}_"):
+                # Execute qemu-img command
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                if result.returncode != 0:
+                    raise RuntimeError(f"qemu-img failed: {result.stderr}")
+
+                logger.info(f"Created versioned snapshot disk: {snapshot_disk}")
+
+                # Verify the snapshot was created correctly
+                info_cmd = ["qemu-img", "info", str(snapshot_disk)]
+                info_result = subprocess.run(info_cmd, capture_output=True, text=True)
+                if info_result.returncode == 0:
+                    logger.debug(f"Snapshot info: {info_result.stdout}")
+
+        except Exception as e:
             logger.error(f"Failed to create versioned snapshot: {e}")
+            # Clean up failed snapshot disk
+            if snapshot_disk.exists():
+                try:
+                    snapshot_disk.unlink()
+                except Exception as cleanup_e:
+                    logger.warning(f"Failed to cleanup failed snapshot disk: {cleanup_e}")
             raise
 
         # Create new snapshot metadata
@@ -1032,7 +1320,22 @@ fi
         # Update parent-child relationships
         parent_snapshot.children_snapshots.add(snapshot_id)
 
+        # Calculate initial disk usage
+        try:
+            snapshot.disk_usage = os.path.getsize(snapshot_disk)
+        except Exception:
+            snapshot.disk_usage = 0
+
         self.snapshots[snapshot_id] = snapshot
+
+        # Log the snapshot creation
+        audit_logger.log_event(AuditEvent(
+            event_type=AuditEventType.VM_SNAPSHOT,
+            severity=AuditSeverity.INFO,
+            description=f"Created versioned snapshot {snapshot_id} from {parent_snapshot_id}",
+            target=snapshot_id
+        ))
+
         logger.info(f"Created versioned snapshot: {snapshot_id}")
         return snapshot_id
 
@@ -1101,11 +1404,24 @@ fi
         snapshot = self.snapshots[snapshot_id]
         logger.info(f"Rolling back snapshot: {snapshot_id}")
 
+        # Track original state for recovery
+        original_disk_path = snapshot.disk_path
+        original_disk_backup = None
+        was_vm_running = snapshot.vm_process and snapshot.vm_process.poll() is None
+
         try:
+            # Close SSH connections
+            self._close_ssh_connection(snapshot)
+
             # Stop VM if running
-            if snapshot.vm_process and snapshot.vm_process.poll() is None:
+            if was_vm_running:
                 self._stop_vm_for_snapshot(snapshot)
                 time.sleep(2)
+
+            # Backup current disk
+            original_disk_backup = f"{original_disk_path}.backup"
+            if Path(original_disk_path).exists():
+                shutil.copy2(original_disk_path, original_disk_backup)
 
             if target_state and target_state in self.snapshots:
                 # Rollback to specific snapshot state
@@ -1117,23 +1433,28 @@ fi
                 cmd = [
                     "qemu-img", "create", "-f", "qcow2",
                     "-b", target_snapshot.disk_path,
+                    "-F", "qcow2",
                     str(rollback_disk)
                 ]
 
-                subprocess.run(cmd, check=True, capture_output=True, text=True)
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                if result.returncode != 0:
+                    raise RuntimeError(f"Failed to create rollback disk: {result.stderr}")
 
                 # Replace current disk
                 os.remove(snapshot.disk_path)
-                os.rename(rollback_disk, snapshot.disk_path)
+                shutil.move(str(rollback_disk), snapshot.disk_path)
 
                 logger.info(
                     f"Rolled back {snapshot_id} to state of {target_state}")
+
+                rollback_type = f"to snapshot {target_state}"
             else:
                 # Rollback to clean state (recreate from base)
-                base_image = self.base_images.get(
-                    "windows")  # Default to Windows
-                if not base_image:
-                    raise RuntimeError("No base image available for rollback")
+                os_type = self._detect_os_type(snapshot.binary_path)
+                base_image = self.base_images.get(os_type.lower())
+                if not base_image or not base_image.exists():
+                    raise RuntimeError(f"No base image available for {os_type}")
 
                 # Remove current disk
                 os.remove(snapshot.disk_path)
@@ -1142,23 +1463,64 @@ fi
                 cmd = [
                     "qemu-img", "create", "-f", "qcow2",
                     "-b", str(base_image),
+                    "-F", "qcow2",
                     snapshot.disk_path
                 ]
 
-                subprocess.run(cmd, check=True, capture_output=True, text=True)
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                if result.returncode != 0:
+                    raise RuntimeError(f"Failed to create clean disk: {result.stderr}")
+
                 logger.info(f"Rolled back {snapshot_id} to clean base state")
+                rollback_type = "to clean base state"
 
             # Clear test results and metrics
             snapshot.test_results.clear()
             snapshot.performance_metrics.clear()
+            snapshot.version += 1  # Increment version after rollback
+
+            # Log the rollback
+            audit_logger.log_event(AuditEvent(
+                event_type=AuditEventType.VM_SNAPSHOT,
+                severity=AuditSeverity.MEDIUM,
+                description=f"Rolled back snapshot {snapshot_id} {rollback_type}",
+                details={"target_state": target_state, "new_version": snapshot.version},
+                target=snapshot_id
+            ))
 
             # Restart VM if it was running
-            self._start_vm_for_snapshot(snapshot)
+            if was_vm_running:
+                self._start_vm_for_snapshot(snapshot)
+
+            # Remove backup on success
+            if original_disk_backup and Path(original_disk_backup).exists():
+                os.remove(original_disk_backup)
 
             return True
 
         except Exception as e:
             logger.error(f"Rollback failed for {snapshot_id}: {e}")
+
+            # Attempt recovery from backup
+            if original_disk_backup and Path(original_disk_backup).exists():
+                try:
+                    logger.info("Attempting to restore from backup...")
+                    if Path(snapshot.disk_path).exists():
+                        os.remove(snapshot.disk_path)
+                    shutil.move(original_disk_backup, snapshot.disk_path)
+                    logger.info("Restored from backup successfully")
+                except Exception as restore_e:
+                    logger.error(f"Failed to restore from backup: {restore_e}")
+
+            # Log failure
+            audit_logger.log_event(AuditEvent(
+                event_type=AuditEventType.ERROR,
+                severity=AuditSeverity.HIGH,
+                description=f"Snapshot rollback failed for {snapshot_id}",
+                details={"error": str(e), "target_state": target_state},
+                target=snapshot_id
+            ))
+
             return False
 
     def monitor_snapshot_performance(self, snapshot_id: str) -> Dict[str, Any]:
@@ -1270,51 +1632,644 @@ fi
 
         return hierarchy
 
+    def test_script_in_vm(self, script_content: str, binary_path: str,
+                          script_type: str = "frida", timeout: int = 60) -> ExecutionResult:
+        """Test a script in QEMU VM - main entry point for autonomous agent."""
+        try:
+            # Create snapshot for testing
+            snapshot_id = self.create_script_test_snapshot(binary_path)
+
+            # Test based on script type
+            if script_type.lower() == "frida":
+                result = self.test_frida_script(snapshot_id, script_content, binary_path)
+            elif script_type.lower() == "ghidra":
+                result = self.test_ghidra_script(snapshot_id, script_content, binary_path)
+            else:
+                # Generic script execution
+                result = self._test_generic_script(snapshot_id, script_content, binary_path)
+
+            # Cleanup snapshot after test
+            self.cleanup_snapshot(snapshot_id)
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Failed to test script in VM: {e}")
+            return ExecutionResult(
+                success=False,
+                output="",
+                error=f"VM test failed: {str(e)}",
+                exit_code=-1,
+                runtime_ms=0
+            )
+
+    def _test_generic_script(self, snapshot_id: str, script_content: str, binary_path: str) -> ExecutionResult:
+        """Test a generic script in QEMU environment."""
+        if snapshot_id not in self.snapshots:
+            return ExecutionResult(
+                success=False,
+                output="",
+                error="Snapshot not found",
+                exit_code=-1,
+                runtime_ms=0
+            )
+
+        snapshot = self.snapshots[snapshot_id]
+        start_time = time.time()
+
+        try:
+            # Upload binary to VM
+            remote_binary = f"/tmp/{Path(binary_path).name}"
+            self._upload_binary_to_vm(snapshot, binary_path, remote_binary)
+
+            # Create wrapper script
+            wrapper_script = f"""#!/bin/bash
+# Generic script execution
+echo "[+] Starting generic script test"
+{script_content}
+echo "[+] Script execution completed"
+exit 0
+"""
+
+            # Execute script in VM
+            result = self._execute_in_vm_real(snapshot, wrapper_script)
+
+            runtime_ms = int((time.time() - start_time) * 1000)
+
+            return ExecutionResult(
+                success=result['exit_code'] == 0,
+                output=result['stdout'],
+                error=result['stderr'],
+                exit_code=result['exit_code'],
+                runtime_ms=runtime_ms
+            )
+
+        except Exception as e:
+            runtime_ms = int((time.time() - start_time) * 1000)
+            return ExecutionResult(
+                success=False,
+                output="",
+                error=f"Generic test failed: {str(e)}",
+                exit_code=-1,
+                runtime_ms=runtime_ms
+            )
+
     def optimize_snapshot_storage(self) -> Dict[str, Any]:
-        """Optimize snapshot storage by removing unused overlays and compacting."""
-        logger.info("Optimizing snapshot storage")
+        """Optimize snapshot storage by removing unused overlays and compacting.
+
+        Returns:
+            Dictionary containing optimization results and statistics
+        """
+        logger.info("Starting snapshot storage optimization")
+
+        # Log optimization start
+        audit_logger.log_event(AuditEvent(
+            event_type=AuditEventType.TOOL_EXECUTION,
+            severity=AuditSeverity.INFO,
+            description="Starting snapshot storage optimization",
+            details={"total_snapshots": len(self.snapshots)}
+        ))
 
         optimization_results = {
             "snapshots_processed": 0,
+            "snapshots_optimized": 0,
             "space_saved_bytes": 0,
-            "errors": []
+            "space_saved_mb": 0,
+            "processing_time_seconds": 0,
+            "errors": [],
+            "warnings": []
+        }
+
+        start_time = time.time()
+        total_snapshots = len(self.snapshots)
+
+        # Create temporary directory for optimization with resource manager
+        with self.resource_manager.temp_directory(prefix="qemu_snapshot_opt_") as temp_dir:
+            for idx, (snapshot_id, snapshot) in enumerate(self.snapshots.items()):
+                try:
+                    # Progress tracking
+                    progress = (idx + 1) / total_snapshots * 100
+                    logger.info(f"Optimizing snapshot {idx + 1}/{total_snapshots} ({progress:.1f}%): {snapshot_id}")
+
+                    # Check if file exists
+                    if not os.path.exists(snapshot.disk_path):
+                        warning = f"Snapshot file not found: {snapshot.disk_path}"
+                        optimization_results["warnings"].append(warning)
+                        logger.warning(warning)
+                        continue
+
+                    # Get original size
+                    original_size = os.path.getsize(snapshot.disk_path)
+
+                    # Skip non-qcow2 images
+                    if not snapshot.disk_path.endswith('.qcow2'):
+                        warning = f"Skipping non-qcow2 snapshot: {snapshot_id}"
+                        optimization_results["warnings"].append(warning)
+                        continue
+
+                    # Check if image is already optimized (has compression)
+                    info_cmd = ["qemu-img", "info", "--output=json", snapshot.disk_path]
+                    info_result = subprocess.run(
+                        info_cmd, capture_output=True, text=True, timeout=30)
+
+                    if info_result.returncode == 0:
+                        import json
+                        info_data = json.loads(info_result.stdout)
+
+                        # Skip if already compressed
+                        if info_data.get("compressed", False):
+                            logger.debug(f"Snapshot {snapshot_id} already compressed")
+                            optimization_results["snapshots_processed"] += 1
+                            continue
+
+                    # Create temp file in our managed temp directory
+                    temp_path = temp_dir / f"{snapshot_id}_opt.qcow2"
+
+                    # Compact and compress the qcow2 image
+                    convert_cmd = [
+                        "qemu-img", "convert",
+                        "-c",  # Enable compression
+                        "-p",  # Show progress
+                        "-O", "qcow2",
+                        "-o", "lazy_refcounts=on,cluster_size=2M",  # Optimization options
+                        snapshot.disk_path,
+                        str(temp_path)
+                    ]
+
+                    # Run conversion with resource management
+                    logger.debug(f"Running optimization command: {' '.join(convert_cmd)}")
+
+                    with self.resource_manager.managed_process(
+                        convert_cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE
+                    ) as process_resource:
+                        # Wait for completion with timeout
+                        try:
+                            stdout, stderr = process_resource.process.communicate(timeout=300)
+
+                            if process_resource.process.returncode == 0:
+                                # Check new size
+                                new_size = os.path.getsize(temp_path)
+                                space_saved = original_size - new_size
+
+                                if space_saved > 0:
+                                    # Verify integrity before replacing
+                                    check_cmd = ["qemu-img", "check", str(temp_path)]
+                                    check_result = subprocess.run(
+                                        check_cmd, capture_output=True, text=True, timeout=60)
+
+                                    if check_result.returncode == 0:
+                                        # Backup original before replacement
+                                        backup_path = f"{snapshot.disk_path}.backup"
+                                        try:
+                                            os.rename(snapshot.disk_path, backup_path)
+                                            os.rename(str(temp_path), snapshot.disk_path)
+                                            os.remove(backup_path)
+
+                                            optimization_results["space_saved_bytes"] += space_saved
+                                            optimization_results["snapshots_optimized"] += 1
+
+                                            logger.info(
+                                                f"Optimized {snapshot_id}: saved {space_saved:,} bytes "
+                                                f"({space_saved / 1024 / 1024:.2f} MB)"
+                                            )
+
+                                            # Update snapshot metadata
+                                            snapshot.metadata["optimized"] = True
+                                            snapshot.metadata["optimization_date"] = datetime.now().isoformat()
+                                            snapshot.metadata["original_size"] = original_size
+                                            snapshot.metadata["optimized_size"] = new_size
+
+                                        except Exception as e:
+                                            # Restore backup on error
+                                            if os.path.exists(backup_path):
+                                                os.rename(backup_path, snapshot.disk_path)
+                                            raise Exception(f"Failed to replace snapshot file: {e}")
+                                    else:
+                                        raise Exception(f"Integrity check failed: {check_result.stderr}")
+                                else:
+                                    # No space saved, remove temp file
+                                    logger.debug(f"No space saved for {snapshot_id}")
+
+                            else:
+                                raise Exception(f"Conversion failed: {stderr}")
+
+                        except subprocess.TimeoutExpired:
+                            process_resource.process.kill()
+                            raise Exception("Optimization timeout (300s)")
+
+                    optimization_results["snapshots_processed"] += 1
+
+                except Exception as e:
+                    error_msg = f"Failed to optimize {snapshot_id}: {str(e)}"
+                    optimization_results["errors"].append(error_msg)
+                    logger.error(error_msg)
+
+                    # Log error to audit
+                    audit_logger.log_event(AuditEvent(
+                        event_type=AuditEventType.ERROR,
+                        severity=AuditSeverity.MEDIUM,
+                        description=f"Snapshot optimization failed: {snapshot_id}",
+                        details={"error": str(e)},
+                        target=snapshot.disk_path
+                    ))
+
+        # Calculate final statistics
+        optimization_results["processing_time_seconds"] = time.time() - start_time
+        optimization_results["space_saved_mb"] = optimization_results["space_saved_bytes"] / (1024 * 1024)
+
+        # Log completion
+        audit_logger.log_event(AuditEvent(
+            event_type=AuditEventType.TOOL_EXECUTION,
+            severity=AuditSeverity.INFO,
+            description="Snapshot storage optimization completed",
+            details={
+                "snapshots_processed": optimization_results["snapshots_processed"],
+                "snapshots_optimized": optimization_results["snapshots_optimized"],
+                "space_saved_mb": f"{optimization_results['space_saved_mb']:.2f}",
+                "processing_time": f"{optimization_results['processing_time_seconds']:.1f}s",
+                "error_count": len(optimization_results["errors"])
+            }
+        ))
+
+        logger.info(
+            f"Optimization complete: processed {optimization_results['snapshots_processed']} snapshots, "
+            f"optimized {optimization_results['snapshots_optimized']}, "
+            f"saved {optimization_results['space_saved_mb']:.2f} MB in "
+            f"{optimization_results['processing_time_seconds']:.1f} seconds"
+        )
+
+        # Save updated metadata
+        self._save_metadata()
+
+        return optimization_results
+
+    def cleanup_old_snapshots(self, max_age_days: int = 7, keep_versions: int = 3) -> Dict[str, Any]:
+        """Clean up old snapshots based on age and version retention policy.
+
+        Args:
+            max_age_days: Maximum age in days to keep snapshots
+            keep_versions: Number of recent versions to keep per parent
+
+        Returns:
+            Dictionary containing cleanup results
+        """
+        logger.info(f"Starting old snapshot cleanup (max_age={max_age_days} days, keep_versions={keep_versions})")
+
+        # Log cleanup start
+        audit_logger.log_event(AuditEvent(
+            event_type=AuditEventType.TOOL_EXECUTION,
+            severity=AuditSeverity.INFO,
+            description="Starting old snapshot cleanup",
+            details={
+                "total_snapshots": len(self.snapshots),
+                "max_age_days": max_age_days,
+                "keep_versions": keep_versions
+            }
+        ))
+
+        cleanup_results = {
+            "snapshots_removed": 0,
+            "snapshots_kept": 0,
+            "space_freed_bytes": 0,
+            "space_freed_mb": 0,
+            "errors": [],
+            "warnings": [],
+            "processing_time_seconds": 0
+        }
+
+        start_time = time.time()
+        current_time = datetime.now()
+        max_age_delta = timedelta(days=max_age_days)
+
+        # Build version hierarchy
+        versions_by_parent = defaultdict(list)
+        for snapshot_id, snapshot in self.snapshots.items():
+            if snapshot.parent_snapshot:
+                versions_by_parent[snapshot.parent_snapshot].append(
+                    (snapshot.version, snapshot_id, snapshot)
+                )
+            else:
+                # Root snapshots
+                versions_by_parent[None].append(
+                    (snapshot.version, snapshot_id, snapshot)
+                )
+
+        # Sort versions by version number (descending) to keep newest
+        for parent in versions_by_parent:
+            versions_by_parent[parent].sort(key=lambda x: x[0], reverse=True)
+
+        # Determine which snapshots to remove
+        snapshots_to_remove = []
+
+        for parent, versions in versions_by_parent.items():
+            for idx, (_version, snapshot_id, snapshot) in enumerate(versions):
+                # Check if snapshot is too old
+                age = current_time - snapshot.created_at
+                is_too_old = age > max_age_delta
+
+                # Check if we should keep this version
+                should_keep_version = idx < keep_versions
+
+                # Check if snapshot has children (don't delete if it has active children)
+                has_children = bool(snapshot.children_snapshots)
+
+                # Check if VM is currently running
+                is_running = snapshot.vm_process and snapshot.vm_process.poll() is None
+
+                # Decision logic
+                if is_running:
+                    cleanup_results["warnings"].append(
+                        f"Skipping {snapshot_id}: VM is currently running"
+                    )
+                    cleanup_results["snapshots_kept"] += 1
+                elif has_children:
+                    cleanup_results["warnings"].append(
+                        f"Skipping {snapshot_id}: Has active child snapshots"
+                    )
+                    cleanup_results["snapshots_kept"] += 1
+                elif should_keep_version and not is_too_old:
+                    logger.debug(f"Keeping {snapshot_id}: Within version retention policy")
+                    cleanup_results["snapshots_kept"] += 1
+                elif is_too_old and not should_keep_version:
+                    logger.info(f"Marking {snapshot_id} for removal: Too old and beyond retention count")
+                    snapshots_to_remove.append(snapshot_id)
+                elif is_too_old:
+                    logger.info(f"Marking {snapshot_id} for removal: Too old ({age.days} days)")
+                    snapshots_to_remove.append(snapshot_id)
+                else:
+                    cleanup_results["snapshots_kept"] += 1
+
+        # Remove marked snapshots
+        for snapshot_id in snapshots_to_remove:
+            try:
+                snapshot = self.snapshots[snapshot_id]
+
+                # Get disk size before removal
+                disk_size = 0
+                if os.path.exists(snapshot.disk_path):
+                    disk_size = os.path.getsize(snapshot.disk_path)
+
+                # Log removal attempt
+                logger.info(f"Removing old snapshot: {snapshot_id}")
+
+                # Use existing cleanup_snapshot method
+                self.cleanup_snapshot(snapshot_id)
+
+                cleanup_results["snapshots_removed"] += 1
+                cleanup_results["space_freed_bytes"] += disk_size
+
+                # Log successful removal
+                audit_logger.log_event(AuditEvent(
+                    event_type=AuditEventType.VM_SNAPSHOT,
+                    severity=AuditSeverity.INFO,
+                    description=f"Removed old snapshot: {snapshot_id}",
+                    details={
+                        "age_days": (current_time - snapshot.created_at).days,
+                        "disk_size_mb": disk_size / (1024 * 1024),
+                        "version": snapshot.version
+                    },
+                    target=snapshot_id
+                ))
+
+            except Exception as e:
+                error_msg = f"Failed to remove snapshot {snapshot_id}: {str(e)}"
+                cleanup_results["errors"].append(error_msg)
+                logger.error(error_msg)
+
+                # Log error
+                audit_logger.log_event(AuditEvent(
+                    event_type=AuditEventType.ERROR,
+                    severity=AuditSeverity.MEDIUM,
+                    description=f"Failed to remove old snapshot: {snapshot_id}",
+                    details={"error": str(e)},
+                    target=snapshot_id
+                ))
+
+        # Calculate final statistics
+        cleanup_results["processing_time_seconds"] = time.time() - start_time
+        cleanup_results["space_freed_mb"] = cleanup_results["space_freed_bytes"] / (1024 * 1024)
+
+        # Log completion
+        audit_logger.log_event(AuditEvent(
+            event_type=AuditEventType.TOOL_EXECUTION,
+            severity=AuditSeverity.INFO,
+            description="Old snapshot cleanup completed",
+            details={
+                "snapshots_removed": cleanup_results["snapshots_removed"],
+                "snapshots_kept": cleanup_results["snapshots_kept"],
+                "space_freed_mb": f"{cleanup_results['space_freed_mb']:.2f}",
+                "processing_time": f"{cleanup_results['processing_time_seconds']:.1f}s",
+                "error_count": len(cleanup_results["errors"])
+            }
+        ))
+
+        logger.info(
+            f"Cleanup complete: removed {cleanup_results['snapshots_removed']} snapshots, "
+            f"kept {cleanup_results['snapshots_kept']}, "
+            f"freed {cleanup_results['space_freed_mb']:.2f} MB in "
+            f"{cleanup_results['processing_time_seconds']:.1f} seconds"
+        )
+
+        # Save updated metadata
+        self._save_metadata()
+
+        return cleanup_results
+
+    def perform_snapshot_maintenance(self,
+                                   optimize: bool = True,
+                                   cleanup_old: bool = True,
+                                   verify_integrity: bool = True) -> Dict[str, Any]:
+        """Perform comprehensive snapshot maintenance tasks.
+
+        Args:
+            optimize: Whether to optimize snapshot storage
+            cleanup_old: Whether to cleanup old snapshots
+            verify_integrity: Whether to verify snapshot integrity
+
+        Returns:
+            Dictionary containing all maintenance results
+        """
+        logger.info("Starting comprehensive snapshot maintenance")
+
+        maintenance_results = {
+            "start_time": datetime.now().isoformat(),
+            "tasks_performed": [],
+            "total_processing_time_seconds": 0,
+            "errors": [],
+            "warnings": []
+        }
+
+        start_time = time.time()
+
+        # Log maintenance start
+        audit_logger.log_event(AuditEvent(
+            event_type=AuditEventType.TOOL_EXECUTION,
+            severity=AuditSeverity.INFO,
+            description="Starting snapshot maintenance",
+            details={
+                "optimize": optimize,
+                "cleanup_old": cleanup_old,
+                "verify_integrity": verify_integrity,
+                "total_snapshots": len(self.snapshots)
+            }
+        ))
+
+        # Step 1: Verify snapshot integrity
+        if verify_integrity:
+            try:
+                logger.info("Step 1/3: Verifying snapshot integrity")
+                integrity_results = self._verify_all_snapshot_integrity()
+                maintenance_results["integrity_check"] = integrity_results
+                maintenance_results["tasks_performed"].append("integrity_check")
+
+                # Remove corrupted snapshots
+                for corrupted_id in integrity_results.get("corrupted_snapshots", []):
+                    try:
+                        logger.warning(f"Removing corrupted snapshot: {corrupted_id}")
+                        self.cleanup_snapshot(corrupted_id)
+                    except Exception as e:
+                        maintenance_results["errors"].append(
+                            f"Failed to remove corrupted snapshot {corrupted_id}: {e}"
+                        )
+
+            except Exception as e:
+                error_msg = f"Integrity check failed: {str(e)}"
+                maintenance_results["errors"].append(error_msg)
+                logger.error(error_msg)
+
+        # Step 2: Cleanup old snapshots
+        if cleanup_old:
+            try:
+                logger.info("Step 2/3: Cleaning up old snapshots")
+                cleanup_results = self.cleanup_old_snapshots(
+                    max_age_days=7,
+                    keep_versions=3
+                )
+                maintenance_results["cleanup_results"] = cleanup_results
+                maintenance_results["tasks_performed"].append("cleanup_old")
+
+            except Exception as e:
+                error_msg = f"Cleanup failed: {str(e)}"
+                maintenance_results["errors"].append(error_msg)
+                logger.error(error_msg)
+
+        # Step 3: Optimize storage
+        if optimize:
+            try:
+                logger.info("Step 3/3: Optimizing snapshot storage")
+                optimization_results = self.optimize_snapshot_storage()
+                maintenance_results["optimization_results"] = optimization_results
+                maintenance_results["tasks_performed"].append("optimization")
+
+            except Exception as e:
+                error_msg = f"Optimization failed: {str(e)}"
+                maintenance_results["errors"].append(error_msg)
+                logger.error(error_msg)
+
+        # Calculate total processing time
+        maintenance_results["total_processing_time_seconds"] = time.time() - start_time
+        maintenance_results["end_time"] = datetime.now().isoformat()
+
+        # Generate summary
+        summary = {
+            "snapshots_remaining": len(self.snapshots),
+            "total_disk_usage_mb": sum(
+                os.path.getsize(s.disk_path) / (1024 * 1024)
+                for s in self.snapshots.values()
+                if os.path.exists(s.disk_path)
+            ),
+            "tasks_completed": len(maintenance_results["tasks_performed"]),
+            "errors_encountered": len(maintenance_results["errors"])
+        }
+        maintenance_results["summary"] = summary
+
+        # Log completion
+        audit_logger.log_event(AuditEvent(
+            event_type=AuditEventType.TOOL_EXECUTION,
+            severity=AuditSeverity.INFO,
+            description="Snapshot maintenance completed",
+            details={
+                "tasks_performed": maintenance_results["tasks_performed"],
+                "snapshots_remaining": summary["snapshots_remaining"],
+                "total_disk_usage_mb": f"{summary['total_disk_usage_mb']:.2f}",
+                "processing_time": f"{maintenance_results['total_processing_time_seconds']:.1f}s",
+                "error_count": summary["errors_encountered"]
+            }
+        ))
+
+        logger.info(
+            f"Maintenance complete: performed {summary['tasks_completed']} tasks, "
+            f"{summary['snapshots_remaining']} snapshots remain, "
+            f"using {summary['total_disk_usage_mb']:.2f} MB total disk space"
+        )
+
+        return maintenance_results
+
+    def _verify_all_snapshot_integrity(self) -> Dict[str, Any]:
+        """Verify integrity of all snapshots.
+
+        Returns:
+            Dictionary containing verification results
+        """
+        logger.info("Verifying integrity of all snapshots")
+
+        integrity_results = {
+            "snapshots_checked": 0,
+            "snapshots_valid": 0,
+            "corrupted_snapshots": [],
+            "missing_snapshots": [],
+            "warnings": []
         }
 
         for snapshot_id, snapshot in self.snapshots.items():
-            try:
-                original_size = os.path.getsize(snapshot.disk_path)
+            integrity_results["snapshots_checked"] += 1
 
-                # Convert to qcow2 with compression if not already
-                if not snapshot.disk_path.endswith('.qcow2'):
+            try:
+                # Check if disk file exists
+                if not os.path.exists(snapshot.disk_path):
+                    integrity_results["missing_snapshots"].append(snapshot_id)
+                    logger.warning(f"Snapshot disk missing: {snapshot_id}")
                     continue
 
-                # Compact the qcow2 image
-                temp_path = f"{snapshot.disk_path}.tmp"
-                convert_cmd = [
-                    "qemu-img", "convert", "-c", "-O", "qcow2",
-                    snapshot.disk_path, temp_path
-                ]
-
+                # Verify qcow2 integrity
+                check_cmd = ["qemu-img", "check", "-q", snapshot.disk_path]
                 result = subprocess.run(
-                    convert_cmd, capture_output=True, text=True)
+                    check_cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+
                 if result.returncode == 0:
-                    new_size = os.path.getsize(temp_path)
-                    space_saved = original_size - new_size
+                    integrity_results["snapshots_valid"] += 1
+                else:
+                    integrity_results["corrupted_snapshots"].append(snapshot_id)
+                    logger.error(f"Snapshot corrupted: {snapshot_id} - {result.stderr}")
 
-                    if space_saved > 0:
-                        # Replace with optimized version
-                        os.replace(temp_path, snapshot.disk_path)
-                        optimization_results["space_saved_bytes"] += space_saved
-                        logger.info(
-                            f"Optimized {snapshot_id}: saved {space_saved} bytes")
-                    else:
-                        os.remove(temp_path)
+                    # Log corruption
+                    audit_logger.log_event(AuditEvent(
+                        event_type=AuditEventType.ERROR,
+                        severity=AuditSeverity.HIGH,
+                        description=f"Corrupted snapshot detected: {snapshot_id}",
+                        details={"error": result.stderr},
+                        target=snapshot_id
+                    ))
 
-                optimization_results["snapshots_processed"] += 1
-
+            except subprocess.TimeoutExpired:
+                integrity_results["warnings"].append(
+                    f"Timeout checking {snapshot_id}"
+                )
             except Exception as e:
-                error_msg = f"Failed to optimize {snapshot_id}: {e}"
-                optimization_results["errors"].append(error_msg)
-                logger.error(error_msg)
+                integrity_results["warnings"].append(
+                    f"Error checking {snapshot_id}: {str(e)}"
+                )
 
-        return optimization_results
+        logger.info(
+            f"Integrity check complete: {integrity_results['snapshots_valid']}/{integrity_results['snapshots_checked']} valid, "
+            f"{len(integrity_results['corrupted_snapshots'])} corrupted, "
+            f"{len(integrity_results['missing_snapshots'])} missing"
+        )
+
+        return integrity_results

@@ -1,5 +1,5 @@
 """
-Intellicrack CLI Module 
+Intellicrack CLI Module
 
 Copyright (C) 2025 Zachary Flint
 

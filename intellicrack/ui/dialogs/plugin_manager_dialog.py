@@ -44,6 +44,7 @@ from .common_imports import (
     QTabWidget,
     QTextEdit,
     QThread,
+    QTimer,
     QVBoxLayout,
     QWidget,
     logger,
@@ -66,6 +67,7 @@ if not HAS_PYQT:
         Provides minimal interface methods to allow code to run without PyQt5.
         """
         def __init__(self, parent=None):
+            """Initialize stub plugin manager dialog for non-GUI environments."""
             self.parent = parent
 
             # Initialize UI attributes
@@ -123,6 +125,7 @@ else:
         installation_finished = pyqtSignal(bool, str)
 
         def __init__(self, plugin_path: str, install_dir: str):
+            """Initialize plugin installation thread with source path and destination directory."""
             super().__init__()
             self.plugin_path = plugin_path
             self.install_dir = install_dir
@@ -161,56 +164,56 @@ else:
         """Dialog for managing Intellicrack plugins."""
 
         def __init__(self, parent=None, app_context=None):
-        """Initialize plugin manager dialog with plugin discovery and management capabilities."""
-        super().__init__(parent)
-        self.setWindowTitle("Plugin Manager")
-        self.setMinimumSize(900, 600)
-        
-        # App context
-        self.app_context = app_context
-        
-        # Plugin management
-        self.installed_plugins = {}
-        self.available_plugins = {}
-        self.plugin_categories = ['Analysis', 'Exploitation', 'Network', 'UI', 'Utilities']
-        
-        # Threading
-        self.install_thread = None
-        self.discovery_thread = None
-        
-        # Current state
-        self.current_plugin = None
-        self.filter_category = 'All'
-        self.search_text = ''
-        
-        # Setup UI
-        self.setup_ui()
-        self.setup_connections()
-        
-        # Load plugins
-        self.refresh_plugin_lists()
-        
-        # Setup drag and drop
-        self.setAcceptDrops(True)
-        
-        # Load settings
-        self.load_settings()
-        
-        # Auto-refresh timer
-        self.auto_refresh_timer = QTimer()
-        self.auto_refresh_timer.timeout.connect(self.auto_refresh_plugins)
-        
-        # Check for updates on startup
-        if hasattr(self.app_context, 'config') and self.app_context.config.get('plugin_auto_update', True):
-            QTimer.singleShot(2000, self.check_for_updates)
-        
-        logger.info("Plugin Manager Dialog initialized")
-        
-        # Show welcome message for first time users
-        if not hasattr(self.app_context, 'plugin_manager_shown_before'):
-            self.show_welcome_message()
-            if hasattr(self.app_context, 'config'):
-                self.app_context.config['plugin_manager_shown_before'] = True
+            """Initialize plugin manager dialog with plugin discovery and management capabilities."""
+            super().__init__(parent)
+            self.setWindowTitle("Plugin Manager")
+            self.setMinimumSize(900, 600)
+
+            # App context
+            self.app_context = app_context
+
+            # Plugin management
+            self.installed_plugins = {}
+            self.available_plugins = {}
+            self.plugin_categories = ['Analysis', 'Exploitation', 'Network', 'UI', 'Utilities']
+
+            # Threading
+            self.install_thread = None
+            self.discovery_thread = None
+
+            # Current state
+            self.current_plugin = None
+            self.filter_category = 'All'
+            self.search_text = ''
+
+            # Setup UI
+            self.setup_ui()
+            self.setup_connections()
+
+            # Load plugins
+            self.refresh_plugin_lists()
+
+            # Setup drag and drop
+            self.setAcceptDrops(True)
+
+            # Load settings
+            self.load_settings()
+
+            # Auto-refresh timer
+            self.auto_refresh_timer = QTimer()
+            self.auto_refresh_timer.timeout.connect(self.auto_refresh_plugins)
+
+            # Check for updates on startup
+            if hasattr(self.app_context, 'config') and self.app_context.config.get('plugin_auto_update', True):
+                QTimer.singleShot(2000, self.check_for_updates)
+
+            logger.info("Plugin Manager Dialog initialized")
+
+            # Show welcome message for first time users
+            if not hasattr(self.app_context, 'plugin_manager_shown_before'):
+                self.show_welcome_message()
+                if hasattr(self.app_context, 'config'):
+                    self.app_context.config['plugin_manager_shown_before'] = True
 
         def setup_ui(self):
             """Set up the user interface."""
@@ -949,9 +952,9 @@ class {plugin_name.replace(' ', '')}Plugin:
         \"\"\"Perform binary analysis.\"\"\"
         import os
         import hashlib
-        
+
         findings = []
-        
+
         try:
             if not os.path.exists(binary_path):
                 return {{
@@ -959,20 +962,20 @@ class {plugin_name.replace(' ', '')}Plugin:
                     'status': 'error',
                     'findings': [f'File not found: {{binary_path}}']
                 }}
-            
+
             # Basic file analysis
             file_size = os.path.getsize(binary_path)
             findings.append(f'File size: {{file_size:,}} bytes')
-            
+
             # File hash calculation
             with open(binary_path, 'rb') as f:
                 file_data = f.read()
                 md5_hash = hashlib.md5(file_data).hexdigest()
                 sha256_hash = hashlib.sha256(file_data).hexdigest()
-                
+
             findings.append(f'MD5: {{md5_hash}}')
             findings.append(f'SHA256: {{sha256_hash}}')
-            
+
             # File type detection
             if file_data.startswith(b'MZ'):
                 findings.append('File type: Windows PE executable')
@@ -985,25 +988,25 @@ class {plugin_name.replace(' ', '')}Plugin:
                 findings.append('File type: macOS Mach-O executable')
             else:
                 findings.append('File type: Unknown or raw binary')
-            
+
             # Entropy analysis (simple)
             entropy = 0.0
             if len(file_data) > 0:
                 byte_counts = [0] * 256
                 for byte in file_data[:1024]:  # Sample first 1KB
                     byte_counts[byte] += 1
-                
+
                 for count in byte_counts:
                     if count > 0:
                         p = count / 1024
                         entropy -= p * (p.bit_length() - 1) if p > 0 else 0
-            
+
             findings.append(f'Entropy (sample): {{entropy:.2f}}')
             if entropy > 7.5:
                 findings.append('High entropy detected - possibly packed/encrypted')
             elif entropy < 1.0:
                 findings.append('Low entropy - likely unprocessed data')
-            
+
             # String analysis
             strings = []
             current_string = ''
@@ -1014,18 +1017,18 @@ class {plugin_name.replace(' ', '')}Plugin:
                     if len(current_string) >= 4:
                         strings.append(current_string)
                     current_string = ''
-            
+
             findings.append(f'Printable strings found: {{len(strings)}}')
-            
+
             # Suspicious indicators
             suspicious_strings = ['debug', 'test', 'password', 'admin', 'license', 'trial']
             found_suspicious = [s for s in strings if any(sus in s.lower() for sus in suspicious_strings)]
             if found_suspicious:
                 findings.append(f'Suspicious strings detected: {{len(found_suspicious)}}')
-            
+
         except Exception as e:
             findings.append(f'Analysis error: {{str(e)}}')
-        
+
         return {{
             'type': 'binary_analysis',
             'status': 'completed',

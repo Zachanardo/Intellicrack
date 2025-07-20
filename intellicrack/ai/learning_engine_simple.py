@@ -55,7 +55,7 @@ class AILearningEngine:
 
     def __init__(self, db_path: Optional[str] = None):
         """Initialize the simplified AI learning engine.
-        
+
         Args:
             db_path: Optional path to the database file (currently unused in
                      simplified implementation)

@@ -245,7 +245,7 @@ class FallbackChain:
 
         last_error = None
 
-        for model_id, config in ordered_models:
+        for model_id, _config in ordered_models:
             health = self.health_stats[model_id]
 
             # Skip if circuit breaker is open
@@ -291,7 +291,7 @@ class FallbackChain:
                     # Calculate backoff delay
                     if attempt < self.max_retries - 1:
                         delay = self.retry_delay * \
-                            (2 ** attempt) + random.uniform(0, 1)
+                            (2 ** attempt) + random.uniform(0, 1)  # noqa: S311
                         logger.debug(
                             f"Retrying model {model_id} in {delay:.2f}s (attempt {attempt + 1})")
                         await asyncio.sleep(delay)
