@@ -32,10 +32,10 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 try:
     import importlib.util
-    PYQT5_AVAILABLE = importlib.util.find_spec("PyQt5") is not None
+    PYQT6_AVAILABLE = importlib.util.find_spec("PyQt6") is not None
 except ImportError as e:
     logger.error("Import error in taint_analyzer: %s", e)
-    PYQT5_AVAILABLE = False
+    PYQT6_AVAILABLE = False
 
 
 
@@ -1645,11 +1645,11 @@ def run_taint_analysis(app: Any) -> None:
             app.analyze_results.append(f"License checks found: {results['summary']['license_checks_found']}")
             app.analyze_results.append(f"Potential bypass points: {results['summary']['potential_bypass_points']}")
 
-            # Handle report generation if PyQt5 is available
-            if PYQT5_AVAILABLE:
-                from ...utils.reporting.report_common import handle_pyqt5_report_generation
+            # Handle report generation if PyQt6 is available
+            if PYQT6_AVAILABLE:
+                from ...utils.reporting.report_common import handle_pyqt6_report_generation
 
-                report_path = handle_pyqt5_report_generation(
+                report_path = handle_pyqt6_report_generation(
                     app,
                     "taint analysis",
                     engine

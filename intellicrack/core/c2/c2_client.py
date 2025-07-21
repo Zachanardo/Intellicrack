@@ -610,7 +610,7 @@ class C2Client(BaseC2):
 
             except ImportError as e:
                 self.logger.error("Import error in c2_client.py: %s", e)
-                # Method 2: PyQt5 screenshot
+                # Method 2: PyQt6 screenshot
                 try:
                     import sys
 
@@ -628,7 +628,7 @@ class C2Client(BaseC2):
                     buffer = io.BytesIO()
                     screenshot.save(buffer, format='PNG')
                     screenshot_data = buffer.getvalue()
-                    screenshot_method = 'PyQt5'
+                    screenshot_method = 'PyQt6'
 
                 except ImportError as e:
                     self.logger.error("Import error in c2_client.py: %s", e)
@@ -686,7 +686,7 @@ class C2Client(BaseC2):
                 try:
                     if screenshot_method == 'PIL':
                         width, height = screenshot.size
-                    elif screenshot_method == 'PyQt5':
+                    elif screenshot_method == 'PyQt6':
                         width, height = screenshot.width(), screenshot.height()
                 except Exception:
                     self.logger.debug("Error getting screenshot dimensions")

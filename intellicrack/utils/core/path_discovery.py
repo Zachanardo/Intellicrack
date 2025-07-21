@@ -727,7 +727,7 @@ class PathDiscovery:
                                 self.config_manager.set(f"{tool_name}_path", path)
                             return path
                 except ImportError:
-                    logger.warning("PyQt5 not available for GUI prompts")
+                    logger.warning("PyQt6 not available for GUI prompts")
             else:
                 # CLI mode
                 print(f"{tool_name} not found. Please enter the path (or press Enter to skip):")

@@ -31,7 +31,7 @@ from typing import Any, Dict
 
 from .base_dialog import BaseTemplateDialog
 
-# Import common PyQt5 components
+# Import common PyQt6 components
 from .common_imports import (
     HAS_PYQT,
     QCheckBox,
@@ -206,7 +206,7 @@ class ReportManagerDialog(BaseTemplateDialog):
     def setup_ui(self):
         """Set up the user interface."""
         if not HAS_PYQT:
-            logger.warning("PyQt5 not available, cannot create report manager dialog")
+            logger.warning("PyQt6 not available, cannot create report manager dialog")
             return
 
         from ..shared_ui_layouts import UILayoutHelpers

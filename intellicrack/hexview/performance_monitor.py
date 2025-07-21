@@ -25,7 +25,7 @@ import time
 from typing import Any, Dict, Optional
 
 from ..ui.common_imports import (
-    PYQT5_AVAILABLE,
+    PYQT6_AVAILABLE,
     QFont,
     QFormLayout,
     QGroupBox,
@@ -47,13 +47,13 @@ logger = logging.getLogger(__name__)
 __all__ = ['PerformanceMonitor', 'PerformanceWidget']
 
 
-class PerformanceWidget(QWidget if PYQT5_AVAILABLE else object):
+class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
     """Widget for displaying performance statistics."""
 
     def __init__(self, parent=None):
         """Initialize the performance widget."""
-        if not PYQT5_AVAILABLE:
-            logger.warning("PyQt5 not available, PerformanceWidget cannot be created")
+        if not PYQT6_AVAILABLE:
+            logger.warning("PyQt6 not available, PerformanceWidget cannot be created")
             return
 
         super().__init__(parent)
@@ -469,7 +469,7 @@ class PerformanceMonitor:
 
     def create_widget(self, parent=None) -> Optional[QWidget]:
         """Create and return the performance monitoring widget."""
-        if not PYQT5_AVAILABLE:
+        if not PYQT6_AVAILABLE:
             return None
 
         self.widget = PerformanceWidget(parent)

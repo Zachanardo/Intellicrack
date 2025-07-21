@@ -129,9 +129,9 @@ def ensure_html_extension(filename):
     return filename
 
 
-def handle_pyqt5_report_generation(app, report_type, generator):
+def handle_pyqt6_report_generation(app, report_type, generator):
     """
-    Handle PyQt5 report generation workflow.
+    Handle PyQt6 report generation workflow.
 
     Args:
         app: Application instance for UI dialogs
@@ -142,14 +142,14 @@ def handle_pyqt5_report_generation(app, report_type, generator):
         str or None: Path to generated report file, or None if cancelled
     """
     try:
-        # Check if PyQt5 is available
+        # Check if PyQt6 is available
         import importlib.util
-        PYQT5_AVAILABLE = importlib.util.find_spec("PyQt5") is not None
+        PYQT6_AVAILABLE = importlib.util.find_spec("PyQt6") is not None
     except ImportError as e:
         logger.error("Import error in report_common: %s", e)
-        PYQT5_AVAILABLE = False
+        PYQT6_AVAILABLE = False
 
-    if not PYQT5_AVAILABLE:
+    if not PYQT6_AVAILABLE:
         return None
 
     from ..ui.ui_helpers import ask_yes_no_question, show_file_dialog

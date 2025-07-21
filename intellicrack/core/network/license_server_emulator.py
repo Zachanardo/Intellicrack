@@ -1311,7 +1311,7 @@ def run_network_license_emulator(app: Any) -> None:
             return msg
 
     if not QT_AVAILABLE:
-        print("PyQt5 not available, cannot run interactive emulator")
+        print("PyQt6 not available, cannot run interactive emulator")
         return
 
     app.update_output.emit(log_message("[Network] Starting network license server emulator..."))

@@ -1026,7 +1026,7 @@ def run_report_generation(app: Any) -> None:
         app: Application instance
     """
     if not PYQT_AVAILABLE:
-        app.logger.warning("PyQt5 not available. Cannot run report generation UI.")
+        app.logger.warning("PyQt6 not available. Cannot run report generation UI.")
         return
 
     if not app.binary_path:

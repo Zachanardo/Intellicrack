@@ -44,9 +44,9 @@ if HAS_PYQT:
         QWidget,
     )
 else:
-    # Define fallback classes when PyQt5 is not available
+    # Define fallback classes when PyQt6 is not available
     class MockQtClass:
-        """Mock Qt class for when PyQt5 is not available."""
+        """Mock Qt class for when PyQt6 is not available."""
         def __init__(self, *args, **kwargs):
             pass
         def __getattr__(self, name):
@@ -64,8 +64,8 @@ logger = setup_logger(__name__)
 
 try:
     import matplotlib
-    matplotlib.use('Qt5Agg')
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+    matplotlib.use('qtagg')
+    from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
     HAS_MATPLOTLIB = True
 except ImportError as e:
@@ -76,7 +76,7 @@ except ImportError as e:
 def setup_dataset_tab(parent: Any) -> Optional[Any]:
     """Set up the dataset management tab."""
     if not HAS_PYQT:
-        logger.warning("PyQt5 not available, cannot create dataset tab")
+        logger.warning("PyQt6 not available, cannot create dataset tab")
         return None
 
     tab = QWidget(parent)  # Set parent for proper widget hierarchy
@@ -184,7 +184,7 @@ def setup_dataset_tab(parent: Any) -> Optional[Any]:
 def setup_memory_monitor(parent: Any) -> Optional[Any]:
     """Set up memory monitoring widget."""
     if not HAS_PYQT:
-        logger.warning("PyQt5 not available, cannot create memory monitor")
+        logger.warning("PyQt6 not available, cannot create memory monitor")
         return None
 
     widget = QWidget(parent)  # Set parent for proper widget hierarchy
@@ -281,7 +281,7 @@ def setup_memory_monitor(parent: Any) -> Optional[Any]:
 def setup_training_tab(parent: Any) -> Optional[Any]:
     """Set up the model training tab."""
     if not HAS_PYQT:
-        logger.warning("PyQt5 not available, cannot create training tab")
+        logger.warning("PyQt6 not available, cannot create training tab")
         return None
 
     tab = QWidget(parent)  # Set parent for proper widget hierarchy

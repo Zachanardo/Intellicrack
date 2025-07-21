@@ -1725,7 +1725,7 @@ def run_deep_cfg_analysis(app):
 def run_cfg_explorer(app):
     """Initialize and run the CFG explorer with GUI integration"""
     if not PYQT_AVAILABLE:
-        print("PyQt5 not available - cannot run GUI version")
+        print("PyQt6 not available - cannot run GUI version")
         return
 
     app.update_output.emit(log_message("[CFG Explorer] Initializing CFG explorer..."))

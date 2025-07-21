@@ -2,7 +2,7 @@
 
 This example demonstrates how to use the BackgroundModelLoader
 with QueuedProgressCallback for asynchronous model loading with
-progress tracking in a PyQt5 application.
+progress tracking in a PyQt6 application.
 
 Copyright (C) 2025 Zachary Flint
 """

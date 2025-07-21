@@ -1,6 +1,6 @@
 # Intellicrack User Interface
 
-The UI module provides a modern, professional graphical interface built with PyQt5 for cross-platform compatibility.
+The UI module provides a modern, professional graphical interface built with PyQt6 for cross-platform compatibility.
 
 ## Architecture Overview
 
@@ -107,7 +107,7 @@ The main interface uses a professional three-panel design:
 
 ```python
 from intellicrack.ui.main_app import IntellicracApp
-from PyQt5.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication
 import sys
 
 # Create application
@@ -123,7 +123,7 @@ sys.exit(app.exec_())
 
 ```python
 from intellicrack.ui.widgets.widget_factory import WidgetFactory
-from PyQt5.QtWidgets import QWidget
+from PyQt6.QtWidgets import QWidget
 
 class CustomAnalysisWidget(QWidget):
     def __init__(self, parent=None):
@@ -201,7 +201,7 @@ class MyWidget(QWidget):
 
 ### Custom Events
 ```python
-from PyQt5.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSignal
 
 class AnalysisWidget(QWidget):
     analysis_completed = pyqtSignal(dict)
@@ -257,7 +257,7 @@ if prefs.exec_() == QDialog.Accepted:
 
 ### Persistent UI State
 ```python
-from PyQt5.QtCore import QSettings
+from PyQt6.QtCore import QSettings
 
 class MainWindow(QMainWindow):
     def save_state(self):
@@ -285,7 +285,7 @@ class MainWindow(QMainWindow):
 
 ### Threading
 ```python
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal
 
 class AnalysisThread(QThread):
     progress_updated = pyqtSignal(int)
@@ -317,8 +317,8 @@ class AnalysisThread(QThread):
 ### Unit Testing
 ```python
 import unittest
-from PyQt5.QtTest import QTest
-from PyQt5.QtCore import Qt
+from PyQt6.QtTest import QTest
+from PyQt6.QtCore import Qt
 
 class TestAnalysisWidget(unittest.TestCase):
     def setUp(self):
@@ -389,7 +389,7 @@ def print_widget_tree(widget, indent=0):
 ## Development Guidelines
 
 ### Code Style
-- Follow PyQt5 naming conventions
+- Follow PyQt6 naming conventions
 - Use meaningful widget names
 - Group related functionality
 - Document complex UI logic

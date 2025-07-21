@@ -784,7 +784,7 @@ class AIAssistantTab(BaseTab):
                         analysis_text += f"  - [{i+1}] {section.get('name', 'Unknown')}: {perms} ({size:,} bytes, entropy: {entropy:.2f})\n"
                     analysis_text += "\n"
             except Exception as e:
-                logger.debug(f"Binary analyzer failed: {e}")
+                self.log_message(f"Binary analyzer failed: {e}", "debug")
                 analysis_text += f"[!] Binary analysis unavailable: {str(e)}\n\n"
 
             # Enhanced PE analysis with advanced features
@@ -813,7 +813,7 @@ class AIAssistantTab(BaseTab):
                 )
 
             except Exception as e:
-                logger.debug(f"PE parsing failed: {e}")
+                self.log_message(f"PE parsing failed: {e}", "debug")
                 analysis_text += "[!] PE Format: Analysis failed (may be packed/obfuscated)\n\n"
 
             # Dynamic analysis capabilities
@@ -834,7 +834,7 @@ class AIAssistantTab(BaseTab):
                             f"  - Suspicious Behavior: {len(dynamic_results.get('suspicious_behaviors', []))}\n\n"
                         )
                 except Exception as e:
-                    logger.debug(f"Dynamic analysis failed: {e}")
+                    self.log_message(f"Dynamic analysis failed: {e}", "debug")
 
             # Enhanced string analysis with categorization
             strings = string_extractor.extract_strings(binary_path)
@@ -880,7 +880,7 @@ class AIAssistantTab(BaseTab):
                         analysis_text += "[+] AI-Generated Insights:\n"
                         analysis_text += f"{ai_analysis}\n\n"
                 except Exception as e:
-                    logger.debug(f"AI analysis failed: {e}")
+                    self.log_message(f"AI analysis failed: {e}", "debug")
 
             # Recommendations based on analysis
             recommendations = self._generate_analysis_recommendations(focus, depth)
@@ -1375,934 +1375,932 @@ class AIAssistantTab(BaseTab):
 
     def _perform_security_audit(self, pe, strings, file_data):
         """Security audit analysis."""
-analysis = "[+] Enhanced Security Audit:\n"
+        analysis = "[+] Enhanced Security Audit:\n"
 
-# Cryptographic functions
-crypto_functions = []
-crypto_strings = [
-"CryptGenKey",
-"CryptEncrypt",
-"CryptDecrypt",
-"CryptHashData",
-"BCryptGenRandom",
-"BCryptEncrypt",
-"BCryptDecrypt",
-"AES",
-"DES",
-"RSA",
-"SHA",
-"MD5",
-]
+        # Cryptographic functions
+        crypto_functions = []
+        crypto_strings = [
+            "CryptGenKey",
+            "CryptEncrypt",
+            "CryptDecrypt",
+            "CryptHashData",
+            "BCryptGenRandom",
+            "BCryptEncrypt",
+            "BCryptDecrypt",
+            "AES",
+            "DES",
+            "RSA",
+            "SHA",
+            "MD5",
+        ]
 
-for string in strings:
-if any(crypto in string for crypto in crypto_strings):
-crypto_functions.append(string)
+        for string in strings:
+            if any(crypto in string for crypto in crypto_strings):
+                crypto_functions.append(string)
 
-analysis += f"  - Cryptographic Functions: {len(crypto_functions)}\n"
-for func in crypto_functions[:5]:
-analysis += f"│    - {func}\n"
+        analysis += f"  - Cryptographic Functions: {len(crypto_functions)}\n"
+        for func in crypto_functions[:5]:
+            analysis += f"│    - {func}\n"
 
-# Authentication mechanisms
-auth_indicators = []
-auth_strings = ["password", "username", "login", "authenticate", "credential", "token", "session", "cookie"]
+        # Authentication mechanisms
+        auth_indicators = []
+        auth_strings = ["password", "username", "login", "authenticate", "credential", "token", "session", "cookie"]
 
-for string in strings:
-if any(auth.lower() in string.lower() for auth in auth_strings):
-auth_indicators.append(string)
+        for string in strings:
+            if any(auth.lower() in string.lower() for auth in auth_strings):
+                auth_indicators.append(string)
 
-analysis += f"  - Authentication Elements: {len(auth_indicators)}\n"
-for indicator in auth_indicators[:3]:
-display_str = indicator[:40] + "..." if len(indicator) > 40 else indicator
-analysis += f"│    - {display_str}\n"
+        analysis += f"  - Authentication Elements: {len(auth_indicators)}\n"
+        for indicator in auth_indicators[:3]:
+            display_str = indicator[:40] + "..." if len(indicator) > 40 else indicator
+            analysis += f"│    - {display_str}\n"
 
-# Input validation
-validation_functions = []
-validation_strings = ["validate", "sanitize", "filter", "escape", "strlen", "strnlen", "wcslen", "wcsnlen"]
+        # Input validation
+        validation_functions = []
+        validation_strings = ["validate", "sanitize", "filter", "escape", "strlen", "strnlen", "wcslen", "wcsnlen"]
 
-for string in strings:
-if any(val in string.lower() for val in validation_strings):
-validation_functions.append(string)
+        for string in strings:
+            if any(val in string.lower() for val in validation_strings):
+                validation_functions.append(string)
 
-analysis += f"  - Input Validation: {len(validation_functions)}\n"
-for func in validation_functions[:3]:
-analysis += f"│    - {func}\n"
+        analysis += f"  - Input Validation: {len(validation_functions)}\n"
+        for func in validation_functions[:3]:
+            analysis += f"│    - {func}\n"
 
-# Secure coding practices
-secure_indicators = []
-secure_strings = [
-"SecureZeroMemory",
-"CryptProtectData",
-"CryptUnprotectData",
-"GetSecurityInfo",
-"SetSecurityInfo",
-]
+        # Secure coding practices
+        secure_indicators = []
+        secure_strings = [
+            "SecureZeroMemory",
+            "CryptProtectData",
+            "CryptUnprotectData",
+            "GetSecurityInfo",
+            "SetSecurityInfo",
+        ]
 
-for string in strings:
-if any(secure in string for secure in secure_strings):
-secure_indicators.append(string)
+        for string in strings:
+            if any(secure in string for secure in secure_strings):
+                secure_indicators.append(string)
 
-analysis += f"  - Secure APIs: {len(secure_indicators)}\n"
-for indicator in secure_indicators[:3]:
-analysis += f"│    - {indicator}\n"
+        analysis += f"  - Secure APIs: {len(secure_indicators)}\n"
+        for indicator in secure_indicators[:3]:
+            analysis += f"│    - {indicator}\n"
 
-analysis += "  - Security Recommendations:\n"
-if not crypto_functions:
-analysis += "     - Consider adding encryption for sensitive data\n"
-if not validation_functions:
-analysis += "     - Implement input validation\n"
-if not secure_indicators:
-analysis += "     - Use secure memory management APIs\n"
-analysis += "     - Regular security testing recommended\n"
+        analysis += "  - Security Recommendations:\n"
+        if not crypto_functions:
+            analysis += "     - Consider adding encryption for sensitive data\n"
+        if not validation_functions:
+            analysis += "     - Implement input validation\n"
+        if not secure_indicators:
+            analysis += "     - Use secure memory management APIs\n"
+        analysis += "     - Regular security testing recommended\n"
 
-return analysis + "\n"
+        return analysis + "\n"
 
     def _perform_enhanced_analysis(self, pe, strings, file_data):
         """General enhanced analysis."""
-analysis = "[+] General Enhanced Analysis:\n"
+        analysis = "[+] General Enhanced Analysis:\n"
 
-# File operations
-file_ops = []
-file_strings = [
-"CreateFile",
-"ReadFile",
-"WriteFile",
-"DeleteFile",
-"FindFirstFile",
+        # File operations
+        file_ops = []
+        file_strings = [
+            "CreateFile",
+            "ReadFile",
+            "WriteFile",
+            "DeleteFile",
+            "FindFirstFile",
 "FindNextFile",
 "GetFileAttributes",
-]
+        ]
 
-for string in strings:
-if any(op in string for op in file_strings):
-file_ops.append(string)
+        for string in strings:
+            if any(op in string for op in file_strings):
+                file_ops.append(string)
 
-analysis += f"  - File Operations: {len(file_ops)}\n"
-for op in file_ops[:3]:
-analysis += f"│    - {op}\n"
+        analysis += f"  - File Operations: {len(file_ops)}\n"
+        for op in file_ops[:3]:
+            analysis += f"│    - {op}\n"
 
-# Registry operations
-registry_ops = []
-registry_strings = [
-"RegOpenKey",
-"RegCreateKey",
-"RegSetValue",
-"RegQueryValue",
-"RegDeleteKey",
-"RegDeleteValue",
-"RegEnumKey",
-]
+        # Registry operations
+        registry_ops = []
+        registry_strings = [
+            "RegOpenKey",
+            "RegCreateKey",
+            "RegSetValue",
+            "RegQueryValue",
+            "RegDeleteKey",
+            "RegDeleteValue",
+            "RegEnumKey",
+        ]
 
-for string in strings:
-if any(op in string for op in registry_strings):
-registry_ops.append(string)
+        for string in strings:
+            if any(op in string for op in registry_strings):
+                registry_ops.append(string)
 
-analysis += f"  - Registry Operations: {len(registry_ops)}\n"
-for op in registry_ops[:3]:
-analysis += f"│    - {op}\n"
+        analysis += f"  - Registry Operations: {len(registry_ops)}\n"
+        for op in registry_ops[:3]:
+            analysis += f"│    - {op}\n"
 
-# Process operations
-process_ops = []
-process_strings = [
-"CreateProcess",
-"TerminateProcess",
-"OpenProcess",
-"GetCurrentProcess",
-"WaitForSingleObject",
-]
+        # Process operations
+        process_ops = []
+        process_strings = [
+            "CreateProcess",
+            "TerminateProcess",
+            "OpenProcess",
+            "GetCurrentProcess",
+            "WaitForSingleObject",
+        ]
 
-for string in strings:
-if any(op in string for op in process_strings):
-process_ops.append(string)
+        for string in strings:
+            if any(op in string for op in process_strings):
+                process_ops.append(string)
 
-analysis += f"  - Process Operations: {len(process_ops)}\n"
-for op in process_ops[:3]:
-analysis += f"│    - {op}\n"
+        analysis += f"  - Process Operations: {len(process_ops)}\n"
+        for op in process_ops[:3]:
+            analysis += f"│    - {op}\n"
 
-# Threading operations
-thread_ops = []
-thread_strings = [
-"CreateThread",
-"ExitThread",
-"SuspendThread",
-"ResumeThread",
-"GetThreadContext",
-"SetThreadContext",
-]
+        # Threading operations
+        thread_ops = []
+        thread_strings = [
+            "CreateThread",
+            "ExitThread",
+            "SuspendThread",
+            "ResumeThread",
+            "GetThreadContext",
+            "SetThreadContext",
+        ]
 
-for string in strings:
-if any(op in string for op in thread_strings):
-thread_ops.append(string)
+        for string in strings:
+            if any(op in string for op in thread_strings):
+                thread_ops.append(string)
 
-analysis += f"  - Threading Operations: {len(thread_ops)}\n"
-for op in thread_ops[:3]:
-analysis += f"     - {op}\n"
+        analysis += f"  - Threading Operations: {len(thread_ops)}\n"
+        for op in thread_ops[:3]:
+            analysis += f"     - {op}\n"
 
-return analysis + "\n"
+        return analysis + "\n"
 
     def _generate_analysis_recommendations(self, focus, depth):
         """Generate actionable recommendations based on analysis."""
-recommendations = []
+        recommendations = []
 
-if focus == "License Detection":
-recommendations.extend(
-[
-"Use dynamic analysis to trace license validation routines",
-"Monitor registry access during license checks",
-"Analyze network communication for online license validation",
-"Check for hardware fingerprinting in license mechanism",
-]
-)
-elif focus == "Protection Analysis":
-recommendations.extend(
-[
-"Consider unpacking if high entropy sections detected",
-"Use anti-anti-debug techniques for protected binaries",
-"Analyze in isolated VM environment",
-"Monitor API calls during execution",
-]
-)
-elif focus == "Vulnerability Research":
-recommendations.extend(
-[
-"Focus on input validation in identified dangerous functions",
-"Test network input handling for buffer overflows",
-"Examine format string vulnerabilities",
-"Consider targeted fuzzing for specific components",
-]
-)
+        if focus == "License Detection":
+            recommendations.extend(
+                [
+                    "Use dynamic analysis to trace license validation routines",
+                    "Monitor registry access during license checks",
+                    "Analyze network communication for online license validation",
+                    "Check for hardware fingerprinting in license mechanism",
+                ]
+            )
+        elif focus == "Protection Analysis":
+            recommendations.extend(
+                [
+                    "Consider unpacking if high entropy sections detected",
+                    "Use anti-anti-debug techniques for protected binaries",
+                    "Analyze in isolated VM environment",
+                    "Monitor API calls during execution",
+                ]
+            )
+        elif focus == "Vulnerability Research":
+            recommendations.extend(
+                [
+                    "Focus on input validation in identified dangerous functions",
+                    "Test network input handling for buffer overflows",
+                    "Examine format string vulnerabilities",
+                    "Consider targeted fuzzing for specific components",
+                ]
+            )
 
-elif focus == "Security Audit":
-recommendations.extend(
-[
-"Review cryptographic implementations",
-"Assess input validation mechanisms",
-"Check authentication and authorization",
-"Evaluate secure coding practices",
-]
-)
-else:
-recommendations.extend(
-[
-"Start with static analysis of imports and strings",
-"Use dynamic analysis to understand runtime behavior",
-"Focus on interesting strings and API calls",
-"Consider reverse engineering specific functions",
-]
-)
+        elif focus == "Security Audit":
+            recommendations.extend(
+                [
+                    "Review cryptographic implementations",
+                    "Assess input validation mechanisms",
+                    "Check authentication and authorization",
+                    "Evaluate secure coding practices",
+                ]
+            )
+        else:
+            recommendations.extend(
+                [
+                    "Start with static analysis of imports and strings",
+                    "Use dynamic analysis to understand runtime behavior",
+                    "Focus on interesting strings and API calls",
+                    "Consider reverse engineering specific functions",
+                ]
+            )
 
-# Add depth-specific recommendations
-if depth in ["Deep Analysis", "Comprehensive"]:
-recommendations.extend(
-[
-"Perform control flow graph analysis",
-"Use symbolic execution for path exploration",
-"Apply machine learning for pattern recognition",
-]
-)
+        # Add depth-specific recommendations
+        if depth in ["Deep Analysis", "Comprehensive"]:
+            recommendations.extend(
+                [
+                    "Perform control flow graph analysis",
+                    "Use symbolic execution for path exploration",
+                    "Apply machine learning for pattern recognition",
+                ]
+            )
 
-return recommendations[:8]  # Limit to 8 recommendations
+        return recommendations[:8]  # Limit to 8 recommendations
 
     def _detect_advanced_protections(self, pe, strings, file_data, binary_path):
         """Advanced protection detection using multiple techniques."""
-protections = {
-"packers": [],
-"protectors": [],
-"obfuscators": [],
-"anti_analysis": [],
-"code_injection": [],
-"virtualization": [],
-}
+        protections = {
+            "packers": [],
+            "protectors": [],
+            "obfuscators": [],
+            "anti_analysis": [],
+            "code_injection": [],
+            "virtualization": [],
+        }
 
-# Enhanced packer signatures
-packer_signatures = {
-"UPX": [b"UPX!", b"UPX0", b"UPX1", b"UPX2", b"$Id: UPX"],
-"ASPack": [b"aPSPack", b"ASPack", b".aspack", b"asPack"],
-"PECompact": [b"PECompact", b"pec1", b"pec2", b"PEC2TO"],
-"FSG": [b"FSG!", b"FSG ", b"FSG1", b"FSG2"],
-"MEW": [b"MEW ", b"MEW1", b"MEW2"],
-"Petite": [b"Petite", b"petite"],
-"NsPack": [b"NsPack", b"nsp1", b"nsp2"],
-"WWPack": [b"WWPack32", b"WWPACK"],
-"tElock": [b"tElock", b"TELOCK"],
-"Yoda": [b"Yoda's", b"YodaProtector"],
-"CrypKey": [b"CrypKey", b"CRYPKEY"],
-"Enigma": [b"Enigma", b"ENIGMA"],
-"ExeCryptor": [b"ExeCryptor", b"EXECRYPTOR"],
-"PESpin": [b"PESpin", b"PESPIN"],
-"ASProtect": [b"ASProtect", b"ASPROTECT"],
-"BobSoft": [b"BobSoft", b"BOBSOFT"],
-"PEBundle": [b"PEBundle", b"PEBUNDLE"],
-"WinUpack": [b"WinUpack", b"WINUPACK"],
-}
+        # Enhanced packer signatures
+        packer_signatures = {
+            "UPX": [b"UPX!", b"UPX0", b"UPX1", b"UPX2", b"$Id: UPX"],
+            "ASPack": [b"aPSPack", b"ASPack", b".aspack", b"asPack"],
+            "PECompact": [b"PECompact", b"pec1", b"pec2", b"PEC2TO"],
+            "FSG": [b"FSG!", b"FSG ", b"FSG1", b"FSG2"],
+            "MEW": [b"MEW ", b"MEW1", b"MEW2"],
+            "Petite": [b"Petite", b"petite"],
+            "NsPack": [b"NsPack", b"nsp1", b"nsp2"],
+            "WWPack": [b"WWPack32", b"WWPACK"],
+            "tElock": [b"tElock", b"TELOCK"],
+            "Yoda": [b"Yoda's", b"YodaProtector"],
+            "CrypKey": [b"CrypKey", b"CRYPKEY"],
+            "Enigma": [b"Enigma", b"ENIGMA"],
+            "ExeCryptor": [b"ExeCryptor", b"EXECRYPTOR"],
+            "PESpin": [b"PESpin", b"PESPIN"],
+            "ASProtect": [b"ASProtect", b"ASPROTECT"],
+            "BobSoft": [b"BobSoft", b"BOBSOFT"],
+            "PEBundle": [b"PEBundle", b"PEBUNDLE"],
+            "WinUpack": [b"WinUpack", b"WINUPACK"],
+        }
 
-# Advanced protector signatures
-protector_signatures = {
-"Themida": [b"Themida", b"WinLicense", b"Oreans", b"SecuROM"],
-"VMProtect": [b"VMProtect", b"VMP", b"PolyTech"],
-"Armadillo": [b"Armadillo", b"ARMADILLOv", b"Silicon Realms"],
-"SafeDisc": [b"SafeDisc", b"SAFEDISC", b"Macrovision"],
-"StarForce": [b"StarForce", b"STARFORCE", b"Protection Technology"],
-"SecuROM": [b"SecuROM", b"SECUROM", b"Sony DADC"],
-"Denuvo": [b"Denuvo", b"DENUVO", b"Irdeto"],
-"HASP": [b"HASP", b"Sentinel", b"SafeNet"],
-"CodeMeter": [b"CodeMeter", b"WIBU"],
-"FlexLM": [b"FlexLM", b"FLEXLM", b"Flexera"],
-"Guardant": [b"Guardant", b"GUARDANT"],
+        # Advanced protector signatures
+        protector_signatures = {
+            "Themida": [b"Themida", b"WinLicense", b"Oreans", b"SecuROM"],
+            "VMProtect": [b"VMProtect", b"VMP", b"PolyTech"],
+            "Armadillo": [b"Armadillo", b"ARMADILLOv", b"Silicon Realms"],
+            "SafeDisc": [b"SafeDisc", b"SAFEDISC", b"Macrovision"],
+            "StarForce": [b"StarForce", b"STARFORCE", b"Protection Technology"],
+            "SecuROM": [b"SecuROM", b"SECUROM", b"Sony DADC"],
+            "Denuvo": [b"Denuvo", b"DENUVO", b"Irdeto"],
+            "HASP": [b"HASP", b"Sentinel", b"SafeNet"],
+            "CodeMeter": [b"CodeMeter", b"WIBU"],
+            "FlexLM": [b"FlexLM", b"FLEXLM", b"Flexera"],
+            "Guardant": [b"Guardant", b"GUARDANT"],
 "PACE": [b"PACE Anti-Piracy", b"iLok"],
 "LockIt": [b"Lock-It!", b"LOCK-IT"],
 "SGK": [b"SuperPro", b"Rainbow"],
 "ELMLicense": [b"ELMLicense", b"ELMLICENSE"],
 }
 
-# Virtualization/Code protection signatures
-virtualization_signatures = {
-"Code Virtualizer": [b"Code Virtualizer", b"CODEVIRTUALIZER"],
-"WinLicense": [b"WinLicense", b"WINLICENSE"],
-"VMProtect Ultimate": [b"VMProtect Ultimate", b"VMPROTECT_ULTIMATE"],
-"Enigma VirtualBox": [b"Enigma VirtualBox", b"ENIGMA_VIRTUALBOX"],
-"BoxedApp": [b"BoxedApp", b"BOXEDAPP"],
-"Molebox": [b"Molebox", b"MOLEBOX"],
-"Thinstall": [b"Thinstall", b"THINSTALL"],
-"Cameyo": [b"Cameyo", b"CAMEYO"],
-}
+        # Virtualization/Code protection signatures
+        virtualization_signatures = {
+            "Code Virtualizer": [b"Code Virtualizer", b"CODEVIRTUALIZER"],
+            "WinLicense": [b"WinLicense", b"WINLICENSE"],
+            "VMProtect Ultimate": [b"VMProtect Ultimate", b"VMPROTECT_ULTIMATE"],
+            "Enigma VirtualBox": [b"Enigma VirtualBox", b"ENIGMA_VIRTUALBOX"],
+            "BoxedApp": [b"BoxedApp", b"BOXEDAPP"],
+            "Molebox": [b"Molebox", b"MOLEBOX"],
+            "Thinstall": [b"Thinstall", b"THINSTALL"],
+            "Cameyo": [b"Cameyo", b"CAMEYO"],
+        }
 
-# Obfuscation signatures
-obfuscation_signatures = {
-"ConfuserEx": [b"ConfuserEx", b"CONFUSEREX"],
-"Obfuscar": [b"Obfuscar", b"OBFUSCAR"],
-"SmartAssembly": [b"SmartAssembly", b"SMARTASSEMBLY"],
-"Dotfuscator": [b"Dotfuscator", b"DOTFUSCATOR"],
-"Eazfuscator": [b"Eazfuscator", b"EAZFUSCATOR"],
-"Code Obfuscator": [b"Code Obfuscator", b"CODEOBFUSCATOR"],
-"Babel Obfuscator": [b"Babel", b"BABEL"],
-"Reactor": [b"Reactor", b"REACTOR"],
-"Xenocode": [b"Xenocode", b"XENOCODE"],
-}
+        # Obfuscation signatures
+        obfuscation_signatures = {
+            "ConfuserEx": [b"ConfuserEx", b"CONFUSEREX"],
+            "Obfuscar": [b"Obfuscar", b"OBFUSCAR"],
+            "SmartAssembly": [b"SmartAssembly", b"SMARTASSEMBLY"],
+            "Dotfuscator": [b"Dotfuscator", b"DOTFUSCATOR"],
+            "Eazfuscator": [b"Eazfuscator", b"EAZFUSCATOR"],
+            "Code Obfuscator": [b"Code Obfuscator", b"CODEOBFUSCATOR"],
+            "Babel Obfuscator": [b"Babel", b"BABEL"],
+            "Reactor": [b"Reactor", b"REACTOR"],
+            "Xenocode": [b"Xenocode", b"XENOCODE"],
+        }
 
-# Scan for all protection types
-all_signatures = {
-"packers": packer_signatures,
-"protectors": protector_signatures,
-"obfuscators": obfuscation_signatures,
-"virtualization": virtualization_signatures,
-}
+        # Scan for all protection types
+        all_signatures = {
+            "packers": packer_signatures,
+            "protectors": protector_signatures,
+            "obfuscators": obfuscation_signatures,
+            "virtualization": virtualization_signatures,
+        }
 
-for category, signature_dict in all_signatures.items():
-for protection_name, signatures in signature_dict.items():
-for signature in signatures:
-if signature in file_data:
-protections[category].append(protection_name)
-break
+        for category, signature_dict in all_signatures.items():
+            for protection_name, signatures in signature_dict.items():
+                for signature in signatures:
+                    if signature in file_data:
+                        protections[category].append(protection_name)
+                        break
 
-# Anti-analysis techniques detection
-anti_analysis_indicators = {
-"Anti-Debug": [
-"IsDebuggerPresent",
-"CheckRemoteDebuggerPresent",
-"OutputDebugString",
-"NtQueryInformationProcess",
-"NtSetInformationThread",
-"KiFastSystemCall",
-"DbgBreakPoint",
-"DbgUserBreakPoint",
-"ZwQueryInformationProcess",
-"ProcessDebugPort",
-"ProcessDebugObjectHandle",
-"ProcessDebugFlags",
-],
-"Anti-VM": [
-"VMware",
-"VirtualBox",
-"QEMU",
-"Xen",
-"Parallels",
-"VirtualPC",
-"vmtoolsd",
-"VBoxService",
-"vmmouse",
-"vmhgfs",
-"vmsrvc",
-"VBoxTray",
-"VBoxControl",
-"vmwareuser",
-"vmwaretray",
-],
-"Anti-Sandbox": [
-"Sandboxie",
-"SbieDll",
-"SboxDll",
-"cmdvrt32",
-"Anubis",
-"ThreatAnalyzer",
-"CWSandbox",
-"Joe Sandbox",
-"Cuckoo",
-"WinAPIOverride",
-"apimonitor",
-"detours",
-],
-"Anti-Emulation": [
-"Wine",
-"user32.dll",
-"GetVersion",
-"GetVersionEx",
-"CPUID",
-"rdtsc",
-"QueryPerformanceCounter",
-"GetTickCount",
-"timeGetTime",
-"GetSystemTime",
-],
-}
+        # Anti-analysis techniques detection
+        anti_analysis_indicators = {
+            "Anti-Debug": [
+                "IsDebuggerPresent",
+                "CheckRemoteDebuggerPresent",
+                "OutputDebugString",
+                "NtQueryInformationProcess",
+                "NtSetInformationThread",
+                "KiFastSystemCall",
+                "DbgBreakPoint",
+                "DbgUserBreakPoint",
+                "ZwQueryInformationProcess",
+                "ProcessDebugPort",
+                "ProcessDebugObjectHandle",
+                "ProcessDebugFlags",
+            ],
+            "Anti-VM": [
+                "VMware",
+                "VirtualBox",
+                "QEMU",
+                "Xen",
+                "Parallels",
+                "VirtualPC",
+                "vmtoolsd",
+                "VBoxService",
+                "vmmouse",
+                "vmhgfs",
+                "vmsrvc",
+                "VBoxTray",
+                "VBoxControl",
+                "vmwareuser",
+                "vmwaretray",
+            ],
+            "Anti-Sandbox": [
+                "Sandboxie",
+                "SbieDll",
+                "SboxDll",
+                "cmdvrt32",
+                "Anubis",
+                "ThreatAnalyzer",
+                "CWSandbox",
+                "Joe Sandbox",
+                "Cuckoo",
+                "WinAPIOverride",
+                "apimonitor",
+                "detours",
+            ],
+            "Anti-Emulation": [
+                "Wine",
+                "user32.dll",
+                "GetVersion",
+                "GetVersionEx",
+                "CPUID",
+                "rdtsc",
+                "QueryPerformanceCounter",
+                "GetTickCount",
+                "timeGetTime",
+                "GetSystemTime",
+            ],
+        }
 
-for category, indicators in anti_analysis_indicators.items():
-detected = []
-for indicator in indicators:
-for string in strings:
-if indicator.lower() in string.lower():
-detected.append(indicator)
-break
-if detected:
-protections["anti_analysis"].append(
-{"category": category, "indicators": detected[:5]}  # Limit to first 5
-)
+        for category, indicators in anti_analysis_indicators.items():
+            detected = []
+            for indicator in indicators:
+                for string in strings:
+                    if indicator.lower() in string.lower():
+                        detected.append(indicator)
+                        break
+            if detected:
+                protections["anti_analysis"].append(
+                    {"category": category, "indicators": detected[:5]}  # Limit to first 5
+                )
 
-# Code injection detection
-injection_indicators = [
-"VirtualAlloc",
-"VirtualProtect",
-"WriteProcessMemory",
-"CreateRemoteThread",
-"SetWindowsHookEx",
-"NtMapViewOfSection",
-"ZwMapViewOfSection",
-"RtlCreateUserThread",
-"NtCreateThread",
-"ZwCreateThread",
-"LoadLibrary",
-"GetProcAddress",
-"DllInject",
-"Process32First",
-"Process32Next",
-"CreateToolhelp32Snapshot",
-]
+        # Code injection detection
+        injection_indicators = [
+            "VirtualAlloc",
+            "VirtualProtect",
+            "WriteProcessMemory",
+            "CreateRemoteThread",
+            "SetWindowsHookEx",
+            "NtMapViewOfSection",
+            "ZwMapViewOfSection",
+            "RtlCreateUserThread",
+            "NtCreateThread",
+            "ZwCreateThread",
+            "LoadLibrary",
+            "GetProcAddress",
+            "DllInject",
+            "Process32First",
+            "Process32Next",
+            "CreateToolhelp32Snapshot",
+        ]
 
-detected_injection = []
-for indicator in injection_indicators:
-for string in strings:
-if indicator.lower() in string.lower():
-detected_injection.append(indicator)
-break
+        detected_injection = []
+        for indicator in injection_indicators:
+            for string in strings:
+                if indicator.lower() in string.lower():
+                    detected_injection.append(indicator)
+                    break
 
-if detected_injection:
-protections["code_injection"] = detected_injection[:10]
+        if detected_injection:
+            protections["code_injection"] = detected_injection[:10]
 
-return protections
+        return protections
 
     def _analyze_pe_anomalies(self, pe):
         """Analyze PE file for structural anomalies that indicate protection."""
-anomalies = []
+        anomalies = []
 
-try:
-# Check for unusual section names
-common_sections = {".text", ".data", ".rdata", ".rsrc", ".reloc", ".idata", ".edata", ".bss"}
-for section in pe.sections:
-section_name = section.Name.decode().rstrip("\x00")
-if section_name not in common_sections and not section_name.startswith(".debug"):
-anomalies.append(f"Unusual section name: {section_name}")
+        try:
+            # Check for unusual section names
+            common_sections = {".text", ".data", ".rdata", ".rsrc", ".reloc", ".idata", ".edata", ".bss"}
+            for section in pe.sections:
+                section_name = section.Name.decode().rstrip("\x00")
+                if section_name not in common_sections and not section_name.startswith(".debug"):
+                    anomalies.append(f"Unusual section name: {section_name}")
 
-# Check for overlapping sections
-sections_data = []
-for section in pe.sections:
-sections_data.append(
-{
-"name": section.Name.decode().rstrip("\x00"),
-"virtual_address": section.VirtualAddress,
-"virtual_size": section.Misc_VirtualSize,
-"raw_address": section.PointerToRawData,
-"raw_size": section.SizeOfRawData,
-}
-)
+            # Check for overlapping sections
+            sections_data = []
+            for section in pe.sections:
+                sections_data.append(
+                    {
+                        "name": section.Name.decode().rstrip("\x00"),
+                        "virtual_address": section.VirtualAddress,
+                        "virtual_size": section.Misc_VirtualSize,
+                        "raw_address": section.PointerToRawData,
+                        "raw_size": section.SizeOfRawData,
+                    }
+                )
 
-for i, section1 in enumerate(sections_data):
-for section2 in sections_data[i + 1 :]:
-# Check virtual address overlap
-if (
-section1["virtual_address"] < section2["virtual_address"] + section2["virtual_size"]
-and section2["virtual_address"] < section1["virtual_address"] + section1["virtual_size"]
-):
-anomalies.append(f"Virtual address overlap: {section1['name']} and {section2['name']}")
+            for i, section1 in enumerate(sections_data):
+                for section2 in sections_data[i + 1 :]:
+                    # Check virtual address overlap
+                    if (
+                        section1["virtual_address"] < section2["virtual_address"] + section2["virtual_size"]
+                        and section2["virtual_address"] < section1["virtual_address"] + section1["virtual_size"]
+                    ):
+                        anomalies.append(f"Virtual address overlap: {section1['name']} and {section2['name']}")
 
-# Check raw address overlap
-if (
-section1["raw_address"] < section2["raw_address"] + section2["raw_size"]
-and section2["raw_address"] < section1["raw_address"] + section1["raw_size"]
-):
-anomalies.append(f"Raw address overlap: {section1['name']} and {section2['name']}")
+                    # Check raw address overlap
+                    if (
+                        section1["raw_address"] < section2["raw_address"] + section2["raw_size"]
+                        and section2["raw_address"] < section1["raw_address"] + section1["raw_size"]
+                    ):
+                        anomalies.append(f"Raw address overlap: {section1['name']} and {section2['name']}")
 
-# Check for suspicious characteristics
-characteristics = pe.FILE_HEADER.Characteristics
-if characteristics & 0x0001:  # IMAGE_FILE_RELOCS_STRIPPED
-anomalies.append("Relocations stripped (unusual for executables)")
+            # Check for suspicious characteristics
+            characteristics = pe.FILE_HEADER.Characteristics
+            if characteristics & 0x0001:  # IMAGE_FILE_RELOCS_STRIPPED
+                anomalies.append("Relocations stripped (unusual for executables)")
 
-if characteristics & 0x0004:  # IMAGE_FILE_LINE_NUMBERS_STRIPPED
-anomalies.append("Line numbers stripped")
+            if characteristics & 0x0004:  # IMAGE_FILE_LINE_NUMBERS_STRIPPED
+                anomalies.append("Line numbers stripped")
 
-if characteristics & 0x0008:  # IMAGE_FILE_LOCAL_SYMS_STRIPPED
-anomalies.append("Local symbols stripped")
+            if characteristics & 0x0008:  # IMAGE_FILE_LOCAL_SYMS_STRIPPED
+                anomalies.append("Local symbols stripped")
 
-# Check optional header anomalies
-if hasattr(pe, "OPTIONAL_HEADER"):
-# Unusual entry point
-entry_point = pe.OPTIONAL_HEADER.AddressOfEntryPoint
-found_in_section = False
-for section in pe.sections:
-if section.VirtualAddress <= entry_point < section.VirtualAddress + section.Misc_VirtualSize:
-section_name = section.Name.decode().rstrip("\x00")
-if section_name != ".text":
-anomalies.append(f"Entry point in unusual section: {section_name}")
-found_in_section = True
-break
+            # Check optional header anomalies
+            if hasattr(pe, "OPTIONAL_HEADER"):
+                # Unusual entry point
+                entry_point = pe.OPTIONAL_HEADER.AddressOfEntryPoint
+                found_in_section = False
+                for section in pe.sections:
+                    if section.VirtualAddress <= entry_point < section.VirtualAddress + section.Misc_VirtualSize:
+                        section_name = section.Name.decode().rstrip("\x00")
+                        if section_name != ".text":
+                            anomalies.append(f"Entry point in unusual section: {section_name}")
+                        found_in_section = True
+                        break
 
-if not found_in_section:
-anomalies.append("Entry point not found in any section")
+                if not found_in_section:
+                    anomalies.append("Entry point not found in any section")
 
-# Check for unusual image base
-image_base = pe.OPTIONAL_HEADER.ImageBase
-if image_base != 0x400000 and image_base != 0x10000000:
-anomalies.append(f"Unusual image base: 0x{image_base:08x}")
+                # Check for unusual image base
+                image_base = pe.OPTIONAL_HEADER.ImageBase
+                if image_base != 0x400000 and image_base != 0x10000000:
+                    anomalies.append(f"Unusual image base: 0x{image_base:08x}")
 
-# Check subsystem
-subsystem = pe.OPTIONAL_HEADER.Subsystem
-if subsystem not in [1, 2, 3]:  # Native, GUI, Console
-anomalies.append(f"Unusual subsystem: {subsystem}")
+                # Check subsystem
+                subsystem = pe.OPTIONAL_HEADER.Subsystem
+                if subsystem not in [1, 2, 3]:  # Native, GUI, Console
+                    anomalies.append(f"Unusual subsystem: {subsystem}")
 
-# Check import table anomalies
-if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
-total_imports = 0
-for entry in pe.DIRECTORY_ENTRY_IMPORT:
-total_imports += len(entry.imports)
+            # Check import table anomalies
+            if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
+                total_imports = 0
+                for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                    total_imports += len(entry.imports)
 
-if total_imports < 5:
-anomalies.append(f"Very few imports detected: {total_imports}")
-elif total_imports > 1000:
-anomalies.append(f"Unusually many imports: {total_imports}")
-else:
-anomalies.append("No import table found")
+                if total_imports < 5:
+                    anomalies.append(f"Very few imports detected: {total_imports}")
+                elif total_imports > 1000:
+                    anomalies.append(f"Unusually many imports: {total_imports}")
+            else:
+                anomalies.append("No import table found")
 
-except Exception as e:
-anomalies.append(f"PE analysis error: {str(e)}")
+        except Exception as e:
+            anomalies.append(f"PE analysis error: {str(e)}")
 
-return anomalies
+        return anomalies
 
     def _detect_runtime_packers(self, binary_path):
         """Detect runtime packers using heuristic analysis."""
-runtime_indicators = []
+        runtime_indicators = []
 
-try:
-with open(binary_path, "rb") as f:
-# Read first 1024 bytes for analysis
-header_data = f.read(1024)
+        try:
+            with open(binary_path, "rb") as f:
+                # Read first 1024 bytes for analysis
+                header_data = f.read(1024)
 
-# Check for common runtime packer patterns
-packer_patterns = [
-(b"\\x60\\x8B\\x6C\\x24\\x24", "UPX stub pattern"),
-(b"\\x87\\x25\\x00\\x00\\x01\\x00", "ASPack pattern"),
-(b"\\x68\\x00\\x00\\x00\\x00\\x68", "Common packer prologue"),
-(b"\\xE8\\x00\\x00\\x00\\x00\\x5D", "GetPC thunk pattern"),
-(b"\\x55\\x8B\\xEC\\x83\\xEC", "Standard function prologue"),
-(b"\\x60\\x9C\\x33\\xC0\\x8B", "Pushad/Pushfd pattern"),
-]
+                # Check for common runtime packer patterns
+                packer_patterns = [
+                    (b"\\x60\\x8B\\x6C\\x24\\x24", "UPX stub pattern"),
+                    (b"\\x87\\x25\\x00\\x00\\x01\\x00", "ASPack pattern"),
+                    (b"\\x68\\x00\\x00\\x00\\x00\\x68", "Common packer prologue"),
+                    (b"\\xE8\\x00\\x00\\x00\\x00\\x5D", "GetPC thunk pattern"),
+                    (b"\\x55\\x8B\\xEC\\x83\\xEC", "Standard function prologue"),
+                    (b"\\x60\\x9C\\x33\\xC0\\x8B", "Pushad/Pushfd pattern"),
+                ]
 
-for pattern, description in packer_patterns:
-if pattern in header_data:
-runtime_indicators.append(description)
+                for pattern, description in packer_patterns:
+                    if pattern in header_data:
+                        runtime_indicators.append(description)
 
-# Seek to different file positions to check for packed data
-file_size = f.seek(0, 2)  # Seek to end to get size
-f.seek(0)  # Back to beginning
+                # Seek to different file positions to check for packed data
+                file_size = f.seek(0, 2)  # Seek to end to get size
+                f.seek(0)  # Back to beginning
 
-# Sample different areas of the file
-sample_positions = [0, file_size // 4, file_size // 2, 3 * file_size // 4]
-high_entropy_regions = 0
+                # Sample different areas of the file
+                sample_positions = [0, file_size // 4, file_size // 2, 3 * file_size // 4]
+                high_entropy_regions = 0
 
-for pos in sample_positions:
-if pos + 512 < file_size:
-f.seek(pos)
-sample = f.read(512)
-entropy = self._calculate_entropy(sample)
-if entropy > 7.5:
-high_entropy_regions += 1
+                for pos in sample_positions:
+                    if pos + 512 < file_size:
+                        f.seek(pos)
+                        sample = f.read(512)
+                        entropy = self._calculate_entropy(sample)
+                        if entropy > 7.5:
+                            high_entropy_regions += 1
 
-if high_entropy_regions >= 3:
-runtime_indicators.append(f"High entropy in {high_entropy_regions}/4 regions")
+                if high_entropy_regions >= 3:
+                    runtime_indicators.append(f"High entropy in {high_entropy_regions}/4 regions")
 
-except Exception as e:
-runtime_indicators.append(f"Runtime analysis error: {str(e)}")
+        except Exception as e:
+            runtime_indicators.append(f"Runtime analysis error: {str(e)}")
 
-return runtime_indicators
+        return runtime_indicators
 
     def _calculate_entropy(self, data):
         """Calculate Shannon entropy of data."""
-import math
-from collections import Counter
+        import math
+        from collections import Counter
 
-if len(data) == 0:
-return 0
+        if len(data) == 0:
+            return 0
 
-counter = Counter(data)
-entropy = 0
-data_len = len(data)
+        counter = Counter(data)
+        entropy = 0
+        data_len = len(data)
 
-for count in counter.values():
-freq = count / data_len
-entropy -= freq * math.log2(freq)
+        for count in counter.values():
+            freq = count / data_len
+            entropy -= freq * math.log2(freq)
 
-return entropy
+        return entropy
 
     def _detect_anti_analysis(self, strings):
         """Detect anti-analysis techniques from string analysis."""
-anti_analysis = {
-"debugger_detection": [],
-"vm_detection": [],
-"sandbox_detection": [],
-"analysis_tools": [],
-"evasion_techniques": [],
-}
+        anti_analysis = {
+            "debugger_detection": [],
+            "vm_detection": [],
+            "sandbox_detection": [],
+            "analysis_tools": [],
+            "evasion_techniques": [],
+        }
 
-patterns = {
-"debugger_detection": [
-"isdebuggerpresent",
-"checkremotedebuggerpresent",
-"outputdebugstring",
-"findwindow.*olly",
-"findwindow.*debug",
-"ntqueryinformationprocess",
-"zwqueryinformationprocess",
-"debugbreak",
-"int 3",
-"__debugbreak",
-"processdebugport",
-"processdebugflags",
-"heap flags",
-],
-"vm_detection": [
-"vmware",
-"virtualbox",
-"qemu",
-"xen",
-"parallels",
-"virtualpc",
-"vbox",
-"vmtoolsd",
-"vboxservice",
-"vmmouse",
-"vmhgfs",
-"redpill",
-"sidt",
-"sgdt",
-"sldt",
-"str",
-"cpuid",
-],
-"sandbox_detection": [
-"sandboxie",
-"anubis",
-"joesandbox",
-"cuckoo",
-"threatanalyzer",
-"cwsandbox",
-"norman",
-"sunbelt",
-"comodo",
-"malwr",
-"sleep",
-"delay",
-"timeout",
-"wait",
-],
-"analysis_tools": [
-"wireshark",
-"fiddler",
-"procmon",
-"process monitor",
-"regmon",
-"filemon",
-"apimonitor",
-"detours",
-"winapis",
-"ollydbg",
-"x32dbg",
-"x64dbg",
-"immunity",
-"ida",
-"ghidra",
-"radare",
-],
-"evasion_techniques": [
-"virtualalloc",
-"virtualprotect",
-"heapalloc",
-"getmodulehandle",
-"getprocaddress",
-"loadlibrary",
-"createthread",
-"createprocess",
-"writeprocessmemory",
-"readprocessmemory",
-"suspendthread",
-],
-}
+        patterns = {
+            "debugger_detection": [
+                "isdebuggerpresent",
+                "checkremotedebuggerpresent",
+                "outputdebugstring",
+                "findwindow.*olly",
+                "findwindow.*debug",
+                "ntqueryinformationprocess",
+                "zwqueryinformationprocess",
+                "debugbreak",
+                "int 3",
+                "__debugbreak",
+                "processdebugport",
+                "processdebugflags",
+                "heap flags",
+            ],
+            "vm_detection": [
+                "vmware",
+                "virtualbox",
+                "qemu",
+                "xen",
+                "parallels",
+                "virtualpc",
+                "vbox",
+                "vmtoolsd",
+                "vboxservice",
+                "vmmouse",
+                "vmhgfs",
+                "redpill",
+                "sidt",
+                "sgdt",
+                "sldt",
+                "str",
+                "cpuid",
+            ],
+            "sandbox_detection": [
+                "sandboxie",
+                "anubis",
+                "joesandbox",
+                "cuckoo",
+                "threatanalyzer",
+                "cwsandbox",
+                "norman",
+                "sunbelt",
+                "comodo",
+                "malwr",
+                "sleep",
+                "delay",
+                "timeout",
+                "wait",
+            ],
+            "analysis_tools": [
+                "wireshark",
+                "fiddler",
+                "procmon",
+                "process monitor",
+                "regmon",
+                "filemon",
+                "apimonitor",
+                "detours",
+                "winapis",
+                "ollydbg",
+                "x32dbg",
+                "x64dbg",
+                "immunity",
+                "ida",
+                "ghidra",
+                "radare",
+            ],
+            "evasion_techniques": [
+                "virtualalloc",
+                "virtualprotect",
+                "heapalloc",
+                "getmodulehandle",
+                "getprocaddress",
+                "loadlibrary",
+                "createthread",
+                "createprocess",
+                "writeprocessmemory",
+                "readprocessmemory",
+                "suspendthread",
+            ],
+        }
 
-for category, keywords in patterns.items():
-for string in strings:
-string_lower = string.lower()
-for keyword in keywords:
-if keyword in string_lower:
-anti_analysis[category].append(string)
-break
+        for category, keywords in patterns.items():
+            for string in strings:
+                string_lower = string.lower()
+                for keyword in keywords:
+                    if keyword in string_lower:
+                        anti_analysis[category].append(string)
+                        break
 
-# Limit results to prevent overwhelming output
-for category in anti_analysis:
-anti_analysis[category] = anti_analysis[category][:10]
+        # Limit results to prevent overwhelming output
+        for category in anti_analysis:
+            anti_analysis[category] = anti_analysis[category][:10]
 
-return anti_analysis
+        return anti_analysis
 
     def _generate_protection_report(self, protections, pe_anomalies, runtime_indicators, anti_analysis):
         """Generate comprehensive protection analysis report."""
-report = "[+] Comprehensive Protection Detection Report:\n"
-report += "=" * 60 + "\n\n"
+        report = "[+] Comprehensive Protection Detection Report:\n"
+        report += "=" * 60 + "\n\n"
 
-# Protection categories summary
-total_protections = sum(len(prots) for prots in protections.values() if isinstance(prots, list))
-if total_protections > 0:
-report += f"[+] Protection Summary: {total_protections} protection mechanisms detected\n\n"
+        # Protection categories summary
+        total_protections = sum(len(prots) for prots in protections.values() if isinstance(prots, list))
+        if total_protections > 0:
+            report += f"[+] Protection Summary: {total_protections} protection mechanisms detected\n\n"
 
-# Packers
-if protections["packers"]:
-report += "[+] Detected Packers:\n"
-for packer in protections["packers"]:
-report += f"  - {packer}\n"
-report += "\n"
+        # Packers
+        if protections["packers"]:
+            report += "[+] Detected Packers:\n"
+            for packer in protections["packers"]:
+                report += f"  - {packer}\n"
+            report += "\n"
 
-# Protectors
-if protections["protectors"]:
-report += "[+] Detected Protectors:\n"
-for protector in protections["protectors"]:
-report += f"  - {protector}\n"
-report += "\n"
+        # Protectors
+        if protections["protectors"]:
+            report += "[+] Detected Protectors:\n"
+            for protector in protections["protectors"]:
+                report += f"  - {protector}\n"
+            report += "\n"
 
-# Obfuscators
-if protections["obfuscators"]:
-report += "🔀 Detected Obfuscators:\n"
-for obfuscator in protections["obfuscators"]:
-report += f"  - {obfuscator}\n"
-report += "\n"
+        # Obfuscators
+        if protections["obfuscators"]:
+            report += "[+] Detected Obfuscators:\n"
+            for obfuscator in protections["obfuscators"]:
+                report += f"  - {obfuscator}\n"
+            report += "\n"
 
-# Virtualization
-if protections["virtualization"]:
-report += "[+] Detected Virtualization:\n"
-for virtualizer in protections["virtualization"]:
-report += f"  - {virtualizer}\n"
-report += "\n"
+        # Virtualization
+        if protections["virtualization"]:
+            report += "[+] Detected Virtualization:\n"
+            for virtualizer in protections["virtualization"]:
+                report += f"  - {virtualizer}\n"
+            report += "\n"
 
-# Anti-analysis techniques
-if protections["anti_analysis"]:
-report += "🚫 Anti-Analysis Techniques:\n"
-for technique in protections["anti_analysis"]:
-report += f"  - {technique['category']}: "
-report += f"{', '.join(technique['indicators'][:3])}\n"
-report += "\n"
+        # Anti-analysis techniques
+        if protections["anti_analysis"]:
+            report += "[+] Anti-Analysis Techniques:\n"
+            for technique in protections["anti_analysis"]:
+                report += f"  - {technique['category']}: "
+                report += f"{', '.join(technique['indicators'][:3])}\n"
+            report += "\n"
 
-# Code injection capabilities
-if protections["code_injection"]:
-report += "💉 Code Injection Capabilities:\n"
-for api in protections["code_injection"][:5]:
-report += f"  - {api}\n"
-report += "\n"
+        # Code injection capabilities
+        if protections["code_injection"]:
+            report += "[+] Code Injection Capabilities:\n"
+            for api in protections["code_injection"][:5]:
+                report += f"  - {api}\n"
+            report += "\n"
 
-# PE anomalies
-if pe_anomalies:
-report += "[+] PE Structure Anomalies:\n"
-for anomaly in pe_anomalies[:10]:
-report += f"  - {anomaly}\n"
-report += "\n"
+        # PE anomalies
+        if pe_anomalies:
+            report += "[+] PE Structure Anomalies:\n"
+            for anomaly in pe_anomalies[:10]:
+                report += f"  - {anomaly}\n"
+            report += "\n"
 
-# Runtime indicators
-if runtime_indicators:
-report += "[+] Runtime Packer Indicators:\n"
-for indicator in runtime_indicators:
-report += f"  - {indicator}\n"
-report += "\n"
+        # Runtime indicators
+        if runtime_indicators:
+            report += "[+] Runtime Packer Indicators:\n"
+            for indicator in runtime_indicators:
+                report += f"  - {indicator}\n"
+            report += "\n"
 
-# Detailed anti-analysis breakdown
-for category, techniques in anti_analysis.items():
-if techniques:
-category_name = category.replace("_", " ").title()
-report += f"[+] {category_name}:\n"
-for technique in techniques[:5]:
-display_str = technique[:50] + "..." if len(technique) > 50 else technique
-report += f"  - {display_str}\n"
-report += "\n"
+        # Detailed anti-analysis breakdown
+        for category, techniques in anti_analysis.items():
+            if techniques:
+                category_name = category.replace("_", " ").title()
+                report += f"[+] {category_name}:\n"
+                for technique in techniques[:5]:
+                    display_str = technique[:50] + "..." if len(technique) > 50 else technique
+                    report += f"  - {display_str}\n"
+                report += "\n"
 
-# Protection level assessment
-protection_level = "Low"
-if total_protections >= 10:
-protection_level = "Very High"
-elif total_protections >= 5:
-protection_level = "High"
-elif total_protections >= 2:
-protection_level = "Medium"
+        # Protection level assessment
+        protection_level = "Low"
+        if total_protections >= 10:
+            protection_level = "Very High"
+        elif total_protections >= 5:
+            protection_level = "High"
+        elif total_protections >= 2:
+            protection_level = "Medium"
 
-report += f"[+] Overall Protection Level: {protection_level}\n\n"
+        report += f"[+] Overall Protection Level: {protection_level}\n\n"
 
-# Bypass recommendations
-report += "[+] Analysis & Bypass Recommendations:\n"
+        # Bypass recommendations
+        report += "[+] Analysis & Bypass Recommendations:\n"
 
-if protections["packers"]:
-report += "  - Use unpacking tools (UPX, ASPack unpackers)\n"
+        if protections["packers"]:
+            report += "  - Use unpacking tools (UPX, ASPack unpackers)\n"
 
-if protections["protectors"]:
-report += "  - Consider commercial unpacking services\n"
-report += "  - Use memory dumping during runtime\n"
+        if protections["protectors"]:
+            report += "  - Consider commercial unpacking services\n"
+            report += "  - Use memory dumping during runtime\n"
 
-if protections["virtualization"]:
-report += "  - Analyze in hardware virtualization environment\n"
-report += "  - Use specialized VM detection bypass tools\n"
+        if protections["virtualization"]:
+            report += "  - Analyze in hardware virtualization environment\n"
+            report += "  - Use specialized VM detection bypass tools\n"
 
-if protections["anti_analysis"]:
-report += "  - Implement anti-anti-analysis techniques\n"
-report += "  - Use kernel-mode debugging\n"
+        if protections["anti_analysis"]:
+            report += "  - Implement anti-anti-analysis techniques\n"
+            report += "  - Use kernel-mode debugging\n"
 
-if pe_anomalies:
-report += "  - Manual PE reconstruction may be required\n"
+        if pe_anomalies:
+            report += "  - Manual PE reconstruction may be required\n"
 
-if runtime_indicators:
-report += "  - Dynamic analysis in isolated environment\n"
+        if runtime_indicators:
+            report += "  - Dynamic analysis in isolated environment\n"
 
-report += "  - Consider multiple analysis approaches\n"
+        report += "  - Consider multiple analysis approaches\n"
 
-return report
+        return report
 
     def stop_ai_analysis(self):
         """Stop ongoing AI analysis"""
-try:
-self.log_ai_message("AI analysis stopped by user", "warning")
+        try:
+            self.log_ai_message("AI analysis stopped by user", "warning")
 
-except Exception as e:
-self.log_ai_message(f"Error stopping analysis: {str(e)}", "error")
+        except Exception as e:
+            self.log_ai_message(f"Error stopping analysis: {str(e)}", "error")
 
     def generate_ai_script(self):
         """Generate script using AI"""
-if not self.current_model:
-self.log_ai_message("Error: No AI model loaded", "error")
-return
+        if not self.current_model:
+            self.log_ai_message("Error: No AI model loaded", "error")
+            return
 
-script_type = self.script_type_combo.currentText()
-target = self.script_target_edit.text().strip()
-requirements = self.requirements_edit.toPlainText().strip()
+        script_type = self.script_type_combo.currentText()
+        target = self.script_target_edit.text().strip()
+        requirements = self.requirements_edit.toPlainText().strip()
 
-if not target:
-self.log_ai_message("Error: No target specified for script generation", "error")
-return
+        if not target:
+            self.log_ai_message("Error: No target specified for script generation", "error")
+            return
 
-try:
-self.log_ai_message(f"Generating {script_type} for target: {target}...")
+        try:
+            self.log_ai_message(f"Generating {script_type} for target: {target}...")
 
-# Generate script based on type and requirements
-script_content = self._generate_script_content(script_type, target, requirements)
+            # Generate script based on type and requirements
+            script_content = self._generate_script_content(script_type, target, requirements)
 
-# Add to generated scripts
-script_info = {
-"type": script_type,
-"target": target,
-"content": script_content,
-"requirements": requirements,
-}
+            # Add to generated scripts
+            script_info = {
+                "type": script_type,
+                "target": target,
+                "content": script_content,
+                "requirements": requirements,
+            }
 
-self.generated_scripts.append(script_info)
+            self.generated_scripts.append(script_info)
 
-# Update scripts list
-script_name = f"{script_type} - {target}"
-self.scripts_list.addItem(script_name)
+            # Update scripts list
+            script_name = f"{script_type} - {target}"
+            self.scripts_list.addItem(script_name)
 
-# Display in content area
-self.script_content.setPlainText(script_content)
+            # Display in content area
+            self.script_content.setPlainText(script_content)
 
-self.log_ai_message(f"Generated {script_type} successfully", "success")
-self.script_generated.emit(script_type, "success")
+            self.log_ai_message(f"Generated {script_type} successfully", "success")
+            self.script_generated.emit(script_type, "success")
 
-except Exception as e:
-self.log_ai_message(f"Error generating script: {str(e)}", "error")
-self.script_generated.emit(script_type, "failed")
+        except Exception as e:
+            self.log_ai_message(f"Error generating script: {str(e)}", "error")
+            self.script_generated.emit(script_type, "failed")
 
     def _generate_script_content(self, script_type, target, requirements):
         """Generate actual script content based on type and requirements"""
-try:
-# Use AI model if available
-if self.current_model and self.ai_model_manager.get_loaded_models():
-script_type_map = {
-"Frida Hook Script": "frida",
-"Ghidra Analysis Script": "ghidra",
+        try:
+            # Use AI model if available
+            if self.current_model and self.ai_model_manager.get_loaded_models():
+                script_type_map = {
+                    "Frida Hook Script": "frida",
+                    "Ghidra Analysis Script": "ghidra",
+                    "API Hook Script": "api_hook",
+                }
 
-"API Hook Script": "api_hook",
-}
+                ai_script_type = script_type_map.get(script_type, script_type.lower())
 
-ai_script_type = script_type_map.get(script_type, script_type.lower())
+                # Generate using AI model
+                generated_script = self.ai_model_manager.generate_script(
+                    self.current_model, ai_script_type, target, requirements
+                )
 
-# Generate using AI model
-generated_script = self.ai_model_manager.generate_script(
-self.current_model, ai_script_type, target, requirements
-)
+                if generated_script:
+                    return generated_script
 
-if generated_script:
-return generated_script
+            # Fallback to template-based generation
+            if script_type == "Frida Hook Script":
+                return self._generate_frida_script(target, requirements)
+            elif script_type == "Ghidra Analysis Script":
+                return self._generate_ghidra_script(target, requirements)
+            elif script_type == "API Hook Script":
+                return self._generate_api_hook_script(target, requirements)
+            else:
+                return self._generate_generic_script(script_type, target, requirements)
 
-# Fallback to template-based generation
-if script_type == "Frida Hook Script":
-return self._generate_frida_script(target, requirements)
-elif script_type == "Ghidra Analysis Script":
-return self._generate_ghidra_script(target, requirements)
-
-elif script_type == "API Hook Script":
-return self._generate_api_hook_script(target, requirements)
-else:
-return self._generate_generic_script(script_type, target, requirements)
-
-except Exception as e:
-return f"// Error generating script: {str(e)}\n// Please check your requirements and try again."
+        except Exception as e:
+            return f"// Error generating script: {str(e)}\n// Please check your requirements and try again."
 
     def _generate_frida_script(self, target, requirements):
         """Generate Frida hook script"""
-script_template = f"""// Frida Hook Script for {target}
+        script_template = f"""// Frida Hook Script for {target}
 // Generated by Intellicrack AI Assistant
 
 Java.perform(function() {{
-console.log("[+] Starting Frida hook for {target}");
+    console.log("[+] Starting Frida hook for {target}");
 
-// Hook target function/method
-var targetClass = Java.use("{target}");
+    // Hook target function/method
+    var targetClass = Java.use("{target}");
 
-targetClass.targetMethod.implementation = function() {{
-console.log("[+] Method called with arguments:", arguments);
+    targetClass.targetMethod.implementation = function() {{
+        console.log("[+] Method called with arguments:", arguments);
 
-// Original function call
-var result = this.targetMethod.apply(this, arguments);
+        // Original function call
+        var result = this.targetMethod.apply(this, arguments);
 
-console.log("[+] Method result:", result);
-return result;
-}};
+        console.log("[+] Method result:", result);
+        return result;
+    }};
 
-console.log("[+] Hook installed successfully");
+    console.log("[+] Hook installed successfully");
 }});
 
 // Additional requirements: {requirements}
 """
-return script_template
+        return script_template
 
     def _generate_ghidra_script(self, target, requirements):
         """Generate Ghidra analysis script"""
-script_template = f"""// Ghidra Analysis Script for {target}
+        script_template = f"""// Ghidra Analysis Script for {target}
 // Generated by Intellicrack AI Assistant
 
 import ghidra.app.script.GhidraScript;
@@ -2312,48 +2310,48 @@ import ghidra.program.model.symbol.*;
 
 public class AutoAnalysis extends GhidraScript {{
 
-@Override
-public void run() throws Exception {{
-println("Starting analysis of {target}");
+    @Override
+    public void run() throws Exception {{
+        println("Starting analysis of {target}");
 
-// Get current program
-Program program = getCurrentProgram();
-Listing listing = program.getListing();
+        // Get current program
+        Program program = getCurrentProgram();
+        Listing listing = program.getListing();
 
-// Find target functions
-FunctionManager functionManager = program.getFunctionManager();
-FunctionIterator functions = functionManager.getFunctions(true);
+        // Find target functions
+        FunctionManager functionManager = program.getFunctionManager();
+        FunctionIterator functions = functionManager.getFunctions(true);
 
-while (functions.hasNext()) {{
-Function function = functions.next();
-String funcName = function.getName();
+        while (functions.hasNext()) {{
+            Function function = functions.next();
+            String funcName = function.getName();
 
-if (funcName.contains("{target}")) {{
-println("Found target function: " + funcName);
+            if (funcName.contains("{target}")) {{
+                println("Found target function: " + funcName);
 
-// Analyze function
-analyzeFunction(function);
-}}
-}}
+                // Analyze function
+                analyzeFunction(function);
+            }}
+        }}
 
-println("Analysis complete");
-}}
+        println("Analysis complete");
+    }}
 
-private void analyzeFunction(Function function) {{
-// Analysis implementation based on requirements
-println("Analyzing: " + function.getName());
+    private void analyzeFunction(Function function) {{
+        // Analysis implementation based on requirements
+        println("Analyzing: " + function.getName());
 
-// {requirements}
-}}
+        // {requirements}
+    }}
 }}
 """
-return script_template
+        return script_template
 
 
 
     def _generate_api_hook_script(self, target, requirements):
         """Generate API hook script"""
-script_template = f"""// API Hook Script for {target}
+        script_template = f"""// API Hook Script for {target}
 // Generated by Intellicrack AI Assistant
 
 #include <windows.h>
@@ -2365,53 +2363,53 @@ static FARPROC OriginalAPI = NULL;
 
 // Hooked function
 DWORD WINAPI HookedAPI(DWORD param1, DWORD param2) {{
-printf("[+] API called: {target} with params: %lu, %lu\\n", param1, param2);
+    printf("[+] API called: {target} with params: %lu, %lu\\n", param1, param2);
 
-// Call original function
-DWORD result = ((DWORD(WINAPI*)(DWORD, DWORD))OriginalAPI)(param1, param2);
+    // Call original function
+    DWORD result = ((DWORD(WINAPI*)(DWORD, DWORD))OriginalAPI)(param1, param2);
 
-printf("[+] API result: %lu\\n", result);
-return result;
+    printf("[+] API result: %lu\\n", result);
+    return result;
 }}
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved) {{
-switch (fdwReason) {{
-case DLL_PROCESS_ATTACH:
-printf("[+] API hook loaded for {target}\\n");
+    switch (fdwReason) {{
+        case DLL_PROCESS_ATTACH:
+            printf("[+] API hook loaded for {target}\\n");
 
-// Hook the target API
-HMODULE hMod = GetModuleHandle(TEXT("kernel32.dll"));
-OriginalAPI = GetProcAddress(hMod, "{target}");
+            // Hook the target API
+            HMODULE hMod = GetModuleHandle(TEXT("kernel32.dll"));
+            OriginalAPI = GetProcAddress(hMod, "{target}");
 
-if (OriginalAPI) {{
-DetourTransactionBegin();
-DetourUpdateThread(GetCurrentThread());
-DetourAttach(&OriginalAPI, HookedAPI);
-DetourTransactionCommit();
+            if (OriginalAPI) {{
+                DetourTransactionBegin();
+                DetourUpdateThread(GetCurrentThread());
+                DetourAttach(&OriginalAPI, HookedAPI);
+                DetourTransactionCommit();
 
-printf("[+] {target} hooked successfully\\n");
-}}
-break;
+                printf("[+] {target} hooked successfully\\n");
+            }}
+            break;
 
-case DLL_PROCESS_DETACH:
-if (OriginalAPI) {{
-DetourTransactionBegin();
-DetourUpdateThread(GetCurrentThread());
-DetourDetach(&OriginalAPI, HookedAPI);
-DetourTransactionCommit();
-}}
-break;
-}}
-return TRUE;
+        case DLL_PROCESS_DETACH:
+            if (OriginalAPI) {{
+                DetourTransactionBegin();
+                DetourUpdateThread(GetCurrentThread());
+                DetourDetach(&OriginalAPI, HookedAPI);
+                DetourTransactionCommit();
+            }}
+            break;
+    }}
+    return TRUE;
 }}
 
 // Additional requirements: {requirements}
 """
-return script_template
+        return script_template
 
     def _generate_generic_script(self, script_type, target, requirements):
         """Generate generic script for other types"""
-script_template = f"""// {script_type} for {target}
+        script_template = f"""// {script_type} for {target}
 // Generated by Intellicrack AI Assistant
 
 // This is a generic template for {script_type}
@@ -2419,47 +2417,47 @@ script_template = f"""// {script_type} for {target}
 // Requirements: {requirements}
 
 function main() {{
-console.log("Starting {script_type} for {target}");
+    console.log("Starting {script_type} for {target}");
 
-// Implementation based on script type and requirements
-try {{
-// Add your specific implementation here
-performAnalysis();
+    // Implementation based on script type and requirements
+    try {{
+        // Add your specific implementation here
+        performAnalysis();
 
-console.log("Script execution completed successfully");
-}} catch (error) {{
-console.error("Script execution failed:", error);
-}}
+        console.log("Script execution completed successfully");
+    }} catch (error) {{
+        console.error("Script execution failed:", error);
+    }}
 }}
 
 function performAnalysis() {{
-// Specific analysis logic for {target}
-// Based on requirements: {requirements}
+    // Specific analysis logic for {target}
+    // Based on requirements: {requirements}
 }}
 
 // Execute main function
 main();
 """
-return script_template
+        return script_template
 
     def send_chat_message(self):
         """Send chat message to AI assistant"""
-message = self.chat_input.text().strip()
-if not message:
-return
+        message = self.chat_input.text().strip()
+        if not message:
+            return
 
-# Add user message to chat history
-self.chat_history.append(f"<b>You:</b> {message}")
-self.chat_input.clear()
+        # Add user message to chat history
+        self.chat_history.append(f"<b>You:</b> {message}")
+        self.chat_input.clear()
 
-# Simulate AI response
+        # Simulate AI response
         ai_response = self.generate_ai_response(message)
-self.chat_history.append(f"<b>AI Assistant:</b> {ai_response}")
+        self.chat_history.append(f"<b>AI Assistant:</b> {ai_response}")
 
-# Scroll to bottom
-cursor = self.chat_history.textCursor()
-cursor.movePosition(cursor.End)
-self.chat_history.setTextCursor(cursor)
+        # Scroll to bottom
+        cursor = self.chat_history.textCursor()
+        cursor.movePosition(cursor.End)
+        self.chat_history.setTextCursor(cursor)
 
     def generate_ai_response(self, message):
         """Generate AI response based on user message"""
@@ -2483,15 +2481,15 @@ self.chat_history.setTextCursor(cursor)
 
     def browse_training_dataset(self):
         """Browse for training dataset"""
-from PyQt6.QtWidgets import QFileDialog
+        from PyQt6.QtWidgets import QFileDialog
 
-file_path, _ = QFileDialog.getOpenFileName(
-self, "Select Training Dataset", "", "Dataset Files (*.json *.csv *.txt);;All Files (*)"
-)
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Select Training Dataset", "", "Dataset Files (*.json *.csv *.txt);;All Files (*)"
+        )
 
-if file_path:
-self.dataset_path_edit.setText(file_path)
-self.log_message(f"Training dataset selected: {file_path}")
+        if file_path:
+            self.dataset_path_edit.setText(file_path)
+            self.log_message(f"Training dataset selected: {file_path}")
 
     def start_model_training(self):
         """Start model training process"""
@@ -2668,5 +2666,4 @@ self.log_message(f"Training dataset selected: {file_path}")
         """Handle AI model error"""
         self.model_progress.setVisible(False)
         self.log_ai_message(f"AI Error ({model_name}): {error}", "error")
-        QMessageBox.warning(self, "AI Model Error", f"Error with {model_name}:
-{error}")
+        QMessageBox.warning(self, "AI Model Error", f"Error with {model_name}:\n{error}")

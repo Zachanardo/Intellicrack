@@ -36,7 +36,11 @@ class TaskSignals(QObject):
     finished = pyqtSignal(str)  # task_id
 
 
-class BaseTask(QRunnable, ABC):
+# Create a metaclass that resolves the conflict between QRunnable and ABC
+class TaskMeta(type(QRunnable), type(ABC)):
+    pass
+
+class BaseTask(QRunnable, ABC, metaclass=TaskMeta):
     """Base class for all background tasks."""
 
     def __init__(self, task_id: Optional[str] = None, description: str = ""):

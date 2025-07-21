@@ -865,7 +865,7 @@ class IntellicrackCLI:
             launch_with_results(results_file, self.binary_path)
 
         except ImportError:
-            logger.error("GUI components not available. Install PyQt5.")
+            logger.error("GUI components not available. Install PyQt6.")
         except Exception as e:
             logger.error(f"Failed to launch GUI: {e}")
 

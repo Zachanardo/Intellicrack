@@ -25,6 +25,7 @@ exclude = [
     ".venv_wsl/",
     "venv/",
     "env/",
+    "mamba_env/",
     
     # Build and distribution
     "build/",

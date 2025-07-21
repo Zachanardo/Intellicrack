@@ -150,7 +150,7 @@ def run_gui_mode(args) -> int:
 
     except ImportError as e:
         logger.error("GUI dependencies not available: %s", e)
-        logger.info("Please install PyQt5 to use GUI mode")
+        logger.info("Please install PyQt6 to use GUI mode")
         return 1
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error launching GUI: %s", e)

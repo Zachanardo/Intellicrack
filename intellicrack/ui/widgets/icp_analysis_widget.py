@@ -1,7 +1,7 @@
 """
 Intellicrack Protection Engine Analysis Widget
 
-PyQt5 widget for displaying ICP engine analysis results.
+PyQt6 widget for displaying ICP engine analysis results.
 
 Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0

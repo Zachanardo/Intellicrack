@@ -29,10 +29,10 @@ logger = logging.getLogger(__name__)
 
 try:
     from PyQt6.QtWidgets import QInputDialog
-    PYQT5_AVAILABLE = True
+    PYQT6_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in rop_generator: %s", e)
-    PYQT5_AVAILABLE = False
+    PYQT6_AVAILABLE = False
     QInputDialog = None
 
 
@@ -1566,8 +1566,8 @@ def run_rop_chain_generator(app: Any) -> None:
         if hasattr(app, 'update_output'):
             app.update_output.emit(f"log_message([ROP Chain Generator] Binary set: {app.binary_path})")
 
-        # Handle architecture selection if PyQt5 is available
-        if PYQT5_AVAILABLE:
+        # Handle architecture selection if PyQt6 is available
+        if PYQT6_AVAILABLE:
             arch_options = ['x86_64', 'x86', 'arm', 'arm64', 'mips']
             arch, ok = QInputDialog.getItem(
                 app,
@@ -1604,7 +1604,7 @@ def run_rop_chain_generator(app: Any) -> None:
             else:
                 generator._add_default_targets()
         else:
-            # No PyQt5 available, use defaults
+            # No PyQt6 available, use defaults
             generator._add_default_targets()
 
         # Find gadgets
@@ -1656,11 +1656,11 @@ def run_rop_chain_generator(app: Any) -> None:
                     for _addr in chain['payload']:
                         app.analyze_results.append(f"  {_addr}")
 
-                # Handle report generation if PyQt5 is available
-                if PYQT5_AVAILABLE:
-                    from ...utils.reporting.report_common import handle_pyqt5_report_generation
+                # Handle report generation if PyQt6 is available
+                if PYQT6_AVAILABLE:
+                    from ...utils.reporting.report_common import handle_pyqt6_report_generation
 
-                    report_path = handle_pyqt5_report_generation(
+                    report_path = handle_pyqt6_report_generation(
                         app,
                         "ROP chain generation",
                         generator

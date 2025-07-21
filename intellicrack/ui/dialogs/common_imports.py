@@ -19,12 +19,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 Common imports for dialog modules.
 
-This module centralizes common PyQt5 imports to avoid duplication.
+This module centralizes common PyQt6 imports to avoid duplication.
 """
 
 from intellicrack.logger import logger
 
-# Common PyQt5 imports
+# Common PyQt6 imports
 try:
     from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
     from PyQt6.QtGui import QFont, QIcon, QPixmap

@@ -75,10 +75,10 @@ def add_table(parent: Any, headers: List[str], data: List[List[Any]]) -> Any:
         data: 2D list containing table data
 
     Returns:
-        QTableWidget instance or None if PyQt5 not available
+        QTableWidget instance or None if PyQt6 not available
     """
     if not HAS_PYQT:
-        logger.warning("PyQt5 not available, cannot create table")
+        logger.warning("PyQt6 not available, cannot create table")
         return None
 
     from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem
@@ -104,7 +104,7 @@ def browse_dataset(parent: Any = None) -> Optional[str]:
         Selected file path or None if cancelled/unavailable
     """
     if not HAS_PYQT:
-        logger.warning("PyQt5 not available, cannot browse dataset")
+        logger.warning("PyQt6 not available, cannot browse dataset")
         return None
 
     from PyQt6.QtWidgets import QFileDialog
@@ -129,7 +129,7 @@ def browse_model(parent: Any = None) -> Optional[str]:
         Selected model file path or None if cancelled/unavailable
     """
     if not HAS_PYQT:
-        logger.warning("PyQt5 not available, cannot browse model")
+        logger.warning("PyQt6 not available, cannot browse model")
         return None
 
     from PyQt6.QtWidgets import QFileDialog

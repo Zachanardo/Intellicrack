@@ -24,7 +24,7 @@ import logging
 import os
 import re
 
-# Import common PyQt5 components
+# Import common PyQt6 components
 from .common_imports import (
     HAS_PYQT,
     QCheckBox,

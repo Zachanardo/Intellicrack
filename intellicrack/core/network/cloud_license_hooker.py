@@ -36,10 +36,10 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 try:
     from PyQt6.QtWidgets import QMessageBox
-    PYQT5_AVAILABLE = True
+    PYQT6_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in cloud_license_hooker: %s", e)
-    PYQT5_AVAILABLE = False
+    PYQT6_AVAILABLE = False
 
 
 class CloudLicenseResponseGenerator:
@@ -2074,9 +2074,9 @@ def run_cloud_license_generator(app: Any) -> None:
     # Create generator
     generator = CloudLicenseResponseGenerator()
 
-    # Handle learning mode selection if PyQt5 is available
+    # Handle learning mode selection if PyQt6 is available
     learning_mode = True
-    if PYQT5_AVAILABLE:
+    if PYQT6_AVAILABLE:
         learning_mode = QMessageBox.question(
             app,
             "Learning Mode",

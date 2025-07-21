@@ -58,7 +58,7 @@ try:
     )
 except ImportError as e:
     logger.error("Import error in llm_config_dialog: %s", e)
-    # Fallback for environments without PyQt5
+    # Fallback for environments without PyQt6
     QDialog = object
     QThread = object
     def pyqtSignal(*args):

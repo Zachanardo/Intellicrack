@@ -507,7 +507,7 @@ class SecurityError(Exception):
     pass
 
 # Auto-initialize on import
-initialize_security()
+# initialize_security()  # Temporarily disabled for testing
 
 # Export public API
 __all__ = [

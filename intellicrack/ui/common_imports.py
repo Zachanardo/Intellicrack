@@ -2,7 +2,7 @@
 from intellicrack.logger import logger
 
 """
-Common PyQt5 imports used across dialogs
+Common PyQt6 imports used across UI components
 
 Copyright (C) 2025 Zachary Flint
 
@@ -89,7 +89,7 @@ try:
         QWizard,
         QWizardPage,
     )
-    PYQT5_AVAILABLE = True
+    PYQT6_AVAILABLE = True
 
     # Utility functions that use the imported classes
     def create_point(x: int, y: int) -> QPoint:
@@ -316,8 +316,8 @@ try:
 
     # Export all utility functions for easy access
     __all__ = [
-        # PyQt5 availability flag
-        'PYQT5_AVAILABLE',
+        # PyQt6 availability flag
+        'PYQT6_AVAILABLE',
         # Core classes
         'Qt', 'QThread', 'QTimer', 'pyqtSignal',
         # Geometry classes
@@ -352,7 +352,7 @@ try:
 
 except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
-    PYQT5_AVAILABLE = False
+    PYQT6_AVAILABLE = False
 
     # Create dummy implementations when PyQt5 is not available
     def create_point(x, y):

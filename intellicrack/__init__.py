@@ -114,7 +114,7 @@ except ImportError as e:
     logger.warning("Core modules not available: %s", e)
     ai = core = utils = None
 
-# UI modules (optional - requires PyQt5)
+# UI modules (optional - requires PyQt6)
 try:
     from . import ui
 except ImportError as e:
@@ -128,7 +128,7 @@ except ImportError as e:
     logger.warning("Plugins module not available: %s", e)
     plugins = None
 
-# Hex viewer integration (optional - requires PyQt5)
+# Hex viewer integration (optional - requires PyQt6)
 try:
     from . import hexview
 except ImportError as e:
@@ -171,7 +171,7 @@ def create_app():
 
     Raises:
         ImportError: If IntellicrackApp is not available due to missing
-                    dependencies (typically PyQt5 or other UI components)
+                    dependencies (typically PyQt6 or other UI components)
 
     Example:
         >>> from intellicrack import create_app

@@ -75,10 +75,10 @@ try:
         QVBoxLayout,
         QWidget,
     )
-    PYQT5_AVAILABLE = True
+    PYQT6_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in model_finetuning_dialog: %s", e)
-    PYQT5_AVAILABLE = False
+    PYQT6_AVAILABLE = False
     QDialog = object
     QThread = object
 
@@ -217,7 +217,7 @@ class TrainingThread(QThread):
         finished: Emitted when training completes
     """
 
-    progress_signal = pyqtSignal(dict) if PYQT5_AVAILABLE else None
+    progress_signal = pyqtSignal(dict) if PYQT6_AVAILABLE else None
 
     def __init__(self, config: TrainingConfig):
         """
@@ -226,7 +226,7 @@ class TrainingThread(QThread):
         Args:
             config: Training configuration parameters
         """
-        if PYQT5_AVAILABLE:
+        if PYQT6_AVAILABLE:
             super().__init__()
         self.config = config
         self.model = None
@@ -242,7 +242,7 @@ class TrainingThread(QThread):
             self.status = TrainingStatus.PREPARING
             self.logger.info("Starting training with config: %s", self.config)
 
-            if PYQT5_AVAILABLE and self.progress_signal:
+            if PYQT6_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
                     "status": self.status.value,
                     "message": "Preparing training",
@@ -260,7 +260,7 @@ class TrainingThread(QThread):
 
             # Run training
             self.status = TrainingStatus.TRAINING
-            if PYQT5_AVAILABLE and self.progress_signal:
+            if PYQT6_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
                     "status": self.status.value,
                     "message": "Training in progress",
@@ -269,7 +269,7 @@ class TrainingThread(QThread):
             self._train_model()
 
             self.status = TrainingStatus.COMPLETED
-            if PYQT5_AVAILABLE and self.progress_signal:
+            if PYQT6_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
                     "status": self.status.value,
                     "message": "Training completed successfully",
@@ -279,7 +279,7 @@ class TrainingThread(QThread):
         except (OSError, ValueError, RuntimeError) as e:
             self.status = TrainingStatus.ERROR
             self.logger.error(f"Training failed: {e}", exc_info=True)
-            if PYQT5_AVAILABLE and self.progress_signal:
+            if PYQT6_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
                     "status": self.status.value,
                     "error": str(e),
@@ -318,7 +318,7 @@ class TrainingThread(QThread):
                 self.logger.warning("Creating dummy model for simulation")
                 self._create_dummy_model()
 
-            if PYQT5_AVAILABLE and self.progress_signal:
+            if PYQT6_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
                     "status": self.status.value,
                     "message": "Model loaded successfully",
@@ -1048,7 +1048,7 @@ class TrainingThread(QThread):
                     # Convert to input/output format
                     data = [{"input": _line.strip(), "output": ""} for _line in lines if _line.strip()]
 
-            if PYQT5_AVAILABLE and self.progress_signal:
+            if PYQT6_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
                     "status": f"Dataset loaded: {len(data)} samples",
                     "step": 1
@@ -1091,7 +1091,7 @@ class TrainingThread(QThread):
                     report_to=None  # Disable wandb/tensorboard
                 )
 
-            if PYQT5_AVAILABLE and self.progress_signal:
+            if PYQT6_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
                     "status": "Training setup complete",
                     "step": 2
@@ -1141,7 +1141,7 @@ class TrainingThread(QThread):
                     self.training_history.append(metrics)
 
                     # Emit progress signal
-                    if PYQT5_AVAILABLE and self.progress_signal:
+                    if PYQT6_AVAILABLE and self.progress_signal:
                         self.progress_signal.emit({
                             **metrics,
                             "status": f"Training epoch {_epoch+1}/{self.config.epochs}",
@@ -1154,7 +1154,7 @@ class TrainingThread(QThread):
                 # Run validation at the end of each epoch
                 if not self.is_stopped:
                     self.status = TrainingStatus.VALIDATING
-                    if PYQT5_AVAILABLE and self.progress_signal:
+                    if PYQT6_AVAILABLE and self.progress_signal:
                         self.progress_signal.emit({
                             "status": self.status.value,
                             "message": f"Validating epoch {_epoch+1}",
@@ -1167,7 +1167,7 @@ class TrainingThread(QThread):
                     # Return to training status
                     self.status = TrainingStatus.TRAINING
 
-            if PYQT5_AVAILABLE and self.progress_signal:
+            if PYQT6_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
                     "status": "Training completed",
                     "step": total_steps,
@@ -1229,7 +1229,7 @@ class ModelFinetuningDialog(QDialog):
             parent: Parent widget (optional)
 
         Raises:
-            ImportError: If PyQt5 is not available
+            ImportError: If PyQt6 is not available
         """
 
         # Initialize UI attributes
@@ -1275,8 +1275,8 @@ class ModelFinetuningDialog(QDialog):
         self.training_log = None
         self.validate_dataset_button = None
         self.visualization_label = None
-        if not PYQT5_AVAILABLE:
-            raise ImportError("PyQt5 is required for ModelFinetuningDialog")
+        if not PYQT6_AVAILABLE:
+            raise ImportError("PyQt6 is required for ModelFinetuningDialog")
 
         super().__init__(parent)
         self.parent = parent
@@ -2779,10 +2779,10 @@ def create_model_finetuning_dialog(parent=None) -> Optional[ModelFinetuningDialo
         parent: Parent widget
 
     Returns:
-        ModelFinetuningDialog instance or None if PyQt5 not available
+        ModelFinetuningDialog instance or None if PyQt6 not available
     """
-    if not PYQT5_AVAILABLE:
-        logging.getLogger(__name__).warning("PyQt5 not available, cannot create dialog")
+    if not PYQT6_AVAILABLE:
+        logging.getLogger(__name__).warning("PyQt6 not available, cannot create dialog")
         return None
 
     try:

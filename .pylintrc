@@ -1,9 +1,9 @@
 [MASTER]
-# Add PyQt5 to the extension whitelist
-extension-pkg-whitelist=PyQt5
+# Add PyQt5 and PyQt6 to the extension whitelist
+extension-pkg-whitelist=PyQt5,PyQt6
 
 # Ignore specific paths
-ignore-paths=^tests/.*,^dev/.*,^\.git/.*,^venv/.*,^\.venv/.*,^build/.*,^dist/.*
+ignore-paths=^tests/.*,^dev/.*,^\.git/.*,^venv/.*,^\.venv/.*,^build/.*,^dist/.*,^mamba_env/.*
 
 [MESSAGES CONTROL]
 # Disable all C (Convention) codes
@@ -13,7 +13,7 @@ disable=C
 
 [TYPECHECK]
 # List of module names for which member attributes should not be checked
-ignored-modules=PyQt5,PyQt5.QtCore,PyQt5.QtGui,PyQt5.QtWidgets
+ignored-modules=PyQt5,PyQt5.QtCore,PyQt5.QtGui,PyQt5.QtWidgets,PyQt6,PyQt6.QtCore,PyQt6.QtGui,PyQt6.QtWidgets
 
 # List of classes for which member attributes should not be checked
 ignored-classes=QApplication,QWidget,QDialog,QMainWindow,QPushButton,QLabel,QLineEdit,QTextEdit,QTableWidget,QMessageBox,QFileDialog,QVBoxLayout,QHBoxLayout,Qt,pyqtSignal,QThread,QTimer,QFont,QIcon,QPixmap,QAction,QCheckBox,QComboBox,QSpinBox,QGroupBox,QFormLayout,QListWidget,QTreeWidget,QTabWidget,QSplitter,QProgressBar,QStatusBar,QToolBar,QMenu,QAbstractScrollArea,QPlainTextEdit,QInputDialog,QDesktopWidget,QSplashScreen,QWizard,QWizardPage,QTextBrowser,QHeaderView,QAbstractItemView,QDialogButtonBox,QSizePolicy,QSpacerItem,QFrame,QListWidgetItem,QTreeWidgetItem,QTableWidgetItem,QSize,QPoint,QRect,QColor,QPainter,QPen,QKeyEvent,QMouseEvent,QPaintEvent,QResizeEvent,QFontMetrics,QKeySequence

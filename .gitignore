@@ -540,6 +540,10 @@ siphash24_replacement.py
 Install_Dependencies.ps1
 install_dependencies.bat
 run_vulture_windows.py
+check_deps.py
+installed_packages.txt
+run_tests_standalone.py
+test_imports.py
 
 # WSL specific files
 *_wsl.*

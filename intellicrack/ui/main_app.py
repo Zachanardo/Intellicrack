@@ -262,7 +262,7 @@ try:  # pylint: disable=unused-argument
         QWizard,
         QWizardPage,
     )
-    QtWidgets = __import__('PyQt5.QtWidgets', fromlist=[''])
+    QtWidgets = __import__('PyQt6.QtWidgets', fromlist=[''])
 
     # Optional PyQt imports
     try:
@@ -283,7 +283,7 @@ try:  # pylint: disable=unused-argument
         HAS_PDF_SUPPORT = True
     except ImportError as e:
         if "QtPdf" in str(e):
-            logger.info("PyQt5.QtPdf not available - PDF features disabled (optional)")
+            logger.info("PyQt6.QtPdf not available - PDF features disabled (optional)")
         else:
             logger.error("Import error in main_app.py: %s", e)
         QPdfDocument = QPdfView = None
@@ -387,7 +387,7 @@ except ImportError as e:
     logger.error("Import error in main_app.py: %s", e)
     # Define a dummy SplashScreen for environments without PyQt5
     class SplashScreen:
-        """Fallback SplashScreen class for environments without PyQt5."""
+        """Fallback SplashScreen class for environments without PyQt6."""
         def show(self):
             """Show splash screen (no-op in fallback)."""
         def close(self):
@@ -12534,7 +12534,7 @@ class Plugin:
 
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
-            QMessageBox.warning(self, "Error", "PyQt5 components not available for process analysis dialog")
+            QMessageBox.warning(self, "Error", "PyQt6 components not available for process analysis dialog")
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
             self.logger.error(f"Error in process behavior analysis: {e}")
             if hasattr(self, 'update_output'):
@@ -12581,7 +12581,7 @@ class Plugin:
 
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
-            QMessageBox.warning(self, "Error", "PyQt5 components not available for memory scan dialog")
+            QMessageBox.warning(self, "Error", "PyQt6 components not available for memory scan dialog")
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
             self.logger.error(f"Error in memory keyword scan: {e}")
             if hasattr(self, 'update_output'):
@@ -17862,7 +17862,7 @@ def register():
     def open_distributed_config(self):
         """Open the distributed processing configuration dialog"""
         if DistributedProcessingConfigDialog is None:
-            self.update_output.emit("[Config] Error: Distributed config dialog not available (PyQt5 not installed)")
+            self.update_output.emit("[Config] Error: Distributed config dialog not available (PyQt6 not installed)")
             return
 
         try:
@@ -25985,7 +25985,7 @@ Focus on:
                     # Create layout
                     layout = QVBoxLayout(self.report_viewer)
 
-                    # Check if PyQt5 PDF modules are available
+                    # Check if PyQt6 PDF modules are available
                     if 'HAS_PDF_SUPPORT' in globals() and HAS_PDF_SUPPORT:
                         # Create PDF viewer
                         pdf_view = QPdfView()
@@ -26000,7 +26000,7 @@ Focus on:
                         fallback_widget = QWidget()
                         fallback_layout = QVBoxLayout(fallback_widget)
 
-                        message_label = QLabel("PDF viewing is not available with current PyQt5 installation.")
+                        message_label = QLabel("PDF viewing is not available with current PyQt6 installation.")
                         message_label.setWordWrap(True)
                         fallback_layout.addWidget(message_label)
 

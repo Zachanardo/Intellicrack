@@ -37,10 +37,10 @@ logger = logging.getLogger(__name__)
 
 try:
     from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal
-    PYQT5_AVAILABLE = True
+    PYQT6_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in large_file_handler: %s", e)
-    PYQT5_AVAILABLE = False
+    PYQT6_AVAILABLE = False
     QObject = object
     QThread = object
 
@@ -272,17 +272,17 @@ class MemoryMonitor:
                 time.sleep(5.0)  # Wait longer on error
 
 
-class BackgroundLoader(QThread if PYQT5_AVAILABLE else threading.Thread):
+class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
     """Background thread for loading file data."""
 
     # Signals for _Qt integration
-    progress_updated = pyqtSignal(int) if PYQT5_AVAILABLE else None
-    region_loaded = pyqtSignal(object) if PYQT5_AVAILABLE else None
-    error_occurred = pyqtSignal(str) if PYQT5_AVAILABLE else None
+    progress_updated = pyqtSignal(int) if PYQT6_AVAILABLE else None
+    region_loaded = pyqtSignal(object) if PYQT6_AVAILABLE else None
+    error_occurred = pyqtSignal(str) if PYQT6_AVAILABLE else None
 
     def __init__(self, file_path: str, cache: FileCache, config: MemoryConfig):
         """Initialize the BackgroundLoader with file path, cache, and configuration."""
-        if PYQT5_AVAILABLE:
+        if PYQT6_AVAILABLE:
             super().__init__()
         else:
             super().__init__(daemon=True)
@@ -414,8 +414,8 @@ class LargeFileHandler:
             self.memory_monitor.add_callback(self._on_memory_pressure)
             self.memory_monitor.start_monitoring()
 
-            # Setup periodic cleanup timer if PyQt5 is available
-            if PYQT5_AVAILABLE:
+            # Setup periodic cleanup timer if PyQt6 is available
+            if PYQT6_AVAILABLE:
                 self.cleanup_timer = QTimer()
                 self.cleanup_timer.timeout.connect(self._periodic_cleanup)
                 self.cleanup_timer.start(30000)  # Every 30 seconds

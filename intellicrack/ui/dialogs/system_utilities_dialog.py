@@ -54,17 +54,17 @@ try:
     )
 except ImportError as e:
     logger.error("Import error in system_utilities_dialog: %s", e)
-    # Fallback for environments without PyQt5
+    # Fallback for environments without PyQt6
     class QDialog:
         """
-        Stub class for QDialog when PyQt5 is not available.
+        Stub class for QDialog when PyQt6 is not available.
 
         Provides a placeholder to prevent import errors in non-GUI environments.
         """
         pass
     def pyqtSignal(*args, **kwargs):
         """
-        Stub function for pyqtSignal when PyQt5 is not available.
+        Stub function for pyqtSignal when PyQt6 is not available.
 
         Args:
             *args: Signal type arguments (ignored)

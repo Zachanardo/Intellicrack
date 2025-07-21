@@ -32,6 +32,12 @@ class GPUAutoLoader:
 
     def setup(self) -> bool:
         """Main setup function that tries different GPU configurations"""
+        # Check if GPU is disabled via environment variable
+        if os.environ.get('INTELLICRACK_NO_GPU', '').lower() in ('1', 'true', 'yes'):
+            logger.info("GPU disabled via environment variable")
+            self._try_cpu_fallback()
+            return True
+            
         logger.info("Starting GPU auto-detection...")
 
         methods = [

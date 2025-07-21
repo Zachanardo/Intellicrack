@@ -775,7 +775,7 @@ def run_analysis_manager(app: Any) -> None:
         app: Main application instance
     """
     if not PYQT_AVAILABLE:
-        app.logger.warning("PyQt5 not available. Cannot show confirmation dialogs.")
+        app.logger.warning("PyQt6 not available. Cannot show confirmation dialogs.")
         return
 
     # Track feature usage

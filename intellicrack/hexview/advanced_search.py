@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from ..ui.common_imports import (
-    PYQT5_AVAILABLE,
+    PYQT6_AVAILABLE,
     QButtonGroup,
     QCheckBox,
     QComboBox,
@@ -477,17 +477,17 @@ class SearchEngine:
         return True
 
 
-class SearchThread(QThread if PYQT5_AVAILABLE else object):
+class SearchThread(QThread if PYQT6_AVAILABLE else object):
     """Background thread for long-running search operations."""
 
-    progress_updated = pyqtSignal(int) if PYQT5_AVAILABLE else None
-    result_found = pyqtSignal(object) if PYQT5_AVAILABLE else None
-    search_completed = pyqtSignal(list) if PYQT5_AVAILABLE else None
+    progress_updated = pyqtSignal(int) if PYQT6_AVAILABLE else None
+    result_found = pyqtSignal(object) if PYQT6_AVAILABLE else None
+    search_completed = pyqtSignal(list) if PYQT6_AVAILABLE else None
 
     def __init__(self, search_engine: SearchEngine, pattern: str, search_type: SearchType,
                  find_all: bool = False, **kwargs):
         """Initialize the SearchThread with search parameters."""
-        if PYQT5_AVAILABLE:
+        if PYQT6_AVAILABLE:
             super().__init__()
         self.search_engine = search_engine
         self.pattern = pattern
@@ -519,12 +519,12 @@ class SearchThread(QThread if PYQT5_AVAILABLE else object):
         self.should_stop = True
 
 
-class AdvancedSearchDialog(QDialog if PYQT5_AVAILABLE else object):
+class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
     """Advanced search dialog with comprehensive search options."""
 
     def __init__(self, parent=None, search_engine: SearchEngine = None):
         """Initialize the advanced search dialog with parent widget and search engine."""
-        if not PYQT5_AVAILABLE:
+        if not PYQT6_AVAILABLE:
             return
 
         super().__init__(parent)

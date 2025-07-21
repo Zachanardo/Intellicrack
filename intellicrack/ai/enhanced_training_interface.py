@@ -60,12 +60,12 @@ try:
         QVBoxLayout,
         QWidget,
     )
-    PYQT5_AVAILABLE = True
+    PYQT6_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in enhanced_training_interface: %s", e)
-    PYQT5_AVAILABLE = False
+    PYQT6_AVAILABLE = False
 
-    # Create fallback classes for when PyQt5 is not available
+    # Create fallback classes for when PyQt6 is not available
     class QThread:
         pass
 
@@ -1372,8 +1372,8 @@ class EnhancedTrainingInterface(QDialog):
 
 def create_enhanced_training_interface(parent=None) -> 'EnhancedTrainingInterface':
     """Factory function to create the enhanced training interface."""
-    if not PYQT5_AVAILABLE:
+    if not PYQT6_AVAILABLE:
         raise ImportError(
-            "PyQt5 is required for the enhanced training interface")
+            "PyQt6 is required for the enhanced training interface")
 
     return EnhancedTrainingInterface(parent)

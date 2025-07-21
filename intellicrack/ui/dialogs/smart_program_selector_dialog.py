@@ -54,7 +54,7 @@ try:
     HAS_QT = True
 except ImportError as e:
     logger.error("Import error in smart_program_selector_dialog: %s", e)
-    # Fallback definitions for when PyQt5 is not available
+    # Fallback definitions for when PyQt6 is not available
     QDialog = object
     QVBoxLayout = object
     QHBoxLayout = object

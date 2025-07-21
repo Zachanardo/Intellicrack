@@ -121,7 +121,7 @@ def check_and_install_dependencies() -> bool:
 
     # Optional dependencies with graceful fallbacks
     optional_deps = {
-        "PyQt5": "GUI interface",
+        "PyQt6": "GUI interface",
         "numpy": "Machine learning features",
         "scikit-learn": "ML model training",
         "matplotlib": "Visualization features",

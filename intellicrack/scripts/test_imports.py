@@ -39,7 +39,7 @@ def test_import(module_name, description):
         print(f"✓ {description}")
         return True
     except ImportError as e:
-        if "PyQt5" in str(e) or "numpy" in str(e) or "sklearn" in str(e) or "pefile" in str(e):
+        if "PyQt6" in str(e) or "numpy" in str(e) or "sklearn" in str(e) or "pefile" in str(e):
             print(f"⚠ {description} (missing optional dependency: {e})")
             return True  # This is acceptable - missing optional deps
         else:
@@ -69,7 +69,7 @@ def test_core_imports():
     # Test AI modules
     results.append(test_import("intellicrack.ai.ml_predictor", "ML predictor"))
 
-    # Test UI modules (expected to have PyQt5 dependency issues)
+    # Test UI modules (expected to have PyQt6 dependency issues)
     results.append(test_import("intellicrack.ui.dialogs.splash_screen", "Splash screen"))
 
     print("\n" + "=" * 50)

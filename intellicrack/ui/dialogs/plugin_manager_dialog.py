@@ -55,16 +55,16 @@ from .common_imports import (
 if not HAS_PYQT:
     class PluginInstallThread:
         """
-        Stub class for plugin installation thread when PyQt5 is not available.
+        Stub class for plugin installation thread when PyQt6 is not available.
 
         Provides a placeholder to prevent import errors in non-GUI environments.
         """
         pass
     class PluginManagerDialog:
         """
-        Stub class for plugin manager dialog when PyQt5 is not available.
+        Stub class for plugin manager dialog when PyQt6 is not available.
 
-        Provides minimal interface methods to allow code to run without PyQt5.
+        Provides minimal interface methods to allow code to run without PyQt6.
         """
         def __init__(self, parent=None):
             """Initialize stub plugin manager dialog for non-GUI environments."""
@@ -95,13 +95,13 @@ if not HAS_PYQT:
             self.test_output = None
         def show(self):
             """
-            Show the dialog (no-op when PyQt5 is not available).
+            Show the dialog (no-op when PyQt6 is not available).
             """
             pass
 
         def exec_(self):
             """
-            Execute the dialog modally (no-op when PyQt5 is not available).
+            Execute the dialog modally (no-op when PyQt6 is not available).
 
             Returns:
                 int: Always returns 0
@@ -110,7 +110,7 @@ if not HAS_PYQT:
 
         def exec(self):
             """
-            Execute the dialog modally - PyQt6 style method (no-op when PyQt5 is not available).
+            Execute the dialog modally - PyQt6 style method (no-op when PyQt6 is not available).
 
             Returns:
                 int: Always returns 0

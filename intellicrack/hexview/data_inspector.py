@@ -26,7 +26,7 @@ import struct
 from enum import Enum
 
 from ..ui.common_imports import (
-    PYQT5_AVAILABLE,
+    PYQT6_AVAILABLE,
     QComboBox,
     QFont,
     QFormLayout,
@@ -331,7 +331,7 @@ class DataInterpreter:
         return "Insufficient data"
 
 
-class DataInspector(QWidget if PYQT5_AVAILABLE else object):
+class DataInspector(QWidget if PYQT6_AVAILABLE else object):
     """
     Data inspector widget for interpreting selected bytes.
 
@@ -340,12 +340,12 @@ class DataInspector(QWidget if PYQT5_AVAILABLE else object):
     """
 
     # Signal emitted when user wants to modify data
-    data_modified = pyqtSignal(bytes) if PYQT5_AVAILABLE else None
+    data_modified = pyqtSignal(bytes) if PYQT6_AVAILABLE else None
 
     def __init__(self, parent=None):
         """Initialize the data inspector widget."""
-        if not PYQT5_AVAILABLE:
-            logger.warning("PyQt5 not available, DataInspector cannot be created")
+        if not PYQT6_AVAILABLE:
+            logger.warning("PyQt6 not available, DataInspector cannot be created")
             return
 
         super().__init__(parent)
