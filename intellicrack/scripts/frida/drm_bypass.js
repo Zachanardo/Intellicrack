@@ -868,7 +868,7 @@
                 getRequestDetails: function(args) {
                     // Simplified request detail extraction
                     return {
-                        url: "example.com",
+                        url: (globalThis.TARGET_URL || "internal.local"),
                         headers: "User-Agent: Browser"
                     };
                 },

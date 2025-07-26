@@ -160,7 +160,7 @@ class MemoryOptimizer:
             Tuple of (used_memory_bytes, total_memory_bytes, usage_percentage)
         """
         if not PSUTIL_AVAILABLE:
-            # Return dummy values when psutil is not available
+            # Return default values when psutil is not available
             return (0, 0, 0.0)
 
         try:

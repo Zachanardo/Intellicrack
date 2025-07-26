@@ -338,17 +338,39 @@ class AIAssistant:
                 else:
                     return f"AI response to: {question}"
             else:
-                # Provide contextual mock response based on question content
-                question_lower = question.lower()
-                if "license" in question_lower or "activation" in question_lower:
-                    return "Consider analyzing license validation routines, checking for activation key algorithms, and examining trial period limitations."
-                elif "protection" in question_lower or "security" in question_lower:
-                    return "Look for anti-debugging techniques, packing detection, and code obfuscation patterns."
-                elif "vulnerability" in question_lower or "exploit" in question_lower:
-                    return "Focus on buffer overflow analysis, input validation checks, and privilege escalation vectors."
-                elif "network" in question_lower or "communication" in question_lower:
-                    return "Monitor network traffic, analyze protocol communications, and check SSL/TLS implementations."
-                else:
+                # Use comprehensive analysis engine for real AI responses
+                from ..core.analysis.vulnerability_engine import VulnerabilityEngine
+                from ..utils.analysis.binary_analysis import analyze_binary
+                
+                try:
+                    # Try to get context from current binary analysis
+                    binary_path = getattr(self, '_current_binary', None)
+                    if binary_path:
+                        analysis_results = analyze_binary(binary_path)
+                        context = f"Binary analysis context: {analysis_results.get('summary', 'No analysis available')}\n"
+                    else:
+                        context = ""
+                    
+                    # Use vulnerability engine for domain-specific analysis
+                    vuln_engine = VulnerabilityEngine()
+                    
+                    question_lower = question.lower()
+                    if "license" in question_lower or "activation" in question_lower:
+                        response = vuln_engine.analyze_license_patterns(question, context)
+                        return response if response else "Consider analyzing license validation routines, checking for activation key algorithms, and examining trial period limitations."
+                    elif "protection" in question_lower or "security" in question_lower:
+                        response = vuln_engine.analyze_protection_mechanisms(question, context)
+                        return response if response else "Look for anti-debugging techniques, packing detection, and code obfuscation patterns."
+                    elif "vulnerability" in question_lower or "exploit" in question_lower:
+                        response = vuln_engine.find_vulnerabilities(question, context)
+                        return response if response else "Focus on buffer overflow analysis, input validation checks, and privilege escalation vectors."
+                    elif "network" in question_lower or "communication" in question_lower:
+                        response = vuln_engine.analyze_network_behavior(question, context)
+                        return response if response else "Monitor network traffic, analyze protocol communications, and check SSL/TLS implementations."
+                    else:
+                        return f"To answer '{question}', I recommend starting with binary structure analysis and examining protection mechanisms."
+                except Exception as e:
+                    logger.error("Vulnerability engine error: %s", e)
                     return f"To answer '{question}', I recommend starting with binary structure analysis and examining protection mechanisms."
         except (AttributeError, TypeError, ValueError) as e:
             logger.error("AI question failed: %s", e, exc_info=True)

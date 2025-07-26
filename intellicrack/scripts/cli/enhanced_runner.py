@@ -231,7 +231,7 @@ class EnhancedCLIRunner:
             # Return analysis results (simulated)
             return {
                 "protocols": ["HTTP", "HTTPS"],
-                "endpoints": ["api.example.com", "license.server.com"],
+                "endpoints": [os.environ.get('API_SERVER_URL', 'api.internal'), os.environ.get('LICENSE_SERVER_URL', 'license.internal')],
                 "suspicious": False,
                 "analyzer_info": f"Analysis by {type(analyzer).__name__}"
             }

@@ -1,5 +1,6 @@
 """License protocol handler for processing license validation requests."""
 import logging
+import os
 import threading
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
@@ -72,10 +73,10 @@ class LicenseProtocolHandler(ABC):
         self.logger = logging.getLogger(__name__)
 
         # Initialize protocol-specific configuration
-        self.port = self.config.get('port', 8080)
-        self.host = self.config.get('host', 'localhost')  # Default to localhost for security
+        self.port = self.config.get('port', int(os.environ.get('LICENSE_PROTOCOL_PORT', '8080')))
+        self.host = self.config.get('host', os.environ.get('LICENSE_PROTOCOL_HOST', 'localhost'))  # Default to localhost for security
         self.bind_host = self.config.get('bind_host', self.host)  # Allow separate bind host
-        self.timeout = self.config.get('timeout', 30)
+        self.timeout = self.config.get('timeout', int(os.environ.get('LICENSE_PROTOCOL_TIMEOUT', '30')))
 
         self.logger.info("Initialized %s protocol handler", self.__class__.__name__)
 
@@ -295,6 +296,13 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
         self.session_data = {}
         self.client_connections = {}
         self.vendor_daemon_port = self.config.get('vendor_daemon_port', 27001)
+        
+        # Configure FlexLM response parameters
+        self.flexlm_version = self.config.get('flexlm_version', '11.16.2')
+        self.license_count = self.config.get('license_count', 9999)
+        self.license_type = self.config.get('license_type', 'permanent')
+        self.feature_version = self.config.get('feature_version', '2.0')
+        self.server_status = self.config.get('server_status', 'UP')
 
     def clear_data(self) -> None:
         """Clear FlexLM-specific captured data."""
@@ -415,8 +423,9 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
 
         # Check for common FlexLM commands
         if request_str.startswith('HELLO'):
-            # Initial handshake
-            return b"HELLO 1 1 27001\n"  # version 1.1, vendor daemon on port 27001
+            # Initial handshake - use configured vendor daemon port
+            major, minor = self.flexlm_version.split('.')[:2]
+            return f"HELLO {major} {minor} {self.vendor_daemon_port}\n".encode('utf-8')
 
         elif request_str.startswith('GETLIC'):
             # License checkout request
@@ -424,8 +433,10 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             parts = request_str.split()
             if len(parts) >= 2:
                 feature = parts[1]
-                # Generate a success response with license details
-                response = f"GRANT {feature} 1.0 permanent 0 0 0 0 HOSTID=ANY\n"
+                # Generate a success response with configurable license details
+                import time
+                expiry = "0" if self.license_type == "permanent" else str(int(time.time()) + 86400 * 365)
+                response = f"GRANT {feature} {self.feature_version} {self.license_type} {expiry} 0 0 0 HOSTID=ANY\n"
                 return response.encode('utf-8')
 
         elif request_str.startswith('CHECKIN'):
@@ -437,10 +448,10 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             return b"HEARTBEAT_OK\n"
 
         elif 'STATUS' in request_str:
-            # Status query
+            # Status query - use configured values
             response = "STATUS OK\n"
-            response += "SERVER UP\n"
-            response += "LICENSES AVAILABLE: 999\n"
+            response += f"SERVER {self.server_status}\n"
+            response += f"LICENSES AVAILABLE: {self.license_count}\n"
             return response.encode('utf-8')
 
         else:
@@ -467,6 +478,15 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         self.client_connections = {}
         self._hasp_aes_key = None
         self._hasp_nonce = None
+        
+        # Configure HASP response parameters
+        self.hasp_memory_size = self.config.get('hasp_memory_size', 0x20000)  # 128KB default
+        self.hasp_version = self.config.get('hasp_version', '7.50')
+        self.hasp_vendor_id = self.config.get('hasp_vendor_id', 0x1234)
+        self.license_features = self.config.get('license_features', [
+            'PROFESSIONAL', 'ENTERPRISE', 'DEVELOPER', 'RUNTIME'
+        ])
+        self.hasp_emulator_version = self.config.get('hasp_emulator_version', 'HASP_EMU_v2.1')
 
     def clear_data(self) -> None:
         """Clear HASP-specific captured data."""
@@ -589,8 +609,12 @@ class HASPProtocolHandler(LicenseProtocolHandler):
 
             # Handle common HASP commands
             if command_id == 0x01:  # HASP_LOGIN
-                # Login response: success status + handle
-                response = struct.pack('<II', 0x00000000, 0x12345678)  # Success + handle
+                # Login response: success status + dynamic handle
+                import random
+                handle = random.randint(0x10000000, 0x7FFFFFFF)  # Generate dynamic handle
+                response = struct.pack('<II', 0x00000000, handle)  # Success + handle
+                # Store handle for this session
+                self.session_data['handle'] = handle
                 return response
 
             elif command_id == 0x02:  # HASP_LOGOUT
@@ -662,8 +686,8 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                 return struct.pack('<I', 0x00000000)
 
             elif command_id == 0x05:  # HASP_GET_SIZE
-                # Return size of available memory
-                return struct.pack('<II', 0x00000000, 0x10000)  # Success + 64KB
+                # Return size of available memory from configuration
+                return struct.pack('<II', 0x00000000, self.hasp_memory_size)  # Success + configured size
 
             elif command_id == 0x06:  # HASP_READ
                 # Read memory response
@@ -680,11 +704,17 @@ class HASPProtocolHandler(LicenseProtocolHandler):
 
                     # Generate realistic license data based on offset
                     if offset < 16:
-                        # License header area - return license signature
-                        license_data = b"HASP_LICENSE_V2\x00" + b"\x00" * (size - 16)
+                        # License header area - return dynamic license signature
+                        version_bytes = self.hasp_version.replace('.', '_').encode('utf-8')
+                        license_sig = b"HASP_LIC_" + version_bytes + b"\x00"
+                        license_data = license_sig.ljust(size, b'\x00')
                     elif offset < 256:
-                        # License info area - return feature data
-                        feature_data = b"FEATURE_1\x00FEATURE_2\x00FEATURE_3\x00" + b"\x00" * (size - 30)
+                        # License info area - return configured feature data
+                        feature_bytes = b""
+                        for feature in self.license_features:
+                            feature_bytes += feature.encode('utf-8') + b"\x00"
+                        # Pad to requested size
+                        feature_data = feature_bytes + b"\x00" * max(0, size - len(feature_bytes))
                         license_data = feature_data[:size]
                     else:
                         # Data area - return mixed content
@@ -706,8 +736,8 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                 return struct.pack('<II', 0x00000000, current_time)
 
             elif command_id == 0x09:  # HASP_GET_INFO
-                # Get HASP info
-                info = b"HASP_EMU_v1.0\x00"
+                # Get HASP info - use configured emulator version
+                info = self.hasp_emulator_version.encode('utf-8') + b"\x00"
                 return struct.pack('<I', 0x00000000) + info
 
             else:

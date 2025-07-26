@@ -1131,11 +1131,58 @@ class AnalysisViewerPanel:
         if chart_type == "Confidence Over Time":
             self.chart.update_data(self.current_analysis.confidence, "Confidence")
         elif chart_type == "Protection Distribution":
-            # This would require historical data
-            pass
+            # Calculate protection distribution from current and historical data
+            protection_counts = {}
+            
+            # Add current analysis protections
+            if self.current_analysis and self.current_analysis.protections:
+                for protection in self.current_analysis.protections:
+                    prot_name = protection.protection_type
+                    protection_counts[prot_name] = protection_counts.get(prot_name, 0) + 1
+            
+            # Add historical protections if available
+            if hasattr(self, 'analysis_history'):
+                for analysis in self.analysis_history:
+                    if analysis.protections:
+                        for protection in analysis.protections:
+                            prot_name = protection.protection_type
+                            protection_counts[prot_name] = protection_counts.get(prot_name, 0) + 1
+            
+            # Update chart with distribution data
+            if protection_counts:
+                labels = list(protection_counts.keys())
+                values = list(protection_counts.values())
+                self.chart.update_pie_data(labels, values, "Protection Distribution")
+            else:
+                self.chart.clear_data()
+                
         elif chart_type == "Bypass Success Rate":
-            # This would require success tracking
-            pass
+            # Calculate bypass success rate from tracked data
+            bypass_stats = {'Successful': 0, 'Failed': 0, 'Partial': 0}
+            
+            # Check current analysis for bypass recommendations
+            if self.current_analysis and self.current_analysis.bypass_recommendations:
+                for recommendation in self.current_analysis.bypass_recommendations:
+                    # Estimate success based on confidence
+                    if recommendation.confidence >= 0.8:
+                        bypass_stats['Successful'] += 1
+                    elif recommendation.confidence >= 0.5:
+                        bypass_stats['Partial'] += 1
+                    else:
+                        bypass_stats['Failed'] += 1
+            
+            # Add historical bypass data if available
+            if hasattr(self, 'bypass_history'):
+                for result in self.bypass_history:
+                    bypass_stats[result['status']] = bypass_stats.get(result['status'], 0) + 1
+            
+            # Update chart with success rate data
+            if sum(bypass_stats.values()) > 0:
+                labels = list(bypass_stats.keys())
+                values = list(bypass_stats.values())
+                self.chart.update_pie_data(labels, values, "Bypass Success Rate")
+            else:
+                self.chart.clear_data()
 
     def add_to_history(self, result: AnalysisResult):
         """Add analysis result to history"""
@@ -1186,8 +1233,64 @@ class AnalysisViewerPanel:
         """Handle history double-click to view details"""
         selection = self.history_tree.selection()
         if selection:
-            # Would load historical analysis details
-            pass
+            # Load historical analysis details
+            item = self.history_tree.item(selection[0])
+            values = item['values']
+            
+            if len(values) >= 4:
+                file_name = values[0]
+                protection_type = values[1]
+                confidence = values[2]
+                timestamp = values[3]
+                
+                # Create detail window
+                detail_window = tk.Toplevel(self.parent)
+                detail_window.title(f"Analysis Details - {file_name}")
+                detail_window.geometry("600x400")
+                
+                # Create detail frame
+                detail_frame = ttk.Frame(detail_window, padding="10")
+                detail_frame.pack(fill=tk.BOTH, expand=True)
+                
+                # Add details
+                ttk.Label(detail_frame, text=f"File: {file_name}", font=('TkDefaultFont', 10, 'bold')).pack(anchor='w', pady=5)
+                ttk.Label(detail_frame, text=f"Protection Type: {protection_type}").pack(anchor='w', pady=2)
+                ttk.Label(detail_frame, text=f"Confidence: {confidence}%").pack(anchor='w', pady=2)
+                ttk.Label(detail_frame, text=f"Analyzed: {timestamp}").pack(anchor='w', pady=2)
+                
+                # Add text area for detailed info
+                ttk.Label(detail_frame, text="Analysis Details:", font=('TkDefaultFont', 9, 'bold')).pack(anchor='w', pady=(10, 5))
+                
+                detail_text = tk.Text(detail_frame, height=15, width=70, wrap=tk.WORD)
+                detail_text.pack(fill=tk.BOTH, expand=True, pady=5)
+                
+                # Add scrollbar
+                scrollbar = ttk.Scrollbar(detail_text)
+                scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+                detail_text.config(yscrollcommand=scrollbar.set)
+                scrollbar.config(command=detail_text.yview)
+                
+                # Populate with historical data if available
+                detail_info = f"File: {file_name}\n"
+                detail_info += f"Protection Type: {protection_type}\n"
+                detail_info += f"Confidence Level: {confidence}%\n"
+                detail_info += f"Analysis Timestamp: {timestamp}\n\n"
+                
+                # Add more details if stored in history
+                if hasattr(self, 'analysis_history_details'):
+                    history_key = f"{file_name}_{timestamp}"
+                    if history_key in self.analysis_history_details:
+                        detail_info += "Detailed Analysis:\n"
+                        detail_info += self.analysis_history_details[history_key]
+                else:
+                    detail_info += "Detailed analysis data not available for this historical entry.\n"
+                    detail_info += "Future analyses will store complete details."
+                
+                detail_text.insert('1.0', detail_info)
+                detail_text.config(state='disabled')
+                
+                # Add close button
+                ttk.Button(detail_frame, text="Close", command=detail_window.destroy).pack(pady=10)
 
     def clear_history(self):
         """Clear analysis history"""

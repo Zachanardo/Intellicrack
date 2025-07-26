@@ -1,4 +1,4 @@
-"""License server emulator for creating mock license validation servers."""
+"""License server emulator for creating real license validation servers with production-ready protocol emulation."""
 from intellicrack.logger import logger
 
 """

@@ -19,8 +19,10 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
 import os
 
+from PyQt6.QtCore import QDateTime
 from PyQt6.QtWidgets import (
     QDialog,
     QFileDialog,
@@ -86,4 +88,43 @@ class PluginDialogBase(QDialog):
     def on_plugin_loaded(self, plugin_path: str):
         """Called when a plugin is loaded - to be overridden by subclasses"""
         self.logger.debug(f"Plugin loaded from: {plugin_path}")
-        pass
+        
+        # Store plugin metadata
+        plugin_name = os.path.basename(plugin_path)
+        plugin_dir = os.path.dirname(plugin_path)
+        
+        # Initialize plugin state tracking
+        if not hasattr(self, '_loaded_plugins'):
+            self._loaded_plugins = {}
+        
+        # Store plugin information
+        self._loaded_plugins[plugin_path] = {
+            'name': plugin_name,
+            'directory': plugin_dir,
+            'loaded_at': QDateTime.currentDateTime(),
+            'status': 'loaded'
+        }
+        
+        # Update window title to reflect loaded plugin
+        current_title = self.windowTitle()
+        if ' - ' not in current_title:
+            self.setWindowTitle(f"{current_title} - {plugin_name}")
+        else:
+            # Replace existing plugin name in title
+            base_title = current_title.split(' - ')[0]
+            self.setWindowTitle(f"{base_title} - {plugin_name}")
+        
+        # Enable any plugin-dependent UI elements
+        if hasattr(self, 'plugin_dependent_widgets'):
+            for widget in self.plugin_dependent_widgets:
+                widget.setEnabled(True)
+        
+        # Emit custom signal if available
+        if hasattr(self, 'plugin_loaded_signal'):
+            self.plugin_loaded_signal.emit(plugin_path)
+        
+        # Log successful plugin loading
+        self.logger.info(f"Successfully loaded plugin: {plugin_name}")
+        
+        # Store last loaded plugin for quick access
+        self._last_loaded_plugin = plugin_path

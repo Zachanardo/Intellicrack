@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
 import logging
+import os
 import threading
 import time
 import uuid
@@ -708,7 +709,7 @@ class DynamicAnalysisAgent(BaseAgent):
                 {"type": "write", "file": "output.log"}
             ],
             "network_connections": [
-                {"host": "api.example.com", "port": 443, "protocol": "HTTPS"}
+                {"host": os.environ.get('API_SERVER_HOST', 'api.internal'), "port": 443, "protocol": "HTTPS"}
             ],
             "registry_operations": [
                 {"operation": "read", "key": "HKLM\\Software\\Example"}
@@ -761,7 +762,7 @@ class DynamicAnalysisAgent(BaseAgent):
                 {"function": "RegOpenKeyExA", "args": [
                     "HKLM\\Software"], "result": "success"},
                 {"function": "InternetConnectA", "args": [
-                    "api.example.com"], "result": "success"}
+                    os.environ.get('API_SERVER_HOST', 'api.internal')], "result": "success"}
             ],
             "suspicious_apis": [
                 {"function": "VirtualAlloc", "reason": "executable_memory"},

@@ -135,10 +135,12 @@ class R2KeygenAssistant:
 
     # Serial format patterns
     SERIAL_PATTERNS = {
-        'XXXX-XXXX-XXXX-XXXX': r'^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$',
-        'XXXXX-XXXXX-XXXXX': r'^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
-        'XXXXXXXXXXXXXXXX': r'^[A-Z0-9]{16}$',
-        'XXX-XXXXXX-XXXXXX': r'^[A-Z0-9]{3}-[A-Z0-9]{6}-[A-Z0-9]{6}$'
+        '4x4': r'^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$',
+        '3x5': r'^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
+        '16-char': r'^[A-Z0-9]{16}$',
+        '3-6-6': r'^[A-Z0-9]{3}-[A-Z0-9]{6}-[A-Z0-9]{6}$',
+        '5x5': r'^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
+        '6x4': r'^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$'
     }
 
     def __init__(self, r2: r2pipe.open = None, filename: str = None):
@@ -357,9 +359,9 @@ class R2KeygenAssistant:
             if re.search(fmt, strings):
                 # Guess format based on format string
                 if 'x' in fmt or 'X' in fmt:
-                    return 'XXXX-XXXX-XXXX-XXXX'
+                    return '4x4'
                 else:
-                    return 'XXXXX-XXXXX-XXXXX'
+                    return '3x5'
 
         return None
 
@@ -787,12 +789,12 @@ class R2KeygenAssistant:
 
     def _add_serial_formatting(self, code: List[str], format_pattern: str):
         """Add serial formatting code"""
-        if format_pattern == 'XXXX-XXXX-XXXX-XXXX':
+        if format_pattern == '4x4':
             code.append("    hex_str = digest.hex().upper()[:16]")
             code.append("    parts = [hex_str[i:i+4] for i in range(0, 16, 4)]")
             code.append("    serial = '-'.join(parts)")
 
-        elif format_pattern == 'XXXXX-XXXXX-XXXXX':
+        elif format_pattern == '3x5':
             code.append("    # Convert to base32-like format")
             code.append("    chars = string.ascii_uppercase + string.digits")
             code.append("    serial_parts = []")
@@ -878,7 +880,7 @@ class R2KeygenAssistant:
         code.append("    std::stringstream ss;")
         code.append("    ss << std::hex << std::uppercase << std::setfill('0');")
 
-        if flow.serial_format == 'XXXX-XXXX-XXXX-XXXX':
+        if flow.serial_format == '4x4':
             code.append("    for (int i = 0; i < 4; i++) {")
             code.append("        if (i > 0) ss << '-';")
             code.append(f"        ss << std::setw(4) << *(uint16_t*)({current_var} + i*2);")
@@ -1004,7 +1006,7 @@ class R2KeygenAssistant:
         code.append("        // Format serial")
         code.append("        StringBuilder serial = new StringBuilder();")
 
-        if flow.serial_format == 'XXXX-XXXX-XXXX-XXXX':
+        if flow.serial_format == '4x4':
             code.append("        for (int i = 0; i < 8 && i < " + current_var + ".length; i++) {")
             code.append("            if (i > 0 && i % 2 == 0) serial.append('-');")
             code.append(f"            serial.append(String.format(\"%02X\", {current_var}[i] & 0xFF));")

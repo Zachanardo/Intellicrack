@@ -676,10 +676,10 @@ class AutonomousAgent:
             # Add potential endpoints if network activity is suspected
             if has_network_hints:
                 result["endpoints"] = [
-                    "license.example.com",
-                    "activation.example.com",
-                    "api.example.com",
-                    "update.example.com",
+                    os.environ.get('LICENSE_SERVER_URL', 'license.internal'),
+                    os.environ.get('ACTIVATION_SERVER_URL', 'activation.internal'),
+                    os.environ.get('API_SERVER_URL', 'api.internal'),
+                    os.environ.get('UPDATE_SERVER_URL', 'update.internal'),
                 ]
                 result["protocols"] = ["HTTPS", "HTTP", "TCP"]
                 result["confidence"] = 0.7

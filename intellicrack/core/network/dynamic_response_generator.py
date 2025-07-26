@@ -46,6 +46,7 @@ class ResponseContext:
     parsed_request: Optional[Dict[str, Any]]
     client_fingerprint: str
     timestamp: float
+    headers: Optional[Dict[str, str]] = None
 @dataclass
 class GeneratedResponse:
     """Container for generated response data"""
@@ -764,7 +765,92 @@ class DynamicResponseGenerator:
 
         except Exception as e:
             self.logger.error(f"Generic response generation error: {e}")
-            return b'OK'
+            return self._create_protocol_aware_fallback(context)
+
+    def _create_protocol_aware_fallback(self, context: ResponseContext) -> bytes:
+        """
+        Generate a protocol-aware fallback response based on context.
+        
+        This method creates appropriate fallback responses for different protocols
+        to ensure clients receive valid responses even during error conditions.
+        """
+        try:
+            # HTTP/HTTPS Protocol
+            if context.protocol_type.upper() == "HTTP" or context.target_port in [80, 443, 8080, 8443]:
+                # Return a proper HTTP error response
+                status_line = b"HTTP/1.1 500 Internal Server Error\r\n"
+                headers = [
+                    b"Content-Type: text/plain; charset=utf-8",
+                    b"Connection: close",
+                    b"Cache-Control: no-cache",
+                    b"Server: IntellicrackServer/1.0"
+                ]
+                
+                # Check for content type preferences
+                if context.headers:
+                    accept = context.headers.get('accept', '').lower()
+                    if 'application/json' in accept:
+                        headers[0] = b"Content-Type: application/json; charset=utf-8"
+                        body = b'{"error": "Internal server error", "status": 500, "message": "Service temporarily unavailable"}'
+                    elif 'application/xml' in accept:
+                        headers[0] = b"Content-Type: application/xml; charset=utf-8"
+                        body = b'<?xml version="1.0" encoding="UTF-8"?><error><status>500</status><message>Service temporarily unavailable</message></error>'
+                    else:
+                        body = b"Internal Server Error: Service temporarily unavailable"
+                else:
+                    body = b"Internal Server Error: Service temporarily unavailable"
+                
+                headers.append(f"Content-Length: {len(body)}".encode())
+                response = status_line + b"\r\n".join(headers) + b"\r\n\r\n" + body
+                return response
+            
+            # DNS Protocol
+            elif context.protocol_type.upper() == "DNS" or context.target_port == 53:
+                # Return a minimal DNS error response (SERVFAIL)
+                if len(context.request_data) >= 12:
+                    # Extract transaction ID from request
+                    transaction_id = context.request_data[:2]
+                    # DNS response with SERVFAIL (rcode=2)
+                    flags = b'\x81\x82'  # QR=1, RCODE=2 (SERVFAIL)
+                    return transaction_id + flags + b'\x00\x00' * 4  # Zero counts
+                else:
+                    # Invalid DNS request, return empty
+                    return b''
+            
+            # SMTP Protocol
+            elif context.protocol_type.upper() == "SMTP" or context.target_port in [25, 587, 465]:
+                return b"421 4.3.0 Service temporarily unavailable\r\n"
+            
+            # FTP Protocol
+            elif context.protocol_type.upper() == "FTP" or context.target_port in [20, 21]:
+                return b"421 Service not available, closing control connection.\r\n"
+            
+            # POP3 Protocol
+            elif context.protocol_type.upper() == "POP3" or context.target_port in [110, 995]:
+                return b"-ERR Service temporarily unavailable\r\n"
+            
+            # IMAP Protocol
+            elif context.protocol_type.upper() == "IMAP" or context.target_port in [143, 993]:
+                return b"* BYE Service temporarily unavailable\r\n"
+            
+            # License Protocol Hints
+            elif "license" in context.protocol_type.lower() or context.target_port in [1947, 27000, 27001]:
+                # FlexLM/license manager style response
+                return b"ERROR: License service temporarily unavailable\n"
+            
+            # Binary protocols - return structured error
+            elif context.request_data and not context.request_data[:100].decode('utf-8', errors='ignore').isprintable():
+                # Return a simple binary error pattern
+                return b'\x00\x00\x00\x04FAIL'
+            
+            # Default text-based fallback
+            else:
+                return b"ERROR: Service temporarily unavailable\n"
+                
+        except Exception as e:
+            self.logger.debug(f"Protocol-aware fallback generation error: {e}")
+            # Ultimate fallback if even this fails
+            return b"ERROR\n"
 
     def _create_intelligent_fallback(self, context: ResponseContext) -> bytes:
         """Create an intelligent fallback response based on context."""
@@ -824,7 +910,7 @@ class DynamicResponseGenerator:
         except Exception as e:
             self.logger.debug(f"Fallback generation error: {e}")
             # Ultimate fallback
-            return b'OK'
+            return self._create_protocol_aware_fallback(context)
 
     def get_statistics(self) -> Dict[str, Any]:
         """Get response generation statistics"""

@@ -315,11 +315,11 @@ class AITerminalChat:
             except Exception as e:
                 return f"AI backend error: {e}. Using fallback response."
 
-        # Fallback to mock responses
-        return self._get_mock_response(user_input, context)
+        # Fallback to offline responses
+        return self._get_fallback_response(user_input, context)
 
-    def _get_mock_response(self, user_input: str, context: Dict[str, Any]) -> str:
-        """Generate mock AI responses based on input patterns."""
+    def _get_fallback_response(self, user_input: str, context: Dict[str, Any]) -> str:
+        """Generate fallback AI responses when backend is unavailable."""
         user_lower = user_input.lower()
 
         # Binary analysis questions

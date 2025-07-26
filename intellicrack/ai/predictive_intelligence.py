@@ -797,9 +797,14 @@ class VulnerabilityPredictor:
         Sets up the predictor for estimating vulnerability discovery likelihood
         in target binaries based on code patterns and historical data.
         """
+        self.model = LinearRegressionModel("vulnerability_discovery")
+        self.feature_extractor = FeatureExtractor()
         self.vulnerability_patterns = []
         self.pattern_weights = {}
         self.discovery_history = []
+        self._initialize_model()
+
+        logger.info("Vulnerability predictor initialized")
 
     def _initialize_model(self):
         """Initialize with vulnerability-specific training data."""

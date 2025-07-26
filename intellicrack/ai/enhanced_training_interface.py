@@ -202,23 +202,48 @@ except ImportError as e:
 
         def setLabel(self, axis, text, **kwargs):
             """Stub method for setting axis labels."""
-            pass
+            # Store label settings for potential future use
+            if not hasattr(self, '_labels'):
+                self._labels = {}
+            self._labels[axis] = {'text': text, 'kwargs': kwargs}
+            logger.debug(f"PlotWidget stub: setLabel({axis}, {text})")
 
         def enableAutoRange(self, *args, **kwargs):
             """Stub method for enabling auto range."""
-            pass
+            # Store auto range settings
+            self._auto_range_enabled = True
+            self._auto_range_args = args
+            self._auto_range_kwargs = kwargs
+            logger.debug(f"PlotWidget stub: enableAutoRange({args}, {kwargs})")
 
         def showGrid(self, x=None, y=None, **kwargs):
             """Stub method for showing grid."""
-            pass
+            # Store grid settings
+            if not hasattr(self, '_grid_settings'):
+                self._grid_settings = {}
+            self._grid_settings['x'] = x if x is not None else self._grid_settings.get('x', True)
+            self._grid_settings['y'] = y if y is not None else self._grid_settings.get('y', True)
+            self._grid_settings.update(kwargs)
+            logger.debug(f"PlotWidget stub: showGrid(x={x}, y={y}, {kwargs})")
 
         def setBackground(self, *args, **kwargs):
             """Stub method for setting background."""
-            pass
+            # Store background settings
+            self._background_args = args
+            self._background_kwargs = kwargs
+            if args:
+                self._background_color = args[0]
+            logger.debug(f"PlotWidget stub: setBackground({args}, {kwargs})")
 
         def addLegend(self, *args, **kwargs):
             """Stub method for adding legend."""
-            pass
+            # Store legend settings
+            self._legend_enabled = True
+            self._legend_args = args
+            self._legend_kwargs = kwargs
+            logger.debug(f"PlotWidget stub: addLegend({args}, {kwargs})")
+            # Return self to allow method chaining
+            return self
 
 __all__ = ['EnhancedTrainingInterface',
            'TrainingConfiguration', 'ModelMetrics', 'TrainingStatus']

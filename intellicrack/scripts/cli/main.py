@@ -1085,8 +1085,8 @@ class IntellicrackCLI:
         try:
             hooker = CloudLicenseHooker()
             hooker.configure_endpoints([
-                "https://license.example.com/api/v1/validate",
-                "https://auth.example.com/license/check"
+                os.environ.get('LICENSE_VALIDATION_URL', 'https://license.internal/api/v1/validate'),
+                os.environ.get('AUTH_CHECK_URL', 'https://auth.internal/license/check')
             ])
             hooker.set_bypass_mode(True)
 

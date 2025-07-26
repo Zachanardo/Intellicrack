@@ -530,7 +530,7 @@ def _get_protocol_handler_requests(limit: int) -> List[Dict[str, Any]]:
                             "type": "license_checkout",
                             "protocol": "FlexLM",
                             "src_ip": "192.168.1.100",
-                            "dst_ip": "license.example.com",
+                            "dst_ip": os.environ.get('LICENSE_SERVER_HOST', 'license.internal'),
                             "dst_port": 27000 + i,
                             "request_data": f"CHECKOUT feature_{i} HOST=client VERSION=1.0",
                             "response_data": f"GRANT feature_{i} 1.0 permanent",
@@ -603,7 +603,7 @@ def _get_network_interceptor_requests(limit: int) -> List[Dict[str, Any]]:
                 "type": "intercepted_traffic",
                 "protocol": protocol.upper(),
                 "src_ip": f"192.168.1.{100 + i}",
-                "dst_ip": f"server{i}.example.com",
+                "dst_ip": f"server{i}.{os.environ.get('BASE_DOMAIN', 'internal')}",
                 "dst_port": port,
                 "request_data": _generate_realistic_request_data(req_type, protocol),
                 "response_data": _generate_realistic_response_data(req_type, protocol),
@@ -757,9 +757,9 @@ def _generate_realistic_request_data(req_type: str, protocol: str) -> str:
         Formatted request data string
     """
     if protocol == "http":
-        return f"GET /api/license/check HTTP/1.1\\nHost: license.example.com\\nUser-Agent: {req_type}_Client/1.0\\n\\n"
+        return f"GET /api/license/check HTTP/1.1\\nHost: {os.environ.get('LICENSE_SERVER_HOST', 'license.internal')}\\nUser-Agent: {req_type}_Client/1.0\\n\\n"
     elif protocol == "https":
-        return f"POST /auth/activate HTTP/1.1\\nHost: secure.example.com\\nContent-Type: application/json\\n\\n{{\"key\": \"sample_key\", \"type\": \"{req_type}\"}}"
+        return f"POST /auth/activate HTTP/1.1\\nHost: {os.environ.get('SECURE_SERVER_HOST', 'secure.internal')}\\nContent-Type: application/json\\n\\n{{\"key\": \"sample_key\", \"type\": \"{req_type}\"}}"
     elif protocol == "tcp":
         return f"{req_type}_PROTOCOL_REQUEST\\nVERSION: 1.0\\nCOMMAND: CHECK\\n"
     else:
@@ -804,7 +804,7 @@ def _generate_example_cached_requests(limit: int) -> List[Dict[str, Any]]:
             "type": "license_validation",
             "protocol": "HTTPS",
             "src_ip": "192.168.1.100",
-            "dst_ip": f"license{i}.example.com",
+            "dst_ip": f"license{i}.{os.environ.get('BASE_DOMAIN', 'internal')}",
             "dst_port": 443,
             "request_data": f"POST /validate HTTP/1.1\\nContent-Type: application/json\\n\\n{{\"key\": \"example_key_{i}\"}}",
             "response_data": f"{{\"valid\": true, \"feature\": \"example_feature_{i}\"}}",

@@ -22,6 +22,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import time
+from datetime import datetime
 from typing import Callable, Dict, List, Optional
 
 __version__ = "1.0.0"
@@ -35,23 +36,107 @@ class Plugin:
 
     def will_run_callback(self, *args, **kwargs):
         """Called before analysis starts"""
-        pass
+        # Initialize analysis state
+        self.analysis_start_time = time.time()
+        self.total_states_analyzed = 0
+        self.analysis_metadata = {
+            'start_time': self.analysis_start_time,
+            'initial_memory_usage': self._get_memory_usage(),
+            'callback_args': args,
+            'callback_kwargs': kwargs
+        }
+        logger.info(f"Starting analysis at {datetime.fromtimestamp(self.analysis_start_time)}")
 
     def did_finish_run_callback(self, *args, **kwargs):
         """Called after analysis finishes"""
-        pass
+        # Calculate analysis statistics
+        end_time = time.time()
+        duration = end_time - getattr(self, 'analysis_start_time', end_time)
+        
+        # Log completion statistics
+        logger.info(f"Analysis completed in {duration:.2f} seconds")
+        logger.info(f"Total states analyzed: {getattr(self, 'total_states_analyzed', 0)}")
+        
+        # Store final metrics
+        if hasattr(self, 'analysis_metadata'):
+            self.analysis_metadata['end_time'] = end_time
+            self.analysis_metadata['duration'] = duration
+            self.analysis_metadata['final_memory_usage'] = self._get_memory_usage()
+            self.analysis_metadata['completion_args'] = args
+            self.analysis_metadata['completion_kwargs'] = kwargs
 
     def will_fork_state_callback(self, state, *args, **kwargs):
         """Called before a state is forked"""
-        pass
+        # Track state forking for analysis
+        if not hasattr(self, 'fork_count'):
+            self.fork_count = 0
+        self.fork_count += 1
+        
+        # Log fork event
+        logger.debug(f"Forking state at address 0x{state.address:x} (fork #{self.fork_count})")
+        
+        # Store fork metadata
+        if not hasattr(self, 'fork_history'):
+            self.fork_history = []
+        self.fork_history.append({
+            'timestamp': time.time(),
+            'state_address': state.address,
+            'fork_number': self.fork_count,
+            'parent_constraints': len(state.constraints) if hasattr(state, 'constraints') else 0
+        })
 
     def will_terminate_state_callback(self, state, *args, **kwargs):
         """Called before a state is terminated"""
-        pass
+        # Track termination reasons
+        if not hasattr(self, 'termination_pending'):
+            self.termination_pending = {}
+        
+        # Store pending termination info
+        state_id = getattr(state, 'state_id', id(state))
+        self.termination_pending[state_id] = {
+            'timestamp': time.time(),
+            'address': state.address,
+            'reason': kwargs.get('reason', 'unknown'),
+            'constraints_count': len(state.constraints) if hasattr(state, 'constraints') else 0
+        }
+        
+        logger.debug(f"State at 0x{state.address:x} pending termination")
 
     def did_terminate_state_callback(self, state, *args, **kwargs):
         """Called after a state is terminated"""
-        pass
+        # Update termination statistics
+        if not hasattr(self, 'terminated_states'):
+            self.terminated_states = []
+        
+        state_id = getattr(state, 'state_id', id(state))
+        termination_info = getattr(self, 'termination_pending', {}).get(state_id, {})
+        
+        # Record terminated state
+        self.terminated_states.append({
+            'timestamp': time.time(),
+            'address': state.address,
+            'state_id': state_id,
+            'reason': termination_info.get('reason', 'unknown'),
+            'duration': time.time() - termination_info.get('timestamp', time.time())
+        })
+        
+        # Clean up pending termination
+        if hasattr(self, 'termination_pending') and state_id in self.termination_pending:
+            del self.termination_pending[state_id]
+        
+        # Update total states analyzed
+        self.total_states_analyzed = getattr(self, 'total_states_analyzed', 0) + 1
+        
+        logger.debug(f"State at 0x{state.address:x} terminated (total: {self.total_states_analyzed})")
+    
+    def _get_memory_usage(self):
+        """Get current memory usage in MB"""
+        try:
+            import psutil
+            process = psutil.Process()
+            return process.memory_info().rss / 1024 / 1024  # Convert to MB
+        except:
+            return 0
 
 
 class State:

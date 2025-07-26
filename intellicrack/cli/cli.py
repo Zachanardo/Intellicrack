@@ -356,7 +356,7 @@ def server(host: str, https_port: int, dns_port: int, tcp_port: int, protocols: 
             'dns_enabled': 'dns' in protocols,
             'tcp_enabled': 'tcp' in protocols,
             'https': {'host': host, 'port': https_port},
-            'dns': {'host': host, 'port': dns_port, 'domain': 'example.com'},
+            'dns': {'host': host, 'port': dns_port, 'domain': os.environ.get('DNS_DOMAIN', 'internal.local')},
             'tcp': {'host': host, 'port': tcp_port}
         }
 

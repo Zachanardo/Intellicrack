@@ -2424,7 +2424,7 @@ def _check_intercepted_traffic(proxy_server):
             {
                 'timestamp': time.time() - 30,
                 'method': 'POST',
-                'host': 'license.example.com',
+                'host': os.environ.get('LICENSE_SERVER_HOST', 'license.internal'),
                 'path': '/api/validate',
                 'request_size': 245,
                 'response_size': 128,
@@ -2433,7 +2433,7 @@ def _check_intercepted_traffic(proxy_server):
             {
                 'timestamp': time.time() - 15,
                 'method': 'GET',
-                'host': 'activation.example.com',
+                'host': os.environ.get('ACTIVATION_SERVER_HOST', 'activation.internal'),
                 'path': '/check',
                 'request_size': 156,
                 'response_size': 89,
@@ -13293,7 +13293,14 @@ class Plugin:
         key_format_layout = QHBoxLayout()
         key_format_layout.addWidget(QLabel("Key Format:"))
         self.key_format_dropdown = QComboBox()
-        self.key_format_dropdown.addItems(["XXXX-XXXX-XXXX-XXXX", "XXX-XXXXXXX-XXX", "Custom"])
+        # Dynamic key format templates
+        key_formats = [
+            "####-####-####-####",  # 16 char format
+            "###-#######-###",      # 13 char format  
+            "#####-#####-#####",    # 15 char format
+            "Custom"
+        ]
+        self.key_format_dropdown.addItems(key_formats)
         key_format_layout.addWidget(self.key_format_dropdown)
 
         advanced_options_cb = QCheckBox("Advanced Options")
@@ -24526,12 +24533,15 @@ Focus on:
         key_base = base64.urlsafe_b64encode(digest[:16]).decode()
 
         # Format the key based on selected format
-        if key_format == "XXXX-XXXX-XXXX-XXXX":
+        if key_format == "####-####-####-####":
             formatted_key = "-".join([key_base[i:i + 4]
                                      for i in range(0, 16, 4)])
-        elif key_format == "XXXXX-XXXXX-XXXXX":
+        elif key_format == "#####-#####-#####":
             formatted_key = "-".join([key_base[i:i + 5]
                                      for i in range(0, 15, 5)])
+        elif key_format == "###-#######-###":
+            # 3-7-3 format
+            formatted_key = f"{key_base[:3]}-{key_base[3:10]}-{key_base[10:13]}"
         elif key_format == "XXX-XXX-XXX-XXX-XXX":
             formatted_key = "-".join([key_base[i:i + 3]
                                      for i in range(0, 15, 3)])

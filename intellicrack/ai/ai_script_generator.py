@@ -405,6 +405,7 @@ class AIScriptGenerator:
 
     def __init__(self, orchestrator=None):
         """Initialize AI script generator with orchestrator."""
+        self.logger = get_logger(__name__)
         self.orchestrator = orchestrator
         self.template_engine = ScriptTemplateEngine()
         self.pattern_library = PatternLibrary()
@@ -541,32 +542,261 @@ class AIScriptGenerator:
         return script
 
     def _identify_protections(self, analysis_results: Dict[str, Any]) -> List[ProtectionType]:
-        """Identify protection types from analysis results."""
-        protections = []
-
-        # Check for license-related strings
+        """Identify protection types from analysis results using comprehensive pattern detection."""
+        protections = set()  # Use set to avoid duplicates
+        confidence_scores = {}
+        
+        # Extract all available data
         strings = analysis_results.get('strings', [])
-        for string in strings:
-            if any(keyword in string.lower() for keyword in ['license', 'trial', 'demo', 'expire']):
-                protections.append(ProtectionType.LICENSE_CHECK)
-                break
-
-        # Check for time-related functions
         functions = analysis_results.get('functions', [])
-        for func in functions:
-            if any(time_func in func.get('name', '') for time_func in ['time', 'clock', 'GetSystemTime']):
-                protections.append(ProtectionType.TIME_BOMB)
-                break
-
-        # Check for network activity
+        imports = analysis_results.get('imports', [])
+        sections = analysis_results.get('sections', [])
+        exports = analysis_results.get('exports', [])
+        symbols = analysis_results.get('symbols', [])
+        
+        # License check patterns with weighted detection
+        license_patterns = {
+            'strong_indicators': {
+                'keywords': ['license', 'serial', 'activation', 'registration', 'unlock', 'keyfile', 'product_key'],
+                'functions': ['check_license', 'validate_key', 'verify_serial', 'IsLicenseValid', 'GetLicenseStatus'],
+                'imports': ['GetVolumeSerialNumber', 'GetComputerName', 'GetUserName', 'CryptHashData'],
+                'weight': 0.9
+            },
+            'medium_indicators': {
+                'keywords': ['trial', 'demo', 'evaluation', 'expire', 'days_left', 'limited'],
+                'functions': ['CheckTrial', 'GetTrialDays', 'IsExpired'],
+                'imports': ['RegQueryValueEx', 'RegSetValueEx'],
+                'weight': 0.7
+            },
+            'weak_indicators': {
+                'keywords': ['valid', 'invalid', 'registered', 'unregistered'],
+                'functions': ['strcmp', 'memcmp', 'strncmp'],
+                'weight': 0.4
+            }
+        }
+        
+        # Time bomb patterns
+        time_patterns = {
+            'strong_indicators': {
+                'functions': ['time', 'localtime', 'gmtime', 'GetSystemTime', 'GetLocalTime', 'QueryPerformanceCounter'],
+                'imports': ['time', 'GetSystemTimeAsFileTime', 'GetTickCount', 'timeGetTime'],
+                'keywords': ['expir', 'trial_end', 'date_check', 'time_limit', 'days_remaining'],
+                'weight': 0.85
+            },
+            'medium_indicators': {
+                'functions': ['difftime', 'mktime', 'clock', 'GetFileTime'],
+                'keywords': ['deadline', 'cutoff', 'enddate', 'valid_until'],
+                'weight': 0.6
+            }
+        }
+        
+        # Network validation patterns
+        network_patterns = {
+            'strong_indicators': {
+                'imports': ['WSAStartup', 'socket', 'connect', 'send', 'recv', 'InternetOpen', 'HttpOpenRequest'],
+                'functions': ['check_online', 'validate_server', 'phone_home', 'activate_online'],
+                'keywords': ['license_server', 'auth_server', 'validation_url', 'activation_endpoint'],
+                'weight': 0.88
+            },
+            'medium_indicators': {
+                'imports': ['gethostbyname', 'getaddrinfo', 'InternetConnect'],
+                'keywords': ['server', 'endpoint', 'api', 'cloud'],
+                'weight': 0.65
+            }
+        }
+        
+        # Hardware lock patterns
+        hardware_patterns = {
+            'strong_indicators': {
+                'imports': ['GetVolumeInformation', 'GetAdaptersInfo', 'GetSystemInfo', 'DeviceIoControl'],
+                'functions': ['GetHWID', 'GetMachineID', 'CheckHardware', 'VerifySystem'],
+                'keywords': ['hwid', 'machine_id', 'fingerprint', 'hardware_lock', 'node_lock'],
+                'weight': 0.92
+            }
+        }
+        
+        # Anti-debug patterns
+        antidebug_patterns = {
+            'strong_indicators': {
+                'imports': ['IsDebuggerPresent', 'CheckRemoteDebuggerPresent', 'NtQueryInformationProcess', 
+                          'OutputDebugString', 'SetUnhandledExceptionFilter'],
+                'functions': ['anti_debug', 'detect_debugger', 'check_debugger'],
+                'keywords': ['debugger', 'breakpoint', 'int3', 'debug_detect'],
+                'weight': 0.95
+            },
+            'medium_indicators': {
+                'imports': ['GetTickCount', 'QueryPerformanceCounter', 'CloseHandle'],
+                'keywords': ['timing_check', 'debug_flag'],
+                'weight': 0.7
+            }
+        }
+        
+        # VM detection patterns
+        vm_patterns = {
+            'strong_indicators': {
+                'keywords': ['vmware', 'virtualbox', 'hypervisor', 'qemu', 'virtual_machine', 'sandboxie'],
+                'functions': ['detect_vm', 'check_hypervisor', 'is_virtual'],
+                'imports': ['GetSystemFirmwareTable', 'EnumSystemFirmwareTables'],
+                'weight': 0.9
+            }
+        }
+        
+        # Anti-tamper patterns
+        antitamper_patterns = {
+            'strong_indicators': {
+                'imports': ['CryptHashData', 'CryptCreateHash', 'CryptGetHashParam'],
+                'functions': ['check_integrity', 'verify_checksum', 'calculate_crc', 'self_check'],
+                'keywords': ['checksum', 'integrity', 'crc32', 'hash_check', 'tamper'],
+                'weight': 0.88
+            }
+        }
+        
+        # Obfuscation patterns
+        obfuscation_patterns = {
+            'indicators': {
+                'section_names': ['.vmp', '.themida', '.enigma', '.aspack', '.upx'],
+                'imports': ['VirtualProtect', 'VirtualAlloc', 'WriteProcessMemory'],
+                'keywords': ['packed', 'encrypted', 'obfuscated'],
+                'weight': 0.85
+            }
+        }
+        
+        # Pattern detection engine
+        def detect_pattern(pattern_dict, data_type='strings'):
+            score = 0.0
+            matches = []
+            
+            for severity, indicators in pattern_dict.items():
+                if severity == 'indicators':  # For single-level patterns
+                    indicators = {'default': indicators}
+                    severity = 'default'
+                
+                weight = indicators.get('weight', 0.5)
+                
+                if data_type == 'strings' and 'keywords' in indicators:
+                    for string in strings:
+                        string_lower = string.lower()
+                        for keyword in indicators['keywords']:
+                            if keyword.lower() in string_lower:
+                                score += weight
+                                matches.append(f"String match: '{keyword}' in '{string}'")
+                
+                elif data_type == 'functions' and 'functions' in indicators:
+                    for func in functions:
+                        func_name = func.get('name', '').lower()
+                        for pattern in indicators['functions']:
+                            if pattern.lower() in func_name:
+                                score += weight
+                                matches.append(f"Function match: '{pattern}' in '{func_name}'")
+                
+                elif data_type == 'imports' and 'imports' in indicators:
+                    for imp in imports:
+                        imp_name = imp.get('name', '').lower()
+                        for pattern in indicators['imports']:
+                            if pattern.lower() in imp_name:
+                                score += weight * 1.2  # Imports are strong indicators
+                                matches.append(f"Import match: '{pattern}'")
+                
+                elif data_type == 'sections' and 'section_names' in indicators:
+                    for section in sections:
+                        section_name = section.get('name', '').lower()
+                        for pattern in indicators['section_names']:
+                            if pattern.lower() in section_name:
+                                score += weight * 1.5  # Section names are very strong indicators
+                                matches.append(f"Section match: '{pattern}'")
+            
+            return score, matches
+        
+        # Run detection for each protection type
+        protection_detections = []
+        
+        # License checks
+        for data_type in ['strings', 'functions', 'imports']:
+            score, matches = detect_pattern(license_patterns, data_type)
+            if score > 0:
+                protection_detections.append(('LICENSE_CHECK', score, matches))
+        
+        # Time bombs
+        for data_type in ['strings', 'functions', 'imports']:
+            score, matches = detect_pattern(time_patterns, data_type)
+            if score > 0:
+                protection_detections.append(('TIME_BOMB', score, matches))
+        
+        # Network validation
+        for data_type in ['strings', 'functions', 'imports']:
+            score, matches = detect_pattern(network_patterns, data_type)
+            if score > 0:
+                protection_detections.append(('NETWORK_VALIDATION', score, matches))
+        
+        # Hardware lock
+        for data_type in ['strings', 'functions', 'imports']:
+            score, matches = detect_pattern(hardware_patterns, data_type)
+            if score > 0:
+                protection_detections.append(('HARDWARE_LOCK', score, matches))
+        
+        # Anti-debugging
+        for data_type in ['strings', 'functions', 'imports']:
+            score, matches = detect_pattern(antidebug_patterns, data_type)
+            if score > 0:
+                protection_detections.append(('ANTI_DEBUG', score, matches))
+        
+        # VM detection
+        for data_type in ['strings', 'functions', 'imports']:
+            score, matches = detect_pattern(vm_patterns, data_type)
+            if score > 0:
+                protection_detections.append(('VM_DETECTION', score, matches))
+        
+        # Anti-tamper
+        for data_type in ['strings', 'functions', 'imports']:
+            score, matches = detect_pattern(antitamper_patterns, data_type)
+            if score > 0:
+                protection_detections.append(('ANTI_TAMPER', score, matches))
+        
+        # Obfuscation
+        score, matches = detect_pattern(obfuscation_patterns, 'sections')
+        if score > 0:
+            protection_detections.append(('OBFUSCATION', score, matches))
+        
+        # Additional network activity check
         if analysis_results.get('network_activity'):
-            protections.append(ProtectionType.NETWORK_VALIDATION)
-
-        # Default to unknown if no specific protections detected
+            protection_detections.append(('NETWORK_VALIDATION', 0.7, ['Direct network activity detected']))
+        
+        # Process detections and determine protections
+        protection_scores = {}
+        for prot_type, score, matches in protection_detections:
+            if prot_type not in protection_scores:
+                protection_scores[prot_type] = {'score': 0, 'matches': []}
+            protection_scores[prot_type]['score'] += score
+            protection_scores[prot_type]['matches'].extend(matches)
+        
+        # Add protections based on confidence threshold
+        confidence_threshold = 0.5
+        for prot_type, data in protection_scores.items():
+            if data['score'] >= confidence_threshold:
+                # Map string to enum
+                if hasattr(ProtectionType, prot_type):
+                    protections.add(getattr(ProtectionType, prot_type))
+                    confidence_scores[prot_type] = min(data['score'], 1.0)  # Cap at 1.0
+                    
+                    # Log detection details
+                    self.logger.info(f"Detected {prot_type} with confidence {data['score']:.2f}")
+                    for match in data['matches'][:5]:  # Log first 5 matches
+                        self.logger.debug(f"  - {match}")
+        
+        # If no protections detected, check for generic protection indicators
         if not protections:
-            protections.append(ProtectionType.UNKNOWN)
-
-        return protections
+            # Look for generic protection indicators
+            generic_indicators = ['protect', 'secure', 'guard', 'shield', 'defend', 'lock']
+            for string in strings:
+                if any(indicator in string.lower() for indicator in generic_indicators):
+                    protections.add(ProtectionType.UNKNOWN)
+                    break
+        
+        # Store confidence scores for later use
+        if hasattr(self, 'protection_confidence'):
+            self.protection_confidence = confidence_scores
+        
+        return list(protections)
 
     def _generate_hooks(self, analysis_results: Dict[str, Any], protection_types: List[ProtectionType]) -> str:
         """Generate hook installation code based on analysis results."""
@@ -3411,12 +3641,17 @@ if (Process.platform === 'windows') {{
                 }},
                 onLeave: function(retval) {{
                     if (this.isLicenseValue && retval.toInt32() === 0) {{
-                        // Inject fake license data
+                        // Generate and inject license data
                         if (this.lpData && this.lpcbData) {{
-                            const fakeSerial = "XXXX-XXXX-XXXX-XXXX";
-                            this.lpData.writeUtf8String(fakeSerial);
-                            this.lpcbData.writeU32(fakeSerial.length + 1);
-                            console.log("[+] Injected fake license data");
+                            // Generate realistic license key based on current time and machine ID
+                            const timestamp = Date.now().toString(36).toUpperCase();
+                            const machineId = Process.arch + "-" + Process.platform;
+                            const hashPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+                            const licenseKey = timestamp + "-" + hashPart + "-PRO1-ENT5";
+                            
+                            this.lpData.writeUtf8String(licenseKey);
+                            this.lpcbData.writeU32(licenseKey.length + 1);
+                            console.log("[+] Injected license data: " + licenseKey);
                         }}
                     }}
                 }}

@@ -135,11 +135,50 @@ class QEMUTestManager:
             # Initialize QEMU emulator without a binary - it will be set when needed
             try:
                 # Check if we have a test binary available
-                test_binaries = [
-                    os.path.join(self.working_dir, "test.exe"),
-                    "/bin/ls",  # Linux fallback
-                    "C:\\Windows\\System32\\cmd.exe",  # Windows fallback
-                ]
+                test_binaries = []
+                
+                # Add project test binary if exists
+                project_test_binary = os.path.join(self.working_dir, "test.exe")
+                if os.path.exists(project_test_binary):
+                    test_binaries.append(project_test_binary)
+                
+                # Find real system binaries based on platform
+                import platform
+                import shutil
+                
+                if platform.system() == 'Windows':
+                    # Windows system binaries
+                    windows_binaries = [
+                        "C:\Windows\System32\notepad.exe",
+                        "C:\Windows\System32\calc.exe",
+                        "C:\Windows\System32\ping.exe",
+                        "C:\Windows\System32\hostname.exe"
+                    ]
+                    for binary in windows_binaries:
+                        if os.path.exists(binary):
+                            test_binaries.append(binary)
+                            break
+                else:
+                    # Unix-like system binaries
+                    unix_binaries = [
+                        "/bin/echo",
+                        "/bin/cat", 
+                        "/usr/bin/id",
+                        "/usr/bin/whoami",
+                        "/bin/hostname"
+                    ]
+                    for binary in unix_binaries:
+                        if os.path.exists(binary):
+                            test_binaries.append(binary)
+                            break
+                    
+                    # Also check using which command
+                    if not test_binaries:
+                        for cmd in ['echo', 'cat', 'id', 'whoami', 'hostname']:
+                            path = shutil.which(cmd)
+                            if path:
+                                test_binaries.append(path)
+                                break
 
                 binary_to_use = None
                 for test_binary in test_binaries:
@@ -207,9 +246,43 @@ class QEMUTestManager:
         except Exception as e:
             logger.error(f"Failed to initialize SSH keys: {e}")
             log_credential_access('SSH_KEY', 'QEMU VM access key initialization', success=False)
-            # Generate temporary key as fallback
+            # Generate and persist key as recovery mechanism
+            logger.warning("Failed to access secrets manager, generating recovery key")
             self.master_ssh_key = RSAKey.generate(2048)
             self.ssh_public_key = f"ssh-rsa {self.master_ssh_key.get_base64()} intellicrack@qemu"
+            
+            # Try to save recovery key to local secure storage
+            try:
+                recovery_key_path = self.working_dir / '.ssh' / 'qemu_recovery_key'
+                recovery_key_path.parent.mkdir(parents=True, exist_ok=True)
+                
+                # Save private key
+                with open(recovery_key_path, 'w', encoding='utf-8') as f:
+                    self.master_ssh_key.write_private_key(f)
+                
+                # Set secure permissions (Unix only)
+                if platform.system() != 'Windows':
+                    os.chmod(recovery_key_path, 0o600)
+                
+                # Save public key
+                with open(recovery_key_path.with_suffix('.pub'), 'w', encoding='utf-8') as f:
+                    f.write(self.ssh_public_key)
+                
+                logger.info(f"Recovery SSH key saved to {recovery_key_path}")
+                
+                # Attempt to update secrets manager with recovery key
+                try:
+                    private_key_str = StringIO()
+                    self.master_ssh_key.write_private_key(private_key_str)
+                    set_secret('QEMU_SSH_PRIVATE_KEY', private_key_str.getvalue())
+                    set_secret('QEMU_SSH_PUBLIC_KEY', self.ssh_public_key)
+                    logger.info("Recovery key successfully saved to secrets manager")
+                except:
+                    pass  # Continue with local recovery key
+                    
+            except Exception as recovery_e:
+                logger.error(f"Failed to save recovery key: {recovery_e}")
+                # Key is still in memory and usable for this session
 
     def _find_qemu_executable(self) -> str:
         """Find QEMU executable on the system."""
@@ -847,40 +920,97 @@ class QEMUTestManager:
         possible_paths = [
             Path("/var/lib/libvirt/images/windows_base.qcow2"),
             Path("~/VMs/windows_base.qcow2"),
-            project_root / "data" / "qemu_images" / "windows_base.qcow2"
+            project_root / "data" / "qemu_images" / "windows_base.qcow2",
+            # Additional common Windows VM locations
+            Path("C:/VMs/windows_base.qcow2"),
+            Path("D:/VMs/windows_base.qcow2"),
+            Path("~/Documents/Virtual Machines/windows_base.qcow2"),
         ]
 
         for path in possible_paths:
             expanded_path = path.expanduser()
             if expanded_path.exists():
+                self.logger.info(f"Found Windows base image at: {expanded_path}")
                 return expanded_path
 
-        # Create placeholder path in project directory
-        default_path = project_root / "data" / "qemu_images" / "windows_base.qcow2"
-        default_path.parent.mkdir(parents=True, exist_ok=True)
-        return default_path
+        # If no base image found, create a minimal test image
+        test_image_path = project_root / "data" / "qemu_images" / "windows_test_minimal.qcow2"
+        test_image_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        if not test_image_path.exists():
+            self.logger.warning("No Windows base image found. Creating minimal test image.")
+            try:
+                # Create a minimal qcow2 image (1GB)
+                subprocess.run([
+                    "qemu-img", "create", "-f", "qcow2", 
+                    str(test_image_path), "1G"
+                ], check=True, capture_output=True)
+                self.logger.info(f"Created minimal test image at: {test_image_path}")
+            except subprocess.CalledProcessError as e:
+                self.logger.error(f"Failed to create test image: {e}")
+                raise RuntimeError(
+                    "No Windows base image found and failed to create test image. "
+                    "Please provide a Windows base image at one of the expected locations."
+                )
+            except FileNotFoundError:
+                self.logger.error("qemu-img not found. Please install QEMU.")
+                raise RuntimeError(
+                    "QEMU tools not installed. Cannot create test image."
+                )
+        
+        return test_image_path
 
-    def _get_linux_base_image(self) -> Path:
-        """Get path to Linux base image."""
-        # Use project-relative paths
-        # Go up to project root
-        project_root = Path(__file__).parent.parent.parent
-
-        possible_paths = [
-            Path("/var/lib/libvirt/images/linux_base.qcow2"),
-            Path("~/VMs/linux_base.qcow2"),
-            project_root / "data" / "qemu_images" / "linux_base.qcow2"
+    def _get_linux_base_image(self) -> str:
+        """Get Linux base image for testing."""
+        # Check common locations for base images
+        image_locations = [
+            "/var/lib/libvirt/images/ubuntu-22.04.qcow2",
+            "/var/lib/libvirt/images/debian-11.qcow2",
+            "/var/lib/libvirt/images/centos-8.qcow2",
+            os.path.expanduser("~/vms/ubuntu.qcow2"),
+            os.path.expanduser("~/vms/debian.qcow2")
         ]
-
-        for path in possible_paths:
-            expanded_path = path.expanduser()
-            if expanded_path.exists():
-                return expanded_path
-
-        # Create placeholder path in project directory
-        default_path = project_root / "data" / "qemu_images" / "linux_base.qcow2"
-        default_path.parent.mkdir(parents=True, exist_ok=True)
-        return default_path
+        
+        for image_path in image_locations:
+            if os.path.exists(image_path):
+                return image_path
+        
+        # Create minimal test image if none found
+        test_image_path = self.working_dir / "linux_test.qcow2"
+        if not test_image_path.exists():
+            logger.info("Creating minimal Linux test image")
+            try:
+                # Create 1GB qcow2 image
+                subprocess.run([
+                    'qemu-img', 'create', '-f', 'qcow2',
+                    str(test_image_path), '1G'
+                ], check=True)
+                
+                # Create minimal bootable image with busybox
+                # This creates a basic Linux environment for testing
+                initrd_path = self.working_dir / "initrd.img"
+                kernel_path = self.working_dir / "vmlinuz"
+                
+                # Download minimal kernel and initrd if not present
+                if not kernel_path.exists():
+                    # Use Alpine Linux kernel for minimal footprint
+                    kernel_url = "https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_64/netboot/vmlinuz-lts"
+                    subprocess.run(['curl', '-L', '-o', str(kernel_path), kernel_url], check=True)
+                
+                if not initrd_path.exists():
+                    initrd_url = "https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_64/netboot/initramfs-lts"
+                    subprocess.run(['curl', '-L', '-o', str(initrd_path), initrd_url], check=True)
+                
+                # Store kernel/initrd paths for boot configuration
+                self._linux_kernel = str(kernel_path)
+                self._linux_initrd = str(initrd_path)
+                
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Failed to create test image: {e}")
+                # Create empty image as last resort
+                test_image_path.touch()
+        
+        return str(test_image_path)
 
     def _detect_os_type(self, binary_path: str) -> str:
         """Detect operating system type from binary."""
@@ -919,10 +1049,18 @@ class QEMUTestManager:
             if Path(binary_path).exists():
                 target_binary = shared_dir / Path(binary_path).name
                 shutil.copy2(binary_path, target_binary)
-            else:
-                # Create dummy binary for testing
-                target_binary = shared_dir / "test_binary.exe"
-                target_binary.write_text("# Dummy binary for testing")
+        else:
+            # Binary not found - this is a critical error
+            raise FileNotFoundError(
+                f"Target binary not found: {binary_path}\n"
+                f"Please provide a valid path to an executable file.\n"
+                f"Common paths:\n"
+                f"  Windows: C:\Windows\System32\*.exe
+"
+                f"  Linux: /usr/bin/*, /bin/*
+"
+                f"  Custom: Provide full path to your target binary"
+            )
 
             # Create snapshot object
             snapshot = QEMUSnapshot(
@@ -978,10 +1116,14 @@ class QEMUTestManager:
 
         except Exception as e:
             logger.error(f"Failed to create minimal test image: {e}")
-
-        # Fallback: create dummy file
-        disk_path.touch()
-        return disk_path
+            # Cannot continue without a valid disk image
+            raise RuntimeError(
+                f"Failed to create test disk image: {e}\n"
+                f"Ensure qemu-img is installed and accessible.\n"
+                f"On Windows: Install QEMU from https://www.qemu.org/download/\n"
+                f"On Linux: sudo apt-get install qemu-utils\n"
+                f"On macOS: brew install qemu"
+            )
 
     def _copy_base_image(self, base_image: Path, snapshot_dir: Path) -> Path:
         """Copy base image to snapshot directory."""
@@ -1001,15 +1143,24 @@ class QEMUTestManager:
             else:
                 logger.error(
                     f"Failed to create snapshot image: {result.stderr}")
-                # Fallback: copy the base image
+                # Try direct copy as recovery mechanism
+                logger.info("Attempting direct copy of base image")
                 shutil.copy2(base_image, temp_disk)
                 return temp_disk
 
         except Exception as e:
             logger.error(f"Failed to copy base image: {e}")
-            # Create dummy disk
-            temp_disk.touch()
-            return temp_disk
+            # Cannot continue without a valid disk image
+            raise RuntimeError(
+                f"Failed to copy/create disk image: {e}\n"
+                f"Base image: {base_image}\n"
+                f"Target: {temp_disk}\n"
+                f"Ensure:\n"
+                f"1. Base image exists and is readable\n"
+                f"2. Target directory is writable\n"
+                f"3. Sufficient disk space available\n"
+                f"4. qemu-img is installed and working"
+            )
 
     def _start_vm(self, snapshot: QEMUSnapshot) -> bool:
         """Start QEMU VM."""
@@ -1104,10 +1255,11 @@ if command -v frida &> /dev/null; then
         exit 0
     fi
 else
-    echo "WARNING: Frida not available in VM"
-    # Simulate successful execution
-    echo "SIMULATED: Frida script would execute successfully"
-    exit 0
+    echo "ERROR: Frida not available in VM"
+    echo "This test requires Frida to be installed in the VM."
+    echo "Please ensure the VM image includes Frida installation."
+    echo "Install with: pip install frida-tools"
+    exit 1
 fi
 '''
             runner_script.write_text(runner_content)
@@ -1179,10 +1331,11 @@ if [ -d "/opt/ghidra" ] || command -v analyzeHeadless &> /dev/null; then
     echo "SUCCESS: Ghidra script executed"
     exit 0
 else
-    echo "WARNING: Ghidra not available in VM"
-    # Validate script syntax as fallback
-    python3 -m py_compile test_script.py && echo "SIMULATED: Script syntax valid" || echo "ERROR: Script syntax error"
-    exit 0
+    echo "ERROR: Ghidra not available in VM"
+    echo "This test requires Ghidra to be installed in the VM."
+    echo "Please ensure the VM image includes Ghidra installation at /opt/ghidra"
+    echo "or has analyzeHeadless in PATH."
+    exit 1
 fi
 '''
             runner_script.write_text(runner_content)

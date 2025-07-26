@@ -1,7 +1,7 @@
 """Dashboard Tab Original implementation for Intellicrack UI."""
 
 import os
-
+from datetime import datetime
 """UI module for Dashboard Tab Original.
 
 This module provides UI components and dialogs for dashboard tab original functionality.
@@ -388,11 +388,31 @@ class DashboardTab(BaseTab):
 
         if project_file:
             project_name = os.path.splitext(os.path.basename(project_file))[0]
-            self.current_project = project_name
-            self.current_project_label.setText(f"Project: {project_name}")
-            self.current_project_label.setStyleSheet("color: #0078d4; padding: 5px; font-weight: bold;")
-            self.log_activity(f"Opened project: {project_name}")
-            self.project_opened.emit(project_file)
+            
+            # Load project data
+            if self._load_project_data(project_name):
+                self.current_project = project_name
+                self.current_project_label.setText(f"Project: {project_name}")
+                self.current_project_label.setStyleSheet("color: #0078d4; padding: 5px; font-weight: bold;")
+                self.log_activity(f"Opened project: {project_name}")
+                
+                # Refresh file tree to show project files
+                self.refresh_file_tree()
+                
+                self.project_opened.emit(project_file)
+            else:
+                # Create new project data if file doesn't exist
+                self.current_project = project_name
+                self.project_data = {
+                    'name': project_name,
+                    'files': {},
+                    'created': datetime.now().isoformat(),
+                    'modified': datetime.now().isoformat()
+                }
+                self.current_project_label.setText(f"Project: {project_name}")
+                self.current_project_label.setStyleSheet("color: #0078d4; padding: 5px; font-weight: bold;")
+                self.log_activity(f"Created new project data for: {project_name}")
+                self.project_opened.emit(project_file)
 
     def save_project(self):
         """Save the current project"""
@@ -400,16 +420,38 @@ class DashboardTab(BaseTab):
             QMessageBox.warning(self, "Warning", "No project to save!")
             return
 
+        # Initialize project data if not exists
+        if not hasattr(self, 'project_data'):
+            self.project_data = {
+                'name': self.current_project,
+                'files': {},
+                'created': datetime.now().isoformat(),
+                'modified': datetime.now().isoformat()
+            }
+
+        # Save the project data
+        self._save_project_data()
+        
+        # Also allow user to export project to a different location
         project_file, _ = QFileDialog.getSaveFileName(
             self,
-            "Save Project",
+            "Export Project As",
             f"{self.current_project}.icp",
             "Intellicrack Projects (*.icp);;All Files (*)"
         )
 
         if project_file:
+            try:
+                import json
+                with open(project_file, 'w') as f:
+                    json.dump(self.project_data, f, indent=2)
+                self.log_activity(f"Exported project to: {project_file}")
+                QMessageBox.information(self, "Success", f"Project exported to:\n{project_file}")
+            except Exception as e:
+                self.logger.error(f"Failed to export project: {e}")
+                QMessageBox.critical(self, "Error", f"Failed to export project: {str(e)}")
+        else:
             self.log_activity(f"Saved project: {self.current_project}")
-            # Implement actual project saving logic here
 
     def browse_binary(self):
         """Browse for a binary file"""
@@ -672,18 +714,37 @@ class DashboardTab(BaseTab):
         """Populate the file tree with project files"""
         self.file_tree.clear()
 
-        # Simulated project files
-        if self.current_project:
-            project_files = [
-                ("analysis_report.pdf", "Document", "2.1 MB", "2024-01-15"),
-                ("extracted_strings.txt", "Text", "45 KB", "2024-01-15"),
-                ("ghidra_project.gpr", "Ghidra Project", "15 MB", "2024-01-14"),
-                ("memory_dump.bin", "Binary", "128 MB", "2024-01-14"),
-                ("frida_script.js", "JavaScript", "5 KB", "2024-01-13")
-            ]
-
-            for name, file_type, size, modified in project_files:
-                item = QTreeWidgetItem([name, file_type, size, modified])
+        # Show real project files
+        if self.current_project and hasattr(self, 'project_data') and 'files' in self.project_data:
+            for file_path, file_info in self.project_data['files'].items():
+                # Format size for display
+                size = file_info['size']
+                if size < 1024:
+                    size_str = f"{size} B"
+                elif size < 1024 * 1024:
+                    size_str = f"{size / 1024:.1f} KB"
+                elif size < 1024 * 1024 * 1024:
+                    size_str = f"{size / (1024 * 1024):.1f} MB"
+                else:
+                    size_str = f"{size / (1024 * 1024 * 1024):.1f} GB"
+                
+                # Format date for display
+                try:
+                    modified_date = datetime.fromisoformat(file_info['modified']).strftime("%Y-%m-%d %H:%M")
+                except:
+                    modified_date = file_info.get('modified', 'Unknown')
+                
+                # Create tree item
+                item = QTreeWidgetItem([
+                    file_info['name'],
+                    file_info.get('type', 'Unknown'),
+                    size_str,
+                    modified_date
+                ])
+                
+                # Store full path as user data for later access
+                item.setData(0, Qt.ItemDataRole.UserRole, file_path)
+                
                 self.file_tree.addTopLevelItem(item)
 
     def refresh_file_tree(self):
@@ -695,26 +756,56 @@ class DashboardTab(BaseTab):
         """Open the selected file"""
         current_item = self.file_tree.currentItem()
         if current_item:
-            file_name = current_item.text(0)
-            self.log_activity(f"Opening file: {file_name}")
-            # Implement file opening logic here
+            file_path = current_item.data(0, Qt.ItemDataRole.UserRole)
+            if file_path and os.path.exists(file_path):
+                file_name = current_item.text(0)
+                self.log_activity(f"Opening file: {file_name}")
+                
+                # Open file with default system application
+                try:
+                    if os.name == 'nt':  # Windows
+                        os.startfile(file_path)
+                    elif os.name == 'posix':  # macOS and Linux
+                        import subprocess
+                        if sys.platform == 'darwin':  # macOS
+                            subprocess.call(['open', file_path])
+                        else:  # Linux
+                            subprocess.call(['xdg-open', file_path])
+                except Exception as e:
+                    self.logger.error(f"Failed to open file: {e}")
+                    QMessageBox.critical(self, "Error", f"Failed to open file: {str(e)}")
+            else:
+                QMessageBox.warning(self, "Warning", "Selected file no longer exists!")
 
     def delete_selected_file(self):
         """Delete the selected file"""
         current_item = self.file_tree.currentItem()
         if current_item:
             file_name = current_item.text(0)
+            file_path = current_item.data(0, Qt.ItemDataRole.UserRole)
+            
             reply = QMessageBox.question(
                 self,
-                "Delete File",
-                f"Are you sure you want to delete '{file_name}'?",
+                "Remove File from Project",
+                f"Are you sure you want to remove '{file_name}' from the project?\n\nNote: This will only remove it from the project, not delete the actual file.",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No
             )
 
             if reply == QMessageBox.StandardButton.Yes:
-                self.file_tree.takeTopLevelItem(self.file_tree.indexOfTopLevelItem(current_item))
-                self.log_activity(f"Deleted file: {file_name}")
+                # Remove from project data
+                if hasattr(self, 'project_data') and 'files' in self.project_data and file_path in self.project_data['files']:
+                    del self.project_data['files'][file_path]
+                    self.project_data['modified'] = datetime.now().isoformat()
+                    
+                    # Save updated project data
+                    self._save_project_data()
+                    
+                    # Remove from tree
+                    self.file_tree.takeTopLevelItem(self.file_tree.indexOfTopLevelItem(current_item))
+                    self.log_activity(f"Removed from project: {file_name}")
+                else:
+                    QMessageBox.warning(self, "Warning", "File not found in project data!")
 
     def cleanup(self):
         """Cleanup resources when tab is closed"""
@@ -820,13 +911,84 @@ class DashboardTab(BaseTab):
             QMessageBox.warning(self, "Warning", "No project loaded. Create or open a project first.")
             return
 
+        # Initialize project data structure if not exists
+        if not hasattr(self, 'project_data'):
+            self.project_data = {
+                'name': self.current_project,
+                'files': {},
+                'created': datetime.now().isoformat(),
+                'modified': datetime.now().isoformat()
+            }
+        
+        added_count = 0
         for file_path in file_paths:
-            self.log_activity(f"Added to project: {os.path.basename(file_path)}")
-            # TODO: Implement actual project file management
-
+            if os.path.exists(file_path):
+                # Get file metadata
+                stat_info = os.stat(file_path)
+                file_info = {
+                    'path': file_path,
+                    'name': os.path.basename(file_path),
+                    'size': stat_info.st_size,
+                    'modified': datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
+                    'type': self._get_file_type_from_path(file_path),
+                    'added': datetime.now().isoformat()
+                }
+                
+                # Add to project data using file path as key
+                self.project_data['files'][file_path] = file_info
+                added_count += 1
+                
+                self.log_activity(f"Added to project: {os.path.basename(file_path)}")
+        
+        # Update project modified time
+        self.project_data['modified'] = datetime.now().isoformat()
+        
+        # Save project data to file
+        self._save_project_data()
+        
         self.refresh_file_tree()
         QMessageBox.information(
             self,
             "Files Added",
             f"Added {len(file_paths)} files to the current project."
         )
+
+    def _get_file_type_from_path(self, file_path):
+        """Get file type from path for project file management"""
+        return self.get_file_type(file_path)
+    
+    def _save_project_data(self):
+        """Save project data to file"""
+        if not self.current_project or not hasattr(self, 'project_data'):
+            return
+        
+        # Determine project file path
+        project_dir = os.path.join(os.path.expanduser("~"), ".intellicrack", "projects")
+        os.makedirs(project_dir, exist_ok=True)
+        
+        project_file = os.path.join(project_dir, f"{self.current_project}.icp")
+        
+        try:
+            import json
+            with open(project_file, 'w') as f:
+                json.dump(self.project_data, f, indent=2)
+            self.logger.debug(f"Saved project data to {project_file}")
+        except Exception as e:
+            self.logger.error(f"Failed to save project data: {e}")
+    
+    def _load_project_data(self, project_name):
+        """Load project data from file"""
+        project_dir = os.path.join(os.path.expanduser("~"), ".intellicrack", "projects")
+        project_file = os.path.join(project_dir, f"{project_name}.icp")
+        
+        if os.path.exists(project_file):
+            try:
+                import json
+                with open(project_file, 'r') as f:
+                    self.project_data = json.load(f)
+                self.logger.debug(f"Loaded project data from {project_file}")
+                return True
+            except Exception as e:
+                self.logger.error(f"Failed to load project data: {e}")
+                return False
+        return False

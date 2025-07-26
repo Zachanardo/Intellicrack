@@ -33,6 +33,7 @@ encryption, and session management.
 from flask import Flask
 from .base_c2 import BaseC2
 from ...utils.logger import get_logger
+from ...utils.constants import C2_DEFAULTS
 
 logger = logging.getLogger(__name__)
 
@@ -43,10 +44,10 @@ class C2Server(BaseC2):
     and enterprise-grade security features.
     """
 
-    def __init__(self, host: str = '0.0.0.0', port: int = 8080):
+    def __init__(self, host: str = None, port: int = None):
         """Initialize the C2 server with host and port configuration."""
-        self.host = host
-        self.port = port
+        self.host = host or C2_DEFAULTS['http']['host']
+        self.port = port or C2_DEFAULTS['http']['port']
         self.running = False
         self.server = None
         self.logger = logging.getLogger(__name__)
@@ -69,8 +70,8 @@ class C2Server(BaseC2):
         if self.config.get('https_enabled', True):
             https_config = self.config.get('https', {})
             # Use environment variables with fallback to config values
-            https_host = os.environ.get('C2_HTTPS_HOST', https_config.get('host', '0.0.0.0'))
-            https_port = int(os.environ.get('C2_HTTPS_PORT', https_config.get('port', 443)))
+            https_host = os.environ.get('C2_HTTPS_HOST', https_config.get('host', C2_DEFAULTS['https']['host']))
+            https_port = int(os.environ.get('C2_HTTPS_PORT', https_config.get('port', C2_DEFAULTS['https']['port'])))
 
             protocols_config.append({
                 'type': 'https',
@@ -83,9 +84,9 @@ class C2Server(BaseC2):
         if self.config.get('dns_enabled', False):
             dns_config = self.config.get('dns', {})
             # Use environment variables with fallback to config values
-            dns_domain = os.environ.get('C2_DNS_DOMAIN', dns_config.get('domain', 'example.com'))
-            dns_host = os.environ.get('C2_DNS_HOST', dns_config.get('host', '0.0.0.0'))
-            dns_port = int(os.environ.get('C2_DNS_PORT', dns_config.get('port', 53)))
+            dns_domain = os.environ.get('C2_DNS_DOMAIN', dns_config.get('domain', C2_DEFAULTS['dns']['domain']))
+            dns_host = os.environ.get('C2_DNS_HOST', dns_config.get('host', C2_DEFAULTS['dns']['host']))
+            dns_port = int(os.environ.get('C2_DNS_PORT', dns_config.get('port', C2_DEFAULTS['dns']['port'])))
 
             protocols_config.append({
                 'type': 'dns',
@@ -98,8 +99,8 @@ class C2Server(BaseC2):
         if self.config.get('tcp_enabled', False):
             tcp_config = self.config.get('tcp', {})
             # Use environment variables with fallback to config values
-            tcp_host = os.environ.get('C2_TCP_HOST', tcp_config.get('host', '0.0.0.0'))
-            tcp_port = int(os.environ.get('C2_TCP_PORT', tcp_config.get('port', 4444)))
+            tcp_host = os.environ.get('C2_TCP_HOST', tcp_config.get('host', C2_DEFAULTS['tcp']['host']))
+            tcp_port = int(os.environ.get('C2_TCP_PORT', tcp_config.get('port', C2_DEFAULTS['tcp']['port'])))
 
             protocols_config.append({
                 'type': 'tcp',

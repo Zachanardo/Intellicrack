@@ -25,6 +25,7 @@ sessions, and remote operations.
 
 import asyncio
 import logging
+import os
 import time
 from datetime import datetime
 from typing import Any, Dict
@@ -579,7 +580,7 @@ class C2ManagementDialog(QDialog):
                 'dns': {
                     'host': self.listen_addr_edit.text(),
                     'port': self.dns_port_spin.value(),
-                    'domain': 'example.com'
+                    'domain': os.environ.get('DNS_DOMAIN', 'internal.local')
                 },
                 'tcp': {
                     'host': self.listen_addr_edit.text(),
@@ -1198,8 +1199,55 @@ class C2ManagementDialog(QDialog):
 
     def filter_logs(self, filter_type: str):
         """Filter activity logs."""
-        # Placeholder for log filtering
-        pass
+        # Get current log text
+        current_text = self.log_display.toPlainText()
+        if not current_text:
+            return
+            
+        # Split into lines
+        lines = current_text.split('\n')
+        filtered_lines = []
+        
+        # Apply filter based on type
+        filter_type_lower = filter_type.lower()
+        
+        for line in lines:
+            line_lower = line.lower()
+            
+            # Filter by log level/type
+            if filter_type_lower == 'all':
+                filtered_lines.append(line)
+            elif filter_type_lower == 'error' and ('error' in line_lower or 'fail' in line_lower):
+                filtered_lines.append(line)
+            elif filter_type_lower == 'warning' and ('warning' in line_lower or 'warn' in line_lower):
+                filtered_lines.append(line)
+            elif filter_type_lower == 'info' and ('info' in line_lower or 'information' in line_lower):
+                filtered_lines.append(line)
+            elif filter_type_lower == 'success' and ('success' in line_lower or 'complete' in line_lower):
+                filtered_lines.append(line)
+            elif filter_type_lower == 'connection' and ('connect' in line_lower or 'disconnect' in line_lower):
+                filtered_lines.append(line)
+            elif filter_type_lower == 'command' and ('command' in line_lower or 'execute' in line_lower):
+                filtered_lines.append(line)
+            elif filter_type_lower == 'upload' and ('upload' in line_lower or 'download' in line_lower):
+                filtered_lines.append(line)
+            elif filter_type_lower == 'client' and ('client' in line_lower or 'agent' in line_lower):
+                filtered_lines.append(line)
+            # Custom filter - search for the filter text in the line
+            elif filter_type_lower not in ['all', 'error', 'warning', 'info', 'success', 'connection', 'command', 'upload', 'client']:
+                if filter_type_lower in line_lower:
+                    filtered_lines.append(line)
+        
+        # Update display with filtered content
+        self.log_display.setPlainText('\n'.join(filtered_lines))
+        
+        # Store original text for reset
+        if not hasattr(self, '_original_log_text'):
+            self._original_log_text = current_text
+        
+        # Update status
+        if hasattr(self, 'filter_status_label'):
+            self.filter_status_label.setText(f"Filter: {filter_type} ({len(filtered_lines)} lines)")
 
     def clear_logs(self):
         """Clear activity logs."""

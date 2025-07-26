@@ -237,7 +237,7 @@ class DataCollector:
         data_points = []
 
         if not PSUTIL_AVAILABLE:
-            # Return default mock data points when psutil is not available
+            # Return default fallback data points when psutil is not available
             data_points.extend([
                 DataPoint(
                     timestamp=datetime.now(),

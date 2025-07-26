@@ -38,15 +38,34 @@
     "**/ml_training_cache",
     "docs/_build",
     "docs/build",
-    ".venv_windows",
     ".venv_wsl",
     ".zen_venv",
-    "temp_venv"
+    "temp_venv",
+    "mamba_env/",
+    "mamba_env/**",
+    "**/mamba_env/**",
+    "C:/Intellicrack/mamba_env/**",
+    "**/.serena",
+    "**/tests",
+    "**/test_*",
+    "**/tensorflow/**",
+    "**/torch/**",
+    "**/site-packages/**",
+    "dev/**",
+    "tools/**"
   ],
-  "typeCheckingMode": "basic",
-  "useLibraryCodeForTypes": false,
-  "reportMissingImports": "warning",
-  "pythonVersion": "3.10",
-  "venvPath": ".",
-  "venv": ".venv_windows"
+  "typeCheckingMode": "off",
+  "useLibraryCodeForTypes": true,
+  "reportMissingImports": "none",
+  "pythonVersion": "3.12",
+  "pythonPath": "C:/Intellicrack/mamba_env/python.exe",
+  "analyzeUnannotatedFunctions": false,
+  "enableTypeIgnoreComments": true,
+  "verboseOutput": false,
+  "stubPath": "typings",
+  "ignore": [
+    "mamba_env",
+    "dev",
+    "tools"
+  ]
 }

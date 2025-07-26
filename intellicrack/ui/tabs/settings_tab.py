@@ -567,7 +567,7 @@ class SettingsTab(BaseTab):
         proxy_layout.addWidget(QLabel("Proxy:"))
         self.proxy_edit = QLineEdit()
         self.proxy_edit.setText(self.settings.get('proxy', ''))
-        self.proxy_edit.setPlaceholderText("http://proxy.example.com:8080")
+        self.proxy_edit.setPlaceholderText("http://proxy.internal:8080")
         proxy_layout.addWidget(self.proxy_edit)
 
         # Timeout

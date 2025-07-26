@@ -23,6 +23,8 @@ This module contains constants that are used across multiple modules
 to avoid code duplication.
 """
 
+import os
+
 # Adobe process names used by multiple injection modules
 ADOBE_PROCESSES = [
     "Photoshop.exe",
@@ -51,3 +53,24 @@ SIZE_UNITS = [
     (1024, "KB"),
     (1, "B")
 ]
+
+# C2 Server default configuration
+C2_DEFAULTS = {
+    'http': {
+        'host': os.environ.get('C2_HTTP_HOST', '127.0.0.1'),
+        'port': int(os.environ.get('C2_HTTP_PORT', '8080'))
+    },
+    'https': {
+        'host': os.environ.get('C2_HTTPS_HOST', '127.0.0.1'),
+        'port': int(os.environ.get('C2_HTTPS_PORT', '8443'))
+    },
+    'dns': {
+        'host': os.environ.get('C2_DNS_HOST', '127.0.0.1'),
+        'port': int(os.environ.get('C2_DNS_PORT', '5353')),
+        'domain': os.environ.get('C2_DNS_DOMAIN', 'localhost.localdomain')
+    },
+    'tcp': {
+        'host': os.environ.get('C2_TCP_HOST', '127.0.0.1'),
+        'port': int(os.environ.get('C2_TCP_PORT', '4444'))
+    }
+}

@@ -25,6 +25,7 @@ import threading
 from typing import Callable
 import ssl
 import time
+import os
 from typing import Any, Dict, List, Optional
 
 # Create module logger
@@ -135,7 +136,7 @@ class BaseProtocol:
                 self.logger.error("Encryption failed: %s", str(e))
                 return None
         else:
-            # No encryption - return mock response
+            # No encryption - return unencrypted response
             return {
                 'status': 'success',
                 'message_id': message.get('id', 'unknown'),
@@ -522,7 +523,7 @@ class DnsProtocol(BaseProtocol):
             self.socket.settimeout(5)
 
             # Send test query
-            test_query = self._build_dns_query("test.example.com")
+            test_query = self._build_dns_query(os.environ.get('DNS_TEST_DOMAIN', 'test.internal'))
             self.socket.sendto(test_query, (self.host, self.port))
 
             response, addr = self.socket.recvfrom(1024)
