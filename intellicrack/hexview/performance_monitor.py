@@ -1,5 +1,4 @@
-"""
-Performance Monitor for Hex Viewer Large File Operations.
+"""Performance Monitor for Hex Viewer Large File Operations.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,7 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ..ui.common_imports import (
     PYQT6_AVAILABLE,
@@ -349,7 +348,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error updating performance display: %s", e)
 
-    def update_overview_tab(self, stats: Dict[str, Any]):
+    def update_overview_tab(self, stats: dict[str, Any]):
         """Update the overview tab."""
         # File information
         self.file_size_label.setText(f"{stats.get('file_size_mb', 0):.1f} MB")
@@ -369,13 +368,13 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
 
         loader_active = stats.get("background_loader_active", False)
         self.background_loader_status.setText(
-            f"Background loader: {'Active' if loader_active else 'Inactive'}"
+            f"Background loader: {'Active' if loader_active else 'Inactive'}",
         )
         self.background_loader_status.setStyleSheet(
-            "color: green;" if loader_active else "color: gray;"
+            "color: green;" if loader_active else "color: gray;",
         )
 
-    def update_memory_tab(self, stats: Dict[str, Any]):
+    def update_memory_tab(self, stats: dict[str, Any]):
         """Update the memory tab."""
         cache_stats = stats.get("cache_stats", {})
 
@@ -400,7 +399,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
             self.system_memory_label.setText("N/A (psutil not available)")
             self.system_memory_progress.setValue(50)  # Default to 50%
 
-    def update_cache_tab(self, stats: Dict[str, Any]):
+    def update_cache_tab(self, stats: dict[str, Any]):
         """Update the cache tab."""
         cache_stats = stats.get("cache_stats", {})
 
@@ -413,7 +412,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
         self.cache_utilization_label.setText(f"{utilization:.1f}%")
         self.cache_progress.setValue(int(utilization))
 
-    def update_patterns_tab(self, stats: Dict[str, Any]):
+    def update_patterns_tab(self, stats: dict[str, Any]):
         """Update the access patterns tab."""
         # This would require more detailed access pattern tracking
         # For now, just show basic statistics
@@ -467,7 +466,7 @@ class PerformanceMonitor:
         self.widget = None
         self.file_handler = None
 
-    def create_widget(self, parent=None) -> Optional[QWidget]:
+    def create_widget(self, parent=None) -> QWidget | None:
         """Create and return the performance monitoring widget."""
         if not PYQT6_AVAILABLE:
             return None
@@ -484,7 +483,7 @@ class PerformanceMonitor:
         if self.widget:
             self.widget.set_file_handler(file_handler)
 
-    def get_stats_summary(self) -> Dict[str, Any]:
+    def get_stats_summary(self) -> dict[str, Any]:
         """Get a summary of current performance statistics."""
         if not self.file_handler:
             return {}
@@ -501,5 +500,5 @@ class PerformanceMonitor:
             "cache_memory_mb": cache_stats.get("total_memory_mb", 0),
             "cache_utilization": cache_stats.get("utilization", 0),
             "sequential_ratio": stats.get("sequential_ratio", 0),
-            "optimization_active": stats.get("file_size_mb", 0) > 50
+            "optimization_active": stats.get("file_size_mb", 0) > 50,
         }

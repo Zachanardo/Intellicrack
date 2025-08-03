@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Project Management - CLI workspace and project support for Intellicrack
+"""Project Management - CLI workspace and project support for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -27,7 +26,7 @@ import os
 import shutil
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +53,7 @@ class IntellicrackProject:
             name: Project name
             path: Project directory path
             description: Project description
+
         """
         self.logger = logging.getLogger("IntellicrackLogger.IntellicrackProject")
         self.name = name
@@ -76,10 +76,10 @@ class IntellicrackProject:
             "backup_enabled": True,
             "analysis_timeout": 300,
             "export_format": "json",
-            "temp_cleanup": True
+            "temp_cleanup": True,
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert project to dictionary."""
         return {
             "name": self.name,
@@ -93,16 +93,16 @@ class IntellicrackProject:
             "reports": self.reports,
             "notes": self.notes,
             "tags": self.tags,
-            "settings": self.settings
+            "settings": self.settings,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "IntellicrackProject":
+    def from_dict(cls, data: dict[str, Any]) -> "IntellicrackProject":
         """Create project from dictionary."""
         project = cls(
             data["name"],
             data["path"],
-            data.get("description", "")
+            data.get("description", ""),
         )
 
         project.created_time = datetime.fromisoformat(data.get("created_time", datetime.now().isoformat()))
@@ -136,11 +136,11 @@ class IntellicrackProject:
             return True
         return False
 
-    def add_analysis_result(self, binary_name: str, analysis_data: Dict[str, Any]) -> None:
+    def add_analysis_result(self, binary_name: str, analysis_data: dict[str, Any]) -> None:
         """Add analysis result for a binary."""
         self.analysis_results[binary_name] = {
             "timestamp": datetime.now().isoformat(),
-            "data": analysis_data
+            "data": analysis_data,
         }
         self.modified_time = datetime.now()
 
@@ -174,6 +174,7 @@ class ProjectManager:
 
         Args:
             workspace_root: Root directory for workspaces
+
         """
         self.logger = logging.getLogger("IntellicrackLogger.ProjectManager")
         self.workspace_root = os.path.expanduser(f"~/{workspace_root}")
@@ -189,7 +190,7 @@ class ProjectManager:
             "auto_backup": True,
             "max_projects": 50,
             "cleanup_old_projects": True,
-            "compression_enabled": True
+            "compression_enabled": True,
         }
 
         self._ensure_workspace_structure()
@@ -202,7 +203,7 @@ class ProjectManager:
             self.projects_dir,
             self.templates_dir,
             os.path.join(self.workspace_root, "backups"),
-            os.path.join(self.workspace_root, "temp")
+            os.path.join(self.workspace_root, "temp"),
         ]
 
         for directory in directories:
@@ -212,7 +213,7 @@ class ProjectManager:
         """Load manager configuration."""
         try:
             if os.path.exists(self.config_file):
-                with open(self.config_file, "r", encoding="utf-8") as f:
+                with open(self.config_file, encoding="utf-8") as f:
                     config = json.load(f)
                 self.settings.update(config.get("manager_settings", {}))
         except Exception as e:
@@ -223,7 +224,7 @@ class ProjectManager:
         try:
             config = {
                 "manager_settings": self.settings,
-                "last_updated": datetime.now().isoformat()
+                "last_updated": datetime.now().isoformat(),
             }
             with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2)
@@ -231,7 +232,7 @@ class ProjectManager:
             logger.debug(f"Non-critical operation failed: {e}")
 
     def create_project(self, name: str, description: str = "",
-                      template: Optional[str] = None) -> Optional[IntellicrackProject]:
+                      template: str | None = None) -> IntellicrackProject | None:
         """Create new project.
 
         Args:
@@ -241,6 +242,7 @@ class ProjectManager:
 
         Returns:
             Created project or None if failed
+
         """
         # Validate project name
         if not name or not name.isalnum():
@@ -279,11 +281,12 @@ class ProjectManager:
                 shutil.rmtree(project_path, ignore_errors=True)
             return None
 
-    def create_project_interactive(self) -> Optional[IntellicrackProject]:
+    def create_project_interactive(self) -> IntellicrackProject | None:
         """Create a new project interactively using Prompt.
 
         Returns:
             Created project or None if cancelled/failed
+
         """
         if not RICH_AVAILABLE or not self.console:
             # Fallback to input() if rich not available
@@ -314,7 +317,7 @@ class ProjectManager:
                 template = Prompt.ask(
                     "Select template",
                     choices=template_choices,
-                    default="none"
+                    default="none",
                 )
                 template = None if template == "none" else template
             else:
@@ -326,9 +329,8 @@ class ProjectManager:
             if project:
                 self.console.print(f"[green]✓ Project '{name}' created successfully![/green]")
                 return project
-            else:
-                self.console.print(f"[red]✗ Failed to create project '{name}'[/red]")
-                return None
+            self.console.print(f"[red]✗ Failed to create project '{name}'[/red]")
+            return None
 
         except KeyboardInterrupt:
             self.console.print("\n[yellow]Project creation cancelled.[/yellow]")
@@ -337,11 +339,12 @@ class ProjectManager:
             self.console.print(f"[red]Error during project creation: {e}[/red]")
             return None
 
-    def _get_available_templates(self) -> List[str]:
+    def _get_available_templates(self) -> list[str]:
         """Get list of available project templates.
 
         Returns:
             List of template names
+
         """
         templates = []
         try:
@@ -353,7 +356,7 @@ class ProjectManager:
             pass
         return sorted(templates)
 
-    def load_project(self, name: str) -> Optional[IntellicrackProject]:
+    def load_project(self, name: str) -> IntellicrackProject | None:
         """Load existing project.
 
         Args:
@@ -361,6 +364,7 @@ class ProjectManager:
 
         Returns:
             Loaded project or None if not found
+
         """
         project_path = os.path.join(self.projects_dir, name)
         project_file = os.path.join(project_path, "project.json")
@@ -369,7 +373,7 @@ class ProjectManager:
             return None
 
         try:
-            with open(project_file, "r", encoding="utf-8") as f:
+            with open(project_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             project = IntellicrackProject.from_dict(data)
@@ -387,6 +391,7 @@ class ProjectManager:
 
         Returns:
             True if successful
+
         """
         return self._save_project(project)
 
@@ -417,6 +422,7 @@ class ProjectManager:
 
         Returns:
             True if successful
+
         """
         project_path = os.path.join(self.projects_dir, name)
 
@@ -449,11 +455,12 @@ class ProjectManager:
         except Exception:
             return False
 
-    def list_projects(self) -> List[Dict[str, Any]]:
+    def list_projects(self) -> list[dict[str, Any]]:
         """List all projects.
 
         Returns:
             List of project information dictionaries
+
         """
         projects = []
 
@@ -464,7 +471,7 @@ class ProjectManager:
 
                 if os.path.isdir(project_path) and os.path.exists(project_file):
                     try:
-                        with open(project_file, "r", encoding="utf-8") as f:
+                        with open(project_file, encoding="utf-8") as f:
                             data = json.load(f)
 
                         # Calculate project size
@@ -477,7 +484,7 @@ class ProjectManager:
                             "modified_time": data.get("modified_time", ""),
                             "size": size,
                             "binary_count": len(data.get("binaries", [])),
-                            "analysis_count": len(data.get("analysis_results", {}))
+                            "analysis_count": len(data.get("analysis_results", {})),
                         })
 
                     except Exception:
@@ -499,6 +506,7 @@ class ProjectManager:
 
         Returns:
             True if successful
+
         """
         if not os.path.exists(binary_path):
             return False
@@ -538,6 +546,7 @@ class ProjectManager:
 
         Returns:
             True if successful
+
         """
         try:
             import zipfile
@@ -560,7 +569,7 @@ class ProjectManager:
                     TextColumn("[progress.description]{task.description}"),
                     BarColumn(),
                     TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-                    console=console
+                    console=console,
                 ) as progress:
                     export_task = progress.add_task(f"Exporting {project.name}...", total=total_files)
 
@@ -612,7 +621,7 @@ class ProjectManager:
         except Exception:
             return False
 
-    def import_project(self, archive_path: str, project_name: Optional[str] = None) -> Optional[IntellicrackProject]:
+    def import_project(self, archive_path: str, project_name: str | None = None) -> IntellicrackProject | None:
         """Import project from archive.
 
         Args:
@@ -621,6 +630,7 @@ class ProjectManager:
 
         Returns:
             Imported project or None if failed
+
         """
         if not os.path.exists(archive_path):
             return None
@@ -662,7 +672,7 @@ class ProjectManager:
 
         if os.path.exists(template_path):
             try:
-                with open(template_path, "r", encoding="utf-8") as f:
+                with open(template_path, encoding="utf-8") as f:
                     template_data = json.load(f)
 
                 # Apply template settings
@@ -751,7 +761,7 @@ class ProjectManager:
                     str(project["binary_count"]),
                     str(project["analysis_count"]),
                     size_str,
-                    modified_str
+                    modified_str,
                 )
 
             self.console.print(table)
@@ -781,6 +791,7 @@ class ProjectManager:
 
         Args:
             project: Project to display
+
         """
         if not RICH_AVAILABLE or not self.console:
             return
@@ -851,6 +862,7 @@ class ProjectManager:
 
         Returns:
             Number of files cleaned up
+
         """
         cleaned_count = 0
 

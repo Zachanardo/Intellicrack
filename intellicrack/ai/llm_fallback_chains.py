@@ -1,5 +1,4 @@
-"""
-Model Fallback Chains for Intellicrack LLM System
+"""Model Fallback Chains for Intellicrack LLM System
 
 Provides automatic failover between models and providers for improved reliability.
 
@@ -14,7 +13,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from ..utils.logger import get_logger
 from .llm_backends import LLMConfig, LLMMessage, LLMResponse, get_llm_manager
@@ -24,6 +23,7 @@ logger = get_logger(__name__)
 
 class FailureType(Enum):
     """Types of LLM failures for classification."""
+
     TEMPORARY = "temporary"  # Rate limits, temporary network issues
     PERMANENT = "permanent"  # Auth failures, invalid models
     TIMEOUT = "timeout"      # Request timeouts
@@ -34,23 +34,25 @@ class FailureType(Enum):
 @dataclass
 class FailureInfo:
     """Information about a model failure."""
+
     failure_type: FailureType
     timestamp: datetime
     error_message: str
-    retry_after: Optional[float] = None  # Seconds to wait before retry
+    retry_after: float | None = None  # Seconds to wait before retry
 
 
 @dataclass
 class ModelHealth:
     """Health tracking for a model in the chain."""
+
     model_id: str
     success_count: int = 0
     failure_count: int = 0
-    last_success: Optional[datetime] = None
-    last_failure: Optional[datetime] = None
-    recent_failures: List[FailureInfo] = field(default_factory=list)
+    last_success: datetime | None = None
+    last_failure: datetime | None = None
+    recent_failures: list[FailureInfo] = field(default_factory=list)
     is_circuit_open: bool = False
-    circuit_opened_at: Optional[datetime] = None
+    circuit_opened_at: datetime | None = None
     avg_response_time: float = 0.0
     total_requests: int = 0
 
@@ -88,7 +90,7 @@ class FallbackChain:
 
     def __init__(self,
                  chain_id: str,
-                 model_configs: List[Tuple[str, LLMConfig]],
+                 model_configs: list[tuple[str, LLMConfig]],
                  max_retries: int = 3,
                  retry_delay: float = 1.0,
                  circuit_failure_threshold: int = 5,
@@ -102,6 +104,7 @@ class FallbackChain:
             retry_delay: Base delay between retries (with exponential backoff)
             circuit_failure_threshold: Failures needed to open circuit breaker
             enable_adaptive_ordering: Whether to reorder based on performance
+
         """
         self.chain_id = chain_id
         self.model_configs = model_configs
@@ -185,7 +188,7 @@ class FallbackChain:
                     failure_info = FailureInfo(
                         failure_type=failure_type,
                         timestamp=datetime.now(),
-                        error_message=str(error)
+                        error_message=str(error),
                     )
                     health.recent_failures.append(failure_info)
 
@@ -203,7 +206,7 @@ class FallbackChain:
                         logger.warning(
                             f"Circuit breaker opened for model {model_id} after {recent_failures} failures")
 
-    def _get_ordered_models(self) -> List[Tuple[str, LLMConfig]]:
+    def _get_ordered_models(self) -> list[tuple[str, LLMConfig]]:
         """Get models ordered by current performance if adaptive ordering is enabled."""
         if not self.enable_adaptive_ordering:
             return self.model_configs
@@ -235,7 +238,7 @@ class FallbackChain:
 
         return available_models
 
-    async def chat_async(self, messages: List[LLMMessage], tools: Optional[List[Dict]] = None) -> Optional[LLMResponse]:
+    async def chat_async(self, messages: list[LLMMessage], tools: list[dict] | None = None) -> LLMResponse | None:
         """Async version of chat with fallback logic."""
         ordered_models = self._get_ordered_models()
 
@@ -260,7 +263,7 @@ class FallbackChain:
 
                     # Use asyncio to handle potential blocking calls
                     response = await asyncio.get_event_loop().run_in_executor(
-                        None, self.llm_manager.chat, messages, model_id, tools
+                        None, self.llm_manager.chat, messages, model_id, tools,
                     )
 
                     if response:
@@ -271,8 +274,7 @@ class FallbackChain:
                         logger.debug(
                             f"Chain {self.chain_id}: Success with model {model_id} (attempt {attempt + 1})")
                         return response
-                    else:
-                        raise RuntimeError("LLM returned None response")
+                    raise RuntimeError("LLM returned None response")
 
                 except Exception as e:
                     last_error = e
@@ -303,7 +305,7 @@ class FallbackChain:
             f"All models failed in chain {self.chain_id}. Last error: {last_error}")
         return None
 
-    def chat(self, messages: List[LLMMessage], tools: Optional[List[Dict]] = None) -> Optional[LLMResponse]:
+    def chat(self, messages: list[LLMMessage], tools: list[dict] | None = None) -> LLMResponse | None:
         """Synchronous chat with fallback logic."""
         try:
             # Run async version in event loop
@@ -317,14 +319,14 @@ class FallbackChain:
             logger.error(f"Error in fallback chain chat: {e}")
             return None
 
-    def get_health_report(self) -> Dict[str, Any]:
+    def get_health_report(self) -> dict[str, Any]:
         """Get a comprehensive health report for the chain."""
         with self.lock:
             report = {
                 "chain_id": self.chain_id,
                 "total_models": len(self.model_configs),
                 "available_models": len([h for h in self.health_stats.values() if h.should_retry()]),
-                "models": {}
+                "models": {},
             }
 
             for model_id, health in self.health_stats.items():
@@ -337,13 +339,13 @@ class FallbackChain:
                     "total_requests": health.total_requests,
                     "last_success": health.last_success.isoformat() if health.last_success else None,
                     "last_failure": health.last_failure.isoformat() if health.last_failure else None,
-                    "recent_failure_count": len(health.recent_failures)
+                    "recent_failure_count": len(health.recent_failures),
                 }
                 report["models"][model_id] = model_report
 
             return report
 
-    def reset_health_stats(self, model_id: Optional[str] = None):
+    def reset_health_stats(self, model_id: str | None = None):
         """Reset health statistics for specific model or all models."""
         with self.lock:
             if model_id:
@@ -370,7 +372,7 @@ class FallbackManager:
 
     def create_chain(self,
                      chain_id: str,
-                     model_configs: List[Tuple[str, LLMConfig]],
+                     model_configs: list[tuple[str, LLMConfig]],
                      **kwargs) -> FallbackChain:
         """Create a new fallback chain.
 
@@ -381,6 +383,7 @@ class FallbackManager:
 
         Returns:
             Created FallbackChain instance
+
         """
         with self.lock:
             if chain_id in self.chains:
@@ -396,7 +399,7 @@ class FallbackManager:
             logger.info(f"Created fallback chain: {chain_id}")
             return chain
 
-    def get_chain(self, chain_id: str) -> Optional[FallbackChain]:
+    def get_chain(self, chain_id: str) -> FallbackChain | None:
         """Get a fallback chain by ID."""
         return self.chains.get(chain_id)
 
@@ -409,9 +412,9 @@ class FallbackManager:
         logger.info(f"Set default chain to: {chain_id}")
 
     def chat(self,
-             messages: List[LLMMessage],
-             chain_id: Optional[str] = None,
-             tools: Optional[List[Dict]] = None) -> Optional[LLMResponse]:
+             messages: list[LLMMessage],
+             chain_id: str | None = None,
+             tools: list[dict] | None = None) -> LLMResponse | None:
         """Chat using a specific chain or the default chain.
 
         Args:
@@ -421,6 +424,7 @@ class FallbackManager:
 
         Returns:
             LLM response or None if all models fail
+
         """
         target_chain_id = chain_id or self.default_chain_id
 
@@ -436,9 +440,9 @@ class FallbackManager:
         return chain.chat(messages, tools)
 
     async def chat_async(self,
-                         messages: List[LLMMessage],
-                         chain_id: Optional[str] = None,
-                         tools: Optional[List[Dict]] = None) -> Optional[LLMResponse]:
+                         messages: list[LLMMessage],
+                         chain_id: str | None = None,
+                         tools: list[dict] | None = None) -> LLMResponse | None:
         """Async chat using fallback chains."""
         target_chain_id = chain_id or self.default_chain_id
 
@@ -453,16 +457,16 @@ class FallbackManager:
 
         return await chain.chat_async(messages, tools)
 
-    def list_chains(self) -> List[str]:
+    def list_chains(self) -> list[str]:
         """List all available chain IDs."""
         return list(self.chains.keys())
 
-    def get_global_health_report(self) -> Dict[str, Any]:
+    def get_global_health_report(self) -> dict[str, Any]:
         """Get health report for all chains."""
         report = {
             "total_chains": len(self.chains),
             "default_chain": self.default_chain_id,
-            "chains": {}
+            "chains": {},
         }
 
         for chain_id, chain in self.chains.items():
@@ -478,6 +482,7 @@ class FallbackManager:
 
         Returns:
             True if removed, False if not found
+
         """
         with self.lock:
             if chain_id not in self.chains:
@@ -493,7 +498,7 @@ class FallbackManager:
             logger.info(f"Removed fallback chain: {chain_id}")
             return True
 
-    def create_chain_from_config(self, config: Dict[str, Any]) -> FallbackChain:
+    def create_chain_from_config(self, config: dict[str, Any]) -> FallbackChain:
         """Create a chain from configuration dictionary.
 
         Args:
@@ -501,6 +506,7 @@ class FallbackManager:
 
         Returns:
             Created FallbackChain instance
+
         """
         chain_id = config["chain_id"]
         model_configs = []
@@ -520,7 +526,7 @@ class FallbackManager:
                 temperature=model_config.get("temperature", 0.7),
                 max_tokens=model_config.get("max_tokens", 2048),
                 tools_enabled=model_config.get("tools_enabled", True),
-                custom_params=model_config.get("custom_params", {})
+                custom_params=model_config.get("custom_params", {}),
             )
 
             model_id = model_config.get(
@@ -532,17 +538,17 @@ class FallbackManager:
             "max_retries": config.get("max_retries", 3),
             "retry_delay": config.get("retry_delay", 1.0),
             "circuit_failure_threshold": config.get("circuit_failure_threshold", 5),
-            "enable_adaptive_ordering": config.get("enable_adaptive_ordering", True)
+            "enable_adaptive_ordering": config.get("enable_adaptive_ordering", True),
         }
 
         return self.create_chain(chain_id, model_configs, **chain_settings)
 
-    def export_configuration(self) -> Dict[str, Any]:
+    def export_configuration(self) -> dict[str, Any]:
         """Export all chains configuration to a dictionary."""
         config = {
             "version": "1.0",
             "default_chain": self.default_chain_id,
-            "chains": {}
+            "chains": {},
         }
 
         for chain_id, chain in self.chains.items():
@@ -552,7 +558,7 @@ class FallbackManager:
                 "retry_delay": chain.retry_delay,
                 "circuit_failure_threshold": chain.circuit_failure_threshold,
                 "enable_adaptive_ordering": chain.enable_adaptive_ordering,
-                "models": []
+                "models": [],
             }
 
             for model_id, llm_config in chain.model_configs:
@@ -567,7 +573,7 @@ class FallbackManager:
                     "temperature": llm_config.temperature,
                     "max_tokens": llm_config.max_tokens,
                     "tools_enabled": llm_config.tools_enabled,
-                    "custom_params": llm_config.custom_params
+                    "custom_params": llm_config.custom_params,
                 }
                 chain_config["models"].append(model_config)
 
@@ -575,12 +581,13 @@ class FallbackManager:
 
         return config
 
-    def import_configuration(self, config: Dict[str, Any], replace: bool = False):
+    def import_configuration(self, config: dict[str, Any], replace: bool = False):
         """Import chains configuration from a dictionary.
 
         Args:
             config: Configuration dictionary
             replace: Whether to replace existing chains
+
         """
         if replace:
             self.chains.clear()
@@ -612,7 +619,7 @@ def get_fallback_manager() -> FallbackManager:
 
 
 def create_simple_fallback_chain(chain_id: str,
-                                 model_ids: List[str],
+                                 model_ids: list[str],
                                  use_existing_configs: bool = True) -> FallbackChain:
     """Create a simple fallback chain from existing model IDs.
 
@@ -623,6 +630,7 @@ def create_simple_fallback_chain(chain_id: str,
 
     Returns:
         Created FallbackChain instance
+
     """
     manager = get_fallback_manager()
     llm_manager = get_llm_manager()
@@ -640,7 +648,7 @@ def create_simple_fallback_chain(chain_id: str,
             from .llm_backends import LLMConfig, LLMProvider
             placeholder_config = LLMConfig(
                 provider=LLMProvider.OPENAI,  # Placeholder
-                model_name=model_id
+                model_name=model_id,
             )
             model_configs.append((model_id, placeholder_config))
         else:

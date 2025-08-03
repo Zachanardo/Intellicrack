@@ -1,5 +1,4 @@
-"""
-Plugin Manager Dialog for Intellicrack.
+"""Plugin Manager Dialog for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -54,18 +53,17 @@ from .common_imports import (
 # Additional imports specific to plugin manager
 if not HAS_PYQT:
     class PluginInstallThread:
-        """
-        Stub class for plugin installation thread when PyQt6 is not available.
+        """Stub class for plugin installation thread when PyQt6 is not available.
 
         Provides a placeholder to prevent import errors in non-GUI environments.
         """
-        pass
+
     class PluginManagerDialog:
-        """
-        Stub class for plugin manager dialog when PyQt6 is not available.
+        """Stub class for plugin manager dialog when PyQt6 is not available.
 
         Provides minimal interface methods to allow code to run without PyQt6.
         """
+
         def __init__(self, parent=None):
             """Initialize stub plugin manager dialog for non-GUI environments."""
             self.parent = parent
@@ -94,26 +92,24 @@ if not HAS_PYQT:
             self.test_file_edit = None
             self.test_output = None
         def show(self):
+            """Show the dialog (no-op when PyQt6 is not available).
             """
-            Show the dialog (no-op when PyQt6 is not available).
-            """
-            pass
 
         def exec_(self):
-            """
-            Execute the dialog modally (no-op when PyQt6 is not available).
+            """Execute the dialog modally (no-op when PyQt6 is not available).
 
             Returns:
                 int: Always returns 0
+
             """
             return 0
 
         def exec(self):
-            """
-            Execute the dialog modally - PyQt6 style method (no-op when PyQt6 is not available).
+            """Execute the dialog modally - PyQt6 style method (no-op when PyQt6 is not available).
 
             Returns:
                 int: Always returns 0
+
             """
             return 0
 else:
@@ -158,7 +154,7 @@ else:
 
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in plugin_manager_dialog: %s", e)
-                self.installation_finished.emit(False, f"Installation failed: {str(e)}")
+                self.installation_finished.emit(False, f"Installation failed: {e!s}")
 
     class PluginManagerDialog(QDialog):
         """Dialog for managing Intellicrack plugins."""
@@ -436,7 +432,7 @@ else:
                 "Exploit Plugin",
                 "UI Plugin",
                 "Tool Plugin",
-                "Generic Plugin"
+                "Generic Plugin",
             ])
             template_layout.addRow("Plugin Type:", self.plugin_type_combo)
 
@@ -518,7 +514,7 @@ else:
                     "description": "Advanced license validation bypass techniques",
                     "author": "Community",
                     "category": "Analysis",
-                    "size": "45 KB"
+                    "size": "45 KB",
                 },
                 {
                     "name": "Packer Detector Pro",
@@ -526,7 +522,7 @@ else:
                     "description": "Detect and analyze various executable packers",
                     "author": "Security Team",
                     "category": "Analysis",
-                    "size": "128 KB"
+                    "size": "128 KB",
                 },
                 {
                     "name": "Frida Script Generator",
@@ -534,8 +530,8 @@ else:
                     "description": "Generate custom Frida scripts for dynamic analysis",
                     "author": "Dev Team",
                     "category": "Tool",
-                    "size": "67 KB"
-                }
+                    "size": "67 KB",
+                },
             ]
 
             for plugin in demo_plugins:
@@ -552,13 +548,13 @@ else:
                 "type": "file" if os.path.isfile(plugin_path) else "directory",
                 "enabled": True,
                 "version": "1.0.0",
-                "description": "No description available"
+                "description": "No description available",
             }
 
             # Try to read plugin metadata
             try:
                 if plugin_path.endswith(".py"):
-                    with open(plugin_path, "r", encoding="utf-8") as f:
+                    with open(plugin_path, encoding="utf-8") as f:
                         content = f.read()
 
                     # Extract basic metadata from comments
@@ -643,7 +639,7 @@ Description: {plugin_info['description']}"""
                     self,
                     "Confirm Removal",
                     f"Are you sure you want to remove plugin '{plugin_info['name']}'?",
-                    QMessageBox.Yes | QMessageBox.No
+                    QMessageBox.Yes | QMessageBox.No,
                 )
 
                 if reply == QMessageBox.Yes:
@@ -657,7 +653,7 @@ Description: {plugin_info['description']}"""
                         QMessageBox.information(self, "Success", "Plugin removed successfully")
                     except Exception as e:
                         logger.error("Exception in plugin_manager_dialog: %s", e)
-                        QMessageBox.critical(self, "Error", f"Failed to remove plugin: {str(e)}")
+                        QMessageBox.critical(self, "Error", f"Failed to remove plugin: {e!s}")
 
         def configure_selected_plugin(self):
             """Configure the selected plugin."""
@@ -668,7 +664,7 @@ Description: {plugin_info['description']}"""
                     self,
                     "Plugin Configuration",
                     f"Configuration for '{plugin_info['name']}' is not yet implemented.\n\n"
-                    "This feature will allow you to modify plugin settings and parameters."
+                    "This feature will allow you to modify plugin settings and parameters.",
                 )
 
         def install_selected_plugin(self):
@@ -680,7 +676,7 @@ Description: {plugin_info['description']}"""
                     self,
                     "Plugin Installation",
                     f"Installation of '{plugin_info['name']}' from repository is not yet implemented.\n\n"
-                    "This feature will download and install plugins from online repositories."
+                    "This feature will download and install plugins from online repositories.",
                 )
 
         def preview_selected_plugin(self):
@@ -696,7 +692,7 @@ Description: {plugin_info['description']}"""
                     f"Version: {plugin_info['version']}\n"
                     f"Author: {plugin_info['author']}\n"
                     f"Category: {plugin_info['category']}\n\n"
-                    "Full preview functionality coming soon."
+                    "Full preview functionality coming soon.",
                 )
 
         def browse_plugin_file(self):
@@ -705,7 +701,7 @@ Description: {plugin_info['description']}"""
                 self,
                 "Select Plugin File",
                 "",
-                "Plugin Files (*.py *.zip);;Python Files (*.py);;ZIP Archives (*.zip);;All Files (*)"
+                "Plugin Files (*.py *.zip);;Python Files (*.py);;ZIP Archives (*.zip);;All Files (*)",
             )
 
             if file_path:
@@ -1264,14 +1260,14 @@ if __name__ == '__main__':
                     self,
                     "Template Created",
                     f"Plugin template created successfully:\n{file_path}\n\n"
-                    "You can now edit the template to implement your plugin functionality."
+                    "You can now edit the template to implement your plugin functionality.",
                 )
 
                 self.load_installed_plugins()  # Refresh list
 
             except Exception as e:
                 logger.error("Exception in plugin_manager_dialog: %s", e)
-                QMessageBox.critical(self, "Error", f"Failed to create template: {str(e)}")
+                QMessageBox.critical(self, "Error", f"Failed to create template: {e!s}")
 
         def browse_test_plugin(self):
             """Browse for a plugin file to test."""
@@ -1279,7 +1275,7 @@ if __name__ == '__main__':
                 self,
                 "Select Plugin to Test",
                 self.plugins_dir,
-                "Python Files (*.py);;All Files (*)"
+                "Python Files (*.py);;All Files (*)",
             )
 
             if file_path:
@@ -1301,7 +1297,7 @@ if __name__ == '__main__':
 
             try:
                 # Basic syntax check
-                with open(plugin_file, "r", encoding="utf-8") as f:
+                with open(plugin_file, encoding="utf-8") as f:
                     content = f.read()
 
                 # Try to compile the code

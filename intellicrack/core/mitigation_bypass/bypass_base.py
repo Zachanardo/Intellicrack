@@ -1,6 +1,5 @@
 
-"""
-Base classes for mitigation bypass techniques.
+"""Base classes for mitigation bypass techniques.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -20,18 +19,18 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class MitigationBypassBase(ABC):
     """Base class for all mitigation bypass techniques."""
 
     def __init__(self, mitigation_name: str):
-        """
-        Initialize the bypass.
+        """Initialize the bypass.
 
         Args:
             mitigation_name: Name of the mitigation being bypassed
+
         """
         self.mitigation_name = mitigation_name
         self.techniques = []
@@ -41,30 +40,28 @@ class MitigationBypassBase(ABC):
     @abstractmethod
     def _initialize_techniques(self) -> None:
         """Initialize the list of available techniques for this bypass."""
-        pass
 
     @abstractmethod
-    def get_recommended_technique(self, binary_info: Dict[str, Any]) -> str:
-        """
-        Get the recommended technique based on binary analysis.
+    def get_recommended_technique(self, binary_info: dict[str, Any]) -> str:
+        """Get the recommended technique based on binary analysis.
 
         Args:
             binary_info: Information about the target binary
 
         Returns:
             Name of recommended technique
-        """
-        pass
 
-    def analyze_bypass_opportunities(self, binary_info: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Analyze bypass opportunities for this mitigation.
+
+    def analyze_bypass_opportunities(self, binary_info: dict[str, Any]) -> dict[str, Any]:
+        """Analyze bypass opportunities for this mitigation.
 
         Args:
             binary_info: Information about the target binary
 
         Returns:
             Analysis results dictionary
+
         """
         try:
             recommended = self.get_recommended_technique(binary_info)
@@ -85,15 +82,15 @@ class MitigationBypassBase(ABC):
                 "techniques_available": self.techniques,
             }
 
-    def _perform_detailed_analysis(self, binary_info: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Perform detailed analysis for this bypass type.
+    def _perform_detailed_analysis(self, binary_info: dict[str, Any]) -> dict[str, Any]:
+        """Perform detailed analysis for this bypass type.
 
         Args:
             binary_info: Information about the target binary
 
         Returns:
             Detailed analysis results
+
         """
         # Default implementation - subclasses can override
         return {
@@ -103,15 +100,15 @@ class MitigationBypassBase(ABC):
             "security_features": binary_info.get("security_features", []),
         }
 
-    def get_technique_info(self, technique_name: str) -> Optional[Dict[str, Any]]:
-        """
-        Get information about a specific technique.
+    def get_technique_info(self, technique_name: str) -> dict[str, Any] | None:
+        """Get information about a specific technique.
 
         Args:
             technique_name: Name of the technique
 
         Returns:
             Technique information or None if not found
+
         """
         if technique_name not in self.techniques:
             return None
@@ -124,9 +121,8 @@ class MitigationBypassBase(ABC):
             "requirements": [],
         }
 
-    def is_technique_applicable(self, technique_name: str, binary_info: Dict[str, Any]) -> bool:
-        """
-        Check if a technique is applicable to the given binary.
+    def is_technique_applicable(self, technique_name: str, binary_info: dict[str, Any]) -> bool:
+        """Check if a technique is applicable to the given binary.
 
         Args:
             technique_name: Name of the technique
@@ -134,6 +130,7 @@ class MitigationBypassBase(ABC):
 
         Returns:
             True if technique is applicable
+
         """
         # First check if technique exists
         if technique_name not in self.techniques:
@@ -231,24 +228,24 @@ class MitigationBypassBase(ABC):
         # All checks passed
         return True
 
-    def get_all_techniques(self) -> List[str]:
-        """
-        Get list of all available techniques.
+    def get_all_techniques(self) -> list[str]:
+        """Get list of all available techniques.
 
         Returns:
             List of technique names
+
         """
         return self.techniques.copy()
 
     def get_technique_difficulty(self, technique_name: str) -> str:
-        """
-        Get the difficulty level of a technique.
+        """Get the difficulty level of a technique.
 
         Args:
             technique_name: Name of the technique
 
         Returns:
             Difficulty level (easy, medium, hard)
+
         """
         info = self.get_technique_info(technique_name)
         return info.get("difficulty", "medium") if info else "unknown"
@@ -262,19 +259,20 @@ class ROPBasedBypass(MitigationBypassBase):
 
         Args:
             mitigation_name: Name of the mitigation being bypassed.
+
         """
         super().__init__(mitigation_name)
         self.rop_techniques = ["rop_chain", "jop_chain", "ret2libc"]
 
-    def find_rop_gadgets(self, binary_info: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Find ROP gadgets in the binary.
+    def find_rop_gadgets(self, binary_info: dict[str, Any]) -> list[dict[str, Any]]:
+        """Find ROP gadgets in the binary.
 
         Args:
             binary_info: Information about the target binary
 
         Returns:
             List of found gadgets
+
         """
         # Placeholder implementation
         gadgets = []
@@ -282,23 +280,23 @@ class ROPBasedBypass(MitigationBypassBase):
         # In a real implementation, this would analyze the binary for gadgets
         if binary_info.get("has_executable_sections", True):
             gadgets.append(
-                {"address": "0x401000", "instruction": "pop rdi; ret", "type": "pop_register"}
+                {"address": "0x401000", "instruction": "pop rdi; ret", "type": "pop_register"},
             )
             gadgets.append(
-                {"address": "0x401005", "instruction": "pop rsi; ret", "type": "pop_register"}
+                {"address": "0x401005", "instruction": "pop rsi; ret", "type": "pop_register"},
             )
 
         return gadgets
 
-    def assess_rop_viability(self, binary_info: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Assess the viability of ROP-based attacks.
+    def assess_rop_viability(self, binary_info: dict[str, Any]) -> dict[str, Any]:
+        """Assess the viability of ROP-based attacks.
 
         Args:
             binary_info: Information about the target binary
 
         Returns:
             ROP viability assessment
+
         """
         gadgets = self.find_rop_gadgets(binary_info)
 

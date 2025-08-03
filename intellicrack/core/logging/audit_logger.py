@@ -1,5 +1,4 @@
-"""
-Audit Logging Framework for Intellicrack
+"""Audit Logging Framework for Intellicrack
 
 Provides tamper-resistant, structured logging for all exploitation attempts
 and security-sensitive operations.
@@ -19,7 +18,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ...utils.logger import get_logger
 from ...utils.secrets_manager import get_secret, set_secret
@@ -83,10 +82,10 @@ class AuditEvent:
         event_type: AuditEventType,
         severity: AuditSeverity,
         description: str,
-        details: Optional[Dict[str, Any]] = None,
-        user: Optional[str] = None,
-        source_ip: Optional[str] = None,
-        target: Optional[str] = None,
+        details: dict[str, Any] | None = None,
+        user: str | None = None,
+        source_ip: str | None = None,
+        target: str | None = None,
     ):
         """Initialize an audit event.
 
@@ -98,6 +97,7 @@ class AuditEvent:
             user: User who triggered the event
             source_ip: Source IP address
             target: Target of the operation (file, host, etc.)
+
         """
         self.event_id = self._generate_event_id()
         self.timestamp = datetime.now(timezone.utc)
@@ -125,7 +125,7 @@ class AuditEvent:
         except:
             return os.environ.get("USER", os.environ.get("USERNAME", "unknown"))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert event to dictionary format."""
         return {
             "event_id": self.event_id,
@@ -157,7 +157,7 @@ class AuditLogger:
 
     def __init__(
         self,
-        log_dir: Optional[Path] = None,
+        log_dir: Path | None = None,
         max_file_size: int = 100 * 1024 * 1024,  # 100MB
         rotation_count: int = 10,
         enable_encryption: bool = True,
@@ -169,6 +169,7 @@ class AuditLogger:
             max_file_size: Maximum size per log file before rotation
             rotation_count: Number of rotated files to keep
             enable_encryption: Whether to encrypt log entries
+
         """
         self.log_dir = log_dir or self._get_default_log_dir()
         self.log_dir.mkdir(parents=True, exist_ok=True)
@@ -199,7 +200,7 @@ class AuditLogger:
                 event_type=AuditEventType.SYSTEM_START,
                 severity=AuditSeverity.INFO,
                 description="Audit logging system initialized",
-            )
+            ),
         )
 
     def _get_default_log_dir(self) -> Path:
@@ -231,7 +232,7 @@ class AuditLogger:
             logger.warning("Cryptography not available - audit logs will not be encrypted")
             self._cipher = None
 
-    def _load_last_hash(self) -> Optional[str]:
+    def _load_last_hash(self) -> str | None:
         """Load the last hash from the hash chain file."""
         hash_file = self.log_dir / ".hash_chain"
         if hash_file.exists():
@@ -348,9 +349,9 @@ class AuditLogger:
         self,
         target: str,
         exploit_type: str,
-        payload: Optional[str] = None,
+        payload: str | None = None,
         success: bool = False,
-        error: Optional[str] = None,
+        error: str | None = None,
     ):
         """Log an exploitation attempt."""
         event_type = AuditEventType.EXPLOIT_SUCCESS if success else AuditEventType.EXPLOIT_FAILURE
@@ -373,10 +374,10 @@ class AuditLogger:
                 description=f"Exploit attempt on {target} using {exploit_type}",
                 details=details,
                 target=target,
-            )
+            ),
         )
 
-    def log_binary_analysis(self, file_path: str, file_hash: str, protections: List[str], vulnerabilities: List[str]):
+    def log_binary_analysis(self, file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]):
         """Log binary analysis results."""
         self.log_event(
             AuditEvent(
@@ -391,10 +392,10 @@ class AuditLogger:
                     "vulnerability_count": len(vulnerabilities),
                 },
                 target=file_path,
-            )
+            ),
         )
 
-    def log_vm_operation(self, operation: str, vm_name: str, success: bool = True, error: Optional[str] = None):
+    def log_vm_operation(self, operation: str, vm_name: str, success: bool = True, error: str | None = None):
         """Log VM-related operations."""
         event_map = {
             "start": AuditEventType.VM_START,
@@ -416,7 +417,7 @@ class AuditLogger:
                 description=f"VM operation '{operation}' on {vm_name}",
                 details=details,
                 target=vm_name,
-            )
+            ),
         )
 
     def log_credential_access(self, credential_type: str, purpose: str, success: bool = True):
@@ -427,7 +428,7 @@ class AuditLogger:
                 severity=AuditSeverity.MEDIUM,
                 description=f"Credential access: {credential_type} for {purpose}",
                 details={"credential_type": credential_type, "purpose": purpose, "success": success},
-            )
+            ),
         )
 
     def log_tool_execution(
@@ -435,8 +436,8 @@ class AuditLogger:
         tool_name: str,
         command: str,
         success: bool = True,
-        output: Optional[str] = None,
-        error: Optional[str] = None,
+        output: str | None = None,
+        error: str | None = None,
     ):
         """Log external tool execution."""
         event_type = AuditEventType.TOOL_EXECUTION if success else AuditEventType.TOOL_ERROR
@@ -456,8 +457,8 @@ class AuditLogger:
 
         self.log_event(
             AuditEvent(
-                event_type=event_type, severity=severity, description=f"Tool execution: {tool_name}", details=details
-            )
+                event_type=event_type, severity=severity, description=f"Tool execution: {tool_name}", details=details,
+            ),
         )
 
     def verify_log_integrity(self, log_file: Path) -> bool:
@@ -465,7 +466,7 @@ class AuditLogger:
         try:
             previous_hash = None
 
-            with open(log_file, "r", encoding="utf-8") as f:
+            with open(log_file, encoding="utf-8") as f:
                 for line_num, line in enumerate(f, 1):
                     if not line.strip():
                         continue
@@ -499,7 +500,7 @@ class AuditLogger:
 
                             # Recalculate hash
                             calculated_hash = hashlib.sha256(
-                                json.dumps(event_data, sort_keys=True).encode()
+                                json.dumps(event_data, sort_keys=True).encode(),
                             ).hexdigest()
 
                             if calculated_hash != stored_hash:
@@ -524,13 +525,13 @@ class AuditLogger:
 
     def search_events(
         self,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
-        event_types: Optional[List[AuditEventType]] = None,
-        severity: Optional[AuditSeverity] = None,
-        user: Optional[str] = None,
-        target: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+        event_types: list[AuditEventType] | None = None,
+        severity: AuditSeverity | None = None,
+        user: str | None = None,
+        target: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Search audit logs based on criteria."""
         results = []
 
@@ -539,7 +540,7 @@ class AuditLogger:
 
         for log_file in log_files:
             try:
-                with open(log_file, "r", encoding="utf-8") as f:
+                with open(log_file, encoding="utf-8") as f:
                     for line in f:
                         if not line.strip():
                             continue
@@ -588,7 +589,7 @@ class AuditLogger:
 
         return results
 
-    def generate_report(self, start_time: datetime, end_time: datetime, output_file: Optional[Path] = None) -> str:
+    def generate_report(self, start_time: datetime, end_time: datetime, output_file: Path | None = None) -> str:
         """Generate an audit report for a time period."""
         events = self.search_events(start_time=start_time, end_time=end_time)
 
@@ -672,7 +673,7 @@ class PerformanceMonitor:
             self.start_times[timer_id] = time.time()
         return timer_id
 
-    def end_timer(self, timer_id: str, metadata: Dict = None):
+    def end_timer(self, timer_id: str, metadata: dict = None):
         """End timing and record duration."""
         end_time = time.time()
         with self._lock:
@@ -707,7 +708,7 @@ class PerformanceMonitor:
                 if duration > 5.0:  # More than 5 seconds
                     logger.warning(f"Slow operation {operation}: {duration:.2f}s")
 
-    def increment_counter(self, metric: str, value: int = 1, tags: Dict = None):
+    def increment_counter(self, metric: str, value: int = 1, tags: dict = None):
         """Increment a counter metric."""
         with self._lock:
             metric_key = f"counter.{metric}"
@@ -716,7 +717,7 @@ class PerformanceMonitor:
                 metric_key += f"_{tag_str}"
             self.counters[metric_key] += value
 
-    def record_gauge(self, metric: str, value: float, tags: Dict = None):
+    def record_gauge(self, metric: str, value: float, tags: dict = None):
         """Record a gauge metric."""
         with self._lock:
             metric_key = f"gauge.{metric}"
@@ -725,7 +726,7 @@ class PerformanceMonitor:
                 metric_key += f"_{tag_str}"
             self.metrics[metric_key] = {"value": value, "timestamp": time.time()}
 
-    def get_metrics_summary(self) -> Dict[str, Any]:
+    def get_metrics_summary(self) -> dict[str, Any]:
         """Get summary of all metrics."""
         with self._lock:
             summary = {
@@ -751,7 +752,7 @@ class PerformanceMonitor:
             summary["percentiles"] = percentiles
             return summary
 
-    def _get_system_metrics(self) -> Dict[str, Any]:
+    def _get_system_metrics(self) -> dict[str, Any]:
         """Get system-level metrics."""
         try:
             import psutil
@@ -889,7 +890,7 @@ class TelemetryCollector:
         except Exception as e:
             logger.error(f"Failed to collect telemetry: {e}")
 
-    def _log_telemetry_summary(self, metrics: Dict[str, Any]):
+    def _log_telemetry_summary(self, metrics: dict[str, Any]):
         """Log telemetry summary."""
         try:
             system_metrics = metrics.get("system_metrics", {})
@@ -910,7 +911,7 @@ class TelemetryCollector:
 
             logger.info(
                 f"Telemetry: CPU={cpu_percent:.1f}% Memory={memory_percent:.1f}% "
-                f"Resources={total_resources} Tools={available_tools}/{total_tools}"
+                f"Resources={total_resources} Tools={available_tools}/{total_tools}",
             )
 
             # Check for alerts
@@ -925,13 +926,13 @@ class TelemetryCollector:
             if resource_health.get("status") != "healthy":
                 logger.warning(
                     f"Resource manager health: {resource_health.get('status')} - "
-                    f"Issues: {resource_health.get('issues', [])}"
+                    f"Issues: {resource_health.get('issues', [])}",
                 )
 
         except Exception as e:
             logger.debug(f"Failed to log telemetry summary: {e}")
 
-    def get_telemetry_history(self, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_telemetry_history(self, limit: int = 50) -> list[dict[str, Any]]:
         """Get recent telemetry history."""
         with self._lock:
             return self.telemetry_data[-limit:]
@@ -1075,7 +1076,7 @@ except Exception as e:
 
 
 # Global audit logger instance
-_audit_logger: Optional[AuditLogger] = None
+_audit_logger: AuditLogger | None = None
 
 
 def get_audit_logger() -> AuditLogger:
@@ -1091,7 +1092,7 @@ def log_exploit_attempt(target: str, exploit_type: str, **kwargs):
     get_audit_logger().log_exploit_attempt(target, exploit_type, **kwargs)
 
 
-def log_binary_analysis(file_path: str, file_hash: str, protections: List[str], vulnerabilities: List[str]):
+def log_binary_analysis(file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]):
     """Convenience function to log binary analysis."""
     get_audit_logger().log_binary_analysis(file_path, file_hash, protections, vulnerabilities)
 

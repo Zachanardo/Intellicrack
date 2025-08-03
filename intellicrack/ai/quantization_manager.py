@@ -1,5 +1,4 @@
-"""
-Model Quantization Manager for Intellicrack
+"""Model Quantization Manager for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -21,7 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import gc
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 from ..utils.logger import get_logger
 from .model_sharding import get_sharding_manager
@@ -115,7 +114,7 @@ class QuantizationManager:
             "bitsandbytes": HAS_BITSANDBYTES,
             "auto_gptq": HAS_AUTO_GPTQ,
             "transformers": HAS_TRANSFORMERS,
-            "peft": HAS_PEFT
+            "peft": HAS_PEFT,
         }
 
         logger.info(
@@ -135,11 +134,11 @@ class QuantizationManager:
 
     def load_quantized_model(
         self,
-        model_path: Union[str, Path],
+        model_path: str | Path,
         quantization_type: str = "auto",
         device: str = "auto",
-        **kwargs
-    ) -> Optional[Any]:
+        **kwargs,
+    ) -> Any | None:
         """Load a quantized model with automatic backend selection.
 
         Args:
@@ -150,6 +149,7 @@ class QuantizationManager:
 
         Returns:
             Loaded model or None on failure
+
         """
         model_path = Path(model_path)
 
@@ -167,17 +167,16 @@ class QuantizationManager:
         try:
             if quantization_type == "8bit":
                 return self._load_8bit_model(model_path, device, **kwargs)
-            elif quantization_type == "4bit":
+            if quantization_type == "4bit":
                 return self._load_4bit_model(model_path, device, **kwargs)
-            elif quantization_type == "gptq":
+            if quantization_type == "gptq":
                 return self._load_gptq_model(model_path, device, **kwargs)
-            elif quantization_type == "awq":
+            if quantization_type == "awq":
                 logger.warning(
                     "AWQ support has been removed due to dependency issues")
                 return None
-            else:
-                # Load without quantization
-                return self._load_standard_model(model_path, device, **kwargs)
+            # Load without quantization
+            return self._load_standard_model(model_path, device, **kwargs)
 
         except Exception as e:
             logger.error(f"Failed to load quantized model: {e}")
@@ -187,12 +186,11 @@ class QuantizationManager:
         """Get the best available device for model loading."""
         if GPU_AUTOLOADER_AVAILABLE:
             return get_device()
-        elif HAS_TORCH and torch.cuda.is_available():
+        if HAS_TORCH and torch.cuda.is_available():
             return "cuda"
-        elif HAS_TORCH and hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        if HAS_TORCH and hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
             return "mps"
-        else:
-            return "cpu"
+        return "cpu"
 
     def _detect_quantization_type(self, model_path: Path) -> str:
         """Detect quantization type from model files."""
@@ -208,18 +206,18 @@ class QuantizationManager:
         config_path = model_path / "config.json" if model_path.is_dir() else None
         if config_path and config_path.exists():
             import json
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 config = json.load(f)
                 if "quantization_config" in config:
                     quant_config = config["quantization_config"]
                     if "bits" in quant_config:
                         return f"{quant_config['bits']}bit"
-                    elif quant_config.get("quant_method") == "gptq":
+                    if quant_config.get("quant_method") == "gptq":
                         return "gptq"
 
         return "none"
 
-    def _load_8bit_model(self, model_path: Path, device: str, **kwargs) -> Optional[Any]:
+    def _load_8bit_model(self, model_path: Path, device: str, **kwargs) -> Any | None:
         """Load model with 8-bit quantization using bitsandbytes."""
         if not HAS_BITSANDBYTES or not HAS_TRANSFORMERS:
             logger.error(
@@ -236,7 +234,7 @@ class QuantizationManager:
                 load_in_8bit=True,
                 bnb_8bit_compute_dtype=torch.float16,
                 bnb_8bit_use_double_quant=True,
-                bnb_8bit_quant_type="nf4"
+                bnb_8bit_quant_type="nf4",
             )
 
             # Check if multi-GPU sharding should be used
@@ -246,7 +244,7 @@ class QuantizationManager:
                     model_path,
                     max_memory=kwargs.get("max_memory"),
                     no_split_module_classes=kwargs.get(
-                        "no_split_module_classes")
+                        "no_split_module_classes"),
                 )
 
             # Load model
@@ -255,7 +253,7 @@ class QuantizationManager:
                 quantization_config=quantization_config,
                 device_map=device_map,
                 trust_remote_code=kwargs.get("trust_remote_code", True),
-                torch_dtype=torch.float16
+                torch_dtype=torch.float16,
             )
 
             logger.info("Successfully loaded 8-bit quantized model")
@@ -265,7 +263,7 @@ class QuantizationManager:
             logger.error(f"Failed to load 8-bit model: {e}")
             return None
 
-    def _load_4bit_model(self, model_path: Path, device: str, **kwargs) -> Optional[Any]:
+    def _load_4bit_model(self, model_path: Path, device: str, **kwargs) -> Any | None:
         """Load model with 4-bit quantization using bitsandbytes."""
         if not HAS_BITSANDBYTES or not HAS_TRANSFORMERS:
             logger.error(
@@ -282,7 +280,7 @@ class QuantizationManager:
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=torch.float16,
                 bnb_4bit_use_double_quant=True,
-                bnb_4bit_quant_type="nf4"
+                bnb_4bit_quant_type="nf4",
             )
 
             # Check if multi-GPU sharding should be used
@@ -292,7 +290,7 @@ class QuantizationManager:
                     model_path,
                     max_memory=kwargs.get("max_memory"),
                     no_split_module_classes=kwargs.get(
-                        "no_split_module_classes")
+                        "no_split_module_classes"),
                 )
 
             # Load model
@@ -301,7 +299,7 @@ class QuantizationManager:
                 quantization_config=quantization_config,
                 device_map=device_map,
                 trust_remote_code=kwargs.get("trust_remote_code", True),
-                torch_dtype=torch.float16
+                torch_dtype=torch.float16,
             )
 
             # Prepare for training if needed
@@ -315,7 +313,7 @@ class QuantizationManager:
             logger.error(f"Failed to load 4-bit model: {e}")
             return None
 
-    def _load_gptq_model(self, model_path: Path, device: str, **kwargs) -> Optional[Any]:
+    def _load_gptq_model(self, model_path: Path, device: str, **kwargs) -> Any | None:
         """Load GPTQ quantized model."""
         if not HAS_AUTO_GPTQ:
             logger.error("auto-gptq required for GPTQ models")
@@ -333,7 +331,7 @@ class QuantizationManager:
                 trust_remote_code=kwargs.get("trust_remote_code", True),
                 use_safetensors=True,
                 inject_fused_attention=kwargs.get("fused_attention", True),
-                inject_fused_mlp=kwargs.get("fused_mlp", True)
+                inject_fused_mlp=kwargs.get("fused_mlp", True),
             )
 
             logger.info("Successfully loaded GPTQ model")
@@ -343,7 +341,7 @@ class QuantizationManager:
             logger.error(f"Failed to load GPTQ model: {e}")
             return None
 
-    def _load_standard_model(self, model_path: Path, device: str, **kwargs) -> Optional[Any]:
+    def _load_standard_model(self, model_path: Path, device: str, **kwargs) -> Any | None:
         """Load model without quantization."""
         if not HAS_TRANSFORMERS:
             logger.error("transformers required for model loading")
@@ -365,7 +363,7 @@ class QuantizationManager:
                     model_class=AutoModelForCausalLM,
                     torch_dtype=torch_dtype,
                     trust_remote_code=kwargs.get("trust_remote_code", True),
-                    **kwargs
+                    **kwargs,
                 )
             else:
                 device_map = "auto"
@@ -375,7 +373,7 @@ class QuantizationManager:
                 str(model_path),
                 device_map=device_map,
                 torch_dtype=torch_dtype,
-                trust_remote_code=kwargs.get("trust_remote_code", True)
+                trust_remote_code=kwargs.get("trust_remote_code", True),
             )
 
             if device == "cpu":
@@ -401,9 +399,9 @@ class QuantizationManager:
     def load_lora_adapter(
         self,
         base_model: Any,
-        adapter_path: Union[str, Path],
-        **kwargs
-    ) -> Optional[Any]:
+        adapter_path: str | Path,
+        **kwargs,
+    ) -> Any | None:
         """Load LoRA adapter onto a base model.
 
         Args:
@@ -413,6 +411,7 @@ class QuantizationManager:
 
         Returns:
             Model with LoRA adapter or None
+
         """
         if not HAS_PEFT:
             logger.error("peft required for LoRA adapters")
@@ -426,7 +425,7 @@ class QuantizationManager:
                 base_model,
                 str(adapter_path),
                 torch_dtype=kwargs.get("torch_dtype", torch.float16),
-                device_map=kwargs.get("device_map", "auto")
+                device_map=kwargs.get("device_map", "auto"),
             )
 
             # Merge adapter if requested
@@ -444,8 +443,8 @@ class QuantizationManager:
     def apply_dynamic_quantization(
         self,
         model: Any,
-        quantization_config: Dict[str, Any]
-    ) -> Optional[Any]:
+        quantization_config: dict[str, Any],
+    ) -> Any | None:
         """Apply dynamic quantization to a loaded model.
 
         Args:
@@ -454,6 +453,7 @@ class QuantizationManager:
 
         Returns:
             Quantized model or None
+
         """
         try:
             quant_type = quantization_config.get("type", "int8")
@@ -463,7 +463,7 @@ class QuantizationManager:
                 model = torch.quantization.quantize_dynamic(
                     model,
                     {torch.nn.Linear},
-                    dtype=torch.qint8
+                    dtype=torch.qint8,
                 )
             elif quant_type == "fp16":
                 # Convert to FP16
@@ -478,9 +478,9 @@ class QuantizationManager:
 
     def estimate_memory_usage(
         self,
-        model_path: Union[str, Path],
-        quantization_type: str = "auto"
-    ) -> Dict[str, float]:
+        model_path: str | Path,
+        quantization_type: str = "auto",
+    ) -> dict[str, float]:
         """Estimate memory usage for a model with given quantization.
 
         Args:
@@ -489,6 +489,7 @@ class QuantizationManager:
 
         Returns:
             Dictionary with memory estimates in GB
+
         """
         model_path = Path(model_path)
 
@@ -510,7 +511,7 @@ class QuantizationManager:
             "fp32_memory_gb": size_gb,
             "fp16_memory_gb": size_gb / 2,
             "int8_memory_gb": size_gb / 4,
-            "int4_memory_gb": size_gb / 8
+            "int4_memory_gb": size_gb / 8,
         }
 
         if quantization_type == "8bit":
@@ -528,10 +529,10 @@ class QuantizationManager:
         self,
         r: int = 16,
         lora_alpha: int = 32,
-        target_modules: Optional[list] = None,
+        target_modules: list | None = None,
         lora_dropout: float = 0.1,
-        **kwargs
-    ) -> Optional[Any]:
+        **kwargs,
+    ) -> Any | None:
         """Create a LoRA configuration for fine-tuning.
 
         Args:
@@ -543,6 +544,7 @@ class QuantizationManager:
 
         Returns:
             LoRA configuration or None
+
         """
         if not HAS_PEFT:
             logger.error("peft required for LoRA configuration")
@@ -560,26 +562,26 @@ class QuantizationManager:
             lora_dropout=lora_dropout,
             bias=kwargs.get("bias", "none"),
             task_type=kwargs.get("task_type", "CAUSAL_LM"),
-            inference_mode=kwargs.get("inference_mode", False)
+            inference_mode=kwargs.get("inference_mode", False),
         )
 
         return config
 
-    def get_sharding_info(self) -> Dict[str, Any]:
+    def get_sharding_info(self) -> dict[str, Any]:
         """Get information about multi-GPU sharding capabilities.
 
         Returns:
             Dictionary with sharding information
+
         """
         if self.sharding_manager:
             return self.sharding_manager.get_device_info()
-        else:
-            gpu_info = get_gpu_info() if GPU_AUTOLOADER_AVAILABLE else {}
+        gpu_info = get_gpu_info() if GPU_AUTOLOADER_AVAILABLE else {}
         return {
                 "cuda_available": gpu_info.get("available", False) if GPU_AUTOLOADER_AVAILABLE else torch.cuda.is_available(),
                 "device_count": gpu_info.get("info", {}).get("device_count", 0) if GPU_AUTOLOADER_AVAILABLE else (torch.cuda.device_count() if torch.cuda.is_available() else 0),
                 "sharding_available": False,
-                "reason": "Single GPU or no GPU available"
+                "reason": "Single GPU or no GPU available",
             }
 
     def get_supported_quantization_types(self) -> list:
@@ -600,7 +602,7 @@ class QuantizationManager:
 
         return supported_types
 
-    def quantize_model_with_bnb(self, model: Any, quantization_bits: int = 8, **kwargs) -> Optional[Any]:
+    def quantize_model_with_bnb(self, model: Any, quantization_bits: int = 8, **kwargs) -> Any | None:
         """Quantize a model using bitsandbytes (bnb) library.
 
         Args:
@@ -610,6 +612,7 @@ class QuantizationManager:
 
         Returns:
             Quantized model or None
+
         """
         if not HAS_BITSANDBYTES or not bnb:
             logger.error("bitsandbytes (bnb) required for this quantization method")
@@ -631,14 +634,14 @@ class QuantizationManager:
                             out_features,
                             bias=module.bias is not None,
                             has_fp16_weights=kwargs.get("has_fp16_weights", False),
-                            threshold=kwargs.get("threshold", 6.0)
+                            threshold=kwargs.get("threshold", 6.0),
                         )
 
                         # Copy weights
                         linear_8bit.weight = bnb.nn.Int8Params(
                             module.weight.data.clone(),
                             requires_grad=False,
-                            has_fp16_weights=kwargs.get("has_fp16_weights", False)
+                            has_fp16_weights=kwargs.get("has_fp16_weights", False),
                         )
 
                         if module.bias is not None:
@@ -664,7 +667,7 @@ class QuantizationManager:
                             in_features,
                             out_features,
                             compress_statistics=kwargs.get("compress_statistics", True),
-                            quant_type=kwargs.get("quant_type", "fp4")
+                            quant_type=kwargs.get("quant_type", "fp4"),
                         )
 
                         # Copy and quantize weights
@@ -672,7 +675,7 @@ class QuantizationManager:
                             module.weight.data.clone(),
                             requires_grad=False,
                             compress_statistics=kwargs.get("compress_statistics", True),
-                            quant_type=kwargs.get("quant_type", "fp4")
+                            quant_type=kwargs.get("quant_type", "fp4"),
                         )
 
                         if module.bias is not None:
@@ -692,7 +695,7 @@ class QuantizationManager:
             logger.error(f"Failed to quantize model with bnb: {e}")
             return None
 
-    def create_gptq_config(self, bits: int = 4, group_size: int = 128, **kwargs) -> Optional[Any]:
+    def create_gptq_config(self, bits: int = 4, group_size: int = 128, **kwargs) -> Any | None:
         """Create a GPTQ configuration using BaseQuantizeConfig.
 
         Args:
@@ -702,6 +705,7 @@ class QuantizationManager:
 
         Returns:
             GPTQ configuration or None
+
         """
         if not HAS_AUTO_GPTQ or not BaseQuantizeConfig:
             logger.error("auto-gptq with BaseQuantizeConfig required")
@@ -717,8 +721,8 @@ class QuantizationManager:
                 static_groups=kwargs.get("static_groups", False),
                 sym=kwargs.get("sym", True),
                 true_sequential=kwargs.get("true_sequential", True),
-                model_name_or_path=kwargs.get("model_name_or_path", None),
-                model_file_base_name=kwargs.get("model_file_base_name", "model")
+                model_name_or_path=kwargs.get("model_name_or_path"),
+                model_file_base_name=kwargs.get("model_file_base_name", "model"),
             )
 
             logger.info(f"Created GPTQ config: {bits}-bit, group_size={group_size}")
@@ -728,7 +732,7 @@ class QuantizationManager:
             logger.error(f"Failed to create GPTQ config: {e}")
             return None
 
-    def prepare_model_for_gptq_quantization(self, model_path: Union[str, Path], config: Any = None, **kwargs) -> Optional[Any]:
+    def prepare_model_for_gptq_quantization(self, model_path: str | Path, config: Any = None, **kwargs) -> Any | None:
         """Prepare a model for GPTQ quantization using GPTQConfig.
 
         Args:
@@ -738,6 +742,7 @@ class QuantizationManager:
 
         Returns:
             Model prepared for GPTQ quantization or None
+
         """
         if not HAS_TRANSFORMERS or not GPTQConfig:
             logger.error("transformers with GPTQConfig required")
@@ -753,7 +758,7 @@ class QuantizationManager:
                     desc_act=kwargs.get("desc_act", True),
                     static_groups=kwargs.get("static_groups", False),
                     sym=kwargs.get("sym", True),
-                    true_sequential=kwargs.get("true_sequential", True)
+                    true_sequential=kwargs.get("true_sequential", True),
                 )
             else:
                 # Convert BaseQuantizeConfig to GPTQConfig parameters
@@ -764,7 +769,7 @@ class QuantizationManager:
                     desc_act=config.desc_act,
                     static_groups=config.static_groups,
                     sym=config.sym,
-                    true_sequential=config.true_sequential
+                    true_sequential=config.true_sequential,
                 )
 
             # Load model with GPTQ config
@@ -773,7 +778,7 @@ class QuantizationManager:
                 quantization_config=gptq_config,
                 device_map="auto",
                 trust_remote_code=kwargs.get("trust_remote_code", True),
-                torch_dtype=torch.float16
+                torch_dtype=torch.float16,
             )
 
             logger.info("Successfully prepared model for GPTQ quantization")
@@ -791,73 +796,67 @@ class QuantizationManager:
                     "load_in_8bit": True,
                     "llm_int8_threshold": 6.0,
                     "llm_int8_has_fp16_weight": False,
-                    "llm_int8_enable_fp32_cpu_offload": True
+                    "llm_int8_enable_fp32_cpu_offload": True,
                 }
-            else:
-                logger.warning(
-                    "8-bit quantization requires bitsandbytes and transformers")
-                return {"quantization_type": "8bit", "available": False}
+            logger.warning(
+                "8-bit quantization requires bitsandbytes and transformers")
+            return {"quantization_type": "8bit", "available": False}
 
-        elif quantization_type == "4bit":
+        if quantization_type == "4bit":
             if HAS_BITSANDBYTES and HAS_TRANSFORMERS:
                 return {
                     "load_in_4bit": True,
                     "bnb_4bit_compute_dtype": "float16",
                     "bnb_4bit_use_double_quant": True,
-                    "bnb_4bit_quant_type": "nf4"
+                    "bnb_4bit_quant_type": "nf4",
                 }
-            else:
-                logger.warning(
-                    "4-bit quantization requires bitsandbytes and transformers")
-                return {"quantization_type": "4bit", "available": False}
+            logger.warning(
+                "4-bit quantization requires bitsandbytes and transformers")
+            return {"quantization_type": "4bit", "available": False}
 
-        elif quantization_type == "gptq":
+        if quantization_type == "gptq":
             if HAS_AUTO_GPTQ:
                 return {
                     "bits": 4,
                     "group_size": 128,
                     "desc_act": False,
-                    "disable_exllama": False
+                    "disable_exllama": False,
                 }
-            else:
-                logger.warning("GPTQ quantization requires auto-gptq")
-                return {"quantization_type": "gptq", "available": False}
+            logger.warning("GPTQ quantization requires auto-gptq")
+            return {"quantization_type": "gptq", "available": False}
 
-        elif quantization_type == "dynamic":
+        if quantization_type == "dynamic":
             if HAS_TORCH:
                 return {
                     "qconfig_spec": {
-                        "": torch.quantization.default_dynamic_qconfig
+                        "": torch.quantization.default_dynamic_qconfig,
                     },
                     "dtype": "qint8",
-                    "qconfig_dict": None
+                    "qconfig_dict": None,
                 }
-            else:
-                logger.warning("Dynamic quantization requires PyTorch")
-                return {"quantization_type": "dynamic", "available": False}
+            logger.warning("Dynamic quantization requires PyTorch")
+            return {"quantization_type": "dynamic", "available": False}
 
-        elif quantization_type == "static":
+        if quantization_type == "static":
             if HAS_TORCH:
                 return {
                     "qconfig_spec": {
-                        "": torch.quantization.default_qconfig
+                        "": torch.quantization.default_qconfig,
                     },
                     "calibration_data_required": True,
-                    "dtype": "qint8"
+                    "dtype": "qint8",
                 }
-            else:
-                logger.warning("Static quantization requires PyTorch")
-                return {"quantization_type": "static", "available": False}
+            logger.warning("Static quantization requires PyTorch")
+            return {"quantization_type": "static", "available": False}
 
-        elif quantization_type == "none":
+        if quantization_type == "none":
             return {
                 "quantization_type": "none",
-                "description": "No quantization applied"
+                "description": "No quantization applied",
             }
 
-        else:
-            raise ValueError(
-                f"Unsupported quantization type: {quantization_type}")
+        raise ValueError(
+            f"Unsupported quantization type: {quantization_type}")
 
     def cleanup_memory(self):
         """Clean up GPU memory after model operations."""

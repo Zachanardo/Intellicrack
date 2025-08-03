@@ -14,15 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""
-Runtime type validation utilities for Intellicrack.
+"""Runtime type validation utilities for Intellicrack.
 
 This module provides common validation functions to ensure type safety
 and prevent runtime errors in critical functions.
 """
 
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 def validate_file_path(
@@ -30,10 +29,9 @@ def validate_file_path(
     check_exists: bool = True,
     check_readable: bool = True,
     check_writable: bool = False,
-    allow_empty: bool = False
+    allow_empty: bool = False,
 ) -> None:
-    """
-    Validate a file path parameter.
+    """Validate a file path parameter.
 
     Args:
         path: Path to validate
@@ -47,6 +45,7 @@ def validate_file_path(
         ValueError: If path is empty or invalid
         FileNotFoundError: If path doesn't exist (when check_exists=True)
         PermissionError: If permissions are insufficient
+
     """
     if not isinstance(path, (str, bytes, os.PathLike)):
         raise TypeError(f"path must be str, bytes, or PathLike, got {type(path).__name__}")
@@ -72,12 +71,11 @@ def validate_file_path(
 def validate_integer_range(
     value: Any,
     name: str,
-    min_value: Optional[int] = None,
-    max_value: Optional[int] = None,
-    allow_negative: bool = True
+    min_value: int | None = None,
+    max_value: int | None = None,
+    allow_negative: bool = True,
 ) -> None:
-    """
-    Validate an integer parameter and its range.
+    """Validate an integer parameter and its range.
 
     Args:
         value: Value to validate
@@ -89,6 +87,7 @@ def validate_integer_range(
     Raises:
         TypeError: If value is not an integer
         ValueError: If value is out of range
+
     """
     if not isinstance(value, int):
         raise TypeError(f"{name} must be int, got {type(value).__name__}")
@@ -106,12 +105,11 @@ def validate_integer_range(
 def validate_bytes_data(
     data: Any,
     name: str = "data",
-    max_size: Optional[int] = None,
-    min_size: Optional[int] = None,
-    allow_empty: bool = True
+    max_size: int | None = None,
+    min_size: int | None = None,
+    allow_empty: bool = True,
 ) -> None:
-    """
-    Validate binary data parameter.
+    """Validate binary data parameter.
 
     Args:
         data: Data to validate
@@ -123,6 +121,7 @@ def validate_bytes_data(
     Raises:
         TypeError: If data is not bytes
         ValueError: If data size is invalid
+
     """
     if not isinstance(data, bytes):
         raise TypeError(f"{name} must be bytes, got {type(data).__name__}")
@@ -142,10 +141,9 @@ def validate_string_list(
     name: str = "strings",
     allow_empty_list: bool = False,
     allow_empty_strings: bool = False,
-    max_length: Optional[int] = None
+    max_length: int | None = None,
 ) -> None:
-    """
-    Validate a list of strings parameter.
+    """Validate a list of strings parameter.
 
     Args:
         strings: List to validate
@@ -157,6 +155,7 @@ def validate_string_list(
     Raises:
         TypeError: If not a list or contains non-strings
         ValueError: If list is invalid
+
     """
     if not isinstance(strings, list):
         raise TypeError(f"{name} must be list, got {type(strings).__name__}")
@@ -178,10 +177,9 @@ def validate_string_list(
 def validate_memory_address(
     address: Any,
     name: str = "address",
-    allow_zero: bool = False
+    allow_zero: bool = False,
 ) -> None:
-    """
-    Validate a memory address parameter.
+    """Validate a memory address parameter.
 
     Args:
         address: Address to validate
@@ -191,6 +189,7 @@ def validate_memory_address(
     Raises:
         TypeError: If address is not an integer
         ValueError: If address is invalid
+
     """
     if not isinstance(address, int):
         raise TypeError(f"{name} must be int, got {type(address).__name__}")
@@ -208,8 +207,7 @@ def validate_memory_address(
 
 
 def validate_process_id(pid: Any, name: str = "pid") -> None:
-    """
-    Validate a process ID parameter.
+    """Validate a process ID parameter.
 
     Args:
         pid: Process ID to validate
@@ -218,6 +216,7 @@ def validate_process_id(pid: Any, name: str = "pid") -> None:
     Raises:
         TypeError: If PID is not an integer
         ValueError: If PID is invalid
+
     """
     if not isinstance(pid, int):
         raise TypeError(f"{name} must be int, got {type(pid).__name__}")
@@ -230,9 +229,8 @@ def validate_process_id(pid: Any, name: str = "pid") -> None:
         raise ValueError(f"{name} too large: {pid}. Maximum: 4194304")
 
 
-def create_error_result(error_msg: str, result_template: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """
-    Create a standardized error result dictionary.
+def create_error_result(error_msg: str, result_template: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Create a standardized error result dictionary.
 
     Args:
         error_msg: Error message
@@ -240,6 +238,7 @@ def create_error_result(error_msg: str, result_template: Optional[Dict[str, Any]
 
     Returns:
         Dictionary with error information
+
     """
     if result_template is None:
         result_template = {"error": None}

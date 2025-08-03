@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -25,5 +24,5 @@ Common utilities and configurations used across multiple core modules.
 from .bypass_config import BypassConfig
 
 __all__ = [
-    "BypassConfig"
+    "BypassConfig",
 ]

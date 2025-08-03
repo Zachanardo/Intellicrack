@@ -1,5 +1,4 @@
-"""
-Intellicrack Protection Detection Widget
+"""Intellicrack Protection Detection Widget
 
 This widget displays protection detection results from Intellicrack's protection engine
 including packers, protectors, compilers, and licensing schemes.
@@ -9,7 +8,6 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-from typing import Optional
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QBrush, QColor, QFont
@@ -45,6 +43,7 @@ logger = get_logger(__name__)
 
 class ProtectionAnalysisThread(QThread):
     """Thread for running protection analysis without blocking UI"""
+
     analysis_complete = pyqtSignal(object)  # ProtectionAnalysis
     analysis_error = pyqtSignal(str)
     analysis_progress = pyqtSignal(str)
@@ -98,7 +97,7 @@ class ProtectionAnalysisThread(QThread):
                         analysis.license_file_summary = {
                             "total_found": len(license_file_results.get("files_found", [])),
                             "search_directory": binary_dir,
-                            "patterns_matched": license_file_results.get("patterns_matched", [])
+                            "patterns_matched": license_file_results.get("patterns_matched", []),
                         }
                 except Exception as e:
                     logger.warning(f"License file search failed: {e}")
@@ -110,8 +109,7 @@ class ProtectionAnalysisThread(QThread):
 
 
 class IntellicrackProtectionWidget(QWidget):
-    """
-    Main widget for displaying Intellicrack protection detection results
+    """Main widget for displaying Intellicrack protection detection results
     """
 
     # Signals
@@ -121,8 +119,8 @@ class IntellicrackProtectionWidget(QWidget):
     def __init__(self, parent=None):
         """Initialize protection widget with parent widget, AI assistant components, and UI setup."""
         super().__init__(parent)
-        self.current_analysis: Optional[ProtectionAnalysis] = None
-        self.analysis_thread: Optional[ProtectionAnalysisThread] = None
+        self.current_analysis: ProtectionAnalysis | None = None
+        self.analysis_thread: ProtectionAnalysisThread | None = None
         self.ai_assistant = IntellicrackAIAssistant()
         self.ai_tools = AIAssistant()
         self.init_ui()
@@ -247,7 +245,7 @@ class IntellicrackProtectionWidget(QWidget):
             self,
             "Select Binary to Analyze",
             "",
-            "Executable Files (*.exe *.dll *.sys *.ocx);;All Files (*.*)"
+            "Executable Files (*.exe *.dll *.sys *.ocx);;All Files (*.*)",
         )
 
         if file_path:
@@ -291,7 +289,7 @@ class IntellicrackProtectionWidget(QWidget):
             for detection in analysis.detections:
                 self.protection_detected.emit(
                     detection.name,
-                    detection.bypass_recommendations
+                    detection.bypass_recommendations,
                 )
 
     def on_analysis_error(self, error_msg: str):
@@ -497,7 +495,7 @@ class IntellicrackProtectionWidget(QWidget):
             "Select export format:",
             formats,
             0,
-            False
+            False,
         )
 
         if not ok:
@@ -509,7 +507,7 @@ class IntellicrackProtectionWidget(QWidget):
             self,
             "Export Analysis Results",
             f"protection_analysis.{format_ext}",
-            f"{format_choice} Files (*.{format_ext});;All Files (*.*)"
+            f"{format_choice} Files (*.{format_ext});;All Files (*.*)",
         )
 
         if file_path:
@@ -517,7 +515,7 @@ class IntellicrackProtectionWidget(QWidget):
                 detector = IntellicrackProtectionCore()
                 export_data = detector.export_results(
                     self.current_analysis,
-                    format_ext
+                    format_ext,
                 )
 
                 with open(file_path, "w") as f:
@@ -526,14 +524,14 @@ class IntellicrackProtectionWidget(QWidget):
                 QMessageBox.information(
                     self,
                     "Export Complete",
-                    f"Results exported to:\n{file_path}"
+                    f"Results exported to:\n{file_path}",
                 )
             except Exception as e:
                 logger.error("Exception in intellicrack_protection_widget: %s", e)
                 QMessageBox.critical(
                     self,
                     "Export Error",
-                    f"Error exporting results:\n{str(e)}"
+                    f"Error exporting results:\n{e!s}",
                 )
 
     def clear_results(self):
@@ -571,9 +569,9 @@ class IntellicrackProtectionWidget(QWidget):
                     "architecture": self.current_analysis.architecture,
                     "is_packed": self.current_analysis.is_packed,
                     "is_protected": self.current_analysis.is_protected,
-                    "compiler": self.current_analysis.compiler
+                    "compiler": self.current_analysis.compiler,
                 },
-                "patterns": []
+                "patterns": [],
             }
 
             # Add detection patterns
@@ -584,14 +582,14 @@ class IntellicrackProtectionWidget(QWidget):
                         "type": detection.type.value,
                         "version": detection.version,
                         "confidence": detection.confidence,
-                        "bypass_recommendations": detection.bypass_recommendations
+                        "bypass_recommendations": detection.bypass_recommendations,
                     })
 
             # Add ML results if available
             if hasattr(self.current_analysis, "ml_confidence"):
                 task_data["ml_results"] = {
                     "confidence": self.current_analysis.ml_confidence,
-                    "predictions": task_data["patterns"]
+                    "predictions": task_data["patterns"],
                 }
 
             # Perform AI reasoning
@@ -606,7 +604,7 @@ class IntellicrackProtectionWidget(QWidget):
 
         except Exception as e:
             logger.error("Error in AI reasoning: %s", e)
-            QMessageBox.critical(self, "AI Reasoning Error", f"Error performing AI reasoning:\n{str(e)}")
+            QMessageBox.critical(self, "AI Reasoning Error", f"Error performing AI reasoning:\n{e!s}")
             self.ai_reasoning_btn.setEnabled(True)
             self.status_label.setText("AI reasoning failed")
 
@@ -730,7 +728,7 @@ class IntellicrackProtectionWidget(QWidget):
 
         except Exception as e:
             logger.error(f"Error searching for license files: {e}")
-            QMessageBox.critical(self, "Error", f"Error searching for license files:\n{str(e)}")
+            QMessageBox.critical(self, "Error", f"Error searching for license files:\n{e!s}")
             self.status_label.setText("License file search failed")
 
     def on_ask_ai_clicked(self):
@@ -799,7 +797,7 @@ class IntellicrackProtectionWidget(QWidget):
                 logger.error(f"Error asking AI question: {e}")
                 response_text.clear()
                 response_text.append(f"<b>Question:</b> {question}\n")
-                response_text.append(f"<b>Error:</b> {str(e)}")
+                response_text.append(f"<b>Error:</b> {e!s}")
             finally:
                 ask_button.setEnabled(True)
                 question_input.clear()

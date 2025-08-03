@@ -1,5 +1,4 @@
-"""
-Autonomous AI Agent for Intellicrack - Claude Code-like Script Generation
+"""Autonomous AI Agent for Intellicrack - Claude Code-like Script Generation
 
 Copyright (C) 2025 Zachary Flint
 
@@ -27,7 +26,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from ..core.logging import AuditEvent, AuditEventType, AuditSeverity, get_audit_logger
 from ..core.resources import get_resource_manager
@@ -81,17 +80,16 @@ class TaskRequest:
     """User request parsed into actionable task."""
 
     binary_path: str
-    script_types: List[ScriptType]
+    script_types: list[ScriptType]
     test_environment: TestEnvironment
     max_iterations: int
     autonomous_mode: bool
     user_confirmation_required: bool
-    additional_params: Dict[str, Any] = None
+    additional_params: dict[str, Any] = None
 
 
 class AutonomousAgent:
-    """
-    Autonomous AI agent that can iteratively develop and test scripts.
+    """Autonomous AI agent that can iteratively develop and test scripts.
     Similar to Claude Code - takes a request and autonomously completes it.
     """
 
@@ -101,6 +99,7 @@ class AutonomousAgent:
         Args:
             orchestrator: The orchestrator instance for managing AI operations
             cli_interface: The command-line interface for user interaction
+
         """
         self.orchestrator = orchestrator
         self.cli_interface = cli_interface
@@ -130,9 +129,8 @@ class AutonomousAgent:
         # Agent identifier for session tracking
         self.agent_id = f"agent_{int(time.time())}_{id(self)}"
 
-    def process_request(self, user_request: str) -> Dict[str, Any]:
-        """
-        Process a user request autonomously, similar to Claude Code.
+    def process_request(self, user_request: str) -> dict[str, Any]:
+        """Process a user request autonomously, similar to Claude Code.
 
         Example: "Create a Frida script to bypass the license check in app.exe"
         """
@@ -143,7 +141,7 @@ class AutonomousAgent:
             # Parse the user request
             self.current_task = self._parse_request(user_request)
             self.conversation_history.append(
-                {"role": "user", "content": user_request, "timestamp": datetime.now().isoformat()}
+                {"role": "user", "content": user_request, "timestamp": datetime.now().isoformat()},
             )
 
             # Analyze the target
@@ -187,19 +185,19 @@ class AutonomousAgent:
         except FileNotFoundError as e:
             self.workflow_state = WorkflowState.ERROR
             logger.error(f"Binary file not found: {e}", exc_info=True)
-            return self._error_result(f"File not found: {str(e)}")
+            return self._error_result(f"File not found: {e!s}")
         except TimeoutError as e:
             self.workflow_state = WorkflowState.ERROR
             logger.error(f"Operation timed out: {e}", exc_info=True)
-            return self._error_result(f"Operation timed out: {str(e)}")
+            return self._error_result(f"Operation timed out: {e!s}")
         except (PermissionError, OSError) as e:
             self.workflow_state = WorkflowState.ERROR
             logger.error(f"File access error: {e}", exc_info=True)
-            return self._error_result(f"File access error: {str(e)}")
+            return self._error_result(f"File access error: {e!s}")
         except (AttributeError, KeyError, ValueError) as e:
             self.workflow_state = WorkflowState.ERROR
             logger.error(f"Autonomous workflow failed: {e}", exc_info=True)
-            return self._error_result(f"Workflow error: {str(e)}")
+            return self._error_result(f"Workflow error: {e!s}")
 
     def _parse_request(self, request: str) -> TaskRequest:
         """Parse user request into structured task."""
@@ -222,16 +220,14 @@ class AutonomousAgent:
     def _extract_binary_path(self, request: str) -> str:
         """Extract binary path from request."""
         for word in request.split():
-            if word.endswith((".exe", ".dll", ".so", ".dylib", ".bin", ".elf")):
+            if word.endswith((".exe", ".dll", ".so", ".dylib", ".bin", ".elf")) or (("/" in word or "\\" in word) and not word.startswith("http")):
                 return word
-            elif ("/" in word or "\\" in word) and not word.startswith("http"):
-                return word
-            elif len(word) > 3 and not any(c in word for c in [" ", '"', "'"]):
+            if len(word) > 3 and not any(c in word for c in [" ", '"', "'"]):
                 if any(char in word for char in ["_", "-", "."]) and not word.startswith("-"):
                     return word
         return "unknown"
 
-    def _extract_script_types(self, request_lower: str) -> List[ScriptType]:
+    def _extract_script_types(self, request_lower: str) -> list[ScriptType]:
         """Extract script types from request."""
         script_types = []
         if "frida" in request_lower or "dynamic" in request_lower:
@@ -246,13 +242,13 @@ class AutonomousAgent:
         """Extract test environment from request."""
         if "qemu" in request_lower:
             return TestEnvironment.QEMU
-        elif "docker" in request_lower:
+        if "docker" in request_lower:
             return TestEnvironment.DOCKER
-        elif "direct" in request_lower:
+        if "direct" in request_lower:
             return TestEnvironment.DIRECT
         return TestEnvironment.QEMU
 
-    def _analyze_target(self, binary_path: str) -> Optional[Dict[str, Any]]:
+    def _analyze_target(self, binary_path: str) -> dict[str, Any] | None:
         """Analyze the target binary for protection mechanisms."""
         try:
             self._log_to_user("Running comprehensive binary analysis...")
@@ -269,7 +265,7 @@ class AutonomousAgent:
             }
 
             self._log_to_user(
-                f"Analysis complete - found {len(analysis_results.get('protections', []))} protection mechanisms"
+                f"Analysis complete - found {len(analysis_results.get('protections', []))} protection mechanisms",
             )
             return analysis_results
 
@@ -282,7 +278,7 @@ class AutonomousAgent:
             self._log_to_user(f"Analysis failed: {e}")
             return None
 
-    def _get_binary_info(self, binary_path: str) -> Dict[str, Any]:
+    def _get_binary_info(self, binary_path: str) -> dict[str, Any]:
         """Get basic binary information."""
         try:
             path_obj = Path(binary_path)
@@ -297,7 +293,7 @@ class AutonomousAgent:
             logger.debug(f"Failed to get binary info: {e}", exc_info=True)
             return {"name": "unknown", "size": 0, "type": "unknown"}
 
-    def _extract_strings(self, binary_path: str) -> List[str]:
+    def _extract_strings(self, binary_path: str) -> list[str]:
         """Extract strings from binary for analysis."""
         strings = []
         try:
@@ -306,7 +302,7 @@ class AutonomousAgent:
 
             license_related = [
                 "license", "trial", "demo", "expire", "activate", "register",
-                "serial", "key", "validation", "auth", "check"
+                "serial", "key", "validation", "auth", "check",
             ]
 
             # Try subprocess method first
@@ -322,10 +318,10 @@ class AutonomousAgent:
                 "Trial period expired",
                 "Please enter license key",
                 "Registration required",
-                "Demo version - limited functionality"
+                "Demo version - limited functionality",
             ])
 
-        except (FileNotFoundError, PermissionError, OSError, IOError) as e:
+        except (FileNotFoundError, PermissionError, OSError) as e:
             logger.error(f"String extraction failed: {e}", exc_info=True)
 
         return strings
@@ -346,7 +342,7 @@ class AutonomousAgent:
             allowed_dirs = [
                 os.path.realpath(os.getcwd()),
                 os.path.realpath(os.path.expanduser("~")),
-                os.path.realpath(tempfile.gettempdir())
+                os.path.realpath(tempfile.gettempdir()),
             ]
             if not any(real_path.startswith(allowed_dir) for allowed_dir in allowed_dirs):
                 logger.warning("Binary path outside allowed directories: %s", real_path)
@@ -357,7 +353,7 @@ class AutonomousAgent:
 
         return True
 
-    def _extract_strings_with_command(self, binary_path: str, license_related: List[str]) -> List[str]:
+    def _extract_strings_with_command(self, binary_path: str, license_related: list[str]) -> list[str]:
         """Extract strings using subprocess command."""
         import shutil
         import subprocess
@@ -372,7 +368,7 @@ class AutonomousAgent:
                     text=True,
                     timeout=30,
                     check=False,
-                    shell=False
+                    shell=False,
                 )
                 if result.returncode == 0:
                     all_strings = result.stdout.split("\n")
@@ -384,7 +380,7 @@ class AutonomousAgent:
 
         return strings
 
-    def _extract_strings_from_file(self, binary_path: str, license_related: List[str]) -> List[str]:
+    def _extract_strings_from_file(self, binary_path: str, license_related: list[str]) -> list[str]:
         """Extract strings by reading file directly."""
         strings = []
         data = self._read_binary_data(binary_path)
@@ -409,7 +405,7 @@ class AutonomousAgent:
             from .ai_file_tools import get_ai_file_tools
             ai_file_tools = get_ai_file_tools(getattr(self, "app_instance", None))
             file_data = ai_file_tools.read_file(
-                binary_path, purpose="Extract license-related strings from binary"
+                binary_path, purpose="Extract license-related strings from binary",
             )
             if file_data.get("status") == "success" and file_data.get("content"):
                 content = file_data["content"]
@@ -424,14 +420,14 @@ class AutonomousAgent:
             try:
                 with open(binary_path, "rb") as f:
                     data = f.read()
-            except (IOError, OSError) as e:
+            except OSError as e:
                 logger.error(f"Failed to read binary file {binary_path}: {e}")
             except Exception as e:
                 logger.error(f"Unexpected error reading binary file: {e}")
 
         return data or b""
 
-    def _filter_license_strings(self, all_strings: List[str], license_related: List[str]) -> List[str]:
+    def _filter_license_strings(self, all_strings: list[str], license_related: list[str]) -> list[str]:
         """Filter strings for license-related content."""
         filtered = []
         for string in all_strings:
@@ -439,7 +435,7 @@ class AutonomousAgent:
                 filtered.append(string.strip())
         return filtered
 
-    def _analyze_functions(self, binary_path: str) -> List[Dict[str, Any]]:
+    def _analyze_functions(self, binary_path: str) -> list[dict[str, Any]]:
         """Analyze functions in the binary."""
         functions = []
         try:
@@ -466,12 +462,12 @@ class AutonomousAgent:
             # Add context-specific functions based on filename patterns
             if "trial" in filename or "demo" in filename:
                 license_functions.append(
-                    {"name": "CheckTrialPeriod", "address": "0x401800", "type": "trial_check", "binary": filename}
+                    {"name": "CheckTrialPeriod", "address": "0x401800", "type": "trial_check", "binary": filename},
                 )
 
             if "setup" in filename or "install" in filename:
                 license_functions.append(
-                    {"name": "ValidateInstallation", "address": "0x401A00", "type": "install_check", "binary": filename}
+                    {"name": "ValidateInstallation", "address": "0x401A00", "type": "install_check", "binary": filename},
                 )
 
             # Add analysis metadata
@@ -487,7 +483,7 @@ class AutonomousAgent:
 
         return functions
 
-    def _analyze_imports(self, binary_path: str) -> List[str]:
+    def _analyze_imports(self, binary_path: str) -> list[str]:
         """Analyze imported functions."""
         imports = []
         try:
@@ -530,7 +526,7 @@ class AutonomousAgent:
                         "OutputDebugStringA",
                         "GetModuleHandleA",
                         "GetProcAddress",
-                    ]
+                    ],
                 )
             elif file_ext in [".so", ".elf"]:
                 # Linux-specific imports
@@ -539,12 +535,12 @@ class AutonomousAgent:
             # Add context-aware imports based on filename
             if "license" in filename or "trial" in filename:
                 protection_imports.extend(
-                    ["GetVolumeInformationA", "GetComputerNameA", "GetUserNameA", "CryptCreateHash"]
+                    ["GetVolumeInformationA", "GetComputerNameA", "GetUserNameA", "CryptCreateHash"],
                 )
 
             if "network" in filename or "online" in filename:
                 protection_imports.extend(
-                    ["WSAStartup", "socket", "connect", "send", "recv", "gethostbyname", "inet_addr"]
+                    ["WSAStartup", "socket", "connect", "send", "recv", "gethostbyname", "inet_addr"],
                 )
 
             imports.extend(protection_imports)
@@ -555,7 +551,7 @@ class AutonomousAgent:
 
         return imports
 
-    def _detect_protections(self, binary_path: str) -> List[Dict[str, Any]]:
+    def _detect_protections(self, binary_path: str) -> list[dict[str, Any]]:
         """Detect protection mechanisms."""
         protections = []
         try:
@@ -600,7 +596,7 @@ class AutonomousAgent:
                         "indicators": ["large_binary", "potential_packing"],
                         "binary_path": binary_path,
                         "binary_size": file_size,
-                    }
+                    },
                 )
 
             # Context-aware detection based on filename
@@ -613,7 +609,7 @@ class AutonomousAgent:
                         "indicators": ["installer", "msi", "setup"],
                         "binary_path": binary_path,
                         "binary_size": file_size,
-                    }
+                    },
                 )
 
             if "trial" in filename or "demo" in filename:
@@ -625,7 +621,7 @@ class AutonomousAgent:
                         "indicators": ["trial", "demo", "time_limit"],
                         "binary_path": binary_path,
                         "binary_size": file_size,
-                    }
+                    },
                 )
 
             # Platform-specific protections
@@ -638,7 +634,7 @@ class AutonomousAgent:
                         "indicators": ["IsDebuggerPresent", "anti_debug"],
                         "binary_path": binary_path,
                         "binary_size": file_size,
-                    }
+                    },
                 )
 
             protections.extend(detected_protections)
@@ -649,7 +645,7 @@ class AutonomousAgent:
 
         return protections
 
-    def _check_network_activity(self, binary_path: str) -> Dict[str, Any]:
+    def _check_network_activity(self, binary_path: str) -> dict[str, Any]:
         """Check for network-based validation."""
         try:
             # Verify binary exists
@@ -694,7 +690,7 @@ class AutonomousAgent:
             logger.error(f"Network activity check failed for {binary_path}: {e}", exc_info=True)
             return {"has_network": False, "endpoints": [], "protocols": [], "error": str(e)}
 
-    def _generate_initial_scripts(self, analysis: Dict[str, Any]) -> List[GeneratedScript]:
+    def _generate_initial_scripts(self, analysis: dict[str, Any]) -> list[GeneratedScript]:
         """Generate initial scripts based on analysis."""
         scripts = []
 
@@ -720,9 +716,8 @@ class AutonomousAgent:
 
         return scripts
 
-    def _iterative_refinement(self, script: GeneratedScript, analysis: Dict[str, Any]) -> Optional[GeneratedScript]:
-        """
-        Iteratively test and refine the script until it works.
+    def _iterative_refinement(self, script: GeneratedScript, analysis: dict[str, Any]) -> GeneratedScript | None:
+        """Iteratively test and refine the script until it works.
         """
         current_script = script
         self.iteration_count = 0
@@ -730,7 +725,7 @@ class AutonomousAgent:
         for iteration in range(self.max_iterations):
             self.iteration_count = iteration + 1
             self._log_to_user(
-                f"Testing iteration {self.iteration_count} for {script.metadata.script_type.value} script..."
+                f"Testing iteration {self.iteration_count} for {script.metadata.script_type.value} script...",
             )
 
             # Test the script
@@ -744,8 +739,7 @@ class AutonomousAgent:
                 if self._verify_bypass(test_result, analysis):
                     self._log_to_user("✓ Protection bypass confirmed!")
                     return current_script
-                else:
-                    self._log_to_user("✗ Script ran but didn't achieve bypass goal")
+                self._log_to_user("✗ Script ran but didn't achieve bypass goal")
             else:
                 self._log_to_user(f"✗ Script failed: {test_result.error}")
 
@@ -760,7 +754,7 @@ class AutonomousAgent:
                             "iteration": iteration + 1,
                             "changes": "Script refined based on test results",
                             "timestamp": datetime.now().isoformat(),
-                        }
+                        },
                     )
                 else:
                     self._log_to_user("Failed to refine script")
@@ -769,28 +763,27 @@ class AutonomousAgent:
         self._log_to_user(f"Maximum iterations ({self.max_iterations}) reached. Script may need manual review.")
         return current_script
 
-    def _test_script(self, script: GeneratedScript, analysis: Dict[str, Any]) -> ExecutionResult:
+    def _test_script(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
         """Test the script in the appropriate environment."""
         start_time = time.time()
 
         try:
             if self.current_task.test_environment == TestEnvironment.QEMU:
                 return self._test_in_qemu(script, analysis)
-            elif self.current_task.test_environment == TestEnvironment.DOCKER:
+            if self.current_task.test_environment == TestEnvironment.DOCKER:
                 return self._test_in_docker(script, analysis)
-            elif self.current_task.test_environment == TestEnvironment.SANDBOX:
+            if self.current_task.test_environment == TestEnvironment.SANDBOX:
                 return self._test_in_sandbox(script, analysis)
-            else:
-                return self._test_direct(script, analysis)
+            return self._test_direct(script, analysis)
 
-        except (OSError, IOError, RuntimeError, AttributeError, ValueError, TypeError) as e:
+        except (OSError, RuntimeError, AttributeError, ValueError, TypeError) as e:
             logger.error("Error in autonomous_agent: %s", e)
             runtime_ms = int((time.time() - start_time) * 1000)
             return ExecutionResult(
-                success=False, output="", error=f"Test execution failed: {str(e)}", exit_code=-1, runtime_ms=runtime_ms
+                success=False, output="", error=f"Test execution failed: {e!s}", exit_code=-1, runtime_ms=runtime_ms,
             )
 
-    def _test_in_qemu(self, script: GeneratedScript, analysis: Dict[str, Any]) -> ExecutionResult:
+    def _test_in_qemu(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
         """Test script in QEMU environment using real VM execution."""
         self._log_to_user("Preparing QEMU test environment...")
 
@@ -808,7 +801,7 @@ class AutonomousAgent:
                 return ExecutionResult(
                     success=False,
                     output="",
-                    error=f"QEMU test environment not available: {str(e)}",
+                    error=f"QEMU test environment not available: {e!s}",
                     exit_code=-1,
                     runtime_ms=0,
                 )
@@ -826,7 +819,7 @@ class AutonomousAgent:
             }
 
             self._log_to_user(
-                f"Testing {script.metadata.script_type.value} script against {len(protections)} protections..."
+                f"Testing {script.metadata.script_type.value} script against {len(protections)} protections...",
             )
 
             # Execute script in real QEMU VM
@@ -853,7 +846,7 @@ class AutonomousAgent:
                     output += f"\nTargeted protections: {', '.join(script_protections)}"
 
             return ExecutionResult(
-                success=success, output=output, error=error, exit_code=exit_code, runtime_ms=runtime_ms
+                success=success, output=output, error=error, exit_code=exit_code, runtime_ms=runtime_ms,
             )
 
         except Exception as e:
@@ -866,7 +859,7 @@ class AutonomousAgent:
                 runtime_ms=0,
             )
 
-    def _test_in_docker(self, script: GeneratedScript, analysis: Dict[str, Any]) -> ExecutionResult:
+    def _test_in_docker(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
         """Test script in Docker environment with real container execution."""
         # Use analysis data for Docker configuration
         binary_info = analysis.get("binary_info", {})
@@ -931,7 +924,7 @@ class AutonomousAgent:
                 # Execute script in container
                 start_time = time.time()
                 exec_result = self._execute_in_container(
-                    container_id, f"python3 /data/{script_name} /data/{binary_name}", workdir="/data"
+                    container_id, f"python3 /data/{script_name} /data/{binary_name}", workdir="/data",
                 )
                 runtime_ms = int((time.time() - start_time) * 1000)
 
@@ -959,7 +952,7 @@ class AutonomousAgent:
         except Exception as e:
             logger.error(f"Docker execution failed: {e}")
             return ExecutionResult(
-                success=False, output="Docker: Container execution failed", error=str(e), exit_code=1, runtime_ms=0
+                success=False, output="Docker: Container execution failed", error=str(e), exit_code=1, runtime_ms=0,
             )
         finally:
             # Clean up container
@@ -969,7 +962,7 @@ class AutonomousAgent:
                 except Exception as e:
                     logger.error(f"Failed to cleanup container {container_id}: {e}")
 
-    def _test_in_sandbox(self, script: GeneratedScript, analysis: Dict[str, Any]) -> ExecutionResult:
+    def _test_in_sandbox(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
         """Test script in sandbox environment using real sandboxing."""
         # Use analysis data for sandbox configuration
         binary_path = analysis.get("binary_path", "unknown")
@@ -1023,7 +1016,7 @@ class AutonomousAgent:
 
                     # Execute in Windows Sandbox
                     result = subprocess.run(
-                        ["WindowsSandbox.exe", str(config_path)], capture_output=True, text=True, timeout=30
+                        ["WindowsSandbox.exe", str(config_path)], check=False, capture_output=True, text=True, timeout=30,
                     )
 
                     runtime_ms = int((time.time() - start_time) * 1000)
@@ -1054,7 +1047,7 @@ class AutonomousAgent:
                         cmd.append("--net=none")
                     cmd.extend(["--private=" + temp_dir, "python3", str(script_path), test_binary])
 
-                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                    result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30)
 
                     runtime_ms = int((time.time() - start_time) * 1000)
                     success = result.returncode == 0
@@ -1077,7 +1070,7 @@ class AutonomousAgent:
                 error = error or "Script execution completed but bypass not confirmed"
 
             return ExecutionResult(
-                success=success, output=output, error=error, exit_code=0 if success else 1, runtime_ms=runtime_ms
+                success=success, output=output, error=error, exit_code=0 if success else 1, runtime_ms=runtime_ms,
             )
 
         except Exception as e:
@@ -1092,7 +1085,7 @@ class AutonomousAgent:
 
                     result = subprocess.run(
                         ["python3", str(script_path), binary_path],
-                        capture_output=True,
+                        check=False, capture_output=True,
                         text=True,
                         timeout=10,
                         cwd=temp_dir,  # Restrict to temp directory
@@ -1108,10 +1101,10 @@ class AutonomousAgent:
                     )
             except Exception as fallback_e:
                 return ExecutionResult(
-                    success=False, output="Sandbox: Execution failed", error=str(fallback_e), exit_code=1, runtime_ms=0
+                    success=False, output="Sandbox: Execution failed", error=str(fallback_e), exit_code=1, runtime_ms=0,
                 )
 
-    def _test_direct(self, script: GeneratedScript, analysis: Dict[str, Any]) -> ExecutionResult:
+    def _test_direct(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
         """Test script directly (high risk)."""
         binary_path = analysis.get("binary_path", "unknown")
         protections = analysis.get("protections", [])
@@ -1171,7 +1164,7 @@ class AutonomousAgent:
 
         return ExecutionResult(success=True, output=result_output, error="", exit_code=0, runtime_ms=120)
 
-    def _verify_bypass(self, test_result: ExecutionResult, analysis: Dict[str, Any]) -> bool:
+    def _verify_bypass(self, test_result: ExecutionResult, analysis: dict[str, Any]) -> bool:
         """Verify that the script actually bypassed the protection."""
         if not test_result.success:
             return False
@@ -1229,14 +1222,14 @@ class AutonomousAgent:
         # Log verification details
         logger.info(
             f"Bypass verification for {binary_path}: score={verification_score:.2f}, "
-            f"protections={len(protections)}, duration={test_result.runtime_ms}ms"
+            f"protections={len(protections)}, duration={test_result.runtime_ms}ms",
         )
 
         return verification_score >= 0.8
 
     def _refine_script(
-        self, script: GeneratedScript, test_result: ExecutionResult, analysis: Dict[str, Any]
-    ) -> Optional[GeneratedScript]:
+        self, script: GeneratedScript, test_result: ExecutionResult, analysis: dict[str, Any],
+    ) -> GeneratedScript | None:
         """Refine the script based on test results and analysis."""
         try:
             protections = analysis.get("protections", [])
@@ -1249,7 +1242,7 @@ class AutonomousAgent:
             # Apply failure-based refinements
             if not test_result.success:
                 refined_content, failure_notes = self._apply_failure_refinements(
-                    script, test_result, refined_content
+                    script, test_result, refined_content,
                 )
                 refinement_notes.extend(failure_notes)
 
@@ -1267,7 +1260,7 @@ class AutonomousAgent:
             logger.error(f"Script refinement failed for {analysis.get('binary_path', 'unknown')}: {e}", exc_info=True)
             return None
 
-    def _apply_failure_refinements(self, script: GeneratedScript, test_result: ExecutionResult, content: str) -> tuple[str, List[str]]:
+    def _apply_failure_refinements(self, script: GeneratedScript, test_result: ExecutionResult, content: str) -> tuple[str, list[str]]:
         """Apply refinements based on test failures."""
         refinement_notes = []
 
@@ -1276,7 +1269,7 @@ class AutonomousAgent:
                 if "stealth" not in content.lower():
                     stealth_code = "\n        // Stealth mode enhancements\n        Process.setExceptionHandler(function(details) { return true; });\n"
                     content = content.replace(
-                        'console.log("[AI-Generated]', stealth_code + '        console.log("[AI-Generated]'
+                        'console.log("[AI-Generated]', stealth_code + '        console.log("[AI-Generated]',
                     )
                     refinement_notes.append("Added stealth exception handling")
 
@@ -1288,7 +1281,7 @@ class AutonomousAgent:
 
         return content, refinement_notes
 
-    def _apply_protection_refinements(self, script: GeneratedScript, protections: List[Dict], content: str) -> List[str]:
+    def _apply_protection_refinements(self, script: GeneratedScript, protections: list[dict], content: str) -> list[str]:
         """Apply protection-specific refinements."""
         refinement_notes = []
 
@@ -1309,7 +1302,7 @@ class AutonomousAgent:
 
         return refinement_notes
 
-    def _apply_general_refinements(self, script: GeneratedScript, binary_info: Dict, content: str) -> List[str]:
+    def _apply_general_refinements(self, script: GeneratedScript, binary_info: dict, content: str) -> list[str]:
         """Apply general refinements."""
         refinement_notes = []
 
@@ -1326,7 +1319,7 @@ class AutonomousAgent:
         if binary_info.get("arch") == "x64" and "x64" not in content:
             if script.metadata.script_type == ScriptType.FRIDA:
                 content = content.replace(
-                    "Module.findExportByName", "Module.findExportByName // x64 targeting"
+                    "Module.findExportByName", "Module.findExportByName // x64 targeting",
                 )
                 refinement_notes.append("Added x64 architecture awareness")
 
@@ -1361,7 +1354,7 @@ class AutonomousAgent:
         });
 """
 
-    def _create_refined_script(self, original: GeneratedScript, content: str, notes: List[str], binary_path: str) -> Optional[GeneratedScript]:
+    def _create_refined_script(self, original: GeneratedScript, content: str, notes: list[str], binary_path: str) -> GeneratedScript | None:
         """Create refined script with updated metadata."""
         refined_script = GeneratedScript(
             metadata=original.metadata,
@@ -1384,7 +1377,7 @@ class AutonomousAgent:
         logger.info(f"Refined script for {binary_path}: {len(notes)} improvements")
         return refined_script
 
-    def _deploy_scripts(self, scripts: List[GeneratedScript]) -> List[Dict[str, Any]]:
+    def _deploy_scripts(self, scripts: list[GeneratedScript]) -> list[dict[str, Any]]:
         """Deploy scripts with appropriate safety measures."""
         deployment_results = []
 
@@ -1398,7 +1391,7 @@ class AutonomousAgent:
                                 "script_id": script.metadata.script_id,
                                 "status": "cancelled",
                                 "message": "User cancelled deployment",
-                            }
+                            },
                         )
                         continue
 
@@ -1411,19 +1404,19 @@ class AutonomousAgent:
                         "status": "deployed",
                         "path": script_path,
                         "message": "Script saved successfully",
-                    }
+                    },
                 )
 
                 self._log_to_user(f"✓ Script deployed: {script_path}")
 
-            except (FileNotFoundError, PermissionError, OSError, IOError, AttributeError) as e:
+            except (FileNotFoundError, PermissionError, OSError, AttributeError) as e:
                 logger.error("Error in autonomous_agent: %s", e)
                 deployment_results.append(
                     {
                         "script_id": script.metadata.script_id,
                         "status": "error",
-                        "message": f"Deployment failed: {str(e)}",
-                    }
+                        "message": f"Deployment failed: {e!s}",
+                    },
                 )
 
         return deployment_results
@@ -1439,9 +1432,8 @@ class AutonomousAgent:
 
             response = input("Deploy this script? (y/n): ").lower().strip()
             return response in ["y", "yes"]
-        else:
-            # For GUI or other interfaces, assume approval for now
-            return True
+        # For GUI or other interfaces, assume approval for now
+        return True
 
     def _log_to_user(self, message: str):
         """Log progress to user via CLI or UI."""
@@ -1455,10 +1447,10 @@ class AutonomousAgent:
 
         # Add to conversation history
         self.conversation_history.append(
-            {"role": "assistant", "content": message, "timestamp": datetime.now().isoformat()}
+            {"role": "assistant", "content": message, "timestamp": datetime.now().isoformat()},
         )
 
-    def _error_result(self, message: str) -> Dict[str, Any]:
+    def _error_result(self, message: str) -> dict[str, Any]:
         """Return error result and save to file."""
         self._log_to_user(f"ERROR: {message}")
         result = {
@@ -1475,7 +1467,7 @@ class AutonomousAgent:
             with tempfile.NamedTemporaryFile(mode="w", suffix="_error.json", delete=False) as f:
                 json.dump(result, f, indent=2)
                 logger.info(f"Error result saved to: {f.name}")
-        except (OSError, IOError, json.JSONDecodeError, AttributeError) as e:
+        except (OSError, json.JSONDecodeError, AttributeError) as e:
             logger.warning(f"Failed to save error result: {e}", exc_info=True)
 
         return result
@@ -1494,23 +1486,22 @@ class AutonomousAgent:
                     exit_code=result.get("exit_code", 1),
                     runtime_ms=result.get("runtime_ms", 0),
                 )
-            else:
-                # Fallback: simulate testing without actual QEMU
-                logger.warning("QEMU testing not available, using fallback simulation")
-                return ExecutionResult(
-                    success=True,
-                    output=f"[QEMU Simulation] Testing script on {target_binary}\n[QEMU Simulation] Script execution completed\nTest type: qemu_simulation\nTarget: {target_binary}\nScript length: {len(script)}\nSimulated: True",
-                    error="",
-                    exit_code=0,
-                    runtime_ms=100,  # Simulated runtime
-                )
+            # Fallback: simulate testing without actual QEMU
+            logger.warning("QEMU testing not available, using fallback simulation")
+            return ExecutionResult(
+                success=True,
+                output=f"[QEMU Simulation] Testing script on {target_binary}\n[QEMU Simulation] Script execution completed\nTest type: qemu_simulation\nTarget: {target_binary}\nScript length: {len(script)}\nSimulated: True",
+                error="",
+                exit_code=0,
+                runtime_ms=100,  # Simulated runtime
+            )
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError) as e:
             logger.error(f"QEMU script testing failed: {e}", exc_info=True)
             return ExecutionResult(
-                success=False, output="", error=f"QEMU testing error: {str(e)}", exit_code=1, runtime_ms=0
+                success=False, output="", error=f"QEMU testing error: {e!s}", exit_code=1, runtime_ms=0,
             )
 
-    def execute_autonomous_task(self, task_config: Dict[str, Any]) -> Dict[str, Any]:
+    def execute_autonomous_task(self, task_config: dict[str, Any]) -> dict[str, Any]:
         """Execute an autonomous task based on configuration."""
         try:
             logger.info(f"Starting autonomous task: {task_config.get('type', 'unknown')}")
@@ -1523,7 +1514,7 @@ class AutonomousAgent:
                 user_request = task_config.get("request", f"Analyze and create scripts for {target_binary}")
                 return self.process_request(user_request)
 
-            elif task_type == "vulnerability_analysis":
+            if task_type == "vulnerability_analysis":
                 # Perform vulnerability analysis
                 if not target_binary:
                     return self._error_result("No target binary specified for vulnerability analysis")
@@ -1536,7 +1527,7 @@ class AutonomousAgent:
                     "recommendations": analysis.get("recommendations", []),
                 }
 
-            elif task_type == "script_testing":
+            if task_type == "script_testing":
                 # Test existing scripts
                 script = task_config.get("script")
                 if not script or not target_binary:
@@ -1550,14 +1541,13 @@ class AutonomousAgent:
                     "errors": test_result.error,
                 }
 
-            else:
-                return self._error_result(f"Unknown task type: {task_type}")
+            return self._error_result(f"Unknown task type: {task_type}")
 
         except Exception as e:
             logger.error(f"Error executing autonomous task: {e}")
-            return self._error_result(f"Task execution failed: {str(e)}")
+            return self._error_result(f"Task execution failed: {e!s}")
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get current workflow status."""
         return {
             "state": self.workflow_state.value,
@@ -1568,11 +1558,11 @@ class AutonomousAgent:
             "last_update": datetime.now().isoformat(),
         }
 
-    def get_conversation_history(self) -> List[Dict[str, Any]]:
+    def get_conversation_history(self) -> list[dict[str, Any]]:
         """Get conversation history."""
         return self.conversation_history.copy()
 
-    def save_session_data(self, output_path: Optional[str] = None) -> str:
+    def save_session_data(self, output_path: str | None = None) -> str:
         """Save complete session data to JSON file."""
         try:
             session_data = {
@@ -1604,15 +1594,15 @@ class AutonomousAgent:
             logger.info(f"Session data saved to: {output_path}")
             return output_path
 
-        except (IOError, OSError) as e:
+        except OSError as e:
             logger.error(f"Failed to save session data: {e}")
-            raise RuntimeError(f"Could not save session data: {str(e)}") from e
+            raise RuntimeError(f"Could not save session data: {e!s}") from e
         except json.JSONEncodeError as e:
             logger.error(f"Failed to encode session data as JSON: {e}")
-            raise RuntimeError(f"Invalid session data format: {str(e)}") from e
+            raise RuntimeError(f"Invalid session data format: {e!s}") from e
         except Exception as e:
             logger.error(f"Unexpected error saving session data: {e}")
-            raise RuntimeError(f"Session save failed: {str(e)}") from e
+            raise RuntimeError(f"Session save failed: {e!s}") from e
 
     def reset(self):
         """Reset agent state for new task."""
@@ -1636,7 +1626,7 @@ class AutonomousAgent:
 
             # Initialize with production configuration
             self.qemu_manager = QEMUTestManager(
-                ssh_timeout=30, max_connections=5, enable_circuit_breaker=True, failure_threshold=3, recovery_timeout=60
+                ssh_timeout=30, max_connections=5, enable_circuit_breaker=True, failure_threshold=3, recovery_timeout=60,
             )
 
             logger.info("QEMU manager initialized successfully")
@@ -1648,7 +1638,7 @@ class AutonomousAgent:
                     severity=AuditSeverity.INFO,
                     description="QEMU manager initialized for autonomous agent",
                     details={"agent_id": self.agent_id, "max_connections": 5, "circuit_breaker": True},
-                )
+                ),
             )
 
         except ImportError as e:
@@ -1658,7 +1648,7 @@ class AutonomousAgent:
             logger.error(f"Failed to initialize QEMU manager: {e}")
             raise
 
-    def _create_vm(self, vm_name: str, config: Dict[str, Any]) -> str:
+    def _create_vm(self, vm_name: str, config: dict[str, Any]) -> str:
         """Create a new QEMU VM with specified configuration.
 
         Args:
@@ -1672,6 +1662,7 @@ class AutonomousAgent:
 
         Returns:
             VM ID for tracking
+
         """
         # Ensure QEMU manager is initialized
         if not self.qemu_manager:
@@ -1729,6 +1720,7 @@ class AutonomousAgent:
 
         Returns:
             True if successful
+
         """
         if vm_id not in self._active_vms:
             logger.error(f"VM {vm_id} not found")
@@ -1751,9 +1743,8 @@ class AutonomousAgent:
 
                 logger.info(f"Started VM {vm_id}")
                 return True
-            else:
-                logger.error(f"Failed to start VM {vm_id}")
-                return False
+            logger.error(f"Failed to start VM {vm_id}")
+            return False
 
         except Exception as e:
             logger.error(f"Error starting VM {vm_id}: {e}")
@@ -1769,6 +1760,7 @@ class AutonomousAgent:
 
         Returns:
             True if successful
+
         """
         if vm_id not in self._active_vms:
             logger.error(f"VM {vm_id} not found")
@@ -1791,16 +1783,15 @@ class AutonomousAgent:
 
                 logger.info(f"Stopped VM {vm_id}")
                 return True
-            else:
-                logger.error(f"Failed to stop VM {vm_id}")
-                return False
+            logger.error(f"Failed to stop VM {vm_id}")
+            return False
 
         except Exception as e:
             logger.error(f"Error stopping VM {vm_id}: {e}")
             self._audit_logger.log_vm_operation("stop", vm_info["name"], success=False, error=str(e))
             return False
 
-    def _create_snapshot(self, vm_id: str, snapshot_name: str) -> Optional[str]:
+    def _create_snapshot(self, vm_id: str, snapshot_name: str) -> str | None:
         """Create a snapshot of the VM state.
 
         Args:
@@ -1809,6 +1800,7 @@ class AutonomousAgent:
 
         Returns:
             Snapshot ID if successful, None otherwise
+
         """
         if vm_id not in self._active_vms:
             logger.error(f"VM {vm_id} not found")
@@ -1839,9 +1831,8 @@ class AutonomousAgent:
 
                 logger.info(f"Created snapshot {snapshot_name} for VM {vm_id}")
                 return snapshot_id
-            else:
-                logger.error(f"Failed to create snapshot for VM {vm_id}")
-                return None
+            logger.error(f"Failed to create snapshot for VM {vm_id}")
+            return None
 
         except Exception as e:
             logger.error(f"Error creating snapshot for VM {vm_id}: {e}")
@@ -1857,6 +1848,7 @@ class AutonomousAgent:
 
         Returns:
             True if successful
+
         """
         if vm_id not in self._active_vms:
             logger.error(f"VM {vm_id} not found")
@@ -1885,14 +1877,13 @@ class AutonomousAgent:
                         severity=AuditSeverity.INFO,
                         description=f"Restored VM {vm_info['name']} from snapshot",
                         details={"vm_id": vm_id, "snapshot_id": snapshot_id, "snapshot_name": snapshot_info["name"]},
-                    )
+                    ),
                 )
 
                 logger.info(f"Restored VM {vm_id} from snapshot {snapshot_id}")
                 return True
-            else:
-                logger.error(f"Failed to restore snapshot {snapshot_id} for VM {vm_id}")
-                return False
+            logger.error(f"Failed to restore snapshot {snapshot_id} for VM {vm_id}")
+            return False
 
         except Exception as e:
             logger.error(f"Error restoring snapshot {snapshot_id} for VM {vm_id}: {e}")
@@ -1906,6 +1897,7 @@ class AutonomousAgent:
 
         Returns:
             True if successful
+
         """
         if snapshot_id not in self._vm_snapshots:
             logger.error(f"Snapshot {snapshot_id} not found")
@@ -1932,9 +1924,8 @@ class AutonomousAgent:
 
                 logger.info(f"Deleted snapshot {snapshot_id}")
                 return True
-            else:
-                logger.error(f"Failed to delete snapshot {snapshot_id}")
-                return False
+            logger.error(f"Failed to delete snapshot {snapshot_id}")
+            return False
 
         except Exception as e:
             logger.error(f"Error deleting snapshot {snapshot_id}: {e}")
@@ -1948,6 +1939,7 @@ class AutonomousAgent:
 
         Returns:
             True if successful
+
         """
         if vm_id not in self._active_vms:
             logger.warning(f"VM {vm_id} not found for cleanup")
@@ -1977,7 +1969,7 @@ class AutonomousAgent:
                     severity=AuditSeverity.INFO,
                     description=f"Cleaned up VM {vm_info['name']}",
                     details={"vm_id": vm_id},
-                )
+                ),
             )
 
             logger.info(f"Cleaned up VM {vm_id}")
@@ -2003,7 +1995,7 @@ class AutonomousAgent:
 
         logger.info("Cleaned up all VMs")
 
-    def _get_vm_status(self, vm_id: str) -> Optional[Dict[str, Any]]:
+    def _get_vm_status(self, vm_id: str) -> dict[str, Any] | None:
         """Get current status of a VM.
 
         Args:
@@ -2011,6 +2003,7 @@ class AutonomousAgent:
 
         Returns:
             VM status information or None if not found
+
         """
         if vm_id not in self._active_vms:
             return None
@@ -2032,11 +2025,12 @@ class AutonomousAgent:
             "config": vm_info["config"],
         }
 
-    def _list_vms(self) -> List[Dict[str, Any]]:
+    def _list_vms(self) -> list[dict[str, Any]]:
         """List all active VMs.
 
         Returns:
             List of VM status information
+
         """
         vms = []
         for vm_id in self._active_vms:
@@ -2054,6 +2048,7 @@ class AutonomousAgent:
 
         Returns:
             Path to disk image
+
         """
         # Check for pre-configured images
         images_dir = Path.home() / ".intellicrack" / "vm_images"
@@ -2083,6 +2078,7 @@ class AutonomousAgent:
 
         Returns:
             Free port number
+
         """
         import socket
 
@@ -2092,7 +2088,7 @@ class AutonomousAgent:
                 s.listen(1)
                 port = s.getsockname()[1]
             return port
-        except socket.error as e:
+        except OSError as e:
             logger.error(f"Failed to get free port: {e}")
             # Return a random high port as fallback
             import secrets
@@ -2133,7 +2129,7 @@ class AutonomousAgent:
                     severity=AuditSeverity.INFO,
                     description="Docker client initialized for autonomous agent",
                     details={"agent_id": self.agent_id, "docker_version": self.docker_client.version()},
-                )
+                ),
             )
 
         except ImportError as e:
@@ -2141,9 +2137,9 @@ class AutonomousAgent:
             raise RuntimeError("Docker package not available - install with: pip install docker") from e
         except Exception as e:
             logger.error(f"Failed to initialize Docker client: {e}")
-            raise RuntimeError(f"Docker initialization failed: {str(e)}") from e
+            raise RuntimeError(f"Docker initialization failed: {e!s}") from e
 
-    def _create_container(self, container_name: str, config: Dict[str, Any]) -> str:
+    def _create_container(self, container_name: str, config: dict[str, Any]) -> str:
         """Create a new Docker container with specified configuration.
 
         Args:
@@ -2159,6 +2155,7 @@ class AutonomousAgent:
 
         Returns:
             Container ID for tracking
+
         """
         # Ensure Docker client is initialized
         if not hasattr(self, "docker_client"):
@@ -2223,7 +2220,7 @@ class AutonomousAgent:
                             "memory_limit": memory_limit,
                             "cpu_count": cpu_count,
                         },
-                    )
+                    ),
                 )
 
                 logger.info(f"Created container {container_name} with ID {container.id[:12]}")
@@ -2237,7 +2234,7 @@ class AutonomousAgent:
                     severity=AuditSeverity.HIGH,
                     description=f"Failed to create container {container_name}",
                     details={"error": str(e)},
-                )
+                ),
             )
             raise
 
@@ -2249,6 +2246,7 @@ class AutonomousAgent:
 
         Returns:
             True if successful
+
         """
         if not hasattr(self, "_active_containers") or container_id not in self._active_containers:
             logger.error(f"Container {container_id} not found")
@@ -2268,7 +2266,7 @@ class AutonomousAgent:
                     severity=AuditSeverity.INFO,
                     description=f"Started container {container_info['name']}",
                     details={"container_id": container_id},
-                )
+                ),
             )
 
             logger.info(f"Started container {container_id[:12]}")
@@ -2287,6 +2285,7 @@ class AutonomousAgent:
 
         Returns:
             True if successful
+
         """
         if not hasattr(self, "_active_containers") or container_id not in self._active_containers:
             logger.error(f"Container {container_id} not found")
@@ -2306,7 +2305,7 @@ class AutonomousAgent:
                     severity=AuditSeverity.INFO,
                     description=f"Stopped container {container_info['name']}",
                     details={"container_id": container_id},
-                )
+                ),
             )
 
             logger.info(f"Stopped container {container_id[:12]}")
@@ -2317,8 +2316,8 @@ class AutonomousAgent:
             return False
 
     def _execute_in_container(
-        self, container_id: str, command: Union[str, List[str]], workdir: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, container_id: str, command: str | list[str], workdir: str | None = None,
+    ) -> dict[str, Any]:
         """Execute a command in a running container.
 
         Args:
@@ -2328,6 +2327,7 @@ class AutonomousAgent:
 
         Returns:
             Dict with exit_code, output, and error
+
         """
         if not hasattr(self, "_active_containers") or container_id not in self._active_containers:
             logger.error(f"Container {container_id} not found")
@@ -2351,7 +2351,7 @@ class AutonomousAgent:
 
             # Track execution
             container_info["exec_sessions"].append(
-                {"command": command, "exit_code": exit_code, "timestamp": datetime.now()}
+                {"command": command, "exit_code": exit_code, "timestamp": datetime.now()},
             )
 
             return {"exit_code": exit_code, "output": stdout, "error": stderr}
@@ -2370,6 +2370,7 @@ class AutonomousAgent:
 
         Returns:
             True if successful
+
         """
         if not hasattr(self, "_active_containers") or container_id not in self._active_containers:
             logger.error(f"Container {container_id} not found")
@@ -2409,6 +2410,7 @@ class AutonomousAgent:
 
         Returns:
             True if successful
+
         """
         if not hasattr(self, "_active_containers") or container_id not in self._active_containers:
             logger.error(f"Container {container_id} not found")
@@ -2449,6 +2451,7 @@ class AutonomousAgent:
 
         Returns:
             True if successful
+
         """
         if not hasattr(self, "_active_containers"):
             return True
@@ -2477,7 +2480,7 @@ class AutonomousAgent:
                     severity=AuditSeverity.INFO,
                     description=f"Cleaned up container {container_info['name']}",
                     details={"container_id": container_id},
-                )
+                ),
             )
 
             logger.info(f"Cleaned up container {container_id[:12]}")
@@ -2505,7 +2508,7 @@ class AutonomousAgent:
 
         logger.info("Cleaned up all containers")
 
-    def _get_container_status(self, container_id: str) -> Optional[Dict[str, Any]]:
+    def _get_container_status(self, container_id: str) -> dict[str, Any] | None:
         """Get current status of a container.
 
         Args:
@@ -2513,6 +2516,7 @@ class AutonomousAgent:
 
         Returns:
             Container status information or None if not found
+
         """
         if not hasattr(self, "_active_containers") or container_id not in self._active_containers:
             return None
@@ -2551,11 +2555,12 @@ class AutonomousAgent:
             "config": container_info["config"],
         }
 
-    def _list_containers(self) -> List[Dict[str, Any]]:
+    def _list_containers(self) -> list[dict[str, Any]]:
         """List all active containers.
 
         Returns:
             List of container status information
+
         """
         if not hasattr(self, "_active_containers"):
             return []

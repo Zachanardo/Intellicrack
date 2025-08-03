@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -52,14 +51,14 @@ def migrate_llm_configs():
     secrets_manager = get_secrets_manager()
 
     try:
-        with open(llm_config_path, "r") as f:
+        with open(llm_config_path) as f:
             config = json.load(f)
 
         migrated_count = 0
 
         # Process each model configuration
         for model_id, model_config in config.items():
-            if "api_key" in model_config and model_config["api_key"]:
+            if model_config.get("api_key"):
                 api_key = model_config["api_key"]
 
                 # Determine the appropriate secret key based on provider

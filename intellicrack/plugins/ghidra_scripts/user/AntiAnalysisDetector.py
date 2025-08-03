@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -32,7 +31,6 @@ try:
 
     # Ghidra API functions available in script environment:
     # currentProgram, getReferencesTo, createBookmark, findBytes
-    # ruff: noqa: F821
     GHIDRA_AVAILABLE = True
 except ImportError:
     # Running outside Ghidra environment
@@ -106,6 +104,7 @@ except ImportError:
 
             Returns:
                 str: The default value in non-interactive mode
+
             """
             print(f"{title}: {prompt} (default: {default_value})")
             return default_value
@@ -120,6 +119,7 @@ except ImportError:
 
             Returns:
                 int: The default value in non-interactive mode
+
             """
             print(f"{title}: {prompt} (default: {default_value})")
             return default_value
@@ -138,6 +138,7 @@ except ImportError:
 
             Returns:
                 list: Script arguments
+
             """
             return self._script_args
 
@@ -146,6 +147,7 @@ except ImportError:
 
             Args:
                 args: List of arguments
+
             """
             self._script_args = args if args else []
 
@@ -154,6 +156,7 @@ except ImportError:
 
             Returns:
                 str: Path to the script file
+
             """
             return os.path.abspath(__file__)
 
@@ -162,6 +165,7 @@ except ImportError:
 
             Returns:
                 str: Directory containing the script
+
             """
             return self._script_dir
 
@@ -170,6 +174,7 @@ except ImportError:
 
             Args:
                 message: Message to display
+
             """
             print(f"POPUP: {message}")
 
@@ -178,6 +183,7 @@ except ImportError:
 
             Returns:
                 bool: True when not in Ghidra environment
+
             """
             return True
 
@@ -296,7 +302,7 @@ class AntiAnalysisDetector(GhidraScript):
         "GetTickCount",
         "QueryPerformanceCounter",
         "NtQuerySystemInformation",
-        "NtQueryObject"
+        "NtQueryObject",
     ]
 
     # Anti-VM artifacts to check
@@ -315,7 +321,7 @@ class AntiAnalysisDetector(GhidraScript):
         # Registry keys
         "HARDWARE\\DEVICEMAP\\Scsi\\Scsi Port 0",
         "SYSTEM\\CurrentControlSet\\Services\\Disk\\Enum",
-        "SOFTWARE\\Oracle\\VirtualBox Guest Additions"
+        "SOFTWARE\\Oracle\\VirtualBox Guest Additions",
     ]
 
     # CPU instructions for detection
@@ -328,7 +334,7 @@ class AntiAnalysisDetector(GhidraScript):
         "sidt",       # Store IDT register
         "sgdt",       # Store GDT register
         "sldt",       # Store LDT register
-        "str"         # Store task register
+        "str",         # Store task register
     ]
 
     def run(self):
@@ -358,7 +364,7 @@ class AntiAnalysisDetector(GhidraScript):
             "anti_vm": [],
             "timing_checks": [],
             "cpu_detection": [],
-            "exception_tricks": []
+            "exception_tricks": [],
         }
 
         # Check for anti-debugging APIs
@@ -401,7 +407,7 @@ class AntiAnalysisDetector(GhidraScript):
                                 "type": "API Call",
                                 "name": api,
                                 "address": ref.getFromAddress(),
-                                "description": self.get_api_description(api)
+                                "description": self.get_api_description(api),
                             })
                             print(f"  [+] Found {api} at {ref.getFromAddress()}")
                             safe_ghidra_call("createBookmark", ref.getFromAddress(), "AntiDebug", f"{api} call")
@@ -424,7 +430,7 @@ class AntiAnalysisDetector(GhidraScript):
                                 "type": "VM Artifact",
                                 "name": artifact,
                                 "address": addr,
-                                "description": "Potential VM detection string"
+                                "description": "Potential VM detection string",
                             })
                             print(f"  [+] Found VM artifact '{artifact}' at {addr}")
                             safe_ghidra_call("createBookmark", addr, "AntiVM", f"VM artifact: {artifact}")
@@ -444,7 +450,7 @@ class AntiAnalysisDetector(GhidraScript):
                     "type": "CPU Instruction",
                     "instruction": mnemonic,
                     "address": instr.getAddress(),
-                    "description": self.get_instruction_description(mnemonic)
+                    "description": self.get_instruction_description(mnemonic),
                 })
                 print(f"  [+] Found {mnemonic} instruction at {instr.getAddress()}")
                 safe_ghidra_call("createBookmark", instr.getAddress(), "Detection", f"{mnemonic} instruction")
@@ -471,7 +477,7 @@ class AntiAnalysisDetector(GhidraScript):
                     "type": "Timing Check",
                     "start": addr1,
                     "end": addr2,
-                    "description": "Potential timing-based anti-debugging check"
+                    "description": "Potential timing-based anti-debugging check",
                 })
                 print(f"  [+] Found timing check between {addr1} and {addr2}")
                 safe_ghidra_call("createBookmark", addr1, "Timing", "Timing check start")
@@ -485,7 +491,7 @@ class AntiAnalysisDetector(GhidraScript):
                 "type": "Exception Handler",
                 "api": "SetUnhandledExceptionFilter",
                 "address": ref,
-                "description": "Custom exception handler (possible anti-debug)"
+                "description": "Custom exception handler (possible anti-debug)",
             })
             safe_ghidra_call("createBookmark", ref, "Exception", "SEH manipulation")
 
@@ -495,7 +501,7 @@ class AntiAnalysisDetector(GhidraScript):
             findings["exception_tricks"].append({
                 "type": "INT3 Breakpoint",
                 "address": addr,
-                "description": "Hardcoded breakpoint (possible anti-debug trap)"
+                "description": "Hardcoded breakpoint (possible anti-debug trap)",
             })
             safe_ghidra_call("createBookmark", addr, "Exception", "INT3 trap")
 
@@ -537,7 +543,7 @@ class AntiAnalysisDetector(GhidraScript):
             "NtSetInformationThread": "Thread hiding from debugger",
             "FindWindowA": "Debugger window detection",
             "GetTickCount": "Timing-based debugger detection",
-            "QueryPerformanceCounter": "High-precision timing check"
+            "QueryPerformanceCounter": "High-precision timing check",
         }
         return descriptions.get(api, "Anti-debugging API")
 
@@ -549,7 +555,7 @@ class AntiAnalysisDetector(GhidraScript):
             "int 3": "Software breakpoint - debugger detection",
             "int 2d": "Windows debug service - debugger detection",
             "sidt": "Store IDT - VM/debugger detection",
-            "sgdt": "Store GDT - VM/debugger detection"
+            "sgdt": "Store GDT - VM/debugger detection",
         }
         return descriptions.get(instr, "Detection instruction")
 
@@ -597,14 +603,13 @@ class AntiAnalysisDetector(GhidraScript):
 
         if score == 0:
             return "None - No anti-analysis detected"
-        elif score < 10:
+        if score < 10:
             return "Low - Basic anti-analysis techniques"
-        elif score < 25:
+        if score < 25:
             return "Medium - Multiple anti-analysis techniques"
-        elif score < 50:
+        if score < 50:
             return "High - Advanced anti-analysis protection"
-        else:
-            return "Very High - Heavily protected/obfuscated"
+        return "Very High - Heavily protected/obfuscated"
 
 # Run the script
 if __name__ == "__main__":

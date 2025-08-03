@@ -1,5 +1,4 @@
-"""
-Copyright (C) 2025 Zachary Flint
+"""Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
 
@@ -27,6 +26,11 @@ from .ui.ui_helpers import (
     show_file_dialog,
 )
 
-__all__ = ["check_binary_path_and_warn", "emit_log_message", "show_file_dialog",
-           "ask_yes_no_question", "generate_exploit_payload_common",
-           "generate_exploit_strategy_common"]
+__all__ = [
+    "ask_yes_no_question",
+    "check_binary_path_and_warn",
+    "emit_log_message",
+    "generate_exploit_payload_common",
+    "generate_exploit_strategy_common",
+    "show_file_dialog",
+]

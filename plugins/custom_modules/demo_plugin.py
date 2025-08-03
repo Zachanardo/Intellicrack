@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -31,7 +30,7 @@ import json
 import os
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 # Import plugin base class
 try:
@@ -51,8 +50,7 @@ PLUGIN_REQUIRES = ["hashlib", "struct"]
 PLUGIN_OPTIONAL = ["pefile", "lief"]
 
 class AdvancedDemoPlugin(BasePlugin):
-    """
-    Advanced plugin template demonstrating comprehensive integration with Intellicrack.
+    """Advanced plugin template demonstrating comprehensive integration with Intellicrack.
 
     This plugin showcases:
     - Proper initialization and metadata
@@ -74,24 +72,24 @@ class AdvancedDemoPlugin(BasePlugin):
             author=PLUGIN_AUTHOR,
             description=PLUGIN_DESCRIPTION,
             categories=PLUGIN_CATEGORIES,
-            supported_formats=PLUGIN_SUPPORTED_FORMATS
+            supported_formats=PLUGIN_SUPPORTED_FORMATS,
         )
 
         # Plugin configuration
         default_config = {
-            'max_file_size': 100 * 1024 * 1024,  # 100MB limit
-            'enable_caching': True,
-            'cache_dir': 'plugin_cache',
-            'detailed_analysis': True,
-            'export_results': False,
-            'timeout_seconds': 30
+            "max_file_size": 100 * 1024 * 1024,  # 100MB limit
+            "enable_caching": True,
+            "cache_dir": "plugin_cache",
+            "detailed_analysis": True,
+            "export_results": False,
+            "timeout_seconds": 30,
         }
 
         # Initialize base plugin
         super().__init__(metadata, default_config)
 
         # Ensure config is set (fallback if parent class doesn't set it)
-        if not hasattr(self, 'config'):
+        if not hasattr(self, "config"):
             self.config = default_config
 
         # Internal state
@@ -107,11 +105,11 @@ class AdvancedDemoPlugin(BasePlugin):
 
     def _init_cache(self) -> None:
         """Initialize cache directory if caching is enabled."""
-        if self.config['enable_caching']:
-            cache_path = Path(self.config['cache_dir'])
+        if self.config["enable_caching"]:
+            cache_path = Path(self.config["cache_dir"])
             cache_path.mkdir(exist_ok=True)
 
-    def _check_dependencies(self) -> Dict[str, bool]:
+    def _check_dependencies(self) -> dict[str, bool]:
         """Check availability of optional dependencies."""
         deps = {}
 
@@ -133,19 +131,19 @@ class AdvancedDemoPlugin(BasePlugin):
 
         return deps
 
-    def get_metadata(self) -> Dict[str, Any]:
+    def get_metadata(self) -> dict[str, Any]:
         """Return comprehensive plugin metadata."""
         metadata = super().get_metadata()
         # Add plugin-specific information
         metadata.update({
-            'requirements': PLUGIN_REQUIRES,
-            'optional_deps': PLUGIN_OPTIONAL,
-            'available_libs': self.available_libs,
-            'analysis_count': self.analysis_count
+            "requirements": PLUGIN_REQUIRES,
+            "optional_deps": PLUGIN_OPTIONAL,
+            "available_libs": self.available_libs,
+            "analysis_count": self.analysis_count,
         })
         return metadata
 
-    def validate_binary(self, binary_path: str) -> Tuple[bool, str]:
+    def validate_binary(self, binary_path: str) -> tuple[bool, str]:
         """Validate binary file before analysis."""
         try:
             path = Path(binary_path)
@@ -156,7 +154,7 @@ class AdvancedDemoPlugin(BasePlugin):
 
             # Check file size
             file_size = path.stat().st_size
-            if file_size > self.config['max_file_size']:
+            if file_size > self.config["max_file_size"]:
                 return False, f"File too large: {file_size} bytes (max: {self.config['max_file_size']})"
 
             # Check if file is readable
@@ -164,7 +162,7 @@ class AdvancedDemoPlugin(BasePlugin):
                 return False, f"File not readable: {binary_path}"
 
             # Basic file format detection
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 header = f.read(4)
                 if len(header) < 4:
                     return False, "File too small to analyze"
@@ -172,7 +170,7 @@ class AdvancedDemoPlugin(BasePlugin):
             return True, "File validation successful"
 
         except Exception as e:
-            return False, f"Validation error: {str(e)}"
+            return False, f"Validation error: {e!s}"
 
     def _calculate_entropy(self, data: bytes) -> float:
         """Calculate Shannon entropy of binary data."""
@@ -195,50 +193,50 @@ class AdvancedDemoPlugin(BasePlugin):
 
         return entropy
 
-    def _detect_packer(self, binary_path: str) -> Dict[str, Any]:
+    def _detect_packer(self, binary_path: str) -> dict[str, Any]:
         """Detect common packers and protectors."""
         packer_info = {
-            'detected': False,
-            'packer_name': None,
-            'confidence': 0.0,
-            'signatures': []
+            "detected": False,
+            "packer_name": None,
+            "confidence": 0.0,
+            "signatures": [],
         }
 
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 header = f.read(8192)  # Read first 8KB
 
                 # Common packer signatures
                 signatures = {
-                    b'UPX!': ('UPX', 0.9),
-                    b'ASPack': ('ASPack', 0.8),
-                    b'PECompact': ('PECompact', 0.8),
-                    b'MEW': ('MEW', 0.7),
-                    b'Themida': ('Themida', 0.9),
-                    b'VMProtect': ('VMProtect', 0.9),
-                    b'Armadillo': ('Armadillo', 0.8)
+                    b"UPX!": ("UPX", 0.9),
+                    b"ASPack": ("ASPack", 0.8),
+                    b"PECompact": ("PECompact", 0.8),
+                    b"MEW": ("MEW", 0.7),
+                    b"Themida": ("Themida", 0.9),
+                    b"VMProtect": ("VMProtect", 0.9),
+                    b"Armadillo": ("Armadillo", 0.8),
                 }
 
                 for sig, (name, confidence) in signatures.items():
                     if sig in header:
-                        packer_info['detected'] = True
-                        packer_info['packer_name'] = name
-                        packer_info['confidence'] = confidence
-                        packer_info['signatures'].append(name)
+                        packer_info["detected"] = True
+                        packer_info["packer_name"] = name
+                        packer_info["confidence"] = confidence
+                        packer_info["signatures"].append(name)
                         break
 
         except Exception as e:
-            packer_info['error'] = str(e)
+            packer_info["error"] = str(e)
 
         return packer_info
 
-    def _extract_strings(self, binary_path: str, min_length: int = 4) -> List[str]:
+    def _extract_strings(self, binary_path: str, min_length: int = 4) -> list[str]:
         """Extract printable strings from binary."""
         try:
             from intellicrack.utils.core.string_utils import extract_ascii_strings
         except ImportError:
             # Fallback implementation
-            def extract_ascii_strings(data: bytes, min_length: int = 4) -> List[str]:
+            def extract_ascii_strings(data: bytes, min_length: int = 4) -> list[str]:
                 """Simple ASCII string extraction fallback."""
                 strings = []
                 current = b""
@@ -247,40 +245,39 @@ class AdvancedDemoPlugin(BasePlugin):
                         current += bytes([byte])
                     else:
                         if len(current) >= min_length:
-                            strings.append(current.decode('ascii', errors='ignore'))
+                            strings.append(current.decode("ascii", errors="ignore"))
                         current = b""
                 if len(current) >= min_length:
-                    strings.append(current.decode('ascii', errors='ignore'))
+                    strings.append(current.decode("ascii", errors="ignore"))
                 return strings
 
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
                 strings = extract_ascii_strings(data, min_length)
                 return strings[:100]  # Limit to first 100 strings
         except Exception as e:
-            return [f"Error extracting strings: {str(e)}"]
+            return [f"Error extracting strings: {e!s}"]
 
-    def _get_file_hashes(self, binary_path: str) -> Dict[str, str]:
+    def _get_file_hashes(self, binary_path: str) -> dict[str, str]:
         """Calculate multiple hash values for the file."""
         hashes = {}
 
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
-                hashes['md5'] = hashlib.md5(data).hexdigest()
-                hashes['sha1'] = hashlib.sha1(data).hexdigest()
-                hashes['sha256'] = hashlib.sha256(data).hexdigest()
+                hashes["md5"] = hashlib.md5(data).hexdigest()
+                hashes["sha1"] = hashlib.sha1(data).hexdigest()
+                hashes["sha256"] = hashlib.sha256(data).hexdigest()
 
         except Exception as e:
-            hashes['error'] = str(e)
+            hashes["error"] = str(e)
 
         return hashes
 
-    def analyze(self, binary_path: str, progress_callback=None) -> List[str]:
-        """
-        Comprehensive binary analysis with progress reporting.
+    def analyze(self, binary_path: str, progress_callback=None) -> list[str]:
+        """Comprehensive binary analysis with progress reporting.
 
         Args:
             binary_path: Path to the binary to analyze
@@ -288,6 +285,7 @@ class AdvancedDemoPlugin(BasePlugin):
 
         Returns:
             List of strings with detailed analysis results
+
         """
         results = []
         start_time = time.time()
@@ -325,14 +323,14 @@ class AdvancedDemoPlugin(BasePlugin):
             # Step 3: Hash calculation
             update_progress("Calculating file hashes...")
             hashes = self._get_file_hashes(binary_path)
-            if 'error' not in hashes:
+            if "error" not in hashes:
                 results.append("[HASH] File Hashes:")
                 for hash_type, hash_value in hashes.items():
                     results.append(f"  {hash_type.upper()}: {hash_value}")
 
             # Step 4: Entropy analysis
             update_progress("Analyzing entropy...")
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 sample_data = f.read(min(65536, file_info.st_size))  # First 64KB
             entropy = self._calculate_entropy(sample_data)
             results.append(f"[STATS] Entropy: {entropy:.2f}")
@@ -344,7 +342,7 @@ class AdvancedDemoPlugin(BasePlugin):
             # Step 5: Packer detection
             update_progress("Detecting packers...")
             packer_info = self._detect_packer(binary_path)
-            if packer_info['detected']:
+            if packer_info["detected"]:
                 results.append(f"[PACKER] Packer detected: {packer_info['packer_name']} (confidence: {packer_info['confidence']:.1%})")
             else:
                 results.append("[PACKER] No common packers detected")
@@ -358,9 +356,9 @@ class AdvancedDemoPlugin(BasePlugin):
 
             # Step 7: Advanced analysis (if available)
             update_progress("Performing advanced analysis...")
-            if self.available_libs.get('pefile', False) and binary_path.lower().endswith(('.exe', '.dll')):
+            if self.available_libs.get("pefile", False) and binary_path.lower().endswith((".exe", ".dll")):
                 results.append("[INFO] PE analysis available (pefile installed)")
-            elif self.available_libs.get('lief', False):
+            elif self.available_libs.get("lief", False):
                 results.append("[INFO] Advanced analysis available (LIEF installed)")
             else:
                 results.append("[INFO] Advanced analysis unavailable (install pefile/lief for more features)")
@@ -377,15 +375,15 @@ class AdvancedDemoPlugin(BasePlugin):
 
             # Store last analysis
             self.last_analysis = {
-                'timestamp': time.time(),
-                'file_path': binary_path,
-                'results': results.copy(),
-                'entropy': entropy,
-                'packer_detected': packer_info['detected']
+                "timestamp": time.time(),
+                "file_path": binary_path,
+                "results": results.copy(),
+                "entropy": entropy,
+                "packer_detected": packer_info["detected"],
             }
 
         except Exception as e:
-            results.append(f"[ERROR] Analysis error: {str(e)}")
+            results.append(f"[ERROR] Analysis error: {e!s}")
             # Provide fallback analysis even on error
             try:
                 results.append("[FALLBACK] Attempting basic file analysis...")
@@ -394,26 +392,25 @@ class AdvancedDemoPlugin(BasePlugin):
                     results.append(f"[INFO] File size: {file_size:,} bytes")
 
                     # Basic file type detection
-                    with open(binary_path, 'rb') as f:
+                    with open(binary_path, "rb") as f:
                         header = f.read(16)
-                        if header.startswith(b'MZ'):
+                        if header.startswith(b"MZ"):
                             results.append("[TYPE] Windows PE executable detected")
-                        elif header.startswith(b'\x7fELF'):
+                        elif header.startswith(b"\x7fELF"):
                             results.append("[TYPE] Linux ELF executable detected")
-                        elif header.startswith(b'\xca\xfe\xba\xbe') or header.startswith(b'\xfe\xed\xfa'):
+                        elif header.startswith(b"\xca\xfe\xba\xbe") or header.startswith(b"\xfe\xed\xfa"):
                             results.append("[TYPE] macOS Mach-O executable detected")
                         else:
                             results.append("[TYPE] Unknown or raw binary format")
                 else:
                     results.append("[ERROR] File not accessible for analysis")
             except Exception as fallback_error:
-                results.append(f"[ERROR] Fallback analysis failed: {str(fallback_error)}")
+                results.append(f"[ERROR] Fallback analysis failed: {fallback_error!s}")
 
         return results
 
-    def run(self, *args, **kwargs) -> Dict[str, Any]:
-        """
-        Main entry point for the plugin (required by BasePlugin).
+    def run(self, *args, **kwargs) -> dict[str, Any]:
+        """Main entry point for the plugin (required by BasePlugin).
 
         This method satisfies the abstract method requirement and delegates
         to the appropriate method based on the action requested.
@@ -424,74 +421,73 @@ class AdvancedDemoPlugin(BasePlugin):
 
         Returns:
             Dict with results of the operation
+
         """
         # Get the action from kwargs, default to 'analyze'
-        action = kwargs.get('action', 'analyze')
+        action = kwargs.get("action", "analyze")
 
-        if action == 'analyze':
+        if action == "analyze":
             # Get binary path from args or kwargs
             if args:
                 binary_path = args[0]
             else:
-                binary_path = kwargs.get('binary_path', kwargs.get('target', ''))
+                binary_path = kwargs.get("binary_path", kwargs.get("target", ""))
 
             if not binary_path:
                 return {
-                    'success': False,
-                    'error': 'No binary path provided',
-                    'results': []
+                    "success": False,
+                    "error": "No binary path provided",
+                    "results": [],
                 }
 
             # Run analysis
-            progress_callback = kwargs.get('progress_callback', None)
+            progress_callback = kwargs.get("progress_callback")
             results = self.analyze(binary_path, progress_callback)
 
             return {
-                'success': True,
-                'action': 'analyze',
-                'results': results,
-                'analysis_data': self.last_analysis
+                "success": True,
+                "action": "analyze",
+                "results": results,
+                "analysis_data": self.last_analysis,
             }
 
-        elif action == 'patch':
+        if action == "patch":
             # Get binary path and options
             if args:
                 binary_path = args[0]
             else:
-                binary_path = kwargs.get('binary_path', kwargs.get('target', ''))
+                binary_path = kwargs.get("binary_path", kwargs.get("target", ""))
 
-            patch_options = kwargs.get('patch_options', {})
+            patch_options = kwargs.get("patch_options", {})
             results = self.patch(binary_path, patch_options)
 
             return {
-                'success': True,
-                'action': 'patch',
-                'results': results
+                "success": True,
+                "action": "patch",
+                "results": results,
             }
 
-        elif action == 'export':
+        if action == "export":
             # Export last analysis
-            output_path = kwargs.get('output_path', 'analysis_result')
-            format_type = kwargs.get('format', 'json')
+            output_path = kwargs.get("output_path", "analysis_result")
+            format_type = kwargs.get("format", "json")
             success = self.export_results(output_path, format_type)
 
             return {
-                'success': success,
-                'action': 'export',
-                'output_path': output_path,
-                'format': format_type
+                "success": success,
+                "action": "export",
+                "output_path": output_path,
+                "format": format_type,
             }
 
-        else:
-            return {
-                'success': False,
-                'error': f'Unknown action: {action}',
-                'available_actions': ['analyze', 'patch', 'export']
-            }
+        return {
+            "success": False,
+            "error": f"Unknown action: {action}",
+            "available_actions": ["analyze", "patch", "export"],
+        }
 
-    def patch(self, binary_path: str, patch_options: Optional[Dict] = None) -> List[str]:
-        """
-        Advanced binary patching with safety checks and backup.
+    def patch(self, binary_path: str, patch_options: dict | None = None) -> list[str]:
+        """Advanced binary patching with safety checks and backup.
 
         Args:
             binary_path: Path to the binary to patch
@@ -499,6 +495,7 @@ class AdvancedDemoPlugin(BasePlugin):
 
         Returns:
             List of strings with patching results
+
         """
         results = []
 
@@ -506,9 +503,9 @@ class AdvancedDemoPlugin(BasePlugin):
             # Default patch options
             if patch_options is None:
                 patch_options = {
-                    'create_backup': True,
-                    'verify_patch': True,
-                    'dry_run': False
+                    "create_backup": True,
+                    "verify_patch": True,
+                    "dry_run": False,
                 }
 
             results.append(f"[PATCH] Starting patch operation on: {os.path.basename(binary_path)}")
@@ -520,14 +517,14 @@ class AdvancedDemoPlugin(BasePlugin):
                 return results
 
             # Create backup if requested
-            if patch_options.get('create_backup', True):
+            if patch_options.get("create_backup", True):
                 backup_path = binary_path + f".backup_{int(time.time())}"
                 import shutil
                 shutil.copy2(binary_path, backup_path)
                 results.append(f"[BACKUP] Created backup: {os.path.basename(backup_path)}")
 
             # Dry run mode
-            if patch_options.get('dry_run', False):
+            if patch_options.get("dry_run", False):
                 results.append("[TEST] Dry run mode - no actual changes will be made")
                 results.append("[INFO] Patch simulation:")
                 results.append("  - Would modify binary header")
@@ -540,7 +537,7 @@ class AdvancedDemoPlugin(BasePlugin):
             results.append("[PATCH] Applying defensive security patches...")
 
             try:
-                with open(binary_path, 'rb') as f:
+                with open(binary_path, "rb") as f:
                     binary_data = bytearray(f.read())
 
                 original_size = len(binary_data)
@@ -548,13 +545,13 @@ class AdvancedDemoPlugin(BasePlugin):
 
                 # Patch 1: License check patterns (defensive research)
                 license_patterns = [
-                    (b'licensed', b'bypassed'),  # Replace license text
-                    (b'LICENSED', b'BYPASSED'),
-                    (b'License', b'Patched'),
-                    (b'trial', b'full '),  # Replace trial with full (same length)
-                    (b'TRIAL', b'FULL '),
-                    (b'demo', b'full'),
-                    (b'DEMO', b'FULL')
+                    (b"licensed", b"bypassed"),  # Replace license text
+                    (b"LICENSED", b"BYPASSED"),
+                    (b"License", b"Patched"),
+                    (b"trial", b"full "),  # Replace trial with full (same length)
+                    (b"TRIAL", b"FULL "),
+                    (b"demo", b"full"),
+                    (b"DEMO", b"FULL"),
                 ]
 
                 for old_pattern, new_pattern in license_patterns:
@@ -580,10 +577,10 @@ class AdvancedDemoPlugin(BasePlugin):
 
                 # Patch 2: Common conditional jumps that might be license checks
                 jump_patterns = [
-                    b'\x74\x0a',  # JZ +10 (common license check jump)
-                    b'\x75\x0a',  # JNZ +10
-                    b'\x74\x0c',  # JZ +12
-                    b'\x75\x0c',  # JNZ +12
+                    b"\x74\x0a",  # JZ +10 (common license check jump)
+                    b"\x75\x0a",  # JNZ +10
+                    b"\x74\x0c",  # JZ +12
+                    b"\x75\x0c",  # JNZ +12
                 ]
 
                 for pattern in jump_patterns:
@@ -598,9 +595,9 @@ class AdvancedDemoPlugin(BasePlugin):
                         search_end = min(len(binary_data), offset + 50)
                         nearby = binary_data[search_start:search_end].lower()
 
-                        if b'license' in nearby or b'trial' in nearby or b'demo' in nearby:
+                        if b"license" in nearby or b"trial" in nearby or b"demo" in nearby:
                             # Convert conditional jump to NOP (defensive technique)
-                            binary_data[offset:offset+len(pattern)] = b'\x90' * len(pattern)
+                            binary_data[offset:offset+len(pattern)] = b"\x90" * len(pattern)
                             patches_applied += 1
                             results.append(f"[PATCH] NOPed potential license check jump at offset 0x{offset:x}")
 
@@ -613,7 +610,7 @@ class AdvancedDemoPlugin(BasePlugin):
 
                 if patches_applied > 0:
                     # Write patched binary
-                    with open(binary_path, 'wb') as f:
+                    with open(binary_path, "wb") as f:
                         f.write(binary_data)
 
                     results.append(f"[SUCCESS] Applied {patches_applied} patches successfully")
@@ -625,7 +622,7 @@ class AdvancedDemoPlugin(BasePlugin):
                     results.append("[INFO] No applicable patches found in binary")
 
             except Exception as patch_error:
-                results.append(f"[ERROR] Patching failed: {str(patch_error)}")
+                results.append(f"[ERROR] Patching failed: {patch_error!s}")
                 # Restore from backup if available
                 backup_files = [f for f in os.listdir(os.path.dirname(binary_path))
                               if f.startswith(os.path.basename(binary_path) + ".backup_")]
@@ -642,29 +639,29 @@ class AdvancedDemoPlugin(BasePlugin):
             results.append("[TOOLS] Defensive patching operations completed:")
 
             # Verification
-            if patch_options.get('verify_patch', True):
+            if patch_options.get("verify_patch", True):
                 results.append("[INFO] Verifying patch integrity...")
                 results.append("[OK] Patch verification completed")
 
             results.append("[OK] Patch operation completed successfully")
 
         except Exception as e:
-            results.append(f"[ERROR] Patch error: {str(e)}")
+            results.append(f"[ERROR] Patch error: {e!s}")
 
         return results
 
-    def export_results(self, output_path: str, format_type: str = 'json') -> bool:
+    def export_results(self, output_path: str, format_type: str = "json") -> bool:
         """Export analysis results to file."""
         if not self.last_analysis:
             return False
 
         try:
-            if format_type.lower() == 'json':
-                with open(output_path, 'w') as f:
+            if format_type.lower() == "json":
+                with open(output_path, "w") as f:
                     json.dump(self.last_analysis, f, indent=2)
-            elif format_type.lower() == 'txt':
-                with open(output_path, 'w') as f:
-                    f.write("\n".join(self.last_analysis['results']))
+            elif format_type.lower() == "txt":
+                with open(output_path, "w") as f:
+                    f.write("\n".join(self.last_analysis["results"]))
             else:
                 return False
 
@@ -672,7 +669,7 @@ class AdvancedDemoPlugin(BasePlugin):
         except Exception:
             return False
 
-    def configure(self, config_updates: Dict[str, Any]) -> bool:
+    def configure(self, config_updates: dict[str, Any]) -> bool:
         """Update plugin configuration."""
         try:
             self.config.update(config_updates)
@@ -680,7 +677,7 @@ class AdvancedDemoPlugin(BasePlugin):
         except Exception:
             return False
 
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         """Return list of plugin capabilities."""
         return [
             "binary_analysis",
@@ -693,15 +690,15 @@ class AdvancedDemoPlugin(BasePlugin):
             "progress_reporting",
             "configuration",
             "export",
-            "validation"
+            "validation",
         ]
 
 def register():
-    """
-    Required function to register the plugin with Intellicrack.
+    """Required function to register the plugin with Intellicrack.
 
     Returns:
         Instance of the plugin class
+
     """
     return AdvancedDemoPlugin()
 
@@ -718,6 +715,6 @@ _plugin_metadata = PluginMetadata(
     author=PLUGIN_AUTHOR,
     description=PLUGIN_DESCRIPTION,
     categories=PLUGIN_CATEGORIES,
-    supported_formats=PLUGIN_SUPPORTED_FORMATS
+    supported_formats=PLUGIN_SUPPORTED_FORMATS,
 )
-PLUGIN_INFO = create_plugin_info(_plugin_metadata, 'register')
+PLUGIN_INFO = create_plugin_info(_plugin_metadata, "register")

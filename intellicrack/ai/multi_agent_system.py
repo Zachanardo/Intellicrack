@@ -1,5 +1,4 @@
-"""
-Multi-Agent Collaboration System
+"""Multi-Agent Collaboration System
 
 Copyright (C) 2025 Zachary Flint
 
@@ -31,7 +30,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from queue import Empty, PriorityQueue, Queue
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 from ..utils.logger import get_logger
 from .learning_engine_simple import get_learning_engine
@@ -43,6 +42,7 @@ logger = get_logger(__name__)
 
 class AgentRole(Enum):
     """Specialized agent roles."""
+
     STATIC_ANALYZER = "static_analyzer"
     DYNAMIC_ANALYZER = "dynamic_analyzer"
     REVERSE_ENGINEER = "reverse_engineer"
@@ -56,6 +56,7 @@ class AgentRole(Enum):
 
 class MessageType(Enum):
     """Types of inter-agent messages."""
+
     TASK_REQUEST = "task_request"
     TASK_RESPONSE = "task_response"
     KNOWLEDGE_SHARE = "knowledge_share"
@@ -68,6 +69,7 @@ class MessageType(Enum):
 
 class TaskPriority(Enum):
     """Task priority levels."""
+
     CRITICAL = 1
     HIGH = 2
     MEDIUM = 3
@@ -78,70 +80,75 @@ class TaskPriority(Enum):
 @dataclass
 class AgentMessage:
     """Message between agents."""
+
     message_id: str
     sender_id: str
     recipient_id: str
     message_type: MessageType
-    content: Dict[str, Any]
+    content: dict[str, Any]
     priority: TaskPriority = TaskPriority.MEDIUM
     timestamp: datetime = field(default_factory=datetime.now)
-    correlation_id: Optional[str] = None
+    correlation_id: str | None = None
     requires_response: bool = False
-    response_timeout: Optional[float] = None
+    response_timeout: float | None = None
 
 
 @dataclass
 class AgentTask:
     """Task for agent execution."""
+
     task_id: str
     task_type: str
     description: str
-    input_data: Dict[str, Any]
+    input_data: dict[str, Any]
     priority: TaskPriority
     created_at: datetime = field(default_factory=datetime.now)
-    assigned_to: Optional[str] = None
-    dependencies: List[str] = field(default_factory=list)
-    deadline: Optional[datetime] = None
-    context: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    assigned_to: str | None = None
+    dependencies: list[str] = field(default_factory=list)
+    deadline: datetime | None = None
+    context: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class AgentCapability:
     """Agent capability definition."""
+
     capability_name: str
     description: str
-    input_types: List[str]
-    output_types: List[str]
+    input_types: list[str]
+    output_types: list[str]
     processing_time_estimate: float
     confidence_level: float
-    resource_requirements: Dict[str, Any] = field(default_factory=dict)
-    prerequisites: List[str] = field(default_factory=list)
+    resource_requirements: dict[str, Any] = field(default_factory=dict)
+    prerequisites: list[str] = field(default_factory=list)
 
 
 @dataclass
 class CollaborationResult:
     """Result of agent collaboration."""
+
     task_id: str
     success: bool
-    result_data: Dict[str, Any]
-    participating_agents: List[str]
+    result_data: dict[str, Any]
+    participating_agents: list[str]
     execution_time: float
     confidence: float
-    errors: List[str] = field(default_factory=list)
-    knowledge_gained: Dict[str, Any] = field(default_factory=dict)
+    errors: list[str] = field(default_factory=list)
+    knowledge_gained: dict[str, Any] = field(default_factory=dict)
 
 
 class BaseAgent(ABC):
     """Base class for all specialized agents."""
 
-    def __init__(self, agent_id: str, role: AgentRole, llm_manager: Optional[LLMManager] = None):
+    def __init__(self, agent_id: str, role: AgentRole, llm_manager: LLMManager | None = None):
         """Initialize the base agent.
 
         Args:
             agent_id: Unique identifier for the agent
             role: Role of the agent from AgentRole enum
             llm_manager: Optional LLM manager for AI capabilities
+
         """
         self.logger = logging.getLogger(__name__ + ".BaseAgent")
         self.agent_id = agent_id
@@ -151,14 +158,14 @@ class BaseAgent(ABC):
         # Agent state
         self.active = False
         self.busy = False
-        self.current_task: Optional[AgentTask] = None
+        self.current_task: AgentTask | None = None
         self.message_queue: Queue = Queue()
-        self.response_waiters: Dict[str, Queue] = {}
+        self.response_waiters: dict[str, Queue] = {}
 
         # Capabilities
-        self.capabilities: List[AgentCapability] = []
-        self.knowledge_base: Dict[str, Any] = {}
-        self.learned_patterns: List[str] = []
+        self.capabilities: list[AgentCapability] = []
+        self.knowledge_base: dict[str, Any] = {}
+        self.learned_patterns: list[str] = []
 
         # Performance tracking
         self.tasks_completed = 0
@@ -167,8 +174,8 @@ class BaseAgent(ABC):
         self.last_activity = datetime.now()
 
         # Communication
-        self.collaboration_system: Optional["MultiAgentSystem"] = None
-        self.trusted_agents: Set[str] = set()
+        self.collaboration_system: MultiAgentSystem | None = None
+        self.trusted_agents: set[str] = set()
 
         # Learning engine
         self.learning_engine = get_learning_engine()
@@ -181,10 +188,9 @@ class BaseAgent(ABC):
     @abstractmethod
     def _initialize_capabilities(self):
         """Initialize agent-specific capabilities."""
-        pass
 
     @abstractmethod
-    async def execute_task(self, task: AgentTask) -> Dict[str, Any]:
+    async def execute_task(self, task: AgentTask) -> dict[str, Any]:
         """Execute a task specific to this agent."""
         # Implementation should use the task parameter to perform agent-specific work
         raise NotImplementedError(
@@ -197,7 +203,7 @@ class BaseAgent(ABC):
         # Start message processing loop
         self.message_thread = threading.Thread(
             target=self._message_processing_loop,
-            daemon=True
+            daemon=True,
         )
         self.message_thread.start()
 
@@ -256,7 +262,7 @@ class BaseAgent(ABC):
             input_data=task_data.get("input", {}),
             priority=TaskPriority(task_data.get("priority", 3)),
             context=task_data.get("context", {}),
-            metadata=task_data.get("metadata", {})
+            metadata=task_data.get("metadata", {}),
         )
 
         # Execute task asynchronously
@@ -286,7 +292,7 @@ class BaseAgent(ABC):
                 execution_time=execution_time,
                 memory_usage=0,  # Could implement memory tracking
                 context={"agent_role": self.role.value,
-                         "agent_id": self.agent_id}
+                         "agent_id": self.agent_id},
             )
 
             # Send success response
@@ -307,7 +313,7 @@ class BaseAgent(ABC):
                 memory_usage=0,
                 error_message=str(e),
                 context={"agent_role": self.role.value,
-                         "agent_id": self.agent_id}
+                         "agent_id": self.agent_id},
             )
 
             logger.error(f"Task execution failed in {self.agent_id}: {e}")
@@ -318,7 +324,7 @@ class BaseAgent(ABC):
             self.busy = False
             self.current_task = None
 
-    def _can_execute_task(self, task_data: Dict[str, Any]) -> bool:
+    def _can_execute_task(self, task_data: dict[str, Any]) -> bool:
         """Check if agent can execute the task."""
         task_type = task_data.get("type", "")
 
@@ -342,7 +348,7 @@ class BaseAgent(ABC):
             self.knowledge_base[key][source_agent] = {
                 "value": value,
                 "timestamp": datetime.now(),
-                "confidence": message.content.get("confidence", 0.8)
+                "confidence": message.content.get("confidence", 0.8),
             }
 
         logger.info(
@@ -358,7 +364,7 @@ class BaseAgent(ABC):
                 self._send_collaboration_response(message, True, {
                     "available": True,
                     "estimated_time": self._estimate_execution_time(required_capability),
-                    "confidence": self._get_capability_confidence(required_capability)
+                    "confidence": self._get_capability_confidence(required_capability),
                 })
             else:
                 self._send_collaboration_response(
@@ -374,7 +380,7 @@ class BaseAgent(ABC):
                 "input_types": capability.input_types,
                 "output_types": capability.output_types,
                 "confidence": capability.confidence_level,
-                "estimated_time": capability.processing_time_estimate
+                "estimated_time": capability.processing_time_estimate,
             })
 
         response = AgentMessage(
@@ -383,7 +389,7 @@ class BaseAgent(ABC):
             recipient_id=message.sender_id,
             message_type=MessageType.CAPABILITY_RESPONSE,
             content={"capabilities": capabilities_data},
-            correlation_id=message.message_id
+            correlation_id=message.message_id,
         )
 
         self._send_message(response)
@@ -394,7 +400,7 @@ class BaseAgent(ABC):
         if correlation_id and correlation_id in self.response_waiters:
             self.response_waiters[correlation_id].put(message)
 
-    def _send_task_response(self, original_message: AgentMessage, success: bool, result: Dict[str, Any]):
+    def _send_task_response(self, original_message: AgentMessage, success: bool, result: dict[str, Any]):
         """Send task response."""
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
@@ -404,9 +410,9 @@ class BaseAgent(ABC):
             content={
                 "success": success,
                 "result": result,
-                "execution_time": time.time() - original_message.timestamp.timestamp()
+                "execution_time": time.time() - original_message.timestamp.timestamp(),
             },
-            correlation_id=original_message.message_id
+            correlation_id=original_message.message_id,
         )
 
         self._send_message(response)
@@ -421,14 +427,14 @@ class BaseAgent(ABC):
             content={
                 "success": False,
                 "result": {"error": f"Task rejected: {reason}"},
-                "rejected": True
+                "rejected": True,
             },
-            correlation_id=original_message.message_id
+            correlation_id=original_message.message_id,
         )
 
         self._send_message(response)
 
-    def _send_collaboration_response(self, original_message: AgentMessage, available: bool, data: Dict[str, Any]):
+    def _send_collaboration_response(self, original_message: AgentMessage, available: bool, data: dict[str, Any]):
         """Send collaboration response."""
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
@@ -437,9 +443,9 @@ class BaseAgent(ABC):
             message_type=MessageType.TASK_RESPONSE,
             content={
                 "available": available,
-                "data": data
+                "data": data,
             },
-            correlation_id=original_message.message_id
+            correlation_id=original_message.message_id,
         )
 
         self._send_message(response)
@@ -452,7 +458,7 @@ class BaseAgent(ABC):
             recipient_id=original_message.sender_id,
             message_type=MessageType.ERROR_REPORT,
             content={"error": error},
-            correlation_id=original_message.message_id
+            correlation_id=original_message.message_id,
         )
 
         self._send_message(response)
@@ -480,7 +486,7 @@ class BaseAgent(ABC):
                 return capability.confidence_level
         return 0.0
 
-    def share_knowledge(self, knowledge: Dict[str, Any], target_agents: Optional[List[str]] = None):
+    def share_knowledge(self, knowledge: dict[str, Any], target_agents: list[str] | None = None):
         """Share knowledge with other agents."""
         if not self.collaboration_system:
             return
@@ -498,12 +504,12 @@ class BaseAgent(ABC):
                 content={
                     "knowledge": knowledge,
                     "confidence": 0.8,
-                    "source_role": self.role.value
-                }
+                    "source_role": self.role.value,
+                },
             )
             self._send_message(message)
 
-    def get_agent_status(self) -> Dict[str, Any]:
+    def get_agent_status(self) -> dict[str, Any]:
         """Get current agent status."""
         return {
             "agent_id": self.agent_id,
@@ -518,7 +524,7 @@ class BaseAgent(ABC):
             "last_activity": self.last_activity.isoformat(),
             "capabilities_count": len(self.capabilities),
             "knowledge_base_size": len(self.knowledge_base),
-            "trusted_agents": len(self.trusted_agents)
+            "trusted_agents": len(self.trusted_agents),
         }
 
 
@@ -534,7 +540,7 @@ class StaticAnalysisAgent(BaseAgent):
                 input_types=["binary_file", "file_path"],
                 output_types=["analysis_report", "metadata"],
                 processing_time_estimate=5.0,
-                confidence_level=0.9
+                confidence_level=0.9,
             ),
             AgentCapability(
                 capability_name="code_analysis",
@@ -542,7 +548,7 @@ class StaticAnalysisAgent(BaseAgent):
                 input_types=["source_code", "code_file"],
                 output_types=["vulnerability_report", "code_metrics"],
                 processing_time_estimate=10.0,
-                confidence_level=0.85
+                confidence_level=0.85,
             ),
             AgentCapability(
                 capability_name="control_flow_analysis",
@@ -550,25 +556,24 @@ class StaticAnalysisAgent(BaseAgent):
                 input_types=["binary_file", "disassembly"],
                 output_types=["control_flow_graph", "call_graph"],
                 processing_time_estimate=15.0,
-                confidence_level=0.8
-            )
+                confidence_level=0.8,
+            ),
         ]
 
-    async def execute_task(self, task: AgentTask) -> Dict[str, Any]:
+    async def execute_task(self, task: AgentTask) -> dict[str, Any]:
         """Execute static analysis task."""
         task_type = task.task_type
         input_data = task.input_data
 
         if task_type == "binary_analysis":
             return await self._analyze_binary(input_data)
-        elif task_type == "code_analysis":
+        if task_type == "code_analysis":
             return await self._analyze_code(input_data)
-        elif task_type == "control_flow_analysis":
+        if task_type == "control_flow_analysis":
             return await self._analyze_control_flow(input_data)
-        else:
-            raise ValueError(f"Unknown task type: {task_type}")
+        raise ValueError(f"Unknown task type: {task_type}")
 
-    async def _analyze_binary(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_binary(self, input_data: dict[str, Any]) -> dict[str, Any]:
         """Perform binary analysis."""
         file_path = input_data.get("file_path", "")
 
@@ -586,18 +591,18 @@ class StaticAnalysisAgent(BaseAgent):
             "exports": [],
             "entry_point": "0x401000",
             "file_size": input_data.get("file_size", 0),
-            "confidence": 0.9
+            "confidence": 0.9,
         }
 
         # Share knowledge with other agents
         self.share_knowledge({
             "binary_metadata": analysis_result,
-            "analysis_timestamp": datetime.now().isoformat()
+            "analysis_timestamp": datetime.now().isoformat(),
         })
 
         return analysis_result
 
-    async def _analyze_code(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_code(self, input_data: dict[str, Any]) -> dict[str, Any]:
         """Perform code analysis."""
         code = input_data.get("code", "")
         language = input_data.get("language", "unknown")
@@ -612,15 +617,15 @@ class StaticAnalysisAgent(BaseAgent):
             "classes_detected": 2,
             "potential_vulnerabilities": [
                 {"type": "buffer_overflow", "line": 45, "severity": "high"},
-                {"type": "sql_injection", "line": 78, "severity": "medium"}
+                {"type": "sql_injection", "line": 78, "severity": "medium"},
             ],
             "code_quality_score": 0.75,
-            "confidence": 0.85
+            "confidence": 0.85,
         }
 
         return analysis_result
 
-    async def _analyze_control_flow(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_control_flow(self, input_data: dict[str, Any]) -> dict[str, Any]:
         """Perform control flow analysis."""
         binary_path = input_data.get("binary_path", "")
 
@@ -636,9 +641,9 @@ class StaticAnalysisAgent(BaseAgent):
             "call_graph_nodes": 45,
             "control_flow_anomalies": [
                 {"type": "unreachable_code", "address": "0x401234"},
-                {"type": "indirect_call", "address": "0x402456"}
+                {"type": "indirect_call", "address": "0x402456"},
             ],
-            "confidence": 0.8
+            "confidence": 0.8,
         }
 
         return result
@@ -656,7 +661,7 @@ class DynamicAnalysisAgent(BaseAgent):
                 input_types=["executable", "process"],
                 output_types=["runtime_behavior", "execution_trace"],
                 processing_time_estimate=30.0,
-                confidence_level=0.85
+                confidence_level=0.85,
             ),
             AgentCapability(
                 capability_name="memory_analysis",
@@ -664,7 +669,7 @@ class DynamicAnalysisAgent(BaseAgent):
                 input_types=["process", "memory_dump"],
                 output_types=["memory_report", "heap_analysis"],
                 processing_time_estimate=20.0,
-                confidence_level=0.8
+                confidence_level=0.8,
             ),
             AgentCapability(
                 capability_name="api_monitoring",
@@ -672,25 +677,24 @@ class DynamicAnalysisAgent(BaseAgent):
                 input_types=["process", "executable"],
                 output_types=["api_trace", "system_interactions"],
                 processing_time_estimate=25.0,
-                confidence_level=0.9
-            )
+                confidence_level=0.9,
+            ),
         ]
 
-    async def execute_task(self, task: AgentTask) -> Dict[str, Any]:
+    async def execute_task(self, task: AgentTask) -> dict[str, Any]:
         """Execute dynamic analysis task."""
         task_type = task.task_type
         input_data = task.input_data
 
         if task_type == "runtime_analysis":
             return await self._analyze_runtime(input_data)
-        elif task_type == "memory_analysis":
+        if task_type == "memory_analysis":
             return await self._analyze_memory(input_data)
-        elif task_type == "api_monitoring":
+        if task_type == "api_monitoring":
             return await self._monitor_api_calls(input_data)
-        else:
-            raise ValueError(f"Unknown task type: {task_type}")
+        raise ValueError(f"Unknown task type: {task_type}")
 
-    async def _analyze_runtime(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_runtime(self, input_data: dict[str, Any]) -> dict[str, Any]:
         """Perform runtime analysis."""
         executable = input_data.get("executable", "")
 
@@ -706,21 +710,21 @@ class DynamicAnalysisAgent(BaseAgent):
             "memory_peak": 45.6,
             "file_operations": [
                 {"type": "read", "file": "config.ini"},
-                {"type": "write", "file": "output.log"}
+                {"type": "write", "file": "output.log"},
             ],
             "network_connections": [
-                {"host": os.environ.get("API_SERVER_HOST", "api.internal"), "port": 443, "protocol": "HTTPS"}
+                {"host": os.environ.get("API_SERVER_HOST", "api.internal"), "port": 443, "protocol": "HTTPS"},
             ],
             "registry_operations": [
-                {"operation": "read", "key": "HKLM\\Software\\Example"}
+                {"operation": "read", "key": "HKLM\\Software\\Example"},
             ],
             "behavior_patterns": ["license_check", "network_communication"],
-            "confidence": 0.85
+            "confidence": 0.85,
         }
 
         return result
 
-    async def _analyze_memory(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_memory(self, input_data: dict[str, Any]) -> dict[str, Any]:
         """Perform memory analysis."""
         process_id = input_data.get("process_id", 0)
 
@@ -734,19 +738,19 @@ class DynamicAnalysisAgent(BaseAgent):
             "stack_usage": 2.1,
             "memory_leaks": [],
             "buffer_overflows": [
-                {"address": "0x7fff1234", "size": 256, "severity": "high"}
+                {"address": "0x7fff1234", "size": 256, "severity": "high"},
             ],
             "memory_protection": {
                 "dep_enabled": True,
                 "aslr_enabled": True,
-                "stack_canaries": True
+                "stack_canaries": True,
             },
-            "confidence": 0.8
+            "confidence": 0.8,
         }
 
         return result
 
-    async def _monitor_api_calls(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _monitor_api_calls(self, input_data: dict[str, Any]) -> dict[str, Any]:
         """Monitor API calls."""
         process_id = input_data.get("process_id", 0)
 
@@ -762,17 +766,17 @@ class DynamicAnalysisAgent(BaseAgent):
                 {"function": "RegOpenKeyExA", "args": [
                     "HKLM\\Software"], "result": "success"},
                 {"function": "InternetConnectA", "args": [
-                    os.environ.get("API_SERVER_HOST", "api.internal")], "result": "success"}
+                    os.environ.get("API_SERVER_HOST", "api.internal")], "result": "success"},
             ],
             "suspicious_apis": [
                 {"function": "VirtualAlloc", "reason": "executable_memory"},
-                {"function": "WriteProcessMemory", "reason": "code_injection"}
+                {"function": "WriteProcessMemory", "reason": "code_injection"},
             ],
             "protection_bypasses": [
                 {"type": "amsi_bypass", "detected": True},
-                {"type": "etw_bypass", "detected": False}
+                {"type": "etw_bypass", "detected": False},
             ],
-            "confidence": 0.9
+            "confidence": 0.9,
         }
 
         return result
@@ -790,7 +794,7 @@ class ReverseEngineeringAgent(BaseAgent):
                 input_types=["binary_file", "code_bytes"],
                 output_types=["assembly_code", "instruction_analysis"],
                 processing_time_estimate=8.0,
-                confidence_level=0.9
+                confidence_level=0.9,
             ),
             AgentCapability(
                 capability_name="decompilation",
@@ -798,7 +802,7 @@ class ReverseEngineeringAgent(BaseAgent):
                 input_types=["binary_file", "assembly_code"],
                 output_types=["pseudo_code", "function_signatures"],
                 processing_time_estimate=20.0,
-                confidence_level=0.7
+                confidence_level=0.7,
             ),
             AgentCapability(
                 capability_name="algorithm_analysis",
@@ -807,25 +811,24 @@ class ReverseEngineeringAgent(BaseAgent):
                 output_types=["algorithm_identification",
                               "complexity_analysis"],
                 processing_time_estimate=15.0,
-                confidence_level=0.8
-            )
+                confidence_level=0.8,
+            ),
         ]
 
-    async def execute_task(self, task: AgentTask) -> Dict[str, Any]:
+    async def execute_task(self, task: AgentTask) -> dict[str, Any]:
         """Execute reverse engineering task."""
         task_type = task.task_type
         input_data = task.input_data
 
         if task_type == "disassembly":
             return await self._disassemble_code(input_data)
-        elif task_type == "decompilation":
+        if task_type == "decompilation":
             return await self._decompile_code(input_data)
-        elif task_type == "algorithm_analysis":
+        if task_type == "algorithm_analysis":
             return await self._analyze_algorithms(input_data)
-        else:
-            raise ValueError(f"Unknown task type: {task_type}")
+        raise ValueError(f"Unknown task type: {task_type}")
 
-    async def _disassemble_code(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _disassemble_code(self, input_data: dict[str, Any]) -> dict[str, Any]:
         """Disassemble binary code."""
         binary_data = input_data.get("binary_data", b"")
         start_address = input_data.get("start_address", 0x401000)
@@ -840,21 +843,21 @@ class ReverseEngineeringAgent(BaseAgent):
             "assembly_instructions": [
                 {"address": "0x401000", "instruction": "push ebp", "bytes": "55"},
                 {"address": "0x401001", "instruction": "mov ebp, esp", "bytes": "8bec"},
-                {"address": "0x401003", "instruction": "sub esp, 20", "bytes": "83ec14"}
+                {"address": "0x401003", "instruction": "sub esp, 20", "bytes": "83ec14"},
             ],
             "function_boundaries": [
                 {"start": "0x401000", "end": "0x401050", "name": "main"},
-                {"start": "0x401060", "end": "0x4010a0", "name": "validate_license"}
+                {"start": "0x401060", "end": "0x4010a0", "name": "validate_license"},
             ],
             "cross_references": [
-                {"from": "0x401020", "to": "0x401060", "type": "call"}
+                {"from": "0x401020", "to": "0x401060", "type": "call"},
             ],
-            "confidence": 0.9
+            "confidence": 0.9,
         }
 
         return result
 
-    async def _decompile_code(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _decompile_code(self, input_data: dict[str, Any]) -> dict[str, Any]:
         """Decompile code to higher level."""
         assembly_code = input_data.get("assembly_code", [])
 
@@ -886,18 +889,18 @@ int validate_license(char* license_key) {
                 {"name": "validate_license", "parameters": [
                     "char*"], "return_type": "int"},
                 {"name": "main", "parameters": [
-                    "int", "char**"], "return_type": "int"}
+                    "int", "char**"], "return_type": "int"},
             ],
             "variable_analysis": [
                 {"name": "license_key", "type": "char*", "scope": "parameter"},
-                {"name": "result", "type": "int", "scope": "local"}
+                {"name": "result", "type": "int", "scope": "local"},
             ],
-            "confidence": 0.7
+            "confidence": 0.7,
         }
 
         return result
 
-    async def _analyze_algorithms(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_algorithms(self, input_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze algorithms in code."""
         code = input_data.get("code", "")
 
@@ -912,13 +915,13 @@ int validate_license(char* license_key) {
                 {"name": "string_comparison",
                     "complexity": "O(n)", "confidence": 0.9},
                 {"name": "basic_validation",
-                    "complexity": "O(1)", "confidence": 0.8}
+                    "complexity": "O(1)", "confidence": 0.8},
             ],
             "cryptographic_functions": [],
             "obfuscation_techniques": [],
             "optimization_level": "medium",
             "compiler_patterns": ["msvc_2019"],
-            "confidence": 0.8
+            "confidence": 0.8,
         }
 
         return result
@@ -927,15 +930,16 @@ int validate_license(char* license_key) {
 class MultiAgentSystem:
     """Multi-agent collaboration system."""
 
-    def __init__(self, llm_manager: Optional[LLMManager] = None):
+    def __init__(self, llm_manager: LLMManager | None = None):
         """Initialize the multi-agent collaboration system.
 
         Args:
             llm_manager: Optional LLM manager instance. If None, creates a new
                         default LLMManager
+
         """
         self.llm_manager = llm_manager or LLMManager()
-        self.agents: Dict[str, BaseAgent] = {}
+        self.agents: dict[str, BaseAgent] = {}
         self.message_router = MessageRouter()
         self.task_distributor = TaskDistributor(self)
         self.knowledge_manager = KnowledgeManager()
@@ -946,7 +950,7 @@ class MultiAgentSystem:
             "messages_sent": 0,
             "tasks_distributed": 0,
             "collaborations_successful": 0,
-            "knowledge_shares": 0
+            "knowledge_shares": 0,
         }
 
         logger.info("Multi-agent system initialized")
@@ -1035,7 +1039,7 @@ class MultiAgentSystem:
                 result_data=combined_result,
                 participating_agents=participating_agents,
                 execution_time=execution_time,
-                confidence=confidence
+                confidence=confidence,
             )
 
             # Share collaboration knowledge
@@ -1054,10 +1058,10 @@ class MultiAgentSystem:
                 participating_agents=participating_agents,
                 execution_time=execution_time,
                 confidence=0.0,
-                errors=[str(e)]
+                errors=[str(e)],
             )
 
-    def _determine_required_capabilities(self, task: AgentTask) -> List[str]:
+    def _determine_required_capabilities(self, task: AgentTask) -> list[str]:
         """Determine required capabilities for task."""
         task_type = task.task_type
 
@@ -1065,12 +1069,12 @@ class MultiAgentSystem:
             "binary_analysis": ["binary_analysis", "disassembly"],
             "vulnerability_assessment": ["static_analysis", "dynamic_analysis", "code_analysis"],
             "reverse_engineering": ["disassembly", "decompilation", "algorithm_analysis"],
-            "comprehensive_analysis": ["binary_analysis", "runtime_analysis", "disassembly"]
+            "comprehensive_analysis": ["binary_analysis", "runtime_analysis", "disassembly"],
         }
 
         return capability_map.get(task_type, [task_type])
 
-    def _find_suitable_agents(self, required_capabilities: List[str]) -> List[Tuple[str, BaseAgent]]:
+    def _find_suitable_agents(self, required_capabilities: list[str]) -> list[tuple[str, BaseAgent]]:
         """Find agents with required capabilities."""
         suitable_agents = []
 
@@ -1089,12 +1093,12 @@ class MultiAgentSystem:
         suitable_agents.sort(key=lambda x: (
             x[1].tasks_completed /
             max(1, x[1].tasks_completed + x[1].tasks_failed),
-            -x[1].total_execution_time / max(1, x[1].tasks_completed)
+            -x[1].total_execution_time / max(1, x[1].tasks_completed),
         ), reverse=True)
 
         return suitable_agents
 
-    def _create_subtasks(self, main_task: AgentTask, suitable_agents: List[Tuple[str, BaseAgent]]) -> List[Tuple[str, AgentTask]]:
+    def _create_subtasks(self, main_task: AgentTask, suitable_agents: list[tuple[str, BaseAgent]]) -> list[tuple[str, AgentTask]]:
         """Create subtasks for agents."""
         subtasks = []
 
@@ -1112,16 +1116,16 @@ class MultiAgentSystem:
                         priority=main_task.priority,
                         context=main_task.context,
                         metadata={**main_task.metadata,
-                                  "parent_task": main_task.task_id}
+                                  "parent_task": main_task.task_id},
                     )
                     subtasks.append((agent_id, subtask))
                     break
 
         return subtasks
 
-    async def _execute_subtasks_parallel(self, subtasks: List[Tuple[str, AgentTask]]) -> Dict[str, Dict[str, Any]]:
+    async def _execute_subtasks_parallel(self, subtasks: list[tuple[str, AgentTask]]) -> dict[str, dict[str, Any]]:
         """Execute subtasks in parallel."""
-        async def execute_subtask(agent_id: str, subtask: AgentTask) -> Tuple[str, Dict[str, Any]]:
+        async def execute_subtask(agent_id: str, subtask: AgentTask) -> tuple[str, dict[str, Any]]:
             agent = self.agents[agent_id]
             try:
                 result = await agent.execute_task(subtask)
@@ -1137,12 +1141,12 @@ class MultiAgentSystem:
 
         return dict(results)
 
-    def _combine_results(self, subtask_results: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+    def _combine_results(self, subtask_results: dict[str, dict[str, Any]]) -> dict[str, Any]:
         """Combine results from multiple agents."""
         combined = {
             "agent_results": {},
             "unified_analysis": {},
-            "cross_validated_findings": []
+            "cross_validated_findings": [],
         }
 
         successful_results = {}
@@ -1160,13 +1164,13 @@ class MultiAgentSystem:
 
         return combined
 
-    def _create_unified_analysis(self, results: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+    def _create_unified_analysis(self, results: dict[str, dict[str, Any]]) -> dict[str, Any]:
         """Create unified analysis from multiple agent results."""
         unified = {
             "overall_assessment": "analysis_complete",
             "confidence_scores": {},
             "combined_findings": [],
-            "recommendations": []
+            "recommendations": [],
         }
 
         # Combine confidence scores
@@ -1190,7 +1194,7 @@ class MultiAgentSystem:
 
         return unified
 
-    def _cross_validate_findings(self, results: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _cross_validate_findings(self, results: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
         """Cross-validate findings between agents."""
         validated_findings = []
 
@@ -1209,12 +1213,12 @@ class MultiAgentSystem:
                 validated_findings.append({
                     "pattern": pattern,
                     "confirmed_by": confirming_agents,
-                    "confidence": len(confirming_agents) / len(results)
+                    "confidence": len(confirming_agents) / len(results),
                 })
 
         return validated_findings
 
-    def _extract_patterns(self, result: Dict[str, Any]) -> List[str]:
+    def _extract_patterns(self, result: dict[str, Any]) -> list[str]:
         """Extract patterns from agent result."""
         patterns = []
 
@@ -1234,7 +1238,7 @@ class MultiAgentSystem:
 
         return patterns
 
-    def _calculate_combined_confidence(self, subtask_results: Dict[str, Dict[str, Any]]) -> float:
+    def _calculate_combined_confidence(self, subtask_results: dict[str, dict[str, Any]]) -> float:
         """Calculate combined confidence from multiple agents."""
         confidences = []
 
@@ -1258,9 +1262,9 @@ class MultiAgentSystem:
                 "participating_agents": result.participating_agents,
                 "execution_time": result.execution_time,
                 "success": result.success,
-                "confidence": result.confidence
+                "confidence": result.confidence,
             },
-            "effective_combinations": result.participating_agents if result.success else []
+            "effective_combinations": result.participating_agents if result.success else [],
         }
 
         # Share with all agents that participated
@@ -1271,7 +1275,7 @@ class MultiAgentSystem:
 
         self.collaboration_stats["knowledge_shares"] += 1
 
-    def get_system_status(self) -> Dict[str, Any]:
+    def get_system_status(self) -> dict[str, Any]:
         """Get multi-agent system status."""
         agent_statuses = {}
         for agent_id, agent in self.agents.items():
@@ -1283,7 +1287,7 @@ class MultiAgentSystem:
             "active_agents": len([a for a in self.agents.values() if a.active]),
             "busy_agents": len([a for a in self.agents.values() if a.busy]),
             "collaboration_stats": self.collaboration_stats,
-            "agents": agent_statuses
+            "agents": agent_statuses,
         }
 
 
@@ -1292,7 +1296,7 @@ class MessageRouter:
 
     def __init__(self):
         """Initialize the message router for agent communication."""
-        self.agent_queues: Dict[str, Queue] = {}
+        self.agent_queues: dict[str, Queue] = {}
         self.message_log: deque = deque(maxlen=1000)
 
     def register_agent(self, agent_id: str, message_queue: Queue):
@@ -1313,7 +1317,7 @@ class MessageRouter:
                 "from": message.sender_id,
                 "to": message.recipient_id,
                 "type": message.message_type.value,
-                "message_id": message.message_id
+                "message_id": message.message_id,
             })
         else:
             logger.warning(f"No route found for agent {message.recipient_id}")
@@ -1328,6 +1332,7 @@ class TaskDistributor:
         Args:
             multi_agent_system: The parent multi-agent system that manages
                               agents and coordination
+
         """
         self.system = multi_agent_system
         self.task_queue: PriorityQueue = PriorityQueue()
@@ -1353,11 +1358,11 @@ class TaskDistributor:
                         "input": task.input_data,
                         "priority": task.priority.value,
                         "context": task.context,
-                        "metadata": task.metadata
-                    }
+                        "metadata": task.metadata,
+                    },
                 },
                 priority=task.priority,
-                requires_response=True
+                requires_response=True,
             )
 
             self.system.route_message(message)
@@ -1365,7 +1370,7 @@ class TaskDistributor:
 
         return ""
 
-    def _find_best_agent(self, task: AgentTask) -> Optional[BaseAgent]:
+    def _find_best_agent(self, task: AgentTask) -> BaseAgent | None:
         """Find best agent for task."""
         suitable_agents = []
 
@@ -1417,7 +1422,7 @@ class LoadBalancer:
 
     def __init__(self):
         """Initialize the load balancer for distributing tasks among agents."""
-        self.agent_loads: Dict[str, float] = {}
+        self.agent_loads: dict[str, float] = {}
         self.load_history: deque = deque(maxlen=100)
 
     def update_agent_load(self, agent_id: str, load: float):
@@ -1426,10 +1431,10 @@ class LoadBalancer:
         self.load_history.append({
             "timestamp": datetime.now(),
             "agent_id": agent_id,
-            "load": load
+            "load": load,
         })
 
-    def get_least_loaded_agent(self, available_agents: List[str]) -> Optional[str]:
+    def get_least_loaded_agent(self, available_agents: list[str]) -> str | None:
         """Get least loaded agent from available agents."""
         if not available_agents:
             return None
@@ -1451,9 +1456,9 @@ class KnowledgeManager:
 
     def __init__(self):
         """Initialize the knowledge manager for sharing information between agents."""
-        self.shared_knowledge: Dict[str, Dict[str, Any]] = {}
-        self.knowledge_graph: Dict[str, Set[str]] = defaultdict(set)
-        self.access_patterns: Dict[str, int] = defaultdict(int)
+        self.shared_knowledge: dict[str, dict[str, Any]] = {}
+        self.knowledge_graph: dict[str, set[str]] = defaultdict(set)
+        self.access_patterns: dict[str, int] = defaultdict(int)
 
     def store_knowledge(self, category: str, key: str, value: Any, source_agent: str):
         """Store knowledge from agent."""
@@ -1464,7 +1469,7 @@ class KnowledgeManager:
             "value": value,
             "source": source_agent,
             "timestamp": datetime.now(),
-            "access_count": 0
+            "access_count": 0,
         }
 
         logger.debug(
@@ -1473,7 +1478,7 @@ class KnowledgeManager:
         # Update knowledge graph
         self.knowledge_graph[source_agent].add(f"{category}:{key}")
 
-    def retrieve_knowledge(self, category: str, key: str, requesting_agent: str) -> Optional[Any]:
+    def retrieve_knowledge(self, category: str, key: str, requesting_agent: str) -> Any | None:
         """Retrieve knowledge for agent."""
         if category in self.shared_knowledge and key in self.shared_knowledge[category]:
             knowledge_item = self.shared_knowledge[category][key]
@@ -1488,7 +1493,7 @@ class KnowledgeManager:
             f"Knowledge not found for {category}:{key} requested by agent {requesting_agent}")
         return None
 
-    def get_related_knowledge(self, category: str, requesting_agent: str) -> Dict[str, Any]:
+    def get_related_knowledge(self, category: str, requesting_agent: str) -> dict[str, Any]:
         """Get all knowledge in category."""
         logger.debug(
             f"Agent '{requesting_agent}' requesting knowledge from category '{category}'")

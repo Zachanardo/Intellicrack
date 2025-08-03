@@ -1,13 +1,13 @@
-"""
-Production performance monitor for AI operations.
+"""Production performance monitor for AI operations.
 """
 
 import logging
-import time
 import threading
-from typing import Callable, Dict, Any
+import time
 from collections import defaultdict, deque
+from collections.abc import Callable
 from functools import wraps
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class PerformanceMonitor:
                 self.metrics[operation_name].append({
                     "duration": duration,
                     "timestamp": end_time,
-                    "success": success
+                    "success": success,
                 })
                 self.operation_counts[operation_name] += 1
                 if not success:
@@ -49,7 +49,7 @@ class PerformanceMonitor:
                 if len(self.metrics[operation_name]) > 1000:
                     self.metrics[operation_name] = self.metrics[operation_name][-1000:]
 
-    def get_stats(self, operation_name: str) -> Dict[str, Any]:
+    def get_stats(self, operation_name: str) -> dict[str, Any]:
         """Get performance statistics for an operation."""
         with self.lock:
             if operation_name not in self.metrics:
@@ -65,7 +65,7 @@ class PerformanceMonitor:
                 "min_duration": min(durations),
                 "max_duration": max(durations),
                 "error_rate": self.error_counts[operation_name] / self.operation_counts[operation_name],
-                "total_operations": self.operation_counts[operation_name]
+                "total_operations": self.operation_counts[operation_name],
             }
 
 
@@ -85,7 +85,7 @@ class AsyncPerformanceMonitor:
         with self.lock:
             self.active_operations[operation_id] = {
                 "name": operation_name,
-                "start_time": start_time
+                "start_time": start_time,
             }
 
         try:
@@ -104,7 +104,7 @@ class AsyncPerformanceMonitor:
                         "name": operation_name,
                         "duration": end_time - op_info["start_time"],
                         "success": success,
-                        "timestamp": end_time
+                        "timestamp": end_time,
                     })
 
         return result

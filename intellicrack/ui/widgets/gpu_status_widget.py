@@ -4,9 +4,9 @@ This module provides a widget for displaying GPU usage, memory,
 and compute capabilities in the system monitoring interface.
 """
 import subprocess
-from typing import Any, Dict, List
+from typing import Any
 
-from PyQt6.QtCore import QObject, QThread, Qt, pyqtSignal
+from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QGridLayout,
@@ -54,12 +54,12 @@ class GPUMonitorWorker(QObject):
             if self.running:
                 self.thread().msleep(1000)  # 1 second update
 
-    def _collect_gpu_data(self) -> Dict[str, Any]:
+    def _collect_gpu_data(self) -> dict[str, Any]:
         """Collect GPU data based on platform"""
         gpu_data = {
             "gpus": [],
             "platform": self.platform,
-            "error": None
+            "error": None,
         }
 
         if self.platform == "Windows":
@@ -89,7 +89,7 @@ class GPUMonitorWorker(QObject):
 
         return gpu_data
 
-    def _get_nvidia_gpu_info(self) -> List[Dict[str, Any]]:
+    def _get_nvidia_gpu_info(self) -> list[dict[str, Any]]:
         """Get NVIDIA GPU information using nvidia-smi"""
         gpus = []
         try:
@@ -97,9 +97,9 @@ class GPUMonitorWorker(QObject):
             result = subprocess.run(
                 ["nvidia-smi", "--query-gpu=index,name,temperature.gpu,utilization.gpu,memory.used,memory.total,power.draw",
                  "--format=csv,noheader,nounits"],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             if result.returncode == 0:
@@ -116,14 +116,14 @@ class GPUMonitorWorker(QObject):
                                 "utilization": float(parts[3]) if parts[3] != "[N/A]" else 0,
                                 "memory_used": float(parts[4]) if parts[4] != "[N/A]" else 0,
                                 "memory_total": float(parts[5]) if parts[5] != "[N/A]" else 0,
-                                "power": float(parts[6]) if parts[6] != "[N/A]" else 0
+                                "power": float(parts[6]) if parts[6] != "[N/A]" else 0,
                             })
         except (subprocess.SubprocessError, FileNotFoundError):
             pass
 
         return gpus
 
-    def _get_intel_arc_info(self) -> List[Dict[str, Any]]:
+    def _get_intel_arc_info(self) -> list[dict[str, Any]]:
         """Get Intel Arc GPU information"""
         gpus = []
         try:
@@ -142,14 +142,14 @@ class GPUMonitorWorker(QObject):
                         "utilization": 0,  # Would need Intel GPU tools
                         "memory_used": 0,
                         "memory_total": gpu.AdapterRAM / (1024**3) if gpu.AdapterRAM else 0,
-                        "power": 0
+                        "power": 0,
                     })
         except:
             pass
 
         return gpus
 
-    def _get_amd_gpu_info(self) -> List[Dict[str, Any]]:
+    def _get_amd_gpu_info(self) -> list[dict[str, Any]]:
         """Get AMD GPU information"""
         gpus = []
         # AMD GPU detection would go here
@@ -279,7 +279,7 @@ class GPUStatusWidget(QWidget):
             self.monitor_thread.quit()
             self.monitor_thread.wait()
 
-    def update_gpu_data(self, data: Dict[str, Any]):
+    def update_gpu_data(self, data: dict[str, Any]):
         """Update GPU data from monitor"""
         self.gpu_data = data
 
@@ -348,7 +348,7 @@ class GPUStatusWidget(QWidget):
         # Update capabilities
         self.update_capabilities(gpu)
 
-    def update_capabilities(self, gpu: Dict[str, Any]):
+    def update_capabilities(self, gpu: dict[str, Any]):
         """Update GPU capabilities display"""
         caps_text = []
 
@@ -421,4 +421,4 @@ class GPUStatusWidget(QWidget):
             self._start_monitoring()
 
         except Exception as e:
-            self.error_occurred.emit(f"Failed to refresh GPUs: {str(e)}")
+            self.error_occurred.emit(f"Failed to refresh GPUs: {e!s}")

@@ -20,9 +20,11 @@ class BaseTab(QWidget):
 
     def __init__(self, shared_context=None, parent=None):
         """Initialize the basetab.
-                Args:
+
+        Args:
         shared_context: Initialization parameter
         parent: Initialization parameter
+
         """
         super().__init__(parent)
         self.shared_context = shared_context or {}
@@ -58,7 +60,6 @@ class BaseTab(QWidget):
 
     def setup_content(self):
         """Override this method to setup the actual tab content"""
-        pass
 
     def clear_layout(self):
         """Clear all widgets and delete the existing layout"""

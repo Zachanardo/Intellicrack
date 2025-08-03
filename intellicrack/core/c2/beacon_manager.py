@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -19,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import time
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 """
 Beacon Manager for C2 Infrastructure
@@ -32,8 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 class BeaconManager:
-    """
-    Advanced beacon management system for C2 infrastructure.
+    """Advanced beacon management system for C2 infrastructure.
 
     Handles session health monitoring, beacon scheduling,
     and adaptive communication intervals.
@@ -60,14 +58,14 @@ class BeaconManager:
             "active_sessions": 0,
             "inactive_sessions": 0,
             "average_response_time": 0.0,
-            "last_update": time.time()
+            "last_update": time.time(),
         }
 
         # Adaptive intervals
         self.adaptive_intervals = {}
         self.performance_metrics = defaultdict(list)
 
-    def register_session(self, session_id: str, initial_config: Dict[str, Any] = None):
+    def register_session(self, session_id: str, initial_config: dict[str, Any] = None):
         """Register a new session for beacon management."""
         try:
             config = initial_config or {}
@@ -82,14 +80,14 @@ class BeaconManager:
                 "total_beacons": 0,
                 "status": "active",
                 "client_info": config.get("client_info", {}),
-                "performance_score": 1.0
+                "performance_score": 1.0,
             }
 
             self.session_health[session_id] = {
                 "last_seen": time.time(),
                 "response_times": [],
                 "connection_quality": "good",
-                "adaptive_interval": self.default_beacon_interval
+                "adaptive_interval": self.default_beacon_interval,
             }
 
             self.adaptive_intervals[session_id] = self.default_beacon_interval
@@ -122,7 +120,7 @@ class BeaconManager:
         except Exception as e:
             self.logger.error(f"Failed to unregister session {session_id}: {e}")
 
-    def update_beacon(self, session_id: str, beacon_data: Dict[str, Any]):
+    def update_beacon(self, session_id: str, beacon_data: dict[str, Any]):
         """Update beacon information for a session."""
         try:
             current_time = time.time()
@@ -156,7 +154,7 @@ class BeaconManager:
             self.beacon_data[session_id].append({
                 "timestamp": current_time,
                 "data": beacon_data,
-                "response_time": health["response_times"][-1] if health["response_times"] else 0
+                "response_time": health["response_times"][-1] if health["response_times"] else 0,
             })
 
             # Keep only last 50 beacon records per session
@@ -177,7 +175,7 @@ class BeaconManager:
         except Exception as e:
             self.logger.error(f"Failed to update beacon for session {session_id}: {e}")
 
-    def check_inactive_sessions(self) -> List[str]:
+    def check_inactive_sessions(self) -> list[str]:
         """Check for inactive sessions and return list of session IDs."""
         inactive_sessions = []
         current_time = time.time()
@@ -209,7 +207,7 @@ class BeaconManager:
             self.logger.error(f"Error checking inactive sessions: {e}")
             return []
 
-    def get_session_status(self, session_id: str) -> Optional[Dict[str, Any]]:
+    def get_session_status(self, session_id: str) -> dict[str, Any] | None:
         """Get status information for a specific session."""
         try:
             if session_id not in self.sessions:
@@ -238,14 +236,14 @@ class BeaconManager:
                 "average_response_time": avg_response_time,
                 "connection_quality": health["connection_quality"],
                 "performance_score": session["performance_score"],
-                "last_seen": health["last_seen"]
+                "last_seen": health["last_seen"],
             }
 
         except Exception as e:
             self.logger.error(f"Error getting session status for {session_id}: {e}")
             return None
 
-    def get_active_sessions(self) -> List[str]:
+    def get_active_sessions(self) -> list[str]:
         """Get list of active session IDs."""
         try:
             return [
@@ -284,12 +282,12 @@ class BeaconManager:
             # Adjust based on connection quality
             if health["connection_quality"] == "excellent":
                 return max(base_interval // 2, 30)  # Minimum 30 seconds
-            elif health["connection_quality"] == "good":
+            if health["connection_quality"] == "good":
                 return base_interval
-            elif health["connection_quality"] == "poor":
+            if health["connection_quality"] == "poor":
                 return min(base_interval * 2, 300)  # Maximum 5 minutes
-            else:  # bad
-                return min(base_interval * 3, 600)  # Maximum 10 minutes
+            # bad
+            return min(base_interval * 3, 600)  # Maximum 10 minutes
 
         except Exception as e:
             self.logger.error(f"Error calculating recommended interval for {session_id}: {e}")
@@ -318,13 +316,13 @@ class BeaconManager:
                 "active_sessions": active_count,
                 "inactive_sessions": inactive_count,
                 "average_response_time": avg_response_time,
-                "last_update": current_time
+                "last_update": current_time,
             })
 
         except Exception as e:
             self.logger.error(f"Error updating statistics: {e}")
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get beacon management statistics."""
         try:
             self.update_statistics()
@@ -333,7 +331,7 @@ class BeaconManager:
             self.logger.error(f"Error getting statistics: {e}")
             return {}
 
-    def _update_performance_metrics(self, session_id: str, beacon_data: Dict[str, Any]):
+    def _update_performance_metrics(self, session_id: str, beacon_data: dict[str, Any]):
         """Update performance metrics for a session."""
         try:
             metrics = self.performance_metrics[session_id]
@@ -348,7 +346,7 @@ class BeaconManager:
                 "timestamp": current_time,
                 "cpu_usage": cpu_usage,
                 "memory_usage": memory_usage,
-                "beacon_size": len(str(beacon_data))
+                "beacon_size": len(str(beacon_data)),
             })
 
             # Keep only last 20 metrics
@@ -398,7 +396,7 @@ class BeaconManager:
         except Exception as e:
             self.logger.error(f"Error updating adaptive interval for {session_id}: {e}")
 
-    def get_beacon_history(self, session_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_beacon_history(self, session_id: str, limit: int = 10) -> list[dict[str, Any]]:
         """Get beacon history for a session."""
         try:
             if session_id not in self.beacon_data:

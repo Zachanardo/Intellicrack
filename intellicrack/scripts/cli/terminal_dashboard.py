@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Terminal Dashboard - ASCII-based status overview for Intellicrack
+"""Terminal Dashboard - ASCII-based status overview for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,9 +22,10 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import os
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 import psutil
 
@@ -50,6 +50,7 @@ except ImportError:
 @dataclass
 class SystemMetrics:
     """System performance metrics."""
+
     cpu_percent: float = 0.0
     memory_percent: float = 0.0
     disk_usage: float = 0.0
@@ -57,12 +58,13 @@ class SystemMetrics:
     network_recv: int = 0
     process_count: int = 0
     uptime: float = 0.0
-    load_average: Optional[List[float]] = None
+    load_average: list[float] | None = None
 
 
 @dataclass
 class AnalysisStats:
     """Analysis statistics."""
+
     total_binaries: int = 0
     analyses_completed: int = 0
     vulnerabilities_found: int = 0
@@ -70,16 +72,17 @@ class AnalysisStats:
     cache_hits: int = 0
     cache_misses: int = 0
     analysis_time_avg: float = 0.0
-    last_analysis: Optional[str] = None
+    last_analysis: str | None = None
 
 
 @dataclass
 class SessionInfo:
     """Current session information."""
+
     start_time: datetime = field(default_factory=datetime.now)
     commands_executed: int = 0
-    current_binary: Optional[str] = None
-    current_project: Optional[str] = None
+    current_binary: str | None = None
+    current_project: str | None = None
     ai_queries: int = 0
     exports_created: int = 0
     errors_encountered: int = 0
@@ -93,6 +96,7 @@ class TerminalDashboard:
 
         Args:
             update_interval: Update frequency in seconds
+
         """
         self.console = Console() if RICH_AVAILABLE else None
         self.update_interval = update_interval
@@ -111,7 +115,7 @@ class TerminalDashboard:
             "analysis": True,
             "session": True,
             "recent_activity": True,
-            "quick_stats": True
+            "quick_stats": True,
         }
 
         # Activity log
@@ -132,6 +136,7 @@ class TerminalDashboard:
         Args:
             event: Event name
             callback: Callback function
+
         """
         if event not in self.callbacks:
             self.callbacks[event] = []
@@ -143,12 +148,13 @@ class TerminalDashboard:
         Args:
             message: Activity message
             level: Log level (info, warning, error, success)
+
         """
         timestamp = datetime.now().strftime("%H:%M:%S")
         activity = {
             "timestamp": timestamp,
             "message": message,
-            "level": level
+            "level": level,
         }
 
         self.activity_log.append(activity)
@@ -162,6 +168,7 @@ class TerminalDashboard:
 
         Args:
             **kwargs: Analysis stats to update
+
         """
         for key, value in kwargs.items():
             if hasattr(self.analysis_stats, key):
@@ -172,6 +179,7 @@ class TerminalDashboard:
 
         Args:
             **kwargs: Session info to update
+
         """
         for key, value in kwargs.items():
             if hasattr(self.session_info, key):
@@ -182,6 +190,7 @@ class TerminalDashboard:
 
         Args:
             counter: Counter name
+
         """
         if hasattr(self.session_info, counter):
             current = getattr(self.session_info, counter, 0)
@@ -238,7 +247,7 @@ class TerminalDashboard:
             self.system_metrics.cpu_percent,
             100,
             "CPU",
-            width=20
+            width=20,
         )
 
         # Memory indicator
@@ -246,7 +255,7 @@ class TerminalDashboard:
             self.system_metrics.memory_percent,
             100,
             "Memory",
-            width=20
+            width=20,
         )
 
         # Disk indicator
@@ -254,7 +263,7 @@ class TerminalDashboard:
             self.system_metrics.disk_usage,
             100,
             "Disk",
-            width=20
+            width=20,
         )
 
         # Uptime
@@ -402,6 +411,7 @@ Memory: {'🟢' if self.system_metrics.memory_percent < 80 else '🟡' if self.s
 
         Returns:
             Formatted progress bar string
+
         """
         if max_value == 0:
             percentage = 0
@@ -421,7 +431,7 @@ Memory: {'🟢' if self.system_metrics.memory_percent < 80 else '🟡' if self.s
 
         return f"[yellow]{label:<8}[/yellow] [{color}]{bar}[/{color}] {percentage:5.1f}%"
 
-    def _get_trend(self, history: List[float]) -> str:
+    def _get_trend(self, history: list[float]) -> str:
         """Get trend indicator from history.
 
         Args:
@@ -429,6 +439,7 @@ Memory: {'🟢' if self.system_metrics.memory_percent < 80 else '🟡' if self.s
 
         Returns:
             Trend indicator string
+
         """
         if len(history) < 3:
             return "→"
@@ -440,10 +451,9 @@ Memory: {'🟢' if self.system_metrics.memory_percent < 80 else '🟡' if self.s
 
         if diff > 5:
             return "↗️"
-        elif diff < -5:
+        if diff < -5:
             return "↘️"
-        else:
-            return "→"
+        return "→"
 
     def _calculate_commands_per_minute(self) -> float:
         """Calculate commands per minute rate."""
@@ -462,21 +472,22 @@ Memory: {'🟢' if self.system_metrics.memory_percent < 80 else '🟡' if self.s
 
         Returns:
             Formatted duration string
+
         """
         if seconds < 60:
             return f"{seconds:.0f}s"
-        elif seconds < 3600:
+        if seconds < 3600:
             minutes = seconds / 60
             return f"{minutes:.1f}m"
-        else:
-            hours = seconds / 3600
-            return f"{hours:.1f}h"
+        hours = seconds / 3600
+        return f"{hours:.1f}h"
 
-    def show_dashboard(self, duration: Optional[float] = None):
+    def show_dashboard(self, duration: float | None = None):
         """Show dashboard for specified duration.
 
         Args:
             duration: Display duration in seconds (None for indefinite)
+
         """
         if not self.console:
             self._show_basic_dashboard(duration)
@@ -510,46 +521,46 @@ Memory: {'🟢' if self.system_metrics.memory_percent < 80 else '🟡' if self.s
         layout.split_column(
             Layout(name="header", size=3),
             Layout(name="main"),
-            Layout(name="footer", size=3)
+            Layout(name="footer", size=3),
         )
 
         # Header
         header_text = Text(
             "🚀 Intellicrack Terminal Dashboard",
             style="bold cyan",
-            justify="center"
+            justify="center",
         )
         layout["header"].update(Panel(Align.center(header_text), style="blue"))
 
         # Main content
         layout["main"].split_row(
             Layout(name="left"),
-            Layout(name="right")
+            Layout(name="right"),
         )
 
         # Left column
         layout["left"].split_column(
             Layout(self._create_system_panel(), name="system"),
-            Layout(self._create_session_panel(), name="session")
+            Layout(self._create_session_panel(), name="session"),
         )
 
         # Right column
         layout["right"].split_column(
             Layout(self._create_analysis_panel(), name="analysis"),
-            Layout(self._create_activity_panel(), name="activity")
+            Layout(self._create_activity_panel(), name="activity"),
         )
 
         # Footer
         footer_text = Text(
             f"Press Ctrl+C to exit | Updated: {datetime.now().strftime('%H:%M:%S')}",
             style="dim",
-            justify="center"
+            justify="center",
         )
         layout["footer"].update(Panel(Align.center(footer_text), style="dim"))
 
         return layout
 
-    def _show_basic_dashboard(self, duration: Optional[float] = None):
+    def _show_basic_dashboard(self, duration: float | None = None):
         """Show basic text dashboard without Rich."""
         start_time = time.time()
 
@@ -613,6 +624,7 @@ Memory: {'🟢' if self.system_metrics.memory_percent < 80 else '🟡' if self.s
 
         Returns:
             Status summary string
+
         """
         self._update_system_metrics()
 
@@ -637,21 +649,21 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
             f"[bold cyan]{self.system_metrics.cpu_percent:.1f}%[/bold cyan]\n"
             f"Load: {self.system_metrics.load_average[0]:.2f}" if self.system_metrics.load_average else "Load: N/A",
             title="🖥️ CPU Usage",
-            border_style="green" if self.system_metrics.cpu_percent < 80 else "red"
+            border_style="green" if self.system_metrics.cpu_percent < 80 else "red",
         )
 
         memory_panel = Panel(
             f"[bold magenta]{self.system_metrics.memory_percent:.1f}%[/bold magenta]\n"
             f"Processes: {self.system_metrics.process_count}",
             title="💾 Memory Usage",
-            border_style="green" if self.system_metrics.memory_percent < 80 else "red"
+            border_style="green" if self.system_metrics.memory_percent < 80 else "red",
         )
 
         disk_panel = Panel(
             f"[bold yellow]{self.system_metrics.disk_usage:.1f}%[/bold yellow]\n"
             f"Network: ↓{self.system_metrics.network_recv//1024}KB ↑{self.system_metrics.network_sent//1024}KB",
             title="💽 Storage & Network",
-            border_style="green" if self.system_metrics.disk_usage < 80 else "red"
+            border_style="green" if self.system_metrics.disk_usage < 80 else "red",
         )
 
         # Display metrics in columns
@@ -665,6 +677,7 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
             operation_name: Name of the current operation
             total_steps: Total number of steps
             current_step: Current step number
+
         """
         if not RICH_AVAILABLE or not self.console:
             return
@@ -674,17 +687,18 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
             BarColumn(),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
             TimeElapsedColumn(),
-            console=self.console
+            console=self.console,
         ) as progress:
             task = progress.add_task(f"[cyan]{operation_name}...", total=total_steps)
             progress.update(task, completed=current_step)
 
-    def display_activity_with_status(self, activity_title: str, activities: List[str]) -> None:
+    def display_activity_with_status(self, activity_title: str, activities: list[str]) -> None:
         """Display recent activities with status using Status.
 
         Args:
             activity_title: Title for the activity section
             activities: List of recent activities
+
         """
         if not RICH_AVAILABLE or not self.console:
             return
@@ -696,7 +710,7 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
             activity_panel = Panel(
                 activity_items or "No recent activities",
                 title="📋 Recent Activities",
-                border_style="blue"
+                border_style="blue",
             )
 
             self.console.print(activity_panel)
@@ -735,11 +749,12 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
 
         self.console.print(table)
 
-    def display_project_tree_view(self, project_data: Dict[str, Any]) -> None:
+    def display_project_tree_view(self, project_data: dict[str, Any]) -> None:
         """Display project structure as tree using Tree.
 
         Args:
             project_data: Dictionary containing project information
+
         """
         if not RICH_AVAILABLE or not self.console:
             return

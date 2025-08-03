@@ -1,5 +1,4 @@
-"""
-Intellicrack Protection Engine Backend Wrapper
+"""Intellicrack Protection Engine Backend Wrapper
 
 Provides native die-python integration for protection analysis.
 
@@ -12,7 +11,7 @@ import os
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -34,6 +33,7 @@ except ImportError as e:
 
 class ScanMode(Enum):
     """ICP Engine scan modes mapped to die-python flags"""
+
     NORMAL = "normal"
     DEEP = "deep"
     HEURISTIC = "heuristic"
@@ -44,6 +44,7 @@ class ScanMode(Enum):
 @dataclass
 class ICPDetection:
     """Single detection from ICP engine"""
+
     name: str
     type: str
     version: str = ""
@@ -60,38 +61,39 @@ class ICPDetection:
             version=getattr(result, "version", ""),
             info=getattr(result, "info", ""),
             string=getattr(result, "string", ""),
-            confidence=1.0  # die-python doesn't provide confidence scores
+            confidence=1.0,  # die-python doesn't provide confidence scores
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ICPDetection":
+    def from_dict(cls, data: dict[str, Any]) -> "ICPDetection":
         """Create from ICP engine JSON output (legacy compatibility)"""
         return cls(
             name=data.get("name", "Unknown"),
             type=data.get("type", "Unknown"),
             version=data.get("version", ""),
             info=data.get("info", ""),
-            string=data.get("string", "")
+            string=data.get("string", ""),
         )
 
 
 @dataclass
 class ICPFileInfo:
     """File information from ICP engine"""
+
     filetype: str
     size: str
     offset: str = "0"
     parentfilepart: str = ""
-    detections: List[ICPDetection] = field(default_factory=list)
+    detections: list[ICPDetection] = field(default_factory=list)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ICPFileInfo":
+    def from_dict(cls, data: dict[str, Any]) -> "ICPFileInfo":
         """Create from ICP engine JSON output (legacy compatibility)"""
         obj = cls(
             filetype=data.get("filetype", "Unknown"),
             size=data.get("size", "0"),
             offset=data.get("offset", "0"),
-            parentfilepart=data.get("parentfilepart", "")
+            parentfilepart=data.get("parentfilepart", ""),
         )
 
         # Parse detections
@@ -104,11 +106,12 @@ class ICPFileInfo:
 @dataclass
 class ICPScanResult:
     """Complete scan result from ICP engine"""
+
     file_path: str
-    file_infos: List[ICPFileInfo] = field(default_factory=list)
-    error: Optional[str] = None
-    raw_json: Optional[Dict[str, Any]] = None
-    supplemental_data: Dict[str, Any] = field(default_factory=dict)
+    file_infos: list[ICPFileInfo] = field(default_factory=list)
+    error: str | None = None
+    raw_json: dict[str, Any] | None = None
+    supplemental_data: dict[str, Any] = field(default_factory=dict)
 
     @property
     def is_packed(self) -> bool:
@@ -131,7 +134,7 @@ class ICPScanResult:
         return False
 
     @property
-    def all_detections(self) -> List[ICPDetection]:
+    def all_detections(self) -> list[ICPDetection]:
         """Get all detections from all file infos"""
         detections = []
         for info in self.file_infos:
@@ -139,7 +142,7 @@ class ICPScanResult:
         return detections
 
     @classmethod
-    def from_json(cls, file_path: str, json_data: Dict[str, Any]) -> "ICPScanResult":
+    def from_json(cls, file_path: str, json_data: dict[str, Any]) -> "ICPScanResult":
         """Create from ICP engine JSON output (legacy compatibility)"""
         obj = cls(file_path=file_path, raw_json=json_data)
 
@@ -150,7 +153,7 @@ class ICPScanResult:
         return obj
 
     @classmethod
-    def from_die_results(cls, file_path: str, die_results: List) -> "ICPScanResult":
+    def from_die_results(cls, file_path: str, die_results: list) -> "ICPScanResult":
         """Create from die-python scan results"""
         obj = cls(file_path=file_path)
 
@@ -158,7 +161,7 @@ class ICPScanResult:
             # Create a basic file info with no detections
             file_info = ICPFileInfo(
                 filetype="Binary",
-                size=str(Path(file_path).stat().st_size if Path(file_path).exists() else 0)
+                size=str(Path(file_path).stat().st_size if Path(file_path).exists() else 0),
             )
             obj.file_infos.append(file_info)
             return obj
@@ -166,7 +169,7 @@ class ICPScanResult:
         # Create file info with detections
         file_info = ICPFileInfo(
             filetype="Binary",  # die-python doesn't provide file type info directly
-            size=str(Path(file_path).stat().st_size if Path(file_path).exists() else 0)
+            size=str(Path(file_path).stat().st_size if Path(file_path).exists() else 0),
         )
 
         # Convert die-python results to our detection format
@@ -188,6 +191,7 @@ class ICPScanResult:
 
         Returns:
             ICPScanResult with parsed detections
+
         """
         obj = cls(file_path=file_path)
 
@@ -195,7 +199,7 @@ class ICPScanResult:
             # Create a basic file info with no detections
             file_info = ICPFileInfo(
                 filetype="Binary",
-                size=str(Path(file_path).stat().st_size if Path(file_path).exists() else 0)
+                size=str(Path(file_path).stat().st_size if Path(file_path).exists() else 0),
             )
             obj.file_infos.append(file_info)
             return obj
@@ -210,7 +214,7 @@ class ICPScanResult:
         # Create file info
         file_info = ICPFileInfo(
             filetype=filetype,
-            size=str(Path(file_path).stat().st_size if Path(file_path).exists() else 0)
+            size=str(Path(file_path).stat().st_size if Path(file_path).exists() else 0),
         )
 
         # Parse detection lines (indented lines after the first)
@@ -232,7 +236,7 @@ class ICPScanResult:
                     version="",  # die-python text format doesn't include version
                     info="",     # die-python text format doesn't include detailed info
                     string=line, # Store original line
-                    confidence=1.0  # Default confidence
+                    confidence=1.0,  # Default confidence
                 )
 
                 file_info.detections.append(detection)
@@ -244,7 +248,7 @@ class ICPScanResult:
                     version="",
                     info="",
                     string=line,
-                    confidence=1.0
+                    confidence=1.0,
                 )
                 file_info.detections.append(detection)
 
@@ -254,7 +258,7 @@ class ICPScanResult:
 
 class ICPEngineError(Exception):
     """ICP Engine specific errors"""
-    pass
+
 
 
 class ICPBackend:
@@ -288,13 +292,15 @@ class ICPBackend:
         analysis = backend.get_detailed_analysis("target.exe")
         print(f"Entropy: {analysis['entropy']:.4f}")
         print(f"Strings found: {len(analysis['strings'])}")
+
     """
 
-    def __init__(self, engine_path: Optional[str] = None):
+    def __init__(self, engine_path: str | None = None):
         """Initialize ICP backend
 
         Args:
             engine_path: Legacy parameter for compatibility, ignored in die-python implementation
+
         """
         self.engine_path = engine_path  # Keep for compatibility
 
@@ -316,7 +322,7 @@ class ICPBackend:
             ScanMode.AGGRESSIVE: self.die.ScanFlags.DEEP_SCAN | self.die.ScanFlags.HEURISTIC_SCAN,
             ScanMode.ALL: (self.die.ScanFlags.DEEP_SCAN |
                           self.die.ScanFlags.HEURISTIC_SCAN |
-                          self.die.ScanFlags.ALL_TYPES_SCAN)
+                          self.die.ScanFlags.ALL_TYPES_SCAN),
         }
         return flag_map.get(scan_mode, 0)
 
@@ -327,7 +333,7 @@ class ICPBackend:
         show_entropy: bool = True,
         show_info: bool = True,
         timeout: float = 30.0,
-        include_supplemental: bool = True
+        include_supplemental: bool = True,
     ) -> ICPScanResult:
         """Analyze a file asynchronously using die-python with optional supplemental analysis
 
@@ -341,12 +347,13 @@ class ICPBackend:
 
         Returns:
             ICPScanResult with analysis data and optional supplemental data
+
         """
         file_path = Path(file_path)
         if not file_path.exists():
             return ICPScanResult(
                 file_path=str(file_path),
-                error=f"File not found: {file_path}"
+                error=f"File not found: {file_path}",
             )
 
         # Get scan flags
@@ -377,13 +384,13 @@ class ICPBackend:
             try:
                 results = await asyncio.wait_for(
                     loop.run_in_executor(None, _scan_file),
-                    timeout=timeout
+                    timeout=timeout,
                 )
             except asyncio.TimeoutError:
                 logger.error(f"Analysis timed out after {timeout} seconds")
                 return ICPScanResult(
                     file_path=str(file_path),
-                    error=f"Analysis timed out after {timeout} seconds"
+                    error=f"Analysis timed out after {timeout} seconds",
                 )
 
             # Convert results to our format
@@ -447,15 +454,15 @@ class ICPBackend:
             logger.error(f"ICP analysis error: {e}")
             return ICPScanResult(
                 file_path=str(file_path),
-                error=str(e)
+                error=str(e),
             )
 
     async def batch_analyze(
         self,
-        file_paths: List[str],
+        file_paths: list[str],
         scan_mode: ScanMode = ScanMode.NORMAL,
-        max_concurrent: int = 4
-    ) -> Dict[str, ICPScanResult]:
+        max_concurrent: int = 4,
+    ) -> dict[str, ICPScanResult]:
         """Analyze multiple files concurrently
 
         Args:
@@ -465,6 +472,7 @@ class ICPBackend:
 
         Returns:
             Dictionary mapping file paths to results
+
         """
         semaphore = asyncio.Semaphore(max_concurrent)
 
@@ -488,7 +496,7 @@ class ICPBackend:
             logger.error(f"Failed to get engine version: {e}")
             return "Unknown"
 
-    def get_available_scan_modes(self) -> List[str]:
+    def get_available_scan_modes(self) -> list[str]:
         """Get list of available scan modes"""
         return [mode.value for mode in ScanMode]
 
@@ -507,6 +515,7 @@ class ICPBackend:
 
         Returns:
             str: File type (e.g., "PE64", "ELF64", "Unknown")
+
         """
         try:
             result = self.die.scan_file(str(file_path), 0)
@@ -528,6 +537,7 @@ class ICPBackend:
 
         Returns:
             float: Entropy value between 0.0 and 8.0
+
         """
         try:
             import math
@@ -553,7 +563,7 @@ class ICPBackend:
             logger.error(f"Error calculating entropy: {e}")
             return 0.0
 
-    def extract_strings(self, file_path: str, min_length: int = 4) -> List[Dict[str, any]]:
+    def extract_strings(self, file_path: str, min_length: int = 4) -> list[dict[str, any]]:
         """Extract printable ASCII strings from binary file.
 
         Searches for sequences of printable ASCII characters that could
@@ -569,6 +579,7 @@ class ICPBackend:
                 - string: The extracted string
                 - length: Length of the string
                 - type: String type ("ASCII")
+
         """
         try:
             strings = []
@@ -590,7 +601,7 @@ class ICPBackend:
                             "offset": current_offset,
                             "string": current_string,
                             "length": len(current_string),
-                            "type": "ASCII"
+                            "type": "ASCII",
                         })
                     current_string = ""
 
@@ -600,7 +611,7 @@ class ICPBackend:
                     "offset": current_offset,
                     "string": current_string,
                     "length": len(current_string),
-                    "type": "ASCII"
+                    "type": "ASCII",
                 })
 
             return strings
@@ -608,7 +619,7 @@ class ICPBackend:
             logger.error(f"Error extracting strings: {e}")
             return []
 
-    def get_file_sections(self, file_path: str) -> List[Dict[str, any]]:
+    def get_file_sections(self, file_path: str) -> list[dict[str, any]]:
         """Extract file sections with detailed information.
 
         Attempts to parse PE file sections using pefile if available,
@@ -626,6 +637,7 @@ class ICPBackend:
                 - raw_offset: Offset in file
                 - characteristics: Section characteristics flags
                 - entropy: Section entropy (calculated if needed)
+
         """
         try:
             sections = []
@@ -642,7 +654,7 @@ class ICPBackend:
                         "raw_size": section.SizeOfRawData,
                         "raw_offset": section.PointerToRawData,
                         "characteristics": section.Characteristics,
-                        "entropy": 0.0  # Will calculate if needed
+                        "entropy": 0.0,  # Will calculate if needed
                     }
                     sections.append(section_info)
             except:
@@ -659,7 +671,7 @@ class ICPBackend:
                     "raw_size": file_size,
                     "raw_offset": 0,
                     "characteristics": 0,
-                    "entropy": self.get_file_entropy(file_path)
+                    "entropy": self.get_file_entropy(file_path),
                 })
 
             return sections
@@ -667,7 +679,7 @@ class ICPBackend:
             logger.error(f"Error getting file sections: {e}")
             return []
 
-    def detect_packers(self, file_path: str) -> List[str]:
+    def detect_packers(self, file_path: str) -> list[str]:
         """Detect packers and protectors using native die-python analysis.
 
         Scans the file and extracts any detections that are classified
@@ -678,6 +690,7 @@ class ICPBackend:
 
         Returns:
             List[str]: List of detected packer/protector names
+
         """
         try:
             result = self.die.scan_file(str(file_path), 0)
@@ -699,7 +712,7 @@ class ICPBackend:
             logger.error(f"Error detecting packers: {e}")
             return []
 
-    def add_supplemental_data(self, scan_result: ICPScanResult, supplemental_data: Dict[str, Any]) -> ICPScanResult:
+    def add_supplemental_data(self, scan_result: ICPScanResult, supplemental_data: dict[str, Any]) -> ICPScanResult:
         """Add supplemental analysis data to an ICP scan result
 
         Args:
@@ -708,6 +721,7 @@ class ICPBackend:
 
         Returns:
             Updated ICPScanResult with merged supplemental data
+
         """
         if supplemental_data:
             scan_result.supplemental_data.update(supplemental_data)
@@ -717,7 +731,7 @@ class ICPBackend:
 
         return scan_result
 
-    def _merge_supplemental_detections(self, scan_result: ICPScanResult, supplemental_data: Dict[str, Any]):
+    def _merge_supplemental_detections(self, scan_result: ICPScanResult, supplemental_data: dict[str, Any]):
         """Merge supplemental analysis findings into ICP detections"""
         try:
             # Process YARA pattern findings
@@ -731,7 +745,7 @@ class ICPBackend:
                         version="",
                         info=f"YARA: {pattern.get('category', 'Unknown')}",
                         string=pattern.get("description", ""),
-                        confidence=pattern.get("confidence", 0.8)
+                        confidence=pattern.get("confidence", 0.8),
                     )
 
                     # Add to first file info or create new one
@@ -740,7 +754,7 @@ class ICPBackend:
                     else:
                         file_info = ICPFileInfo(
                             filetype="Binary",
-                            size=str(Path(scan_result.file_path).stat().st_size if Path(scan_result.file_path).exists() else 0)
+                            size=str(Path(scan_result.file_path).stat().st_size if Path(scan_result.file_path).exists() else 0),
                         )
                         file_info.detections.append(detection)
                         scan_result.file_infos.append(file_info)
@@ -756,7 +770,7 @@ class ICPBackend:
                             version="",
                             info=f"Firmware: {component.get('type', 'Unknown')} at offset {component.get('offset', 0)}",
                             string=f"Size: {component.get('size', 0)} bytes",
-                            confidence=component.get("confidence", 0.9)
+                            confidence=component.get("confidence", 0.9),
                         )
 
                         if scan_result.file_infos:
@@ -764,7 +778,7 @@ class ICPBackend:
                         else:
                             file_info = ICPFileInfo(
                                 filetype="Firmware",
-                                size=str(Path(scan_result.file_path).stat().st_size if Path(scan_result.file_path).exists() else 0)
+                                size=str(Path(scan_result.file_path).stat().st_size if Path(scan_result.file_path).exists() else 0),
                             )
                             file_info.detections.append(detection)
                             scan_result.file_infos.append(file_info)
@@ -780,7 +794,7 @@ class ICPBackend:
                             version="",
                             info=f"Memory: PID {indicator.get('pid', 0)} - {', '.join(indicator.get('indicators', []))}",
                             string=f"Hidden: {indicator.get('is_hidden', False)}",
-                            confidence=0.7
+                            confidence=0.7,
                         )
 
                         if scan_result.file_infos:
@@ -788,7 +802,7 @@ class ICPBackend:
                         else:
                             file_info = ICPFileInfo(
                                 filetype="Memory Dump",
-                                size=str(Path(scan_result.file_path).stat().st_size if Path(scan_result.file_path).exists() else 0)
+                                size=str(Path(scan_result.file_path).stat().st_size if Path(scan_result.file_path).exists() else 0),
                             )
                             file_info.detections.append(detection)
                             scan_result.file_infos.append(file_info)
@@ -796,9 +810,9 @@ class ICPBackend:
         except Exception as e:
             logger.error(f"Error merging supplemental detections: {e}")
 
-    def merge_analysis_engines_data(self, file_path: str, yara_data: Optional[Dict[str, Any]] = None,
-                                   firmware_data: Optional[Dict[str, Any]] = None,
-                                   memory_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def merge_analysis_engines_data(self, file_path: str, yara_data: dict[str, Any] | None = None,
+                                   firmware_data: dict[str, Any] | None = None,
+                                   memory_data: dict[str, Any] | None = None) -> dict[str, Any]:
         """Merge data from all analysis engines into a unified report
 
         Args:
@@ -809,6 +823,7 @@ class ICPBackend:
 
         Returns:
             Unified analysis report with all engine data
+
         """
         try:
             # Start with base ICP analysis
@@ -845,10 +860,10 @@ class ICPBackend:
             logger.error(f"Error merging analysis engines data: {e}")
             return {
                 "file_path": file_path,
-                "error": str(e)
+                "error": str(e),
             }
 
-    def _calculate_threat_score(self, base_analysis: Dict[str, Any], supplemental_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _calculate_threat_score(self, base_analysis: dict[str, Any], supplemental_data: dict[str, Any]) -> dict[str, Any]:
         """Calculate comprehensive threat score based on all analysis data"""
         try:
             threat_score = 0.0
@@ -888,14 +903,14 @@ class ICPBackend:
                 "score": round(threat_score, 2),
                 "level": "critical" if threat_score >= 7.0 else "high" if threat_score >= 5.0 else "medium" if threat_score >= 3.0 else "low",
                 "indicators": threat_indicators,
-                "assessment": f"Threat level: {threat_score:.1f}/10.0"
+                "assessment": f"Threat level: {threat_score:.1f}/10.0",
             }
 
         except Exception as e:
             logger.error(f"Error calculating threat score: {e}")
             return {"score": 0.0, "level": "unknown", "indicators": [], "assessment": "Assessment failed"}
 
-    def _extract_security_indicators(self, supplemental_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_security_indicators(self, supplemental_data: dict[str, Any]) -> list[dict[str, Any]]:
         """Extract unified security indicators from all analysis engines"""
         indicators = []
 
@@ -908,7 +923,7 @@ class ICPBackend:
                     "type": indicator.get("type", "unknown"),
                     "severity": indicator.get("severity", "low"),
                     "description": indicator.get("description", ""),
-                    "confidence": indicator.get("confidence", 0.5)
+                    "confidence": indicator.get("confidence", 0.5),
                 })
 
             # Firmware security indicators
@@ -920,7 +935,7 @@ class ICPBackend:
                     "severity": indicator.get("severity", "low"),
                     "description": indicator.get("description", ""),
                     "file": indicator.get("file", ""),
-                    "remediation": indicator.get("remediation", "")
+                    "remediation": indicator.get("remediation", ""),
                 })
 
             # Memory forensics security indicators
@@ -931,7 +946,7 @@ class ICPBackend:
                     "type": indicator.get("type", "unknown"),
                     "severity": indicator.get("severity", "low"),
                     "description": indicator.get("description", ""),
-                    "evidence": indicator.get("evidence", {})
+                    "evidence": indicator.get("evidence", {}),
                 })
 
         except Exception as e:
@@ -939,7 +954,7 @@ class ICPBackend:
 
         return indicators
 
-    def _generate_bypass_recommendations(self, base_analysis: Dict[str, Any], supplemental_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _generate_bypass_recommendations(self, base_analysis: dict[str, Any], supplemental_data: dict[str, Any]) -> list[dict[str, Any]]:
         """Generate protection bypass recommendations based on analysis data"""
         recommendations = []
 
@@ -953,7 +968,7 @@ class ICPBackend:
                         "method": "Unpacking",
                         "tools": ["UPX", "PEiD", "Universal Unpacker"],
                         "difficulty": "medium",
-                        "description": f"Use specialized unpacker for {packer}"
+                        "description": f"Use specialized unpacker for {packer}",
                     })
 
             # YARA-based recommendations
@@ -965,7 +980,7 @@ class ICPBackend:
                         "method": "Pattern Bypass",
                         "tools": ["Debugger", "Hex Editor", "Patch Tool"],
                         "difficulty": "high",
-                        "description": f"Patch or bypass {pattern.get('description', 'protection mechanism')}"
+                        "description": f"Patch or bypass {pattern.get('description', 'protection mechanism')}",
                     })
 
             # Firmware-based recommendations
@@ -977,7 +992,7 @@ class ICPBackend:
                         "method": "Extraction & Analysis",
                         "tools": ["Binwalk", "Ghidra", "IDA Pro"],
                         "difficulty": "medium",
-                        "description": f"Extract and analyze embedded component at offset {component.get('offset', 0)}"
+                        "description": f"Extract and analyze embedded component at offset {component.get('offset', 0)}",
                     })
 
             # Memory-based recommendations
@@ -988,7 +1003,7 @@ class ICPBackend:
                     "method": "Memory Analysis",
                     "tools": ["Volatility", "Process Hacker", "Debugging"],
                     "difficulty": "high",
-                    "description": "Analyze runtime behavior and memory layout for bypass opportunities"
+                    "description": "Analyze runtime behavior and memory layout for bypass opportunities",
                 })
 
         except Exception as e:
@@ -997,9 +1012,9 @@ class ICPBackend:
         return recommendations
 
     def get_detailed_analysis(self, file_path: str, include_supplemental: bool = False,
-                             yara_data: Optional[Dict[str, Any]] = None,
-                             firmware_data: Optional[Dict[str, Any]] = None,
-                             memory_data: Optional[Dict[str, Any]] = None) -> Dict[str, any]:
+                             yara_data: dict[str, Any] | None = None,
+                             firmware_data: dict[str, Any] | None = None,
+                             memory_data: dict[str, Any] | None = None) -> dict[str, any]:
         """Perform comprehensive file analysis combining all ICP backend capabilities.
 
         This is the main analysis method that combines file type detection,
@@ -1029,6 +1044,7 @@ class ICPBackend:
                 - security_indicators: Combined security findings (if supplemental data provided)
                 - bypass_recommendations: Protection bypass suggestions (if supplemental data provided)
                 - error: Error message if analysis failed
+
         """
         try:
             analysis = {
@@ -1040,7 +1056,7 @@ class ICPBackend:
                 "strings": self.extract_strings(file_path),
                 "packers": self.detect_packers(file_path),
                 "is_packed": False,
-                "is_encrypted": False
+                "is_encrypted": False,
             }
 
             # Determine if file is packed/encrypted
@@ -1056,26 +1072,26 @@ class ICPBackend:
             logger.error(f"Error in detailed analysis: {e}")
             return {
                 "file_path": file_path,
-                "error": str(e)
+                "error": str(e),
             }
 
-    async def _run_supplemental_analysis(self, file_path: str) -> Dict[str, Any]:
-        """
-        Run supplemental analysis using YARA, Binwalk, and Volatility3 engines
+    async def _run_supplemental_analysis(self, file_path: str) -> dict[str, Any]:
+        """Run supplemental analysis using YARA, Binwalk, and Volatility3 engines
 
         Args:
             file_path: Path to file to analyze
 
         Returns:
             Merged supplemental data from all available engines
+
         """
         supplemental_data = {
             "engines_used": [],
             "analysis_summary": {
                 "yara_available": False,
                 "binwalk_available": False,
-                "volatility_available": False
-            }
+                "volatility_available": False,
+            },
         }
 
         # Run YARA pattern analysis
@@ -1108,8 +1124,8 @@ class ICPBackend:
                             file_path,
                             extract_files=False,  # Skip extraction for performance
                             analyze_security=True,
-                            extraction_depth=1
-                        )
+                            extraction_depth=1,
+                        ),
                     )
                     if not firmware_result.error:
                         firmware_supplemental = firmware_analyzer.generate_icp_supplemental_data(firmware_result)
@@ -1144,8 +1160,8 @@ class ICPBackend:
                             None,
                             lambda: memory_engine.analyze_memory_dump(
                                 file_path,
-                                deep_analysis=False  # Skip deep analysis for performance
-                            )
+                                deep_analysis=False,  # Skip deep analysis for performance
+                            ),
                         )
                         if not memory_result.error:
                             memory_supplemental = memory_engine.generate_icp_supplemental_data(memory_result)
@@ -1170,12 +1186,12 @@ class ICPBackend:
         logger.info(f"Supplemental analysis complete: {supplemental_data['engines_used']}")
         return supplemental_data
 
-    def get_supplemental_engines_status(self) -> Dict[str, Any]:
-        """
-        Get status of supplemental analysis engines
+    def get_supplemental_engines_status(self) -> dict[str, Any]:
+        """Get status of supplemental analysis engines
 
         Returns:
             Dictionary with engine availability and status
+
         """
         return {
             "supplemental_engines_available": SUPPLEMENTAL_ENGINES_AVAILABLE,
@@ -1185,17 +1201,16 @@ class ICPBackend:
             "engines_summary": {
                 "yara": "Pattern matching for protections, packers, and malware",
                 "binwalk": "Firmware analysis and embedded file extraction",
-                "volatility3": "Memory forensics for runtime analysis"
-            }
+                "volatility3": "Memory forensics for runtime analysis",
+            },
         }
 
     async def analyze_with_all_engines(
         self,
         file_path: str,
-        scan_mode: ScanMode = ScanMode.DEEP
+        scan_mode: ScanMode = ScanMode.DEEP,
     ) -> ICPScanResult:
-        """
-        Convenience method to analyze file with all available engines
+        """Convenience method to analyze file with all available engines
 
         Args:
             file_path: Path to file to analyze
@@ -1203,16 +1218,17 @@ class ICPBackend:
 
         Returns:
             Complete analysis results with supplemental data
+
         """
         return await self.analyze_file(
             file_path=file_path,
             scan_mode=scan_mode,
-            include_supplemental=True
+            include_supplemental=True,
         )
 
 
 # Singleton instance
-_icp_backend: Optional[ICPBackend] = None
+_icp_backend: ICPBackend | None = None
 
 
 def get_icp_backend() -> ICPBackend:
@@ -1224,7 +1240,7 @@ def get_icp_backend() -> ICPBackend:
 
 
 # Integration helper for existing protection detector
-async def analyze_with_icp(file_path: str) -> Optional[ICPScanResult]:
+async def analyze_with_icp(file_path: str) -> ICPScanResult | None:
     """Helper function for easy integration"""
     backend = get_icp_backend()
     return await backend.analyze_file(file_path, ScanMode.DEEP)

@@ -1,5 +1,4 @@
-"""
-GPU Framework Benchmarking Utilities.
+"""GPU Framework Benchmarking Utilities.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -21,16 +20,15 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 
 logger = logging.getLogger(__name__)
 
 
-def run_gpu_accelerated_analysis(app, binary_data: bytes) -> Dict[str, Any]:
-    """
-    Run GPU-accelerated binary analysis using available frameworks.
+def run_gpu_accelerated_analysis(app, binary_data: bytes) -> dict[str, Any]:
+    """Run GPU-accelerated binary analysis using available frameworks.
 
     Args:
         app: Application instance with update_output signal
@@ -38,11 +36,12 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> Dict[str, Any]:
 
     Returns:
         Dictionary with analysis results
+
     """
     results = {
         "gpu_available": False,
         "framework_used": "cpu",
-        "analyses": {}
+        "analyses": {},
     }
 
     try:
@@ -66,7 +65,7 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> Dict[str, Any]:
             (b"LICENSE", "License string"),
             (b"ACTIVATION", "Activation string"),
             (b"SERIAL", "Serial string"),
-            (b"KEY", "Key string")
+            (b"KEY", "Key string"),
         ]
 
         pattern_results = []
@@ -78,7 +77,7 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> Dict[str, Any]:
             if hasattr(app, "update_output"):
                 app.update_output.emit(
                     f"[GPU] Pattern '{description}': {result['match_count']} matches found "
-                    f"({result['execution_time']:.3f}s via {result['method']})"
+                    f"({result['execution_time']:.3f}s via {result['method']})",
                 )
 
         results["analyses"]["pattern_search"] = pattern_results
@@ -91,7 +90,7 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> Dict[str, Any]:
             app.update_output.emit(
                 f"[GPU] Entropy analysis: avg={entropy_result['average_entropy']:.2f}, "
                 f"min={entropy_result['min_entropy']:.2f}, max={entropy_result['max_entropy']:.2f} "
-                f"({entropy_result['execution_time']:.3f}s via {entropy_result['method']})"
+                f"({entropy_result['execution_time']:.3f}s via {entropy_result['method']})",
             )
 
         # Identify high entropy sections (likely encrypted/compressed)
@@ -102,13 +101,13 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> Dict[str, Any]:
                     high_entropy_blocks.append({
                         "block_index": i,
                         "offset": i * 4096,
-                        "entropy": entropy
+                        "entropy": entropy,
                     })
 
             if high_entropy_blocks and hasattr(app, "update_output"):
                 app.update_output.emit(
                     f"[GPU] Found {len(high_entropy_blocks)} high-entropy blocks "
-                    "(likely encrypted/compressed)"
+                    "(likely encrypted/compressed)",
                 )
 
         # Perform hash computation
@@ -129,7 +128,7 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> Dict[str, Any]:
             speedup_factors = {
                 "cupy": 10,
                 "numba": 8,
-                "pycuda": 12
+                "pycuda": 12,
             }
             speedup = speedup_factors.get(accelerator.framework, 5)
             estimated_cpu_time = total_gpu_time * speedup
@@ -138,17 +137,17 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> Dict[str, Any]:
                 "gpu_time": total_gpu_time,
                 "estimated_cpu_time": estimated_cpu_time,
                 "speedup": speedup,
-                "data_processed_mb": len(binary_data) / (1024 * 1024)
+                "data_processed_mb": len(binary_data) / (1024 * 1024),
             }
 
             if hasattr(app, "update_output"):
                 app.update_output.emit(
                     f"[GPU] Total GPU time: {total_gpu_time:.3f}s, "
-                    f"Estimated speedup: {speedup:.1f}x"
+                    f"Estimated speedup: {speedup:.1f}x",
                 )
                 app.update_output.emit(
                     f"[GPU] Processed {results['performance']['data_processed_mb']:.1f} MB "
-                    f"at {results['performance']['data_processed_mb']/total_gpu_time:.1f} MB/s"
+                    f"at {results['performance']['data_processed_mb']/total_gpu_time:.1f} MB/s",
                 )
 
     except ImportError as e:
@@ -163,9 +162,8 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> Dict[str, Any]:
     return results
 
 
-def benchmark_gpu_frameworks(app, test_sizes: List[int] = None) -> Dict[str, Any]:
-    """
-    Benchmark available GPU frameworks.
+def benchmark_gpu_frameworks(app, test_sizes: list[int] = None) -> dict[str, Any]:
+    """Benchmark available GPU frameworks.
 
     Args:
         app: Application instance
@@ -173,19 +171,20 @@ def benchmark_gpu_frameworks(app, test_sizes: List[int] = None) -> Dict[str, Any
 
     Returns:
         Dictionary with benchmark results
+
     """
     if test_sizes is None:
         test_sizes = [
             1024 * 1024,      # 1 MB
             10 * 1024 * 1024, # 10 MB
-            50 * 1024 * 1024  # 50 MB
+            50 * 1024 * 1024,  # 50 MB
         ]
 
     results = {
         "frameworks_tested": [],
         "benchmarks": {},
         "best_framework": None,
-        "recommendations": []
+        "recommendations": [],
     }
 
     # Generate test data
@@ -226,7 +225,7 @@ def benchmark_gpu_frameworks(app, test_sizes: List[int] = None) -> Dict[str, Any
             "pattern_search": {},
             "entropy": {},
             "data_transfer": {},
-            "total_time": 0
+            "total_time": 0,
         }
 
         for size, data in test_data.items():
@@ -291,7 +290,7 @@ def benchmark_gpu_frameworks(app, test_sizes: List[int] = None) -> Dict[str, Any
             elif framework == "pycuda":
                 try:
                     import pycuda.driver as cuda
-                    import pycuda.gpuarray as gpuarray
+                    from pycuda import gpuarray
 
                     # Data transfer
                     transfer_start = time.time()
@@ -355,13 +354,13 @@ def benchmark_gpu_frameworks(app, test_sizes: List[int] = None) -> Dict[str, Any
 
                     if hasattr(app, "update_output"):
                         app.update_output.emit(
-                            f"[GPU] {framework} speedup: {speedup:.1f}x over CPU"
+                            f"[GPU] {framework} speedup: {speedup:.1f}x over CPU",
                         )
 
     # Generate recommendations
     if results["best_framework"]:
         results["recommendations"].append(
-            f"Use {results['best_framework']} for best performance"
+            f"Use {results['best_framework']} for best performance",
         )
 
         # Check if data transfer is significant
@@ -371,12 +370,12 @@ def benchmark_gpu_frameworks(app, test_sizes: List[int] = None) -> Dict[str, Any
             total_compute = sum(best_framework_data["pattern_search"].values())
             if total_transfer > total_compute * 0.5:
                 results["recommendations"].append(
-                    "Consider keeping data on GPU between operations to reduce transfer overhead"
+                    "Consider keeping data on GPU between operations to reduce transfer overhead",
                 )
 
     if hasattr(app, "update_output"):
         app.update_output.emit(
-            f"[GPU] Benchmark complete. Best framework: {results['best_framework'] or 'CPU'}"
+            f"[GPU] Benchmark complete. Best framework: {results['best_framework'] or 'CPU'}",
         )
 
     return results

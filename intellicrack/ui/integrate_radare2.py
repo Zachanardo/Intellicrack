@@ -1,5 +1,4 @@
-"""
-Simple Integration Script for Adding Radare2 UI to Existing Application
+"""Simple Integration Script for Adding Radare2 UI to Existing Application
 
 Copyright (C) 2025 Zachary Flint
 
@@ -18,8 +17,7 @@ logger = get_logger(__name__)
 
 
 def add_radare2_to_intellicrack_app(app_instance) -> bool:
-    """
-    Add comprehensive radare2 functionality to existing IntellicrackApp instance.
+    """Add comprehensive radare2 functionality to existing IntellicrackApp instance.
 
     This is the main entry point for users who want to add radare2 functionality
     to their existing Intellicrack application.
@@ -39,6 +37,7 @@ def add_radare2_to_intellicrack_app(app_instance) -> bool:
 
     Returns:
         bool: True if integration successful, False otherwise
+
     """
     try:
         logger.info("Starting radare2 integration with IntellicrackApp")
@@ -57,13 +56,13 @@ def add_radare2_to_intellicrack_app(app_instance) -> bool:
             # Add success notification to app if possible
             if hasattr(app_instance, "update_output"):
                 app_instance.update_output.emit(
-                    "[Radare2 Integration] Successfully integrated advanced radare2 analysis capabilities!"
+                    "[Radare2 Integration] Successfully integrated advanced radare2 analysis capabilities!",
                 )
                 app_instance.update_output.emit(
-                    "[Radare2 Integration] New tabs and menu items have been added for comprehensive binary analysis."
+                    "[Radare2 Integration] New tabs and menu items have been added for comprehensive binary analysis.",
                 )
                 app_instance.update_output.emit(
-                    "[Radare2 Integration] Features include: decompilation, vulnerability detection, AI analysis, and automated bypass generation."
+                    "[Radare2 Integration] Features include: decompilation, vulnerability detection, AI analysis, and automated bypass generation.",
                 )
         else:
             logger.error("Radare2 integration failed")
@@ -71,7 +70,7 @@ def add_radare2_to_intellicrack_app(app_instance) -> bool:
             # Add failure notification
             if hasattr(app_instance, "update_output"):
                 app_instance.update_output.emit(
-                    "[Radare2 Integration] Failed to integrate radare2 functionality. Check logs for details."
+                    "[Radare2 Integration] Failed to integrate radare2 functionality. Check logs for details.",
                 )
 
         return success
@@ -82,15 +81,14 @@ def add_radare2_to_intellicrack_app(app_instance) -> bool:
         # Add error notification
         if hasattr(app_instance, "update_output"):
             app_instance.update_output.emit(
-                f"[Radare2 Integration] Integration failed: {e}"
+                f"[Radare2 Integration] Integration failed: {e}",
             )
 
         return False
 
 
 def integrate_with_main_app():
-    """
-    Automatic integration function that tries to find and integrate with
+    """Automatic integration function that tries to find and integrate with
     the main IntellicrackApp instance.
 
     This function can be called from the main application module to
@@ -98,6 +96,7 @@ def integrate_with_main_app():
 
     Returns:
         bool: True if integration successful, False otherwise
+
     """
     try:
         # Try to find the main app instance in various ways
@@ -132,9 +131,8 @@ def integrate_with_main_app():
         if main_app:
             logger.info(f"Found main app instance: {type(main_app)}")
             return add_radare2_to_intellicrack_app(main_app)
-        else:
-            logger.warning("Could not find main IntellicrackApp instance for automatic integration")
-            return False
+        logger.warning("Could not find main IntellicrackApp instance for automatic integration")
+        return False
 
     except Exception as e:
         logger.error(f"Automatic integration failed: {e}")
@@ -142,14 +140,14 @@ def integrate_with_main_app():
 
 
 def create_standalone_radare2_app():
-    """
-    Create a standalone radare2 analysis application.
+    """Create a standalone radare2 analysis application.
 
     This creates a new application window with only radare2 functionality,
     useful for users who want a dedicated radare2 analysis tool.
 
     Returns:
         tuple: (QApplication, main_window) or (None, None) if failed
+
     """
     try:
         from .enhanced_ui_integration import create_enhanced_application
@@ -159,9 +157,8 @@ def create_standalone_radare2_app():
         if app and window:
             logger.info("Created standalone radare2 application")
             return app, window
-        else:
-            logger.error("Failed to create standalone application")
-            return None, None
+        logger.error("Failed to create standalone application")
+        return None, None
 
     except Exception as e:
         logger.error(f"Failed to create standalone application: {e}")
@@ -169,14 +166,14 @@ def create_standalone_radare2_app():
 
 
 def show_integration_status(app_instance=None) -> dict:
-    """
-    Show the current integration status.
+    """Show the current integration status.
 
     Args:
         app_instance: Optional app instance to check
 
     Returns:
         dict: Integration status information
+
     """
     try:
         from .comprehensive_integration import get_integration_status
@@ -200,8 +197,7 @@ def show_integration_status(app_instance=None) -> dict:
 
 # Example usage functions for documentation
 def example_manual_integration():
-    """
-    Example of manual integration with existing app.
+    """Example of manual integration with existing app.
 
     This shows how to manually integrate radare2 with an existing app instance.
     """
@@ -218,12 +214,10 @@ def example_manual_integration():
     # else:
     #     print("Integration failed - check logs for details")
 
-    pass
 
 
 def example_automatic_integration():
-    """
-    Example of automatic integration.
+    """Example of automatic integration.
 
     This shows how to automatically integrate radare2 without knowing the app instance.
     """
@@ -237,12 +231,10 @@ def example_automatic_integration():
     # else:
     #     print("Automatic integration failed - try manual integration")
 
-    pass
 
 
 def example_standalone_app():
-    """
-    Example of creating a standalone radare2 application.
+    """Example of creating a standalone radare2 application.
 
     This shows how to create a dedicated radare2 analysis application.
     """
@@ -257,15 +249,14 @@ def example_standalone_app():
     # else:
     #     print("Failed to create standalone application")
 
-    pass
 
 
 __all__ = [
     "add_radare2_to_intellicrack_app",
-    "integrate_with_main_app",
     "create_standalone_radare2_app",
-    "show_integration_status",
-    "example_manual_integration",
     "example_automatic_integration",
-    "example_standalone_app"
+    "example_manual_integration",
+    "example_standalone_app",
+    "integrate_with_main_app",
+    "show_integration_status",
 ]

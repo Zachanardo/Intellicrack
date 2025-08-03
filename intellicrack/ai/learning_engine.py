@@ -1,5 +1,4 @@
-"""
-AI Learning & Evolution Engine
+"""AI Learning & Evolution Engine
 
 Copyright (C) 2025 Zachary Flint
 
@@ -29,7 +28,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 
@@ -41,6 +40,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class LearningRecord:
     """Record of AI learning experience."""
+
     record_id: str
     task_type: str
     input_hash: str
@@ -49,17 +49,18 @@ class LearningRecord:
     confidence: float
     execution_time: float
     memory_usage: int
-    error_message: Optional[str] = None
-    context: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    error_message: str | None = None
+    context: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
-    learned_patterns: List[str] = field(default_factory=list)
-    improvement_suggestions: List[str] = field(default_factory=list)
+    learned_patterns: list[str] = field(default_factory=list)
+    improvement_suggestions: list[str] = field(default_factory=list)
 
 
 @dataclass
 class PatternRule:
     """Learned pattern rule for AI improvement."""
+
     rule_id: str
     pattern_name: str
     condition: str
@@ -68,34 +69,36 @@ class PatternRule:
     success_rate: float
     usage_count: int = 0
     created_at: datetime = field(default_factory=datetime.now)
-    last_used: Optional[datetime] = None
+    last_used: datetime | None = None
     effectiveness_score: float = 0.0
 
 
 @dataclass
 class FailureAnalysis:
     """Analysis of AI failure patterns."""
+
     failure_id: str
     failure_type: str
     frequency: int
     impact_level: str  # low, medium, high, critical
     root_cause: str
-    suggested_fixes: List[str]
+    suggested_fixes: list[str]
     pattern_signature: str
-    affected_components: List[str] = field(default_factory=list)
-    mitigation_strategies: List[str] = field(default_factory=list)
+    affected_components: list[str] = field(default_factory=list)
+    mitigation_strategies: list[str] = field(default_factory=list)
     resolution_status: str = "open"  # open, in_progress, resolved
 
 
 class AILearningDatabase:
     """Persistent database for AI learning records."""
 
-    def __init__(self, db_path: Optional[Path] = None):
+    def __init__(self, db_path: Path | None = None):
         """Initialize the AI learning database.
 
         Args:
             db_path: Optional path to the database file. If not provided,
                      defaults to ~/.intellicrack/ai_learning.db
+
         """
         self.db_path = db_path or Path.home() / ".intellicrack" / "ai_learning.db"
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -189,7 +192,7 @@ class AILearningDatabase:
                     json.dumps(record.metadata),
                     record.timestamp.isoformat(),
                     json.dumps(record.learned_patterns),
-                    json.dumps(record.improvement_suggestions)
+                    json.dumps(record.improvement_suggestions),
                 ))
                 conn.commit()
 
@@ -210,7 +213,7 @@ class AILearningDatabase:
                     rule.usage_count,
                     rule.created_at.isoformat(),
                     rule.last_used.isoformat() if rule.last_used else None,
-                    rule.effectiveness_score
+                    rule.effectiveness_score,
                 ))
                 conn.commit()
 
@@ -231,13 +234,13 @@ class AILearningDatabase:
                     analysis.pattern_signature,
                     json.dumps(analysis.affected_components),
                     json.dumps(analysis.mitigation_strategies),
-                    analysis.resolution_status
+                    analysis.resolution_status,
                 ))
                 conn.commit()
 
-    def get_learning_records(self, task_type: Optional[str] = None,
-                             success: Optional[bool] = None,
-                             limit: int = 1000) -> List[LearningRecord]:
+    def get_learning_records(self, task_type: str | None = None,
+                             success: bool | None = None,
+                             limit: int = 1000) -> list[LearningRecord]:
         """Get learning records from database."""
         with sqlite3.connect(self.db_path) as conn:
             query = "SELECT * FROM learning_records WHERE 1=1"
@@ -273,19 +276,19 @@ class AILearningDatabase:
                     timestamp=datetime.fromisoformat(row[11]),
                     learned_patterns=json.loads(row[12]) if row[12] else [],
                     improvement_suggestions=json.loads(
-                        row[13]) if row[13] else []
+                        row[13]) if row[13] else [],
                 )
                 records.append(record)
 
             return records
 
-    def get_pattern_rules(self, pattern_name: Optional[str] = None) -> List[PatternRule]:
+    def get_pattern_rules(self, pattern_name: str | None = None) -> list[PatternRule]:
         """Get pattern rules from database."""
         with sqlite3.connect(self.db_path) as conn:
             if pattern_name:
                 cursor = conn.execute(
                     "SELECT * FROM pattern_rules WHERE pattern_name = ? ORDER BY effectiveness_score DESC",
-                    (pattern_name,)
+                    (pattern_name,),
                 )
             else:
                 cursor = conn.execute(
@@ -304,14 +307,14 @@ class AILearningDatabase:
                     created_at=datetime.fromisoformat(row[7]),
                     last_used=datetime.fromisoformat(
                         row[8]) if row[8] else None,
-                    effectiveness_score=row[9]
+                    effectiveness_score=row[9],
                 )
                 rules.append(rule)
 
             return rules
 
-    def get_failure_analyses(self, failure_type: Optional[str] = None,
-                             resolution_status: str = "open") -> List[FailureAnalysis]:
+    def get_failure_analyses(self, failure_type: str | None = None,
+                             resolution_status: str = "open") -> list[FailureAnalysis]:
         """Get failure analyses from database."""
         with sqlite3.connect(self.db_path) as conn:
             query = "SELECT * FROM failure_analyses WHERE resolution_status = ?"
@@ -337,7 +340,7 @@ class AILearningDatabase:
                     pattern_signature=row[6],
                     affected_components=json.loads(row[7]) if row[7] else [],
                     mitigation_strategies=json.loads(row[8]) if row[8] else [],
-                    resolution_status=row[9]
+                    resolution_status=row[9],
                 )
                 analyses.append(analysis)
 
@@ -352,15 +355,16 @@ class PatternEvolutionEngine:
 
         Args:
             database: AI learning database instance for storing and retrieving patterns
+
         """
         self.database = database
-        self.pattern_cache: Dict[str, List[PatternRule]] = {}
+        self.pattern_cache: dict[str, list[PatternRule]] = {}
         self.evolution_threshold = 0.8  # Minimum effectiveness for pattern promotion
         self.cache_ttl = 3600  # 1 hour cache TTL
         self.last_cache_update = datetime.now()
 
     @profile_ai_operation("pattern_evolution")
-    def evolve_patterns(self) -> Dict[str, Any]:
+    def evolve_patterns(self) -> dict[str, Any]:
         """Evolve patterns based on learning data."""
         logger.info("Starting pattern evolution process")
 
@@ -372,7 +376,7 @@ class PatternEvolutionEngine:
             "new_patterns_discovered": 0,
             "patterns_improved": 0,
             "patterns_deprecated": 0,
-            "evolution_insights": []
+            "evolution_insights": [],
         }
 
         # Analyze success patterns
@@ -401,7 +405,7 @@ class PatternEvolutionEngine:
         logger.info(f"Pattern evolution completed: {evolution_results}")
         return evolution_results
 
-    def _analyze_success_patterns(self, records: List[LearningRecord]) -> Dict[str, Any]:
+    def _analyze_success_patterns(self, records: list[LearningRecord]) -> dict[str, Any]:
         """Analyze patterns in successful operations."""
         success_records = [
             r for r in records if r.success and r.confidence > 0.7]
@@ -410,7 +414,7 @@ class PatternEvolutionEngine:
             "task_type_success": defaultdict(list),
             "execution_time_patterns": defaultdict(list),
             "confidence_patterns": defaultdict(list),
-            "context_patterns": defaultdict(list)
+            "context_patterns": defaultdict(list),
         }
 
         for record in success_records:
@@ -436,54 +440,49 @@ class PatternEvolutionEngine:
         """Bucket execution time into categories."""
         if time < 1.0:
             return "fast"
-        elif time < 5.0:
+        if time < 5.0:
             return "medium"
-        elif time < 15.0:
+        if time < 15.0:
             return "slow"
-        else:
-            return "very_slow"
+        return "very_slow"
 
     def _bucket_confidence(self, confidence: float) -> str:
         """Bucket confidence into categories."""
         if confidence >= 0.9:
             return "very_high"
-        elif confidence >= 0.8:
+        if confidence >= 0.8:
             return "high"
-        elif confidence >= 0.7:
+        if confidence >= 0.7:
             return "medium"
-        else:
-            return "low"
+        return "low"
 
     def _generalize_value(self, value: Any) -> str:
         """Generalize values for pattern matching."""
         if isinstance(value, str):
             if len(value) > 50:
                 return "long_string"
-            elif re.match(r"^[a-zA-Z0-9_]+$", value):
+            if re.match(r"^[a-zA-Z0-9_]+$", value):
                 return "identifier"
-            elif re.match(r"^https?://", value):
+            if re.match(r"^https?://", value):
                 return "url"
-            else:
-                return "string"
-        elif isinstance(value, (int, float)):
+            return "string"
+        if isinstance(value, (int, float)):
             if value < 0:
                 return "negative_number"
-            elif value == 0:
+            if value == 0:
                 return "zero"
-            elif value < 100:
+            if value < 100:
                 return "small_number"
-            else:
-                return "large_number"
-        elif isinstance(value, bool):
+            return "large_number"
+        if isinstance(value, bool):
             return str(value).lower()
-        elif isinstance(value, (list, tuple)):
+        if isinstance(value, (list, tuple)):
             return f"list_size_{len(value)}"
-        elif isinstance(value, dict):
+        if isinstance(value, dict):
             return f"dict_size_{len(value)}"
-        else:
-            return "unknown"
+        return "unknown"
 
-    def _create_pattern_rules(self, patterns: Dict[str, Any]) -> List[PatternRule]:
+    def _create_pattern_rules(self, patterns: dict[str, Any]) -> list[PatternRule]:
         """Create new pattern rules from discovered patterns."""
         new_rules = []
 
@@ -503,7 +502,7 @@ class PatternEvolutionEngine:
                         action="apply_high_confidence_strategy",
                         confidence=avg_confidence,
                         success_rate=success_rate,
-                        effectiveness_score=success_rate * avg_confidence
+                        effectiveness_score=success_rate * avg_confidence,
                     )
                     new_rules.append(rule)
                     self.database.save_pattern_rule(rule)
@@ -524,14 +523,14 @@ class PatternEvolutionEngine:
                         action="apply_context_optimization",
                         confidence=avg_confidence,
                         success_rate=success_rate,
-                        effectiveness_score=success_rate * avg_confidence
+                        effectiveness_score=success_rate * avg_confidence,
                     )
                     new_rules.append(rule)
                     self.database.save_pattern_rule(rule)
 
         return new_rules
 
-    def _improve_existing_patterns(self, records: List[LearningRecord]) -> List[PatternRule]:
+    def _improve_existing_patterns(self, records: list[LearningRecord]) -> list[PatternRule]:
         """Improve existing pattern rules based on new data."""
         existing_rules = self.database.get_pattern_rules()
         improved_rules = []
@@ -560,7 +559,7 @@ class PatternEvolutionEngine:
 
         return improved_rules
 
-    def _find_matching_records(self, rule: PatternRule, records: List[LearningRecord]) -> List[LearningRecord]:
+    def _find_matching_records(self, rule: PatternRule, records: list[LearningRecord]) -> list[LearningRecord]:
         """Find records that match a pattern rule."""
         matching_records = []
 
@@ -595,7 +594,7 @@ class PatternEvolutionEngine:
             logger.error("Exception in learning_engine: %s", e)
             return False
 
-    def _deprecate_ineffective_patterns(self) -> List[PatternRule]:
+    def _deprecate_ineffective_patterns(self) -> list[PatternRule]:
         """Deprecate patterns with low effectiveness."""
         all_rules = self.database.get_pattern_rules()
         deprecated_rules = []
@@ -612,7 +611,7 @@ class PatternEvolutionEngine:
 
         return deprecated_rules
 
-    def _generate_evolution_insights(self, records: List[LearningRecord]) -> List[str]:
+    def _generate_evolution_insights(self, records: list[LearningRecord]) -> list[str]:
         """Generate insights from pattern evolution."""
         insights = []
 
@@ -659,7 +658,7 @@ class PatternEvolutionEngine:
 
         self.last_cache_update = datetime.now()
 
-    def get_applicable_patterns(self, context: Dict[str, Any]) -> List[PatternRule]:
+    def get_applicable_patterns(self, context: dict[str, Any]) -> list[PatternRule]:
         """Get patterns applicable to current context."""
         # Update cache if needed
         if datetime.now() - self.last_cache_update > timedelta(seconds=self.cache_ttl):
@@ -686,7 +685,7 @@ class PatternEvolutionEngine:
 
         return applicable_patterns[:10]  # Return top 10
 
-    def get_insights(self) -> Dict[str, Any]:
+    def get_insights(self) -> dict[str, Any]:
         """Get insights about pattern evolution and effectiveness."""
         try:
             # Get recent learning records for analysis
@@ -698,7 +697,7 @@ class PatternEvolutionEngine:
                     "avg_effectiveness": 0.0,
                     "pattern_categories": {},
                     "recommendations": ["No learning data available"],
-                    "evolution_status": "inactive"
+                    "evolution_status": "inactive",
                 }
 
             # Analyze patterns in cache
@@ -724,7 +723,7 @@ class PatternEvolutionEngine:
                 pattern_categories[category] = {
                     "total": len(patterns),
                     "effective": len([p for p in patterns if p.effectiveness_score > self.evolution_threshold]),
-                    "avg_score": sum(p.effectiveness_score for p in patterns) / len(patterns) if patterns else 0.0
+                    "avg_score": sum(p.effectiveness_score for p in patterns) / len(patterns) if patterns else 0.0,
                 }
 
             # Generate recommendations
@@ -747,7 +746,7 @@ class PatternEvolutionEngine:
                 "recommendations": recommendations,
                 "evolution_status": "active" if effective_patterns else "learning",
                 "cache_age": (datetime.now() - self.last_cache_update).total_seconds(),
-                "threshold": self.evolution_threshold
+                "threshold": self.evolution_threshold,
             }
 
         except Exception as e:
@@ -755,7 +754,7 @@ class PatternEvolutionEngine:
             return {
                 "total_patterns": 0,
                 "error": str(e),
-                "evolution_status": "error"
+                "evolution_status": "error",
             }
 
 
@@ -767,13 +766,14 @@ class FailureAnalysisEngine:
 
         Args:
             database: AI learning database instance for storing failure analyses
+
         """
         self.database = database
-        self.failure_patterns: Dict[str, List[str]] = defaultdict(list)
+        self.failure_patterns: dict[str, list[str]] = defaultdict(list)
         self.analysis_threshold = 3  # Minimum failures to analyze
 
     @profile_ai_operation("failure_analysis")
-    def analyze_failures(self) -> Dict[str, Any]:
+    def analyze_failures(self) -> dict[str, Any]:
         """Analyze failure patterns and create improvement strategies."""
         logger.info("Starting failure analysis")
 
@@ -789,7 +789,7 @@ class FailureAnalysisEngine:
             "failure_types": {},
             "critical_patterns": [],
             "improvement_strategies": [],
-            "new_analyses": 0
+            "new_analyses": 0,
         }
 
         # Categorize failures
@@ -816,7 +816,7 @@ class FailureAnalysisEngine:
         logger.info(f"Failure analysis completed: {analysis_results}")
         return analysis_results
 
-    def _categorize_failures(self, failed_records: List[LearningRecord]) -> Dict[str, List[LearningRecord]]:
+    def _categorize_failures(self, failed_records: list[LearningRecord]) -> dict[str, list[LearningRecord]]:
         """Categorize failures by type."""
         categories = defaultdict(list)
 
@@ -835,23 +835,22 @@ class FailureAnalysisEngine:
         """Extract error type from error message."""
         if "timeout" in error_message.lower():
             return "timeout_error"
-        elif "memory" in error_message.lower():
+        if "memory" in error_message.lower():
             return "memory_error"
-        elif "connection" in error_message.lower():
+        if "connection" in error_message.lower():
             return "connection_error"
-        elif "permission" in error_message.lower():
+        if "permission" in error_message.lower():
             return "permission_error"
-        elif "not found" in error_message.lower():
+        if "not found" in error_message.lower():
             return "not_found_error"
-        elif "invalid" in error_message.lower():
+        if "invalid" in error_message.lower():
             return "validation_error"
-        else:
-            # Use first word of error as type
-            first_word = error_message.split(
-            )[0] if error_message.split() else "unknown"
-            return f"{first_word.lower()}_error"
+        # Use first word of error as type
+        first_word = error_message.split(
+        )[0] if error_message.split() else "unknown"
+        return f"{first_word.lower()}_error"
 
-    def _create_failure_analysis(self, failure_type: str, records: List[LearningRecord]) -> Optional[FailureAnalysis]:
+    def _create_failure_analysis(self, failure_type: str, records: list[LearningRecord]) -> FailureAnalysis | None:
         """Create failure analysis from records."""
         if not records:
             return None
@@ -886,12 +885,12 @@ class FailureAnalysisEngine:
             suggested_fixes=suggested_fixes,
             pattern_signature=pattern_signature,
             affected_components=affected_components,
-            mitigation_strategies=mitigation_strategies
+            mitigation_strategies=mitigation_strategies,
         )
 
         return analysis
 
-    def _calculate_impact_level(self, records: List[LearningRecord]) -> str:
+    def _calculate_impact_level(self, records: list[LearningRecord]) -> str:
         """Calculate impact level based on failure frequency and context."""
         frequency = len(records)
 
@@ -903,14 +902,13 @@ class FailureAnalysisEngine:
 
         if frequency >= 50 or critical_failures >= 20:
             return "critical"
-        elif frequency >= 20 or critical_failures >= 10:
+        if frequency >= 20 or critical_failures >= 10:
             return "high"
-        elif frequency >= 10 or critical_failures >= 5:
+        if frequency >= 10 or critical_failures >= 5:
             return "medium"
-        else:
-            return "low"
+        return "low"
 
-    def _identify_root_cause(self, records: List[LearningRecord]) -> str:
+    def _identify_root_cause(self, records: list[LearningRecord]) -> str:
         """Identify root cause of failures."""
         # Analyze common patterns in failed records
         common_contexts = defaultdict(int)
@@ -942,7 +940,7 @@ class FailureAnalysisEngine:
 
         return "Root cause requires further investigation"
 
-    def _generate_pattern_signature(self, records: List[LearningRecord]) -> str:
+    def _generate_pattern_signature(self, records: list[LearningRecord]) -> str:
         """Generate unique signature for failure pattern."""
         # Create signature based on task types, error messages, and contexts
         task_types = sorted(set(r.task_type for r in records))
@@ -952,13 +950,13 @@ class FailureAnalysisEngine:
         signature_parts = [
             f"tasks:{','.join(task_types)}",
             f"errors:{','.join(error_types)}",
-            f"frequency:{len(records)}"
+            f"frequency:{len(records)}",
         ]
 
         signature = "|".join(signature_parts)
         return hashlib.md5(signature.encode(), usedforsecurity=False).hexdigest()
 
-    def _generate_suggested_fixes(self, failure_type: str, records: List[LearningRecord]) -> List[str]:
+    def _generate_suggested_fixes(self, failure_type: str, records: list[LearningRecord]) -> list[str]:
         """Generate suggested fixes for failure type."""
         fixes = []
 
@@ -978,7 +976,7 @@ class FailureAnalysisEngine:
                 "Increase operation timeout values",
                 "Implement async processing for long operations",
                 "Add progress tracking and cancellation support",
-                "Optimize algorithm performance"
+                "Optimize algorithm performance",
             ])
 
         elif "memory" in failure_type:
@@ -986,7 +984,7 @@ class FailureAnalysisEngine:
                 "Implement memory usage monitoring",
                 "Add garbage collection triggers",
                 "Use streaming for large data processing",
-                "Implement memory cleanup in error paths"
+                "Implement memory cleanup in error paths",
             ])
 
         elif "connection" in failure_type:
@@ -994,7 +992,7 @@ class FailureAnalysisEngine:
                 "Add connection retry logic",
                 "Implement connection pooling",
                 "Add network connectivity checks",
-                "Use exponential backoff for retries"
+                "Use exponential backoff for retries",
             ])
 
         elif "permission" in failure_type:
@@ -1002,7 +1000,7 @@ class FailureAnalysisEngine:
                 "Add permission validation before operations",
                 "Implement graceful permission error handling",
                 "Add user guidance for permission issues",
-                "Use fallback methods when permissions limited"
+                "Use fallback methods when permissions limited",
             ])
 
         else:
@@ -1010,12 +1008,12 @@ class FailureAnalysisEngine:
                 "Add comprehensive error handling",
                 "Implement input validation",
                 "Add logging for debugging",
-                "Create fallback mechanisms"
+                "Create fallback mechanisms",
             ])
 
         return fixes
 
-    def _identify_affected_components(self, records: List[LearningRecord]) -> List[str]:
+    def _identify_affected_components(self, records: list[LearningRecord]) -> list[str]:
         """Identify components affected by failures."""
         components = set()
 
@@ -1034,7 +1032,7 @@ class FailureAnalysisEngine:
 
         return list(components)
 
-    def _generate_mitigation_strategies(self, failure_type: str, records: List[LearningRecord]) -> List[str]:
+    def _generate_mitigation_strategies(self, failure_type: str, records: list[LearningRecord]) -> list[str]:
         """Generate mitigation strategies."""
         strategies = []
 
@@ -1058,26 +1056,26 @@ class FailureAnalysisEngine:
             strategies.extend([
                 "Increase timeout thresholds",
                 "Implement asynchronous processing",
-                "Add progress monitoring"
+                "Add progress monitoring",
             ])
         elif "memory" in failure_type.lower():
             strategies.extend([
                 "Implement memory optimization",
                 "Add garbage collection triggers",
-                "Use streaming processing"
+                "Use streaming processing",
             ])
         elif "network" in failure_type.lower():
             strategies.extend([
                 "Add retry mechanisms",
                 "Implement connection pooling",
-                "Add network error handling"
+                "Add network error handling",
             ])
 
         strategies.extend([
             "Implement comprehensive monitoring",
             "Add automated failure detection",
             "Create fallback mechanisms",
-            "Implement graceful degradation"
+            "Implement graceful degradation",
         ])
 
         if len(records) >= 20:
@@ -1088,7 +1086,7 @@ class FailureAnalysisEngine:
 
         return strategies
 
-    def _generate_improvement_strategies(self, failed_records: List[LearningRecord]) -> List[str]:
+    def _generate_improvement_strategies(self, failed_records: list[LearningRecord]) -> list[str]:
         """Generate overall improvement strategies."""
         strategies = []
 
@@ -1115,7 +1113,7 @@ class FailureAnalysisEngine:
             "Implement proactive error prevention",
             "Enhance monitoring and alerting",
             "Create automated recovery procedures",
-            "Develop comprehensive testing strategies"
+            "Develop comprehensive testing strategies",
         ])
 
         return strategies
@@ -1124,12 +1122,13 @@ class FailureAnalysisEngine:
 class AILearningEngine:
     """Main AI learning and evolution engine."""
 
-    def __init__(self, db_path: Optional[Path] = None):
+    def __init__(self, db_path: Path | None = None):
         """Initialize the AI learning engine.
 
         Args:
             db_path: Optional path to the database file. If not provided,
                      defaults to ~/.intellicrack/ai_learning.db
+
         """
         self.database = AILearningDatabase(db_path)
         self.pattern_engine = PatternEvolutionEngine(self.database)
@@ -1142,7 +1141,7 @@ class AILearningEngine:
         self.learning_stats = {
             "records_processed": 0,
             "patterns_discovered": 0,
-            "failures_analyzed": 0
+            "failures_analyzed": 0,
         }
 
         # Initialize ML models
@@ -1162,7 +1161,7 @@ class AILearningEngine:
             self.pattern_classifier = RandomForestClassifier(
                 n_estimators=100,
                 max_depth=10,
-                random_state=42
+                random_state=42,
             )
 
             # Neural network for complex pattern learning
@@ -1171,13 +1170,13 @@ class AILearningEngine:
                 activation="relu",
                 solver="adam",
                 max_iter=1000,
-                random_state=42
+                random_state=42,
             )
 
             # Anomaly detection for identifying new patterns
             self.anomaly_detector = IsolationForest(
                 contamination=0.1,
-                random_state=42
+                random_state=42,
             )
 
             # Feature scaler
@@ -1188,7 +1187,7 @@ class AILearningEngine:
             self.training_data = {
                 "features": np.array([]),
                 "labels": np.array([]),
-                "metadata": []
+                "metadata": [],
             }
             # Initialize feature dimensions
             self.feature_dim = None
@@ -1208,9 +1207,9 @@ class AILearningEngine:
     @profile_ai_operation("record_learning")
     def record_experience(self, task_type: str, input_data: Any, output_data: Any,
                           success: bool, confidence: float, execution_time: float,
-                          memory_usage: int, error_message: Optional[str] = None,
-                          context: Optional[Dict[str, Any]] = None,
-                          metadata: Optional[Dict[str, Any]] = None) -> str:
+                          memory_usage: int, error_message: str | None = None,
+                          context: dict[str, Any] | None = None,
+                          metadata: dict[str, Any] | None = None) -> str:
         """Record AI learning experience."""
         if not self.learning_enabled:
             return ""
@@ -1232,7 +1231,7 @@ class AILearningEngine:
             memory_usage=memory_usage,
             error_message=error_message,
             context=context or {},
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
         # Save to database
@@ -1265,7 +1264,7 @@ class AILearningEngine:
         evolution_thread.start()
 
     @profile_ai_operation("pattern_evolution")
-    def evolve_patterns(self) -> Dict[str, Any]:
+    def evolve_patterns(self) -> dict[str, Any]:
         """Evolve AI patterns based on learning."""
         results = self.pattern_engine.evolve_patterns()
         self.learning_stats["patterns_discovered"] += results.get(
@@ -1273,18 +1272,18 @@ class AILearningEngine:
         return results
 
     @profile_ai_operation("failure_analysis")
-    def analyze_failures(self) -> Dict[str, Any]:
+    def analyze_failures(self) -> dict[str, Any]:
         """Analyze failures for learning."""
         results = self.failure_engine.analyze_failures()
         self.learning_stats["failures_analyzed"] += results.get(
             "new_analyses", 0)
         return results
 
-    def get_applicable_patterns(self, context: Dict[str, Any]) -> List[PatternRule]:
+    def get_applicable_patterns(self, context: dict[str, Any]) -> list[PatternRule]:
         """Get patterns applicable to current context."""
         return self.pattern_engine.get_applicable_patterns(context)
 
-    def get_learning_insights(self) -> Dict[str, Any]:
+    def get_learning_insights(self) -> dict[str, Any]:
         """Get insights from learning data."""
         recent_records = self.database.get_learning_records(limit=1000)
 
@@ -1293,14 +1292,14 @@ class AILearningEngine:
             "success_rate": len([r for r in recent_records if r.success]) / len(recent_records) if recent_records else 0,
             "avg_confidence": sum(r.confidence for r in recent_records) / len(recent_records) if recent_records else 0,
             "learning_stats": self.learning_stats.copy(),
-            "pattern_insights": self.pattern_engine.get_insights()
+            "pattern_insights": self.pattern_engine.get_insights(),
         }
 
         return insights
 
     def record_exploit_chain_creation(self, vulnerability: Any, chain: Any, success: bool,
-                                      execution_time: Optional[float] = None,
-                                      error_message: Optional[str] = None) -> str:
+                                      execution_time: float | None = None,
+                                      error_message: str | None = None) -> str:
         """Record exploit chain creation for learning."""
         # Create context from vulnerability
         context = {
@@ -1309,7 +1308,7 @@ class AILearningEngine:
             "exploitability": getattr(vulnerability, "exploitability", 0.0),
             "chain_complexity": str(chain.complexity.value) if hasattr(chain, "complexity") else "unknown",
             "steps_count": len(chain.steps) if hasattr(chain, "steps") else 0,
-            "safety_verified": getattr(chain, "safety_verified", False)
+            "safety_verified": getattr(chain, "safety_verified", False),
         }
 
         # Create metadata from chain
@@ -1318,7 +1317,7 @@ class AILearningEngine:
             "success_probability": getattr(chain, "success_probability", 0.0),
             "stealth_rating": getattr(chain, "stealth_rating", 0.0),
             "stability_rating": getattr(chain, "stability_rating", 0.0),
-            "primitive_types": [step.step_type.value for step in chain.steps] if hasattr(chain, "steps") else []
+            "primitive_types": [step.step_type.value for step in chain.steps] if hasattr(chain, "steps") else [],
         }
 
         return self.record_experience(
@@ -1333,7 +1332,7 @@ class AILearningEngine:
             memory_usage=getattr(chain, "memory_footprint", 0),
             error_message=error_message,
             context=context,
-            metadata=metadata
+            metadata=metadata,
         )
 
     def learn(self, min_samples: int = 50):
@@ -1341,6 +1340,7 @@ class AILearningEngine:
 
         Args:
             min_samples: Minimum number of samples required to train models
+
         """
         if not self.learning_enabled:
             logger.info("Learning is disabled")
@@ -1372,7 +1372,7 @@ class AILearningEngine:
                     metadata.append({
                         "technique": record["exploit_data"].get("technique"),
                         "target_type": record["exploit_data"].get("target_type"),
-                        "timestamp": record["timestamp"]
+                        "timestamp": record["timestamp"],
                     })
 
             if len(features) < min_samples:
@@ -1422,7 +1422,7 @@ class AILearningEngine:
         except Exception as e:
             logger.error(f"Error during learning: {e}")
 
-    def _extract_features(self, record: Dict[str, Any]) -> Optional[List[float]]:
+    def _extract_features(self, record: dict[str, Any]) -> list[float] | None:
         """Extract numerical features from a learning record.
 
         Args:
@@ -1430,6 +1430,7 @@ class AILearningEngine:
 
         Returns:
             Feature vector or None if extraction fails
+
         """
         try:
             features = []
@@ -1472,7 +1473,7 @@ class AILearningEngine:
             logger.debug(f"Failed to extract features: {e}")
             return None
 
-    def _calculate_protection_score(self, exploit_data: Dict[str, Any]) -> float:
+    def _calculate_protection_score(self, exploit_data: dict[str, Any]) -> float:
         """Calculate a protection score based on exploit data.
 
         Args:
@@ -1480,6 +1481,7 @@ class AILearningEngine:
 
         Returns:
             Protection score (0.0 to 10.0)
+
         """
         score = 0.0
 
@@ -1497,7 +1499,7 @@ class AILearningEngine:
 
         return min(score, 10.0)
 
-    def _encode_technique(self, technique: str) -> List[float]:
+    def _encode_technique(self, technique: str) -> list[float]:
         """Encode exploit technique as numerical features.
 
         Args:
@@ -1505,10 +1507,11 @@ class AILearningEngine:
 
         Returns:
             One-hot encoded vector
+
         """
         techniques = [
             "buffer_overflow", "heap_spray", "rop_chain", "return_to_libc",
-            "format_string", "use_after_free", "integer_overflow", "race_condition"
+            "format_string", "use_after_free", "integer_overflow", "race_condition",
         ]
 
         vector = [0.0] * len(techniques)
@@ -1517,7 +1520,7 @@ class AILearningEngine:
 
         return vector
 
-    def _encode_target_type(self, target_type: str) -> List[float]:
+    def _encode_target_type(self, target_type: str) -> list[float]:
         """Encode target type as numerical features.
 
         Args:
@@ -1525,10 +1528,11 @@ class AILearningEngine:
 
         Returns:
             One-hot encoded vector
+
         """
         target_types = [
             "windows_exe", "linux_elf", "macos_binary", "android_apk",
-            "ios_app", "web_application", "firmware", "driver"
+            "ios_app", "web_application", "firmware", "driver",
         ]
 
         vector = [0.0] * len(target_types)
@@ -1537,13 +1541,14 @@ class AILearningEngine:
 
         return vector
 
-    def _discover_patterns(self, X: np.ndarray, y: np.ndarray, metadata: List[Dict]):
+    def _discover_patterns(self, X: np.ndarray, y: np.ndarray, metadata: list[dict]):
         """Discover new patterns from trained models.
 
         Args:
             X: Feature matrix
             y: Labels
             metadata: Metadata for each sample
+
         """
         if not self.models_trained:
             return
@@ -1566,14 +1571,14 @@ class AILearningEngine:
                     "important_features": important_features.tolist(),
                     "technique": metadata[idx].get("technique"),
                     "target_type": metadata[idx].get("target_type"),
-                    "confidence": float(self.neural_net.predict_proba(X[idx:idx+1])[0, 1])
+                    "confidence": float(self.neural_net.predict_proba(X[idx:idx+1])[0, 1]),
                 }
 
                 # Record the discovered pattern
                 self.pattern_engine.add_pattern(
                     pattern_type="anomaly_based",
                     pattern_data=pattern_data,
-                    source="ml_discovery"
+                    source="ml_discovery",
                 )
 
             self.learning_stats["patterns_discovered"] += len(anomalous_successes)
@@ -1582,7 +1587,7 @@ class AILearningEngine:
         except Exception as e:
             logger.error(f"Error discovering patterns: {e}")
 
-    def predict_success(self, exploit_data: Dict[str, Any]) -> Dict[str, float]:
+    def predict_success(self, exploit_data: dict[str, Any]) -> dict[str, float]:
         """Predict the success probability of an exploit.
 
         Args:
@@ -1590,6 +1595,7 @@ class AILearningEngine:
 
         Returns:
             Dictionary with prediction results from different models
+
         """
         if not self.models_trained:
             return {"status": "models_not_trained", "probability": 0.5}
@@ -1620,7 +1626,7 @@ class AILearningEngine:
                 "random_forest_probability": rf_prob,
                 "neural_network_probability": nn_prob,
                 "is_anomaly": bool(is_anomaly),
-                "confidence": self._calculate_confidence(rf_prob, nn_prob)
+                "confidence": self._calculate_confidence(rf_prob, nn_prob),
             }
 
         except Exception as e:
@@ -1636,6 +1642,7 @@ class AILearningEngine:
 
         Returns:
             Confidence score (0.0 to 1.0)
+
         """
         # High confidence when models agree
         agreement = 1.0 - abs(rf_prob - nn_prob)

@@ -29,7 +29,6 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +36,11 @@ class PathDiscovery:
     """Dynamic path discovery system for tools and resources."""
 
     def __init__(self, config_manager=None):
-        """
-        Initialize path discovery system.
+        """Initialize path discovery system.
 
         Args:
             config_manager: Optional config manager for persistence
+
         """
         self.config_manager = config_manager
         self.cache = {}
@@ -56,7 +55,7 @@ class PathDiscovery:
                 "executables": {
                     "win32": ["ghidraRun.bat", "ghidra.bat"],
                     "linux": ["ghidra", "ghidraRun"],
-                    "darwin": ["ghidra", "ghidraRun"]
+                    "darwin": ["ghidra", "ghidraRun"],
                 },
                 "search_paths": {
                     "win32": [
@@ -76,17 +75,17 @@ class PathDiscovery:
                         "/opt/ghidra",
                         "/usr/local/ghidra",
                         os.path.expanduser("~/ghidra"),
-                    ]
+                    ],
                 },
                 "env_vars": ["GHIDRA_HOME", "GHIDRA_PATH", "GHIDRA_INSTALL_DIR"],
-                "validation": self._validate_ghidra
+                "validation": self._validate_ghidra,
             },
 
             "radare2": {
                 "executables": {
                     "win32": ["radare2.exe", "r2.exe"],
                     "linux": ["radare2", "r2"],
-                    "darwin": ["radare2", "r2"]
+                    "darwin": ["radare2", "r2"],
                 },
                 "search_paths": {
                     "win32": [
@@ -104,17 +103,17 @@ class PathDiscovery:
                         "/usr/local/bin",
                         "/opt/homebrew/bin",
                         "/opt/radare2/bin",
-                    ]
+                    ],
                 },
                 "env_vars": ["RADARE2_HOME", "RADARE2_PATH"],
-                "validation": self._validate_radare2
+                "validation": self._validate_radare2,
             },
 
             "frida": {
                 "executables": {
                     "win32": ["frida.exe", "frida-server.exe"],
                     "linux": ["frida", "frida-server"],
-                    "darwin": ["frida", "frida-server"]
+                    "darwin": ["frida", "frida-server"],
                 },
                 "search_paths": {
                     "win32": [
@@ -131,17 +130,17 @@ class PathDiscovery:
                         "/usr/local/bin",
                         "/opt/homebrew/bin",
                         os.path.expanduser("~/.local/bin"),
-                    ]
+                    ],
                 },
                 "env_vars": ["FRIDA_PATH"],
-                "validation": self._validate_frida
+                "validation": self._validate_frida,
             },
 
             "python": {
                 "executables": {
                     "win32": ["python.exe", "python3.exe", "python311.exe", "python310.exe", "python39.exe"],
                     "linux": ["python3", "python", "python3.11", "python3.10", "python3.9"],
-                    "darwin": ["python3", "python", "python3.11", "python3.10", "python3.9"]
+                    "darwin": ["python3", "python", "python3.11", "python3.10", "python3.9"],
                 },
                 "search_paths": {
                     "win32": [
@@ -163,17 +162,17 @@ class PathDiscovery:
                         "/usr/local/bin",
                         "/opt/homebrew/bin",
                         "/usr/bin",
-                    ]
+                    ],
                 },
                 "env_vars": ["PYTHON_HOME", "PYTHON_PATH"],
-                "validation": self._validate_python
+                "validation": self._validate_python,
             },
 
             "docker": {
                 "executables": {
                     "win32": ["docker.exe", "Docker Desktop.exe"],
                     "linux": ["docker"],
-                    "darwin": ["docker"]
+                    "darwin": ["docker"],
                 },
                 "search_paths": {
                     "win32": [
@@ -187,17 +186,17 @@ class PathDiscovery:
                     "darwin": [
                         "/usr/local/bin",
                         "/opt/homebrew/bin",
-                    ]
+                    ],
                 },
                 "env_vars": ["DOCKER_PATH"],
-                "validation": self._validate_docker
+                "validation": self._validate_docker,
             },
 
             "wireshark": {
                 "executables": {
                     "win32": ["Wireshark.exe", "tshark.exe"],
                     "linux": ["wireshark", "tshark"],
-                    "darwin": ["wireshark", "tshark"]
+                    "darwin": ["wireshark", "tshark"],
                 },
                 "search_paths": {
                     "win32": [
@@ -211,17 +210,17 @@ class PathDiscovery:
                     "darwin": [
                         "/Applications/Wireshark.app/Contents/MacOS",
                         "/usr/local/bin",
-                    ]
+                    ],
                 },
                 "env_vars": ["WIRESHARK_PATH"],
-                "validation": self._validate_wireshark
+                "validation": self._validate_wireshark,
             },
 
             "qemu": {
                 "executables": {
                     "win32": ["qemu-system-x86_64.exe", "qemu-system-i386.exe"],
                     "linux": ["qemu-system-x86_64", "qemu-system-i386"],
-                    "darwin": ["qemu-system-x86_64", "qemu-system-i386"]
+                    "darwin": ["qemu-system-x86_64", "qemu-system-i386"],
                 },
                 "search_paths": {
                     "win32": [
@@ -236,17 +235,17 @@ class PathDiscovery:
                     "darwin": [
                         "/usr/local/bin",
                         "/opt/homebrew/bin",
-                    ]
+                    ],
                 },
                 "env_vars": ["QEMU_PATH", "QEMU_HOME"],
-                "validation": None
+                "validation": None,
             },
 
             "git": {
                 "executables": {
                     "win32": ["git.exe"],
                     "linux": ["git"],
-                    "darwin": ["git"]
+                    "darwin": ["git"],
                 },
                 "search_paths": {
                     "win32": [
@@ -262,17 +261,17 @@ class PathDiscovery:
                         "/usr/bin",
                         "/usr/local/bin",
                         "/opt/homebrew/bin",
-                    ]
+                    ],
                 },
                 "env_vars": ["GIT_PATH"],
-                "validation": None
+                "validation": None,
             },
 
             "wkhtmltopdf": {
                 "executables": {
                     "win32": ["wkhtmltopdf.exe"],
                     "linux": ["wkhtmltopdf"],
-                    "darwin": ["wkhtmltopdf"]
+                    "darwin": ["wkhtmltopdf"],
                 },
                 "search_paths": {
                     "win32": [
@@ -287,11 +286,11 @@ class PathDiscovery:
                     "darwin": [
                         "/usr/local/bin",
                         "/opt/homebrew/bin",
-                    ]
+                    ],
                 },
                 "env_vars": ["WKHTMLTOPDF_PATH"],
-                "validation": None
-            }
+                "validation": None,
+            },
         }
 
         # System paths
@@ -309,9 +308,8 @@ class PathDiscovery:
             "startup": self._get_startup_dir,
         }
 
-    def find_tool(self, tool_name: str, required_executables: Optional[List[str]] = None) -> Optional[str]:
-        """
-        Find a tool using multiple discovery strategies.
+    def find_tool(self, tool_name: str, required_executables: list[str] | None = None) -> str | None:
+        """Find a tool using multiple discovery strategies.
 
         Args:
             tool_name: Name of the tool to find
@@ -319,6 +317,7 @@ class PathDiscovery:
 
         Returns:
             Path to the tool executable or None if not found
+
         """
         # Check cache
         cache_key = f"{tool_name}:{','.join(required_executables or [])}"
@@ -326,9 +325,8 @@ class PathDiscovery:
             cached_path = self.cache[cache_key]
             if os.path.exists(cached_path):
                 return cached_path
-            else:
-                # Cache is stale
-                del self.cache[cache_key]
+            # Cache is stale
+            del self.cache[cache_key]
 
         # Check config first
         if self.config_manager:
@@ -374,7 +372,7 @@ class PathDiscovery:
 
         return None
 
-    def _generic_tool_search(self, tool_name: str, executables: Optional[List[str]] = None) -> Optional[str]:
+    def _generic_tool_search(self, tool_name: str, executables: list[str] | None = None) -> str | None:
         """Generic search for tools not in specification."""
         if not executables:
             executables = [tool_name]
@@ -418,21 +416,21 @@ class PathDiscovery:
 
         return None
 
-    def _search_env_vars(self, env_vars: List[str]) -> Optional[str]:
+    def _search_env_vars(self, env_vars: list[str]) -> str | None:
         """Search using environment variables."""
         for var in env_vars:
             path = os.environ.get(var)
             if path and os.path.exists(path):
                 if os.path.isfile(path):
                     return path
-                elif os.path.isdir(path):
+                if os.path.isdir(path):
                     # Look for executable in directory
                     for file in os.listdir(path):
                         if os.path.isfile(os.path.join(path, file)) and os.access(os.path.join(path, file), os.X_OK):
                             return os.path.join(path, file)
         return None
 
-    def _search_path(self, executables: List[str]) -> Optional[str]:
+    def _search_path(self, executables: list[str]) -> str | None:
         """Search in system PATH."""
         for exe in executables:
             path = shutil.which(exe)
@@ -440,7 +438,7 @@ class PathDiscovery:
                 return path
         return None
 
-    def _search_common_locations(self, spec: Dict) -> Optional[str]:
+    def _search_common_locations(self, spec: dict) -> str | None:
         """Search in common installation locations."""
         search_paths = spec.get("search_paths", {}).get(self.platform, [])
         executables = spec.get("executables", {}).get(self.platform, [])
@@ -461,7 +459,7 @@ class PathDiscovery:
 
         return None
 
-    def _search_registry(self, tool_name: str) -> Optional[str]:
+    def _search_registry(self, tool_name: str) -> str | None:
         """Search Windows registry for installed software."""
         if not self.is_windows:
             return None
@@ -502,78 +500,75 @@ class PathDiscovery:
                                                         return bin_path
                                     except OSError as e:
                                         logger.error("OS error in path_discovery: %s", e)
-                                        pass
                             except OSError as e:
                                 logger.error("OS error in path_discovery: %s", e)
-                                pass
                 except OSError as e:
                     logger.error("OS error in path_discovery: %s", e)
-                    pass
         except ImportError:
             logger.warning("winreg module not available")
 
         return None
 
-    def get_system_path(self, path_type: str) -> Optional[str]:
-        """
-        Get system paths dynamically.
+    def get_system_path(self, path_type: str) -> str | None:
+        """Get system paths dynamically.
 
         Args:
             path_type: Type of system path (e.g., 'windows_system', 'program_files')
 
         Returns:
             System path or None if not applicable
+
         """
         handler = self.system_paths.get(path_type)
         if handler:
             return handler()
         return None
 
-    def _get_windows_system_dir(self) -> Optional[str]:
+    def _get_windows_system_dir(self) -> str | None:
         """Get Windows system directory."""
         if not self.is_windows:
             return None
         return os.environ.get("SystemRoot", r"C:\Windows")
 
-    def _get_windows_system32_dir(self) -> Optional[str]:
+    def _get_windows_system32_dir(self) -> str | None:
         """Get Windows System32 directory."""
         if not self.is_windows:
             return None
         system_root = self._get_windows_system_dir()
         return os.path.join(system_root, "System32") if system_root else None
 
-    def _get_windows_drivers_dir(self) -> Optional[str]:
+    def _get_windows_drivers_dir(self) -> str | None:
         """Get Windows drivers directory."""
         if not self.is_windows:
             return None
         system32 = self._get_windows_system32_dir()
         return os.path.join(system32, "drivers") if system32 else None
 
-    def _get_program_files_dir(self) -> Optional[str]:
+    def _get_program_files_dir(self) -> str | None:
         """Get Program Files directory."""
         if not self.is_windows:
             return None
         return os.environ.get("ProgramFiles", r"C:\Program Files")
 
-    def _get_program_files_x86_dir(self) -> Optional[str]:
+    def _get_program_files_x86_dir(self) -> str | None:
         """Get Program Files (x86) directory."""
         if not self.is_windows:
             return None
         return os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")
 
-    def _get_appdata_dir(self) -> Optional[str]:
+    def _get_appdata_dir(self) -> str | None:
         """Get AppData directory."""
         if not self.is_windows:
             return None
         return os.environ.get("APPDATA")
 
-    def _get_localappdata_dir(self) -> Optional[str]:
+    def _get_localappdata_dir(self) -> str | None:
         """Get LocalAppData directory."""
         if not self.is_windows:
             return None
         return os.environ.get("LOCALAPPDATA")
 
-    def _get_programdata_dir(self) -> Optional[str]:
+    def _get_programdata_dir(self) -> str | None:
         """Get ProgramData directory."""
         if not self.is_windows:
             return None
@@ -588,7 +583,7 @@ class PathDiscovery:
         import tempfile
         return tempfile.gettempdir()
 
-    def _get_startup_dir(self) -> Optional[str]:
+    def _get_startup_dir(self) -> str | None:
         """Get startup directory."""
         if self.is_windows:
             appdata = self._get_appdata_dir()
@@ -656,7 +651,7 @@ class PathDiscovery:
         # For GUI executables, just check if file exists
         return os.path.isfile(path)
 
-    def get_cuda_path(self) -> Optional[str]:
+    def get_cuda_path(self) -> str | None:
         """Find CUDA installation path."""
         if not self.is_windows:
             # Linux/Mac CUDA paths
@@ -689,9 +684,8 @@ class PathDiscovery:
 
         return None
 
-    def ensure_tool_available(self, tool_name: str, parent_widget=None) -> Optional[str]:
-        """
-        Ensure a tool is available, prompting user if needed.
+    def ensure_tool_available(self, tool_name: str, parent_widget=None) -> str | None:
+        """Ensure a tool is available, prompting user if needed.
 
         Args:
             tool_name: Name of the tool
@@ -699,6 +693,7 @@ class PathDiscovery:
 
         Returns:
             Path to tool or None
+
         """
         path = self.find_tool(tool_name)
 
@@ -718,7 +713,7 @@ class PathDiscovery:
                             parent_widget,
                             f"Select {tool_name} executable",
                             "",
-                            file_filter
+                            file_filter,
                         )
 
                         if path:
@@ -748,13 +743,11 @@ class PathDiscovery:
                             if self.config_manager:
                                 self.config_manager.set(f"{tool_name}_path", path)
                             return path
-                        else:
-                            logger.warning(f"Path {path} is not an executable file")
+                        logger.warning(f"Path {path} is not an executable file")
                     else:
                         logger.warning(f"Path {path} does not exist or is not a file")
                 except (KeyboardInterrupt, EOFError) as e:
                     logger.error("Error in path_discovery: %s", e)
-                    pass
                 return None
 
         return path
@@ -770,14 +763,14 @@ def get_path_discovery(config_manager=None) -> PathDiscovery:
         _path_discovery = PathDiscovery(config_manager)
     return _path_discovery
 
-def find_tool(tool_name: str, required_executables: Optional[List[str]] = None) -> Optional[str]:
+def find_tool(tool_name: str, required_executables: list[str] | None = None) -> str | None:
     """Convenience function to find a tool."""
     return get_path_discovery().find_tool(tool_name, required_executables)
 
-def get_system_path(path_type: str) -> Optional[str]:
+def get_system_path(path_type: str) -> str | None:
     """Convenience function to get system paths."""
     return get_path_discovery().get_system_path(path_type)
 
-def ensure_tool_available(tool_name: str, parent_widget=None) -> Optional[str]:
+def ensure_tool_available(tool_name: str, parent_widget=None) -> str | None:
     """Convenience function to ensure tool availability."""
     return get_path_discovery().ensure_tool_available(tool_name, parent_widget)

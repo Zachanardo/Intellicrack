@@ -1,5 +1,4 @@
-"""
-Import validation utilities for plugin development.
+"""Import validation utilities for plugin development.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -19,7 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import ast
 import importlib
-from typing import Dict, List, Optional, Set, Tuple, Union
 
 from intellicrack.logger import logger
 
@@ -28,15 +26,15 @@ class ImportValidator:
     """Utility class for validating Python imports in code files"""
 
     @staticmethod
-    def validate_imports_from_code(code: str) -> Tuple[bool, List[str]]:
-        """
-        Check if imports are available from code string.
+    def validate_imports_from_code(code: str) -> tuple[bool, list[str]]:
+        """Check if imports are available from code string.
 
         Args:
             code: Python code as string
 
         Returns:
             Tuple of (success, warnings/errors)
+
         """
         warnings = []
         try:
@@ -63,23 +61,23 @@ class ImportValidator:
 
         except Exception as e:
             logger.error("Exception in import_validator: %s", e)
-            return False, [f"Import validation error: {str(e)}"]
+            return False, [f"Import validation error: {e!s}"]
 
     @staticmethod
-    def validate_imports_from_file(file_path: str) -> Dict[str, Union[List[str], bool]]:
-        """
-        Check imports from a file path.
+    def validate_imports_from_file(file_path: str) -> dict[str, list[str] | bool]:
+        """Check imports from a file path.
 
         Args:
             file_path: Path to Python file
 
         Returns:
             Dictionary with 'missing' list and optionally 'success' boolean
+
         """
         missing = []
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 code = f.read()
 
             success, warnings = ImportValidator.validate_imports_from_code(code)
@@ -96,15 +94,15 @@ class ImportValidator:
             return {"missing": missing, "success": False}
 
     @staticmethod
-    def get_import_nodes(code: str) -> List[Dict[str, Union[str, List[str]]]]:
-        """
-        Extract all import nodes from code.
+    def get_import_nodes(code: str) -> list[dict[str, str | list[str]]]:
+        """Extract all import nodes from code.
 
         Args:
             code: Python code as string
 
         Returns:
             List of import information dictionaries
+
         """
         imports = []
 
@@ -120,7 +118,7 @@ class ImportValidator:
                                 "module": alias.name,
                                 "alias": alias.asname,
                                 "line": node.lineno,
-                            }
+                            },
                         )
 
                 elif isinstance(node, ast.ImportFrom):
@@ -133,25 +131,24 @@ class ImportValidator:
                                 "names": names,
                                 "level": node.level,
                                 "line": node.lineno,
-                            }
+                            },
                         )
 
         except Exception as e:
             logger.error("Exception in import_validator: %s", e)
-            pass
 
         return imports
 
     @staticmethod
     def check_import_availability(module_name: str) -> bool:
-        """
-        Check if a specific module is available.
+        """Check if a specific module is available.
 
         Args:
             module_name: Name of module to check
 
         Returns:
             True if module is available, False otherwise
+
         """
         try:
             importlib.import_module(module_name)
@@ -161,15 +158,15 @@ class ImportValidator:
             return False
 
     @staticmethod
-    def suggest_alternatives(module_name: str) -> List[str]:
-        """
-        Suggest alternative modules for common missing imports.
+    def suggest_alternatives(module_name: str) -> list[str]:
+        """Suggest alternative modules for common missing imports.
 
         Args:
             module_name: Name of missing module
 
         Returns:
             List of suggested alternatives
+
         """
         alternatives = {
             "cv2": ["opencv-python", "opencv-contrib-python"],
@@ -196,10 +193,9 @@ class PluginStructureValidator:
     @staticmethod
     def validate_structure_from_code(
         code: str,
-        required_methods: Optional[Set[str]] = None
-    ) -> Tuple[bool, List[str]]:
-        """
-        Validate plugin structure requirements from code string.
+        required_methods: set[str] | None = None,
+    ) -> tuple[bool, list[str]]:
+        """Validate plugin structure requirements from code string.
 
         Args:
             code: Python code as string
@@ -207,6 +203,7 @@ class PluginStructureValidator:
 
         Returns:
             Tuple of (success, errors)
+
         """
         if required_methods is None:
             required_methods = {"run"}
@@ -236,16 +233,15 @@ class PluginStructureValidator:
 
         except Exception as e:
             logger.error("Exception in import_validator: %s", e)
-            errors.append(f"Structure validation error: {str(e)}")
+            errors.append(f"Structure validation error: {e!s}")
             return False, errors
 
     @staticmethod
     def validate_structure_from_file(
         file_path: str,
-        required_methods: Optional[Set[str]] = None
-    ) -> Dict[str, Union[bool, List[str]]]:
-        """
-        Check plugin structure from a file path.
+        required_methods: set[str] | None = None,
+    ) -> dict[str, bool | list[str]]:
+        """Check plugin structure from a file path.
 
         Args:
             file_path: Path to Python file
@@ -253,13 +249,14 @@ class PluginStructureValidator:
 
         Returns:
             Dictionary with 'valid' boolean and 'errors' list
+
         """
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 code = f.read()
 
             is_valid, errors = PluginStructureValidator.validate_structure_from_code(
-                code, required_methods
+                code, required_methods,
             )
 
             return {"valid": is_valid, "errors": errors}
@@ -269,15 +266,15 @@ class PluginStructureValidator:
             return {"valid": False, "errors": [str(e)]}
 
     @staticmethod
-    def get_function_definitions(code: str) -> List[Dict[str, Union[str, int]]]:
-        """
-        Extract all function definitions from code.
+    def get_function_definitions(code: str) -> list[dict[str, str | int]]:
+        """Extract all function definitions from code.
 
         Args:
             code: Python code as string
 
         Returns:
             List of function information dictionaries
+
         """
         functions = []
 
@@ -295,7 +292,7 @@ class PluginStructureValidator:
                         "name": node.name,
                         "line": node.lineno,
                         "args": args,
-                        "type": "function"
+                        "type": "function",
                     })
                 elif isinstance(node, ast.ClassDef):
                     # Get methods from classes
@@ -310,22 +307,20 @@ class PluginStructureValidator:
                                 "line": item.lineno,
                                 "args": args,
                                 "type": "method",
-                                "class": node.name
+                                "class": node.name,
                             })
 
         except Exception as e:
             logger.error("Exception in import_validator: %s", e)
-            pass
 
         return functions
 
     @staticmethod
     def validate_combined(
         code: str,
-        required_methods: Optional[Set[str]] = None
-    ) -> Dict[str, Union[bool, List[str]]]:
-        """
-        Validate both imports and structure in one call.
+        required_methods: set[str] | None = None,
+    ) -> dict[str, bool | list[str]]:
+        """Validate both imports and structure in one call.
 
         Args:
             code: Python code as string
@@ -333,13 +328,14 @@ class PluginStructureValidator:
 
         Returns:
             Dictionary with validation results
+
         """
         # Validate imports
         import_success, import_warnings = ImportValidator.validate_imports_from_code(code)
 
         # Validate structure
         struct_success, struct_errors = PluginStructureValidator.validate_structure_from_code(
-            code, required_methods
+            code, required_methods,
         )
 
         return {
@@ -347,32 +343,32 @@ class PluginStructureValidator:
             "import_warnings": import_warnings,
             "structure_errors": struct_errors,
             "import_success": import_success,
-            "structure_success": struct_success
+            "structure_success": struct_success,
         }
 
 
 # Convenience functions for backward compatibility
-def validate_imports(code: str) -> Tuple[bool, List[str]]:
-    """
-    Backward compatibility function for validate_imports.
+def validate_imports(code: str) -> tuple[bool, list[str]]:
+    """Backward compatibility function for validate_imports.
 
     Args:
         code: Python code as string
 
     Returns:
         Tuple of (success, warnings)
+
     """
     return ImportValidator.validate_imports_from_code(code)
 
 
-def validate_structure(code: str) -> Tuple[bool, List[str]]:
-    """
-    Backward compatibility function for validate_structure.
+def validate_structure(code: str) -> tuple[bool, list[str]]:
+    """Backward compatibility function for validate_structure.
 
     Args:
         code: Python code as string
 
     Returns:
         Tuple of (success, errors)
+
     """
     return PluginStructureValidator.validate_structure_from_code(code)

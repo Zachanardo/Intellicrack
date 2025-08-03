@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -24,7 +23,8 @@ This module consolidates repeated UI patterns to avoid code duplication.
 
 import os
 import webbrowser
-from typing import Any, Callable, List, Optional, Tuple
+from collections.abc import Callable
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -52,8 +52,7 @@ except ImportError as e:
 
 
 def ask_open_report(parent: Any, report_path: str) -> bool:
-    """
-    Ask user if they want to open a generated report.
+    """Ask user if they want to open a generated report.
 
     Args:
         parent: Parent widget
@@ -61,6 +60,7 @@ def ask_open_report(parent: Any, report_path: str) -> bool:
 
     Returns:
         True if report was opened
+
     """
     if not HAS_PYQT:
         return False
@@ -70,7 +70,7 @@ def ask_open_report(parent: Any, report_path: str) -> bool:
             parent,
             "Open Report",
             "Do you want to open the report?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         ) == QMessageBox.Yes
 
         if open_report:
@@ -87,9 +87,8 @@ def ask_open_report(parent: Any, report_path: str) -> bool:
 
 def get_save_filename(parent: Any, caption: str = "Save File",
                      filter_str: str = "HTML Files (*.html);;All Files (*.*)",
-                     default_suffix: str = ".html") -> Optional[str]:
-    """
-    Show file save dialog and get filename.
+                     default_suffix: str = ".html") -> str | None:
+    """Show file save dialog and get filename.
 
     Args:
         parent: Parent widget
@@ -99,13 +98,14 @@ def get_save_filename(parent: Any, caption: str = "Save File",
 
     Returns:
         Selected filename or None
+
     """
     if not HAS_PYQT:
         return None
 
     try:
         filename, _ = QFileDialog.getSaveFileName(
-            parent, caption, "", filter_str
+            parent, caption, "", filter_str,
         )
 
         if filename and default_suffix:
@@ -123,9 +123,8 @@ def get_save_filename(parent: Any, caption: str = "Save File",
 def create_binary_selection_header(parent_layout: Any,
                                  binary_path: str = "",
                                  show_label: bool = True,
-                                 extra_buttons: Optional[List[Tuple[str, Callable]]] = None) -> dict:
-    """
-    Create a standard binary selection header widget.
+                                 extra_buttons: list[tuple[str, Callable]] | None = None) -> dict:
+    """Create a standard binary selection header widget.
 
     Args:
         parent_layout: Layout to add the header to
@@ -140,6 +139,7 @@ def create_binary_selection_header(parent_layout: Any,
             'browse_btn': QPushButton,
             'extra_buttons': {button_text: QPushButton}
         }
+
     """
     if not HAS_PYQT:
         return {}

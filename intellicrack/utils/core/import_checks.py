@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -155,16 +154,32 @@ except ImportError as e:
 
 # Export all availability flags
 __all__ = [
-    "PEFILE_AVAILABLE", "pefile",
-    "LIEF_AVAILABLE", "lief",
-    "CAPSTONE_AVAILABLE", "capstone",
-    "PYELFTOOLS_AVAILABLE", "ELFFile",
-    "PSUTIL_AVAILABLE", "psutil",
-    "FRIDA_AVAILABLE", "frida",
-    "MATPLOTLIB_AVAILABLE", "plt",
-    "PDFKIT_AVAILABLE", "pdfkit",
-    "TENSORFLOW_AVAILABLE", "tf",
-    "HAS_PYQT", "QThread", "QTimer", "pyqtSignal", "QApplication", "QWidget",
-    "HAS_NUMPY", "np",
-    "WINREG_AVAILABLE", "winreg"
+    "CAPSTONE_AVAILABLE",
+    "FRIDA_AVAILABLE",
+    "HAS_NUMPY",
+    "HAS_PYQT",
+    "LIEF_AVAILABLE",
+    "MATPLOTLIB_AVAILABLE",
+    "PDFKIT_AVAILABLE",
+    "PEFILE_AVAILABLE",
+    "PSUTIL_AVAILABLE",
+    "PYELFTOOLS_AVAILABLE",
+    "TENSORFLOW_AVAILABLE",
+    "WINREG_AVAILABLE",
+    "ELFFile",
+    "QApplication",
+    "QThread",
+    "QTimer",
+    "QWidget",
+    "capstone",
+    "frida",
+    "lief",
+    "np",
+    "pdfkit",
+    "pefile",
+    "plt",
+    "psutil",
+    "pyqtSignal",
+    "tf",
+    "winreg",
 ]

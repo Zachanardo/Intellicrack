@@ -1,5 +1,4 @@
-"""
-Smart Program Selector Dialog for Intellicrack.
+"""Smart Program Selector Dialog for Intellicrack.
 
 Provides intelligent program discovery from desktop shortcuts, executables,
 and installation folders with automatic licensing analysis integration.
@@ -131,8 +130,7 @@ class ProgramDiscoveryThread(QThread):
 
 
 class ProgramSelectorDialog(QDialog):
-    """
-    Program Selector Dialog with intelligent shortcut resolution
+    """Program Selector Dialog with intelligent shortcut resolution
     and installation folder discovery.
     """
 
@@ -155,7 +153,7 @@ class ProgramSelectorDialog(QDialog):
             "All Executables": ["*.exe", "*.dll", "*.so", "*.dylib", "*.bin"],
             "Windows": ["*.exe", "*.dll", "*.sys"],
             "Linux": ["*.so", "*.bin"],
-            "macOS": ["*.dylib", "*.app"]
+            "macOS": ["*.dylib", "*.app"],
         }
 
         # Setup UI
@@ -324,7 +322,7 @@ class ProgramSelectorDialog(QDialog):
             self,
             "Select Program File or Shortcut",
             "",
-            file_filters
+            file_filters,
         )
 
         if file_path:
@@ -364,7 +362,7 @@ class ProgramSelectorDialog(QDialog):
 
         except Exception as e:
             logger.error(f"Error processing selected file {file_path}: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to process file: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to process file: {e!s}")
         finally:
             self.progress_bar.setVisible(False)
 
@@ -385,27 +383,26 @@ class ProgramSelectorDialog(QDialog):
 
         if discovered_program:
             return discovered_program.__dict__
-        else:
-            # Create basic program info
-            return {
-                "name": file_path.stem,
-                "display_name": file_path.name,
-                "version": "Unknown",
-                "publisher": "Unknown",
-                "install_location": str(install_folder),
-                "executable_paths": [str(file_path)],
-                "icon_path": None,
-                "uninstall_string": None,
-                "install_date": None,
-                "estimated_size": metadata.get("size", 0),
-                "architecture": "Unknown",
-                "file_types": [file_path.suffix],
-                "description": f"Program discovered from {metadata.get('resolution_method', 'direct')} selection",
-                "registry_key": None,
-                "discovery_method": "manual_selection",
-                "confidence_score": 0.8,
-                "analysis_priority": 5
-            }
+        # Create basic program info
+        return {
+            "name": file_path.stem,
+            "display_name": file_path.name,
+            "version": "Unknown",
+            "publisher": "Unknown",
+            "install_location": str(install_folder),
+            "executable_paths": [str(file_path)],
+            "icon_path": None,
+            "uninstall_string": None,
+            "install_date": None,
+            "estimated_size": metadata.get("size", 0),
+            "architecture": "Unknown",
+            "file_types": [file_path.suffix],
+            "description": f"Program discovered from {metadata.get('resolution_method', 'direct')} selection",
+            "registry_key": None,
+            "discovery_method": "manual_selection",
+            "confidence_score": 0.8,
+            "analysis_priority": 5,
+        }
 
     def scan_desktop_shortcuts(self):
         """Scan desktop for shortcuts and analyze them."""
@@ -428,7 +425,7 @@ class ProgramSelectorDialog(QDialog):
                 desktop_paths.extend([
                     os.path.join(user_profile, "Desktop"),
                     os.path.join(user_profile, "OneDrive", "Desktop"),
-                    r"C:\Users\Public\Desktop"
+                    r"C:\Users\Public\Desktop",
                 ])
         elif sys.platform.startswith("linux"):
             # Linux desktop paths
@@ -436,7 +433,7 @@ class ProgramSelectorDialog(QDialog):
             if home:
                 desktop_paths.extend([
                     os.path.join(home, "Desktop"),
-                    os.path.join(home, ".local", "share", "applications")
+                    os.path.join(home, ".local", "share", "applications"),
                 ])
         elif sys.platform.startswith("darwin"):
             # macOS desktop paths
@@ -444,7 +441,7 @@ class ProgramSelectorDialog(QDialog):
             if home:
                 desktop_paths.extend([
                     os.path.join(home, "Desktop"),
-                    "/Applications"
+                    "/Applications",
                 ])
 
         # Filter to existing paths
@@ -695,7 +692,7 @@ Description: {program_data.get('description', 'No description available')}"""
                 ".permit", ".grant", ".auth", ".unlock", ".crack",
 
                 # Hidden or no extension
-                "", ".", ".hidden", ".sys", ".tmp"
+                "", ".", ".hidden", ".sys", ".tmp",
             ]
 
             # Search for licensing-related files with advanced detection
@@ -822,7 +819,7 @@ Description: {program_data.get('description', 'No description available')}"""
                 "path": file_path,
                 "type": file_type,
                 "priority": priority,
-                "size": os.path.getsize(file_path) if os.path.exists(file_path) else 0
+                "size": os.path.getsize(file_path) if os.path.exists(file_path) else 0,
             }
 
             self.licensing_files.append(file_info)
@@ -888,12 +885,12 @@ Description: {program_data.get('description', 'No description available')}"""
                     if hasattr(os, "startfile"):
                         os.startfile(file_path)
                 elif sys.platform.startswith("linux"):
-                    subprocess.run(["xdg-open", file_path])
+                    subprocess.run(["xdg-open", file_path], check=False)
                 elif sys.platform.startswith("darwin"):
-                    subprocess.run(["open", file_path])
+                    subprocess.run(["open", file_path], check=False)
             except Exception as e:
                 logger.error(f"Error opening file {file_path}: {e}")
-                QMessageBox.warning(self, "Error", f"Could not open file: {str(e)}")
+                QMessageBox.warning(self, "Error", f"Could not open file: {e!s}")
 
     def analyze_selected_program(self):
         """Analyze the selected program."""
@@ -909,7 +906,7 @@ Description: {program_data.get('description', 'No description available')}"""
             "program_info": self.selected_program,
             "installation_folder": self.installation_folder,
             "licensing_files": self.licensing_files,
-            "auto_analyze": self.auto_analyze_checkbox.isChecked()
+            "auto_analyze": self.auto_analyze_checkbox.isChecked(),
         }
 
 

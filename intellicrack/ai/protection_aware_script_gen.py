@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -18,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from ..models.protection_knowledge_base import get_protection_knowledge_base
 from ..protection.unified_protection_engine import get_unified_engine
@@ -57,13 +56,12 @@ class ProtectionAwareScriptGenerator:
             "steam_ceg": self._get_steam_scripts(),
             "vmprotect": self._get_vmprotect_scripts(),
             "denuvo": self._get_denuvo_scripts(),
-            "microsoft_activation": self._get_ms_activation_scripts()
+            "microsoft_activation": self._get_ms_activation_scripts(),
         }
 
     def generate_bypass_script(self, binary_path: str,
-                               script_type: str = "frida") -> Dict[str, Any]:
-        """
-        Generate a bypass script tailored to the detected protection.
+                               script_type: str = "frida") -> dict[str, Any]:
+        """Generate a bypass script tailored to the detected protection.
 
         Args:
             binary_path: Path to the protected binary
@@ -71,6 +69,7 @@ class ProtectionAwareScriptGenerator:
 
         Returns:
             Dict containing script and metadata
+
         """
         # Use unified engine for comprehensive analysis
         try:
@@ -81,8 +80,8 @@ class ProtectionAwareScriptGenerator:
                 "Exception in protection_aware_script_gen: %s", e)
             return {
                 "success": False,
-                "error": f"Failed to analyze protection: {str(e)}",
-                "script": self._get_generic_analysis_script(script_type)
+                "error": f"Failed to analyze protection: {e!s}",
+                "script": self._get_generic_analysis_script(script_type),
             }
 
         # Early exit if no protection detected
@@ -95,8 +94,8 @@ class ProtectionAwareScriptGenerator:
                 "approach": "Basic analysis - no protection detected",
                 "metadata": {
                     "file_type": result.file_type if result else "Unknown",
-                    "architecture": result.architecture if result else "Unknown"
-                }
+                    "architecture": result.architecture if result else "Unknown",
+                },
             }
 
         # Build prioritized protection list
@@ -112,7 +111,7 @@ class ProtectionAwareScriptGenerator:
                         "source": "ICP",
                         "type": detection.type,
                         "confidence": detection.confidence,
-                        "version": detection.version
+                        "version": detection.version,
                     }
                     # Track highest confidence protection
                     if detection.confidence > highest_confidence:
@@ -127,7 +126,7 @@ class ProtectionAwareScriptGenerator:
                     "source": protection.get("source", "Unknown"),
                     "type": protection.get("type", "unknown"),
                     "confidence": protection.get("confidence", 50.0) / 100.0,
-                    "version": protection.get("version", "")
+                    "version": protection.get("version", ""),
                 }
                 # Update primary if higher confidence
                 conf = protection.get("confidence", 50.0) / 100.0
@@ -204,13 +203,12 @@ class ProtectionAwareScriptGenerator:
             "bypass_techniques": self._get_recommended_techniques(protection_info),
             "estimated_time": self.kb.estimate_bypass_time(primary_protection, "intermediate") if primary_protection else "Variable",
             "tools_needed": self.kb.get_tools_for_protection(primary_protection) if primary_protection else [],
-            "die_analysis": result.icp_analysis
+            "die_analysis": result.icp_analysis,
         }
 
     def _generate_ai_prompt(self, result, protection_type: str,
                             confidence: float, protection_info: Any) -> str:
         """Generate AI prompt for script enhancement"""
-
         prompt = f"""Generate a bypass script for {protection_type} protection.
 
 Protection Details:
@@ -283,7 +281,7 @@ Focus on the most effective approach for this specific protection type.
 
         return "\n".join(lines)
 
-    def _get_recommended_techniques(self, protection_info: Any) -> List[Dict[str, Any]]:
+    def _get_recommended_techniques(self, protection_info: Any) -> list[dict[str, Any]]:
         """Get recommended bypass techniques"""
         if not protection_info:
             return []
@@ -296,15 +294,15 @@ Focus on the most effective approach for this specific protection type.
                 "difficulty": technique.difficulty.value,
                 "success_rate": technique.success_rate,
                 "time_estimate": technique.time_estimate,
-                "tools": technique.tools_required
+                "tools": technique.tools_required,
             })
 
         return techniques
 
-    def _get_hasp_scripts(self) -> Dict[str, str]:
+    def _get_hasp_scripts(self) -> dict[str, str]:
         """Sentinel HASP specific scripts"""
         return {
-            "frida": '''// Sentinel HASP Bypass Script
+            "frida": """// Sentinel HASP Bypass Script
 // Targets: hasp_login, hasp_encrypt, hasp_decrypt
 
 // Hook hasp_login to always return success
@@ -355,8 +353,8 @@ if (hasp_encrypt) {
 }
 
 console.log("[+] Sentinel HASP hooks installed");
-''',
-            "ghidra": '''// Sentinel HASP Analysis Script for Ghidra
+""",
+            "ghidra": """// Sentinel HASP Analysis Script for Ghidra
 // Identifies HASP API usage and patches validation
 
 import ghidra.app.script.GhidraScript;
@@ -416,13 +414,13 @@ public class SentinelHASPBypass extends GhidraScript {
         }
     }
 }
-'''
+""",
         }
 
-    def _get_flexlm_scripts(self) -> Dict[str, str]:
+    def _get_flexlm_scripts(self) -> dict[str, str]:
         """FlexLM/FlexNet specific scripts"""
         return {
-            "frida": '''// FlexLM/FlexNet License Bypass Script
+            "frida": """// FlexLM/FlexNet License Bypass Script
 // Targets license checkout and validation
 
 // Hook lc_checkout
@@ -466,13 +464,13 @@ Interceptor.attach(getenv, {
 });
 
 console.log("[+] FlexLM hooks installed");
-'''
+""",
         }
 
-    def _get_winlicense_scripts(self) -> Dict[str, str]:
+    def _get_winlicense_scripts(self) -> dict[str, str]:
         """WinLicense/Themida specific scripts"""
         return {
-            "frida": '''// WinLicense/Themida Analysis Script
+            "frida": """// WinLicense/Themida Analysis Script
 // Note: This protection uses heavy virtualization
 
 console.warn("[!] WinLicense/Themida detected - Complex protection!");
@@ -521,13 +519,13 @@ Interceptor.attach(Module.findExportByName("ntdll.dll", "RtlAddVectoredException
 
 console.log("[+] WinLicense analysis hooks installed");
 console.log("[!] Manual unpacking likely required");
-'''
+""",
         }
 
-    def _get_steam_scripts(self) -> Dict[str, str]:
+    def _get_steam_scripts(self) -> dict[str, str]:
         """Steam CEG specific scripts"""
         return {
-            "frida": '''// Steam CEG Bypass Script
+            "frida": """// Steam CEG Bypass Script
 // Targets Steam API initialization and checks
 
 // Hook SteamAPI_Init
@@ -576,13 +574,13 @@ Memory.scan(Process.enumerateModules()[0].base, 0x1000000, steamuser_pattern, {
 });
 
 console.log("[+] Steam CEG bypass hooks installed");
-'''
+""",
         }
 
-    def _get_vmprotect_scripts(self) -> Dict[str, str]:
+    def _get_vmprotect_scripts(self) -> dict[str, str]:
         """VMProtect specific scripts"""
         return {
-            "frida": '''// VMProtect Analysis Helper
+            "frida": """// VMProtect Analysis Helper
 // Note: VMProtect uses heavy virtualization - full bypass is complex
 
 console.warn("[!] VMProtect detected - Extreme protection!");
@@ -645,13 +643,13 @@ vmprotect_apis.forEach(function(api) {
 
 console.log("[+] VMProtect analysis hooks installed");
 console.log("[!] Full devirtualization required for complete bypass");
-'''
+""",
         }
 
-    def _get_denuvo_scripts(self) -> Dict[str, str]:
+    def _get_denuvo_scripts(self) -> dict[str, str]:
         """Denuvo specific scripts"""
         return {
-            "frida": '''// Denuvo Analysis Helper
+            "frida": """// Denuvo Analysis Helper
 // WARNING: Denuvo is extremely complex protection
 
 console.error("[!!!] DENUVO DETECTED [!!!]");
@@ -693,13 +691,13 @@ console.log("  5. Fix any broken functionality");
 console.log("");
 console.log("[!] This is a professional-level challenge");
 console.log("[!] Consider waiting for scene release");
-'''
+""",
         }
 
-    def _get_ms_activation_scripts(self) -> Dict[str, str]:
+    def _get_ms_activation_scripts(self) -> dict[str, str]:
         """Microsoft Activation specific scripts"""
         return {
-            "frida": '''// Microsoft Activation Bypass Helper
+            "frida": """// Microsoft Activation Bypass Helper
 // For educational/testing purposes only
 
 // Software Licensing API hooks
@@ -749,13 +747,13 @@ if (connectServer) {
 }
 
 console.log("[+] Microsoft Activation hooks installed");
-'''
+""",
         }
 
     def _get_basic_analysis_script(self, script_type: str) -> str:
         """Basic analysis script for unprotected binaries"""
         if script_type == "frida":
-            return '''// Basic Binary Analysis Script
+            return """// Basic Binary Analysis Script
 // No protection detected - standard analysis
 
 // Monitor file operations
@@ -787,13 +785,13 @@ if (connect) {
 }
 
 console.log("[+] Basic analysis hooks installed");
-'''
+"""
         return "// Basic analysis script"
 
     def _get_generic_bypass_script(self, script_type: str) -> str:
         """Generic bypass script for unknown protections"""
         if script_type == "frida":
-            return '''// Generic Protection Bypass Script
+            return """// Generic Protection Bypass Script
 // For unknown/custom protection schemes
 
 // Common protection checks to bypass
@@ -848,7 +846,7 @@ Process.enumerateModules().forEach(function(module) {
 });
 
 console.log("[+] Generic bypass hooks installed");
-'''
+"""
         return "// Generic bypass script"
 
     def _get_generic_analysis_script(self, script_type: str) -> str:
@@ -856,7 +854,7 @@ console.log("[+] Generic bypass hooks installed");
         script_type_upper = script_type.upper()
 
         if script_type.lower() == "frida":
-            return f'''// {script_type_upper} Protection Analysis Script
+            return f"""// {script_type_upper} Protection Analysis Script
 // Failed to detect specific protection - running generic analysis
 
 console.log("[?] Protection type could not be determined");
@@ -872,9 +870,8 @@ Process.enumerateModules().forEach(module => {{
 }});
 
 console.log("[+] Generic {script_type} analysis started");
-'''
-        else:
-            return f'''// {script_type_upper} Protection Analysis Script
+"""
+        return f"""// {script_type_upper} Protection Analysis Script
 // Failed to detect specific protection - running generic analysis
 
 // Generic analysis for {script_type}
@@ -884,13 +881,12 @@ print("[*] Running comprehensive {script_type} analysis...")
 // Add {script_type}-specific analysis code here
 
 print("[+] Generic {script_type} analysis started")
-'''
+"""
 
 
 # Integration function
-def enhance_ai_script_generation(ai_generator, binary_path: str) -> Dict[str, Any]:
-    """
-    Enhance existing AI script generation with protection awareness.
+def enhance_ai_script_generation(ai_generator, binary_path: str) -> dict[str, Any]:
+    """Enhance existing AI script generation with protection awareness.
 
     This function would be integrated into the existing AI system to provide
     protection-specific script generation.
@@ -908,8 +904,8 @@ def enhance_ai_script_generation(ai_generator, binary_path: str) -> Dict[str, An
             context={
                 "protection": result["protection_detected"],
                 "difficulty": result["difficulty"],
-                "techniques": result["bypass_techniques"]
-            }
+                "techniques": result["bypass_techniques"],
+            },
         )
         result["enhanced_script"] = enhanced_script
 

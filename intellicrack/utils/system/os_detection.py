@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -23,24 +22,23 @@ Shared OS detection functions to eliminate code duplication across the codebase.
 """
 
 import platform
-from typing import Any, Dict
+from typing import Any
 
 
 def detect_operating_system() -> str:
-    """
-    Detect and normalize operating system identifier.
+    """Detect and normalize operating system identifier.
 
     Returns:
         Normalized OS identifier: 'windows', 'linux', or 'unknown'
+
     """
     system = platform.system().lower()
 
     if system == "windows":
         return "windows"
-    elif system in ["linux", "darwin"]:
+    if system in ["linux", "darwin"]:
         return "linux"
-    else:
-        return "unknown"
+    return "unknown"
 
 
 def is_windows() -> bool:
@@ -58,12 +56,12 @@ def is_unix_like() -> bool:
     return is_linux_like()
 
 
-def get_platform_details() -> Dict[str, Any]:
-    """
-    Get detailed platform information.
+def get_platform_details() -> dict[str, Any]:
+    """Get detailed platform information.
 
     Returns:
         Dictionary with platform details
+
     """
     return {
         "system": platform.system(),
@@ -72,33 +70,32 @@ def get_platform_details() -> Dict[str, Any]:
         "machine": platform.machine(),
         "processor": platform.processor(),
         "architecture": platform.architecture(),
-        "normalized_os": detect_operating_system()
+        "normalized_os": detect_operating_system(),
     }
 
 
 def get_default_persistence_method() -> str:
-    """
-    Get default persistence method based on operating system.
+    """Get default persistence method based on operating system.
 
     Returns:
         Default persistence method for the current OS
+
     """
     current_os = detect_operating_system()
 
     if current_os == "windows":
         return "scheduled_task"
-    elif current_os == "linux":
+    if current_os == "linux":
         return "systemd_service"
-    else:
-        return "cron_job"
+    return "cron_job"
 
 
-def get_platform_specific_paths() -> Dict[str, str]:
-    """
-    Get platform-specific common paths.
+def get_platform_specific_paths() -> dict[str, str]:
+    """Get platform-specific common paths.
 
     Returns:
         Dictionary with common paths for the current platform
+
     """
     current_os = detect_operating_system()
 
@@ -110,26 +107,25 @@ def get_platform_specific_paths() -> Dict[str, str]:
             "localappdata": os.environ.get("LOCALAPPDATA", ""),
             "programfiles": os.environ.get("PROGRAMFILES", "C:\\Program Files"),
             "system32": "C:\\Windows\\System32",
-            "documents": os.path.join(os.path.expanduser("~"), "Documents")
+            "documents": os.path.join(os.path.expanduser("~"), "Documents"),
         }
-    else:
-        return {
-            "temp": "/tmp",
-            "home": os.path.expanduser("~"),
-            "etc": "/etc",
-            "var": "/var",
-            "usr": "/usr",
-            "bin": "/bin"
-        }
+    return {
+        "temp": "/tmp",
+        "home": os.path.expanduser("~"),
+        "etc": "/etc",
+        "var": "/var",
+        "usr": "/usr",
+        "bin": "/bin",
+    }
 
 
 # Export main functions
 __all__ = [
     "detect_operating_system",
-    "is_windows",
+    "get_default_persistence_method",
+    "get_platform_details",
+    "get_platform_specific_paths",
     "is_linux_like",
     "is_unix_like",
-    "get_platform_details",
-    "get_default_persistence_method",
-    "get_platform_specific_paths"
+    "is_windows",
 ]

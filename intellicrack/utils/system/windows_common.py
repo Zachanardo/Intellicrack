@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -68,6 +67,7 @@ def get_windows_ntdll():
 # Common Windows constants
 class WindowsConstants:
     """Common Windows constants used across modules."""
+
     CREATE_SUSPENDED = 0x00000004
     CREATE_NO_WINDOW = 0x08000000
     MEM_COMMIT = 0x1000
@@ -76,18 +76,18 @@ class WindowsConstants:
 
 
 def cleanup_process_handles(kernel32, process_info: dict, logger_instance=None) -> None:
-    """
-    Clean up Windows process handles.
+    """Clean up Windows process handles.
 
     Args:
         kernel32: Windows kernel32 library
         process_info: Dictionary containing process and thread handles
         logger_instance: Optional logger for error reporting
+
     """
     try:
-        if "thread_handle" in process_info and process_info["thread_handle"]:
+        if process_info.get("thread_handle"):
             kernel32.CloseHandle(process_info["thread_handle"])
-        if "process_handle" in process_info and process_info["process_handle"]:
+        if process_info.get("process_handle"):
             kernel32.CloseHandle(process_info["process_handle"])
     except Exception as e:
         if logger_instance:

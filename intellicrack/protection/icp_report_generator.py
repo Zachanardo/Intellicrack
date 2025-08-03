@@ -1,5 +1,4 @@
-"""
-ICP (Intellicrack Protection Engine) Report Generator
+"""ICP (Intellicrack Protection Engine) Report Generator
 
 Generates comprehensive analysis reports from ICP engine results.
 Supports multiple output formats including HTML, PDF, and text.
@@ -12,7 +11,7 @@ import datetime
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from ..utils.logger import get_logger
 from .unified_protection_engine import UnifiedProtectionResult
@@ -23,6 +22,7 @@ logger = get_logger(__name__)
 @dataclass
 class ReportOptions:
     """Options for report generation"""
+
     include_raw_json: bool = False
     include_bypass_methods: bool = True
     include_entropy_graph: bool = True
@@ -43,10 +43,9 @@ class ICPReportGenerator:
     def generate_report(
         self,
         result: UnifiedProtectionResult,
-        options: Optional[ReportOptions] = None
+        options: ReportOptions | None = None,
     ) -> str:
-        """
-        Generate a comprehensive report from analysis results
+        """Generate a comprehensive report from analysis results
 
         Args:
             result: Unified protection analysis result
@@ -54,6 +53,7 @@ class ICPReportGenerator:
 
         Returns:
             Path to generated report file
+
         """
         if options is None:
             options = ReportOptions()
@@ -66,18 +66,17 @@ class ICPReportGenerator:
         # Generate report based on format
         if options.output_format == "html":
             return self._generate_html_report(result, options, report_name)
-        elif options.output_format == "text":
+        if options.output_format == "text":
             return self._generate_text_report(result, options, report_name)
-        elif options.output_format == "json":
+        if options.output_format == "json":
             return self._generate_json_report(result, options, report_name)
-        else:
-            raise ValueError(f"Unsupported output format: {options.output_format}")
+        raise ValueError(f"Unsupported output format: {options.output_format}")
 
     def _generate_html_report(
         self,
         result: UnifiedProtectionResult,
         options: ReportOptions,
-        report_name: str
+        report_name: str,
     ) -> str:
         """Generate HTML report"""
         html_content = f"""<!DOCTYPE html>
@@ -218,13 +217,13 @@ class ICPReportGenerator:
 
         {self._generate_icp_analysis_section(result)}
 
-        {options.include_recommendations and self._generate_recommendations_section(result) or ''}
+        {(options.include_recommendations and self._generate_recommendations_section(result)) or ''}
 
-        {options.include_bypass_methods and self._generate_bypass_methods_section(result) or ''}
+        {(options.include_bypass_methods and self._generate_bypass_methods_section(result)) or ''}
 
-        {options.include_technical_details and self._generate_technical_details_section(result) or ''}
+        {(options.include_technical_details and self._generate_technical_details_section(result)) or ''}
 
-        {options.include_raw_json and self._generate_raw_data_section(result) or ''}
+        {(options.include_raw_json and self._generate_raw_data_section(result)) or ''}
 
         <hr>
         <p style="text-align: center; color: #7f8c8d;">
@@ -371,21 +370,21 @@ class ICPReportGenerator:
             recommendations.append({
                 "title": "Unpacking Required",
                 "desc": "The file is packed. Use dynamic analysis tools to unpack before further analysis.",
-                "tools": ["x64dbg", "Process Dump", "Scylla"]
+                "tools": ["x64dbg", "Process Dump", "Scylla"],
             })
 
         if result.has_anti_debug:
             recommendations.append({
                 "title": "Anti-Debug Bypass Needed",
                 "desc": "Anti-debugging mechanisms detected. Use kernel-mode debuggers or anti-anti-debug plugins.",
-                "tools": ["ScyllaHide", "TitanHide", "VirtualKD"]
+                "tools": ["ScyllaHide", "TitanHide", "VirtualKD"],
             })
 
         if result.has_licensing:
             recommendations.append({
                 "title": "License Analysis",
                 "desc": "Licensing system detected. Analyze license validation routines and key algorithms.",
-                "tools": ["IDA Pro", "API Monitor", "WinAPIOverride"]
+                "tools": ["IDA Pro", "API Monitor", "WinAPIOverride"],
             })
 
         if not recommendations:
@@ -447,7 +446,7 @@ class ICPReportGenerator:
             ("Obfuscated", result.is_obfuscated),
             ("Anti-Debug", result.has_anti_debug),
             ("Anti-VM", result.has_anti_vm),
-            ("Licensing", result.has_licensing)
+            ("Licensing", result.has_licensing),
         ]
 
         for feature, status in features:
@@ -473,7 +472,7 @@ class ICPReportGenerator:
         self,
         result: UnifiedProtectionResult,
         options: ReportOptions,
-        report_name: str
+        report_name: str,
     ) -> str:
         """Generate plain text report"""
         lines = []
@@ -539,7 +538,7 @@ class ICPReportGenerator:
         self,
         result: UnifiedProtectionResult,
         options: ReportOptions,
-        report_name: str
+        report_name: str,
     ) -> str:
         """Generate JSON report"""
         report_data = {
@@ -547,7 +546,7 @@ class ICPReportGenerator:
                 "generated": datetime.datetime.now().isoformat(),
                 "version": self._get_version(),
                 "file_path": result.file_path,
-                "file_name": Path(result.file_path).name
+                "file_name": Path(result.file_path).name,
             },
             "summary": {
                 "file_type": result.file_type,
@@ -560,7 +559,7 @@ class ICPReportGenerator:
                 "has_licensing": result.has_licensing,
                 "confidence_score": result.confidence_score,
                 "analysis_time": result.analysis_time,
-                "engines_used": result.engines_used
+                "engines_used": result.engines_used,
             },
             "protections": [
                 {
@@ -569,11 +568,11 @@ class ICPReportGenerator:
                     "confidence": p.get("confidence", 0),
                     "source": p.get("source", "Unknown"),
                     "version": p.get("version", ""),
-                    "details": p.get("details", {})
+                    "details": p.get("details", {}),
                 }
                 for p in result.protections
             ],
-            "bypass_strategies": result.bypass_strategies
+            "bypass_strategies": result.bypass_strategies,
         }
 
         # Add ICP analysis if available
@@ -585,11 +584,11 @@ class ICPReportGenerator:
                         "type": d.type,
                         "version": d.version,
                         "info": d.info,
-                        "confidence": d.confidence
+                        "confidence": d.confidence,
                     }
                     for d in result.icp_analysis.all_detections
                 ],
-                "error": result.icp_analysis.error
+                "error": result.icp_analysis.error,
             }
 
             if options.include_raw_json and result.icp_analysis.raw_json:
@@ -599,7 +598,7 @@ class ICPReportGenerator:
         report_path = self.report_output_path / f"{report_name}.json"
         report_path.write_text(
             json.dumps(report_data, indent=2),
-            encoding="utf-8"
+            encoding="utf-8",
         )
 
         logger.info(f"JSON report generated: {report_path}")
@@ -614,7 +613,7 @@ class ICPReportGenerator:
             "packer": "medium",
             "obfuscator": "medium",
             "anti-debug": "medium",
-            "anti-vm": "low"
+            "anti-vm": "low",
         }
         return severity_map.get(protection_type.lower(), "low")
 

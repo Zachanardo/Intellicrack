@@ -48,37 +48,37 @@ FRIDA_SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "adobe_bypass_frida.
 injected = set()
 
 def inject(target_name):
-    """
-    Inject Frida script into the specified Adobe process.
+    """Inject Frida script into the specified Adobe process.
 
     Args:
         target_name: Name of the process to inject into
 
     Attempts to attach to the process, load the Frida script, and mark
     the process as injected. Fails silently to maintain stealth.
+
     """
     if not HAS_FRIDA:
         return  # Frida not available, skip injection
 
     try:
         session = frida.attach(target_name)
-        with open(FRIDA_SCRIPT_PATH, "r", encoding="utf-8") as f:
+        with open(FRIDA_SCRIPT_PATH, encoding="utf-8") as f:
             script = session.create_script(f.read())
             script.load()
         injected.add(target_name)
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in adobe_full_auto_injector: %s", e)
-        pass  # Silent fail to remain stealthy
+        # Silent fail to remain stealthy
 
 def get_running_adobe_apps():
-    """
-    Get list of currently running Adobe applications that haven't been injected yet.
+    """Get list of currently running Adobe applications that haven't been injected yet.
 
     Returns:
         list: Names of Adobe processes that are running but not yet injected
 
     Scans running processes and filters for Adobe applications listed in
     ADOBE_PROCESSES that haven't already been marked as injected.
+
     """
     running = []
     for _proc in psutil.process_iter(attrs=["name"]):
@@ -92,8 +92,7 @@ def get_running_adobe_apps():
     return running
 
 def monitor_loop():
-    """
-    Continuously monitor for Adobe applications and inject them as they appear.
+    """Continuously monitor for Adobe applications and inject them as they appear.
 
     Runs an infinite loop that checks for new Adobe processes every 2 seconds
     and injects the Frida script into any newly detected processes.

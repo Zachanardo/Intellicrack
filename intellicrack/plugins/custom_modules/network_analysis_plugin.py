@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -26,13 +25,14 @@ import queue
 import socket
 import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class NetworkAnalysisPlugin:
     """Plugin for network traffic analysis and security assessment."""
+
     def __init__(self):
         """Initialize the network analysis plugin."""
         super().__init__()
@@ -51,7 +51,7 @@ class NetworkAnalysisPlugin:
         network_indicators = [
             b"http://", b"https://", b"ftp://",
             b"socket", b"connect", b"bind", b"listen",
-            b"send", b"recv", b"WSAStartup"
+            b"send", b"recv", b"WSAStartup",
         ]
 
         try:
@@ -75,7 +75,7 @@ class NetworkAnalysisPlugin:
 
         return results
 
-    def detect_socket_apis(self, binary_path: str) -> List[str]:
+    def detect_socket_apis(self, binary_path: str) -> list[str]:
         """Detect socket API usage in binary."""
         results = []
 
@@ -116,7 +116,7 @@ class NetworkAnalysisPlugin:
             b"SSL_connect": "SSL connection",
             b"SSL_read": "SSL read",
             b"SSL_write": "SSL write",
-            b"SSL_CTX_new": "SSL context creation"
+            b"SSL_CTX_new": "SSL context creation",
         }
 
         try:
@@ -140,13 +140,13 @@ class NetworkAnalysisPlugin:
 
         return results
 
-    def create_socket_server(self, host: str = "127.0.0.1", port: int = 0) -> Dict[str, Any]:
+    def create_socket_server(self, host: str = "127.0.0.1", port: int = 0) -> dict[str, Any]:
         """Create a socket server for testing."""
         result = {
             "success": False,
             "host": host,
             "port": port,
-            "socket_info": {}
+            "socket_info": {},
         }
 
         try:
@@ -170,7 +170,7 @@ class NetworkAnalysisPlugin:
                 "type": "SOCK_STREAM",
                 "protocol": "TCP",
                 "address": f"{actual_host}:{actual_port}",
-                "state": "LISTENING"
+                "state": "LISTENING",
             }
 
             # Store socket for later use
@@ -184,7 +184,7 @@ class NetworkAnalysisPlugin:
 
         return result
 
-    def scan_ports(self, target_host: str, start_port: int = 1, end_port: int = 1000, timeout: float = 0.5) -> List[Dict[str, Any]]:
+    def scan_ports(self, target_host: str, start_port: int = 1, end_port: int = 1000, timeout: float = 0.5) -> list[dict[str, Any]]:
         """Scan ports on target host using sockets."""
         open_ports = []
 
@@ -206,7 +206,7 @@ class NetworkAnalysisPlugin:
                             53: "dns", 80: "http", 110: "pop3", 143: "imap",
                             443: "https", 445: "smb", 3306: "mysql", 3389: "rdp",
                             5432: "postgresql", 6379: "redis", 8080: "http-alt",
-                            8443: "https-alt", 27017: "mongodb"
+                            8443: "https-alt", 27017: "mongodb",
                         }
                         service_name = common_ports.get(port, "unknown")
 
@@ -214,9 +214,9 @@ class NetworkAnalysisPlugin:
                         "port": port,
                         "service": service_name,
                         "state": "open",
-                        "protocol": "tcp"
+                        "protocol": "tcp",
                     })
-            except socket.timeout:
+            except TimeoutError:
                 # Port is filtered or host is down
                 pass
             except Exception as e:
@@ -227,13 +227,13 @@ class NetworkAnalysisPlugin:
 
         return open_ports
 
-    def monitor_socket_activity(self, duration: int = 60) -> Dict[str, Any]:
+    def monitor_socket_activity(self, duration: int = 60) -> dict[str, Any]:
         """Monitor real-time socket activity."""
         result = {
             "monitoring_started": time.time(),
             "duration": duration,
             "connections": [],
-            "statistics": {}
+            "statistics": {},
         }
 
         if self.monitoring:
@@ -269,7 +269,7 @@ class NetworkAnalysisPlugin:
                                     "type": "new_connection",
                                     "local": f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "N/A",
                                     "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "N/A",
-                                    "pid": conn.pid if hasattr(conn, "pid") else "N/A"
+                                    "pid": conn.pid if hasattr(conn, "pid") else "N/A",
                                 })
 
                     # Check for closed connections
@@ -278,7 +278,7 @@ class NetworkAnalysisPlugin:
                         connection_log.append({
                             "timestamp": time.time(),
                             "type": "closed_connection",
-                            "connection": conn_id
+                            "connection": conn_id,
                         })
 
                     initial_connections = current_connections
@@ -293,7 +293,7 @@ class NetworkAnalysisPlugin:
             result["statistics"] = {
                 "total_events": len(connection_log),
                 "new_connections": sum(1 for c in connection_log if c["type"] == "new_connection"),
-                "closed_connections": sum(1 for c in connection_log if c["type"] == "closed_connection")
+                "closed_connections": sum(1 for c in connection_log if c["type"] == "closed_connection"),
             }
 
         # Start monitoring in a separate thread
@@ -303,12 +303,12 @@ class NetworkAnalysisPlugin:
 
         return result
 
-    def analyze_socket_traffic(self, capture_file: Optional[str] = None) -> Dict[str, Any]:
+    def analyze_socket_traffic(self, capture_file: str | None = None) -> dict[str, Any]:
         """Analyze socket traffic patterns."""
         result = {
             "analysis_time": time.time(),
             "patterns": [],
-            "suspicious_activity": []
+            "suspicious_activity": [],
         }
 
         try:
@@ -339,7 +339,7 @@ class NetworkAnalysisPlugin:
                             result["suspicious_activity"].append({
                                 "type": "suspicious_port",
                                 "details": f"Connection to suspicious port {conn.raddr.port} at {ip}",
-                                "severity": "medium"
+                                "severity": "medium",
                             })
 
             # Identify patterns
@@ -348,7 +348,7 @@ class NetworkAnalysisPlugin:
                 result["patterns"].append({
                     "type": "port_usage",
                     "description": "Most frequently used ports",
-                    "data": most_used_ports
+                    "data": most_used_ports,
                 })
 
             if ip_frequency:
@@ -356,7 +356,7 @@ class NetworkAnalysisPlugin:
                 result["patterns"].append({
                     "type": "ip_connections",
                     "description": "Most frequently connected IPs",
-                    "data": most_connected_ips
+                    "data": most_connected_ips,
                 })
 
             # Check for potential port scanning
@@ -364,7 +364,7 @@ class NetworkAnalysisPlugin:
                 result["suspicious_activity"].append({
                     "type": "possible_port_scan",
                     "details": f"Large number of different ports in use: {len(port_frequency)}",
-                    "severity": "high"
+                    "severity": "high",
                 })
 
         except Exception as e:
@@ -427,7 +427,7 @@ class NetworkAnalysisPlugin:
                         "remote": remote_addr,
                         "remote_host": remote_host,
                         "status": conn.status,
-                        "pid": conn.pid if hasattr(conn, "pid") else "N/A"
+                        "pid": conn.pid if hasattr(conn, "pid") else "N/A",
                     })
 
             if active_connections:
@@ -447,7 +447,7 @@ class NetworkAnalysisPlugin:
                     local_addr = f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "N/A"
                     listening_ports.append({
                         "address": local_addr,
-                        "pid": conn.pid if hasattr(conn, "pid") else "N/A"
+                        "pid": conn.pid if hasattr(conn, "pid") else "N/A",
                     })
 
             if listening_ports:
@@ -474,12 +474,12 @@ class NetworkAnalysisPlugin:
 
         return results
 
-    def get_socket_info(self, sock: socket.socket) -> Dict[str, Any]:
+    def get_socket_info(self, sock: socket.socket) -> dict[str, Any]:
         """Get detailed information about a socket."""
         info = {
             "family": sock.family.name if hasattr(sock.family, "name") else str(sock.family),
             "type": sock.type.name if hasattr(sock.type, "name") else str(sock.type),
-            "proto": sock.proto
+            "proto": sock.proto,
         }
 
         try:

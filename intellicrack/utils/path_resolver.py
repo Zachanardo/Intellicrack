@@ -1,5 +1,4 @@
-"""
-Path Resolution Utilities for Intellicrack
+"""Path Resolution Utilities for Intellicrack
 
 Provides consistent path resolution across the application,
 ensuring paths are relative to the project root or user directories.
@@ -45,8 +44,7 @@ def resolve_qemu_image_path(image_name: str) -> Path:
     if isinstance(image_name, str):
         # Strip common hardcoded prefixes
         for prefix in ["C:\\Intellicrack\\qemu\\images\\", "C:/Intellicrack/qemu/images/",                       "/Intellicrack/qemu/images/", "qemu/images/", "qemu\\images\\", "intellicrack/"]:
-            if image_name.startswith(prefix):
-                image_name = image_name[len(prefix):]
+            image_name = image_name.removeprefix(prefix)
 
         # Handle backslashes
         image_name = image_name.replace("\\", "/")
@@ -63,7 +61,7 @@ def ensure_data_directories():
         get_qemu_images_dir(),
         get_data_dir() / "cache",
         get_data_dir() / "logs",
-        get_data_dir() / "output"
+        get_data_dir() / "output",
     ]
 
     for directory in directories:

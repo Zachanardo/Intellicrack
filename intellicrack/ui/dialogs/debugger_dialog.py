@@ -1,6 +1,5 @@
 
-"""
-Plugin Debugger Dialog for Intellicrack.
+"""Plugin Debugger Dialog for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -20,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 import queue
-from typing import Any, Dict, List
+from typing import Any
 
 from PyQt6.QtCore import QSize, Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QTextCursor, QTextFormat
@@ -283,7 +282,7 @@ class DebuggerDialog(QDialog):
         """Browse for plugin file"""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Select Plugin",
-            "", "Python Files (*.py);;All Files (*.*)"
+            "", "Python Files (*.py);;All Files (*.*)",
         )
 
         if file_path:
@@ -295,7 +294,7 @@ class DebuggerDialog(QDialog):
         self.file_label.setText(os.path.basename(path))
 
         # Load code into editor
-        with open(path, "r") as f:
+        with open(path) as f:
             code = f.read()
 
         self.code_editor.set_code(code)
@@ -448,7 +447,7 @@ class DebuggerDialog(QDialog):
             self.debugger,
             self.plugin_path,
             binary_path="test.exe",  # Mock binary
-            options={}
+            options={},
         )
         self.debugger_thread.start()
 
@@ -555,7 +554,7 @@ class DebuggerDialog(QDialog):
         elif msg_type == "error":
             self.console.append(f"❌ Error: {data}")
 
-    def update_stack_display(self, stack_frames: List[Dict[str, Any]]):
+    def update_stack_display(self, stack_frames: list[dict[str, Any]]):
         """Update call stack display"""
         self.stack_list.clear()
 
@@ -594,7 +593,7 @@ class DebuggerDialog(QDialog):
             item = QTreeWidgetItem(parent, [
                 name,
                 str(info["value"]),
-                info["type"]
+                info["type"],
             ])
 
             # Add children for complex types
@@ -608,7 +607,7 @@ class DebuggerDialog(QDialog):
         # Expand local variables by default
         local_root.setExpanded(True)
 
-    def update_watch_display(self, watches: Dict[str, Any]):
+    def update_watch_display(self, watches: dict[str, Any]):
         """Update watch expressions display"""
         # Update existing items
         for i in range(self.watch_tree.topLevelItemCount()):
@@ -626,7 +625,7 @@ class DebuggerDialog(QDialog):
         # Add to debugger
         self.debugger.command_queue.put({
             "type": "watch",
-            "expression": expr
+            "expression": expr,
         })
 
         # Add to UI
@@ -645,7 +644,7 @@ class DebuggerDialog(QDialog):
 
         self.debugger.command_queue.put({
             "type": "evaluate",
-            "expression": expr
+            "expression": expr,
         })
 
         # Clear input
@@ -657,7 +656,7 @@ class DebuggerDialog(QDialog):
             reply = QMessageBox.question(
                 self, "Debugging Active",
                 "Debugging session is active. Stop debugging and close?",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
 
             if reply == QMessageBox.Yes:

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -39,7 +38,7 @@ def count_logger_calls():
             if file.endswith(".py"):
                 file_path = Path(root) / file
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
                         count = content.count("logger.error(")
                         if count > 0:

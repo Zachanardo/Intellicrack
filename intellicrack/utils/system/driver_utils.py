@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -29,14 +28,14 @@ logger = logging.getLogger(__name__)
 
 
 def get_driver_path(driver_name: str) -> str:
-    """
-    Get the full path to a Windows driver.
+    """Get the full path to a Windows driver.
 
     Args:
         driver_name: Name of the driver file
 
     Returns:
         Full path to the driver
+
     """
     # Try to use path discovery if available
     try:

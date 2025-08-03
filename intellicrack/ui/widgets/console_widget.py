@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -159,7 +158,7 @@ class ConsoleWidget(QWidget):
         # Filter controls
         self.filter_combo = QComboBox()
         self.filter_combo.addItems([
-            "All", "Errors", "Warnings", "Success", "Info", "Debug"
+            "All", "Errors", "Warnings", "Success", "Info", "Debug",
         ])
         self.filter_combo.currentTextChanged.connect(self.apply_filter)
         toolbar_layout.addWidget(self.filter_combo)
@@ -298,7 +297,7 @@ class ConsoleWidget(QWidget):
         while True:
             cursor = self.output.document().find(
                 search_term, cursor,
-                QTextCursor.FindFlags()
+                QTextCursor.FindFlags(),
             )
 
             if cursor.isNull():
@@ -309,7 +308,7 @@ class ConsoleWidget(QWidget):
             cursor.movePosition(
                 QTextCursor.Right,
                 QTextCursor.KeepAnchor,
-                len(search_term)
+                len(search_term),
             )
 
             # Move to first match
@@ -330,7 +329,7 @@ class ConsoleWidget(QWidget):
         filename, _ = QFileDialog.getSaveFileName(
             self, "Export Console Log",
             f"console_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-            "Text Files (*.txt);;All Files (*.*)"
+            "Text Files (*.txt);;All Files (*.*)",
         )
 
         if filename:
@@ -373,15 +372,15 @@ class ConsoleWidget(QWidget):
                     if self.history_index > 0:
                         self.history_index -= 1
                         self.command_input.setText(
-                            self.command_history[self.history_index]
+                            self.command_history[self.history_index],
                         )
                     return True
-                elif event.key() == Qt.Key_Down:
+                if event.key() == Qt.Key_Down:
                     # Next command
                     if self.history_index < len(self.command_history) - 1:
                         self.history_index += 1
                         self.command_input.setText(
-                            self.command_history[self.history_index]
+                            self.command_history[self.history_index],
                         )
                     elif self.history_index == len(self.command_history) - 1:
                         self.history_index = len(self.command_history)

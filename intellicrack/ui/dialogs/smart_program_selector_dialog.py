@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -19,7 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """Smart program selector dialog for choosing target applications."""
 import os
 import sys
-from typing import List, Optional
 
 from intellicrack.logger import logger
 
@@ -97,7 +95,7 @@ class ProgramDiscoveryWorker(QThread):
     progress_updated = pyqtSignal(str)
     finished = pyqtSignal()
 
-    def __init__(self, discovery_paths: List[str]):
+    def __init__(self, discovery_paths: list[str]):
         """Initialize the program discovery worker with specified paths."""
         super().__init__()
         self.discovery_paths = discovery_paths
@@ -124,7 +122,7 @@ class ProgramDiscoveryWorker(QThread):
                 self.progress_updated.emit(f"Found {len(programs)} programs in {path}")
             except Exception as e:
                 self.logger.error("Exception in smart_program_selector_dialog: %s", e)
-                self.progress_updated.emit(f"Error scanning {path}: {str(e)}")
+                self.progress_updated.emit(f"Error scanning {path}: {e!s}")
 
         self.programs_found.emit(all_programs)
         self.finished.emit()
@@ -145,8 +143,8 @@ class SmartProgramSelectorDialog(QDialog):
         self.resize(800, 600)
 
         # Initialize attributes
-        self.selected_program: Optional[ProgramInfo] = None
-        self.discovery_worker: Optional[ProgramDiscoveryWorker] = None
+        self.selected_program: ProgramInfo | None = None
+        self.discovery_worker: ProgramDiscoveryWorker | None = None
         self.discovery_timer = QTimer()
 
         if HAS_QT:
@@ -208,7 +206,7 @@ class SmartProgramSelectorDialog(QDialog):
         self.discovery_worker.start()
         self.scan_button.setEnabled(False)
 
-    def get_discovery_paths(self) -> List[str]:
+    def get_discovery_paths(self) -> list[str]:
         """Get paths to scan for programs."""
         paths = []
 
@@ -218,11 +216,11 @@ class SmartProgramSelectorDialog(QDialog):
             if user_profile:
                 paths.extend([
                     os.path.join(user_profile, "Desktop"),
-                    os.path.join(user_profile, "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs")
+                    os.path.join(user_profile, "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs"),
                 ])
             paths.extend([
                 r"C:\Users\Public\Desktop",
-                r"C:\ProgramData\Microsoft\Windows\Start Menu\Programs"
+                r"C:\ProgramData\Microsoft\Windows\Start Menu\Programs",
             ])
         elif sys.platform.startswith("linux"):
             # Linux paths
@@ -230,11 +228,11 @@ class SmartProgramSelectorDialog(QDialog):
             if home:
                 paths.extend([
                     os.path.join(home, "Desktop"),
-                    os.path.join(home, ".local", "share", "applications")
+                    os.path.join(home, ".local", "share", "applications"),
                 ])
             paths.extend([
                 "/usr/share/applications",
-                "/usr/local/share/applications"
+                "/usr/local/share/applications",
             ])
         elif sys.platform.startswith("darwin"):
             # macOS paths
@@ -242,17 +240,17 @@ class SmartProgramSelectorDialog(QDialog):
             if home:
                 paths.extend([
                     os.path.join(home, "Desktop"),
-                    os.path.join(home, "Applications")
+                    os.path.join(home, "Applications"),
                 ])
             paths.extend([
                 "/Applications",
-                "/System/Applications"
+                "/System/Applications",
             ])
 
         # Filter to existing paths
         return [path for path in paths if os.path.exists(path)]
 
-    def handle_programs_found(self, programs: List[ProgramInfo]):
+    def handle_programs_found(self, programs: list[ProgramInfo]):
         """Handle discovered programs."""
         self.programs_list.clear()
 
@@ -277,12 +275,12 @@ class SmartProgramSelectorDialog(QDialog):
             self.selected_program = current_item.data(32)
             self.accept()
 
-    def get_selected_program(self) -> Optional[ProgramInfo]:
+    def get_selected_program(self) -> ProgramInfo | None:
         """Get the selected program."""
         return self.selected_program
 
 
-def show_smart_program_selector(parent=None) -> Optional[ProgramInfo]:
+def show_smart_program_selector(parent=None) -> ProgramInfo | None:
     """Show the smart program selector dialog."""
     if not HAS_QT:
         return None

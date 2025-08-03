@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -24,14 +23,13 @@ by wrapping existing patch utilities.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-def generate_patch(target_binary: str, patch_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """
-    Generate a patch for the specified binary.
+def generate_patch(target_binary: str, patch_config: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Generate a patch for the specified binary.
 
     Args:
         target_binary: Path to the target binary
@@ -39,6 +37,7 @@ def generate_patch(target_binary: str, patch_config: Optional[Dict[str, Any]] = 
 
     Returns:
         Dictionary containing patch generation results
+
     """
     _ = patch_config
     try:
@@ -49,9 +48,9 @@ def generate_patch(target_binary: str, patch_config: Optional[Dict[str, Any]] = 
             "patch_info": {
                 "target": target_binary,
                 "type": "compatibility_patch",
-                "size": 0
+                "size": 0,
             },
-            "message": "Patch generation completed using compatibility layer"
+            "message": "Patch generation completed using compatibility layer",
         }
 
         logger.info(f"Generated compatibility patch for {target_binary}")
@@ -63,7 +62,7 @@ def generate_patch(target_binary: str, patch_config: Optional[Dict[str, Any]] = 
             "success": False,
             "error": str(e),
             "patch_data": b"",
-            "patch_info": {}
+            "patch_info": {},
         }
 
 
@@ -74,15 +73,15 @@ class PatchGenerator:
         """Initialize patch generator with logger for binary patching operations."""
         self.logger = logging.getLogger("IntellicrackLogger.PatchGenerator")
 
-    def generate_binary_patch(self, target_path: str, patch_type: str = "license_bypass") -> Dict[str, Any]:
+    def generate_binary_patch(self, target_path: str, patch_type: str = "license_bypass") -> dict[str, Any]:
         """Generate a binary patch with specified type."""
         return generate_patch(target_path, {"type": patch_type})
 
-    def validate_patch(self, patch_data: bytes, target_binary: str) -> Dict[str, Any]:
+    def validate_patch(self, patch_data: bytes, target_binary: str) -> dict[str, Any]:
         """Validate a generated patch."""
         _ = patch_data, target_binary
         return {
             "valid": True,
             "issues": [],
-            "recommendations": []
+            "recommendations": [],
         }

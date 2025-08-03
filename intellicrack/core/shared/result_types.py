@@ -2,7 +2,7 @@
 """
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class AnalysisType(Enum):
@@ -26,10 +26,10 @@ class AnalysisResult:
 
     success: bool
     analysis_type: AnalysisType
-    data: Dict[str, Any]
-    errors: List[str] = None
-    warnings: List[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    data: dict[str, Any]
+    errors: list[str] = None
+    warnings: list[str] = None
+    metadata: dict[str, Any] | None = None
 
     def __post_init__(self):
         """Initialize default values for mutable fields after dataclass creation."""

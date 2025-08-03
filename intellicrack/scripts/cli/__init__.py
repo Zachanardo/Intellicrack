@@ -1,5 +1,4 @@
-"""
-Intellicrack CLI Module
+"""Intellicrack CLI Module
 
 Copyright (C) 2025 Zachary Flint
 
@@ -29,14 +28,14 @@ from .pipeline import Pipeline, PipelineProcessor
 from .progress_manager import ProgressManager
 
 __all__ = [
-    "cli_main",
     "AIWrapper",
+    "ConfigProfileManager",
+    "EnhancedRunner",
+    "InteractiveMode",
     "Pipeline",
     "PipelineProcessor",
-    "InteractiveMode",
     "ProgressManager",
-    "ConfigProfileManager",
-    "EnhancedRunner"
+    "cli_main",
 ]
 
 __version__ = "1.0.0"

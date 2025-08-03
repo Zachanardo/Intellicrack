@@ -113,7 +113,6 @@ def get_frida_presets():
             FRIDA_PRESETS = _PRESETS
         except ImportError as e:
             logger.error("Import error in __init__: %s", e)
-            pass
     return FRIDA_PRESETS
 
 def get_frida_bypass_wizard():
@@ -144,23 +143,22 @@ def get_frida_bypass_wizard():
             FridaBypassWizard = _Wizard
         except ImportError as e:
             logger.error("Import error in __init__: %s", e)
-            pass
     return FridaBypassWizard
 
 __all__ = [
+    "EXPLOITATION_MODULES_AVAILABLE",
+    "FRIDA_MODULES_AVAILABLE",
+    "SECURITY_ENFORCEMENT_AVAILABLE",
     "analysis",
+    "exploitation",
+    "get_frida_bypass_wizard",
+    "get_frida_manager",
+    "get_frida_presets",
     "network",
     "patching",
     "processing",
     "protection_bypass",
     "reporting",
-    "exploitation",
-    "vulnerability_research",
     "security_enforcement",
-    "EXPLOITATION_MODULES_AVAILABLE",
-    "SECURITY_ENFORCEMENT_AVAILABLE",
-    "get_frida_manager",
-    "get_frida_presets",
-    "get_frida_bypass_wizard",
-    "FRIDA_MODULES_AVAILABLE"
+    "vulnerability_research",
 ]

@@ -9,7 +9,7 @@ import signal
 import sys
 import tempfile
 import traceback
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
@@ -94,9 +94,8 @@ def log_message(msg: str) -> str:
     return f"[{msg}]"
 
 
-def load_plugins(plugin_dir: str = "intellicrack/plugins") -> Dict[str, List[Dict[str, Any]]]:
-    """
-    Loads and initializes plugins from the plugin directory.
+def load_plugins(plugin_dir: str = "intellicrack/plugins") -> dict[str, list[dict[str, Any]]]:
+    """Loads and initializes plugins from the plugin directory.
     Returns a dictionary of loaded plugins by category.
 
     Args:
@@ -104,11 +103,12 @@ def load_plugins(plugin_dir: str = "intellicrack/plugins") -> Dict[str, List[Dic
 
     Returns:
         Dictionary with plugin categories (frida, ghidra, custom) and their plugins
+
     """
     plugins = {
         "frida": [],
         "ghidra": [],
-        "custom": []
+        "custom": [],
     }
 
     # Check if plugin directory exists
@@ -155,7 +155,7 @@ def load_plugins(plugin_dir: str = "intellicrack/plugins") -> Dict[str, List[Dic
                             "name": name,
                             "module": module_name,
                             "instance": plugin_instance,
-                            "description": description
+                            "description": description,
                         })
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error loading custom plugin %s: %s", file, e)
@@ -164,18 +164,18 @@ def load_plugins(plugin_dir: str = "intellicrack/plugins") -> Dict[str, List[Dic
     logger.info(
         f"Loaded {len(plugins['frida'])} Frida plugins, "
         f"{len(plugins['ghidra'])} Ghidra plugins, and "
-        f"{len(plugins['custom'])} custom plugins"
+        f"{len(plugins['custom'])} custom plugins",
     )
     return plugins
 
 
 def run_plugin(app, plugin_name: str) -> None:
-    """
-    Runs a built-in plugin.
+    """Runs a built-in plugin.
 
     Args:
         app: Application instance
         plugin_name: Name of the built-in plugin to run
+
     """
     if not app.binary_path:
         app.update_output.emit(log_message("[Plugin] No binary selected."))
@@ -207,13 +207,13 @@ def run_plugin(app, plugin_name: str) -> None:
     inject_comprehensive_api_hooks(app, script)
 
 
-def run_custom_plugin(app, plugin_info: Dict[str, Any]) -> None:
-    """
-    Runs a custom plugin with the current binary.
+def run_custom_plugin(app, plugin_info: dict[str, Any]) -> None:
+    """Runs a custom plugin with the current binary.
 
     Args:
         app: Application instance
         plugin_info: Plugin information dictionary
+
     """
     if not app.binary_path:
         app.update_output.emit(log_message("[Plugin] No binary selected."))
@@ -259,7 +259,7 @@ def run_custom_plugin(app, plugin_info: Dict[str, Any]) -> None:
             app,
             "Run Patch?",
             f"Do you want to run the patch function of {plugin_info['name']}?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         )
 
         if response == QMessageBox.Yes:
@@ -284,13 +284,13 @@ def run_custom_plugin(app, plugin_info: Dict[str, Any]) -> None:
 
 
 def run_frida_plugin_from_file(app, plugin_path: str) -> None:
-    """
-    Runs a Frida plugin script from a file.
+    """Runs a Frida plugin script from a file.
     Enhanced with robust PID finding and error handling.
 
     Args:
         app: Application instance
         plugin_path: Path to the Frida script file
+
     """
     if not FRIDA_AVAILABLE:
         app.update_output.emit(log_message(
@@ -307,7 +307,7 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
 
     try:
         # Read the script content
-        with open(plugin_path, "r", encoding="utf-8") as f:
+        with open(plugin_path, encoding="utf-8") as f:
             script_content = f.read()
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in plugin_system: %s", e)
@@ -344,8 +344,7 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
         script = session.create_script(script_content)
 
         def on_message(message, data):
-            """
-            Callback for handling messages from a Frida script.
+            """Callback for handling messages from a Frida script.
 
             Adds the plugin name as a prefix to log messages and processes payloads.
             """
@@ -448,12 +447,12 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
 
 
 def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
-    """
-    Runs a Ghidra script on the current binary.
+    """Runs a Ghidra script on the current binary.
 
     Args:
         app: Application instance
         plugin_path: Path to the Ghidra script file
+
     """
     if not app.binary_path:
         app.update_output.emit(log_message("[Plugin] No binary selected."))
@@ -492,7 +491,7 @@ def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
             os.path.dirname(plugin_path),
             os.path.basename(plugin_path),
             app=app,
-            overwrite=True
+            overwrite=True,
         )
 
         # Process output
@@ -544,12 +543,12 @@ def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
 
 
 def create_sample_plugins(plugin_dir: str = "intellicrack/plugins") -> None:
-    """
-    Creates comprehensive sample plugin files for users to reference.
+    """Creates comprehensive sample plugin files for users to reference.
     Now includes multiple templates for different use cases.
 
     Args:
         plugin_dir: Directory to create plugin samples in
+
     """
     logger.info("Creating comprehensive sample plugins...")
 
@@ -1053,7 +1052,6 @@ PLUGIN_INFO = create_plugin_info(_plugin_metadata, 'register')
 
 def _create_specialized_templates(plugin_dir: str) -> None:
     """Create specialized plugin templates for different use cases."""
-
     # Simple Analysis Plugin Template
     simple_template = '''"""
 Simple Analysis Plugin Template
@@ -1440,7 +1438,7 @@ def register():
     templates = [
         ("simple_analysis_plugin.py", simple_template),
         ("binary_patcher_plugin.py", patcher_template),
-        ("network_analysis_plugin.py", network_template)
+        ("network_analysis_plugin.py", network_template),
     ]
 
     custom_dir = os.path.join(plugin_dir, "custom_modules")
@@ -1453,8 +1451,7 @@ def register():
 
 
 def create_plugin_template(plugin_name: str, template_type: str = "advanced") -> str:
-    """
-    Generate a plugin template based on the specified type.
+    """Generate a plugin template based on the specified type.
 
     Args:
         plugin_name: Name for the plugin
@@ -1462,8 +1459,8 @@ def create_plugin_template(plugin_name: str, template_type: str = "advanced") ->
 
     Returns:
         String containing the plugin template code
-    """
 
+    """
     # Sanitize plugin name
     class_name = "".join(word.capitalize() for word in plugin_name.split())
     if not class_name.endswith("Plugin"):
@@ -1493,7 +1490,7 @@ def register():
     return {class_name}()
 '''
 
-    elif template_type == "advanced":
+    if template_type == "advanced":
         return f'''"""
 {plugin_name}
 Advanced plugin template with comprehensive features
@@ -1565,19 +1562,18 @@ def register():
 '''
 
     # Add more template types as needed
-    else:
-        return create_plugin_template(plugin_name, "advanced")
+    return create_plugin_template(plugin_name, "advanced")
 
 
 def _sandbox_worker(plugin_path: str, function_name: str, args: tuple, result_queue: multiprocessing.Queue) -> None:
-    """
-    Worker function for sandboxed plugin execution.
+    """Worker function for sandboxed plugin execution.
 
     Args:
         plugin_path: Path to the plugin module
         function_name: Name of the function to execute
         args: Arguments to pass to the function
         result_queue: Queue to put results in
+
     """
     try:
         # Apply resource limits on Unix systems
@@ -1604,9 +1600,8 @@ def _sandbox_worker(plugin_path: str, function_name: str, args: tuple, result_qu
         result_queue.put(("error", str(e)))
 
 
-def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> Optional[List[str]]:
-    """
-    Runs a plugin in a sandboxed process with resource limits.
+def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> list[str] | None:
+    """Runs a plugin in a sandboxed process with resource limits.
 
     Args:
         plugin_path: Path to the plugin file
@@ -1615,6 +1610,7 @@ def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> Option
 
     Returns:
         List of strings with results, or None on error
+
     """
     logger.info("Running plugin in sandbox: %s", plugin_path)
 
@@ -1624,7 +1620,7 @@ def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> Option
     # Create the sandboxed process
     process = multiprocessing.Process(
         target=_sandbox_worker,
-        args=(plugin_path, function_name, args, result_queue)
+        args=(plugin_path, function_name, args, result_queue),
     )
 
     # Start the process
@@ -1645,18 +1641,15 @@ def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> Option
         if status == "success":
             if isinstance(result, list):
                 return result
-            else:
-                return [str(result)]
-        else:
-            return [f"Plugin error: {result}"]
+            return [str(result)]
+        return [f"Plugin error: {result}"]
     except Exception as e:
         logger.error("Exception in plugin_system: %s", e)
         return ["No results returned from plugin"]
 
 
-def run_plugin_remotely(app, plugin_info: Dict[str, Any]) -> Optional[List[str]]:
-    """
-    Runs a plugin on a remote system.
+def run_plugin_remotely(app, plugin_info: dict[str, Any]) -> list[str] | None:
+    """Runs a plugin on a remote system.
 
     Args:
         app: Application instance
@@ -1664,6 +1657,7 @@ def run_plugin_remotely(app, plugin_info: Dict[str, Any]) -> Optional[List[str]]
 
     Returns:
         List of strings with results, or None on error
+
     """
     # Check if remote plugins are enabled
     if not CONFIG.get("enable_remote_plugins", False):
@@ -1678,7 +1672,7 @@ def run_plugin_remotely(app, plugin_info: Dict[str, Any]) -> Optional[List[str]]
     # Ask user for host and port
     host, ok = QInputDialog.getText(
         app, "Remote Plugin Execution",
-        "Enter remote host:", text=default_host
+        "Enter remote host:", text=default_host,
     )
 
     if not ok:
@@ -1687,7 +1681,7 @@ def run_plugin_remotely(app, plugin_info: Dict[str, Any]) -> Optional[List[str]]
     port, ok = QInputDialog.getInt(
         app, "Remote Plugin Execution",
         "Enter remote port:", value=default_port,
-        min=1, max=65535
+        min=1, max=65535,
     )
 
     if not ok:
@@ -1704,13 +1698,12 @@ def run_plugin_remotely(app, plugin_info: Dict[str, Any]) -> Optional[List[str]]
         results = executor.execute_plugin(
             plugin_info["path"],
             "analyze",
-            app.binary_path
+            app.binary_path,
         )
 
         if results:
             return results
-        else:
-            return ["No results returned from remote execution"]
+        return ["No results returned from remote execution"]
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in plugin_system: %s", e)
@@ -1720,8 +1713,7 @@ def run_plugin_remotely(app, plugin_info: Dict[str, Any]) -> Optional[List[str]]
 
 
 class PluginSystem:
-    """
-    Main plugin system class that encapsulates all plugin functionality.
+    """Main plugin system class that encapsulates all plugin functionality.
     This class provides a unified interface for plugin management in Intellicrack.
     """
 
@@ -1731,7 +1723,7 @@ class PluginSystem:
         self.plugins = None
         self.logger = logger
 
-    def load_plugins(self) -> Dict[str, List[Dict[str, Any]]]:
+    def load_plugins(self) -> dict[str, list[dict[str, Any]]]:
         """Load and initialize plugins from the plugin directory."""
         self.plugins = load_plugins(self.plugin_dir)
         return self.plugins
@@ -1740,7 +1732,7 @@ class PluginSystem:
         """Run a built-in plugin."""
         run_plugin(app, plugin_name)
 
-    def run_custom_plugin(self, app, plugin_info: Dict[str, Any]) -> None:
+    def run_custom_plugin(self, app, plugin_info: dict[str, Any]) -> None:
         """Run a custom plugin with the current binary."""
         run_custom_plugin(app, plugin_info)
 
@@ -1748,7 +1740,7 @@ class PluginSystem:
         """Run a Frida plugin script from a file."""
         run_frida_plugin_from_file(app, plugin_path)
 
-    def find_plugin(self, plugin_name: str) -> Optional[str]:
+    def find_plugin(self, plugin_name: str) -> str | None:
         """Find a plugin by name and return its path."""
         # Check custom modules directory
         custom_dir = os.path.join(self.plugin_dir, "custom_modules")
@@ -1782,15 +1774,15 @@ class PluginSystem:
         return create_plugin_template(plugin_name, template_type)
 
     @staticmethod
-    def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> Optional[List[str]]:
+    def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> list[str] | None:
         """Run a plugin in a sandboxed process with resource limits."""
         return run_plugin_in_sandbox(plugin_path, function_name, *args)
 
-    def run_plugin_remotely(self, app, plugin_info: Dict[str, Any]) -> Optional[List[str]]:
+    def run_plugin_remotely(self, app, plugin_info: dict[str, Any]) -> list[str] | None:
         """Run a plugin on a remote system."""
         return run_plugin_remotely(app, plugin_info)
 
-    def discover_plugins(self) -> List[str]:
+    def discover_plugins(self) -> list[str]:
         """Discover available plugins."""
         self.logger.info("Plugin discovery called")
         discovered = []
@@ -1812,7 +1804,7 @@ class PluginSystem:
 
         return discovered
 
-    def list_plugins(self) -> List[Dict[str, Any]]:
+    def list_plugins(self) -> list[dict[str, Any]]:
         """List installed plugins."""
         plugin_list = []
 
@@ -1829,7 +1821,7 @@ class PluginSystem:
                         "category": category,
                         "path": plugin.get("path", ""),
                         "description": plugin.get("description", ""),
-                        "enabled": plugin.get("enabled", True)
+                        "enabled": plugin.get("enabled", True),
                     }
                     plugin_list.append(plugin_info)
 
@@ -1926,14 +1918,13 @@ class PluginSystem:
             builtin_plugins = {
                 "api_monitor": "https://raw.githubusercontent.com/frida/frida-scripts/main/api_monitor.js",
                 "ssl_pinning_bypass": "https://raw.githubusercontent.com/frida/frida-scripts/main/ssl_pinning_bypass.js",
-                "root_detection_bypass": "https://raw.githubusercontent.com/frida/frida-scripts/main/root_detection_bypass.js"
+                "root_detection_bypass": "https://raw.githubusercontent.com/frida/frida-scripts/main/root_detection_bypass.js",
             }
 
             if plugin_name in builtin_plugins:
                 return self.install_plugin(builtin_plugins[plugin_name])
-            else:
-                self.logger.error(f"Plugin {plugin_name} not found in repository")
-                return False
+            self.logger.error(f"Plugin {plugin_name} not found in repository")
+            return False
 
         # Reload plugins if installation was successful
         if plugin_installed:
@@ -2039,7 +2030,7 @@ class PluginSystem:
             if FRIDA_AVAILABLE and frida:
                 try:
                     # Read the script content
-                    with open(plugin_path, "r") as f:
+                    with open(plugin_path) as f:
                         script_content = f.read()
 
                     # Get target process from kwargs or find it
@@ -2089,7 +2080,7 @@ class PluginSystem:
                     if hasattr(script.exports, "execute"):
                         result = script.exports.execute(*args[1:] if len(args) > 1 else [], **kwargs)
                         return result
-                    elif hasattr(script.exports, "main"):
+                    if hasattr(script.exports, "main"):
                         result = script.exports.main(*args[1:] if len(args) > 1 else [], **kwargs)
                         return result
 
@@ -2140,7 +2131,7 @@ class PluginSystem:
             try:
                 # Set up request with timeout and size limit
                 req = urllib.request.Request(plugin_url, headers={
-                    "User-Agent": "Intellicrack Plugin System/1.0"
+                    "User-Agent": "Intellicrack Plugin System/1.0",
                 })
 
                 with urllib.request.urlopen(req, timeout=30) as response:
@@ -2171,7 +2162,7 @@ class PluginSystem:
                     dangerous_patterns = [
                         "os.system", "subprocess.call", "eval(", "exec(",
                         '__import__("os")', "compile(", "globals()", "locals()",
-                        "open(", "file(", "__builtins__"
+                        "open(", "file(", "__builtins__",
                     ]
 
                     content_lower = content_text.lower()
@@ -2234,7 +2225,7 @@ class PluginSystem:
         # Create sandbox process with resource limits
         try:
             # Prepare the sandbox execution code
-            sandbox_code = f'''
+            sandbox_code = f"""
 import sys
 import os
 import signal
@@ -2266,7 +2257,7 @@ signal.alarm(30)  # 30 second timeout
 
 try:
     # Load the plugin
-    plugin_path = {repr(plugin_path)}
+    plugin_path = {plugin_path!r}
     spec = importlib.util.spec_from_file_location("sandboxed_plugin", plugin_path)
     module = importlib.util.module_from_spec(spec)
 
@@ -2300,9 +2291,9 @@ try:
     spec.loader.exec_module(module)
 
     # Find and call the target function
-    function_name = {repr(function_name)}
-    args = {repr(args)}
-    kwargs = {repr(kwargs)}
+    function_name = {function_name!r}
+    args = {args!r}
+    kwargs = {kwargs!r}
 
     if hasattr(module, function_name):
         func = getattr(module, function_name)
@@ -2330,7 +2321,7 @@ except Exception as e:
     print(json.dumps({{"success": False, "error": str(e), "traceback": traceback.format_exc()}}))
 finally:
     signal.alarm(0)
-'''
+"""
 
             # Execute in subprocess
             import subprocess
@@ -2343,7 +2334,7 @@ finally:
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
-                    creationflags=CREATE_NO_WINDOW
+                    creationflags=CREATE_NO_WINDOW,
                 )
             else:
                 # Unix-like systems with resource limits
@@ -2352,7 +2343,7 @@ finally:
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
-                    preexec_fn=getattr(os, "setsid", None) if sys.platform != "win32" else None  # Create new process group on Unix
+                    preexec_fn=getattr(os, "setsid", None) if sys.platform != "win32" else None,  # Create new process group on Unix
                 )
 
             # Wait for completion with timeout
@@ -2410,13 +2401,13 @@ except ImportError as e:
     # Fallback in case of circular import issues
     __all__ = [
         "PluginSystem",
+        "create_plugin_template",
+        "create_sample_plugins",
         "load_plugins",
-        "run_plugin",
         "run_custom_plugin",
         "run_frida_plugin_from_file",
         "run_ghidra_plugin_from_file",
-        "create_sample_plugins",
-        "create_plugin_template",
+        "run_plugin",
         "run_plugin_in_sandbox",
-        "run_plugin_remotely"
+        "run_plugin_remotely",
     ]

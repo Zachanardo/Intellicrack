@@ -1,5 +1,4 @@
-"""
-Model Sharding and Distribution Manager
+"""Model Sharding and Distribution Manager
 
 This module provides functionality for distributing large models across multiple GPUs.
 
@@ -10,7 +9,7 @@ Licensed under GNU General Public License v3.0
 import gc
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -110,7 +109,7 @@ class ModelShardingManager:
                     self.device_properties[i] = {
                         "name": torch.xpu.get_device_name(i) if hasattr(torch.xpu, "get_device_name") else f"Intel XPU {i}",
                         "total_memory": 0,  # Will be filled if available
-                        "device_type": "xpu"
+                        "device_type": "xpu",
                     }
                     # Try to get memory info
                     if hasattr(torch.xpu, "get_device_properties"):
@@ -125,14 +124,14 @@ class ModelShardingManager:
         else:
             logger.info("No GPUs detected, sharding disabled")
 
-    def get_sharding_info(self) -> Dict[str, Any]:
+    def get_sharding_info(self) -> dict[str, Any]:
         """Get information about current sharding configuration."""
         info = {
             "available": self.device_count > 1,
             "device_count": self.device_count,
             "devices": self.device_properties,
             "current_device": self._get_current_device(),
-            "accelerate_available": HAS_ACCELERATE
+            "accelerate_available": HAS_ACCELERATE,
         }
 
         # Add memory info
@@ -164,22 +163,21 @@ class ModelShardingManager:
             if ":" in device_str:
                 return int(device_str.split(":")[1])
             return 0
-        elif self.gpu_type == "nvidia_cuda" and torch.cuda.is_available():
+        if self.gpu_type == "nvidia_cuda" and torch.cuda.is_available():
             return torch.cuda.current_device()
-        elif self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
+        if self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
             if hasattr(torch.xpu, "current_device"):
                 return torch.xpu.current_device()
         return 0
 
     def create_device_map(
         self,
-        model_config_or_path: Union[str, Dict],
-        max_memory: Optional[Dict[int, str]] = None,
-        no_split_module_classes: Optional[List[str]] = None,
-        dtype: Optional[torch.dtype] = None
-    ) -> Dict[str, Any]:
-        """
-        Create a device map for model sharding.
+        model_config_or_path: str | dict,
+        max_memory: dict[int, str] | None = None,
+        no_split_module_classes: list[str] | None = None,
+        dtype: torch.dtype | None = None,
+    ) -> dict[str, Any]:
+        """Create a device map for model sharding.
 
         Args:
             model_config_or_path: Model configuration or path
@@ -189,6 +187,7 @@ class ModelShardingManager:
 
         Returns:
             Device map for model distribution
+
         """
         if not HAS_ACCELERATE:
             logger.warning("Accelerate not available, using simple device map")
@@ -221,7 +220,7 @@ class ModelShardingManager:
                     model,
                     max_memory=max_memory,
                     no_split_module_classes=no_split_module_classes,
-                    dtype=dtype
+                    dtype=dtype,
                 )
 
             logger.info(f"Created device map: {device_map}")
@@ -231,22 +230,21 @@ class ModelShardingManager:
             logger.error(f"Failed to create device map: {e}")
             return self._create_simple_device_map()
 
-    def _create_simple_device_map(self) -> Dict[str, Any]:
+    def _create_simple_device_map(self) -> dict[str, Any]:
         """Create a simple device map for basic sharding."""
         if self.device_count == 0:
             return {"": "cpu"}
-        elif self.device_count == 1:
+        if self.device_count == 1:
             return {"": 0}
-        else:
-            # Simple layer-based distribution
-            return {
-                "embed_tokens": 0,
-                "layers": list(range(self.device_count)),
-                "norm": self.device_count - 1,
-                "lm_head": self.device_count - 1
-            }
+        # Simple layer-based distribution
+        return {
+            "embed_tokens": 0,
+            "layers": list(range(self.device_count)),
+            "norm": self.device_count - 1,
+            "lm_head": self.device_count - 1,
+        }
 
-    def _get_balanced_memory(self) -> Dict[int, str]:
+    def _get_balanced_memory(self) -> dict[int, str]:
         """Get balanced memory allocation across devices."""
         if self.device_count == 0:
             return {}
@@ -268,13 +266,12 @@ class ModelShardingManager:
     def shard_model(
         self,
         model: Any,
-        device_map: Optional[Dict[str, Any]] = None,
-        max_memory: Optional[Dict[int, str]] = None,
-        offload_folder: Optional[str] = None,
-        offload_state_dict: bool = False
+        device_map: dict[str, Any] | None = None,
+        max_memory: dict[int, str] | None = None,
+        offload_folder: str | None = None,
+        offload_state_dict: bool = False,
     ) -> Any:
-        """
-        Shard a model across multiple devices.
+        """Shard a model across multiple devices.
 
         Args:
             model: Model to shard
@@ -285,6 +282,7 @@ class ModelShardingManager:
 
         Returns:
             Sharded model
+
         """
         if not HAS_ACCELERATE:
             logger.warning("Accelerate not available, model not sharded")
@@ -308,7 +306,7 @@ class ModelShardingManager:
                         model = optimized
                         logger.info("Applied GPU optimizations to model")
                 return to_device(model)
-            elif self.device_count == 1:
+            if self.device_count == 1:
                 return model.to(0) if torch.cuda.is_available() else model
             return model
 
@@ -333,7 +331,7 @@ class ModelShardingManager:
                 device_map=device_map,
                 max_memory=max_memory,
                 offload_folder=offload_folder,
-                offload_state_dict=offload_state_dict
+                offload_state_dict=offload_state_dict,
             )
             logger.info("Model successfully sharded across devices")
 
@@ -358,14 +356,13 @@ class ModelShardingManager:
     def load_sharded_checkpoint(
         self,
         model: Any,
-        checkpoint: Union[str, Path],
-        device_map: Optional[Dict[str, Any]] = None,
-        max_memory: Optional[Dict[int, str]] = None,
-        no_split_module_classes: Optional[List[str]] = None,
-        dtype: Optional[torch.dtype] = None
+        checkpoint: str | Path,
+        device_map: dict[str, Any] | None = None,
+        max_memory: dict[int, str] | None = None,
+        no_split_module_classes: list[str] | None = None,
+        dtype: torch.dtype | None = None,
     ) -> Any:
-        """
-        Load a checkpoint and shard it across devices.
+        """Load a checkpoint and shard it across devices.
 
         Args:
             model: Model architecture
@@ -377,6 +374,7 @@ class ModelShardingManager:
 
         Returns:
             Loaded and sharded model
+
         """
         if not HAS_ACCELERATE:
             logger.warning("Accelerate not available, loading normally")
@@ -418,7 +416,7 @@ class ModelShardingManager:
                 device_map=device_map,
                 max_memory=max_memory,
                 no_split_module_classes=no_split_module_classes,
-                dtype=dtype
+                dtype=dtype,
             )
             logger.info("Checkpoint loaded and sharded across devices")
 
@@ -449,11 +447,10 @@ class ModelShardingManager:
 
     def estimate_model_memory(
         self,
-        model_config: Dict[str, Any],
-        dtype: Optional[torch.dtype] = None
-    ) -> Dict[str, Any]:
-        """
-        Estimate memory requirements for a model.
+        model_config: dict[str, Any],
+        dtype: torch.dtype | None = None,
+    ) -> dict[str, Any]:
+        """Estimate memory requirements for a model.
 
         Args:
             model_config: Model configuration
@@ -461,6 +458,7 @@ class ModelShardingManager:
 
         Returns:
             Memory estimation details
+
         """
         if dtype is None and HAS_TORCH:
             dtype = torch.float16
@@ -497,7 +495,7 @@ class ModelShardingManager:
                 device_distribution[i] = {
                     "allocated": memory_per_device,
                     "available": device_memory,
-                    "usage_percent": (memory_per_device / device_memory) * 100
+                    "usage_percent": (memory_per_device / device_memory) * 100,
                 }
 
         return {
@@ -508,17 +506,16 @@ class ModelShardingManager:
             "device_distribution": device_distribution,
             "fits_in_memory": all(
                 d["usage_percent"] < 90 for d in device_distribution.values()
-            ) if device_distribution else False
+            ) if device_distribution else False,
         }
 
     def optimize_device_map(
         self,
-        device_map: Dict[str, Any],
-        model_config: Dict[str, Any],
-        layer_wise: bool = True
-    ) -> Dict[str, Any]:
-        """
-        Optimize a device map for better performance.
+        device_map: dict[str, Any],
+        model_config: dict[str, Any],
+        layer_wise: bool = True,
+    ) -> dict[str, Any]:
+        """Optimize a device map for better performance.
 
         Args:
             device_map: Initial device map
@@ -527,6 +524,7 @@ class ModelShardingManager:
 
         Returns:
             Optimized device map
+
         """
         if not layer_wise or self.device_count <= 1:
             return device_map
@@ -540,7 +538,7 @@ class ModelShardingManager:
         optimized_map = {
             "embeddings": 0,
             "encoder": {},
-            "decoder": {}
+            "decoder": {},
         }
 
         # Distribute layers
@@ -564,7 +562,7 @@ class ModelShardingManager:
         logger.info(f"Optimized device map for {num_layers} layers across {self.device_count} devices")
         return optimized_map
 
-    def monitor_memory_usage(self) -> Dict[int, Dict[str, float]]:
+    def monitor_memory_usage(self) -> dict[int, dict[str, float]]:
         """Monitor memory usage across all devices."""
         memory_info = {}
 
@@ -582,7 +580,7 @@ class ModelShardingManager:
                     "reserved_gb": reserved,
                     "free_gb": total - allocated,
                     "total_gb": total,
-                    "usage_percent": (allocated / total) * 100
+                    "usage_percent": (allocated / total) * 100,
                 }
             elif self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
                 memory_info[i] = {"device_type": "xpu", "device_id": i}
@@ -619,15 +617,15 @@ class ModelShardingManager:
         gc.collect()
         logger.info("Cleaned up memory on all devices")
 
-    def get_device_balance_score(self, device_map: Dict[str, Any]) -> float:
-        """
-        Calculate balance score for a device map.
+    def get_device_balance_score(self, device_map: dict[str, Any]) -> float:
+        """Calculate balance score for a device map.
 
         Args:
             device_map: Device mapping
 
         Returns:
             Balance score (0-1, higher is better)
+
         """
         if self.device_count <= 1:
             return 1.0
@@ -654,23 +652,23 @@ class ModelShardingManager:
 
     def create_pipeline_parallel_groups(
         self,
-        num_stages: Optional[int] = None
-    ) -> List[List[int]]:
-        """
-        Create process groups for pipeline parallelism.
+        num_stages: int | None = None,
+    ) -> list[list[int]]:
+        """Create process groups for pipeline parallelism.
 
         Args:
             num_stages: Number of pipeline stages
 
         Returns:
             List of device groups
+
         """
         if num_stages is None:
             num_stages = self.device_count
 
         if num_stages > self.device_count:
             logger.warning(
-                f"Requested {num_stages} stages but only {self.device_count} devices available"
+                f"Requested {num_stages} stages but only {self.device_count} devices available",
             )
             num_stages = self.device_count
 
@@ -697,11 +695,10 @@ class ModelShardingManager:
         self,
         model: Any,
         sample_input: Any,
-        device_map: Dict[str, Any],
-        num_iterations: int = 10
-    ) -> Dict[str, Any]:
-        """
-        Profile model performance with given distribution.
+        device_map: dict[str, Any],
+        num_iterations: int = 10,
+    ) -> dict[str, Any]:
+        """Profile model performance with given distribution.
 
         Args:
             model: Distributed model
@@ -711,6 +708,7 @@ class ModelShardingManager:
 
         Returns:
             Profiling results
+
         """
         if not HAS_TORCH:
             logger.error("PyTorch required for profiling")
@@ -787,7 +785,7 @@ class ModelShardingManager:
                     "per_device": [
                         torch.cuda.memory_allocated(j)
                         for j in range(self.device_count)
-                    ]
+                    ],
                 })
             else:
                 memory_usage.append({
@@ -795,7 +793,7 @@ class ModelShardingManager:
                     "memory_before": iter_start_memory,
                     "memory_after": iter_start_memory,
                     "memory_delta": 0,
-                    "per_device": []
+                    "per_device": [],
                 })
 
         # Calculate memory usage
@@ -829,21 +827,21 @@ class ModelShardingManager:
                 "average": avg_time,
                 "min": min_time,
                 "max": max_time,
-                "all": forward_times
+                "all": forward_times,
             },
             "memory_usage_bytes": {
                 "start": start_memory,
                 "end": end_memory,
                 "peak": peak_memory,
-                "increase": end_memory - start_memory
+                "increase": end_memory - start_memory,
             },
             "memory_profile": {
                 "per_iteration": memory_usage,
                 "avg_delta_per_iteration": avg_memory_delta,
                 "max_delta_per_iteration": max_memory_delta,
-                "total_iterations": len(memory_usage)
+                "total_iterations": len(memory_usage),
             },
-            "balance_score": self.get_device_balance_score(device_map)
+            "balance_score": self.get_device_balance_score(device_map),
         }
 
         logger.info(f"Profiling complete - Avg forward time: {avg_time:.2f}ms")

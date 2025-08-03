@@ -1,5 +1,4 @@
-"""
-Copyright (C) 2025 Zachary Flint
+"""Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
 
@@ -29,8 +28,7 @@ from PyQt6.QtWidgets import QFileDialog
 
 
 def browse_for_plugin(parent_widget, title="Select Plugin") -> str:
-    """
-    Browse for a plugin file using a file dialog.
+    """Browse for a plugin file using a file dialog.
 
     Args:
         parent_widget: Parent widget for the dialog
@@ -38,22 +36,23 @@ def browse_for_plugin(parent_widget, title="Select Plugin") -> str:
 
     Returns:
         Selected file path or empty string if cancelled
+
     """
     file_path, _ = QFileDialog.getOpenFileName(
-        parent_widget, title, "", "Plugin Files (*.py *.js);;All Files (*.*)"
+        parent_widget, title, "", "Plugin Files (*.py *.js);;All Files (*.*)",
     )
 
     return file_path
 
 
 def get_plugin_basename(path: str) -> str:
-    """
-    Get the basename of a plugin file.
+    """Get the basename of a plugin file.
 
     Args:
         path: Full path to plugin file
 
     Returns:
         Basename of the file
+
     """
     return os.path.basename(path) if path else ""

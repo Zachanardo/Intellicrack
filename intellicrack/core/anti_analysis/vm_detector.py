@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -20,7 +19,7 @@ import logging
 import os
 import platform
 import subprocess
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from .base_detector import BaseDetector
 
@@ -33,8 +32,7 @@ including VMware, VirtualBox, Hyper-V, QEMU, and others.
 
 
 class VMDetector(BaseDetector):
-    """
-    Comprehensive virtual machine detection using multiple techniques.
+    """Comprehensive virtual machine detection using multiple techniques.
     """
 
     def __init__(self):
@@ -51,7 +49,7 @@ class VMDetector(BaseDetector):
             "timing_attacks": self._check_timing_attacks,
             "network_adapters": self._check_network_adapters,
             "bios_info": self._check_bios_info,
-            "device_drivers": self._check_device_drivers
+            "device_drivers": self._check_device_drivers,
         }
 
         # Known VM signatures
@@ -61,52 +59,52 @@ class VMDetector(BaseDetector):
                 "files": [os.path.join(os.environ.get("ProgramFiles", "C:\\\\Program Files"), "VMware", "VMware Tools"), "/usr/bin/vmware-toolbox-cmd"],
                 "registry": [r"HKLM\\SOFTWARE\\VMware, Inc.\\VMware Tools"],
                 "hardware": ["VMware Virtual Platform", "VMware SVGA", "VMware Virtual USB"],
-                "mac_prefixes": ["00:05:69", "00:0C:29", "00:1C:14", "00:50:56"]
+                "mac_prefixes": ["00:05:69", "00:0C:29", "00:1C:14", "00:50:56"],
             },
             "virtualbox": {
                 "processes": ["VBoxService.exe", "VBoxTray.exe"],
                 "files": [os.path.join(os.environ.get("ProgramFiles", r"C:\\Program Files"), "Oracle", "VirtualBox Guest Additions")],
                 "registry": [r"HKLM\\SOFTWARE\\Oracle\\VirtualBox Guest Additions"],
                 "hardware": ["VirtualBox", "VBOX HARDDISK", "VBOX CD-ROM"],
-                "mac_prefixes": ["08:00:27"]
+                "mac_prefixes": ["08:00:27"],
             },
             "hyperv": {
                 "processes": ["vmconnect.exe", "vmms.exe"],
                 "files": [os.path.join(os.environ.get("SystemRoot", "C:\\\\Windows"), "System32", "drivers", "vmbus.sys")],
                 "registry": [r"HKLM\\SOFTWARE\\Microsoft\\Virtual Machine\\Guest\\Parameters"],
                 "hardware": ["Microsoft Corporation Virtual Machine"],
-                "mac_prefixes": ["00:15:5D"]
+                "mac_prefixes": ["00:15:5D"],
             },
             "qemu": {
                 "processes": ["qemu-ga.exe"],
                 "files": ["/usr/bin/qemu-ga"],
                 "hardware": ["QEMU Virtual CPU", "QEMU DVD-ROM", "QEMU HARDDISK"],
-                "mac_prefixes": ["52:54:00"]
+                "mac_prefixes": ["52:54:00"],
             },
             "parallels": {
                 "processes": ["prl_tools.exe", "prl_cc.exe"],
                 "files": [os.path.join(os.environ.get("ProgramFiles", r"C:\\Program Files"), "Parallels", "Parallels Tools")],
                 "hardware": ["Parallels Virtual Platform"],
-                "mac_prefixes": ["00:1C:42"]
-            }
+                "mac_prefixes": ["00:1C:42"],
+            },
         }
 
-    def detect_vm(self, aggressive: bool = False) -> Dict[str, Any]:
-        """
-        Perform VM detection using multiple techniques.
+    def detect_vm(self, aggressive: bool = False) -> dict[str, Any]:
+        """Perform VM detection using multiple techniques.
 
         Args:
             aggressive: Use more aggressive detection methods that might be detected
 
         Returns:
             Detection results with confidence scores
+
         """
         results = {
             "is_vm": False,
             "confidence": 0.0,
             "vm_type": None,
             "detections": {},
-            "evasion_score": 0
+            "evasion_score": 0,
         }
 
         try:
@@ -135,14 +133,14 @@ class VMDetector(BaseDetector):
             self.logger.error(f"VM detection failed: {e}")
             return results
 
-    def _check_cpuid(self) -> Tuple[bool, float, Dict]:
+    def _check_cpuid(self) -> tuple[bool, float, dict]:
         """Check CPUID instruction for hypervisor bit and vendor."""
         details = {"hypervisor_bit": False, "vendor": None}
 
         try:
             # Check if we can use inline assembly or need to parse /proc/cpuinfo
             if platform.system() == "Linux":
-                with open("/proc/cpuinfo", "r") as f:
+                with open("/proc/cpuinfo") as f:
                     cpuinfo = f.read()
                     if "hypervisor" in cpuinfo.lower():
                         details["hypervisor_bit"] = True
@@ -167,7 +165,7 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_hypervisor_brand(self) -> Tuple[bool, float, Dict]:
+    def _check_hypervisor_brand(self) -> tuple[bool, float, dict]:
         """Check hypervisor brand string."""
         details = {"brand": None}
 
@@ -175,7 +173,7 @@ class VMDetector(BaseDetector):
             # Try to get hypervisor brand
             if platform.system() == "Linux":
                 result = subprocess.run(["dmidecode", "-s", "system-product-name"],
-                                      capture_output=True, text=True)
+                                      check=False, capture_output=True, text=True)
                 if result.returncode == 0:
                     product = result.stdout.strip().lower()
                     for vm_type, signatures in self.vm_signatures.items():
@@ -189,7 +187,7 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_hardware_signatures(self) -> Tuple[bool, float, Dict]:
+    def _check_hardware_signatures(self) -> tuple[bool, float, dict]:
         """Check for VM-specific hardware signatures."""
         details = {"detected_hardware": []}
 
@@ -224,12 +222,12 @@ class VMDetector(BaseDetector):
                 dmi_files = [
                     "/sys/class/dmi/id/product_name",
                     "/sys/class/dmi/id/sys_vendor",
-                    "/sys/class/dmi/id/board_vendor"
+                    "/sys/class/dmi/id/board_vendor",
                 ]
 
                 for dmi_file in dmi_files:
                     if os.path.exists(dmi_file):
-                        with open(dmi_file, "r") as f:
+                        with open(dmi_file) as f:
                             content = f.read().strip().lower()
                             for vm_type, sigs in self.vm_signatures.items():
                                 if vm_type in content:
@@ -243,7 +241,7 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_process_list(self) -> Tuple[bool, float, Dict]:
+    def _check_process_list(self) -> tuple[bool, float, dict]:
         """Check for VM-specific processes."""
         details = {"detected_processes": []}
 
@@ -267,7 +265,7 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_registry_keys(self) -> Tuple[bool, float, Dict]:
+    def _check_registry_keys(self) -> tuple[bool, float, dict]:
         """Check for VM-specific registry keys (Windows only)."""
         details = {"detected_keys": []}
 
@@ -299,7 +297,7 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_file_system(self) -> Tuple[bool, float, Dict]:
+    def _check_file_system(self) -> tuple[bool, float, dict]:
         """Check for VM-specific files and directories."""
         details = {"detected_files": []}
 
@@ -319,7 +317,7 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_timing_attacks(self) -> Tuple[bool, float, Dict]:
+    def _check_timing_attacks(self) -> tuple[bool, float, dict]:
         """Use timing attacks to detect VMs (aggressive method)."""
         details = {"timing_anomalies": 0}
 
@@ -356,17 +354,17 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_network_adapters(self) -> Tuple[bool, float, Dict]:
+    def _check_network_adapters(self) -> tuple[bool, float, dict]:
         """Check for VM-specific MAC address prefixes."""
         details = {"detected_macs": []}
 
         try:
             # Get network interfaces
             if platform.system() == "Windows":
-                result = subprocess.run(["ipconfig", "/all"], capture_output=True, text=True)
+                result = subprocess.run(["ipconfig", "/all"], check=False, capture_output=True, text=True)
                 output = result.stdout
             else:
-                result = subprocess.run(["ip", "link"], capture_output=True, text=True)
+                result = subprocess.run(["ip", "link"], check=False, capture_output=True, text=True)
                 output = result.stdout
 
             # Extract MAC addresses
@@ -393,7 +391,7 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_bios_info(self) -> Tuple[bool, float, Dict]:
+    def _check_bios_info(self) -> tuple[bool, float, dict]:
         """Check BIOS information for VM signatures."""
         details = {"bios_vendor": None}
 
@@ -401,7 +399,7 @@ class VMDetector(BaseDetector):
             if platform.system() == "Linux":
                 bios_file = "/sys/class/dmi/id/bios_vendor"
                 if os.path.exists(bios_file):
-                    with open(bios_file, "r") as f:
+                    with open(bios_file) as f:
                         vendor = f.read().strip().lower()
                         for vm_type in self.vm_signatures:
                             if vm_type in vendor:
@@ -427,19 +425,19 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_device_drivers(self) -> Tuple[bool, float, Dict]:
+    def _check_device_drivers(self) -> tuple[bool, float, dict]:
         """Check for VM-specific device drivers."""
         details = {"detected_drivers": []}
 
         try:
             if platform.system() == "Windows":
                 # Check loaded drivers
-                result = subprocess.run(["driverquery"], capture_output=True, text=True)
+                result = subprocess.run(["driverquery"], check=False, capture_output=True, text=True)
                 drivers = result.stdout.lower()
 
                 vm_drivers = [
                     "vmci", "vmmouse", "vmhgfs", "vboxguest",
-                    "vboxmouse", "vboxsf", "vboxvideo", "vm3dmp"
+                    "vboxmouse", "vboxsf", "vboxvideo", "vm3dmp",
                 ]
 
                 for driver in vm_drivers:
@@ -448,12 +446,12 @@ class VMDetector(BaseDetector):
 
             elif platform.system() == "Linux":
                 # Check loaded kernel modules
-                result = subprocess.run(["lsmod"], capture_output=True, text=True)
+                result = subprocess.run(["lsmod"], check=False, capture_output=True, text=True)
                 modules = result.stdout.lower()
 
                 vm_modules = [
                     "vmw_vmci", "vmw_balloon", "vmwgfx", "vboxguest",
-                    "vboxsf", "vboxvideo", "virtio_balloon", "virtio_pci"
+                    "vboxsf", "vboxvideo", "virtio_balloon", "virtio_pci",
                 ]
 
                 for module in vm_modules:
@@ -468,7 +466,7 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _identify_vm_type(self, detections: Dict[str, Any]) -> str:
+    def _identify_vm_type(self, detections: dict[str, Any]) -> str:
         """Identify the specific VM type based on detections."""
         vm_scores = {}
 
@@ -488,7 +486,7 @@ class VMDetector(BaseDetector):
 
         return "unknown"
 
-    def _calculate_evasion_score(self, detections: Dict[str, Any]) -> int:
+    def _calculate_evasion_score(self, detections: dict[str, Any]) -> int:
         """Calculate how difficult it is to evade detection."""
         # Methods that are hard to evade
         hard_to_evade = ["cpuid", "hardware_signatures", "hypervisor_brand"]
@@ -547,9 +545,8 @@ if (IsRunningInVM()) {
         """Get the type of detection this class performs."""
         return "virtual_machine"
 
-    def generate_bypass(self, vm_type: str) -> Dict[str, Any]:
-        """
-        Generate VM detection bypass.
+    def generate_bypass(self, vm_type: str) -> dict[str, Any]:
+        """Generate VM detection bypass.
 
         This method analyzes the detected VM type and generates appropriate
         bypass techniques to hide VM artifacts and evade detection.
@@ -559,6 +556,7 @@ if (IsRunningInVM()) {
 
         Returns:
             Dictionary containing bypass strategies and implementation
+
         """
         self.logger.info(f"Generating VM detection bypass for: {vm_type}")
 
@@ -570,7 +568,7 @@ if (IsRunningInVM()) {
             "success_probability": 0.0,
             "implementation": {},
             "requirements": [],
-            "risks": []
+            "risks": [],
         }
 
         # Identify detection methods used by target
@@ -598,26 +596,26 @@ if (IsRunningInVM()) {
                     "name": "VMware Tools Hiding",
                     "description": "Hide or rename VMware Tools processes and services",
                     "complexity": "medium",
-                    "effectiveness": 0.90
+                    "effectiveness": 0.90,
                 },
                 {
                     "name": "CPUID Masking",
                     "description": "Mask hypervisor CPUID leaf responses",
                     "complexity": "high",
-                    "effectiveness": 0.85
+                    "effectiveness": 0.85,
                 },
                 {
                     "name": "Hardware ID Spoofing",
                     "description": "Change hardware identifiers to non-VM values",
                     "complexity": "medium",
-                    "effectiveness": 0.80
+                    "effectiveness": 0.80,
                 },
                 {
                     "name": "Driver Hiding",
                     "description": "Hide VMware drivers from enumeration",
                     "complexity": "high",
-                    "effectiveness": 0.75
-                }
+                    "effectiveness": 0.75,
+                },
             ]
 
         elif vm_type.lower() == "virtualbox":
@@ -628,20 +626,20 @@ if (IsRunningInVM()) {
                     "name": "VBoxGuest Hiding",
                     "description": "Hide VirtualBox Guest Additions",
                     "complexity": "medium",
-                    "effectiveness": 0.95
+                    "effectiveness": 0.95,
                 },
                 {
                     "name": "ACPI Table Modification",
                     "description": "Modify ACPI tables to remove VBox signatures",
                     "complexity": "high",
-                    "effectiveness": 0.85
+                    "effectiveness": 0.85,
                 },
                 {
                     "name": "Device Name Changing",
                     "description": "Change VBox device names in registry",
                     "complexity": "low",
-                    "effectiveness": 0.90
-                }
+                    "effectiveness": 0.90,
+                },
             ]
 
         elif vm_type.lower() == "hyperv":
@@ -652,14 +650,14 @@ if (IsRunningInVM()) {
                     "name": "Hyper-V Integration Disabling",
                     "description": "Disable Hyper-V integration services",
                     "complexity": "low",
-                    "effectiveness": 0.80
+                    "effectiveness": 0.80,
                 },
                 {
                     "name": "VMBUS Hiding",
                     "description": "Hide VMBUS driver and devices",
                     "complexity": "high",
-                    "effectiveness": 0.70
-                }
+                    "effectiveness": 0.70,
+                },
             ]
 
         else:
@@ -671,20 +669,20 @@ if (IsRunningInVM()) {
                     "name": "Generic Process Hiding",
                     "description": "Hide common VM guest processes",
                     "complexity": "low",
-                    "effectiveness": 0.70
+                    "effectiveness": 0.70,
                 },
                 {
                     "name": "Timing Attack Mitigation",
                     "description": "Normalize timing to hide VM overhead",
                     "complexity": "medium",
-                    "effectiveness": 0.65
+                    "effectiveness": 0.65,
                 },
                 {
                     "name": "Generic Hardware Spoofing",
                     "description": "Replace VM hardware strings",
                     "complexity": "medium",
-                    "effectiveness": 0.60
-                }
+                    "effectiveness": 0.60,
+                },
             ]
 
         # Add implementation details
@@ -696,14 +694,14 @@ if (IsRunningInVM()) {
         bypass_config["requirements"] = [
             "Administrator/root privileges",
             "Ability to modify system files",
-            "Runtime hooking capability (Frida/similar)"
+            "Runtime hooking capability (Frida/similar)",
         ]
 
         # Add risks
         bypass_config["risks"] = [
             "System instability if modifications fail",
             "VM vendor updates may break bypass",
-            "Some applications may depend on VM tools"
+            "Some applications may depend on VM tools",
         ]
 
         return bypass_config
@@ -756,8 +754,7 @@ Interceptor.attach(RegOpenKeyExW, {
     }
 });
 """
-        else:
-            return """
+        return """
 // Generic VM Detection Bypass Script
 console.log('[VM Bypass] Generic VM hiding active');
 
@@ -769,7 +766,7 @@ Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {
 });
 """
 
-    def _get_registry_mods(self, vm_type: str) -> List[Dict[str, str]]:
+    def _get_registry_mods(self, vm_type: str) -> list[dict[str, str]]:
         """Get registry modifications for VM bypass."""
         mods = []
 
@@ -778,27 +775,27 @@ Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {
                 {
                     "action": "delete",
                     "key": r"HKLM\SOFTWARE\VMware, Inc.",
-                    "description": "Remove VMware software keys"
+                    "description": "Remove VMware software keys",
                 },
                 {
                     "action": "rename",
                     "key": r"HKLM\SYSTEM\CurrentControlSet\Services\vmtools",
                     "new_name": "svchost_helper",
-                    "description": "Rename VMware Tools service"
-                }
+                    "description": "Rename VMware Tools service",
+                },
             ])
         elif vm_type.lower() == "virtualbox":
             mods.extend([
                 {
                     "action": "delete",
                     "key": r"HKLM\SOFTWARE\Oracle\VirtualBox Guest Additions",
-                    "description": "Remove VirtualBox guest additions keys"
-                }
+                    "description": "Remove VirtualBox guest additions keys",
+                },
             ])
 
         return mods
 
-    def _get_file_operations(self, vm_type: str) -> List[Dict[str, str]]:
+    def _get_file_operations(self, vm_type: str) -> list[dict[str, str]]:
         """Get file operations for VM bypass."""
         ops = []
 
@@ -808,13 +805,13 @@ Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {
                     "action": "rename",
                     "path": r"C:\Program Files\VMware\VMware Tools\vmtoolsd.exe",
                     "new_name": "svchost32.exe",
-                    "description": "Rename VMware Tools daemon"
+                    "description": "Rename VMware Tools daemon",
                 },
                 {
                     "action": "hide",
                     "path": r"C:\Windows\System32\drivers\vmmouse.sys",
-                    "description": "Hide VMware mouse driver"
-                }
+                    "description": "Hide VMware mouse driver",
+                },
             ])
 
         return ops

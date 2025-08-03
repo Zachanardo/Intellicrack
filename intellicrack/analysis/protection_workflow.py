@@ -1,5 +1,4 @@
-"""
-Protection Analysis Workflow
+"""Protection Analysis Workflow
 
 Provides seamless, integrated workflows for protection analysis that hide
 the complexity of multiple engines and present a unified experience.
@@ -9,10 +8,11 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 try:
     from ..llm.llm_manager import LLMManager
@@ -69,6 +69,7 @@ except ImportError:
 
         Returns:
             A logging.Logger instance
+
         """
         return logging.getLogger(name)
 
@@ -77,6 +78,7 @@ logger = get_logger(__name__)
 
 class WorkflowStep(Enum):
     """Workflow steps"""
+
     QUICK_SCAN = "quick_scan"
     DEEP_ANALYSIS = "deep_analysis"
     BYPASS_GENERATION = "bypass_generation"
@@ -87,18 +89,18 @@ class WorkflowStep(Enum):
 @dataclass
 class WorkflowResult:
     """Result of a protection analysis workflow"""
+
     success: bool
     # UnifiedProtectionResult if available
-    protection_analysis: Optional[Any] = None
-    bypass_scripts: Dict[str, str] = None  # protection_name -> script
-    recommendations: List[str] = None
-    next_steps: List[str] = None
+    protection_analysis: Any | None = None
+    bypass_scripts: dict[str, str] = None  # protection_name -> script
+    recommendations: list[str] = None
+    next_steps: list[str] = None
     confidence: float = 0.0
 
 
 class ProtectionAnalysisWorkflow:
-    """
-    Manages the complete protection analysis workflow
+    """Manages the complete protection analysis workflow
     """
 
     def __init__(self):
@@ -114,13 +116,12 @@ class ProtectionAnalysisWorkflow:
         self.memory_forensics = get_memory_forensics_engine() if get_memory_forensics_engine else None
 
         # Workflow callbacks
-        self.progress_callback: Optional[Callable[[str, int], None]] = None
+        self.progress_callback: Callable[[str, int], None] | None = None
 
     def analyze_and_bypass(self, file_path: str,
                            auto_generate_scripts: bool = True,
-                           target_protections: Optional[List[str]] = None) -> WorkflowResult:
-        """
-        Complete workflow: analyze protections and generate bypass scripts
+                           target_protections: list[str] | None = None) -> WorkflowResult:
+        """Complete workflow: analyze protections and generate bypass scripts
 
         Args:
             file_path: Path to binary file
@@ -129,6 +130,7 @@ class ProtectionAnalysisWorkflow:
 
         Returns:
             Complete workflow result
+
         """
         result = WorkflowResult(success=False)
 
@@ -180,19 +182,19 @@ class ProtectionAnalysisWorkflow:
 
         except Exception as e:
             logger.error(f"Workflow error: {e}")
-            result.recommendations = [f"Analysis failed: {str(e)}"]
+            result.recommendations = [f"Analysis failed: {e!s}"]
 
         return result
 
-    def _run_supplemental_analysis(self, file_path: str) -> Dict[str, Any]:
-        """
-        Run supplemental analysis with YARA, Binwalk, and Volatility3
+    def _run_supplemental_analysis(self, file_path: str) -> dict[str, Any]:
+        """Run supplemental analysis with YARA, Binwalk, and Volatility3
 
         Args:
             file_path: Path to the binary file
 
         Returns:
             Dictionary containing supplemental analysis results
+
         """
         supplemental_data = {}
 
@@ -207,7 +209,7 @@ class ProtectionAnalysisWorkflow:
                         "matches_found": len(yara_result.matches),
                         "total_rules": yara_result.total_rules,
                         "scan_time": yara_result.scan_time,
-                        "supplemental_data": yara_supplemental
+                        "supplemental_data": yara_supplemental,
                     }
                     logger.debug(f"YARA analysis complete: {len(yara_result.matches)} matches found")
                 else:
@@ -224,7 +226,7 @@ class ProtectionAnalysisWorkflow:
                     file_path=file_path,
                     extract_files=False,  # Don't extract for workflow performance
                     analyze_security=True,
-                    extraction_depth=1
+                    extraction_depth=1,
                 )
                 if not firmware_result.error:
                     firmware_supplemental = self.firmware_analyzer.generate_icp_supplemental_data(firmware_result)
@@ -233,7 +235,7 @@ class ProtectionAnalysisWorkflow:
                         "security_findings": len(firmware_result.security_findings),
                         "firmware_type": firmware_result.firmware_type.value,
                         "analysis_time": firmware_result.analysis_time,
-                        "supplemental_data": firmware_supplemental
+                        "supplemental_data": firmware_supplemental,
                     }
                     logger.debug(f"Binwalk analysis complete: {len(firmware_result.signatures)} signatures found")
                 else:
@@ -249,7 +251,7 @@ class ProtectionAnalysisWorkflow:
                 logger.debug("Running Volatility3 memory forensics...")
                 memory_result = self.memory_forensics.analyze_memory_dump(
                     dump_path=file_path,
-                    deep_analysis=False  # Quick analysis for workflow performance
+                    deep_analysis=False,  # Quick analysis for workflow performance
                 )
                 if not memory_result.error:
                     memory_supplemental = self.memory_forensics.generate_icp_supplemental_data(memory_result)
@@ -258,7 +260,7 @@ class ProtectionAnalysisWorkflow:
                         "analysis_profile": memory_result.analysis_profile,
                         "has_suspicious_activity": memory_result.has_suspicious_activity,
                         "analysis_time": memory_result.analysis_time,
-                        "supplemental_data": memory_supplemental
+                        "supplemental_data": memory_supplemental,
                     }
                     logger.debug(f"Volatility3 analysis complete: {sum(memory_result.artifacts_found.values())} artifacts found")
                 else:
@@ -275,14 +277,14 @@ class ProtectionAnalysisWorkflow:
         return supplemental_data
 
     def _is_memory_dump(self, file_path: str) -> bool:
-        """
-        Check if file appears to be a memory dump
+        """Check if file appears to be a memory dump
 
         Args:
             file_path: Path to file
 
         Returns:
             True if file appears to be a memory dump
+
         """
         try:
             # Check file extension
@@ -309,7 +311,7 @@ class ProtectionAnalysisWorkflow:
             logger.debug(f"Memory dump detection error: {e}")
             return False
 
-    def _generate_recommendations(self, analysis: UnifiedProtectionResult) -> List[str]:
+    def _generate_recommendations(self, analysis: UnifiedProtectionResult) -> list[str]:
         """Generate actionable recommendations based on analysis"""
         recommendations = []
 
@@ -319,17 +321,17 @@ class ProtectionAnalysisWorkflow:
         # Priority recommendations
         if analysis.is_packed:
             recommendations.append(
-                "🎯 Priority: Unpack the binary first. The file is packed which obscures the real code."
+                "🎯 Priority: Unpack the binary first. The file is packed which obscures the real code.",
             )
 
         if analysis.has_anti_debug:
             recommendations.append(
-                "⚠️ Anti-debugging detected. Use ScyllaHide or similar tools to bypass debugger checks."
+                "⚠️ Anti-debugging detected. Use ScyllaHide or similar tools to bypass debugger checks.",
             )
 
         if analysis.has_licensing:
             recommendations.append(
-                "🔑 License protection found. Focus on identifying and patching license validation routines."
+                "🔑 License protection found. Focus on identifying and patching license validation routines.",
             )
 
         # Tool recommendations
@@ -343,13 +345,13 @@ class ProtectionAnalysisWorkflow:
 
         if tools_needed:
             recommendations.append(
-                f"📦 Recommended tools: {', '.join(sorted(tools_needed))}"
+                f"📦 Recommended tools: {', '.join(sorted(tools_needed))}",
             )
 
         # Difficulty assessment
         if len(analysis.protections) > 3:
             recommendations.append(
-                "⚡ Multiple protections detected. Consider tackling them one at a time, starting with the outermost layer."
+                "⚡ Multiple protections detected. Consider tackling them one at a time, starting with the outermost layer.",
             )
 
         # Supplemental analysis recommendations
@@ -360,20 +362,20 @@ class ProtectionAnalysisWorkflow:
         # AI assistance
         if self.llm_manager.has_active_backend():
             recommendations.append(
-                "🤖 AI assistance available. Use the Script Generation feature for automated bypass script creation."
+                "🤖 AI assistance available. Use the Script Generation feature for automated bypass script creation.",
             )
 
         return recommendations
 
-    def _generate_supplemental_recommendations(self, supplemental_data: Dict[str, Any]) -> List[str]:
-        """
-        Generate recommendations based on supplemental analysis results
+    def _generate_supplemental_recommendations(self, supplemental_data: dict[str, Any]) -> list[str]:
+        """Generate recommendations based on supplemental analysis results
 
         Args:
             supplemental_data: Results from YARA, Binwalk, and Volatility3
 
         Returns:
             List of recommendations based on supplemental findings
+
         """
         recommendations = []
 
@@ -384,7 +386,7 @@ class ProtectionAnalysisWorkflow:
 
             if matches_found > 0:
                 recommendations.append(
-                    f"🔍 YARA detected {matches_found} protection patterns. Check for packing, anti-debug, and licensing signatures."
+                    f"🔍 YARA detected {matches_found} protection patterns. Check for packing, anti-debug, and licensing signatures.",
                 )
 
                 # Look for specific pattern types in supplemental data
@@ -393,19 +395,19 @@ class ProtectionAnalysisWorkflow:
 
                 if protection_categories.get("packer", 0) > 0:
                     recommendations.append(
-                        "📦 YARA identified packer signatures. Consider unpacking before further analysis."
+                        "📦 YARA identified packer signatures. Consider unpacking before further analysis.",
                     )
                 if protection_categories.get("anti_debug", 0) > 0:
                     recommendations.append(
-                        "🛡️ YARA found anti-debug patterns. Use stealth debugging techniques."
+                        "🛡️ YARA found anti-debug patterns. Use stealth debugging techniques.",
                     )
                 if protection_categories.get("licensing", 0) > 0:
                     recommendations.append(
-                        "🔑 YARA detected licensing patterns. Focus on license validation bypass."
+                        "🔑 YARA detected licensing patterns. Focus on license validation bypass.",
                     )
             else:
                 recommendations.append(
-                    "✅ YARA found no known protection patterns. Binary may use custom or unknown protections."
+                    "✅ YARA found no known protection patterns. Binary may use custom or unknown protections.",
                 )
 
         # Binwalk firmware analysis recommendations
@@ -417,17 +419,17 @@ class ProtectionAnalysisWorkflow:
 
             if signatures_found > 0:
                 recommendations.append(
-                    f"🔧 Binwalk identified {signatures_found} embedded components. This may be firmware or contain embedded files."
+                    f"🔧 Binwalk identified {signatures_found} embedded components. This may be firmware or contain embedded files.",
                 )
 
                 if firmware_type != "unknown":
                     recommendations.append(
-                        f"🖥️ Detected {firmware_type} firmware. Consider firmware-specific analysis techniques."
+                        f"🖥️ Detected {firmware_type} firmware. Consider firmware-specific analysis techniques.",
                     )
 
             if security_findings > 0:
                 recommendations.append(
-                    f"⚠️ Binwalk found {security_findings} security issues in embedded components. Review for hardcoded credentials or keys."
+                    f"⚠️ Binwalk found {security_findings} security issues in embedded components. Review for hardcoded credentials or keys.",
                 )
 
             # Look for specific firmware findings
@@ -435,7 +437,7 @@ class ProtectionAnalysisWorkflow:
             embedded_files = firmware_supplemental.get("embedded_files", [])
             if embedded_files:
                 recommendations.append(
-                    f"📁 Found {len(embedded_files)} embedded files. Extract and analyze individual components."
+                    f"📁 Found {len(embedded_files)} embedded files. Extract and analyze individual components.",
                 )
 
         # Volatility3 memory forensics recommendations
@@ -446,12 +448,12 @@ class ProtectionAnalysisWorkflow:
 
             if artifacts_found > 0:
                 recommendations.append(
-                    f"🧠 Memory analysis found {artifacts_found} runtime artifacts. This provides insight into dynamic behavior."
+                    f"🧠 Memory analysis found {artifacts_found} runtime artifacts. This provides insight into dynamic behavior.",
                 )
 
                 if has_suspicious:
                     recommendations.append(
-                        "🚨 Memory forensics detected suspicious activity. Review process injection and hidden processes."
+                        "🚨 Memory forensics detected suspicious activity. Review process injection and hidden processes.",
                     )
 
                 # Look for specific memory findings
@@ -459,14 +461,14 @@ class ProtectionAnalysisWorkflow:
                 protection_indicators = memory_supplemental.get("protection_indicators", [])
                 if protection_indicators:
                     recommendations.append(
-                        f"🔒 Memory analysis revealed {len(protection_indicators)} protection indicators in runtime."
+                        f"🔒 Memory analysis revealed {len(protection_indicators)} protection indicators in runtime.",
                     )
 
         return recommendations
 
     def _generate_bypass_scripts(self,
                                  analysis: UnifiedProtectionResult,
-                                 target_protections: Optional[List[str]] = None) -> Dict[str, str]:
+                                 target_protections: list[str] | None = None) -> dict[str, str]:
         """Generate bypass scripts for detected protections"""
         scripts = {}
 
@@ -491,7 +493,7 @@ class ProtectionAnalysisWorkflow:
 
     def _generate_single_bypass_script(self,
                                        analysis: UnifiedProtectionResult,
-                                       protection: Dict[str, Any]) -> Optional[str]:
+                                       protection: dict[str, Any]) -> str | None:
         """Generate bypass script for a single protection"""
         context = {
             "file_path": analysis.file_path,
@@ -500,7 +502,7 @@ class ProtectionAnalysisWorkflow:
             "protection_name": protection["name"],
             "protection_type": protection["type"],
             "protection_details": protection.get("details", {}),
-            "bypass_recommendations": protection.get("bypass_recommendations", [])
+            "bypass_recommendations": protection.get("bypass_recommendations", []),
         }
 
         # Use AI if available
@@ -518,14 +520,13 @@ class ProtectionAnalysisWorkflow:
 
         if "pack" in protection_type:
             return self._generate_unpacking_script(context)
-        elif "debug" in protection_type:
+        if "debug" in protection_type:
             return self._generate_antidebug_script(context)
-        elif "licens" in protection_type or "dongle" in protection_type:
+        if "licens" in protection_type or "dongle" in protection_type:
             return self._generate_license_bypass_script(context)
-        else:
-            return self._generate_generic_bypass_script(context)
+        return self._generate_generic_bypass_script(context)
 
-    def _build_bypass_prompt(self, context: Dict[str, Any]) -> str:
+    def _build_bypass_prompt(self, context: dict[str, Any]) -> str:
         """Build prompt for AI bypass script generation"""
         return f"""Generate a Frida script to bypass the following protection:
 
@@ -540,7 +541,7 @@ Bypass recommendations:
 Generate a practical, working Frida script that implements these bypass techniques.
 Include comments explaining each bypass method used."""
 
-    def _generate_unpacking_script(self, context: Dict[str, Any]) -> str:
+    def _generate_unpacking_script(self, context: dict[str, Any]) -> str:
         """Generate unpacking script"""
         return f"""// Unpacking script for {context['protection_name']}
 // Generated by Intellicrack
@@ -591,7 +592,7 @@ var signatures = [
 console.log("[*] Unpacking monitor active for {context['protection_name']}");
 """
 
-    def _generate_antidebug_script(self, context: Dict[str, Any]) -> str:
+    def _generate_antidebug_script(self, context: dict[str, Any]) -> str:
         """Generate anti-debug bypass script"""
         return f"""// Anti-debug bypass script for {context['protection_name']}
 // Generated by Intellicrack
@@ -642,7 +643,7 @@ console.log("[*] PEB.BeingDebugged patched");
 console.log("[+] Anti-debug bypasses active for {context['protection_name']}");
 """
 
-    def _generate_license_bypass_script(self, context: Dict[str, Any]) -> str:
+    def _generate_license_bypass_script(self, context: dict[str, Any]) -> str:
         """Generate license bypass script"""
         return f"""// License bypass script for {context['protection_name']}
 // Generated by Intellicrack
@@ -709,7 +710,7 @@ if (advapi32) {{
 console.log("[+] License bypass hooks active for {context['protection_name']}");
 """
 
-    def _generate_generic_bypass_script(self, context: Dict[str, Any]) -> str:
+    def _generate_generic_bypass_script(self, context: dict[str, Any]) -> str:
         """Generate generic bypass script"""
         return f"""// Generic bypass script for {context['protection_name']}
 // Generated by Intellicrack
@@ -776,7 +777,7 @@ targetModule.enumerateExports().forEach(function(exp) {{
 console.log("[+] Generic bypass active for " + protectionName);
 """
 
-    def _generate_next_steps(self, analysis: UnifiedProtectionResult) -> List[str]:
+    def _generate_next_steps(self, analysis: UnifiedProtectionResult) -> list[str]:
         """Generate next steps for the user"""
         steps = []
 
@@ -816,7 +817,7 @@ console.log("[+] Generic bypass active for " + protectionName);
 
 
 # Convenience functions
-def quick_protection_analysis(file_path: str) -> Dict[str, Any]:
+def quick_protection_analysis(file_path: str) -> dict[str, Any]:
     """Quick protection analysis with summary"""
     workflow = ProtectionAnalysisWorkflow()
     result = workflow.analyze_and_bypass(
@@ -827,15 +828,14 @@ def quick_protection_analysis(file_path: str) -> Dict[str, Any]:
             "protected": bool(result.protection_analysis.protections),
             "protections": [p["name"] for p in result.protection_analysis.protections],
             "recommendations": result.recommendations,
-            "confidence": result.confidence
+            "confidence": result.confidence,
         }
-    else:
-        return {
-            "protected": False,
-            "protections": [],
-            "recommendations": result.recommendations or ["Analysis failed"],
-            "confidence": 0.0
-        }
+    return {
+        "protected": False,
+        "protections": [],
+        "recommendations": result.recommendations or ["Analysis failed"],
+        "confidence": 0.0,
+    }
 
 
 def generate_protection_report(file_path: str) -> str:

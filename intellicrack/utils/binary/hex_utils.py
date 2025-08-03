@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -23,16 +22,14 @@ Utility functions for hex manipulation and display.
 """
 
 import logging
-from typing import Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
 
-def create_hex_dump(data: Union[bytes, bytearray],
+def create_hex_dump(data: bytes | bytearray,
                    bytes_per_line: int = 16,
                    start_offset: int = 0) -> str:
-    """
-    Create a formatted hex dump of binary data.
+    """Create a formatted hex dump of binary data.
 
     Args:
         data: Binary data to dump
@@ -41,6 +38,7 @@ def create_hex_dump(data: Union[bytes, bytearray],
 
     Returns:
         Formatted hex dump string
+
     """
     lines = []
 
@@ -69,14 +67,14 @@ def create_hex_dump(data: Union[bytes, bytearray],
 
 
 def hex_to_bytes(hex_string: str) -> bytes:
-    """
-    Convert hex string to bytes, handling various formats.
+    """Convert hex string to bytes, handling various formats.
 
     Args:
         hex_string: Hex string (supports spaces, 0x prefix, \\x format)
 
     Returns:
         Converted bytes
+
     """
     # Remove common formatting
     hex_string = hex_string.strip()
@@ -96,8 +94,7 @@ def hex_to_bytes(hex_string: str) -> bytes:
 def bytes_to_hex(data: bytes,
                 format_style: str = "plain",
                 uppercase: bool = False) -> str:
-    """
-    Convert bytes to hex string in various formats.
+    """Convert bytes to hex string in various formats.
 
     Args:
         data: Binary data
@@ -106,6 +103,7 @@ def bytes_to_hex(data: bytes,
 
     Returns:
         Formatted hex string
+
     """
     if uppercase:
         hex_str = data.hex().upper()
@@ -114,22 +112,20 @@ def bytes_to_hex(data: bytes,
 
     if format_style == "plain":
         return hex_str
-    elif format_style == "spaces":
+    if format_style == "spaces":
         return " ".join(hex_str[i:i+2] for i in range(0, len(hex_str), 2))
-    elif format_style == "0x":
+    if format_style == "0x":
         return "0x" + hex_str
-    elif format_style == "\\x":
+    if format_style == "\\x":
         return "\\x".join([""] + [hex_str[i:i+2] for i in range(0, len(hex_str), 2)])
-    elif format_style == "c_array":
+    if format_style == "c_array":
         hex_bytes = [f"0x{hex_str[i:i+2]}" for i in range(0, len(hex_str), 2)]
         return ", ".join(hex_bytes)
-    else:
-        return hex_str
+    return hex_str
 
 
-def find_pattern(data: bytes, pattern: bytes, max_results: int = None) -> List[int]:
-    """
-    Find all occurrences of a pattern in data.
+def find_pattern(data: bytes, pattern: bytes, max_results: int = None) -> list[int]:
+    """Find all occurrences of a pattern in data.
 
     Args:
         data: Data to search
@@ -138,6 +134,7 @@ def find_pattern(data: bytes, pattern: bytes, max_results: int = None) -> List[i
 
     Returns:
         List of offsets where pattern was found
+
     """
     results = []
     start = 0
@@ -157,8 +154,7 @@ def find_pattern(data: bytes, pattern: bytes, max_results: int = None) -> List[i
 
 
 def calculate_checksum(data: bytes, algorithm: str = "sum8") -> int:
-    """
-    Calculate checksum of data.
+    """Calculate checksum of data.
 
     Args:
         data: Binary data
@@ -166,23 +162,22 @@ def calculate_checksum(data: bytes, algorithm: str = "sum8") -> int:
 
     Returns:
         Checksum value
+
     """
     if algorithm == "sum8":
         return sum(data) & 0xFF
-    elif algorithm == "sum16":
+    if algorithm == "sum16":
         return sum(data) & 0xFFFF
-    elif algorithm == "xor":
+    if algorithm == "xor":
         result = 0
         for byte in data:
             result ^= byte
         return result
-    else:
-        raise ValueError(f"Unknown checksum algorithm: {algorithm}")
+    raise ValueError(f"Unknown checksum algorithm: {algorithm}")
 
 
 def patch_bytes(data: bytearray, offset: int, patch_data: bytes) -> bool:
-    """
-    Patch bytes at specified offset.
+    """Patch bytes at specified offset.
 
     Args:
         data: Data to patch (modified in place)
@@ -191,6 +186,7 @@ def patch_bytes(data: bytearray, offset: int, patch_data: bytes) -> bool:
 
     Returns:
         True if successful
+
     """
     try:
         if offset < 0 or offset + len(patch_data) > len(data):
@@ -206,8 +202,7 @@ def patch_bytes(data: bytearray, offset: int, patch_data: bytes) -> bool:
 
 
 def nop_range(data: bytearray, start: int, end: int, arch: str = "x86") -> bool:
-    """
-    Fill range with NOP instructions.
+    """Fill range with NOP instructions.
 
     Args:
         data: Data to patch (modified in place)
@@ -217,12 +212,13 @@ def nop_range(data: bytearray, start: int, end: int, arch: str = "x86") -> bool:
 
     Returns:
         True if successful
+
     """
     nop_bytes = {
         "x86": b"\x90",
         "x64": b"\x90",
         "arm": b"\x00\xf0\x20\xe3",
-        "arm64": b"\x1f\x20\x03\xd5"
+        "arm64": b"\x1f\x20\x03\xd5",
     }
 
     if arch not in nop_bytes:
@@ -254,9 +250,8 @@ def nop_range(data: bytearray, start: int, end: int, arch: str = "x86") -> bool:
     return patch_bytes(data, start, patch_data)
 
 
-def compare_bytes(data1: bytes, data2: bytes, context: int = 3) -> List[Dict]:
-    """
-    Compare two byte sequences and find differences.
+def compare_bytes(data1: bytes, data2: bytes, context: int = 3) -> list[dict]:
+    """Compare two byte sequences and find differences.
 
     Args:
         data1: First data
@@ -265,6 +260,7 @@ def compare_bytes(data1: bytes, data2: bytes, context: int = 3) -> List[Dict]:
 
     Returns:
         List of differences with context
+
     """
     differences = []
     min_len = min(len(data1), len(data2))
@@ -281,7 +277,7 @@ def compare_bytes(data1: bytes, data2: bytes, context: int = 3) -> List[Dict]:
                 "data1": data1[start:end],
                 "data2": data2[start:end],
                 "byte1": data1[i],
-                "byte2": data2[i]
+                "byte2": data2[i],
             }
 
             differences.append(diff)
@@ -298,15 +294,14 @@ def compare_bytes(data1: bytes, data2: bytes, context: int = 3) -> List[Dict]:
             "offset": min_len,
             "type": "length",
             "len1": len(data1),
-            "len2": len(data2)
+            "len2": len(data2),
         })
 
     return differences
 
 
 def format_address(address: int, width: int = 8) -> str:
-    """
-    Format address for display.
+    """Format address for display.
 
     Args:
         address: Address value
@@ -314,32 +309,33 @@ def format_address(address: int, width: int = 8) -> str:
 
     Returns:
         Formatted address string
+
     """
     return f"0x{address:0{width}x}"
 
 
 def is_printable_ascii(data: bytes) -> bool:
-    """
-    Check if data contains only printable ASCII characters.
+    """Check if data contains only printable ASCII characters.
 
     Args:
         data: Data to check
 
     Returns:
         True if all bytes are printable ASCII
+
     """
     return all(32 <= b < 127 for b in data)
 
 
-def detect_encoding(data: bytes) -> Optional[str]:
-    """
-    Try to detect the encoding of data.
+def detect_encoding(data: bytes) -> str | None:
+    """Try to detect the encoding of data.
 
     Args:
         data: Data to analyze
 
     Returns:
         Detected encoding name or None
+
     """
     # Check for UTF-8 BOM
     if data.startswith(b"\xef\xbb\xbf"):

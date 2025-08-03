@@ -1,5 +1,4 @@
-"""
-Tool wrappers - wrapper module to redirect to tools/tool_wrappers.py
+"""Tool wrappers - wrapper module to redirect to tools/tool_wrappers.py
 
 Copyright (C) 2025 Zachary Flint
 

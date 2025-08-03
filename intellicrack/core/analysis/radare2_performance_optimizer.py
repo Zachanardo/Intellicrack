@@ -1,5 +1,4 @@
-"""
-Radare2 Performance Optimization for Large Binary Analysis
+"""Radare2 Performance Optimization for Large Binary Analysis
 
 Copyright (C) 2025 Zachary Flint
 
@@ -26,7 +25,7 @@ import threading
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 import psutil
 
@@ -43,6 +42,7 @@ except ImportError as e:
 
 class OptimizationStrategy(Enum):
     """Available optimization strategies"""
+
     MEMORY_CONSERVATIVE = "memory_conservative"
     SPEED_OPTIMIZED = "speed_optimized"
     BALANCED = "balanced"
@@ -52,6 +52,7 @@ class OptimizationStrategy(Enum):
 
 class AnalysisLevel(Enum):
     """Analysis depth levels for performance tuning"""
+
     MINIMAL = "a"          # Basic analysis
     LIGHT = "aa"           # Light analysis
     STANDARD = "aaa"       # Standard analysis
@@ -62,6 +63,7 @@ class AnalysisLevel(Enum):
 @dataclass
 class PerformanceProfile:
     """Performance profile for different binary sizes and types"""
+
     name: str
     max_file_size: int  # In bytes
     analysis_level: AnalysisLevel
@@ -70,13 +72,12 @@ class PerformanceProfile:
     parallel_workers: int
     chunk_size: int    # For large file processing
     cache_enabled: bool
-    optimization_flags: List[str]
+    optimization_flags: list[str]
     description: str
 
 
 class R2PerformanceOptimizer:
-    """
-    Comprehensive performance optimizer for radare2 operations.
+    """Comprehensive performance optimizer for radare2 operations.
 
     This class provides:
     - Automatic performance profiling and optimization
@@ -99,7 +100,7 @@ class R2PerformanceOptimizer:
             chunk_size=1024 * 1024,  # 1MB
             cache_enabled=True,
             optimization_flags=["-e", "anal.timeout=300"],
-            description="Full analysis for small binaries"
+            description="Full analysis for small binaries",
         ),
         "medium_files": PerformanceProfile(
             name="Medium Files (10MB-100MB)",
@@ -111,7 +112,7 @@ class R2PerformanceOptimizer:
             chunk_size=5 * 1024 * 1024,  # 5MB
             cache_enabled=True,
             optimization_flags=["-e", "anal.timeout=600", "-e", "esil.timeout=60"],
-            description="Balanced analysis for medium binaries"
+            description="Balanced analysis for medium binaries",
         ),
         "large_files": PerformanceProfile(
             name="Large Files (100MB-1GB)",
@@ -126,9 +127,9 @@ class R2PerformanceOptimizer:
                 "-e", "anal.timeout=1800",
                 "-e", "esil.timeout=30",
                 "-e", "anal.depth=16",
-                "-e", "anal.bb.maxsize=1024"
+                "-e", "anal.bb.maxsize=1024",
             ],
-            description="Light analysis for large binaries"
+            description="Light analysis for large binaries",
         ),
         "huge_files": PerformanceProfile(
             name="Huge Files (>1GB)",
@@ -145,10 +146,10 @@ class R2PerformanceOptimizer:
                 "-e", "anal.depth=8",
                 "-e", "anal.bb.maxsize=512",
                 "-e", "io.cache=false",
-                "-e", "bin.cache=false"
+                "-e", "bin.cache=false",
             ],
-            description="Minimal analysis for huge binaries"
-        )
+            description="Minimal analysis for huge binaries",
+        ),
     }
 
     def __init__(self, strategy: OptimizationStrategy = OptimizationStrategy.BALANCED):
@@ -156,6 +157,7 @@ class R2PerformanceOptimizer:
 
         Args:
             strategy: The optimization strategy to use for resource management.
+
         """
         self.strategy = strategy
         self.logger = logger
@@ -169,7 +171,7 @@ class R2PerformanceOptimizer:
             "cpu_usage": [],
             "analysis_times": {},
             "optimization_effectiveness": {},
-            "resource_peaks": {"memory": 0, "cpu": 0}
+            "resource_peaks": {"memory": 0, "cpu": 0},
         }
 
         # Resource monitoring
@@ -184,12 +186,12 @@ class R2PerformanceOptimizer:
             "memory_warning": 0.8,  # 80% of available memory
             "memory_critical": 0.9,  # 90% of available memory
             "cpu_throttle": 0.9,     # 90% CPU usage
-            "analysis_timeout_multiplier": 1.5
+            "analysis_timeout_multiplier": 1.5,
         }
 
         self.logger.info(f"R2PerformanceOptimizer initialized with {strategy.value} strategy")
 
-    def _get_system_info(self) -> Dict[str, Any]:
+    def _get_system_info(self) -> dict[str, Any]:
         """Get comprehensive system information"""
         return {
             "cpu_count": multiprocessing.cpu_count(),
@@ -197,18 +199,18 @@ class R2PerformanceOptimizer:
             "memory_available": psutil.virtual_memory().available,
             "memory_percent": psutil.virtual_memory().percent,
             "cpu_percent": psutil.cpu_percent(interval=1),
-            "disk_usage": psutil.disk_usage("/").percent if os.name != "nt" else psutil.disk_usage("C:\\").percent
+            "disk_usage": psutil.disk_usage("/").percent if os.name != "nt" else psutil.disk_usage("C:\\").percent,
         }
 
-    def optimize_for_binary(self, binary_path: str) -> Dict[str, Any]:
-        """
-        Create optimized configuration for specific binary.
+    def optimize_for_binary(self, binary_path: str) -> dict[str, Any]:
+        """Create optimized configuration for specific binary.
 
         Args:
             binary_path: Path to binary file
 
         Returns:
             Dict containing optimized configuration
+
         """
         try:
             # Check cache first
@@ -240,7 +242,7 @@ class R2PerformanceOptimizer:
             # Return safe default configuration
             return self._get_safe_default_config()
 
-    def _analyze_binary_characteristics(self, binary_path: str) -> Dict[str, Any]:
+    def _analyze_binary_characteristics(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary file characteristics for optimization"""
         characteristics = {
             "file_size": 0,
@@ -250,7 +252,7 @@ class R2PerformanceOptimizer:
             "is_stripped": False,
             "section_count": 0,
             "import_count": 0,
-            "complexity_estimate": "medium"
+            "complexity_estimate": "medium",
         }
 
         try:
@@ -288,7 +290,7 @@ class R2PerformanceOptimizer:
 
         return characteristics
 
-    def _estimate_complexity(self, characteristics: Dict[str, Any]) -> str:
+    def _estimate_complexity(self, characteristics: dict[str, Any]) -> str:
         """Estimate binary complexity for optimization purposes"""
         size = characteristics["file_size"]
         section_count = characteristics["section_count"]
@@ -322,14 +324,13 @@ class R2PerformanceOptimizer:
         # Determine final complexity based on total score
         if complexity_score >= 7:
             return "very_high"
-        elif complexity_score >= 5:
+        if complexity_score >= 5:
             return "high"
-        elif complexity_score >= 3:
+        if complexity_score >= 3:
             return "medium"
-        else:
-            return "low"
+        return "low"
 
-    def _select_performance_profile(self, binary_info: Dict[str, Any]) -> PerformanceProfile:
+    def _select_performance_profile(self, binary_info: dict[str, Any]) -> PerformanceProfile:
         """Select appropriate performance profile based on binary characteristics"""
         file_size = binary_info["file_size"]
 
@@ -343,7 +344,7 @@ class R2PerformanceOptimizer:
         # Default to huge files profile
         return self.PERFORMANCE_PROFILES["huge_files"]
 
-    def _customize_profile_for_system(self, profile: PerformanceProfile, binary_info: Dict[str, Any]) -> Dict[str, Any]:
+    def _customize_profile_for_system(self, profile: PerformanceProfile, binary_info: dict[str, Any]) -> dict[str, Any]:
         """Customize profile based on current system resources"""
         system_info = self._get_system_info()
 
@@ -356,7 +357,7 @@ class R2PerformanceOptimizer:
             "cache_enabled": profile.cache_enabled,
             "r2_flags": profile.optimization_flags.copy(),
             "profile_name": profile.name,
-            "binary_info": binary_info
+            "binary_info": binary_info,
         }
 
         # Adjust based on available memory
@@ -383,7 +384,7 @@ class R2PerformanceOptimizer:
 
         return config
 
-    def _apply_strategy_optimizations(self, config: Dict[str, Any], binary_info: Dict[str, Any]) -> Dict[str, Any]:
+    def _apply_strategy_optimizations(self, config: dict[str, Any], binary_info: dict[str, Any]) -> dict[str, Any]:
         """Apply strategy-specific optimizations"""
         if self.strategy == OptimizationStrategy.MEMORY_CONSERVATIVE:
             config = self._apply_memory_conservative_optimizations(config)
@@ -395,7 +396,7 @@ class R2PerformanceOptimizer:
 
         return config
 
-    def _apply_memory_conservative_optimizations(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def _apply_memory_conservative_optimizations(self, config: dict[str, Any]) -> dict[str, Any]:
         """Apply memory-conservative optimizations"""
         # Reduce memory usage
         config["memory_limit"] = int(config["memory_limit"] * 0.7)
@@ -407,19 +408,17 @@ class R2PerformanceOptimizer:
             "-e", "io.cache=false",
             "-e", "bin.cache=false",
             "-e", "anal.depth=8",  # Reduce analysis depth
-            "-e", "anal.bb.maxsize=256"  # Smaller basic blocks
+            "-e", "anal.bb.maxsize=256",  # Smaller basic blocks
         ]
         config["r2_flags"].extend(memory_flags)
 
         # Use lighter analysis
-        if config["analysis_level"] == "aaaa":
-            config["analysis_level"] = "aa"
-        elif config["analysis_level"] == "aaa":
+        if config["analysis_level"] == "aaaa" or config["analysis_level"] == "aaa":
             config["analysis_level"] = "aa"
 
         return config
 
-    def _apply_speed_optimizations(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def _apply_speed_optimizations(self, config: dict[str, Any]) -> dict[str, Any]:
         """Apply speed-focused optimizations"""
         # Increase parallel workers if system allows
         system_info = self._get_system_info()
@@ -434,7 +433,7 @@ class R2PerformanceOptimizer:
             "-e", "io.cache=true",
             "-e", "bin.cache=true",
             "-e", "anal.jmp.tbl=true",
-            "-e", "anal.hasnext=true"
+            "-e", "anal.hasnext=true",
         ]
         config["r2_flags"].extend(speed_flags)
 
@@ -443,7 +442,7 @@ class R2PerformanceOptimizer:
 
         return config
 
-    def _apply_large_file_optimizations(self, config: Dict[str, Any], binary_info: Dict[str, Any]) -> Dict[str, Any]:
+    def _apply_large_file_optimizations(self, config: dict[str, Any], binary_info: dict[str, Any]) -> dict[str, Any]:
         """Apply optimizations specifically for large files"""
         file_size = binary_info["file_size"]
 
@@ -455,7 +454,7 @@ class R2PerformanceOptimizer:
                 "-e", "anal.depth=4",
                 "-e", "anal.bb.maxsize=128",
                 "-e", "esil.timeout=5",
-                "-e", "anal.timeout=" + str(config["timeout"])
+                "-e", "anal.timeout=" + str(config["timeout"]),
             ]
             config["r2_flags"].extend(large_file_flags)
 
@@ -470,7 +469,7 @@ class R2PerformanceOptimizer:
 
         return config
 
-    def _get_safe_default_config(self) -> Dict[str, Any]:
+    def _get_safe_default_config(self) -> dict[str, Any]:
         """Get safe default configuration for fallback"""
         return {
             "analysis_level": "aa",
@@ -481,7 +480,7 @@ class R2PerformanceOptimizer:
             "cache_enabled": True,
             "r2_flags": ["-e", "anal.timeout=300"],
             "profile_name": "Safe Default",
-            "binary_info": {}
+            "binary_info": {},
         }
 
     def start_monitoring(self, interval: float = 1.0):
@@ -491,7 +490,7 @@ class R2PerformanceOptimizer:
             self._monitor_thread = threading.Thread(
                 target=self._monitor_resources,
                 args=(interval,),
-                daemon=True
+                daemon=True,
             )
             self._monitor_thread.start()
             self.logger.info("Resource monitoring started")
@@ -519,11 +518,11 @@ class R2PerformanceOptimizer:
                 # Update peaks
                 self.performance_metrics["resource_peaks"]["memory"] = max(
                     self.performance_metrics["resource_peaks"]["memory"],
-                    memory.percent
+                    memory.percent,
                 )
                 self.performance_metrics["resource_peaks"]["cpu"] = max(
                     self.performance_metrics["resource_peaks"]["cpu"],
-                    cpu
+                    cpu,
                 )
 
                 # Keep only last 100 measurements
@@ -561,7 +560,7 @@ class R2PerformanceOptimizer:
             # Throttle operations
             time.sleep(1)
 
-    def optimize_r2_session(self, r2_session, config: Dict[str, Any]):
+    def optimize_r2_session(self, r2_session, config: dict[str, Any]):
         """Apply optimizations to active r2 session"""
         try:
             # Apply configuration flags
@@ -587,7 +586,7 @@ class R2PerformanceOptimizer:
             self.profile_usage_stats[profile_name] = {
                 "usage_count": 0,
                 "total_file_size": 0,
-                "avg_file_size": 0
+                "avg_file_size": 0,
             }
 
         stats = self.profile_usage_stats[profile_name]
@@ -597,7 +596,7 @@ class R2PerformanceOptimizer:
 
         self.logger.debug(f"Profile {profile_name} used {stats['usage_count']} times, avg file size: {stats['avg_file_size']:.2f} bytes")
 
-    def get_performance_report(self) -> Dict[str, Any]:
+    def get_performance_report(self) -> dict[str, Any]:
         """Generate comprehensive performance report"""
         report = {
             "system_info": self._get_system_info(),
@@ -606,22 +605,22 @@ class R2PerformanceOptimizer:
                 "memory_usage": {
                     "current": self.performance_metrics["memory_usage"][-1] if self.performance_metrics["memory_usage"] else 0,
                     "average": sum(self.performance_metrics["memory_usage"]) / len(self.performance_metrics["memory_usage"]) if self.performance_metrics["memory_usage"] else 0,
-                    "peak": self.performance_metrics["resource_peaks"]["memory"]
+                    "peak": self.performance_metrics["resource_peaks"]["memory"],
                 },
                 "cpu_usage": {
                     "current": self.performance_metrics["cpu_usage"][-1] if self.performance_metrics["cpu_usage"] else 0,
                     "average": sum(self.performance_metrics["cpu_usage"]) / len(self.performance_metrics["cpu_usage"]) if self.performance_metrics["cpu_usage"] else 0,
-                    "peak": self.performance_metrics["resource_peaks"]["cpu"]
+                    "peak": self.performance_metrics["resource_peaks"]["cpu"],
                 },
                 "analysis_times": self.performance_metrics["analysis_times"].copy(),
-                "optimization_effectiveness": self.performance_metrics["optimization_effectiveness"].copy()
+                "optimization_effectiveness": self.performance_metrics["optimization_effectiveness"].copy(),
             },
-            "recommendations": self._generate_recommendations()
+            "recommendations": self._generate_recommendations(),
         }
 
         return report
 
-    def _generate_recommendations(self) -> List[str]:
+    def _generate_recommendations(self) -> list[str]:
         """Generate performance optimization recommendations"""
         recommendations = []
 
@@ -644,7 +643,7 @@ class R2PerformanceOptimizer:
 
         return recommendations
 
-    def benchmark_analysis_types(self, binary_path: str, analysis_types: List[str]) -> Dict[str, Dict[str, float]]:
+    def benchmark_analysis_types(self, binary_path: str, analysis_types: list[str]) -> dict[str, dict[str, float]]:
         """Benchmark different analysis types for performance comparison"""
         results = {}
 
@@ -672,7 +671,7 @@ class R2PerformanceOptimizer:
                 results[analysis_type] = {
                     "duration": end_time - start_time,
                     "memory_delta": end_memory - start_memory,
-                    "memory_peak": max(start_memory, end_memory)
+                    "memory_peak": max(start_memory, end_memory),
                 }
 
             except Exception as e:
@@ -681,7 +680,7 @@ class R2PerformanceOptimizer:
                     "duration": float("inf"),
                     "memory_delta": 0,
                     "memory_peak": 0,
-                    "error": str(e)
+                    "error": str(e),
                 }
 
         return results
@@ -696,7 +695,7 @@ class R2PerformanceOptimizer:
                 "cpu_usage": [],
                 "analysis_times": {},
                 "optimization_effectiveness": {},
-                "resource_peaks": {"memory": 0, "cpu": 0}
+                "resource_peaks": {"memory": 0, "cpu": 0},
             }
 
             # Force garbage collection
@@ -713,25 +712,25 @@ def create_performance_optimizer(strategy: OptimizationStrategy = OptimizationSt
     return R2PerformanceOptimizer(strategy)
 
 
-def optimize_for_large_binary(binary_path: str) -> Dict[str, Any]:
-    """
-    Quick optimization for large binary files.
+def optimize_for_large_binary(binary_path: str) -> dict[str, Any]:
+    """Quick optimization for large binary files.
 
     Args:
         binary_path: Path to binary file
 
     Returns:
         Optimized configuration
+
     """
     optimizer = create_performance_optimizer(OptimizationStrategy.LARGE_FILE_SPECIALIZED)
     return optimizer.optimize_for_binary(binary_path)
 
 
 __all__ = [
-    "R2PerformanceOptimizer",
-    "OptimizationStrategy",
     "AnalysisLevel",
+    "OptimizationStrategy",
     "PerformanceProfile",
+    "R2PerformanceOptimizer",
     "create_performance_optimizer",
-    "optimize_for_large_binary"
+    "optimize_for_large_binary",
 ]

@@ -1,5 +1,4 @@
-"""
-Common string and formatting utilities.
+"""Common string and formatting utilities.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -20,24 +19,21 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-from typing import List, Union
 
 
 def format_bytes(size_bytes: int) -> str:
     """Format byte size in human readable format."""
     if size_bytes < 1024:
         return f"{size_bytes} B"
-    elif size_bytes < 1024 * 1024:
+    if size_bytes < 1024 * 1024:
         return f"{size_bytes / 1024:.2f} KB"
-    elif size_bytes < 1024 * 1024 * 1024:
+    if size_bytes < 1024 * 1024 * 1024:
         return f"{size_bytes / (1024 * 1024):.2f} MB"
-    else:
-        return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
+    return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
 
 
-def extract_ascii_strings(data: Union[bytes, bytearray], min_length: int = 4) -> List[str]:
-    """
-    Extract printable ASCII strings from binary data.
+def extract_ascii_strings(data: bytes | bytearray, min_length: int = 4) -> list[str]:
+    """Extract printable ASCII strings from binary data.
 
     Args:
         data: Binary data to extract strings from
@@ -45,6 +41,7 @@ def extract_ascii_strings(data: Union[bytes, bytearray], min_length: int = 4) ->
 
     Returns:
         List of extracted strings
+
     """
     strings = []
     current_string = ""

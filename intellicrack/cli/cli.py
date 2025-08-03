@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -23,7 +22,6 @@ import os
 import sys
 import threading
 import time
-from typing import Optional
 
 from intellicrack.logger import logger
 from intellicrack.utils.analysis.binary_analysis import analyze_binary
@@ -155,8 +153,8 @@ def payload():
               type=click.Choice(
                   ["raw", "exe", "dll", "powershell", "python", "c"]),
               default="raw", help="Output format")
-def generate(payload_type: str, architecture: str, lhost: Optional[str],
-             lport: Optional[int], encoding: tuple, output: Optional[str],
+def generate(payload_type: str, architecture: str, lhost: str | None,
+             lport: int | None, encoding: tuple, output: str | None,
              output_format: str):
     """Generate a custom payload with various options"""
     try:
@@ -170,11 +168,11 @@ def generate(payload_type: str, architecture: str, lhost: Optional[str],
             "protections": [],
             "av_products": [],
             "network_config": {},
-            "process_info": {}
+            "process_info": {},
         }
 
         options = {
-            "output_format": output_format
+            "output_format": output_format,
         }
 
         # Add connection parameters
@@ -198,7 +196,7 @@ def generate(payload_type: str, architecture: str, lhost: Optional[str],
             PayloadType[payload_type.upper()],
             Architecture[architecture.upper()],
             target_info,
-            options
+            options,
         )
 
         # Save output
@@ -234,7 +232,7 @@ def generate(payload_type: str, architecture: str, lhost: Optional[str],
               type=click.Choice(["shell", "persistence", "privilege_escalation",
                                  "lateral_movement", "steganography", "anti_analysis"]),
               help="Template category")
-def list_templates(category: Optional[str]):
+def list_templates(category: str | None):
     """List available payload templates"""
     try:
         templates = PayloadTemplates()
@@ -261,7 +259,7 @@ def list_templates(category: Optional[str]):
 @click.option("--param", "-p", multiple=True, help="Template parameters (key=value)")
 @click.option("--output", "-o", help="Output file path")
 def from_template(category: str, template_name: str, architecture: str,
-                  param: tuple, output: Optional[str]):
+                  param: tuple, output: str | None):
     """Generate payload from template"""
     try:
         engine = PayloadEngine()
@@ -294,19 +292,19 @@ def from_template(category: str, template_name: str, architecture: str,
             "protections": [],
             "av_products": [],
             "network_config": {},
-            "process_info": {}
+            "process_info": {},
         }
 
         options = {
             "mode": "template",
-            "template": template
+            "template": template,
         }
 
         # Determine payload type from template category
         payload_type_map = {
             "reverse_shell": PayloadType.REVERSE_SHELL,
             "bind_shell": PayloadType.BIND_SHELL,
-            "staged": PayloadType.STAGED_PAYLOAD
+            "staged": PayloadType.STAGED_PAYLOAD,
         }
         payload_type = payload_type_map.get(
             category.lower(), PayloadType.REVERSE_SHELL)
@@ -315,7 +313,7 @@ def from_template(category: str, template_name: str, architecture: str,
             payload_type,
             Architecture[architecture.upper()],
             target_info,
-            options
+            options,
         )
 
         # Save output
@@ -357,7 +355,7 @@ def server(host: str, https_port: int, dns_port: int, tcp_port: int, protocols: 
             "tcp_enabled": "tcp" in protocols,
             "https": {"host": host, "port": https_port},
             "dns": {"host": host, "port": dns_port, "domain": os.environ.get("DNS_DOMAIN", "internal.local")},
-            "tcp": {"host": host, "port": tcp_port}
+            "tcp": {"host": host, "port": tcp_port},
         }
 
         click.echo("Starting C2 server...")
@@ -411,9 +409,9 @@ def client(server_host: str, port: int, protocol: str, interval: int):
                 f"{protocol}_enabled": True,
                 protocol: {
                     "host": server_host,
-                    "port": port
-                }
-            }
+                    "port": port,
+                },
+            },
         }
 
         click.echo(
@@ -457,8 +455,8 @@ def execute_command(session_id: str, command: str):
               default="auto", help="Exploit type")
 @click.option("--payload", "-p", "payload_data", help="Custom payload or payload file")
 @click.option("--output", "-o", help="Output exploit to file")
-def exploit_target(target: str, exploit_type: str, payload_data: Optional[str],
-                   output: Optional[str]):
+def exploit_target(target: str, exploit_type: str, payload_data: str | None,
+                   output: str | None):
     """Exploit a target binary or service"""
     try:
         click.echo(f"Exploiting target: {target}")
@@ -495,7 +493,7 @@ def exploit_target(target: str, exploit_type: str, payload_data: Optional[str],
 @click.option("--deep", "-d", is_flag=True, help="Perform deep analysis")
 @click.option("--output", "-o", help="Save analysis report")
 @click.option("--no-ai", is_flag=True, help="Disable AI integration")
-def basic_analyze(binary_path: str, deep: bool, output: Optional[str], no_ai: bool):
+def basic_analyze(binary_path: str, deep: bool, output: str | None, no_ai: bool):
     """Analyze a binary file with AI integration"""
     try:
         click.echo(f"Analyzing binary: {binary_path}")
@@ -530,7 +528,7 @@ def basic_analyze(binary_path: str, deep: bool, output: Optional[str], no_ai: bo
                 protection_status = "Enabled" if enabled else "Disabled"
                 click.echo(f"  {protection}: {protection_status}")
 
-        if "vulnerabilities" in result and result["vulnerabilities"]:
+        if result.get("vulnerabilities"):
             click.echo("\nPotential Vulnerabilities:")
             for vuln in result["vulnerabilities"]:
                 click.echo(f"  - {vuln}")
@@ -596,8 +594,8 @@ def basic_analyze(binary_path: str, deep: bool, output: Optional[str], no_ai: bo
 @click.option("--data", "-d", help="Patch data (hex)")
 @click.option("--nop-range", "-n", help="NOP range (start:end in hex)")
 @click.option("--output", "-O", help="Output patched binary")
-def patch(binary_path: str, offset: Optional[str], data: Optional[str],
-          nop_range: Optional[str], output: Optional[str]):
+def patch(binary_path: str, offset: str | None, data: str | None,
+          nop_range: str | None, output: str | None):
     """Patch a binary file"""
     try:
         patches = []
@@ -605,7 +603,7 @@ def patch(binary_path: str, offset: Optional[str], data: Optional[str],
         if offset and data:
             patches.append({
                 "offset": int(offset, 16),
-                "data": bytes.fromhex(data.replace(" ", ""))
+                "data": bytes.fromhex(data.replace(" ", "")),
             })
 
         if nop_range:
@@ -613,7 +611,7 @@ def patch(binary_path: str, offset: Optional[str], data: Optional[str],
             patches.append({
                 "type": "nop",
                 "start": int(nop_start, 16),
-                "end": int(nop_end, 16)
+                "end": int(nop_end, 16),
             })
 
         if not patches:
@@ -624,7 +622,7 @@ def patch(binary_path: str, offset: Optional[str], data: Optional[str],
 
         patch_config = {
             "patches": patches,
-            "output_path": output
+            "output_path": output,
         }
         result = generate_patch(binary_path, patch_config)
 
@@ -676,7 +674,7 @@ def advanced_payload():
 @click.option("--format", type=click.Choice(["raw", "exe", "dll", "shellcode"]),
               default="raw", help="Output format")
 def advanced_generate(payload_type: str, architecture: str, lhost: str, lport: int,
-                      encoding: str, evasion: str, output: Optional[str], output_format: str):
+                      encoding: str, evasion: str, output: str | None, output_format: str):
     """Generate advanced payload with evasion techniques"""
     try:
         from intellicrack.core.exploitation.payload_types import (
@@ -695,14 +693,14 @@ def advanced_generate(payload_type: str, architecture: str, lhost: str, lport: i
             "bind_shell": AdvancedPayloadType.BIND_SHELL,
             "meterpreter": AdvancedPayloadType.METERPRETER,
             "staged_payload": AdvancedPayloadType.STAGED_PAYLOAD,
-            "custom": AdvancedPayloadType.CUSTOM
+            "custom": AdvancedPayloadType.CUSTOM,
         }
 
         arch_mapping = {
             "x86": AdvancedArchitecture.X86,
             "x64": AdvancedArchitecture.X64,
             "arm": AdvancedArchitecture.ARM,
-            "arm64": AdvancedArchitecture.ARM64
+            "arm64": AdvancedArchitecture.ARM64,
         }
 
         encoding_mapping = {
@@ -710,14 +708,14 @@ def advanced_generate(payload_type: str, architecture: str, lhost: str, lport: i
             "polymorphic": EncodingType.POLYMORPHIC,
             "metamorphic": EncodingType.METAMORPHIC,
             "xor": EncodingType.XOR,
-            "alpha": EncodingType.ALPHANUMERIC
+            "alpha": EncodingType.ALPHANUMERIC,
         }
 
         target_info = {
             "os_type": "windows",
             "architecture": architecture,
             "protections": ["aslr", "dep"],
-            "av_products": []
+            "av_products": [],
         }
 
         options = {
@@ -725,7 +723,7 @@ def advanced_generate(payload_type: str, architecture: str, lhost: str, lport: i
             "lport": lport,
             "encoding": encoding_mapping[encoding],
             "evasion_level": evasion,
-            "output_format": output_format
+            "output_format": output_format,
         }
 
         click.echo(f"Generating {payload_type} payload...")
@@ -736,7 +734,7 @@ def advanced_generate(payload_type: str, architecture: str, lhost: str, lport: i
             payload_type=payload_type_mapping[payload_type],
             architecture=arch_mapping[architecture],
             target_info=target_info,
-            options=options
+            options=options,
         )
 
         # Define save callback for file output
@@ -769,14 +767,13 @@ def advanced_generate(payload_type: str, architecture: str, lhost: str, lport: i
                 result, click.echo, save_payload)
             if not success:
                 sys.exit(1)
+        # Fallback for missing handler
+        elif result["success"]:
+            save_payload(result["payload"], result["metadata"])
         else:
-            # Fallback for missing handler
-            if result["success"]:
-                save_payload(result["payload"], result["metadata"])
-            else:
-                click.echo(
-                    f"✗ Payload generation failed: {result.get('error', 'Unknown error')}")
-                sys.exit(1)
+            click.echo(
+                f"✗ Payload generation failed: {result.get('error', 'Unknown error')}")
+            sys.exit(1)
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
         logger.error("Advanced payload generation failed: %s",
@@ -798,7 +795,7 @@ def advanced_c2():
               default="aes256", help="Encryption method")
 @click.option("--interface", "-i", default="0.0.0.0", help="Listen interface")
 @click.option("--config", "-c", help="Configuration file path")
-def start(protocol: str, port: Optional[int], encryption: str, interface: str, config: Optional[str]):
+def start(protocol: str, port: int | None, encryption: str, interface: str, config: str | None):
     """Start advanced C2 server"""
     try:
         manager = C2Manager()
@@ -815,11 +812,11 @@ def start(protocol: str, port: Optional[int], encryption: str, interface: str, c
             "interface": interface,
             "encryption_method": encryption.lower(),
             "max_sessions": 100,
-            "session_timeout": 300
+            "session_timeout": 300,
         }
 
         if config:
-            with open(config, "r", encoding="utf-8") as f:
+            with open(config, encoding="utf-8") as f:
                 file_config = json.load(f)
                 server_config.update(file_config)
 
@@ -891,7 +888,7 @@ def research():
 @click.option("--output", "-o", help="Output directory for results")
 @click.option("--timeout", type=int, default=3600, help="Analysis timeout (seconds)")
 @click.option("--use-ai", is_flag=True, help="Use AI-guided analysis")
-def run(target_path: str, campaign_type: str, output: Optional[str], timeout: int, use_ai: bool):
+def run(target_path: str, campaign_type: str, output: str | None, timeout: int, use_ai: bool):
     """Run vulnerability research analysis"""
     try:
         if not os.path.exists(target_path):
@@ -999,7 +996,7 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
                 "fuzzing": CampaignType.FUZZING,
                 "vulnerability_assessment": CampaignType.VULNERABILITY_ASSESSMENT,
                 "patch_analysis": CampaignType.PATCH_ANALYSIS,
-                "hybrid_research": CampaignType.HYBRID_RESEARCH
+                "hybrid_research": CampaignType.HYBRID_RESEARCH,
             }
 
             # Get actual campaign type from mapping
@@ -1010,7 +1007,7 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
             campaign_result = manager.create_campaign(
                 name=f"CLI_Campaign_{int(time.time())}",
                 campaign_type=selected_campaign_type,
-                targets=[target_path]
+                targets=[target_path],
             )
 
             if campaign_result:
@@ -1049,7 +1046,7 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
                         result = analyzer.analyze_vulnerability(
                             target_path=target_path,
                             analysis_method=AnalysisMethod.HYBRID,
-                            vulnerability_types=None
+                            vulnerability_types=None,
                         )
                     finally:
                         if hasattr(signal, "alarm"):
@@ -1059,7 +1056,7 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
                     result = analyzer.analyze_vulnerability(
                         target_path=target_path,
                         analysis_method=AnalysisMethod.HYBRID,
-                        vulnerability_types=None
+                        vulnerability_types=None,
                     )
             except (AttributeError, OSError) as e:
                 logger.error("Error in cli: %s", e)
@@ -1067,7 +1064,7 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
                 result = analyzer.analyze_vulnerability(
                     target_path=target_path,
                     analysis_method=AnalysisMethod.HYBRID,
-                    vulnerability_types=None
+                    vulnerability_types=None,
                 )
 
             if result["success"]:
@@ -1121,7 +1118,7 @@ def post_exploit():
 @click.option("--method", type=click.Choice(["auto", "registry", "service", "scheduled_task", "startup"]),
               default="auto", help="Persistence method")
 @click.option("--payload-path", help="Path to payload for persistence")
-def persist(platform: str, method: str, payload_path: Optional[str]):
+def persist(platform: str, method: str, payload_path: str | None):
     """Establish persistence on target system"""
     try:
         manager = PersistenceManager()
@@ -1132,18 +1129,18 @@ def persist(platform: str, method: str, payload_path: Optional[str]):
             "windows": {
                 "default_payload": os.path.join(tempfile.gettempdir(), "implant.exe"),
                 "methods": ["registry", "service", "scheduled_task", "startup"],
-                "stealth_level": "high"
+                "stealth_level": "high",
             },
             "linux": {
                 "default_payload": os.path.join(tempfile.gettempdir(), "implant"),
                 "methods": ["systemd", "cron", "rc_local", "profile"],
-                "stealth_level": "medium"
+                "stealth_level": "medium",
             },
             "macos": {
                 "default_payload": os.path.join(tempfile.gettempdir(), "implant"),
                 "methods": ["launchd", "cron", "profile", "login_items"],
-                "stealth_level": "high"
-            }
+                "stealth_level": "high",
+            },
         }
 
         platform_config = platform_configs.get(
@@ -1164,7 +1161,7 @@ def persist(platform: str, method: str, payload_path: Optional[str]):
             target_os=platform,
             privilege_level="user",
             stealth_level=platform_config["stealth_level"],
-            options={"preferred_method": method}
+            options={"preferred_method": method},
         )
 
         if result["success"]:
@@ -1220,7 +1217,7 @@ def escalate(target_platform: str, method: str):
 @click.option("--platform", type=click.Choice(["windows", "linux", "macos"]),
               default="windows", help="Target platform")
 @click.option("--output", "-o", help="Save detailed results to file")
-def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str, output: Optional[str]):
+def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str, output: str | None):
     """Run full automated exploitation workflow"""
     try:
         if not os.path.exists(target_path):
@@ -1234,8 +1231,8 @@ def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str,
             "platform": target_platform,
             "network_config": {
                 "lhost": lhost,
-                "lport": lport
-            }
+                "lport": lport,
+            },
         }
 
         click.echo(
@@ -1310,7 +1307,7 @@ def ai():
 @click.option("--autonomous", is_flag=True, help="Enable autonomous mode with testing")
 @click.option("--preview", is_flag=True, help="Preview script before saving")
 def ai_generate(binary_path: str, script_type: str, complexity: str, focus: str,
-                output: Optional[str], autonomous_mode: bool, preview: bool):
+                output: str | None, autonomous_mode: bool, preview: bool):
     """Generate AI scripts for binary protection bypass"""
     try:
         if not os.path.exists(binary_path):
@@ -1347,7 +1344,7 @@ def ai_generate(binary_path: str, script_type: str, complexity: str, focus: str,
                 "trial": "trial extension",
                 "network": "network validation",
                 "anti-debug": "anti-debugging",
-                "vm": "VM detection"
+                "vm": "VM detection",
             }
             script_request += f". Focus on {protection_map[focus]} protection."
 
@@ -1439,7 +1436,7 @@ def ai_generate(binary_path: str, script_type: str, complexity: str, focus: str,
               default="qemu", help="Testing environment")
 @click.option("--timeout", default=60, help="Test timeout in seconds")
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
-def test(script_path: str, binary: Optional[str], environment: str, timeout: int, verbose: bool):
+def test(script_path: str, binary: str | None, environment: str, timeout: int, verbose: bool):
     """Test AI-generated scripts in safe environments"""
     try:
         if not os.path.exists(script_path):
@@ -1458,7 +1455,7 @@ def test(script_path: str, binary: Optional[str], environment: str, timeout: int
             sys.exit(1)
 
         # Read script content
-        with open(script_path, "r", encoding="utf-8") as f:
+        with open(script_path, encoding="utf-8") as f:
             script_content = f.read()
 
         click.echo(
@@ -1523,7 +1520,7 @@ def test(script_path: str, binary: Optional[str], environment: str, timeout: int
 @click.option("--format", type=click.Choice(["text", "json", "html"]),
               default="text", help="Output format")
 @click.option("--deep", is_flag=True, help="Enable deep AI analysis")
-def analyze(binary_path: str, output: Optional[str], output_format: str, deep: bool):
+def analyze(binary_path: str, output: str | None, output_format: str, deep: bool):
     """Analyze binary for protection mechanisms using AI"""
     try:
         if not os.path.exists(binary_path):
@@ -1551,7 +1548,7 @@ def analyze(binary_path: str, output: Optional[str], output_format: str, deep: b
             task_type=AITaskType.BINARY_ANALYSIS,
             complexity=complexity,
             input_data={"binary_path": binary_path},
-            priority=9 if deep else 7
+            priority=9 if deep else 7,
         )
 
         # Submit task
@@ -1573,25 +1570,25 @@ def analyze(binary_path: str, output: Optional[str], output_format: str, deep: b
             "binary_info": {
                 "name": binary_name,
                 "size": os.path.getsize(binary_path),
-                "type": "PE" if binary_path.endswith(".exe") else "Unknown"
+                "type": "PE" if binary_path.endswith(".exe") else "Unknown",
             },
             "protections": [
                 {
                     "type": "license_check",
                     "confidence": 0.85,
-                    "description": "String comparison based license validation"
+                    "description": "String comparison based license validation",
                 },
                 {
                     "type": "trial_timer",
                     "confidence": 0.72,
-                    "description": "Time-based trial limitation"
-                }
+                    "description": "Time-based trial limitation",
+                },
             ],
             "recommendations": [
                 "Focus on license validation bypass",
                 "Monitor time-related function calls",
-                "Consider registry-based license storage"
-            ]
+                "Consider registry-based license storage",
+            ],
         }
 
         # Format output
@@ -1649,7 +1646,7 @@ def analyze(binary_path: str, output: Optional[str], output_format: str, deep: b
               default="qemu", help="Testing environment")
 @click.option("--save-all", is_flag=True, help="Save all intermediate scripts")
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
-def autonomous(request: str, binary: Optional[str], max_iterations: int,
+def autonomous(request: str, binary: str | None, max_iterations: int,
                test_environment: str, save_all: bool, verbose: bool):
     """Run autonomous AI workflow for complex tasks"""
     try:
@@ -1730,7 +1727,7 @@ def autonomous(request: str, binary: Optional[str], max_iterations: int,
 @click.argument("binary_path", type=click.Path(exists=True))
 @click.option("--output", "-o", help="Output file for session data")
 @click.option("--include-ui", is_flag=True, help="Include UI conversation history")
-def save_session(binary_path: str, output: Optional[str], include_ui: bool):
+def save_session(binary_path: str, output: str | None, include_ui: bool):
     """Save AI session data including conversation history"""
     try:
         from intellicrack.ai.autonomous_agent import AutonomousAgent
@@ -1743,7 +1740,7 @@ def save_session(binary_path: str, output: Optional[str], include_ui: bool):
         # Prepare session save options
         save_options = {
             "binary_path": binary_path,
-            "include_ui_history": include_ui
+            "include_ui_history": include_ui,
         }
 
         # Include UI conversation history if requested
@@ -1833,8 +1830,8 @@ def reset(confirm: bool):
 @click.option("--script", help="Script content for testing (script_testing only)")
 @click.option("--output", "-o", help="Output file for results")
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
-def task(task_type: str, binary_path: str, request: Optional[str], script: Optional[str],
-         output: Optional[str], verbose: bool):
+def task(task_type: str, binary_path: str, request: str | None, script: str | None,
+         output: str | None, verbose: bool):
     """Execute specific autonomous AI task"""
     try:
         from intellicrack.ai.autonomous_agent import AutonomousAgent
@@ -1849,7 +1846,7 @@ def task(task_type: str, binary_path: str, request: Optional[str], script: Optio
         task_config = {
             "type": task_type,
             "target_binary": binary_path,
-            "request": request or f"Perform {task_type} on {binary_path}"
+            "request": request or f"Perform {task_type} on {binary_path}",
         }
 
         # Add script for testing tasks

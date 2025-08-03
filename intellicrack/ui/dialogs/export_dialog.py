@@ -1,5 +1,4 @@
-"""
-ICP Analysis Export Dialog
+"""ICP Analysis Export Dialog
 
 Provides comprehensive export functionality for ICP analysis results.
 Supports multiple export formats including JSON, XML, CSV, and PDF reports.
@@ -11,7 +10,7 @@ Licensed under GNU General Public License v3.0
 import json
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 from PyQt6.QtCore import QThread, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QFont
@@ -48,7 +47,7 @@ class ExportWorker(QThread):
     export_completed = pyqtSignal(bool, str)  # success, message
     progress_update = pyqtSignal(int, str)    # progress, status
 
-    def __init__(self, export_config: Dict[str, Any]):
+    def __init__(self, export_config: dict[str, Any]):
         """Initialize the ExportWorker with default values."""
         super().__init__()
         self.export_config = export_config
@@ -80,9 +79,9 @@ class ExportWorker(QThread):
 
         except Exception as e:
             logger.error(f"Export failed: {e}")
-            self.export_completed.emit(False, f"Export failed: {str(e)}")
+            self.export_completed.emit(False, f"Export failed: {e!s}")
 
-    def _export_json(self, output_path: str, results: Dict[str, Any]):
+    def _export_json(self, output_path: str, results: dict[str, Any]):
         """Export to JSON format"""
         self.progress_update.emit(30, "Formatting JSON data...")
 
@@ -91,9 +90,9 @@ class ExportWorker(QThread):
                 "timestamp": datetime.now().isoformat(),
                 "version": "1.0",
                 "format": "json",
-                "exported_by": "Intellicrack Protection Engine"
+                "exported_by": "Intellicrack Protection Engine",
             },
-            "analysis_results": results
+            "analysis_results": results,
         }
 
         self.progress_update.emit(70, "Writing JSON file...")
@@ -101,7 +100,7 @@ class ExportWorker(QThread):
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(export_data, f, indent=2, ensure_ascii=False, default=str)
 
-    def _export_xml(self, output_path: str, results: Dict[str, Any]):
+    def _export_xml(self, output_path: str, results: dict[str, Any]):
         """Export to XML format"""
         self.progress_update.emit(30, "Building XML structure...")
 
@@ -127,7 +126,7 @@ class ExportWorker(QThread):
                     "is_protected": icp_data.is_protected if hasattr(icp_data, "is_protected") else False,
                     "file_type": icp_data.file_type if hasattr(icp_data, "file_type") else "Unknown",
                     "architecture": icp_data.architecture if hasattr(icp_data, "architecture") else "Unknown",
-                    "detections": []
+                    "detections": [],
                 }
 
                 if hasattr(icp_data, "all_detections"):
@@ -136,7 +135,7 @@ class ExportWorker(QThread):
                             "name": detection.name if hasattr(detection, "name") else "Unknown",
                             "type": detection.type if hasattr(detection, "type") else "Unknown",
                             "confidence": detection.confidence if hasattr(detection, "confidence") else 0.0,
-                            "version": detection.version if hasattr(detection, "version") else ""
+                            "version": detection.version if hasattr(detection, "version") else "",
                         }
                         icp_dict["detections"].append(det_dict)
 
@@ -147,7 +146,7 @@ class ExportWorker(QThread):
         tree = ET.ElementTree(root)
         tree.write(output_path, encoding="utf-8", xml_declaration=True)
 
-    def _dict_to_xml(self, parent: ET.Element, data: Dict[str, Any]):
+    def _dict_to_xml(self, parent: ET.Element, data: dict[str, Any]):
         """Convert dictionary to XML elements"""
         for key, value in data.items():
             elem = ET.SubElement(parent, str(key))
@@ -165,7 +164,7 @@ class ExportWorker(QThread):
             else:
                 elem.text = str(value)
 
-    def _export_csv(self, output_path: str, results: Dict[str, Any]):
+    def _export_csv(self, output_path: str, results: dict[str, Any]):
         """Export to CSV format"""
         import csv
 
@@ -177,7 +176,7 @@ class ExportWorker(QThread):
         # Add header
         rows.append([
             "Detection Name", "Type", "Confidence", "Version",
-            "File Type", "Architecture", "Protected"
+            "File Type", "Architecture", "Protected",
         ])
 
         # Extract detection data
@@ -197,7 +196,7 @@ class ExportWorker(QThread):
                         getattr(detection, "version", ""),
                         file_type,
                         architecture,
-                        str(is_protected)
+                        str(is_protected),
                     ])
 
         self.progress_update.emit(70, "Writing CSV file...")
@@ -206,7 +205,7 @@ class ExportWorker(QThread):
             writer = csv.writer(f)
             writer.writerows(rows)
 
-    def _export_pdf(self, output_path: str, results: Dict[str, Any]):
+    def _export_pdf(self, output_path: str, results: dict[str, Any]):
         """Export to PDF format"""
         try:
             from reportlab.lib import colors
@@ -237,7 +236,7 @@ class ExportWorker(QThread):
             parent=styles["Heading1"],
             fontSize=24,
             textColor=colors.darkblue,
-            spaceAfter=30
+            spaceAfter=30,
         )
 
         story.append(Paragraph("Intellicrack Protection Analysis Report", title_style))
@@ -263,7 +262,7 @@ class ExportWorker(QThread):
                 ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
                 ("FONTSIZE", (0, 0), (-1, -1), 10),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
-                ("GRID", (0, 0), (-1, -1), 1, colors.black)
+                ("GRID", (0, 0), (-1, -1), 1, colors.black),
             ]))
 
             story.append(file_table)
@@ -296,7 +295,7 @@ class ExportWorker(QThread):
                         getattr(detection, "name", "Unknown"),
                         getattr(detection, "type", "Unknown"),
                         f"{getattr(detection, 'confidence', 0.0):.1%}",
-                        getattr(detection, "version", "N/A")
+                        getattr(detection, "version", "N/A"),
                     ])
 
                 detection_table = Table(detection_data, colWidths=[2*inch, 1.5*inch, 1*inch, 1*inch])
@@ -308,7 +307,7 @@ class ExportWorker(QThread):
                     ("FONTSIZE", (0, 0), (-1, 0), 12),
                     ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
                     ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-                    ("GRID", (0, 0), (-1, -1), 1, colors.black)
+                    ("GRID", (0, 0), (-1, -1), 1, colors.black),
                 ]))
 
                 story.append(detection_table)
@@ -316,7 +315,7 @@ class ExportWorker(QThread):
         self.progress_update.emit(70, "Writing PDF file...")
         doc.build(story)
 
-    def _export_html(self, output_path: str, results: Dict[str, Any]):
+    def _export_html(self, output_path: str, results: dict[str, Any]):
         """Export to HTML format"""
         self.progress_update.emit(30, "Building HTML report...")
 
@@ -432,7 +431,7 @@ class ExportWorker(QThread):
 class ExportDialog(QDialog):
     """Export dialog for ICP analysis results"""
 
-    def __init__(self, analysis_results: Optional[Dict[str, Any]] = None, parent=None):
+    def __init__(self, analysis_results: dict[str, Any] | None = None, parent=None):
         """Initialize the ExportDialog with default values."""
         super().__init__(parent)
         self.setWindowTitle("Export ICP Analysis Results")
@@ -440,7 +439,7 @@ class ExportDialog(QDialog):
         self.resize(600, 500)
 
         self.analysis_results = analysis_results
-        self.export_worker: Optional[ExportWorker] = None
+        self.export_worker: ExportWorker | None = None
 
         self.init_ui()
 
@@ -474,7 +473,7 @@ class ExportDialog(QDialog):
                 "include_timestamp": config.get("export.include_timestamp", True),
                 "confidence_threshold": config.get("export.confidence_threshold", 50),
                 "include_file_info": config.get("export.include_file_info", True),
-                "include_detections": config.get("export.include_detections", True)
+                "include_detections": config.get("export.include_detections", True),
             }
             logger.debug("Loaded export preferences from configuration")
         except (ImportError, AttributeError) as e:
@@ -509,7 +508,7 @@ class ExportDialog(QDialog):
 
         # Button box
         button_box = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
         )
         button_box.accepted.connect(self.start_export)
         button_box.rejected.connect(self.reject)
@@ -533,7 +532,7 @@ class ExportDialog(QDialog):
             ("xml", "XML", "Extensible Markup Language - structured document"),
             ("csv", "CSV", "Comma-Separated Values - spreadsheet compatible"),
             ("html", "HTML", "HTML Report - web browser viewable"),
-            ("pdf", "PDF", "PDF Report - professional document format")
+            ("pdf", "PDF", "PDF Report - professional document format"),
         ]
 
         for format_id, format_name, description in formats:
@@ -688,7 +687,7 @@ class ExportDialog(QDialog):
             "xml": "XML Files (*.xml);;All Files (*.*)",
             "csv": "CSV Files (*.csv);;All Files (*.*)",
             "html": "HTML Files (*.html *.htm);;All Files (*.*)",
-            "pdf": "PDF Files (*.pdf);;All Files (*.*)"
+            "pdf": "PDF Files (*.pdf);;All Files (*.*)",
         }
 
         file_filter = filters.get(selected_format, "All Files (*.*)")
@@ -697,7 +696,7 @@ class ExportDialog(QDialog):
             self,
             "Save Export File",
             f"intellicrack_analysis.{selected_format}",
-            file_filter
+            file_filter,
         )
 
         if file_path:
@@ -719,9 +718,9 @@ class ExportDialog(QDialog):
                 preview_data = {
                     "export_info": {
                         "timestamp": datetime.now().isoformat(),
-                        "format": "json"
+                        "format": "json",
                     },
-                    "analysis_results": filtered_results
+                    "analysis_results": filtered_results,
                 }
                 preview_text = json.dumps(preview_data, indent=2, default=str)[:2000]
 
@@ -773,9 +772,9 @@ class ExportDialog(QDialog):
 
         except Exception as e:
             logger.error("Exception in export_dialog: %s", e)
-            self.preview_text.setPlainText(f"Preview error: {str(e)}")
+            self.preview_text.setPlainText(f"Preview error: {e!s}")
 
-    def _filter_results(self) -> Dict[str, Any]:
+    def _filter_results(self) -> dict[str, Any]:
         """Filter results based on export options"""
         if not self.analysis_results:
             return {}
@@ -839,7 +838,7 @@ class ExportDialog(QDialog):
                 "export.include_timestamp": self.include_timestamp_cb.isChecked(),
                 "export.confidence_threshold": self.confidence_threshold_spin.value(),
                 "export.include_file_info": self.include_file_info_cb.isChecked(),
-                "export.include_detections": self.include_detections_cb.isChecked()
+                "export.include_detections": self.include_detections_cb.isChecked(),
             }
             config.update(export_prefs)
             logger.debug("Saved export preferences to configuration")
@@ -855,8 +854,8 @@ class ExportDialog(QDialog):
             "options": {
                 "pretty_format": self.pretty_format_cb.isChecked(),
                 "include_timestamp": self.include_timestamp_cb.isChecked(),
-                "confidence_threshold": self.confidence_threshold_spin.value() / 100.0
-            }
+                "confidence_threshold": self.confidence_threshold_spin.value() / 100.0,
+            },
         }
 
         # Start export worker
@@ -922,7 +921,7 @@ def main():
             self.all_detections = [
                 MockDetection("UPX", "Packer", 0.95, "3.96"),
                 MockDetection("VMProtect", "Protector", 0.78, "3.5"),
-                MockDetection("Anti-Debug", "Protector", 0.65)
+                MockDetection("Anti-Debug", "Protector", 0.65),
             ]
 
     mock_results = {
@@ -930,9 +929,9 @@ def main():
             "file_path": "/test/sample.exe",
             "file_size": 1024000,
             "md5": "abc123...",
-            "sha256": "def456..."
+            "sha256": "def456...",
         },
-        "icp_analysis": MockICPAnalysis()
+        "icp_analysis": MockICPAnalysis(),
     }
 
     dialog = ExportDialog(mock_results)

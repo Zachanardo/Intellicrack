@@ -1,5 +1,4 @@
-"""
-Protection detection utilities for the Intellicrack framework.
+"""Protection detection utilities for the Intellicrack framework.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -24,7 +23,7 @@ import logging
 import math
 from collections import Counter
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 # Module logger
 logger = logging.getLogger(__name__)
@@ -37,8 +36,7 @@ except ImportError as e:
 
 
 def calculate_entropy(data: bytes) -> float:
-    """
-    Calculates Shannon entropy of given data.
+    """Calculates Shannon entropy of given data.
 
     Higher values (>7.0) typically indicate encryption, compression, or obfuscation.
 
@@ -47,6 +45,7 @@ def calculate_entropy(data: bytes) -> float:
 
     Returns:
         float: Shannon entropy value between 0 and 8
+
     """
     if not data:
         return 0
@@ -62,9 +61,8 @@ def calculate_entropy(data: bytes) -> float:
     return entropy
 
 
-def detect_packing(binary_path: Union[str, Path]) -> List[str]:
-    """
-    Detect packing techniques used in the binary.
+def detect_packing(binary_path: str | Path) -> list[str]:
+    """Detect packing techniques used in the binary.
 
     Analyzes various indicators of packing including:
     - Section entropy levels
@@ -77,6 +75,7 @@ def detect_packing(binary_path: Union[str, Path]) -> List[str]:
 
     Returns:
         list: Detection results and findings
+
     """
     results = [f"Analyzing {binary_path} for packing..."]
 
@@ -122,7 +121,7 @@ def detect_packing(binary_path: Union[str, Path]) -> List[str]:
                 "LoadLibrary",
                 "GetProcAddress",
                 "VirtualAlloc",
-                "VirtualProtect"
+                "VirtualProtect",
             ]
             found_suspicious = []
 
@@ -159,7 +158,7 @@ def detect_packing(binary_path: Union[str, Path]) -> List[str]:
             if is_executable and is_writable:
                 results.append(
                     f"  ⚠️ Section {name} is both executable and writable - "
-                    f"common in self-modifying code/packers"
+                    f"common in self-modifying code/packers",
                 )
 
         # Summarize findings
@@ -185,15 +184,15 @@ def detect_packing(binary_path: Union[str, Path]) -> List[str]:
     return results
 
 
-def detect_protection(binary_path: Union[str, Path]) -> Dict[str, Any]:
-    """
-    Comprehensive protection detection for binary files.
+def detect_protection(binary_path: str | Path) -> dict[str, Any]:
+    """Comprehensive protection detection for binary files.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         dict: Protection detection results
+
     """
     results = {
         "packing": False,
@@ -202,7 +201,7 @@ def detect_protection(binary_path: Union[str, Path]) -> Dict[str, Any]:
         "anti_vm": False,
         "dongle": False,
         "license": False,
-        "details": []
+        "details": [],
     }
 
     # Run packing detection
@@ -216,21 +215,21 @@ def detect_protection(binary_path: Union[str, Path]) -> Dict[str, Any]:
     return results
 
 
-def analyze_protection(binary_path: Union[str, Path]) -> Dict[str, Any]:
-    """
-    Analyze protection mechanisms in detail.
+def analyze_protection(binary_path: str | Path) -> dict[str, Any]:
+    """Analyze protection mechanisms in detail.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         dict: Detailed protection analysis
+
     """
     analysis = {
         "protection_type": "unknown",
         "confidence": 0.0,
         "indicators": [],
-        "recommendations": []
+        "recommendations": [],
     }
 
     # Get basic protection detection
@@ -245,9 +244,8 @@ def analyze_protection(binary_path: Union[str, Path]) -> Dict[str, Any]:
     return analysis
 
 
-def bypass_protection(binary_path: Union[str, Path], protection_type: str) -> Dict[str, Any]:
-    """
-    Suggest protection bypass strategies.
+def bypass_protection(binary_path: str | Path, protection_type: str) -> dict[str, Any]:
+    """Suggest protection bypass strategies.
 
     Args:
         binary_path: Path to the binary file
@@ -255,13 +253,14 @@ def bypass_protection(binary_path: Union[str, Path], protection_type: str) -> Di
 
     Returns:
         dict: Bypass strategies and recommendations
+
     """
     strategies = {
         "success_probability": "unknown",
         "methods": [],
         "tools": [],
         "warnings": [],
-        "binary_analysis": {}
+        "binary_analysis": {},
     }
 
     # Analyze the specific binary for targeted bypass strategies
@@ -304,7 +303,7 @@ def bypass_protection(binary_path: Union[str, Path], protection_type: str) -> Di
         strategies["methods"] = [
             "Dynamic unpacking using debugger",
             "Memory dumping at OEP",
-            "Using specialized unpackers"
+            "Using specialized unpackers",
         ]
 
         # Customize tools based on platform
@@ -333,7 +332,7 @@ def bypass_protection(binary_path: Union[str, Path], protection_type: str) -> Di
         strategies["methods"] = [
             "Control flow deobfuscation",
             "String decryption",
-            "Dead code elimination"
+            "Dead code elimination",
         ]
         strategies["tools"] = ["de4dot", "VMProtect unpacker", "Themida unpacker"]
         strategies["success_probability"] = "medium"
@@ -342,7 +341,7 @@ def bypass_protection(binary_path: Union[str, Path], protection_type: str) -> Di
         strategies["methods"] = [
             "Patch anti-debug checks",
             "Use stealth debugger",
-            "Runtime NOP patching"
+            "Runtime NOP patching",
         ]
 
         platform = strategies["binary_analysis"].get("platform", "Unknown")
@@ -357,7 +356,7 @@ def bypass_protection(binary_path: Union[str, Path], protection_type: str) -> Di
         strategies["methods"] = [
             "VM handler analysis",
             "Bytecode extraction",
-            "Dynamic trace analysis"
+            "Dynamic trace analysis",
         ]
         strategies["tools"] = ["VMAttack", "Titan Engine", "Intel Pin"]
         strategies["success_probability"] = "low"
@@ -366,15 +365,15 @@ def bypass_protection(binary_path: Union[str, Path], protection_type: str) -> Di
     return strategies
 
 
-def check_anti_debug_tricks(binary_path: Union[str, Path]) -> List[Dict[str, Any]]:
-    """
-    Check for common anti-debugging tricks.
+def check_anti_debug_tricks(binary_path: str | Path) -> list[dict[str, Any]]:
+    """Check for common anti-debugging tricks.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         list: Found anti-debugging techniques
+
     """
     tricks = []
 
@@ -392,7 +391,7 @@ def check_anti_debug_tricks(binary_path: Union[str, Path]) -> List[Dict[str, Any
                         tricks.append({
                             "name": "IsDebuggerPresent",
                             "description": "Checks for attached debugger via API",
-                            "severity": "medium"
+                            "severity": "medium",
                         })
 
         pe.close()
@@ -403,15 +402,15 @@ def check_anti_debug_tricks(binary_path: Union[str, Path]) -> List[Dict[str, Any
     return tricks
 
 
-def identify_protection_vendor(binary_path: Union[str, Path]) -> Optional[str]:
-    """
-    Try to identify the protection vendor/product.
+def identify_protection_vendor(binary_path: str | Path) -> str | None:
+    """Try to identify the protection vendor/product.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         Optional[str]: Protection vendor name if identified
+
     """
     # Known protection signatures
     signatures = {
@@ -439,13 +438,13 @@ def identify_protection_vendor(binary_path: Union[str, Path]) -> Optional[str]:
 
 
 def inject_comprehensive_api_hooks(app, script: str = None) -> None:
-    """
-    Enhanced API hook injection functionality.
+    """Enhanced API hook injection functionality.
     Provides comprehensive runtime monitoring and API hooking capabilities.
 
     Args:
         app: Application instance
         script: Optional Frida script to inject (uses default if not provided)
+
     """
     message = "[API Hooks] Starting comprehensive API hooking and runtime monitoring..."
 
@@ -546,12 +545,12 @@ def inject_comprehensive_api_hooks(app, script: str = None) -> None:
 
 # Exported functions
 __all__ = [
-    "calculate_entropy",
-    "detect_packing",
-    "detect_protection",
     "analyze_protection",
     "bypass_protection",
+    "calculate_entropy",
     "check_anti_debug_tricks",
+    "detect_packing",
+    "detect_protection",
     "identify_protection_vendor",
     "inject_comprehensive_api_hooks",
 ]

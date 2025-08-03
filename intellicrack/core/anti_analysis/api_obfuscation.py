@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -21,7 +20,7 @@ import logging
 import random
 import struct
 import zlib
-from typing import Any, Optional
+from typing import Any
 
 """
 API Obfuscation
@@ -32,8 +31,7 @@ API monitoring and hooking.
 
 
 class APIObfuscator:
-    """
-    Obfuscate API calls to evade monitoring and analysis.
+    """Obfuscate API calls to evade monitoring and analysis.
     """
 
     def __init__(self):
@@ -46,7 +44,7 @@ class APIObfuscator:
             "string_encryption": self._resolve_encrypted_strings,
             "dynamic_loading": self._resolve_dynamic_imports,
             "api_redirection": self._resolve_redirected_apis,
-            "delayed_loading": self._resolve_delayed_imports
+            "delayed_loading": self._resolve_delayed_imports,
         }
 
         # API call obfuscation methods
@@ -54,7 +52,7 @@ class APIObfuscator:
             "indirect_calls": self._generate_indirect_calls,
             "trampoline_calls": self._generate_trampoline_calls,
             "encrypted_payloads": self._generate_encrypted_payloads,
-            "polymorphic_wrappers": self._generate_polymorphic_wrappers
+            "polymorphic_wrappers": self._generate_polymorphic_wrappers,
         }
 
         # Known API hash databases
@@ -72,8 +70,7 @@ class APIObfuscator:
         self.logger.info("API obfuscation system initialized")
 
     def obfuscate_api_calls(self, code: str, method: str = "hash_lookup") -> str:
-        """
-        Obfuscate API calls in code.
+        """Obfuscate API calls in code.
 
         Args:
             code: Source code with API calls
@@ -81,6 +78,7 @@ class APIObfuscator:
 
         Returns:
             Obfuscated code
+
         """
         try:
             self.logger.info(f"Obfuscating API calls using {method}")
@@ -93,18 +91,16 @@ class APIObfuscator:
 
             if method == "hash_lookup":
                 return self._generate_hash_lookup_code()
-            elif method == "dynamic_resolution":
+            if method == "dynamic_resolution":
                 return self._generate_dynamic_resolution_code()
-            else:
-                return code
+            return code
 
         except Exception as e:
             self.logger.error(f"API obfuscation failed: {e}")
             return code
 
-    def resolve_api(self, dll_name: str, api_name: str, method: str = "normal") -> Optional[int]:
-        """
-        Resolve API address using specified method.
+    def resolve_api(self, dll_name: str, api_name: str, method: str = "normal") -> int | None:
+        """Resolve API address using specified method.
 
         Args:
             dll_name: DLL containing the API
@@ -113,6 +109,7 @@ class APIObfuscator:
 
         Returns:
             API address or None
+
         """
         try:
             cache_key = f"{dll_name}!{api_name}"
@@ -145,7 +142,7 @@ class APIObfuscator:
             self.logger.error(f"API resolution failed: {e}")
             return None
 
-    def _normal_resolve(self, dll_name: str, api_name: str) -> Optional[int]:
+    def _normal_resolve(self, dll_name: str, api_name: str) -> int | None:
         """Normal API resolution using GetProcAddress."""
         try:
             import platform
@@ -169,7 +166,7 @@ class APIObfuscator:
 
         return None
 
-    def _resolve_by_hash(self, dll_name: str, api_hash: int) -> Optional[int]:
+    def _resolve_by_hash(self, dll_name: str, api_hash: int) -> int | None:
         """Resolve API by hash value using advanced anti-analysis techniques."""
         try:
             import platform
@@ -245,7 +242,7 @@ class APIObfuscator:
                     self._djb2_hash(name),
                     self._fnv1a_hash(name),
                     self._crc32_hash(name),
-                    self._custom_hash(name)
+                    self._custom_hash(name),
                 ]
 
                 if api_hash in calculated_hashes:
@@ -260,7 +257,7 @@ class APIObfuscator:
             self.logger.debug(f"Hash resolution failed: {e}")
             return None
 
-    def _resolve_by_ordinal(self, dll_name: str, ordinal: int) -> Optional[int]:
+    def _resolve_by_ordinal(self, dll_name: str, ordinal: int) -> int | None:
         """Resolve API by ordinal number with anti-analysis evasion."""
         try:
             import platform
@@ -341,7 +338,7 @@ class APIObfuscator:
             self.logger.debug(f"Ordinal resolution failed: {e}")
             return None
 
-    def _dynamic_resolve(self, dll_name: str, api_name: str) -> Optional[int]:
+    def _dynamic_resolve(self, dll_name: str, api_name: str) -> int | None:
         """Dynamically resolve API at runtime."""
         try:
             # Obfuscate the resolution process
@@ -446,7 +443,7 @@ class APIObfuscator:
             hash_value &= 0xFFFFFFFF
         return hash_value
 
-    def _resolve_forwarded_export(self, forward_str: str) -> Optional[int]:
+    def _resolve_forwarded_export(self, forward_str: str) -> int | None:
         """Resolve forwarded exports like 'NTDLL.RtlInitUnicodeString'."""
         try:
             if "." not in forward_str:
@@ -651,7 +648,7 @@ if (p{api_name}) {{
                 ("ws2_32.dll", "socket"),
                 ("ws2_32.dll", "connect"),
                 ("ws2_32.dll", "send"),
-                ("ws2_32.dll", "recv")
+                ("ws2_32.dll", "recv"),
             ]
 
             # Calculate and store hashes for all algorithms
@@ -660,7 +657,7 @@ if (p{api_name}) {{
                     "djb2": self._djb2_hash(api_name),
                     "fnv1a": self._fnv1a_hash(api_name),
                     "crc32": self._crc32_hash(api_name),
-                    "custom": self._custom_hash(api_name)
+                    "custom": self._custom_hash(api_name),
                 }
 
                 for hash_type, hash_value in hashes.items():

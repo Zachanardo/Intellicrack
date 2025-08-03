@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -35,7 +34,6 @@ import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
 
 import networkx as nx
 import r2pipe
@@ -43,6 +41,7 @@ import r2pipe
 
 class LicenseType(Enum):
     """Types of license validation mechanisms"""
+
     SERIAL_KEY = "serial_key"
     ONLINE = "online_validation"
     HARDWARE = "hardware_locked"
@@ -54,6 +53,7 @@ class LicenseType(Enum):
 
 class ProtectionLevel(Enum):
     """License protection complexity levels"""
+
     BASIC = 1      # Simple checks, easily bypassable
     MODERATE = 2   # Some obfuscation, multiple checks
     ADVANCED = 3   # Strong crypto, anti-debug
@@ -63,17 +63,18 @@ class ProtectionLevel(Enum):
 @dataclass
 class LicenseFunction:
     """Represents a detected license validation function"""
+
     address: int
     name: str
     size: int
     type: LicenseType
     confidence: float
     protection_level: ProtectionLevel
-    cross_refs: List[int] = field(default_factory=list)
-    strings: List[str] = field(default_factory=list)
-    constants: List[int] = field(default_factory=list)
-    api_calls: List[str] = field(default_factory=list)
-    bypass_strategies: List[str] = field(default_factory=list)
+    cross_refs: list[int] = field(default_factory=list)
+    strings: list[str] = field(default_factory=list)
+    constants: list[int] = field(default_factory=list)
+    api_calls: list[str] = field(default_factory=list)
+    bypass_strategies: list[str] = field(default_factory=list)
 
 
 class R2LicenseAnalyzer:
@@ -100,7 +101,7 @@ class R2LicenseAnalyzer:
             "key": 0.65,
             "unlock": 0.8,
             "crack": -0.9,  # Negative weight for anti-crack
-            "patch": -0.8
+            "patch": -0.8,
         },
 
         # String patterns
@@ -120,7 +121,7 @@ class R2LicenseAnalyzer:
             "Machine code": 0.8,
             "License file": 0.85,
             "HKEY_LOCAL_MACHINE": 0.7,
-            "Software\\": 0.6
+            "Software\\": 0.6,
         },
 
         # API patterns
@@ -138,7 +139,7 @@ class R2LicenseAnalyzer:
             "ExitProcess": 0.7,
             "CreateFile": 0.6,
             "ReadFile": 0.6,
-            "IsDebuggerPresent": 0.7
+            "IsDebuggerPresent": 0.7,
         },
 
         # Crypto patterns
@@ -148,18 +149,18 @@ class R2LicenseAnalyzer:
             "RSA": 0.85,
             "AES": 0.85,
             "Base64": 0.7,
-            "CRC32": 0.7
-        }
+            "CRC32": 0.7,
+        },
     }
 
     def __init__(self, r2: r2pipe.open = None, filename: str = None):
         """Initialize the license analyzer"""
         self.r2 = r2 if r2 else r2pipe.open(filename)
-        self.license_functions: List[LicenseFunction] = []
+        self.license_functions: list[LicenseFunction] = []
         self.call_graph = nx.DiGraph()
-        self.string_refs: Dict[int, List[str]] = defaultdict(list)
-        self.api_refs: Dict[int, List[str]] = defaultdict(list)
-        self.crypto_locations: Dict[str, List[int]] = defaultdict(list)
+        self.string_refs: dict[int, list[str]] = defaultdict(list)
+        self.api_refs: dict[int, list[str]] = defaultdict(list)
+        self.crypto_locations: dict[str, list[int]] = defaultdict(list)
 
         # Initialize analysis
         self._init_analysis()
@@ -242,7 +243,7 @@ class R2LicenseAnalyzer:
                 for callee in calls:
                     self.call_graph.add_edge(addr, callee)
 
-    def _get_function_at(self, addr: int) -> Optional[int]:
+    def _get_function_at(self, addr: int) -> int | None:
         """Get function containing address"""
         result = self.r2.cmd(f"afi. @ {addr}")
         if result and result.strip():
@@ -256,7 +257,7 @@ class R2LicenseAnalyzer:
                 pass
         return None
 
-    def analyze(self) -> List[LicenseFunction]:
+    def analyze(self) -> list[LicenseFunction]:
         """Perform comprehensive license analysis"""
         print("\n[*] Starting license function detection...")
 
@@ -312,7 +313,7 @@ class R2LicenseAnalyzer:
                     size=size,
                     type=LicenseType.CUSTOM,
                     confidence=score,
-                    protection_level=ProtectionLevel.BASIC
+                    protection_level=ProtectionLevel.BASIC,
                 )
                 self.license_functions.append(lic_func)
 
@@ -361,11 +362,11 @@ class R2LicenseAnalyzer:
                         type=self._determine_license_type(strings),
                         confidence=score,
                         protection_level=ProtectionLevel.MODERATE,
-                        strings=strings
+                        strings=strings,
                     )
                     self.license_functions.append(lic_func)
 
-    def _calculate_string_score(self, strings: List[str]) -> float:
+    def _calculate_string_score(self, strings: list[str]) -> float:
         """Calculate license probability based on strings"""
         if not strings:
             return 0.0
@@ -385,24 +386,23 @@ class R2LicenseAnalyzer:
 
         return 0.0
 
-    def _determine_license_type(self, indicators: List[str]) -> LicenseType:
+    def _determine_license_type(self, indicators: list[str]) -> LicenseType:
         """Determine license type from indicators"""
         indicators_lower = " ".join(indicators).lower()
 
         if any(x in indicators_lower for x in ["serial", "key", "product key"]):
             return LicenseType.SERIAL_KEY
-        elif any(x in indicators_lower for x in ["online", "server", "internet", "http"]):
+        if any(x in indicators_lower for x in ["online", "server", "internet", "http"]):
             return LicenseType.ONLINE
-        elif any(x in indicators_lower for x in ["hardware", "hwid", "machine", "computer"]):
+        if any(x in indicators_lower for x in ["hardware", "hwid", "machine", "computer"]):
             return LicenseType.HARDWARE
-        elif any(x in indicators_lower for x in ["trial", "days", "expire", "time"]):
+        if any(x in indicators_lower for x in ["trial", "days", "expire", "time"]):
             return LicenseType.TIME_TRIAL
-        elif any(x in indicators_lower for x in ["feature", "unlock", "enable"]):
+        if any(x in indicators_lower for x in ["feature", "unlock", "enable"]):
             return LicenseType.FEATURE_LOCK
-        elif any(x in indicators_lower for x in ["rsa", "aes", "signature", "crypt"]):
+        if any(x in indicators_lower for x in ["rsa", "aes", "signature", "crypt"]):
             return LicenseType.CRYPTO_SIGNATURE
-        else:
-            return LicenseType.CUSTOM
+        return LicenseType.CUSTOM
 
     def _analyze_api_calls(self):
         """Analyze API calls in functions"""
@@ -421,7 +421,7 @@ class R2LicenseAnalyzer:
             if any("IsDebuggerPresent" in api for api in apis):
                 lic_func.protection_level = ProtectionLevel.ADVANCED
 
-    def _calculate_api_score(self, apis: List[str]) -> float:
+    def _calculate_api_score(self, apis: list[str]) -> float:
         """Calculate license probability based on API calls"""
         if not apis:
             return 0.0
@@ -468,7 +468,7 @@ class R2LicenseAnalyzer:
             if self._has_license_control_pattern(blocks):
                 lic_func.confidence *= 1.2
 
-    def _has_license_control_pattern(self, blocks: List[Dict]) -> bool:
+    def _has_license_control_pattern(self, blocks: list[dict]) -> bool:
         """Check for common license validation patterns"""
         if len(blocks) < 3:
             return False
@@ -489,7 +489,7 @@ class R2LicenseAnalyzer:
             "MD5": [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476],
             "SHA1": [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0],
             "SHA256": [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a],
-            "AES_SBOX": [0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5]
+            "AES_SBOX": [0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5],
         }
 
         for name, constants in crypto_constants.items():
@@ -504,14 +504,14 @@ class R2LicenseAnalyzer:
                     lic_func.protection_level = ProtectionLevel.ADVANCED
                     lic_func.confidence = min(1.0, lic_func.confidence * 1.3)
 
-    def _search_crypto_constants(self, name: str, constants: List[int]):
+    def _search_crypto_constants(self, name: str, constants: list[int]):
         """Search for cryptographic constants"""
         for const in constants:
             # Search in different formats
             search_patterns = [
                 f"{const:08x}",  # Hex
                 struct.pack("<I", const).hex(),  # Little endian
-                struct.pack(">I", const).hex()   # Big endian
+                struct.pack(">I", const).hex(),   # Big endian
             ]
 
             for pattern in search_patterns:
@@ -532,33 +532,33 @@ class R2LicenseAnalyzer:
             {
                 "apis": ["RegOpenKeyEx", "RegQueryValueEx"],
                 "strings": ["Software\\", "License"],
-                "type": LicenseType.SERIAL_KEY
+                "type": LicenseType.SERIAL_KEY,
             },
             # Network validation pattern
             {
                 "apis": ["InternetConnect", "HttpSendRequest"],
                 "strings": ["license", "validate", "server"],
-                "type": LicenseType.ONLINE
+                "type": LicenseType.ONLINE,
             },
             # Hardware ID pattern
             {
                 "apis": ["GetVolumeInformation", "GetComputerName"],
                 "strings": ["hardware", "machine", "id"],
-                "type": LicenseType.HARDWARE
+                "type": LicenseType.HARDWARE,
             },
             # Time trial pattern
             {
                 "apis": ["GetSystemTime", "GetLocalTime"],
                 "strings": ["trial", "expire", "days"],
-                "type": LicenseType.TIME_TRIAL
-            }
+                "type": LicenseType.TIME_TRIAL,
+            },
         ]
 
         # Check each pattern
         for pattern in patterns:
             self._check_pattern(pattern)
 
-    def _check_pattern(self, pattern: Dict):
+    def _check_pattern(self, pattern: dict):
         """Check if pattern matches any function"""
         required_apis = set(pattern.get("apis", []))
         required_strings = set(pattern.get("strings", []))
@@ -594,7 +594,7 @@ class R2LicenseAnalyzer:
                         confidence=0.8,
                         protection_level=ProtectionLevel.MODERATE,
                         strings=strings,
-                        api_calls=list(apis)
+                        api_calls=list(apis),
                     )
                     self.license_functions.append(lic_func)
 
@@ -611,7 +611,7 @@ class R2LicenseAnalyzer:
             # Combine with existing confidence
             lic_func.confidence = (lic_func.confidence * 0.7 + score * 0.3)
 
-    def _extract_ml_features(self, lic_func: LicenseFunction) -> Dict[str, float]:
+    def _extract_ml_features(self, lic_func: LicenseFunction) -> dict[str, float]:
         """Extract features for ML scoring"""
         features = {
             "name_score": self._calculate_name_score(lic_func.name),
@@ -619,12 +619,12 @@ class R2LicenseAnalyzer:
             "api_score": self._calculate_api_score(lic_func.api_calls),
             "has_crypto": 1.0 if lic_func.type == LicenseType.CRYPTO_SIGNATURE else 0.0,
             "cross_refs": min(1.0, len(lic_func.cross_refs) / 10),
-            "complexity": min(1.0, lic_func.size / 1000)
+            "complexity": min(1.0, lic_func.size / 1000),
         }
 
         return features
 
-    def _neural_network_score(self, features: Dict[str, float]) -> float:
+    def _neural_network_score(self, features: dict[str, float]) -> float:
         """Simulate neural network scoring"""
         # Weights learned from training data
         weights = {
@@ -633,7 +633,7 @@ class R2LicenseAnalyzer:
             "api_score": 0.2,
             "has_crypto": 0.1,
             "cross_refs": 0.1,
-            "complexity": 0.05
+            "complexity": 0.05,
         }
 
         score = sum(features.get(k, 0) * w for k, w in weights.items())
@@ -688,7 +688,7 @@ class R2LicenseAnalyzer:
             "bits": self.bits,
             "total_functions_analyzed": len(self.call_graph.nodes),
             "license_functions_found": len(self.license_functions),
-            "functions": []
+            "functions": [],
         }
 
         for lic_func in self.license_functions:
@@ -701,7 +701,7 @@ class R2LicenseAnalyzer:
                 "protection_level": lic_func.protection_level.value,
                 "strings": lic_func.strings,
                 "api_calls": lic_func.api_calls,
-                "bypass_strategies": lic_func.bypass_strategies
+                "bypass_strategies": lic_func.bypass_strategies,
             }
             report["functions"].append(func_data)
 
@@ -826,7 +826,7 @@ class R2LicenseAnalyzer:
                     "address": patch_addr,
                     "original": patch_bytes,
                     "patched": b"\x90" * len(patch_bytes),  # NOP
-                    "function": lic_func.name
+                    "function": lic_func.name,
                 })
 
         print(f"\nGenerated {len(patches)} patches")
@@ -837,10 +837,10 @@ class R2LicenseAnalyzer:
                 "address": f"0x{p['address']:x}",
                 "original": p["original"].hex(),
                 "patched": p["patched"].hex(),
-                "function": p["function"]
+                "function": p["function"],
             } for p in patches], f, indent=2)
 
-    def _find_patch_location(self, lic_func: LicenseFunction) -> Tuple[Optional[int], Optional[bytes]]:
+    def _find_patch_location(self, lic_func: LicenseFunction) -> tuple[int | None, bytes | None]:
         """Find optimal patch location"""
         # Get function bytes
         func_bytes = self.r2.cmdj(f"p8j {lic_func.size} @ {lic_func.address}")
@@ -857,7 +857,7 @@ class R2LicenseAnalyzer:
                 0x74: 2,  # JE
                 0x75: 2,  # JNE
                 0x84: 6,  # JE (long)
-                0x85: 6   # JNE (long)
+                0x85: 6,   # JNE (long)
             }
 
             for i, byte in enumerate(func_bytes):

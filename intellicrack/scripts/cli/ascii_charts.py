@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-ASCII Charts - Visual terminal graphs for analysis results
+"""ASCII Charts - Visual terminal graphs for analysis results
 
 Copyright (C) 2025 Zachary Flint
 
@@ -21,7 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from collections import Counter
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any
 
 # Optional imports for enhanced charts
 try:
@@ -45,6 +44,7 @@ class ASCIIChartGenerator:
         Args:
             width: Chart width in characters
             height: Chart height in characters
+
         """
         self.width = width
         self.height = height
@@ -70,10 +70,10 @@ class ASCIIChartGenerator:
             "dot": "•",
             "circle": "○",
             "diamond": "◆",
-            "triangle": "▲"
+            "triangle": "▲",
         }
 
-    def generate_bar_chart(self, data: Dict[str, Union[int, float]],
+    def generate_bar_chart(self, data: dict[str, int | float],
                           title: str = "Bar Chart",
                           show_values: bool = True,
                           color_coding: bool = True) -> str:
@@ -87,12 +87,13 @@ class ASCIIChartGenerator:
 
         Returns:
             ASCII bar chart as string
+
         """
         if not data:
             return "No data to display"
 
         # Calculate dimensions
-        max_label_len = max(len(str(k)) for k in data.keys())
+        max_label_len = max(len(str(k)) for k in data)
         max_value = max(data.values())
         bar_width = self.width - max_label_len - 15  # Leave space for labels and values
 
@@ -127,7 +128,7 @@ class ASCIIChartGenerator:
 
         return "\n".join(lines)
 
-    def generate_histogram(self, values: List[Union[int, float]],
+    def generate_histogram(self, values: list[int | float],
                           bins: int = 10,
                           title: str = "Histogram") -> str:
         """Generate histogram chart.
@@ -139,6 +140,7 @@ class ASCIIChartGenerator:
 
         Returns:
             ASCII histogram as string
+
         """
         if not values:
             return "No data to display"
@@ -166,7 +168,7 @@ class ASCIIChartGenerator:
         hist_data = dict(zip(bin_labels, bin_counts, strict=False))
         return self.generate_bar_chart(hist_data, title)
 
-    def generate_line_chart(self, data: Dict[str, Union[int, float]],
+    def generate_line_chart(self, data: dict[str, int | float],
                            title: str = "Line Chart") -> str:
         """Generate simple line chart.
 
@@ -176,6 +178,7 @@ class ASCIIChartGenerator:
 
         Returns:
             ASCII line chart as string
+
         """
         if not data:
             return "No data to display"
@@ -263,6 +266,7 @@ class ASCIIChartGenerator:
         Args:
             chart_content: ASCII chart content to display
             title: Chart title
+
         """
         if not RICH_AVAILABLE:
             print(f"\n{title}\n{'=' * len(title)}")
@@ -286,13 +290,14 @@ class ASCIIChartGenerator:
         self.console.print(Panel(centered_chart, border_style="cyan", title="Chart Data"))
         self.console.print()
 
-    def create_styled_legend(self, data: Dict[str, Union[int, float]],
+    def create_styled_legend(self, data: dict[str, int | float],
                            title: str = "Legend") -> None:
         """Create a styled legend for chart data using rich Text formatting.
 
         Args:
             data: Dictionary of label -> value pairs
             title: Legend title
+
         """
         if not RICH_AVAILABLE:
             print(f"\n{title}:")
@@ -322,7 +327,7 @@ class ASCIIChartGenerator:
             self.console.print(Align.center(entry))
         self.console.print()
 
-    def generate_pie_chart(self, data: Dict[str, Union[int, float]],
+    def generate_pie_chart(self, data: dict[str, int | float],
                           title: str = "Pie Chart") -> str:
         """Generate ASCII pie chart representation.
 
@@ -332,6 +337,7 @@ class ASCIIChartGenerator:
 
         Returns:
             ASCII pie chart as string
+
         """
         if not data:
             return "No data to display"
@@ -363,7 +369,7 @@ class ASCIIChartGenerator:
 
         return "\n".join(lines)
 
-    def generate_scatter_plot(self, points: List[Tuple[float, float]],
+    def generate_scatter_plot(self, points: list[tuple[float, float]],
                              title: str = "Scatter Plot") -> str:
         """Generate scatter plot.
 
@@ -373,6 +379,7 @@ class ASCIIChartGenerator:
 
         Returns:
             ASCII scatter plot as string
+
         """
         if not points:
             return "No data to display"
@@ -419,7 +426,7 @@ class ASCIIChartGenerator:
 
         return "\n".join(lines)
 
-    def generate_analysis_summary_chart(self, analysis_results: Dict[str, Any]) -> str:
+    def generate_analysis_summary_chart(self, analysis_results: dict[str, Any]) -> str:
         """Generate comprehensive analysis summary chart.
 
         Args:
@@ -427,15 +434,14 @@ class ASCIIChartGenerator:
 
         Returns:
             Multi-chart summary as string
+
         """
         charts = []
 
         # 1. Analysis categories bar chart
         category_counts = {}
         for category, data in analysis_results.items():
-            if isinstance(data, dict):
-                category_counts[category.replace("_", " ").title()] = len(data)
-            elif isinstance(data, list):
+            if isinstance(data, dict) or isinstance(data, list):
                 category_counts[category.replace("_", " ").title()] = len(data)
             else:
                 category_counts[category.replace("_", " ").title()] = 1
@@ -443,7 +449,7 @@ class ASCIIChartGenerator:
         if category_counts:
             charts.append(self.generate_bar_chart(
                 category_counts,
-                "Analysis Categories"
+                "Analysis Categories",
             ))
 
         # 2. Vulnerability severity distribution
@@ -461,7 +467,7 @@ class ASCIIChartGenerator:
                     charts.append("\n" + "="*50 + "\n")
                     charts.append(self.generate_pie_chart(
                         dict(severity_counts),
-                        "Vulnerability Severity Distribution"
+                        "Vulnerability Severity Distribution",
                     ))
 
         # 3. Protection status
@@ -474,7 +480,7 @@ class ASCIIChartGenerator:
                 charts.append("\n" + "="*50 + "\n")
                 charts.append(self.generate_pie_chart(
                     {"Enabled": enabled_count, "Disabled": disabled_count},
-                    "Security Protections Status"
+                    "Security Protections Status",
                 ))
 
         # 4. String analysis histogram
@@ -486,16 +492,17 @@ class ASCIIChartGenerator:
                 charts.append(self.generate_histogram(
                     string_lengths,
                     bins=8,
-                    title="String Length Distribution"
+                    title="String Length Distribution",
                 ))
 
         return "\n".join(charts) if charts else "No chartable data available"
 
-    def generate_rich_dashboard(self, analysis_results: Dict[str, Any]) -> None:
+    def generate_rich_dashboard(self, analysis_results: dict[str, Any]) -> None:
         """Generate rich terminal dashboard with multiple charts.
 
         Args:
             analysis_results: Analysis results dictionary
+
         """
         if not RICH_AVAILABLE or not self.console:
             print("Rich dashboard not available")
@@ -506,7 +513,7 @@ class ASCIIChartGenerator:
         # Title
         title_panel = Panel(
             "[bold cyan]Intellicrack Analysis Dashboard[/bold cyan]",
-            style="blue"
+            style="blue",
         )
         self.console.print(title_panel)
 
@@ -533,7 +540,7 @@ class ASCIIChartGenerator:
             stats_table.add_row(
                 category.replace("_", " ").title(),
                 str(count),
-                details
+                details,
             )
 
         charts.append(Panel(stats_table, title="📊 Summary"))
@@ -560,7 +567,7 @@ class ASCIIChartGenerator:
                     vuln_table.add_row(
                         severity,
                         str(count),
-                        f"{percentage:.1f}%"
+                        f"{percentage:.1f}%",
                     )
 
                 charts.append(Panel(vuln_table, title="🔍 Security Issues"))
@@ -578,7 +585,7 @@ class ASCIIChartGenerator:
                 "dep": "Data Execution Prevention",
                 "canary": "Stack Canary Protection",
                 "pie": "Position Independent Executable",
-                "relro": "Relocation Read-Only"
+                "relro": "Relocation Read-Only",
             }
 
             for prot, enabled in prot_data.items():
@@ -587,7 +594,7 @@ class ASCIIChartGenerator:
                 prot_table.add_row(
                     prot.upper(),
                     status,
-                    desc
+                    desc,
                 )
 
             charts.append(Panel(prot_table, title="🔒 Protections"))
@@ -600,7 +607,7 @@ class ASCIIChartGenerator:
             for chart in charts:
                 self.console.print(chart)
 
-    def generate_vulnerability_trend_chart(self, vulnerability_data: List[Dict[str, Any]]) -> str:
+    def generate_vulnerability_trend_chart(self, vulnerability_data: list[dict[str, Any]]) -> str:
         """Generate trend chart for vulnerability analysis.
 
         Args:
@@ -608,6 +615,7 @@ class ASCIIChartGenerator:
 
         Returns:
             ASCII trend chart as string
+
         """
         if not vulnerability_data:
             return "No vulnerability data available"
@@ -623,11 +631,11 @@ class ASCIIChartGenerator:
         return self.generate_bar_chart(
             dict(severity_counts),
             "Vulnerability Distribution by Severity",
-            show_values=True
+            show_values=True,
         )
 
 
-def create_analysis_charts(analysis_results: Dict[str, Any],
+def create_analysis_charts(analysis_results: dict[str, Any],
                           chart_type: str = "summary",
                           use_rich: bool = True) -> str:
     """Create charts from analysis results.
@@ -639,22 +647,21 @@ def create_analysis_charts(analysis_results: Dict[str, Any],
 
     Returns:
         Chart as string or displays rich dashboard
+
     """
     generator = ASCIIChartGenerator()
 
     if chart_type == "summary":
         return generator.generate_analysis_summary_chart(analysis_results)
-    elif chart_type == "dashboard" and use_rich and RICH_AVAILABLE:
+    if chart_type == "dashboard" and use_rich and RICH_AVAILABLE:
         generator.generate_rich_dashboard(analysis_results)
         return ""
-    elif chart_type == "vulnerability":
+    if chart_type == "vulnerability":
         vuln_data = analysis_results.get("vulnerabilities", {})
         if isinstance(vuln_data, dict) and "vulnerabilities" in vuln_data:
             return generator.generate_vulnerability_trend_chart(vuln_data["vulnerabilities"])
-        else:
-            return "No vulnerability data available"
-    else:
-        return generator.generate_analysis_summary_chart(analysis_results)
+        return "No vulnerability data available"
+    return generator.generate_analysis_summary_chart(analysis_results)
 
 
 if __name__ == "__main__":
@@ -665,16 +672,16 @@ if __name__ == "__main__":
                 {"severity": "high", "type": "buffer_overflow"},
                 {"severity": "medium", "type": "format_string"},
                 {"severity": "low", "type": "info_leak"},
-                {"severity": "high", "type": "injection"}
-            ]
+                {"severity": "high", "type": "injection"},
+            ],
         },
         "protections": {
             "aslr": True,
             "dep": True,
             "canary": False,
-            "pie": True
+            "pie": True,
         },
-        "strings": ["test1", "test2", "longer_string_here", "short"]
+        "strings": ["test1", "test2", "longer_string_here", "short"],
     }
 
     print(create_analysis_charts(test_data, "summary"))

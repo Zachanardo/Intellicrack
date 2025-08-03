@@ -1,5 +1,4 @@
-"""
-Program Discovery Engine for Intellicrack.
+"""Program Discovery Engine for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -28,7 +27,6 @@ import sys
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 from ..core.path_discovery import PathDiscovery
 from .file_resolution import file_resolver
@@ -57,20 +55,21 @@ else:
 @dataclass
 class ProgramInfo:
     """Information about an installed program."""
+
     name: str
     display_name: str
     version: str
     publisher: str
     install_location: str
-    executable_paths: List[str]
-    icon_path: Optional[str]
-    uninstall_string: Optional[str]
-    install_date: Optional[str]
-    estimated_size: Optional[int]
-    architecture: Optional[str]
-    file_types: List[str]
-    description: Optional[str]
-    registry_key: Optional[str]
+    executable_paths: list[str]
+    icon_path: str | None
+    uninstall_string: str | None
+    install_date: str | None
+    estimated_size: int | None
+    architecture: str | None
+    file_types: list[str]
+    description: str | None
+    registry_key: str | None
     discovery_method: str
     confidence_score: float
     analysis_priority: int
@@ -106,7 +105,7 @@ class ProgramDiscoveryEngine:
             "/opt",
             "/Users/{username}/Applications",
             "/Users/{username}/.local/bin",
-        ]
+        ],
     }
 
     # Registry paths for Windows program discovery
@@ -163,16 +162,16 @@ class ProgramDiscoveryEngine:
         "tool": 5,
 
         # Default priority
-        "default": 3
+        "default": 3,
     }
 
-    def __init__(self, cache_file: Optional[str] = None):
+    def __init__(self, cache_file: str | None = None):
         """Initialize the program discovery engine."""
         self.logger = logger
         self.path_discovery = PathDiscovery()
         self.cache_file = cache_file or self._get_default_cache_file()
-        self.programs_cache: Dict[str, ProgramInfo] = {}
-        self.last_scan_time: Optional[float] = None
+        self.programs_cache: dict[str, ProgramInfo] = {}
+        self.last_scan_time: float | None = None
 
         # Load cached data if available
         self._load_cache()
@@ -183,15 +182,15 @@ class ProgramDiscoveryEngine:
         cache_dir.mkdir(exist_ok=True)
         return str(cache_dir / "program_discovery_cache.json")
 
-    def analyze_program_from_path(self, program_path: str) -> Optional[ProgramInfo]:
-        """
-        Analyze a program from its installation path.
+    def analyze_program_from_path(self, program_path: str) -> ProgramInfo | None:
+        """Analyze a program from its installation path.
 
         Args:
             program_path: Path to analyze (can be executable or installation folder)
 
         Returns:
             ProgramInfo object if analysis successful, None otherwise
+
         """
         try:
             program_path = Path(program_path)
@@ -244,7 +243,7 @@ class ProgramDiscoveryEngine:
                 registry_key=None,
                 discovery_method="path_analysis",
                 confidence_score=0.8,
-                analysis_priority=priority
+                analysis_priority=priority,
             )
 
             return program_info
@@ -253,15 +252,15 @@ class ProgramDiscoveryEngine:
             self.logger.error(f"Error analyzing program from path {program_path}: {e}")
             return None
 
-    def discover_programs_from_path(self, search_path: str) -> List[ProgramInfo]:
-        """
-        Discover programs from a specific path (like desktop folder).
+    def discover_programs_from_path(self, search_path: str) -> list[ProgramInfo]:
+        """Discover programs from a specific path (like desktop folder).
 
         Args:
             search_path: Path to search for programs
 
         Returns:
             List of discovered programs
+
         """
         programs = []
         search_path = Path(search_path)
@@ -289,7 +288,7 @@ class ProgramDiscoveryEngine:
 
         return programs
 
-    def get_installed_programs(self) -> List[ProgramInfo]:
+    def get_installed_programs(self) -> list[ProgramInfo]:
         """Get list of installed programs from system registry/package manager."""
         programs = []
 
@@ -302,7 +301,7 @@ class ProgramDiscoveryEngine:
 
         return programs
 
-    def scan_executable_directories(self) -> List[ProgramInfo]:
+    def scan_executable_directories(self) -> list[ProgramInfo]:
         """Scan common executable directories for programs."""
         programs = []
 
@@ -330,7 +329,7 @@ class ProgramDiscoveryEngine:
 
         return programs
 
-    def _find_main_executable(self, folder_path: Path) -> Optional[Path]:
+    def _find_main_executable(self, folder_path: Path) -> Path | None:
         """Find the main executable in a program folder."""
         if not folder_path.is_dir():
             return None
@@ -354,7 +353,7 @@ class ProgramDiscoveryEngine:
 
         return None
 
-    def _analyze_installation_folder(self, folder_path: Path) -> Dict[str, any]:
+    def _analyze_installation_folder(self, folder_path: Path) -> dict[str, any]:
         """Analyze program installation folder for metadata."""
         analysis = {
             "total_size": 0,
@@ -362,7 +361,7 @@ class ProgramDiscoveryEngine:
             "architecture": "Unknown",
             "icon_path": None,
             "has_licensing": False,
-            "licensing_files": []
+            "licensing_files": [],
         }
 
         try:
@@ -397,15 +396,10 @@ class ProgramDiscoveryEngine:
                             "keyfile", "authenticate", "register", "unlock", "crack", "patch",
                             "keygen", "dongle", "hasp", "sentinel", "flexlm", "safenet",
                             "token", "permit", "grant", "cert", "sig", "fingerprint",
-                            "expire", "timeout", "protected", "secured", "locked"
+                            "expire", "timeout", "protected", "secured", "locked",
                         ]
 
-                        if any(pattern in filename_lower for pattern in licensing_indicators):
-                            analysis["has_licensing"] = True
-                            analysis["licensing_files"].append(str(file_path))
-
-                        # Also check for suspicious file extensions
-                        elif file_path.suffix.lower() in [".lic", ".license", ".key", ".dat", ".bin"]:
+                        if any(pattern in filename_lower for pattern in licensing_indicators) or file_path.suffix.lower() in [".lic", ".license", ".key", ".dat", ".bin"]:
                             analysis["has_licensing"] = True
                             analysis["licensing_files"].append(str(file_path))
 
@@ -467,7 +461,7 @@ class ProgramDiscoveryEngine:
             logger.error("Exception in program_discovery: %s", e)
             return "Unknown"
 
-    def _get_windows_version_info(self, exe_path: Path) -> Tuple[str, str]:
+    def _get_windows_version_info(self, exe_path: Path) -> tuple[str, str]:
         """Get version and publisher info from Windows executable."""
         try:
             if HAS_WINREG:
@@ -494,12 +488,12 @@ class ProgramDiscoveryEngine:
 
         return "Unknown", "Unknown"
 
-    def _get_unix_version_info(self, exe_path: Path) -> Tuple[str, str]:
+    def _get_unix_version_info(self, exe_path: Path) -> tuple[str, str]:
         """Get version and publisher info from Unix executable."""
         try:
             # Try to get version from --version flag
             result = subprocess.run([str(exe_path), "--version"],
-                                  capture_output=True, text=True, timeout=5)
+                                  check=False, capture_output=True, text=True, timeout=5)
             if result.returncode == 0 and result.stdout:
                 version_line = result.stdout.split("\n")[0]
                 # Extract version number if present
@@ -523,7 +517,7 @@ class ProgramDiscoveryEngine:
 
         return self.ANALYSIS_PRIORITIES["default"]
 
-    def _get_windows_programs(self) -> List[ProgramInfo]:
+    def _get_windows_programs(self) -> list[ProgramInfo]:
         """Get Windows programs from registry."""
         if not IS_WINDOWS or not HAS_WINREG:
             return []
@@ -538,14 +532,14 @@ class ProgramDiscoveryEngine:
 
         return programs
 
-    def _get_linux_programs(self) -> List[ProgramInfo]:
+    def _get_linux_programs(self) -> list[ProgramInfo]:
         """Get Linux programs from package managers."""
         programs = []
 
         # Try different package managers
         try:
             # Debian/Ubuntu - dpkg
-            result = subprocess.run(["dpkg", "-l"], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(["dpkg", "-l"], check=False, capture_output=True, text=True, timeout=30)
             if result.returncode == 0:
                 programs.extend(self._parse_dpkg_output(result.stdout))
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
@@ -553,7 +547,7 @@ class ProgramDiscoveryEngine:
 
         try:
             # Red Hat/CentOS - rpm
-            result = subprocess.run(["rpm", "-qa"], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(["rpm", "-qa"], check=False, capture_output=True, text=True, timeout=30)
             if result.returncode == 0:
                 programs.extend(self._parse_rpm_output(result.stdout))
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
@@ -561,7 +555,7 @@ class ProgramDiscoveryEngine:
 
         return programs
 
-    def _get_macos_programs(self) -> List[ProgramInfo]:
+    def _get_macos_programs(self) -> list[ProgramInfo]:
         """Get macOS programs from Applications folder."""
         programs = []
 
@@ -585,7 +579,7 @@ class ProgramDiscoveryEngine:
 
         return programs
 
-    def _parse_dpkg_output(self, output: str) -> List[ProgramInfo]:
+    def _parse_dpkg_output(self, output: str) -> list[ProgramInfo]:
         """Parse dpkg output to extract program information."""
         programs = []
 
@@ -614,12 +608,12 @@ class ProgramDiscoveryEngine:
                         registry_key=None,
                         discovery_method="dpkg",
                         confidence_score=0.9,
-                        analysis_priority=self._calculate_analysis_priority(name, "/usr")
+                        analysis_priority=self._calculate_analysis_priority(name, "/usr"),
                     ))
 
         return programs
 
-    def _parse_rpm_output(self, output: str) -> List[ProgramInfo]:
+    def _parse_rpm_output(self, output: str) -> list[ProgramInfo]:
         """Parse rpm output to extract program information."""
         programs = []
 
@@ -650,12 +644,12 @@ class ProgramDiscoveryEngine:
                         registry_key=None,
                         discovery_method="rpm",
                         confidence_score=0.9,
-                        analysis_priority=self._calculate_analysis_priority(name, "/usr")
+                        analysis_priority=self._calculate_analysis_priority(name, "/usr"),
                     ))
 
         return programs
 
-    def _scan_registry_path(self, hkey, path: str, include_system: bool) -> List[ProgramInfo]:
+    def _scan_registry_path(self, hkey, path: str, include_system: bool) -> list[ProgramInfo]:
         """Scan a specific registry path for installed programs."""
         programs = []
         self.logger.debug(f"Scanning registry path {path}, include_system={include_system}")
@@ -678,7 +672,7 @@ class ProgramDiscoveryEngine:
         return programs
 
     def _extract_program_from_registry(self, hkey, path: str, subkey_name: str,
-                                     include_system: bool) -> Optional[ProgramInfo]:
+                                     include_system: bool) -> ProgramInfo | None:
         """Extract program information from a registry entry."""
         try:
             with winreg.OpenKey(hkey, f"{path}\\{subkey_name}") as subkey:
@@ -729,7 +723,7 @@ class ProgramDiscoveryEngine:
                     registry_key=f"{path}\\{subkey_name}",
                     discovery_method="windows_registry",
                     confidence_score=0.9,
-                    analysis_priority=self._calculate_analysis_priority(display_name, install_location or "")
+                    analysis_priority=self._calculate_analysis_priority(display_name, install_location or ""),
                 )
 
                 return program_info
@@ -738,7 +732,7 @@ class ProgramDiscoveryEngine:
             self.logger.debug(f"Error extracting program from registry {subkey_name}: {e}")
             return None
 
-    def _get_registry_value(self, key, value_name: str) -> Optional[str]:
+    def _get_registry_value(self, key, value_name: str) -> str | None:
         """Get a value from a registry key safely."""
         try:
             value, _ = winreg.QueryValueEx(key, value_name)
@@ -752,7 +746,7 @@ class ProgramDiscoveryEngine:
         system_indicators = [
             "microsoft visual c++", "microsoft .net", "windows",
             "update", "kb", "hotfix", "security update",
-            "service pack", "redistributable", "runtime"
+            "service pack", "redistributable", "runtime",
         ]
 
         name_lower = display_name.lower()
@@ -770,7 +764,7 @@ class ProgramDiscoveryEngine:
         cache_age = time.time() - self.last_scan_time
         return cache_age < 3600
 
-    def _get_cached_programs(self) -> List[ProgramInfo]:
+    def _get_cached_programs(self) -> list[ProgramInfo]:
         """Get programs from cache."""
         program_list = list(self.programs_cache.values())
         program_list.sort(key=lambda p: (p.analysis_priority, p.confidence_score), reverse=True)
@@ -780,7 +774,7 @@ class ProgramDiscoveryEngine:
         """Load cached program data."""
         try:
             if os.path.exists(self.cache_file):
-                with open(self.cache_file, "r") as f:
+                with open(self.cache_file) as f:
                     cache_data = json.load(f)
 
                 self.last_scan_time = cache_data.get("last_scan_time")
@@ -800,7 +794,7 @@ class ProgramDiscoveryEngine:
         try:
             cache_data = {
                 "last_scan_time": self.last_scan_time,
-                "programs": {key: asdict(program) for key, program in self.programs_cache.items()}
+                "programs": {key: asdict(program) for key, program in self.programs_cache.items()},
             }
 
             with open(self.cache_file, "w") as f:

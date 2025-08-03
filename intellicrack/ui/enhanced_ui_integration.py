@@ -1,5 +1,4 @@
-"""
-Enhanced UI Integration for Comprehensive Radare2 Features
+"""Enhanced UI Integration for Comprehensive Radare2 Features
 
 Copyright (C) 2025 Zachary Flint
 
@@ -20,7 +19,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
-from typing import Any, Dict
+from typing import Any
 
 from PyQt6.QtGui import QColor, QFont, QIcon, QPalette
 from PyQt6.QtWidgets import (
@@ -140,7 +139,7 @@ class EnhancedAnalysisDashboard(QWidget):
             ("files_analyzed", "Files Analyzed", "0"),
             ("vulnerabilities_found", "Vulnerabilities Found", "0"),
             ("license_functions", "License Functions", "0"),
-            ("bypass_opportunities", "Bypass Opportunities", "0")
+            ("bypass_opportunities", "Bypass Opportunities", "0"),
         ]
 
         for i, (key, label, default) in enumerate(stats_data):
@@ -174,7 +173,7 @@ class EnhancedAnalysisDashboard(QWidget):
             ("New Analysis", self._start_new_analysis, "#3498db"),
             ("Load Report", self._load_report, "#9b59b6"),
             ("Export Results", self._export_results, "#e67e22"),
-            ("Settings", self._open_settings, "#95a5a6")
+            ("Settings", self._open_settings, "#95a5a6"),
         ]
 
         for i, (text, callback, color) in enumerate(quick_actions):
@@ -216,7 +215,7 @@ class EnhancedAnalysisDashboard(QWidget):
         self.viz_type_combo = QComboBox()
         self.viz_type_combo.addItems([
             "Call Graph", "Control Flow Graph", "Function Complexity",
-            "Vulnerability Heatmap", "String Distribution", "Import Analysis"
+            "Vulnerability Heatmap", "String Distribution", "Import Analysis",
         ])
         self.viz_type_combo.currentTextChanged.connect(self._update_visualization)
 
@@ -255,7 +254,7 @@ class EnhancedAnalysisDashboard(QWidget):
         self.report_template_combo = QComboBox()
         self.report_template_combo.addItems([
             "Comprehensive Analysis", "Vulnerability Assessment",
-            "License Analysis", "Executive Summary", "Technical Details"
+            "License Analysis", "Executive Summary", "Technical Details",
         ])
 
         controls_layout.addWidget(QLabel("Template:"))
@@ -296,11 +295,11 @@ class EnhancedAnalysisDashboard(QWidget):
             "#3498db": "#2980b9",
             "#9b59b6": "#8e44ad",
             "#e67e22": "#d35400",
-            "#95a5a6": "#7f8c8d"
+            "#95a5a6": "#7f8c8d",
         }
         return color_map.get(color, color)
 
-    def update_stats(self, stats_data: Dict[str, Any]):
+    def update_stats(self, stats_data: dict[str, Any]):
         """Update dashboard statistics"""
         for key, value in stats_data.items():
             if key in self.stats_labels:
@@ -340,7 +339,7 @@ class EnhancedAnalysisDashboard(QWidget):
     def _load_report(self):
         """Load existing report"""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Load Report", "", "JSON Files (*.json);;All Files (*)"
+            self, "Load Report", "", "JSON Files (*.json);;All Files (*)",
         )
         if file_path:
             self.add_activity(f"Loaded report: {os.path.basename(file_path)}")
@@ -375,7 +374,7 @@ class EnhancedAnalysisDashboard(QWidget):
     def _save_report(self):
         """Save current report"""
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Report", "", "Text Files (*.txt);;All Files (*)"
+            self, "Save Report", "", "Text Files (*.txt);;All Files (*)",
         )
         if file_path:
             with open(file_path, "w", encoding="utf-8") as f:
@@ -553,7 +552,7 @@ class EnhancedMainWindow(QMainWindow):
     def _open_file(self):
         """Open binary file"""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Open Binary File", "", "All Files (*)"
+            self, "Open Binary File", "", "All Files (*)",
         )
 
         if file_path:
@@ -657,12 +656,12 @@ def integrate_enhanced_ui_with_existing_app(existing_app):
             # Add enhanced analysis actions
             comprehensive_action = enhanced_menu.addAction("Comprehensive R2 Analysis")
             comprehensive_action.triggered.connect(
-                lambda: existing_app.enhanced_dashboard.r2_widget._start_analysis("comprehensive")
+                lambda: existing_app.enhanced_dashboard.r2_widget._start_analysis("comprehensive"),
             )
 
             ai_action = enhanced_menu.addAction("AI-Enhanced Analysis")
             ai_action.triggered.connect(
-                lambda: existing_app.enhanced_dashboard.r2_widget._start_analysis("ai")
+                lambda: existing_app.enhanced_dashboard.r2_widget._start_analysis("ai"),
             )
 
         return True
@@ -676,5 +675,5 @@ __all__ = [
     "EnhancedAnalysisDashboard",
     "EnhancedMainWindow",
     "create_enhanced_application",
-    "integrate_enhanced_ui_with_existing_app"
+    "integrate_enhanced_ui_with_existing_app",
 ]

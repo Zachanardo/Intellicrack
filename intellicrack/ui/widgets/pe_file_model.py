@@ -1,5 +1,4 @@
-"""
-PE File Model for Hex Viewer Integration
+"""PE File Model for Hex Viewer Integration
 
 Provides structured access to PE file information with RVA/offset conversion capabilities.
 Serves as the foundational data layer for hex viewer structure visualization.
@@ -11,7 +10,7 @@ Licensed under GNU General Public License v3.0
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ...utils.binary.certificate_extractor import CodeSigningInfo, extract_pe_certificates
 from ...utils.logger import get_logger
@@ -29,24 +28,26 @@ except ImportError as e:
 @dataclass
 class FileStructure:
     """Generic file structure information"""
+
     name: str
     offset: int
     size: int
     description: str
     structure_type: str  # header, section, directory, etc.
-    properties: Dict[str, Any] = field(default_factory=dict)
+    properties: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class SectionInfo:
     """PE section information"""
+
     name: str
     virtual_address: int
     virtual_size: int
     raw_offset: int
     raw_size: int
     characteristics: int
-    entropy: Optional[float] = None
+    entropy: float | None = None
 
     @property
     def is_executable(self) -> bool:
@@ -67,20 +68,22 @@ class SectionInfo:
 @dataclass
 class ImportInfo:
     """Import information"""
+
     dll_name: str
     function_name: str
-    ordinal: Optional[int]
+    ordinal: int | None
     address: int
-    hint: Optional[int] = None
+    hint: int | None = None
 
 
 @dataclass
 class ExportInfo:
     """Export information"""
+
     function_name: str
     ordinal: int
     address: int
-    forwarder: Optional[str] = None
+    forwarder: str | None = None
 
 
 class BinaryFileModel(ABC):
@@ -98,27 +101,22 @@ class BinaryFileModel(ABC):
     @abstractmethod
     def parse_file(self) -> None:
         """Parse the binary file structure"""
-        pass
 
     @abstractmethod
-    def rva_to_offset(self, rva: int) -> Optional[int]:
+    def rva_to_offset(self, rva: int) -> int | None:
         """Convert RVA to file offset"""
-        pass
 
     @abstractmethod
-    def offset_to_rva(self, offset: int) -> Optional[int]:
+    def offset_to_rva(self, offset: int) -> int | None:
         """Convert file offset to RVA"""
-        pass
 
     @abstractmethod
-    def get_sections(self) -> List[SectionInfo]:
+    def get_sections(self) -> list[SectionInfo]:
         """Get file sections"""
-        pass
 
     @abstractmethod
-    def get_structures(self) -> List[FileStructure]:
+    def get_structures(self) -> list[FileStructure]:
         """Get file structures for tree view"""
-        pass
 
 
 class PEFileModel(BinaryFileModel):
@@ -131,12 +129,12 @@ class PEFileModel(BinaryFileModel):
         if not PEFILE_AVAILABLE:
             raise ImportError("pefile library is required for PE analysis")
 
-        self.pe: Optional[pefile.PE] = None
-        self.sections: List[SectionInfo] = []
-        self.imports: List[ImportInfo] = []
-        self.exports: List[ExportInfo] = []
-        self.structures: List[FileStructure] = []
-        self.certificates: Optional[CodeSigningInfo] = None
+        self.pe: pefile.PE | None = None
+        self.sections: list[SectionInfo] = []
+        self.imports: list[ImportInfo] = []
+        self.exports: list[ExportInfo] = []
+        self.structures: list[FileStructure] = []
+        self.certificates: CodeSigningInfo | None = None
         self.image_base: int = 0
         self.entry_point: int = 0
 
@@ -190,7 +188,7 @@ class PEFileModel(BinaryFileModel):
                 virtual_size=section.Misc_VirtualSize,
                 raw_offset=section.PointerToRawData,
                 raw_size=section.SizeOfRawData,
-                characteristics=section.Characteristics
+                characteristics=section.Characteristics,
             )
 
             # Calculate entropy if section has data
@@ -249,7 +247,7 @@ class PEFileModel(BinaryFileModel):
                         function_name=imp.name.decode("utf-8", errors="ignore") if imp.name else f"Ordinal_{imp.ordinal}",
                         ordinal=imp.ordinal,
                         address=imp.address,
-                        hint=imp.hint
+                        hint=imp.hint,
                     )
                     self.imports.append(import_info)
 
@@ -269,7 +267,7 @@ class PEFileModel(BinaryFileModel):
                     function_name=exp.name.decode("utf-8", errors="ignore") if exp.name else f"Ordinal_{exp.ordinal}",
                     ordinal=exp.ordinal,
                     address=exp.address,
-                    forwarder=exp.forwarder.decode("utf-8", errors="ignore") if exp.forwarder else None
+                    forwarder=exp.forwarder.decode("utf-8", errors="ignore") if exp.forwarder else None,
                 )
                 self.exports.append(export_info)
 
@@ -299,9 +297,9 @@ class PEFileModel(BinaryFileModel):
             properties={
                 # pylint: disable=no-member
                 "e_magic": self.pe.DOS_HEADER.e_magic,
-                "e_lfanew": self.pe.DOS_HEADER.e_lfanew
+                "e_lfanew": self.pe.DOS_HEADER.e_lfanew,
                 # pylint: enable=no-member
-            }
+            },
         )
         self.structures.append(dos_header)
 
@@ -320,8 +318,8 @@ class PEFileModel(BinaryFileModel):
                 "timestamp": self.pe.FILE_HEADER.TimeDateStamp,
                 "sections": self.pe.FILE_HEADER.NumberOfSections,
                 "entry_point": self.entry_point,
-                "image_base": self.image_base
-            }
+                "image_base": self.image_base,
+            },
         # pylint: enable=no-member
         )
         self.structures.append(nt_header)
@@ -341,8 +339,8 @@ class PEFileModel(BinaryFileModel):
                     "executable": section.is_executable,
                     "writable": section.is_writable,
                     "readable": section.is_readable,
-                    "entropy": f"{section.entropy:.2f}" if section.entropy else "N/A"
-                }
+                    "entropy": f"{section.entropy:.2f}" if section.entropy else "N/A",
+                },
             )
             self.structures.append(section_struct)
 
@@ -355,7 +353,7 @@ class PEFileModel(BinaryFileModel):
                         "Export Table", "Import Table", "Resource Table", "Exception Table",
                         "Certificate Table", "Base Relocation Table", "Debug", "Architecture",
                         "Global Ptr", "TLS Table", "Load Config Table", "Bound Import",
-                        "IAT", "Delay Import Descriptor", "COM+ Runtime Header", "Reserved"
+                        "IAT", "Delay Import Descriptor", "COM+ Runtime Header", "Reserved",
                     ]
 
                     dir_name = dir_names[i] if i < len(dir_names) else f"Directory {i}"
@@ -372,13 +370,13 @@ class PEFileModel(BinaryFileModel):
                             structure_type="directory",
                             properties={
                                 "rva": f"0x{directory.VirtualAddress:X}",
-                                "size": directory.Size
-                            }
+                                "size": directory.Size,
+                            },
                         )
                         self.structures.append(dir_struct)
             # pylint: enable=no-member
 
-    def rva_to_offset(self, rva: int) -> Optional[int]:
+    def rva_to_offset(self, rva: int) -> int | None:
         """Convert RVA to file offset"""
         if not self.pe:
             return None
@@ -389,7 +387,7 @@ class PEFileModel(BinaryFileModel):
             logger.error("Exception in pe_file_model: %s", e)
             return None
 
-    def offset_to_rva(self, offset: int) -> Optional[int]:
+    def offset_to_rva(self, offset: int) -> int | None:
         """Convert file offset to RVA"""
         if not self.pe:
             return None
@@ -400,34 +398,34 @@ class PEFileModel(BinaryFileModel):
             logger.error("Exception in pe_file_model: %s", e)
             return None
 
-    def get_sections(self) -> List[SectionInfo]:
+    def get_sections(self) -> list[SectionInfo]:
         """Get PE sections"""
         return self.sections
 
-    def get_structures(self) -> List[FileStructure]:
+    def get_structures(self) -> list[FileStructure]:
         """Get file structures for tree view"""
         return self.structures
 
-    def get_imports(self) -> List[ImportInfo]:
+    def get_imports(self) -> list[ImportInfo]:
         """Get PE imports"""
         return self.imports
 
-    def get_exports(self) -> List[ExportInfo]:
+    def get_exports(self) -> list[ExportInfo]:
         """Get PE exports"""
         return self.exports
 
-    def get_certificates(self) -> Optional[CodeSigningInfo]:
+    def get_certificates(self) -> CodeSigningInfo | None:
         """Get digital certificate information"""
         return self.certificates
 
-    def get_section_at_rva(self, rva: int) -> Optional[SectionInfo]:
+    def get_section_at_rva(self, rva: int) -> SectionInfo | None:
         """Get section containing the given RVA"""
         for section in self.sections:
             if section.virtual_address <= rva < section.virtual_address + section.virtual_size:
                 return section
         return None
 
-    def get_section_at_offset(self, offset: int) -> Optional[SectionInfo]:
+    def get_section_at_offset(self, offset: int) -> SectionInfo | None:
         """Get section containing the given file offset"""
         for section in self.sections:
             if section.raw_offset <= offset < section.raw_offset + section.raw_size:
@@ -442,7 +440,7 @@ class PEFileModel(BinaryFileModel):
         """Check if file offset is valid"""
         return 0 <= offset < self.file_size
 
-    def get_file_info(self) -> Dict[str, Any]:
+    def get_file_info(self) -> dict[str, Any]:
         """Get comprehensive file information"""
         info = {
             "file_path": str(self.file_path),
@@ -455,7 +453,7 @@ class PEFileModel(BinaryFileModel):
             "machine_type": self.pe.FILE_HEADER.Machine if self.pe else "Unknown",  # pylint: disable=no-member
             "timestamp": self.pe.FILE_HEADER.TimeDateStamp if self.pe else 0,  # pylint: disable=no-member
             "parsed": self._parsed,
-            "is_signed": self.certificates.is_signed if self.certificates else False
+            "is_signed": self.certificates.is_signed if self.certificates else False,
         }
 
         # Add certificate details if signed
@@ -468,13 +466,13 @@ class PEFileModel(BinaryFileModel):
                     "certificate_valid": signing_cert.is_valid,
                     "certificate_expired": signing_cert.is_expired,
                     "trust_status": self.certificates.trust_status,
-                    "certificate_count": len(self.certificates.certificates)
+                    "certificate_count": len(self.certificates.certificates),
                 })
 
         return info
 
 
-def create_file_model(file_path: str) -> Optional[BinaryFileModel]:
+def create_file_model(file_path: str) -> BinaryFileModel | None:
     """Factory function to create appropriate file model"""
     try:
         # Check file format

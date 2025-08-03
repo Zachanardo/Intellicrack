@@ -1,5 +1,4 @@
-"""
-System utilities for the Intellicrack framework.
+"""System utilities for the Intellicrack framework.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -26,7 +25,7 @@ import platform
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 # Import consolidated process utilities
 from .process_utils import get_all_processes
@@ -50,9 +49,8 @@ except ImportError as e:
     PIL_AVAILABLE = False
 
 
-def get_targetprocess_pid(binary_path: str) -> Optional[int]:
-    """
-    Gets PID of target process, handling multiple instances and partial matches.
+def get_targetprocess_pid(binary_path: str) -> int | None:
+    """Gets PID of target process, handling multiple instances and partial matches.
 
     Searches for processes matching the given binary name and handles cases where
     multiple instances are found. In GUI mode, prompts the user to select the
@@ -63,6 +61,7 @@ def get_targetprocess_pid(binary_path: str) -> Optional[int]:
 
     Returns:
         Optional[int]: Process ID if found, None otherwise
+
     """
     if psutil is None:
         logger.error("psutil is not installed. Cannot search for processes.")
@@ -84,14 +83,14 @@ def get_targetprocess_pid(binary_path: str) -> Optional[int]:
                         "pid": proc.info["pid"],
                         "name": proc.info["name"],
                         "create_time": proc.info["create_time"],
-                        "match": "exact"
+                        "match": "exact",
                     })
                 elif target_name in proc_name_lower:
                     potential_pids.append({
                         "pid": proc.info["pid"],
                         "name": proc.info["name"],
                         "create_time": proc.info["create_time"],
-                        "match": "partial"
+                        "match": "partial",
                     })
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error iterating processes: %s", e)
@@ -108,25 +107,24 @@ def get_targetprocess_pid(binary_path: str) -> Optional[int]:
         pid_info = potential_pids[0]
         logger.info(
             f"[PID Finder] Found unique process: {pid_info['name']} "
-            f"(PID: {pid_info['pid']}, Match: {pid_info['match']})"
+            f"(PID: {pid_info['pid']}, Match: {pid_info['match']})",
         )
         return pid_info["pid"]
-    else:
-        # Multiple processes found - in a library context, just return the first
-        # In the full application, this would prompt the user
-        logger.warning(
-            f"[PID Finder] Found {len(potential_pids)} potential processes. "
-            f"Returning first match."
-        )
-        return potential_pids[0]["pid"]
+    # Multiple processes found - in a library context, just return the first
+    # In the full application, this would prompt the user
+    logger.warning(
+        f"[PID Finder] Found {len(potential_pids)} potential processes. "
+        f"Returning first match.",
+    )
+    return potential_pids[0]["pid"]
 
 
-def get_system_info() -> Dict[str, Any]:
-    """
-    Get comprehensive system information.
+def get_system_info() -> dict[str, Any]:
+    """Get comprehensive system information.
 
     Returns:
         dict: System information including OS, architecture, CPU, memory, etc.
+
     """
     info = {
         "platform": platform.system(),
@@ -152,15 +150,15 @@ def get_system_info() -> Dict[str, Any]:
     return info
 
 
-def check_dependencies(dependencies: Dict[str, str]) -> Tuple[bool, Dict[str, bool]]:
-    """
-    Check if Python dependencies are installed.
+def check_dependencies(dependencies: dict[str, str]) -> tuple[bool, dict[str, bool]]:
+    """Check if Python dependencies are installed.
 
     Args:
         dependencies: Dict mapping module names to descriptions
 
     Returns:
         tuple: (all_satisfied, results) where results maps module names to availability
+
     """
     results = {}
     all_satisfied = True
@@ -178,10 +176,9 @@ def check_dependencies(dependencies: Dict[str, str]) -> Tuple[bool, Dict[str, bo
     return all_satisfied, results
 
 
-def run_command(command: Union[str, List[str]], shell: bool = False,
-                capture_output: bool = True, timeout: Optional[int] = None) -> subprocess.CompletedProcess:
-    """
-    Run a system command with proper error handling.
+def run_command(command: str | list[str], shell: bool = False,
+                capture_output: bool = True, timeout: int | None = None) -> subprocess.CompletedProcess:
+    """Run a system command with proper error handling.
 
     Args:
         command: Command to run (string or list of arguments)
@@ -195,6 +192,7 @@ def run_command(command: Union[str, List[str]], shell: bool = False,
     Raises:
         subprocess.TimeoutExpired: If command times out
         subprocess.CalledProcessError: If command fails
+
     """
     try:
         logger.debug("Running command: %s", command)
@@ -239,20 +237,19 @@ def is_macos() -> bool:
     return platform.system().lower() == "darwin"
 
 
-def get_process_list() -> List[Dict[str, Any]]:
-    """
-    Get list of running processes.
+def get_process_list() -> list[dict[str, Any]]:
+    """Get list of running processes.
 
     Returns:
         list: List of process info dictionaries
+
     """
     # Use the consolidated process listing function
     return get_all_processes(["pid", "name", "cpu_percent", "memory_percent"])
 
 
 def kill_process(pid: int, force: bool = False) -> bool:
-    """
-    Kill a process by PID.
+    """Kill a process by PID.
 
     Args:
         pid: Process ID
@@ -260,6 +257,7 @@ def kill_process(pid: int, force: bool = False) -> bool:
 
     Returns:
         bool: True if successful
+
     """
     if psutil is None:
         logger.error("psutil is not installed. Cannot kill process.")
@@ -286,9 +284,8 @@ def kill_process(pid: int, force: bool = False) -> bool:
         return False
 
 
-def get_environment_variable(name: str, default: Optional[str] = None) -> Optional[str]:
-    """
-    Get environment variable with optional default.
+def get_environment_variable(name: str, default: str | None = None) -> str | None:
+    """Get environment variable with optional default.
 
     Args:
         name: Variable name
@@ -296,75 +293,74 @@ def get_environment_variable(name: str, default: Optional[str] = None) -> Option
 
     Returns:
         Optional[str]: Variable value or default
+
     """
     return os.environ.get(name, default)
 
 
 def set_environment_variable(name: str, value: str) -> None:
-    """
-    Set environment variable.
+    """Set environment variable.
 
     Args:
         name: Variable name
         value: Variable value
+
     """
     os.environ[name] = value
     logger.debug("Set environment variable: %s=%s", name, value)
 
 
 def get_temp_directory() -> Path:
-    """
-    Get system temporary directory.
+    """Get system temporary directory.
 
     Returns:
         Path: Temporary directory path
+
     """
     import tempfile
     return Path(tempfile.gettempdir())
 
 
 def get_home_directory() -> Path:
-    """
-    Get user's home directory.
+    """Get user's home directory.
 
     Returns:
         Path: Home directory path
+
     """
     return Path.home()
 
 
 def check_admin_privileges() -> bool:
-    """
-    Check if running with administrator/root privileges.
+    """Check if running with administrator/root privileges.
 
     Returns:
         bool: True if running with elevated privileges
+
     """
     try:
         if is_windows():
             import ctypes
             return ctypes.windll.shell32.IsUserAnAdmin() != 0
-        else:
-            # Unix-like systems
-            return hasattr(os, "geteuid") and getattr(os, "geteuid", lambda: -1)() == 0
+        # Unix-like systems
+        return hasattr(os, "geteuid") and getattr(os, "geteuid", lambda: -1)() == 0
     except (OSError, ValueError, RuntimeError) as e:
         logger.warning("Could not check admin privileges: %s", e)
         return False
 
 
 def is_admin() -> bool:
-    """
-    Alias for check_admin_privileges() for compatibility.
+    """Alias for check_admin_privileges() for compatibility.
 
     Returns:
         bool: True if running with elevated privileges
+
     """
     return check_admin_privileges()
 
 
-def run_as_admin(command: Union[str, List[str]], shell: bool = False) -> bool:
-    """
-    Run a command with elevated privileges.
+def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
+    """Run a command with elevated privileges.
 
     Args:
         command: Command to run
@@ -372,6 +368,7 @@ def run_as_admin(command: Union[str, List[str]], shell: bool = False) -> bool:
 
     Returns:
         bool: True if command executed successfully
+
     """
     _ = shell
     try:
@@ -388,23 +385,21 @@ def run_as_admin(command: Union[str, List[str]], shell: bool = False) -> bool:
                 text=True
             , check=False)
             return result.returncode == 0
-        else:
-            # On Unix-like systems, use sudo
-            if isinstance(command, str):
-                command = command.split()
+        # On Unix-like systems, use sudo
+        if isinstance(command, str):
+            command = command.split()
 
-            sudo_command = ["sudo"] + command
-            result = subprocess.run(sudo_command, capture_output=True, text=True, check=False)
-            return result.returncode == 0
+        sudo_command = ["sudo"] + command
+        result = subprocess.run(sudo_command, capture_output=True, text=True, check=False)
+        return result.returncode == 0
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error running command as admin: %s", e)
         return False
 
 
-def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[str]:
-    """
-    Extract icon from an executable file.
+def extract_executable_icon(exe_path: str, output_path: str = None) -> str | None:
+    """Extract icon from an executable file.
 
     Args:
         exe_path: Path to the executable file
@@ -412,6 +407,7 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
 
     Returns:
         Optional[str]: Path to the extracted icon file, or None if failed
+
     """
     try:
         if not PIL_AVAILABLE:
@@ -459,7 +455,7 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
                     img = Image.frombuffer(
                         "RGB",
                         (bmpinfo["bmWidth"], bmpinfo["bmHeight"]),
-                        bmpstr, "raw", "BGRX", 0, 1
+                        bmpstr, "raw", "BGRX", 0, 1,
                     )
 
                     img.save(output_path, "PNG")
@@ -486,7 +482,7 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
                             for resource_lang in resource_id.directory.entries:
                                 data = pe.get_data(
                                     resource_lang.data.struct.OffsetToData,
-                                    resource_lang.data.struct.Size
+                                    resource_lang.data.struct.Size,
                                 )
 
                                 # Save as ICO file first
@@ -534,19 +530,19 @@ killprocess = kill_process
 get_target_process_pid = get_targetprocess_pid
 
 
-def optimize_memory_usage() -> Dict[str, Any]:
-    """
-    Optimize system memory usage by clearing caches and garbage collection.
+def optimize_memory_usage() -> dict[str, Any]:
+    """Optimize system memory usage by clearing caches and garbage collection.
 
     Returns:
         Dict[str, Any]: Memory statistics before and after optimization
+
     """
     import gc
 
     stats = {
         "before": {},
         "after": {},
-        "freed": 0
+        "freed": 0,
     }
 
     # Get initial memory stats
@@ -556,7 +552,7 @@ def optimize_memory_usage() -> Dict[str, Any]:
             "total": mem.total,
             "available": mem.available,
             "percent": mem.percent,
-            "used": mem.used
+            "used": mem.used,
         }
 
     # Force garbage collection
@@ -599,7 +595,7 @@ def optimize_memory_usage() -> Dict[str, Any]:
             "total": mem.total,
             "available": mem.available,
             "percent": mem.percent,
-            "used": mem.used
+            "used": mem.used,
         }
 
         # Calculate freed memory

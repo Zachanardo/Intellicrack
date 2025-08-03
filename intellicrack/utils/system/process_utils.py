@@ -1,5 +1,4 @@
-"""
-Process and system utilities for Intellicrack.
+"""Process and system utilities for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -25,7 +24,7 @@ import logging
 import os
 import subprocess
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +39,8 @@ except ImportError as e:
 
 # Consolidated process iteration utilities to avoid code duplication
 
-def find_process_by_name(process_name: str, exact_match: bool = False) -> Optional[int]:
-    """
-    Find process PID by name with unified logic.
+def find_process_by_name(process_name: str, exact_match: bool = False) -> int | None:
+    """Find process PID by name with unified logic.
 
     Args:
         process_name: Name of process to find
@@ -50,6 +48,7 @@ def find_process_by_name(process_name: str, exact_match: bool = False) -> Option
 
     Returns:
         Process PID if found, None otherwise
+
     """
     if not PSUTIL_AVAILABLE:
         logger.warning("psutil not available for process search")
@@ -65,10 +64,9 @@ def find_process_by_name(process_name: str, exact_match: bool = False) -> Option
                         if proc_name_lower == target_name:
                             logger.info(f"Found exact process match: {process_name} with PID: {proc.info['pid']}")
                             return proc.info["pid"]
-                    else:
-                        if target_name in proc_name_lower:
-                            logger.info(f"Found process match: {process_name} with PID: {proc.info['pid']}")
-                            return proc.info["pid"]
+                    elif target_name in proc_name_lower:
+                        logger.info(f"Found process match: {process_name} with PID: {proc.info['pid']}")
+                        return proc.info["pid"]
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                 logger.error("Error in process_utils: %s", e)
                 continue
@@ -78,15 +76,15 @@ def find_process_by_name(process_name: str, exact_match: bool = False) -> Option
     return None
 
 
-def get_all_processes(fields: Optional[List[str]] = None) -> List[Dict[str, Any]]:
-    """
-    Get list of all processes with unified logic.
+def get_all_processes(fields: list[str] | None = None) -> list[dict[str, Any]]:
+    """Get list of all processes with unified logic.
 
     Args:
         fields: List of fields to retrieve (default: ['pid', 'name', 'cpu_percent', 'memory_percent'])
 
     Returns:
         List of process information dictionaries
+
     """
     if not PSUTIL_AVAILABLE:
         logger.warning("psutil not available for process listing")
@@ -109,15 +107,15 @@ def get_all_processes(fields: Optional[List[str]] = None) -> List[Dict[str, Any]
     return processes
 
 
-def find_processes_matching_names(target_names: List[str]) -> List[str]:
-    """
-    Find all running processes that match any of the target names.
+def find_processes_matching_names(target_names: list[str]) -> list[str]:
+    """Find all running processes that match any of the target names.
 
     Args:
         target_names: List of process names to search for
 
     Returns:
         List of running process names that match targets
+
     """
     if not PSUTIL_AVAILABLE:
         logger.warning("psutil not available for process matching")
@@ -140,7 +138,7 @@ def find_processes_matching_names(target_names: List[str]) -> List[str]:
         logger.error(f"Error matching process names: {e}")
         return []
 
-def _get_system_path(path_type: str) -> Optional[str]:
+def _get_system_path(path_type: str) -> str | None:
     """Get system path dynamically."""
     try:
         from .core.path_discovery import get_system_path
@@ -150,22 +148,22 @@ def _get_system_path(path_type: str) -> Optional[str]:
         # Fallback
         if path_type == "windows_system":
             return os.environ.get("SystemRoot", r"C:\Windows")
-        elif path_type == "windows_system32":
+        if path_type == "windows_system32":
             return os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32")
-        elif path_type == "windows_drivers":
+        if path_type == "windows_drivers":
             return os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "drivers")
         return None
 
 
-def get_target_process_pid(process_name: str) -> Optional[int]:
-    """
-    Get the process ID of a target process by name.
+def get_target_process_pid(process_name: str) -> int | None:
+    """Get the process ID of a target process by name.
 
     Args:
         process_name: Name of the process to find
 
     Returns:
         Process ID if found, None otherwise
+
     """
     if not psutil:
         logger.warning("psutil not available - cannot get process PID")
@@ -175,9 +173,8 @@ def get_target_process_pid(process_name: str) -> Optional[int]:
     return find_process_by_name(process_name, exact_match=False)
 
 
-def compute_file_hash(file_path: str, algorithm: str = "sha256") -> Optional[str]:
-    """
-    Compute hash of a file.
+def compute_file_hash(file_path: str, algorithm: str = "sha256") -> str | None:
+    """Compute hash of a file.
 
     Args:
         file_path: Path to the file to hash
@@ -185,6 +182,7 @@ def compute_file_hash(file_path: str, algorithm: str = "sha256") -> Optional[str
 
     Returns:
         Hex digest of the hash, or None if error
+
     """
     try:
         if not os.path.exists(file_path):
@@ -206,9 +204,8 @@ def compute_file_hash(file_path: str, algorithm: str = "sha256") -> Optional[str
         return None
 
 
-def detect_hardware_dongles(app=None) -> List[str]:
-    """
-    Detects hardware dongle drivers and APIs.
+def detect_hardware_dongles(app=None) -> list[str]:
+    """Detects hardware dongle drivers and APIs.
     Supports detection of SafeNet, HASP, CodeMeter, and other common dongles.
 
     Args:
@@ -216,6 +213,7 @@ def detect_hardware_dongles(app=None) -> List[str]:
 
     Returns:
         List of detection results
+
     """
     logger.info("Starting hardware dongle detection.")
     results = []
@@ -237,7 +235,7 @@ def detect_hardware_dongles(app=None) -> List[str]:
         "ROCKEY": ["rockey.dll", "rockeydrv.sys"],
         "Hardlock": ["hlock.sys", "hlock.dll"],
         "Matrix": ["matrix.sys", "matrix.dll"],
-        "Keylok": ["keylok.sys", "keylok3.sys"]
+        "Keylok": ["keylok.sys", "keylok3.sys"],
     }
 
     # Check installed drivers in system directories
@@ -245,7 +243,7 @@ def detect_hardware_dongles(app=None) -> List[str]:
         _get_system_path("windows_system"),
         _get_system_path("windows_system32"),
         os.path.join(_get_system_path("windows_system") or "C:\\Windows", "SysWOW64"),
-        _get_system_path("windows_drivers")
+        _get_system_path("windows_drivers"),
     ]
 
     results.append("Scanning for hardware dongle drivers...")
@@ -278,7 +276,7 @@ def detect_hardware_dongles(app=None) -> List[str]:
         "SafeNet": ["hasplmd.exe", "hasplms.exe", "aksmon.exe"],
         "CodeMeter": ["codemeter.exe", "CodeMeterCC.exe"],
         "HASP": ["nhsrvice.exe", "hasplms.exe"],
-        "WibuKey": ["wibukey.exe", "WkSvc.exe"]
+        "WibuKey": ["wibukey.exe", "WkSvc.exe"],
     }
 
     if psutil:
@@ -312,7 +310,7 @@ def detect_hardware_dongles(app=None) -> List[str]:
                 r"SOFTWARE\WIBU-SYSTEMS",
                 r"SOFTWARE\CodeMeter",
                 r"SYSTEM\CurrentControlSet\Services\Sentinel",
-                r"SYSTEM\CurrentControlSet\Services\aksdf"
+                r"SYSTEM\CurrentControlSet\Services\aksdf",
             ]
 
             results.append("Checking registry for dongle entries...")
@@ -325,7 +323,7 @@ def detect_hardware_dongles(app=None) -> List[str]:
                     winreg.CloseKey(key)
                 except FileNotFoundError as e:
                     logger.error("File not found in process_utils: %s", e)
-                    pass  # Key doesn't exist
+                    # Key doesn't exist
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.debug("Error accessing registry key %s: %s", key_path, e)
 
@@ -341,12 +339,12 @@ def detect_hardware_dongles(app=None) -> List[str]:
     return results
 
 
-def detect_tpm_protection() -> Dict[str, Any]:
-    """
-    Detect TPM (Trusted Platform Module) protection mechanisms.
+def detect_tpm_protection() -> dict[str, Any]:
+    """Detect TPM (Trusted Platform Module) protection mechanisms.
 
     Returns:
         Dictionary containing TPM detection results
+
     """
     results = {
         "tpm_present": False,
@@ -354,7 +352,7 @@ def detect_tpm_protection() -> Dict[str, Any]:
         "tpm_enabled": False,
         "tpm_owned": False,
         "detection_methods": [],
-        "error": None
+        "error": None,
     }
 
     try:
@@ -404,7 +402,7 @@ def detect_tpm_protection() -> Dict[str, Any]:
         # Check for TPM kernel modules on Linux
         if sys.platform.startswith("linux"):
             try:
-                with open("/proc/modules", "r", encoding="utf-8") as f:
+                with open("/proc/modules", encoding="utf-8") as f:
                     modules = f.read()
                     tpm_modules = ["tpm", "tpm_tis", "tpm_crb", "tpm2"]
                     for module in tpm_modules:
@@ -423,12 +421,12 @@ def detect_tpm_protection() -> Dict[str, Any]:
     return results
 
 
-def get_system_processes() -> List[Dict[str, Any]]:
-    """
-    Get list of running system processes.
+def get_system_processes() -> list[dict[str, Any]]:
+    """Get list of running system processes.
 
     Returns:
         List of process information dictionaries
+
     """
     processes = []
 
@@ -443,11 +441,11 @@ def get_system_processes() -> List[Dict[str, Any]]:
                     "pid": proc.info["pid"],
                     "name": proc.info["name"],
                     "cmdline": " ".join(proc.info["cmdline"]) if proc.info["cmdline"] else "",
-                    "create_time": proc.info["create_time"]
+                    "create_time": proc.info["create_time"],
                 })
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                 logger.error("Error in process_utils: %s", e)
-                pass  # Process may have terminated or access denied
+                # Process may have terminated or access denied
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error getting process list: %s", e)
@@ -455,9 +453,8 @@ def get_system_processes() -> List[Dict[str, Any]]:
     return processes
 
 
-def run_command(command: str, timeout: int = 30) -> Dict[str, Any]:
-    """
-    Run a system command and return the result.
+def run_command(command: str, timeout: int = 30) -> dict[str, Any]:
+    """Run a system command and return the result.
 
     Args:
         command: Command to execute
@@ -465,13 +462,14 @@ def run_command(command: str, timeout: int = 30) -> Dict[str, Any]:
 
     Returns:
         Dictionary with command results
+
     """
     result = {
         "success": False,
         "stdout": "",
         "stderr": "",
         "return_code": None,
-        "error": None
+        "error": None,
     }
 
     try:

@@ -1,5 +1,4 @@
-"""
-Advanced Intellicrack Protection Detection Widget
+"""Advanced Intellicrack Protection Detection Widget
 
 Enhanced UI for accessing Intellicrack's full protection analysis feature set including
 entropy analysis, certificates, resources, heuristics, and custom signatures.
@@ -9,7 +8,6 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-from typing import List, Optional
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QBrush, QColor, QFont
@@ -62,6 +60,7 @@ logger = get_logger(__name__)
 
 class AdvancedAnalysisThread(QThread):
     """Thread for running advanced protection analysis"""
+
     analysis_complete = pyqtSignal(object)  # AdvancedProtectionAnalysis
     analysis_error = pyqtSignal(str)
     analysis_progress = pyqtSignal(str, int)  # message, percentage
@@ -88,7 +87,7 @@ class AdvancedAnalysisThread(QThread):
                 self.file_path,
                 scan_mode=self.scan_mode,
                 enable_heuristic=self.enable_heuristic,
-                extract_strings=self.extract_strings
+                extract_strings=self.extract_strings,
             )
 
             self.analysis_progress.emit("Analysis complete!", 100)
@@ -108,7 +107,7 @@ class EntropyGraphWidget(FigureCanvas):
         super().__init__(self.figure)
         self.setParent(parent)
 
-    def plot_entropy(self, entropy_data: List[EntropyInfo]):
+    def plot_entropy(self, entropy_data: list[EntropyInfo]):
         """Plot entropy data for sections"""
         self.figure.clear()
         ax = self.figure.add_subplot(111)
@@ -156,8 +155,7 @@ class EntropyGraphWidget(FigureCanvas):
 
 
 class IntellicrackAdvancedProtectionWidget(QWidget):
-    """
-    Advanced widget for DIE protection detection with full feature access
+    """Advanced widget for DIE protection detection with full feature access
     """
 
     # Signals
@@ -167,8 +165,8 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
     def __init__(self, parent=None):
         """Initialize advanced protection widget with parent widget and UI components."""
         super().__init__(parent)
-        self.current_analysis: Optional[AdvancedProtectionAnalysis] = None
-        self.analysis_thread: Optional[AdvancedAnalysisThread] = None
+        self.current_analysis: AdvancedProtectionAnalysis | None = None
+        self.analysis_thread: AdvancedAnalysisThread | None = None
         self.init_ui()
 
     def init_ui(self):
@@ -339,7 +337,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         self.detections_table = QTableWidget()
         self.detections_table.setColumnCount(5)
         self.detections_table.setHorizontalHeaderLabels([
-            "Name", "Type", "Version", "Confidence", "Bypass Available"
+            "Name", "Type", "Version", "Confidence", "Bypass Available",
         ])
         self.detections_table.horizontalHeader().setStretchLastSection(True)
         self.detections_table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -369,7 +367,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         self.entropy_table = QTableWidget()
         self.entropy_table.setColumnCount(5)
         self.entropy_table.setHorizontalHeaderLabels([
-            "Section", "Offset", "Size", "Entropy", "Status"
+            "Section", "Offset", "Size", "Entropy", "Status",
         ])
         self.entropy_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.entropy_table)
@@ -385,7 +383,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         self.certificates_table = QTableWidget()
         self.certificates_table.setColumnCount(6)
         self.certificates_table.setHorizontalHeaderLabels([
-            "Subject", "Issuer", "Valid From", "Valid To", "Algorithm", "Status"
+            "Subject", "Issuer", "Valid From", "Valid To", "Algorithm", "Status",
         ])
         self.certificates_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.certificates_table)
@@ -401,7 +399,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         self.resources_table = QTableWidget()
         self.resources_table.setColumnCount(5)
         self.resources_table.setHorizontalHeaderLabels([
-            "Type", "Name", "Language", "Size", "Hash"
+            "Type", "Name", "Language", "Size", "Hash",
         ])
         self.resources_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.resources_table)
@@ -427,7 +425,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         self.strings_table = QTableWidget()
         self.strings_table.setColumnCount(4)
         self.strings_table.setHorizontalHeaderLabels([
-            "String", "Offset", "Encoding", "Suspicious"
+            "String", "Offset", "Encoding", "Suspicious",
         ])
         self.strings_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.strings_table)
@@ -511,7 +509,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             self,
             "Select File to Analyze",
             "",
-            "All Executables (*.exe *.dll *.sys *.elf *.so *.dylib *.apk *.dex);;All Files (*.*)"
+            "All Executables (*.exe *.dll *.sys *.elf *.so *.dylib *.apk *.dex);;All Files (*.*)",
         )
 
         if file_path:
@@ -530,7 +528,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             "Normal": ScanMode.NORMAL,
             "Deep": ScanMode.DEEP,
             "Heuristic": ScanMode.HEURISTIC,
-            "All": ScanMode.ALL
+            "All": ScanMode.ALL,
         }
         scan_mode = scan_mode_map.get(scan_mode_text, ScanMode.NORMAL)
 
@@ -547,7 +545,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             file_path,
             scan_mode,
             self.heuristic_check.isChecked(),
-            self.strings_check.isChecked()
+            self.strings_check.isChecked(),
         )
         self.analysis_thread.analysis_complete.connect(self.on_analysis_complete)
         self.analysis_thread.analysis_error.connect(self.on_analysis_error)
@@ -568,7 +566,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         for detection in analysis.detections:
             self.protection_detected.emit(
                 detection.name,
-                detection.bypass_recommendations
+                detection.bypass_recommendations,
             )
 
     def on_analysis_error(self, error_msg: str):
@@ -868,7 +866,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             "Certificates": 3,
             "Resources": 4,
             "Suspicious Strings": 5,
-            "Heuristic Detections": 6
+            "Heuristic Detections": 6,
         }
 
         if category in tab_map:
@@ -939,7 +937,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             self,
             "Export Analysis Results",
             f"die_analysis.{ext}",
-            f"{format_text} Files (*.{ext});;All Files (*.*)"
+            f"{format_text} Files (*.{ext});;All Files (*.*)",
         )
 
         if file_path:
@@ -950,14 +948,14 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 QMessageBox.information(
                     self,
                     "Export Complete",
-                    f"Results exported to:\n{file_path}"
+                    f"Results exported to:\n{file_path}",
                 )
             except Exception as e:
                 logger.error("Exception in intellicrack_advanced_protection_widget: %s", e)
                 QMessageBox.critical(
                     self,
                     "Export Error",
-                    f"Error exporting results:\n{str(e)}"
+                    f"Error exporting results:\n{e!s}",
                 )
 
     def clear_results(self):

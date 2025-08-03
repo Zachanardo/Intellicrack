@@ -1,5 +1,4 @@
-"""
-User Interface utilities for the Intellicrack framework.
+"""User Interface utilities for the Intellicrack framework.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -21,8 +20,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 import logging
+from collections.abc import Callable
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 # Module logger
 logger = logging.getLogger(__name__)
@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 class MessageType(Enum):
     """Message types for UI display."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -40,13 +41,13 @@ class MessageType(Enum):
 class ProgressTracker:
     """Track and manage progress updates."""
 
-    def __init__(self, total: int = 100, callback: Optional[Callable[[int], None]] = None):
-        """
-        Initialize progress tracker.
+    def __init__(self, total: int = 100, callback: Callable[[int], None] | None = None):
+        """Initialize progress tracker.
 
         Args:
             total: Total progress value
             callback: Optional callback for progress updates
+
         """
         self.total = total
         self.current = 0
@@ -84,14 +85,14 @@ class ProgressTracker:
 
 def show_message(message: str, msg_type: MessageType = MessageType.INFO,
                  title: str = None, parent: Any = None) -> None:
-    """
-    Display a message to the user.
+    """Display a message to the user.
 
     Args:
         message: Message text to display
         msg_type: Type of message (affects styling/icon)
         title: Optional title for the message
         parent: Optional parent widget/window for proper dialog positioning
+
     """
     if title is None:
         title = msg_type.value.capitalize()
@@ -126,14 +127,13 @@ def show_message(message: str, msg_type: MessageType = MessageType.INFO,
             "type": msg_type.value,
             "title": title,
             "message": message,
-            "timestamp": str(type(logger).__module__)  # Simple timestamp placeholder
+            "timestamp": str(type(logger).__module__),  # Simple timestamp placeholder
         })
 
 
 def get_user_input(prompt: str, default: str = "",
-                  title: str = "Input Required", parent: Any = None) -> Optional[str]:
-    """
-    Get text input from the user.
+                  title: str = "Input Required", parent: Any = None) -> str | None:
+    """Get text input from the user.
 
     Args:
         prompt: Prompt text to display
@@ -143,6 +143,7 @@ def get_user_input(prompt: str, default: str = "",
 
     Returns:
         Optional[str]: User input or None if cancelled
+
     """
     # Log the input request with parent context
     parent_context = ""
@@ -180,7 +181,7 @@ def get_user_input(prompt: str, default: str = "",
             parent.input_history.append({
                 "prompt": prompt,
                 "result": result,
-                "title": title
+                "title": title,
             })
 
         return result
@@ -190,29 +191,27 @@ def get_user_input(prompt: str, default: str = "",
 
 
 def update_progress(progress: int, message: str = None,
-                   callback: Optional[Callable[[int, str], None]] = None) -> None:
-    """
-    Update progress display.
+                   callback: Callable[[int, str], None] | None = None) -> None:
+    """Update progress display.
 
     Args:
         progress: Progress percentage (0-100)
         message: Optional status message
         callback: Optional callback function
+
     """
     if callback:
         callback(progress, message)
+    # Default console output
+    elif message:
+        print(f"Progress: {progress}% - {message}")
     else:
-        # Default console output
-        if message:
-            print(f"Progress: {progress}% - {message}")
-        else:
-            print(f"Progress: {progress}%")
+        print(f"Progress: {progress}%")
 
 
 def confirm_action(message: str, title: str = "Confirm Action",
                   parent: Any = None) -> bool:
-    """
-    Ask user to confirm an action.
+    """Ask user to confirm an action.
 
     Args:
         message: Confirmation message
@@ -221,6 +220,7 @@ def confirm_action(message: str, title: str = "Confirm Action",
 
     Returns:
         bool: True if confirmed, False otherwise
+
     """
     # In a real UI implementation, this would show a confirmation dialog
     # For now, we use console input (parent parameter reserved for future GUI integration)
@@ -237,11 +237,10 @@ def confirm_action(message: str, title: str = "Confirm Action",
         return False
 
 
-def select_from_list(items: List[str], prompt: str = "Select an item",
+def select_from_list(items: list[str], prompt: str = "Select an item",
                     title: str = "Selection", allow_multiple: bool = False,
-                    parent: Any = None) -> Optional[List[str]]:
-    """
-    Let user select from a list of items.
+                    parent: Any = None) -> list[str] | None:
+    """Let user select from a list of items.
 
     Args:
         items: List of items to choose from
@@ -252,6 +251,7 @@ def select_from_list(items: List[str], prompt: str = "Select an item",
 
     Returns:
         Optional[List[str]]: Selected items or None if cancelled
+
     """
     if not items:
         return None
@@ -285,25 +285,23 @@ def select_from_list(items: List[str], prompt: str = "Select an item",
                     logger.error("Value error in ui_utils: %s", e)
                     continue
             return selected if selected else None
-        else:
-            user_input = input("Enter number: ").strip()
-            # Sanitize and validate input
-            selection = user_input.replace("\0", "").replace("\n", "").replace("\r", "")
-            if not selection.isdigit():
-                return None
-            idx = int(selection) - 1
-            if 0 <= idx < len(items):
-                return [items[idx]]
+        user_input = input("Enter number: ").strip()
+        # Sanitize and validate input
+        selection = user_input.replace("\0", "").replace("\n", "").replace("\r", "")
+        if not selection.isdigit():
             return None
+        idx = int(selection) - 1
+        if 0 <= idx < len(items):
+            return [items[idx]]
+        return None
 
     except (KeyboardInterrupt, EOFError, ValueError) as e:
         logger.error("Error in ui_utils: %s", e)
         return None
 
 
-def create_status_bar_message(message: str, timeout: int = 5000) -> Dict[str, Any]:
-    """
-    Create a status bar message configuration.
+def create_status_bar_message(message: str, timeout: int = 5000) -> dict[str, Any]:
+    """Create a status bar message configuration.
 
     Args:
         message: Status message
@@ -311,18 +309,18 @@ def create_status_bar_message(message: str, timeout: int = 5000) -> Dict[str, An
 
     Returns:
         dict: Status bar configuration
+
     """
     return {
         "message": message,
         "timeout": timeout,
-        "timestamp": None  # Will be set when displayed
+        "timestamp": None,  # Will be set when displayed
     }
 
 
-def format_table_data(headers: List[str], rows: List[List[Any]],
+def format_table_data(headers: list[str], rows: list[list[Any]],
                      max_width: int = 80) -> str:
-    """
-    Format data as a text table.
+    """Format data as a text table.
 
     Args:
         headers: Column headers
@@ -331,6 +329,7 @@ def format_table_data(headers: List[str], rows: List[List[Any]],
 
     Returns:
         str: Formatted table
+
     """
     if not headers or not rows:
         return ""
@@ -378,18 +377,18 @@ class UIUpdateQueue:
 
     def __init__(self):
         """Initialize the update queue."""
-        self.updates: List[Tuple[str, Any]] = []
+        self.updates: list[tuple[str, Any]] = []
 
     def add_update(self, update_type: str, data: Any):
         """Add an update to the queue."""
         self.updates.append((update_type, data))
 
     def flush(self, callback: Callable[[str, Any], None]):
-        """
-        Flush all queued updates.
+        """Flush all queued updates.
 
         Args:
             callback: Function to process each update
+
         """
         for update_type, data in self.updates:
             callback(update_type, data)
@@ -405,11 +404,11 @@ __all__ = [
     "MessageType",
     "ProgressTracker",
     "UIUpdateQueue",
-    "show_message",
-    "get_user_input",
-    "update_progress",
     "confirm_action",
-    "select_from_list",
     "create_status_bar_message",
     "format_table_data",
+    "get_user_input",
+    "select_from_list",
+    "show_message",
+    "update_progress",
 ]

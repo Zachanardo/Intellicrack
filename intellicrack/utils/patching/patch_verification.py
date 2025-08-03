@@ -4,7 +4,7 @@ import shutil
 import tempfile
 import time
 import traceback
-from typing import Any, Dict, List
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -61,9 +61,8 @@ except ImportError as e:
 
 
 
-def verify_patches(app: Any, patched_path: str, instructions: List[Dict[str, Any]]) -> List[str]:
-    """
-    Verify that patches were applied correctly.
+def verify_patches(app: Any, patched_path: str, instructions: list[dict[str, Any]]) -> list[str]:
+    """Verify that patches were applied correctly.
 
     Args:
         app: Application instance
@@ -72,6 +71,7 @@ def verify_patches(app: Any, patched_path: str, instructions: List[Dict[str, Any
 
     Returns:
         List[str]: Verification results messages
+
     """
     app.update_output.emit(
         log_message(f"[Verify] Verifying patches in {patched_path}..."))
@@ -150,9 +150,8 @@ def verify_patches(app: Any, patched_path: str, instructions: List[Dict[str, Any
         return [f"Error during patch verification: {e}"]
 
 
-def test_patch_and_verify(binary_path: str, patches: List[Dict[str, Any]]) -> List[str]:
-    """
-    Test patch application in isolated environment and verify results.
+def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> list[str]:
+    """Test patch application in isolated environment and verify results.
 
     Creates a temporary copy of the binary, applies patches, and performs
     comprehensive verification including sandbox testing.
@@ -163,6 +162,7 @@ def test_patch_and_verify(binary_path: str, patches: List[Dict[str, Any]]) -> Li
 
     Returns:
         List[str]: Test results messages
+
     """
     results = [f"Testing {len(patches)} patches on {binary_path}..."]
 
@@ -311,9 +311,8 @@ def test_patch_and_verify(binary_path: str, patches: List[Dict[str, Any]]) -> Li
     return results
 
 
-def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List[Dict[str, Any]]) -> bool:
-    """
-    Applies parsed patch instructions to a copy of the binary.
+def apply_parsed_patch_instructions_with_validation(app: Any, instructions: list[dict[str, Any]]) -> bool:
+    """Applies parsed patch instructions to a copy of the binary.
 
     Takes a list of patch instructions (typically parsed from AI output)
     and applies them to a copy of the target binary. Includes comprehensive
@@ -328,6 +327,7 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
 
     Returns:
         bool: True if patching was successful, False otherwise
+
     """
     if not app.binary_path:
         app.update_output.emit(log_message(
@@ -383,7 +383,6 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
             except FileNotFoundError as e:
                 logger.error("File not found in patch_verification: %s", e)
                 # File already doesn't exist, which is fine
-                pass
             except PermissionError as perm_error:
                 logger.error("Permission error in patch_verification: %s", perm_error)
                 app.update_output.emit(log_message(f"[Patch] Warning: Cannot remove corrupted file due to permissions: {perm_error}"))
@@ -447,7 +446,7 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
                         log_message(
                             f"[Patch {patch_num}] Skipped: Error getting offset for address 0x{address:X}: {e_offset}"))
                     error_count += 1
-                except IOError as e_io:
+                except OSError as e_io:
                     logger.error("IO error in patch_verification: %s", e_io)
                     app.update_output.emit(log_message(
                         f"[Patch {patch_num}] Skipped: File I/O error applying patch at offset 0x{offset:X}: {e_io}"))
@@ -505,9 +504,8 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
                         log_message(
                             f"[Patch] Successfully created and verified patched file: {patched_path}"))
                     return True
-                else:
-                    app.update_output.emit(
-                        log_message("[Patch] Warning: Some patches could not be verified. Review logs."))
+                app.update_output.emit(
+                    log_message("[Patch] Warning: Some patches could not be verified. Review logs."))
 
         elif applied_count == 0:
             app.update_output.emit(log_message(
@@ -518,7 +516,6 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
             except FileNotFoundError as e:
                 logger.error("File not found in patch_verification: %s", e)
                 # File already doesn't exist, which is acceptable
-                pass
             except PermissionError as perm_error2:
                 logger.error("Permission error in patch_verification: %s", perm_error2)
                 app.update_output.emit(log_message(f"[Patch] Warning: Cannot remove unused patched file due to permissions: {perm_error2}"))
@@ -539,12 +536,12 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
 
 
 def rewrite_license_functions_with_parsing(app: Any) -> None:
-    """
-    Attempts to find and rewrite license checking functions using various methods.
+    """Attempts to find and rewrite license checking functions using various methods.
     Includes enhanced logging and basic safety checks for code size.
 
     Args:
         app: Application instance with binary_path and UI elements
+
     """
     if not app.binary_path:
         app.update_output.emit(log_message(
@@ -666,7 +663,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
                                     patches.append({
                                         "address": start_addr,
                                         "new_bytes": patch_bytes,
-                                        "description": f"Replace function prologue at 0x{start_addr:X} with '{patch_asm}'"
+                                        "description": f"Replace function prologue at 0x{start_addr:X} with '{patch_asm}'",
                                     })
                                     patch_generated = True
                                 else:
@@ -691,7 +688,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
                                                     "address": insn.address,
                                                     "new_bytes": nop_patch,
                                                     "description": f"[MANUAL VERIFY REQUIRED] {suggestion_desc}",
-                                                    "requires_verification": True
+                                                    "requires_verification": True,
                                                 }
                                                 app.potential_patches.append(fallback_patch)
 
@@ -729,7 +726,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
                                 "disassembly": disasm_at_addr or "Unknown",
                                 "reason": "Failed automatic patch generation",
                                 "needs_review": True,
-                                "review_priority": "high" if "check" in (disasm_at_addr or "").lower() else "medium"
+                                "review_priority": "high" if "check" in (disasm_at_addr or "").lower() else "medium",
                             })
 
                         # Log to analysis results for reporting
@@ -836,7 +833,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
                 # Log first patch details for debugging
                 if patches and len(patches) > 0:
                     app.update_output.emit(log_message(
-                        f"[License Rewrite] First patch details: {str(patches[0])}"))
+                        f"[License Rewrite] First patch details: {patches[0]!s}"))
             else:
                 app.update_output.emit(log_message(
                     "[License Rewrite] Automated Patch Agent did not generate any patches"))
@@ -879,8 +876,8 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
 
 # Export all patch verification functions
 __all__ = [
-    "verify_patches",
-    "test_patch_and_verify",
     "apply_parsed_patch_instructions_with_validation",
-    "rewrite_license_functions_with_parsing"
+    "rewrite_license_functions_with_parsing",
+    "test_patch_and_verify",
+    "verify_patches",
 ]

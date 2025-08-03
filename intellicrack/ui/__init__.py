@@ -1,5 +1,4 @@
-"""
-Intellicrack User Interface Package
+"""Intellicrack User Interface Package
 
 Copyright (C) 2025 Zachary Flint
 
@@ -70,11 +69,10 @@ except ImportError as e:
                     main_app,
                     "Integration Not Available",
                     "The Radare2 comprehensive integration module is not available.\n"
-                    "Please check that all dependencies are installed."
+                    "Please check that all dependencies are installed.",
                 )
             except ImportError as e:
                 logger.error("Import error in __init__: %s", e)
-                pass
 
             # Try to disable radare2-related UI elements
             if hasattr(main_app, "radare2_action"):
@@ -86,7 +84,7 @@ except ImportError as e:
                 main_app.integration_attempts.append({
                     "module": "radare2_comprehensive",
                     "status": "failed",
-                    "reason": "Module not available"
+                    "reason": "Module not available",
                 })
 
         return False
@@ -94,7 +92,6 @@ except ImportError as e:
     def get_comprehensive_integration():
         """Fallback for getting comprehensive integration instance."""
         logger.error("Radare2 integration not available")
-        return None
 
     def get_integration_status():
         """Fallback for getting integration status."""
@@ -102,7 +99,6 @@ except ImportError as e:
 
     def cleanup_integration():
         """Fallback for cleanup integration."""
-        pass
 
     ComprehensiveR2Integration = None
 

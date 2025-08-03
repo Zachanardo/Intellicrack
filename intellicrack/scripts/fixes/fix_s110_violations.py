@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -22,10 +21,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple
 
 
-def has_logger_import(lines: List[str]) -> Tuple[bool, str]:
+def has_logger_import(lines: list[str]) -> tuple[bool, str]:
     """Check if file has logger import and return the logger name."""
     for line in lines[:50]:  # Check first 50 lines
         if "from intellicrack.logger import logger" in line:
@@ -36,7 +34,7 @@ def has_logger_import(lines: List[str]) -> Tuple[bool, str]:
             return True, "logger"
     return False, ""
 
-def get_logger_for_context(lines: List[str], line_num: int) -> str:
+def get_logger_for_context(lines: list[str], line_num: int) -> str:
     """Determine the appropriate logger based on context."""
     # Check if we're in a class method
     for i in range(max(0, line_num - 20), line_num):
@@ -51,10 +49,10 @@ def get_logger_for_context(lines: List[str], line_num: int) -> str:
     # Default to module logger
     return "logger"
 
-def fix_exception_blocks(file_path: Path) -> Tuple[bool, int]:
+def fix_exception_blocks(file_path: Path) -> tuple[bool, int]:
     """Fix exception blocks without logger calls."""
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             lines = f.readlines()
     except:
         return False, 0
@@ -128,7 +126,7 @@ def fix_exception_blocks(file_path: Path) -> Tuple[bool, int]:
                     message = f"{exception_type} in {file_path.name}"
 
                 # Insert logger line
-                logger_line = f"{indent}    {logger_name}.error(\"{message}: %s\", {exception_var})\n"
+                logger_line = f'{indent}    {logger_name}.error("{message}: %s", {exception_var})\n'
 
                 # Find where to insert the logger line
                 insert_pos = i + 1

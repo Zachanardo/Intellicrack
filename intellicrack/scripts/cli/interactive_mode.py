@@ -1,5 +1,4 @@
-"""
-Interactive REPL Mode for Intellicrack CLI
+"""Interactive REPL Mode for Intellicrack CLI
 
 Copyright (C) 2025 Zachary Flint
 
@@ -40,7 +39,7 @@ except ImportError:
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 # Rich imports for beautiful terminal UI
 try:
@@ -106,6 +105,7 @@ class AdvancedProgressManager:
             stages: List of (stage_name, weight, substeps) tuples
             callback_func: Function to call for actual work
             *args, **kwargs: Arguments to pass to callback_func
+
         """
         if not RICH_AVAILABLE:
             return callback_func(*args, **kwargs)
@@ -121,7 +121,7 @@ class AdvancedProgressManager:
             TimeElapsedColumn(),
             "•",
             TextColumn("[dim]{task.fields[stage]}"),
-            console=self.console
+            console=self.console,
         ) as progress:
             main_task = progress.add_task(operation_name, total=total_weight, stage="Initializing...")
 
@@ -162,6 +162,7 @@ class AdvancedProgressManager:
         Args:
             stats_func: Function that returns dict of current stats
             duration: How long to show stats for
+
         """
         if not RICH_AVAILABLE:
             return
@@ -236,7 +237,7 @@ class IntellicrackShell(cmd.Cmd):
         """Save command history."""
         try:
             readline.write_history_file(self.histfile)
-        except (IOError, AttributeError):
+        except (OSError, AttributeError):
             self.logger.debug("Failed to save command history")
 
     def do_load(self, arg):
@@ -261,8 +262,7 @@ class IntellicrackShell(cmd.Cmd):
                 self._display_binary_info(info)
 
     def do_analyze(self, arg):
-        """
-        Run analysis on loaded binary
+        """Run analysis on loaded binary
         Usage: analyze [options]
         Options:
           --quick     : Quick analysis
@@ -291,8 +291,7 @@ class IntellicrackShell(cmd.Cmd):
             self.error(f"Unknown option: {arg}")
 
     def do_show(self, arg):
-        """
-        Show analysis results
+        """Show analysis results
         Usage: show [category]
         Categories: all, summary, vulnerabilities, protections, strings, imports, charts, dashboard
         """
@@ -351,7 +350,7 @@ class IntellicrackShell(cmd.Cmd):
             "include_raw_data": "--raw-data" in options,
             "detailed": "--detailed" in options,
             "summary_only": "--summary-only" in options,
-            "data_type": "vulnerabilities" if "--vuln-only" in options else "all"
+            "data_type": "vulnerabilities" if "--vuln-only" in options else "all",
         }
 
         if not self.analysis_results:
@@ -368,7 +367,7 @@ class IntellicrackShell(cmd.Cmd):
                 self.analysis_results,
                 output_path,
                 format_type,
-                **export_options
+                **export_options,
             )
 
             if success:
@@ -390,8 +389,7 @@ class IntellicrackShell(cmd.Cmd):
             self.error(f"Export failed: {e}")
 
     def do_patch(self, arg):
-        """
-        Patch operations
+        """Patch operations
         Usage: patch <command>
         Commands:
           suggest     : Suggest patches
@@ -465,8 +463,7 @@ class IntellicrackShell(cmd.Cmd):
             self.console.print(table)
 
     def do_config(self, arg):
-        """
-        Advanced configuration management
+        """Advanced configuration management
         Usage: config [command] [options]
 
         Commands:
@@ -531,8 +528,7 @@ class IntellicrackShell(cmd.Cmd):
             self.error(f"Configuration command failed: {e}")
 
     def do_plugin(self, arg):
-        """
-        Plugin management
+        """Plugin management
         Usage: plugin [list|run|install] [name]
         """
         args = arg.split()
@@ -577,8 +573,7 @@ class IntellicrackShell(cmd.Cmd):
             self.error(f"Hex viewer error: {e}")
 
     def do_tutorial(self, arg):
-        """
-        Interactive tutorial system for learning Intellicrack CLI
+        """Interactive tutorial system for learning Intellicrack CLI
         Usage: tutorial [command] [options]
 
         Commands:
@@ -667,7 +662,7 @@ This tutorial will guide you through basic usage:
 
 Let's start by loading a binary file!""",
             title="Tutorial",
-            border_style="green"
+            border_style="green",
         ))
 
     def do_ask(self, arg):
@@ -680,8 +675,7 @@ Let's start by loading a binary file!""",
         self._ask_ai_question(arg.strip())
 
     def do_chart(self, arg):
-        """
-        Generate visual charts from analysis data
+        """Generate visual charts from analysis data
         Usage: chart [type]
         Types: summary, bar, pie, vulnerability, dashboard
         """
@@ -739,7 +733,7 @@ Let's start by loading a binary file!""",
                     "xml": ("Structured XML report", "System integration"),
                     "yaml": ("YAML configuration format", "Configuration management"),
                     "xlsx": ("Excel workbook (multiple sheets)", "Comprehensive reporting"),
-                    "vulnerability": ("Detailed vulnerability report", "Security assessment")
+                    "vulnerability": ("Detailed vulnerability report", "Security assessment"),
                 }
 
                 for fmt in formats:
@@ -756,8 +750,7 @@ Let's start by loading a binary file!""",
             self.info("Basic formats: json, html, pdf, markdown")
 
     def do_script(self, arg):
-        """
-        Script management
+        """Script management
         Usage: script [create|list|run] [name]
         """
         args = arg.split()
@@ -790,8 +783,7 @@ Let's start by loading a binary file!""",
             self._launch_ai_chat()
 
     def do_project(self, arg):
-        """
-        Project management commands
+        """Project management commands
         Usage: project [create|load|save|list|import|export|delete] [name/path]
 
         Commands:
@@ -867,7 +859,7 @@ Let's start by loading a binary file!""",
                     response,
                     title="🤖 AI Response",
                     border_style="green",
-                    padding=(1, 2)
+                    padding=(1, 2),
                 )
                 self.console.print(ai_panel)
             else:
@@ -956,7 +948,7 @@ Let's start by loading a binary file!""",
                 chart_panel = Panel(
                     charts,
                     title="📊 Analysis Charts",
-                    border_style="cyan"
+                    border_style="cyan",
                 )
                 self.console.print(chart_panel)
             else:
@@ -1010,7 +1002,7 @@ Let's start by loading a binary file!""",
                     chart_panel = Panel(
                         charts,
                         title=f"📈 {chart_type.title()} Chart",
-                        border_style="green"
+                        border_style="green",
                     )
                     self.console.print(chart_panel)
                 else:
@@ -1025,8 +1017,7 @@ Let's start by loading a binary file!""",
             self.error(f"Chart generation failed: {e}")
 
     def do_report(self, arg):
-        """
-        Generate comprehensive analysis report
+        """Generate comprehensive analysis report
         Usage: report [format] [output_path]
         """
         if not self.analysis_results:
@@ -1084,7 +1075,7 @@ Let's start by loading a binary file!""",
                 "Total Items": sum(
                     len(data) if isinstance(data, (dict, list)) else 1
                     for data in self.analysis_results.values()
-                )
+                ),
             }
 
             # Add vulnerability stats if available
@@ -1113,7 +1104,7 @@ Let's start by loading a binary file!""",
                 stats_panel = Panel(
                     chart,
                     title="📈 Statistics",
-                    border_style="blue"
+                    border_style="blue",
                 )
                 self.console.print(stats_panel)
             else:
@@ -1153,8 +1144,7 @@ Let's start by loading a binary file!""",
             self.error(f"Workspace command failed: {e}")
 
     def do_dashboard(self, arg):
-        """
-        Launch terminal dashboard with real-time system and analysis metrics
+        """Launch terminal dashboard with real-time system and analysis metrics
         Usage: dashboard [duration] [--basic]
 
         Options:
@@ -1222,7 +1212,7 @@ Let's start by loading a binary file!""",
                 status_panel = Panel(
                     summary,
                     title="📊 System Status",
-                    border_style="green"
+                    border_style="green",
                 )
                 self.console.print(status_panel)
             else:
@@ -1237,8 +1227,7 @@ Let's start by loading a binary file!""",
             self.error(f"Status check failed: {e}")
 
     def do_monitor(self, arg):
-        """
-        Continuous monitoring with live updates
+        """Continuous monitoring with live updates
         Usage: monitor [metric] [duration]
 
         Metrics: cpu, memory, analysis, session, all (default)
@@ -1269,7 +1258,7 @@ Let's start by loading a binary file!""",
         except Exception as e:
             self.error(f"Monitoring failed: {e}")
 
-    def _monitor_specific_metric(self, metric: str, duration: Optional[float]):
+    def _monitor_specific_metric(self, metric: str, duration: float | None):
         """Monitor specific metric with live updates."""
         import time
         start_time = time.time()
@@ -1284,7 +1273,7 @@ Let's start by loading a binary file!""",
                             self._dashboard.system_metrics.cpu_percent,
                             100,
                             "CPU",
-                            width=30
+                            width=30,
                         )
                         panel = Panel(cpu_bar, title="🖥️ CPU Monitor")
                         self.console.clear()
@@ -1298,7 +1287,7 @@ Let's start by loading a binary file!""",
                             self._dashboard.system_metrics.memory_percent,
                             100,
                             "Memory",
-                            width=30
+                            width=30,
                         )
                         panel = Panel(memory_bar, title="🧠 Memory Monitor")
                         self.console.clear()
@@ -1321,7 +1310,7 @@ Let's start by loading a binary file!""",
             self._dashboard.update_session_info(
                 current_binary=self.current_binary,
                 current_project=getattr(self, "_current_project", None),
-                commands_executed=len(self.history)
+                commands_executed=len(self.history),
             )
 
     def _update_dashboard_stats(self):
@@ -1344,14 +1333,14 @@ Let's start by loading a binary file!""",
                 vulnerabilities_found=total_vulns,
                 active_projects=active_projects,
                 analyses_completed=len(self.analysis_results),
-                last_analysis=self.current_binary
+                last_analysis=self.current_binary,
             )
 
             # Update session info
             self._dashboard.update_session_info(
                 commands_executed=len(self.history),
                 current_binary=self.current_binary,
-                current_project=getattr(self, "_current_project", None).name if hasattr(self, "_current_project") and self._current_project else None
+                current_project=getattr(self, "_current_project", None).name if hasattr(self, "_current_project") and self._current_project else None,
             )
 
     def _show_workspace_info(self):
@@ -1369,7 +1358,7 @@ Let's start by loading a binary file!""",
             info_panel = Panel(
                 info_content,
                 title="🏗️ Workspace",
-                border_style="blue"
+                border_style="blue",
             )
             self.console.print(info_panel)
         else:
@@ -1409,7 +1398,7 @@ Let's start by loading a binary file!""",
                 ("export <file> [format]", "Export configuration"),
                 ("import <file>", "Import configuration"),
                 ("backup", "Create configuration backup"),
-                ("validate", "Validate current configuration")
+                ("validate", "Validate current configuration"),
             ]
 
             for cmd, desc in commands:
@@ -1426,7 +1415,7 @@ Let's start by loading a binary file!""",
             print("  advanced            - Show advanced options")
             print()
 
-    def _list_advanced_config(self, category: Optional[str] = None):
+    def _list_advanced_config(self, category: str | None = None):
         """List advanced configuration options."""
         self._config_manager.display_config(category, advanced=False)
 
@@ -1457,7 +1446,7 @@ Let's start by loading a binary file!""",
                 info_panel = Panel(
                     info_content,
                     title=f"⚙️ {key}",
-                    border_style="blue"
+                    border_style="blue",
                 )
                 self.console.print(info_panel)
             else:
@@ -1516,7 +1505,7 @@ Let's start by loading a binary file!""",
             if option.validator:
                 self.info("Value does not meet validation requirements")
 
-    def _reset_config(self, category: Optional[str] = None):
+    def _reset_config(self, category: str | None = None):
         """Reset configuration to defaults."""
         if category:
             if category not in self._config_manager.get_categories():
@@ -1576,7 +1565,7 @@ Let's start by loading a binary file!""",
                 "security": "Security and sandboxing options",
                 "ai": "AI backend and model configuration",
                 "performance": "Memory and CPU usage limits",
-                "developer": "Debug and development options"
+                "developer": "Debug and development options",
             }
 
             for category in categories:
@@ -1718,7 +1707,7 @@ Let's start by loading a binary file!""",
                     "Total Data Points": sum(
                         len(data) if isinstance(data, (dict, list)) else 1
                         for data in self.analysis_results.values()
-                    )
+                    ),
                 }
 
                 chart = generator.generate_bar_chart(stats, "Session Summary")
@@ -1727,7 +1716,7 @@ Let's start by loading a binary file!""",
                 summary_panel = Panel(
                     chart,
                     title="📊 Session Summary",
-                    border_style="yellow"
+                    border_style="yellow",
                 )
                 self.console.print(summary_panel)
             except Exception as e:
@@ -1759,7 +1748,7 @@ Let's start by loading a binary file!""",
                 ("export <name> [path]", "Export project to archive"),
                 ("delete <name>", "Delete project"),
                 ("add-binary <path>", "Add binary to current project"),
-                ("show", "Show current project info")
+                ("show", "Show current project info"),
             ]
 
             for cmd, desc in commands:
@@ -1935,7 +1924,7 @@ Let's start by loading a binary file!""",
         success = self._project_manager.import_binary(
             self._current_project,
             binary_path,
-            copy_file=True
+            copy_file=True,
         )
 
         if success:
@@ -1990,7 +1979,7 @@ Let's start by loading a binary file!""",
         info_panel = Panel(
             info_content,
             title=f"📁 {project.name}",
-            border_style="blue"
+            border_style="blue",
         )
         self.console.print(info_panel)
 
@@ -2042,7 +2031,7 @@ Let's start by loading a binary file!""",
         else:
             print(f"ℹ️  Info: {msg}")
 
-    def _get_binary_info(self) -> Dict[str, Any]:
+    def _get_binary_info(self) -> dict[str, Any]:
         """Get basic binary information."""
         try:
             stat = os.stat(self.current_binary)
@@ -2050,7 +2039,7 @@ Let's start by loading a binary file!""",
                 "path": self.current_binary,
                 "size": stat.st_size,
                 "modified": time.ctime(stat.st_mtime),
-                "type": self._detect_binary_type()
+                "type": self._detect_binary_type(),
             }
         except Exception as e:
             return {"error": str(e)}
@@ -2061,14 +2050,13 @@ Let's start by loading a binary file!""",
             magic = f.read(4)
             if magic[:2] == b"MZ":
                 return "PE (Windows Executable)"
-            elif magic == b"\x7fELF":
+            if magic == b"\x7fELF":
                 return "ELF (Linux Executable)"
-            elif magic[:4] == b"\xca\xfe\xba\xbe":
+            if magic[:4] == b"\xca\xfe\xba\xbe":
                 return "Mach-O (macOS Executable)"
-            else:
-                return "Unknown"
+            return "Unknown"
 
-    def _display_binary_info(self, info: Dict[str, Any]):
+    def _display_binary_info(self, info: dict[str, Any]):
         """Display binary information."""
         if not self.console:
             print(f"Binary: {info}")
@@ -2080,7 +2068,7 @@ Path: [cyan]{info.get('path', 'Unknown')}[/cyan]
 Type: [yellow]{info.get('type', 'Unknown')}[/yellow]
 Size: [green]{info.get('size', 0):,} bytes[/green]
 Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
-            border_style="blue"
+            border_style="blue",
         )
         self.console.print(panel)
 
@@ -2100,7 +2088,7 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
             ("Analyzing imports/exports", 20),
             ("Detecting protections", 15),
             ("Extracting strings", 15),
-            ("Finalizing results", 10)
+            ("Finalizing results", 10),
         ]
 
         with Progress(
@@ -2109,7 +2097,7 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
             BarColumn(bar_width=40),
             "[progress.percentage]{task.percentage:>3.1f}%",
             TimeElapsedColumn(),
-            console=self.console
+            console=self.console,
         ) as progress:
             main_task = progress.add_task("Quick Analysis", total=100)
 
@@ -2157,7 +2145,7 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
             MofNCompleteColumn(),
             "[progress.percentage]{task.percentage:>3.1f}%",
             TimeElapsedColumn(),
-            console=self.console
+            console=self.console,
         ) as progress:
             main_task = progress.add_task("Comprehensive Analysis", total=total_steps)
 
@@ -2270,14 +2258,14 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
                 "HIGH": "[red]HIGH[/red]",
                 "MEDIUM": "[yellow]MEDIUM[/yellow]",
                 "LOW": "[green]LOW[/green]",
-                "INFO": "[blue]INFO[/blue]"
+                "INFO": "[blue]INFO[/blue]",
             }.get(vuln.get("severity", "INFO"), "[dim]UNKNOWN[/dim]")
 
             table.add_row(
                 severity_color,
                 vuln.get("type", "Unknown"),
                 vuln.get("location", "N/A"),
-                vuln.get("description", "No description available")
+                vuln.get("description", "No description available"),
             )
 
         self.console.print(table)
@@ -2312,7 +2300,7 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
                         "severity": issue.get("severity", "INFO").upper(),
                         "type": issue.get("category", "Unknown"),
                         "location": issue.get("address", "N/A"),
-                        "description": issue.get("description", "No description")
+                        "description": issue.get("description", "No description"),
                     })
 
             except ImportError:
@@ -2360,7 +2348,7 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
                             "severity": severity,
                             "type": vuln_type,
                             "location": f"0x{pos:08x}",
-                            "description": description
+                            "description": description,
                         })
 
                         # Only report first instance of each pattern
@@ -2372,7 +2360,7 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
                         "severity": "MEDIUM",
                         "type": "Missing Protection",
                         "location": "Binary",
-                        "description": "No stack canary protection detected"
+                        "description": "No stack canary protection detected",
                     })
 
                 # Check for ASLR/PIE
@@ -2383,7 +2371,7 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
                             "severity": "MEDIUM",
                             "type": "Missing Protection",
                             "location": "Binary",
-                            "description": "Position Independent Executable (PIE) not enabled"
+                            "description": "Position Independent Executable (PIE) not enabled",
                         })
 
         except Exception as e:
@@ -2426,9 +2414,9 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
                 "metadata": {
                     "export_time": time.strftime("%Y-%m-%d %H:%M:%S"),
                     "binary_path": self.current_binary,
-                    "tool": "Intellicrack CLI"
+                    "tool": "Intellicrack CLI",
                 },
-                "analysis_results": self.analysis_results
+                "analysis_results": self.analysis_results,
             }
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, default=str, ensure_ascii=False)
@@ -2454,7 +2442,7 @@ This tutorial will guide you through basic usage:
 
 Let's start by loading a binary file!""",
             title="Tutorial",
-            border_style="green"
+            border_style="green",
         ))
 
     def _run_vulnerability_scan(self):
@@ -2476,7 +2464,7 @@ Let's start by loading a binary file!""",
             ("Integer overflow checks", 15),
             ("Use-after-free detection", 20),
             ("ROP gadget analysis", 15),
-            ("Generating report", 5)
+            ("Generating report", 5),
         ]
 
         with Progress(
@@ -2486,7 +2474,7 @@ Let's start by loading a binary file!""",
             "[progress.percentage]{task.percentage:>3.1f}%",
             "•",
             TimeElapsedColumn(),
-            console=self.console
+            console=self.console,
         ) as progress:
             task = progress.add_task("Vulnerability Scanning", total=100)
 
@@ -2533,7 +2521,7 @@ Let's start by loading a binary file!""",
             ("Setting up simulation manager", 10),
             ("Exploring execution paths", 40),
             ("Analyzing constraints", 15),
-            ("Generating path summaries", 10)
+            ("Generating path summaries", 10),
         ]
 
         with Progress(
@@ -2545,7 +2533,7 @@ Let's start by loading a binary file!""",
             TimeElapsedColumn(),
             "•",
             TextColumn("[dim]{task.fields[status]}"),
-            console=self.console
+            console=self.console,
         ) as progress:
             task = progress.add_task("Symbolic Execution", total=100, status="Initializing...")
 
@@ -2598,7 +2586,7 @@ Let's start by loading a binary file!""",
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
-            console=self.console
+            console=self.console,
         ) as progress:
             task = progress.add_task("Analyzing control flow...", total=100)
 
@@ -2675,7 +2663,7 @@ Let's start by loading a binary file!""",
             "pie": ("PIE", "Position Independent Executable"),
             "fortify": ("FORTIFY", "Fortified functions"),
             "relro": ("RELRO", "Relocation Read-Only"),
-            "seh": ("SEH", "Structured Exception Handler")
+            "seh": ("SEH", "Structured Exception Handler"),
         }
 
         for key, (name, desc) in protection_map.items():
@@ -2685,7 +2673,7 @@ Let's start by loading a binary file!""",
                 table.add_row(
                     name,
                     f"[{color}]{'Enabled' if status else 'Disabled'}[/{color}]",
-                    desc
+                    desc,
                 )
 
         self.console.print(table)
@@ -2761,7 +2749,7 @@ Let's start by loading a binary file!""",
             "System": ["kernel32.dll", "ntdll.dll", "user32.dll", "advapi32.dll"],
             "Network": ["ws2_32.dll", "wininet.dll", "winhttp.dll"],
             "Crypto": ["crypt32.dll", "bcrypt.dll"],
-            "Other": []
+            "Other": [],
         }
 
         categorized = {cat: {} for cat in categories}
@@ -2802,7 +2790,7 @@ Let's start by loading a binary file!""",
             generator = ReportGenerator()
             html_content = generator.generate_html_report(
                 self.current_binary,
-                self.analysis_results
+                self.analysis_results,
             )
 
             with open(output_path, "w", encoding="utf-8") as f:
@@ -2823,7 +2811,7 @@ Let's start by loading a binary file!""",
             generator.generate_report(
                 output_path,
                 self.current_binary,
-                self.analysis_results
+                self.analysis_results,
             )
 
             self.success(f"Exported PDF report to {output_path}")
@@ -2901,7 +2889,7 @@ Let's start by loading a binary file!""",
             if create_patch:
                 self._create_patch_from_suggestions(suggestions)
 
-    def _generate_patch_suggestions(self, vulns: Dict[str, Any]) -> List[Tuple[str, str, str, str]]:
+    def _generate_patch_suggestions(self, vulns: dict[str, Any]) -> list[tuple[str, str, str, str]]:
         """Generate real patch suggestions based on vulnerabilities."""
         suggestions = []
 
@@ -2935,7 +2923,7 @@ Let's start by loading a binary file!""",
                     "sprintf": ("MEDIUM", "Format String Risk", "Replace with snprintf"),
                     "vsprintf": ("MEDIUM", "Format String Risk", "Replace with vsnprintf"),
                     "scanf": ("MEDIUM", "Input Validation Risk", "Add length specifiers or use safer alternatives"),
-                    "rand": ("LOW", "Weak Random Number", "Use cryptographic RNG (CryptGenRandom on Windows)")
+                    "rand": ("LOW", "Weak Random Number", "Use cryptographic RNG (CryptGenRandom on Windows)"),
                 }
 
                 for dll, funcs in imports.items():
@@ -2953,7 +2941,7 @@ Let's start by loading a binary file!""",
                             "HIGH",
                             "PE Header",
                             "DEP Not Enabled",
-                            "Enable DEP/NX bit in PE header flags"
+                            "Enable DEP/NX bit in PE header flags",
                         ))
 
                     # Check for ASLR
@@ -2962,7 +2950,7 @@ Let's start by loading a binary file!""",
                             "MEDIUM",
                             "PE Header",
                             "ASLR Not Enabled",
-                            "Enable DYNAMICBASE flag for ASLR support"
+                            "Enable DYNAMICBASE flag for ASLR support",
                         ))
 
                     # Check for SafeSEH
@@ -2971,7 +2959,7 @@ Let's start by loading a binary file!""",
                             "MEDIUM",
                             "PE Header",
                             "SafeSEH Not Enabled",
-                            "Rebuild with /SAFESEH linker flag"
+                            "Rebuild with /SAFESEH linker flag",
                         ))
 
         # Sort by priority
@@ -2980,7 +2968,7 @@ Let's start by loading a binary file!""",
 
         return suggestions[:10]  # Return top 10 suggestions
 
-    def _get_fix_for_vulnerability(self, vuln_type: str, vuln_details: Dict[str, Any]) -> Optional[str]:
+    def _get_fix_for_vulnerability(self, vuln_type: str, vuln_details: dict[str, Any]) -> str | None:
         """Get specific fix recommendation for vulnerability type."""
         vuln_type_lower = vuln_type.lower()
 
@@ -2999,7 +2987,7 @@ Let's start by loading a binary file!""",
             "sql injection": "Use parameterized queries instead of string concatenation",
             "weak crypto": "Use strong cryptographic algorithms (AES, SHA-256+)",
             "hardcoded key": "Move keys to secure storage or use key derivation",
-            "weak random": "Replace with cryptographically secure RNG"
+            "weak random": "Replace with cryptographically secure RNG",
         }
 
         # Check for matches
@@ -3013,7 +3001,7 @@ Let's start by loading a binary file!""",
         # Generic fix if no specific match
         return f"Review and fix {vuln_type} vulnerability"
 
-    def _create_patch_from_suggestions(self, suggestions: List[Tuple[str, str, str, str]]):
+    def _create_patch_from_suggestions(self, suggestions: list[tuple[str, str, str, str]]):
         """Create a patch file from suggestions."""
         filename = Prompt.ask("Patch filename", default="suggested_patches.json")
 
@@ -3024,13 +3012,13 @@ Let's start by loading a binary file!""",
                 "location": location,
                 "issue": issue,
                 "fix": fix,
-                "status": "pending"
+                "status": "pending",
             })
 
         patch_data = {
             "binary": self.current_binary,
             "created": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "patches": patches
+            "patches": patches,
         }
 
         with open(filename, "w") as f:
@@ -3046,7 +3034,7 @@ Let's start by loading a binary file!""",
 
         try:
             # Read patch file
-            with open(patch_file, "r") as f:
+            with open(patch_file) as f:
                 patch_data = json.load(f)
 
             self.info(f"Applying patch from {patch_file}")
@@ -3082,7 +3070,7 @@ Let's start by loading a binary file!""",
             "original": original,
             "replacement": replacement,
             "description": description,
-            "created": time.strftime("%Y-%m-%d %H:%M:%S")
+            "created": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
 
         # Save patch
@@ -3092,7 +3080,7 @@ Let's start by loading a binary file!""",
 
         self.success(f"Patch saved to {filename}")
 
-    def _search_results(self, pattern: str) -> List[Dict[str, str]]:
+    def _search_results(self, pattern: str) -> list[dict[str, str]]:
         """Search within analysis results."""
         results = []
         pattern_lower = pattern.lower()
@@ -3104,7 +3092,7 @@ Let's start by loading a binary file!""",
                         results.append({
                             "category": category,
                             "location": key,
-                            "match": str(value)[:100]
+                            "match": str(value)[:100],
                         })
             elif isinstance(data, list):
                 for i, item in enumerate(data):
@@ -3112,7 +3100,7 @@ Let's start by loading a binary file!""",
                         results.append({
                             "category": category,
                             "location": f"Index {i}",
-                            "match": str(item)[:100]
+                            "match": str(item)[:100],
                         })
 
         return results
@@ -3150,7 +3138,7 @@ Let's start by loading a binary file!""",
             attributes = [
                 ("File Size", current.get("size", "N/A"), other_results.get("size", "N/A")),
                 ("Architecture", current.get("arch", "N/A"), other_results.get("arch", "N/A")),
-                ("Entry Point", current.get("entry_point", "N/A"), other_results.get("entry_point", "N/A"))
+                ("Entry Point", current.get("entry_point", "N/A"), other_results.get("entry_point", "N/A")),
             ]
 
             for attr, val1, val2 in attributes:
@@ -3234,7 +3222,7 @@ Let's start by loading a binary file!""",
                     plugin["name"],
                     plugin.get("version", "N/A"),
                     plugin.get("description", "No description"),
-                    status
+                    status,
                 )
 
             self.console.print(table)
@@ -3291,7 +3279,7 @@ Let's start by loading a binary file!""",
     def _execute_batch_script(self, script_path: str):
         """Execute a batch script file with commands."""
         try:
-            with open(script_path, "r", encoding="utf-8") as f:
+            with open(script_path, encoding="utf-8") as f:
                 lines = f.readlines()
 
             self.info(f"Executing batch script: {script_path}")
@@ -3306,7 +3294,7 @@ Let's start by loading a binary file!""",
                     TextColumn("[bold green]{task.description}"),
                     BarColumn(bar_width=40),
                     "[progress.percentage]{task.percentage:>3.1f}%",
-                    console=self.console
+                    console=self.console,
                 ) as progress:
                     task = progress.add_task("Batch Execution", total=len(lines))
 
@@ -3388,7 +3376,7 @@ Let's start by loading a binary file!""",
 
     def emptyline(self):
         """Called when empty line is entered."""
-        pass  # Don't repeat last command
+        # Don't repeat last command
 
     def default(self, line):
         """Called when command is not recognized."""
@@ -3461,13 +3449,13 @@ show summary
         layout.split_column(
             Layout(name="header", size=3),
             Layout(name="body"),
-            Layout(name="footer", size=2)
+            Layout(name="footer", size=2),
         )
 
         # Split body into columns for different analysis types
         layout["body"].split_row(
             Layout(name="left"),
-            Layout(name="right")
+            Layout(name="right"),
         )
 
         # Header with centered title
@@ -3553,7 +3541,7 @@ show summary
             status.update("[bold blue]Operation completed")
             return result
 
-    def create_custom_progress_column(self) -> Optional[ProgressColumn]:
+    def create_custom_progress_column(self) -> ProgressColumn | None:
         """Create a custom progress column using ProgressColumn."""
         if not RICH_AVAILABLE:
             return None

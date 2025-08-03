@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -22,7 +21,7 @@ Shared UI Layout Utilities
 Common UI layout patterns to eliminate code duplication between dialog classes.
 """
 
-from typing import Callable, List, Optional, Tuple
+from collections.abc import Callable
 
 from PyQt6.QtWidgets import (
     QFormLayout,
@@ -37,15 +36,13 @@ from PyQt6.QtWidgets import (
 
 
 class UILayoutHelpers:
-    """
-    Shared UI layout helper functions for consistent dialog creation.
+    """Shared UI layout helper functions for consistent dialog creation.
     """
 
     @staticmethod
-    def create_tabbed_dialog_layout(dialog, window_title: str, size: Tuple[int, int] = (1000, 700),
-                                   is_modal: bool = False) -> Tuple[QVBoxLayout, QTabWidget]:
-        """
-        Create a standard tabbed dialog layout structure.
+    def create_tabbed_dialog_layout(dialog, window_title: str, size: tuple[int, int] = (1000, 700),
+                                   is_modal: bool = False) -> tuple[QVBoxLayout, QTabWidget]:
+        """Create a standard tabbed dialog layout structure.
 
         Args:
             dialog: The dialog widget to configure
@@ -55,6 +52,7 @@ class UILayoutHelpers:
 
         Returns:
             Tuple of (main_layout, tab_widget)
+
         """
         dialog.setWindowTitle(window_title)
         dialog.setMinimumSize(size[0], size[1])
@@ -72,10 +70,9 @@ class UILayoutHelpers:
         return main_layout, tab_widget
 
     @staticmethod
-    def create_dialog_buttons(button_specs: List[Tuple[str, Callable, bool]],
-                             layout: QVBoxLayout) -> List[QPushButton]:
-        """
-        Create standard dialog buttons with consistent layout.
+    def create_dialog_buttons(button_specs: list[tuple[str, Callable, bool]],
+                             layout: QVBoxLayout) -> list[QPushButton]:
+        """Create standard dialog buttons with consistent layout.
 
         Args:
             button_specs: List of (text, callback, is_right_aligned) tuples
@@ -83,6 +80,7 @@ class UILayoutHelpers:
 
         Returns:
             List of created QPushButton objects
+
         """
         button_layout = QHBoxLayout()
         buttons = []
@@ -111,10 +109,9 @@ class UILayoutHelpers:
 
     @staticmethod
     def create_file_browse_widget(placeholder_text: str = "",
-                                 browse_callback: Optional[Callable] = None,
-                                 browse_text: str = "Browse...") -> Tuple[QHBoxLayout, QLineEdit, QPushButton]:
-        """
-        Create a file browse widget with line edit and browse button.
+                                 browse_callback: Callable | None = None,
+                                 browse_text: str = "Browse...") -> tuple[QHBoxLayout, QLineEdit, QPushButton]:
+        """Create a file browse widget with line edit and browse button.
 
         Args:
             placeholder_text: Placeholder text for the line edit
@@ -123,6 +120,7 @@ class UILayoutHelpers:
 
         Returns:
             Tuple of (layout, line_edit, browse_button)
+
         """
         layout = QHBoxLayout()
 
@@ -140,9 +138,8 @@ class UILayoutHelpers:
         return layout, line_edit, browse_btn
 
     @staticmethod
-    def create_config_group(title: str, use_form_layout: bool = True) -> Tuple[QGroupBox, QVBoxLayout]:
-        """
-        Create a configuration group box with appropriate layout.
+    def create_config_group(title: str, use_form_layout: bool = True) -> tuple[QGroupBox, QVBoxLayout]:
+        """Create a configuration group box with appropriate layout.
 
         Args:
             title: Title for the group box
@@ -150,6 +147,7 @@ class UILayoutHelpers:
 
         Returns:
             Tuple of (group_box, layout)
+
         """
         group = QGroupBox(title)
 
@@ -163,8 +161,7 @@ class UILayoutHelpers:
 
     @staticmethod
     def finalize_widget_layout(widget: QWidget, layout) -> QWidget:
-        """
-        Common widget finalization pattern - adds stretch and sets layout.
+        """Common widget finalization pattern - adds stretch and sets layout.
 
         Args:
             widget: Widget to finalize
@@ -172,6 +169,7 @@ class UILayoutHelpers:
 
         Returns:
             The widget (for method chaining)
+
         """
         if hasattr(layout, "addStretch"):
             layout.addStretch()
@@ -180,30 +178,29 @@ class UILayoutHelpers:
 
     @staticmethod
     def setup_standard_form_field(layout, label_text: str, widget: QWidget) -> None:
-        """
-        Add a standard form field to a form layout.
+        """Add a standard form field to a form layout.
 
         Args:
             layout: QFormLayout to add to
             label_text: Text for the label
             widget: Widget to add as the field
+
         """
         if hasattr(layout, "addRow"):
             layout.addRow(label_text, widget)
-        else:
-            # Fallback for non-form layouts
-            if hasattr(layout, "addWidget"):
-                layout.addWidget(widget)
+        # Fallback for non-form layouts
+        elif hasattr(layout, "addWidget"):
+            layout.addWidget(widget)
 
     @staticmethod
     def create_tabs_from_specs(tab_widget: QTabWidget,
-                              tab_specs: List[Tuple[str, QWidget]]) -> None:
-        """
-        Add multiple tabs to a tab widget from specifications.
+                              tab_specs: list[tuple[str, QWidget]]) -> None:
+        """Add multiple tabs to a tab widget from specifications.
 
         Args:
             tab_widget: QTabWidget to add tabs to
             tab_specs: List of (tab_title, tab_widget) tuples
+
         """
         for title, widget in tab_specs:
             tab_widget.addTab(widget, title)

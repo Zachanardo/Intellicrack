@@ -4,10 +4,10 @@ This module provides a widget for displaying CPU usage, temperature,
 and performance metrics in the system monitoring interface.
 """
 import platform
-from typing import Any, Dict, List
+from typing import Any
 
 import psutil
-from PyQt6.QtCore import QObject, QThread, Qt, pyqtSignal
+from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QGridLayout,
@@ -56,7 +56,7 @@ class CPUMonitorWorker(QObject):
             if self.running:
                 self.thread().msleep(1000)  # 1 second update
 
-    def _collect_cpu_data(self) -> Dict[str, Any]:
+    def _collect_cpu_data(self) -> dict[str, Any]:
         """Collect comprehensive CPU data"""
         # Get CPU info
         cpu_info = {
@@ -68,7 +68,7 @@ class CPUMonitorWorker(QObject):
             "cpu_stats": psutil.cpu_stats()._asdict() if hasattr(psutil, "cpu_stats") else {},
             "load_average": psutil.getloadavg() if hasattr(psutil, "getloadavg") else (0, 0, 0),
             "cpu_times": psutil.cpu_times()._asdict(),
-            "cpu_times_percent": psutil.cpu_times_percent(interval=0.1)._asdict()
+            "cpu_times_percent": psutil.cpu_times_percent(interval=0.1)._asdict(),
         }
 
         # Get process info
@@ -82,7 +82,7 @@ class CPUMonitorWorker(QObject):
                             "pid": pinfo["pid"],
                             "name": pinfo["name"],
                             "cpu_percent": pinfo["cpu_percent"],
-                            "memory_percent": pinfo["memory_percent"]
+                            "memory_percent": pinfo["memory_percent"],
                         })
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
@@ -108,7 +108,7 @@ class CPUMonitorWorker(QObject):
                 for processor in c.Win32_Processor():
                     return processor.Name
             elif platform.system() == "Linux":
-                with open("/proc/cpuinfo", "r") as f:
+                with open("/proc/cpuinfo") as f:
                     for line in f:
                         if line.startswith("model name"):
                             return line.split(":")[1].strip()
@@ -232,7 +232,7 @@ class CPUStatusWidget(QWidget):
             self.monitor_thread.quit()
             self.monitor_thread.wait()
 
-    def update_cpu_data(self, data: Dict[str, Any]):
+    def update_cpu_data(self, data: dict[str, Any]):
         """Update CPU data from monitor"""
         self.cpu_data = data
 
@@ -268,7 +268,7 @@ class CPUStatusWidget(QWidget):
         # Update top processes
         self.update_processes_table(data.get("top_processes", []))
 
-    def update_core_usage(self, core_percents: List[float]):
+    def update_core_usage(self, core_percents: list[float]):
         """Update per-core CPU usage display"""
         # Create core bars if needed
         while len(self.core_bars) < len(core_percents):
@@ -294,7 +294,7 @@ class CPUStatusWidget(QWidget):
                 label.setText(f"{percent:.1f}%")
                 self._set_bar_color(bar, percent)
 
-    def update_processes_table(self, processes: List[Dict[str, Any]]):
+    def update_processes_table(self, processes: list[dict[str, Any]]):
         """Update top processes table"""
         self.processes_table.setRowCount(len(processes))
 

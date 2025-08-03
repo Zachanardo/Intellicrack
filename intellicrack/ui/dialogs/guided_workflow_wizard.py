@@ -1,7 +1,7 @@
 """Guided workflow wizard for step-by-step analysis assistance."""
 import datetime
 import os
-from typing import Any, Dict
+from typing import Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QPixmap
@@ -62,19 +62,18 @@ __all__ = ["GuidedWorkflowWizard"]
 
 
 class GuidedWorkflowWizard(QWizard):
-    """
-    Guided workflow wizard for new users.
+    """Guided workflow wizard for new users.
 
     Provides a step-by-step interface for configuring and starting
     binary analysis and patching operations.
     """
 
     def __init__(self, parent=None):
-        """
-        Initialize the guided workflow wizard.
+        """Initialize the guided workflow wizard.
 
         Args:
             parent: Parent widget (typically the main application)
+
         """
         super().__init__(parent)
         self.parent = parent
@@ -123,7 +122,7 @@ class GuidedWorkflowWizard(QWizard):
             "2. Configuring analysis options\n"
             "3. Reviewing analysis results\n"
             "4. Creating and applying patches\n\n"
-            "You can cancel this wizard at any time and use the application manually."
+            "You can cancel this wizard at any time and use the application manually.",
         )
         intro_text.setWordWrap(True)
         layout.addWidget(intro_text)
@@ -179,7 +178,7 @@ class GuidedWorkflowWizard(QWizard):
         # Add explanation
         hint_label = QLabel(
             "Tip: For best results, select an executable file that has licensing or protection mechanisms. "
-            "Common examples include software trials, licensed applications, or games with anti-piracy protections."
+            "Common examples include software trials, licensed applications, or games with anti-piracy protections.",
         )
         hint_label.setWordWrap(True)
         hint_label.setStyleSheet("font-style: italic; color: #666;")
@@ -243,7 +242,7 @@ class GuidedWorkflowWizard(QWizard):
         # Add hint
         hint_label = QLabel(
             "Tip: Detecting protections first helps optimize the analysis and patching strategies. "
-            "More protections detected means a more thorough but slower analysis."
+            "More protections detected means a more thorough but slower analysis.",
         )
         hint_label.setWordWrap(True)
         hint_label.setStyleSheet("font-style: italic; color: #666;")
@@ -592,7 +591,7 @@ class GuidedWorkflowWizard(QWizard):
         # Add hint
         hint_label = QLabel(
             "Tip: Network analysis is crucial for software that uses online license verification. "
-            "Enable SSL interception if the software uses HTTPS for license checks."
+            "Enable SSL interception if the software uses HTTPS for license checks.",
         )
         hint_label.setWordWrap(True)
         hint_label.setStyleSheet("font-style: italic; color: #666;")
@@ -704,7 +703,7 @@ class GuidedWorkflowWizard(QWizard):
         instructions_label = QLabel(
             "Click 'Finish' to begin analyzing and patching the selected binary. "
             "The application will guide you through the rest of the process and "
-            "show you the results of each step."
+            "show you the results of each step.",
         )
         instructions_label.setWordWrap(True)
         layout.addWidget(instructions_label)
@@ -862,7 +861,7 @@ class GuidedWorkflowWizard(QWizard):
             self,
             "Select Binary File",
             "",
-            "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)"
+            "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)",
         )
 
         if file_path:
@@ -888,7 +887,7 @@ class GuidedWorkflowWizard(QWizard):
                     machine_types = {
                         0x014c: "x86 (32-bit)",
                         0x0200: "IA64",
-                        0x8664: "x64 (64-bit)"
+                        0x8664: "x64 (64-bit)",
                     }
 
                     arch = machine_types.get(machine_type, f"Unknown ({hex(machine_type)})")
@@ -901,7 +900,6 @@ class GuidedWorkflowWizard(QWizard):
                         info_text += f"<b>Compiled:</b> {compile_time.strftime('%Y-%m-%d %H:%M:%S')}<br>"
                     except (OSError, ValueError, RuntimeError) as e:
                         logger.error("Error in guided_workflow_wizard: %s", e)
-                        pass
 
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error in guided_workflow_wizard: %s", e)
@@ -916,7 +914,7 @@ class GuidedWorkflowWizard(QWizard):
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in guided_workflow_wizard: %s", e)
-            self.file_info_label.setText(f"Error getting file info: {str(e)}")
+            self.file_info_label.setText(f"Error getting file info: {e!s}")
 
     def format_size(self, size_bytes: int) -> str:
         """Format a file size in bytes to a human-readable string."""
@@ -936,7 +934,7 @@ class GuidedWorkflowWizard(QWizard):
                     "ml": self.field("ml_analysis"),
                     "timeout": self.field("timeout"),
                     "detect_protections": self.field("detect_protections"),
-                    "detect_vm": self.field("detect_vm")
+                    "detect_vm": self.field("detect_vm"),
                 },
                 "patching": {
                     "auto": self.field("auto_patch"),
@@ -947,9 +945,9 @@ class GuidedWorkflowWizard(QWizard):
                         "license_check": self.field("license_check"),
                         "time_limit": self.field("time_limit"),
                         "feature_unlock": self.field("feature_unlock"),
-                        "anti_debug": self.field("anti_debug")
-                    }
-                }
+                        "anti_debug": self.field("anti_debug"),
+                    },
+                },
             }
 
             # Apply settings to parent app
@@ -993,15 +991,15 @@ class GuidedWorkflowWizard(QWizard):
                     self.parent,
                     "Guided Workflow",
                     "The guided workflow has been set up and started.\n"
-                    "You can monitor the analysis progress in the output panel."
+                    "You can monitor the analysis progress in the output panel.",
                 )
 
-    def get_settings(self) -> Dict[str, Any]:
-        """
-        Get the current wizard settings.
+    def get_settings(self) -> dict[str, Any]:
+        """Get the current wizard settings.
 
         Returns:
             Dictionary containing all current settings
+
         """
         return {
             "binary_path": self.field("binary_path"),
@@ -1012,7 +1010,7 @@ class GuidedWorkflowWizard(QWizard):
                 "ml": self.field("ml_analysis"),
                 "timeout": self.field("timeout"),
                 "detect_protections": self.field("detect_protections"),
-                "detect_vm": self.field("detect_vm")
+                "detect_vm": self.field("detect_vm"),
             },
             "patching": {
                 "auto": self.field("auto_patch"),
@@ -1023,20 +1021,20 @@ class GuidedWorkflowWizard(QWizard):
                     "license_check": self.field("license_check"),
                     "time_limit": self.field("time_limit"),
                     "feature_unlock": self.field("feature_unlock"),
-                    "anti_debug": self.field("anti_debug")
-                }
-            }
+                    "anti_debug": self.field("anti_debug"),
+                },
+            },
         }
 
 
 def create_guided_workflow_wizard(parent=None) -> GuidedWorkflowWizard:
-    """
-    Factory function to create a GuidedWorkflowWizard.
+    """Factory function to create a GuidedWorkflowWizard.
 
     Args:
         parent: Parent widget
 
     Returns:
         Configured wizard instance
+
     """
     return GuidedWorkflowWizard(parent)

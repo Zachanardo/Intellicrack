@@ -193,7 +193,7 @@ class MemoryDumperWidget(QWidget):
             # Fallback to WMI or basic enumeration
             try:
                 import subprocess
-                result = subprocess.run(["tasklist", "/fo", "csv"], capture_output=True, text=True)
+                result = subprocess.run(["tasklist", "/fo", "csv"], check=False, capture_output=True, text=True)
                 lines = result.stdout.strip().split("\n")[1:]  # Skip header
                 for line in lines:
                     parts = line.split('","')
@@ -222,7 +222,7 @@ class MemoryDumperWidget(QWidget):
                 for pid_dir in os.listdir("/proc"):
                     if pid_dir.isdigit():
                         try:
-                            with open(f"/proc/{pid_dir}/comm", "r") as f:
+                            with open(f"/proc/{pid_dir}/comm") as f:
                                 name = f.read().strip()
                             self.process_combo.addItem(f"{name} (PID: {pid_dir})", int(pid_dir))
                         except:
@@ -289,7 +289,7 @@ class MemoryDumperWidget(QWidget):
             h_process = kernel32.OpenProcess(
                 PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
                 False,
-                self.current_process
+                self.current_process,
             )
 
             if not h_process:
@@ -305,7 +305,7 @@ class MemoryDumperWidget(QWidget):
                     h_process,
                     ctypes.c_void_p(address),
                     ctypes.byref(mbi),
-                    ctypes.sizeof(mbi)
+                    ctypes.sizeof(mbi),
                 )
 
                 if result == 0:
@@ -339,7 +339,7 @@ class MemoryDumperWidget(QWidget):
         """Scan Linux process memory regions."""
         try:
             maps_file = f"/proc/{self.current_process}/maps"
-            with open(maps_file, "r") as f:
+            with open(maps_file) as f:
                 for line in f:
                     parts = line.strip().split()
                     if len(parts) >= 5:
@@ -378,7 +378,7 @@ class MemoryDumperWidget(QWidget):
             0x10: "EXECUTE",
             0x20: "EXECUTE_READ",
             0x40: "EXECUTE_READWRITE",
-            0x80: "EXECUTE_WRITECOPY"
+            0x80: "EXECUTE_WRITECOPY",
         }
 
         base_protect = protect & 0xFF
@@ -389,7 +389,7 @@ class MemoryDumperWidget(QWidget):
         types = {
             0x20000: "PRIVATE",
             0x40000: "MAPPED",
-            0x1000000: "IMAGE"
+            0x1000000: "IMAGE",
         }
         return types.get(mem_type, f"0x{mem_type:X}")
 
@@ -442,7 +442,7 @@ class MemoryDumperWidget(QWidget):
             list(selected_rows),
             self.regions_table,
             output_dir,
-            self.get_dump_options()
+            self.get_dump_options(),
         )
 
         self.dump_thread.progress.connect(self.update_progress)
@@ -471,7 +471,7 @@ class MemoryDumperWidget(QWidget):
             all_rows,
             self.regions_table,
             output_dir,
-            self.get_dump_options()
+            self.get_dump_options(),
         )
 
         self.dump_thread.progress.connect(self.update_progress)
@@ -489,7 +489,7 @@ class MemoryDumperWidget(QWidget):
             "full": self.full_dump_check.isChecked(),
             "compress": self.compress_check.isChecked(),
             "metadata": self.metadata_check.isChecked(),
-            "strings": self.strings_check.isChecked()
+            "strings": self.strings_check.isChecked(),
         }
 
     def update_progress(self, value):
@@ -565,7 +565,7 @@ class MemoryDumpThread(QThread):
                 ctypes.c_void_p(addr),
                 buffer,
                 size,
-                ctypes.byref(bytes_read)
+                ctypes.byref(bytes_read),
             )
 
             if result:
@@ -626,7 +626,6 @@ class MemoryDumpThread(QThread):
         if strings:
             filename = os.path.join(self.output_dir, f"strings_0x{base_addr:016X}.txt")
             with open(filename, "w", encoding="utf-8") as f:
-                for addr, string in strings:
-                    f.write(f"0x{addr:016X}: {string}\n")
+                f.writelines(f"0x{addr:016X}: {string}\n" for addr, string in strings)
 
             self.log.emit(f"Extracted {len(strings)} strings to {filename}")

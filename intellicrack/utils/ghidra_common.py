@@ -1,5 +1,4 @@
-"""
-Copyright (C) 2025 Zachary Flint
+"""Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
 
@@ -20,7 +19,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import os
 import subprocess
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +32,8 @@ def run_ghidra_plugin(ghidra_path: str,
                      script_name: str,
                      app: Any = None,
                      overwrite: bool = True,
-                     timeout: int = 300) -> Tuple[int, str, str]:
-    """
-    Run a Ghidra plugin script on a binary.
+                     timeout: int = 300) -> tuple[int, str, str]:
+    """Run a Ghidra plugin script on a binary.
 
     Args:
         ghidra_path: Path to Ghidra executable
@@ -50,6 +48,7 @@ def run_ghidra_plugin(ghidra_path: str,
 
     Returns:
         Tuple of (return_code, stdout, stderr)
+
     """
     try:
         # Validate inputs
@@ -79,7 +78,7 @@ def run_ghidra_plugin(ghidra_path: str,
             project_name=project_name,
             binary_path=binary_path,
             script_path=script_path,
-            overwrite=overwrite
+            overwrite=overwrite,
         )
 
         if app:
@@ -93,7 +92,7 @@ def run_ghidra_plugin(ghidra_path: str,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            cwd=project_dir
+            cwd=project_dir,
         )
 
         try:
@@ -122,7 +121,7 @@ def _build_ghidra_command(ghidra_path: str,
                          project_name: str,
                          binary_path: str,
                          script_path: str,
-                         overwrite: bool = True) -> List[str]:
+                         overwrite: bool = True) -> list[str]:
     """Build the Ghidra command line."""
     command = [ghidra_path]
 
@@ -147,28 +146,27 @@ def _build_ghidra_command(ghidra_path: str,
 
 
 def create_ghidra_analysis_script(analysis_type: str = "basic") -> str:
-    """
-    Create a Ghidra analysis script.
+    """Create a Ghidra analysis script.
 
     Args:
         analysis_type: Type of analysis to perform
 
     Returns:
         Script content as string
+
     """
     if analysis_type == "license_analysis":
         return _create_license_analysis_script()
-    elif analysis_type == "function_analysis":
+    if analysis_type == "function_analysis":
         return _create_function_analysis_script()
-    elif analysis_type == "string_analysis":
+    if analysis_type == "string_analysis":
         return _create_string_analysis_script()
-    else:
-        return _create_basic_analysis_script()
+    return _create_basic_analysis_script()
 
 
 def _create_basic_analysis_script() -> str:
     """Create a basic Ghidra analysis script."""
-    return '''//Basic binary analysis script for Ghidra
+    return """//Basic binary analysis script for Ghidra
 //@author Intellicrack
 //@category Analysis
 //@keybinding
@@ -273,12 +271,12 @@ public class BasicAnalysis extends GhidraScript {
 
         println("Total Imports: " + importCount);
     }
-}'''
+}"""
 
 
 def _create_license_analysis_script() -> str:
     """Create a license-focused analysis script."""
-    return '''//License validation analysis script for Ghidra
+    return """//License validation analysis script for Ghidra
 //@author Intellicrack
 //@category License
 //@keybinding
@@ -415,12 +413,12 @@ public class LicenseAnalysis extends GhidraScript {
 
         println("Time-related symbols found: " + foundCount);
     }
-}'''
+}"""
 
 
 def _create_function_analysis_script() -> str:
     """Create a function analysis script."""
-    return '''//Function analysis script for Ghidra
+    return """//Function analysis script for Ghidra
 //@author Intellicrack
 //@category Analysis
 //@keybinding
@@ -539,12 +537,12 @@ public class FunctionAnalysis extends GhidraScript {
             }
         }
     }
-}'''
+}"""
 
 
 def _create_string_analysis_script() -> str:
     """Create a string analysis script."""
-    return '''//String analysis script for Ghidra
+    return """//String analysis script for Ghidra
 //@author Intellicrack
 //@category Analysis
 //@keybinding
@@ -714,12 +712,11 @@ public class StringAnalysis extends GhidraScript {
 
         println("Total error messages found: " + errorCount);
     }
-}'''
+}"""
 
 
 def save_ghidra_script(script_content: str, script_name: str, output_dir: str) -> str:
-    """
-    Save a Ghidra script to file.
+    """Save a Ghidra script to file.
 
     Args:
         script_content: Content of the script
@@ -728,6 +725,7 @@ def save_ghidra_script(script_content: str, script_name: str, output_dir: str) -
 
     Returns:
         Path to the saved script file
+
     """
     try:
         os.makedirs(output_dir, exist_ok=True)
@@ -749,9 +747,8 @@ def save_ghidra_script(script_content: str, script_name: str, output_dir: str) -
         raise
 
 
-def get_ghidra_project_info(project_dir: str, project_name: str) -> Dict[str, Any]:
-    """
-    Get information about a Ghidra project.
+def get_ghidra_project_info(project_dir: str, project_name: str) -> dict[str, Any]:
+    """Get information about a Ghidra project.
 
     Args:
         project_dir: Directory containing the project
@@ -759,13 +756,14 @@ def get_ghidra_project_info(project_dir: str, project_name: str) -> Dict[str, An
 
     Returns:
         Dictionary with project information
+
     """
     info = {
         "exists": False,
         "project_dir": project_dir,
         "project_name": project_name,
         "files": [],
-        "size": 0
+        "size": 0,
     }
 
     try:
@@ -791,8 +789,7 @@ def get_ghidra_project_info(project_dir: str, project_name: str) -> Dict[str, An
 
 
 def cleanup_ghidra_project(project_dir: str, project_name: str) -> bool:
-    """
-    Clean up a Ghidra project directory.
+    """Clean up a Ghidra project directory.
 
     Args:
         project_dir: Directory containing the project
@@ -800,6 +797,7 @@ def cleanup_ghidra_project(project_dir: str, project_name: str) -> bool:
 
     Returns:
         True if cleanup was successful
+
     """
     try:
         if not os.path.exists(project_dir):
@@ -829,9 +827,9 @@ def cleanup_ghidra_project(project_dir: str, project_name: str) -> bool:
 
 # Export commonly used functions
 __all__ = [
-    "run_ghidra_plugin",
+    "cleanup_ghidra_project",
     "create_ghidra_analysis_script",
-    "save_ghidra_script",
     "get_ghidra_project_info",
-    "cleanup_ghidra_project"
+    "run_ghidra_plugin",
+    "save_ghidra_script",
 ]

@@ -1,5 +1,4 @@
 """Tooltip helper utilities for enhanced UI tooltips."""
-from typing import Dict
 
 from intellicrack.logger import logger
 
@@ -26,12 +25,12 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 
-def get_tooltip_definitions() -> Dict[str, str]:
-    """
-    Get comprehensive tooltip definitions for all UI elements.
+def get_tooltip_definitions() -> dict[str, str]:
+    """Get comprehensive tooltip definitions for all UI elements.
 
     Returns:
         Dictionary mapping button text to tooltip descriptions
+
     """
     return {
         # Analysis Tab - Static Analysis
@@ -299,18 +298,18 @@ def get_tooltip_definitions() -> Dict[str, str]:
             "Uses machine learning to predict potential vulnerabilities.\n"
             "Trained on thousands of vulnerable binaries.\n"
             "Provides probability scores for different vulnerability types."
-        )
+        ),
     }
 
 
 def apply_tooltips_to_all_elements(parent_widget):
-    """
-    Apply tooltips to all UI elements in a widget hierarchy.
+    """Apply tooltips to all UI elements in a widget hierarchy.
     Now supports: QPushButton, QLabel, QLineEdit, QComboBox, QCheckBox,
     QSpinBox, QDoubleSpinBox, QTabWidget, and other common UI elements.
 
     Args:
         parent_widget: The parent widget to search for UI elements
+
     """
     try:
         from PyQt6.QtWidgets import (
@@ -439,12 +438,12 @@ def apply_tooltips_to_all_elements(parent_widget):
         elif object_name and _get_contextual_tooltip(object_name):
             widget.setToolTip(_get_contextual_tooltip(object_name))
 
-def get_enhanced_tooltip_definitions() -> Dict[str, str]:
-    """
-    Enhanced tooltip definitions for all UI element types.
+def get_enhanced_tooltip_definitions() -> dict[str, str]:
+    """Enhanced tooltip definitions for all UI element types.
 
     Returns:
         Dictionary mapping UI element identifiers to tooltip descriptions
+
     """
     return {
         # Tab tooltips
@@ -642,19 +641,19 @@ def get_enhanced_tooltip_definitions() -> Dict[str, str]:
         "Experimental Features": (
             "Enable cutting-edge experimental features.\\n"
             "⚠️ May be unstable - use at your own risk."
-        )
+        ),
     }
 
 
 def _get_contextual_tooltip(text: str) -> str:
-    """
-    Generate contextual tooltips for common UI patterns.
+    """Generate contextual tooltips for common UI patterns.
 
     Args:
         text: The UI element text to analyze
 
     Returns:
         Contextual tooltip or empty string if no match
+
     """
     text_lower = text.lower()
 
@@ -693,18 +692,17 @@ def _get_contextual_tooltip(text: str) -> str:
     return ""  # No contextual match found
 
 def apply_tooltips_to_buttons(parent_widget):
-    """
-    Backward compatibility wrapper for apply_tooltips_to_all_elements.
+    """Backward compatibility wrapper for apply_tooltips_to_all_elements.
 
     Args:
         parent_widget: The parent widget to search for UI elements
+
     """
     apply_tooltips_to_all_elements(parent_widget)
 
 
 def create_tooltip_with_shortcut(description: str, shortcut: str = None) -> str:
-    """
-    Create a formatted tooltip with optional keyboard shortcut.
+    """Create a formatted tooltip with optional keyboard shortcut.
 
     Args:
         description: Main tooltip description
@@ -712,6 +710,7 @@ def create_tooltip_with_shortcut(description: str, shortcut: str = None) -> str:
 
     Returns:
         Formatted tooltip string
+
     """
     if shortcut:
         return f"{description}\n\nShortcut: {shortcut}"

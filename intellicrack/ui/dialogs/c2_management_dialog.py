@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -28,7 +27,7 @@ import logging
 import os
 import time
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QAction, QBrush, QColor, QFont
@@ -109,27 +108,26 @@ class C2ServerThread(QThread):
         """Handle new session connection."""
         self.session_update.emit({
             "event": "connected",
-            "session": session.to_dict() if hasattr(session, "to_dict") else session
+            "session": session.to_dict() if hasattr(session, "to_dict") else session,
         })
 
     def on_session_disconnected(self, session):
         """Handle session disconnection."""
         self.session_update.emit({
             "event": "disconnected",
-            "session": session.to_dict() if hasattr(session, "to_dict") else session
+            "session": session.to_dict() if hasattr(session, "to_dict") else session,
         })
 
     def on_beacon_received(self, data):
         """Handle beacon from session."""
         self.session_update.emit({
             "event": "beacon",
-            "data": data
+            "data": data,
         })
 
 
 class C2ManagementDialog(QDialog):
-    """
-    Comprehensive C2 management interface for controlling
+    """Comprehensive C2 management interface for controlling
     remote sessions and infrastructure.
     """
 
@@ -341,7 +339,7 @@ class C2ManagementDialog(QDialog):
         self.sessions_table.setColumnCount(8)
         self.sessions_table.setHorizontalHeaderLabels([
             "Session ID", "Remote Address", "Username", "OS",
-            "Architecture", "Status", "Last Beacon", "Uptime"
+            "Architecture", "Status", "Last Beacon", "Uptime",
         ])
 
         # Configure table
@@ -436,7 +434,7 @@ class C2ManagementDialog(QDialog):
         self.task_table = QTableWidget()
         self.task_table.setColumnCount(4)
         self.task_table.setHorizontalHeaderLabels([
-            "Task ID", "Type", "Status", "Created"
+            "Task ID", "Type", "Status", "Created",
         ])
         self.task_table.setMaximumHeight(150)
 
@@ -518,7 +516,7 @@ class C2ManagementDialog(QDialog):
         self.transfer_table = QTableWidget()
         self.transfer_table.setColumnCount(5)
         self.transfer_table.setHorizontalHeaderLabels([
-            "File", "Direction", "Size", "Progress", "Status"
+            "File", "Direction", "Size", "Progress", "Status",
         ])
         self.transfer_table.setMaximumHeight(150)
 
@@ -540,7 +538,7 @@ class C2ManagementDialog(QDialog):
 
         self.log_filter_combo = QComboBox()
         self.log_filter_combo.addItems([
-            "All", "Connections", "Commands", "Transfers", "Errors"
+            "All", "Connections", "Commands", "Transfers", "Errors",
         ])
         self.log_filter_combo.currentTextChanged.connect(self.filter_logs)
         filter_layout.addWidget(self.log_filter_combo)
@@ -575,19 +573,19 @@ class C2ManagementDialog(QDialog):
                 "tcp_enabled": self.tcp_check.isChecked(),
                 "https": {
                     "host": self.listen_addr_edit.text(),
-                    "port": self.https_port_spin.value()
+                    "port": self.https_port_spin.value(),
                 },
                 "dns": {
                     "host": self.listen_addr_edit.text(),
                     "port": self.dns_port_spin.value(),
-                    "domain": os.environ.get("DNS_DOMAIN", "internal.local")
+                    "domain": os.environ.get("DNS_DOMAIN", "internal.local"),
                 },
                 "tcp": {
                     "host": self.listen_addr_edit.text(),
-                    "port": self.tcp_port_spin.value()
+                    "port": self.tcp_port_spin.value(),
                 },
                 "beacon_interval": self.beacon_interval_spin.value(),
-                "jitter_percent": self.jitter_spin.value()
+                "jitter_percent": self.jitter_spin.value(),
             }
 
             # Start server thread
@@ -637,7 +635,7 @@ class C2ManagementDialog(QDialog):
         elif "stopped" in status.lower():
             self.status_label.setStyleSheet("QLabel { padding: 5px; background-color: #FFB6C1; }")
 
-    def on_session_update(self, update: Dict[str, Any]):
+    def on_session_update(self, update: dict[str, Any]):
         """Handle session updates from server."""
         event = update.get("event")
 
@@ -664,7 +662,7 @@ class C2ManagementDialog(QDialog):
         self.log_message(f"Server error: {error}", "error")
         QMessageBox.critical(self, "Server Error", f"C2 server error: {error}")
 
-    def add_session(self, session: Dict[str, Any]):
+    def add_session(self, session: dict[str, Any]):
         """Add new session to table."""
         try:
             session_id = session.get("session_id", "unknown")
@@ -681,18 +679,18 @@ class C2ManagementDialog(QDialog):
 
             conn_info = session.get("connection_info", {})
             self.sessions_table.setItem(row, 1, QTableWidgetItem(
-                str(conn_info.get("remote_addr", "unknown"))
+                str(conn_info.get("remote_addr", "unknown")),
             ))
 
             client_info = session.get("client_info", {})
             self.sessions_table.setItem(row, 2, QTableWidgetItem(
-                client_info.get("username", "unknown")
+                client_info.get("username", "unknown"),
             ))
             self.sessions_table.setItem(row, 3, QTableWidgetItem(
-                client_info.get("platform", "unknown")
+                client_info.get("platform", "unknown"),
             ))
             self.sessions_table.setItem(row, 4, QTableWidgetItem(
-                client_info.get("architecture", "unknown")
+                client_info.get("architecture", "unknown"),
             ))
 
             # Status
@@ -770,7 +768,7 @@ class C2ManagementDialog(QDialog):
             self.kill_session_btn.setEnabled(False)
             self.details_text.clear()
 
-    def display_session_details(self, session: Dict[str, Any]):
+    def display_session_details(self, session: dict[str, Any]):
         """Display detailed session information."""
         try:
             details = []
@@ -845,7 +843,7 @@ class C2ManagementDialog(QDialog):
         reply = QMessageBox.question(
             self, "Kill Session",
             f"Are you sure you want to kill session {self.selected_session[:8]}?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         )
 
         if reply == QMessageBox.Yes:
@@ -871,8 +869,8 @@ class C2ManagementDialog(QDialog):
 
                 loop.run_until_complete(
                     self.server_thread.server.send_command(
-                        session_id, "shell_command", {"command": command}
-                    )
+                        session_id, "shell_command", {"command": command},
+                    ),
                 )
 
                 # Display in output
@@ -975,7 +973,7 @@ class C2ManagementDialog(QDialog):
                 self,
                 "Save Downloaded File",
                 file_path,
-                "All Files (*.*)"
+                "All Files (*.*)",
             )
 
             if not local_path:
@@ -985,7 +983,7 @@ class C2ManagementDialog(QDialog):
             command = {
                 "type": "download_file",
                 "remote_path": remote_path,
-                "local_path": local_path
+                "local_path": local_path,
             }
 
             success = self.send_command_to_session(session_id, command)
@@ -997,7 +995,7 @@ class C2ManagementDialog(QDialog):
 
         except Exception as e:
             self.logger.error(f"File download error: {e}")
-            QMessageBox.critical(self, "Download", f"Download failed: {str(e)}")
+            QMessageBox.critical(self, "Download", f"Download failed: {e!s}")
 
     def delete_remote_file(self):
         """Delete file on remote session."""
@@ -1027,7 +1025,7 @@ class C2ManagementDialog(QDialog):
                 "Confirm Delete",
                 f"Are you sure you want to delete the remote file:\n{remote_path}?",
                 QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
+                QMessageBox.No,
             )
 
             if reply != QMessageBox.Yes:
@@ -1036,7 +1034,7 @@ class C2ManagementDialog(QDialog):
             # Send delete command to session
             command = {
                 "type": "delete_file",
-                "remote_path": remote_path
+                "remote_path": remote_path,
             }
 
             success = self.send_command_to_session(session_id, command)
@@ -1056,7 +1054,7 @@ class C2ManagementDialog(QDialog):
 
         except Exception as e:
             self.logger.error(f"File deletion error: {e}")
-            QMessageBox.critical(self, "Delete", f"Deletion failed: {str(e)}")
+            QMessageBox.critical(self, "Delete", f"Deletion failed: {e!s}")
 
     def add_file_to_upload(self):
         """Add file to upload list."""
@@ -1068,7 +1066,7 @@ class C2ManagementDialog(QDialog):
                 self,
                 "Select Files to Upload",
                 "",
-                "All Files (*.*)"
+                "All Files (*.*)",
             )
 
             if not file_paths:
@@ -1106,7 +1104,7 @@ class C2ManagementDialog(QDialog):
 
         except Exception as e:
             self.logger.error(f"Add file to upload error: {e}")
-            QMessageBox.critical(self, "Upload", f"Failed to add files: {str(e)}")
+            QMessageBox.critical(self, "Upload", f"Failed to add files: {e!s}")
 
     def upload_files(self):
         """Upload files to remote session."""
@@ -1160,7 +1158,7 @@ class C2ManagementDialog(QDialog):
                         "type": "upload_file",
                         "remote_path": remote_path,
                         "file_data": base64.b64encode(file_data).decode("utf-8"),
-                        "file_size": len(file_data)
+                        "file_size": len(file_data),
                     }
 
                     success = self.send_command_to_session(session_id, command)
@@ -1191,7 +1189,7 @@ class C2ManagementDialog(QDialog):
 
         except Exception as e:
             self.logger.error(f"File upload error: {e}")
-            QMessageBox.critical(self, "Upload", f"Upload failed: {str(e)}")
+            QMessageBox.critical(self, "Upload", f"Upload failed: {e!s}")
 
     def clear_upload_list(self):
         """Clear upload file list."""
@@ -1215,23 +1213,7 @@ class C2ManagementDialog(QDialog):
             line_lower = line.lower()
 
             # Filter by log level/type
-            if filter_type_lower == "all":
-                filtered_lines.append(line)
-            elif filter_type_lower == "error" and ("error" in line_lower or "fail" in line_lower):
-                filtered_lines.append(line)
-            elif filter_type_lower == "warning" and ("warning" in line_lower or "warn" in line_lower):
-                filtered_lines.append(line)
-            elif filter_type_lower == "info" and ("info" in line_lower or "information" in line_lower):
-                filtered_lines.append(line)
-            elif filter_type_lower == "success" and ("success" in line_lower or "complete" in line_lower):
-                filtered_lines.append(line)
-            elif filter_type_lower == "connection" and ("connect" in line_lower or "disconnect" in line_lower):
-                filtered_lines.append(line)
-            elif filter_type_lower == "command" and ("command" in line_lower or "execute" in line_lower):
-                filtered_lines.append(line)
-            elif filter_type_lower == "upload" and ("upload" in line_lower or "download" in line_lower):
-                filtered_lines.append(line)
-            elif filter_type_lower == "client" and ("client" in line_lower or "agent" in line_lower):
+            if filter_type_lower == "all" or (filter_type_lower == "error" and ("error" in line_lower or "fail" in line_lower)) or (filter_type_lower == "warning" and ("warning" in line_lower or "warn" in line_lower)) or (filter_type_lower == "info" and ("info" in line_lower or "information" in line_lower)) or (filter_type_lower == "success" and ("success" in line_lower or "complete" in line_lower)) or (filter_type_lower == "connection" and ("connect" in line_lower or "disconnect" in line_lower)) or (filter_type_lower == "command" and ("command" in line_lower or "execute" in line_lower)) or (filter_type_lower == "upload" and ("upload" in line_lower or "download" in line_lower)) or (filter_type_lower == "client" and ("client" in line_lower or "agent" in line_lower)):
                 filtered_lines.append(line)
             # Custom filter - search for the filter text in the line
             elif filter_type_lower not in ["all", "error", "warning", "info", "success", "connection", "command", "upload", "client"]:
@@ -1293,16 +1275,15 @@ class C2ManagementDialog(QDialog):
         try:
             if size_bytes < 1024:
                 return f"{size_bytes} B"
-            elif size_bytes < 1024 * 1024:
+            if size_bytes < 1024 * 1024:
                 return f"{size_bytes / 1024:.1f} KB"
-            elif size_bytes < 1024 * 1024 * 1024:
+            if size_bytes < 1024 * 1024 * 1024:
                 return f"{size_bytes / (1024 * 1024):.1f} MB"
-            else:
-                return f"{size_bytes / (1024 * 1024 * 1024):.1f} GB"
+            return f"{size_bytes / (1024 * 1024 * 1024):.1f} GB"
         except:
             return f"{size_bytes} B"
 
-    def send_command_to_session(self, session_id: str, command: Dict[str, Any]) -> bool:
+    def send_command_to_session(self, session_id: str, command: dict[str, Any]) -> bool:
         """Send command to specific session."""
         try:
             if not self.server_thread or not self.server_thread.server:
@@ -1326,7 +1307,7 @@ class C2ManagementDialog(QDialog):
 
         except Exception as e:
             self.logger.error(f"Failed to send command to session: {e}")
-            self.log_message(f"Command send error: {str(e)}", "error")
+            self.log_message(f"Command send error: {e!s}", "error")
             return False
 
     def closeEvent(self, event):
@@ -1335,7 +1316,7 @@ class C2ManagementDialog(QDialog):
             reply = QMessageBox.question(
                 self, "Close C2 Manager",
                 "C2 server is still running. Stop server and close?",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
 
             if reply == QMessageBox.Yes:

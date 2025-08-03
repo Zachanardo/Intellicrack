@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -16,7 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Dict, List, Optional, Tuple
 
 """
 Common AI response parsing utilities.
@@ -25,9 +23,8 @@ This module provides shared functions for parsing AI responses across different 
 """
 
 
-def parse_ai_response_sections(response: str, section_keywords: Dict[str, List[str]]) -> Dict[str, List[str]]:
-    """
-    Parse AI response into categorized sections.
+def parse_ai_response_sections(response: str, section_keywords: dict[str, list[str]]) -> dict[str, list[str]]:
+    """Parse AI response into categorized sections.
 
     Args:
         response: The AI response text to parse
@@ -37,6 +34,7 @@ def parse_ai_response_sections(response: str, section_keywords: Dict[str, List[s
 
     Returns:
         Dictionary mapping section names to lists of extracted content
+
     """
     from .parsing_utils import ResponseLineParser
 
@@ -44,49 +42,48 @@ def parse_ai_response_sections(response: str, section_keywords: Dict[str, List[s
     return ResponseLineParser.parse_lines_by_sections(response, section_keywords)
 
 
-def parse_security_analysis_response(response: str) -> Tuple[List[str], List[str]]:
-    """
-    Parse AI response for security analysis insights and suggestions.
+def parse_security_analysis_response(response: str) -> tuple[list[str], list[str]]:
+    """Parse AI response for security analysis insights and suggestions.
 
     Args:
         response: AI response text
 
     Returns:
         Tuple of (insights, suggestions) lists
+
     """
     section_keywords = {
         "insights": ["vulnerabilit", "security", "risk", "security issue", "weakness"],
-        "suggestions": ["recommend", "suggest", "should", "mitigation", "fix"]
+        "suggestions": ["recommend", "suggest", "should", "mitigation", "fix"],
     }
 
     sections = parse_ai_response_sections(response, section_keywords)
     return sections["insights"], sections["suggestions"]
 
 
-def parse_attack_vector_response(response: str) -> Tuple[List[str], List[str], List[str]]:
-    """
-    Parse AI response for attack vectors, vulnerabilities, and recommendations.
+def parse_attack_vector_response(response: str) -> tuple[list[str], list[str], list[str]]:
+    """Parse AI response for attack vectors, vulnerabilities, and recommendations.
 
     Args:
         response: AI response text
 
     Returns:
         Tuple of (vulnerabilities, recommendations, attack_vectors) lists
+
     """
     section_keywords = {
         "vulnerabilities": ["vulnerabilit", "security issue", "weakness"],
         "recommendations": ["recommend", "suggest", "should", "mitigation"],
-        "attack_vectors": ["attack", "exploit", "vector", "payload"]
+        "attack_vectors": ["attack", "exploit", "vector", "payload"],
     }
 
     sections = parse_ai_response_sections(response, section_keywords)
     return sections["vulnerabilities"], sections["recommendations"], sections["attack_vectors"]
 
 
-def parse_simple_response(response: str, finding_keywords: Optional[List[str]] = None,
-                          recommendation_keywords: Optional[List[str]] = None) -> Tuple[List[str], List[str]]:
-    """
-    Simple response parser for findings and recommendations.
+def parse_simple_response(response: str, finding_keywords: list[str] | None = None,
+                          recommendation_keywords: list[str] | None = None) -> tuple[list[str], list[str]]:
+    """Simple response parser for findings and recommendations.
 
     Args:
         response: The AI response text to parse
@@ -95,6 +92,7 @@ def parse_simple_response(response: str, finding_keywords: Optional[List[str]] =
 
     Returns:
         Tuple of (findings, recommendations) lists
+
     """
     if finding_keywords is None:
         finding_keywords = ["risk", "vulnerability", "threat", "suspicious"]
@@ -103,7 +101,7 @@ def parse_simple_response(response: str, finding_keywords: Optional[List[str]] =
 
     section_keywords = {
         "findings": finding_keywords,
-        "recommendations": recommendation_keywords
+        "recommendations": recommendation_keywords,
     }
 
     sections = parse_ai_response_sections(response, section_keywords)

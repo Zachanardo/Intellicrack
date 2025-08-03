@@ -1,6 +1,6 @@
 """Visual patch editor dialog for graphical binary patching."""
 import os
-from typing import Any, Dict, List
+from typing import Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
@@ -65,21 +65,20 @@ __all__ = ["VisualPatchEditorDialog"]
 
 
 class VisualPatchEditorDialog(QDialog):
-    """
-    Visual patch editor dialog with drag-and-drop functionality.
+    """Visual patch editor dialog with drag-and-drop functionality.
 
     Provides an intuitive interface for creating and managing binary patches
     with real-time disassembly view and byte preview capabilities.
     """
 
-    def __init__(self, binary_path: str, patches: List[Dict[str, Any]], parent=None):
-        """
-        Initialize the Visual Patch Editor dialog.
+    def __init__(self, binary_path: str, patches: list[dict[str, Any]], parent=None):
+        """Initialize the Visual Patch Editor dialog.
 
         Args:
             binary_path: Path to the binary file
             patches: List of patch dictionaries to edit
             parent: Parent widget
+
         """
         super().__init__(parent)
         self.binary_path = binary_path
@@ -445,7 +444,7 @@ class VisualPatchEditorDialog(QDialog):
         new_patch = {
             "address": 0,
             "new_bytes": b"",
-            "description": "New patch"
+            "description": "New patch",
         }
 
         # Add to patches list
@@ -477,7 +476,7 @@ class VisualPatchEditorDialog(QDialog):
             self,
             "Remove Patch",
             f"Are you sure you want to remove patch {index+1}?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         )
 
         if response == QMessageBox.No:
@@ -538,7 +537,7 @@ class VisualPatchEditorDialog(QDialog):
         # Show results
         self.show_test_results(validation_results)
 
-    def show_test_results(self, results: List[str]) -> None:
+    def show_test_results(self, results: list[str]) -> None:
         """Show patch test results."""
         # Create a dialog to show results
         dialog = QDialog(self)
@@ -562,28 +561,27 @@ class VisualPatchEditorDialog(QDialog):
 
         self.status_label.setText("Patch test complete")
 
-    def get_patches(self) -> List[Dict[str, Any]]:
-        """
-        Get the current list of patches.
+    def get_patches(self) -> list[dict[str, Any]]:
+        """Get the current list of patches.
 
         Returns:
             List of patch dictionaries
+
         """
         return self.patches.copy()
 
     def has_unsaved_changes(self) -> bool:
-        """
-        Check if there are unsaved changes.
+        """Check if there are unsaved changes.
 
         Returns:
             True if patches have been modified
+
         """
         return self.patches != self.original_patches
 
 
-def create_visual_patch_editor(binary_path: str, patches: List[Dict[str, Any]], parent=None) -> VisualPatchEditorDialog:
-    """
-    Factory function to create a VisualPatchEditorDialog.
+def create_visual_patch_editor(binary_path: str, patches: list[dict[str, Any]], parent=None) -> VisualPatchEditorDialog:
+    """Factory function to create a VisualPatchEditorDialog.
 
     Args:
         binary_path: Path to binary file
@@ -592,5 +590,6 @@ def create_visual_patch_editor(binary_path: str, patches: List[Dict[str, Any]], 
 
     Returns:
         Configured dialog instance
+
     """
     return VisualPatchEditorDialog(binary_path, patches, parent)

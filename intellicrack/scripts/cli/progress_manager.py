@@ -1,5 +1,4 @@
-"""
-Progress Manager for Intellicrack CLI Provides beautiful progress visualization for long-running operations
+"""Progress Manager for Intellicrack CLI Provides beautiful progress visualization for long-running operations
 
 Copyright (C) 2025 Zachary Flint
 
@@ -29,7 +28,7 @@ import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich import box
 from rich.console import Console
@@ -54,15 +53,16 @@ from rich.text import Text
 @dataclass
 class AnalysisTask:
     """Represents a single analysis task"""
+
     name: str
     description: str
     total_steps: int = 100
     current_step: int = 0
     status: str = "pending"  # pending, running, completed, failed
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    error: Optional[str] = None
-    subtasks: List["AnalysisTask"] = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+    error: str | None = None
+    subtasks: list["AnalysisTask"] = None
 
     def __post_init__(self):
         """Initialize analysis task with empty subtasks list if not provided."""
@@ -72,6 +72,7 @@ class AnalysisTask:
 
 class SpeedColumn(ProgressColumn):
     """Custom column showing processing speed"""
+
     def render(self, task):
         """Render the speed column."""
         speed = task.fields.get("speed", 0)
@@ -86,8 +87,8 @@ class ProgressManager:
     def __init__(self):
         """Initialize progress manager with console, task tracking, and threading support."""
         self.console = Console()
-        self.tasks: Dict[str, AnalysisTask] = {}
-        self.task_ids: Dict[str, int] = {}  # Store task IDs for progress tracking
+        self.tasks: dict[str, AnalysisTask] = {}
+        self.task_ids: dict[str, int] = {}  # Store task IDs for progress tracking
         self.progress = None
         self.live = None
         self._lock = threading.Lock()
@@ -103,10 +104,10 @@ class ProgressManager:
             TimeRemainingColumn(),
             SpeedColumn(),
             console=self.console,
-            refresh_per_second=10
+            refresh_per_second=10,
         )
 
-    def start_analysis(self, binary_path: str, analysis_types: List[str]) -> None:
+    def start_analysis(self, binary_path: str, analysis_types: list[str]) -> None:
         """Start a new analysis with progress tracking"""
         layout = Layout()
 
@@ -114,7 +115,7 @@ class ProgressManager:
         header = Panel(
             f"[bold cyan]Intellicrack Analysis Progress[/bold cyan]\n"
             f"[dim]Binary: {binary_path}[/dim]",
-            box=box.ROUNDED
+            box=box.ROUNDED,
         )
 
         # Create progress section
@@ -130,7 +131,7 @@ class ProgressManager:
         layout.split_column(
             Layout(header, size=5),
             Layout(self.progress, size=len(analysis_types) + 3),
-            Layout(status_table, size=10)
+            Layout(status_table, size=10),
         )
 
         # Start live display
@@ -142,18 +143,18 @@ class ProgressManager:
             task_id = self.progress.add_task(
                 f"[cyan]{analysis_type}",
                 total=100,
-                speed=0
+                speed=0,
             )
             self.tasks[analysis_type] = AnalysisTask(
                 name=analysis_type,
                 description=f"Running {analysis_type} analysis",
-                total_steps=100
+                total_steps=100,
             )
             # Store task ID for progress tracking
             self.task_ids[analysis_type] = task_id
 
     def update_progress(self, task_name: str, current: int, total: int,
-                       speed: Optional[float] = None) -> None:
+                       speed: float | None = None) -> None:
         """Update progress for a specific task"""
         with self._lock:
             if task_name in self.tasks:
@@ -168,12 +169,12 @@ class ProgressManager:
                             task_id,
                             completed=current,
                             total=total,
-                            speed=speed or 0
+                            speed=speed or 0,
                         )
                         break
 
     def complete_task(self, task_name: str, success: bool = True,
-                     error: Optional[str] = None) -> None:
+                     error: str | None = None) -> None:
         """Mark a task as completed"""
         with self._lock:
             if task_name in self.tasks:
@@ -191,7 +192,7 @@ class ProgressManager:
                             # Show error in description
                             self.progress.update(
                                 task_id,
-                                description=f"[red]✗ {task_name} - {error or 'Failed'}"
+                                description=f"[red]✗ {task_name} - {error or 'Failed'}",
                             )
 
     def stop(self) -> None:
@@ -207,7 +208,7 @@ class ProgressManager:
         summary_table = Table(
             title="\n[bold]Analysis Summary[/bold]",
             box=box.ROUNDED,
-            show_lines=True
+            show_lines=True,
         )
 
         summary_table.add_column("Analysis Type", style="cyan")
@@ -232,7 +233,7 @@ class ProgressManager:
                 task_name,
                 f"[{status_style}]{status_icon} {task.status.title()}[/{status_style}]",
                 str(duration).split(".")[0],
-                task.error or "Success"
+                task.error or "Success",
             )
 
             if task.status == "completed":
@@ -247,7 +248,7 @@ class ProgressManager:
             f"[bold red]Failed:[/bold red] {len(self.tasks) - successful_count}\n"
             f"[bold yellow]Total Time:[/bold yellow] {str(total_duration).split('.')[0]}",
             title="Statistics",
-            box=box.DOUBLE
+            box=box.DOUBLE,
         )
 
         self.console.print(stats_panel)
@@ -256,19 +257,19 @@ class ProgressManager:
 class MultiStageProgress:
     """Progress tracker for multi-stage operations"""
 
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, console: Console | None = None):
         """Initialize multi-stage progress tracker with console and stage tracking."""
         self.console = console or Console()
-        self.stages: List[Dict[str, Any]] = []
+        self.stages: list[dict[str, Any]] = []
         self.current_stage = 0
 
-    def add_stage(self, name: str, steps: List[str]) -> None:
+    def add_stage(self, name: str, steps: list[str]) -> None:
         """Add a new stage with multiple steps"""
         self.stages.append({
             "name": name,
             "steps": steps,
             "current_step": 0,
-            "completed": False
+            "completed": False,
         })
 
     def start(self) -> None:
@@ -279,13 +280,13 @@ class MultiStageProgress:
             BarColumn(),
             MofNCompleteColumn(),
             TimeElapsedColumn(),
-            console=self.console
+            console=self.console,
         ) as progress:
 
             # Create main task
             main_task = progress.add_task(
                 "[cyan]Overall Progress",
-                total=sum(len(stage["steps"]) for stage in self.stages)
+                total=sum(len(stage["steps"]) for stage in self.stages),
             )
 
             completed_steps = 0
@@ -296,7 +297,7 @@ class MultiStageProgress:
                 # Create stage task
                 stage_task = progress.add_task(
                     f"[bold]{stage['name']}",
-                    total=len(stage["steps"])
+                    total=len(stage["steps"]),
                 )
 
                 for step_idx, step in enumerate(stage["steps"]):
@@ -305,7 +306,7 @@ class MultiStageProgress:
                     # Update descriptions
                     progress.update(
                         stage_task,
-                        description=f"[bold]{stage['name']}[/bold] - {step}"
+                        description=f"[bold]{stage['name']}[/bold] - {step}",
                     )
 
                     # Simulate work (replace with actual work)
@@ -319,7 +320,7 @@ class MultiStageProgress:
                 stage["completed"] = True
                 progress.update(
                     stage_task,
-                    description=f"[bold green]✓ {stage['name']} - Complete[/bold green]"
+                    description=f"[bold green]✓ {stage['name']} - Complete[/bold green]",
                 )
 
 
@@ -342,7 +343,7 @@ def demo_progress():
         "Dynamic Analysis",
         "Vulnerability Scan",
         "License Detection",
-        "Network Analysis"
+        "Network Analysis",
     ]
 
     pm.start_analysis(binary_path, analysis_types)
@@ -361,7 +362,7 @@ def demo_progress():
                     ("Extracting strings", 15),
                     ("Analyzing imports/exports", 25),
                     ("Computing hashes", 10),
-                    ("Detecting packers", 20)
+                    ("Detecting packers", 20),
                 ]
 
                 total_weight = sum(weight for _, weight in steps)
@@ -379,7 +380,7 @@ def demo_progress():
                         # Real string extraction
                         cmd = ["strings", binary_path] if sys.platform != "win32" else ["findstr", "/r", "[a-zA-Z]", binary_path]
                         try:
-                            result = subprocess.run(cmd, capture_output=True, timeout=5)
+                            result = subprocess.run(cmd, check=False, capture_output=True, timeout=5)
                             len(result.stdout.decode("utf-8", errors="ignore").split("\n"))
                         except:
                             pass
@@ -401,7 +402,7 @@ def demo_progress():
                     ("Hooking API calls", 25),
                     ("Monitoring file operations", 20),
                     ("Tracking network activity", 20),
-                    ("Recording registry changes", 20)
+                    ("Recording registry changes", 20),
                 ]
 
                 total_weight = sum(weight for _, weight in steps)
@@ -432,7 +433,7 @@ def demo_progress():
                     ("Analyzing format strings", 20),
                     ("Detecting integer overflows", 20),
                     ("Scanning for SQL injection", 15),
-                    ("Checking for command injection", 15)
+                    ("Checking for command injection", 15),
                 ]
 
                 total_weight = sum(weight for _, weight in scan_items)
@@ -453,7 +454,7 @@ def demo_progress():
                     ("Scanning for GPL markers", 25),
                     ("Checking MIT license", 25),
                     ("Detecting proprietary licenses", 25),
-                    ("Analyzing copyright notices", 25)
+                    ("Analyzing copyright notices", 25),
                 ]
 
                 total_weight = sum(weight for _, weight in license_patterns)
@@ -474,7 +475,7 @@ def demo_progress():
                     ("Identifying network protocols", 20),
                     ("Extracting URLs/IPs", 30),
                     ("Analyzing C2 patterns", 25),
-                    ("Detecting beaconing", 25)
+                    ("Detecting beaconing", 25),
                 ]
 
                 total_weight = sum(weight for _, weight in network_checks)
@@ -514,20 +515,20 @@ def demo_progress():
         "Loading binary",
         "Parsing headers",
         "Extracting sections",
-        "Building symbol table"
+        "Building symbol table",
     ])
 
     multi_progress.add_stage("Analysis", [
         "Control flow analysis",
         "Data flow analysis",
         "Vulnerability detection",
-        "Pattern matching"
+        "Pattern matching",
     ])
 
     multi_progress.add_stage("Reporting", [
         "Generating report",
         "Creating visualizations",
-        "Exporting results"
+        "Exporting results",
     ])
 
     multi_progress.start()

@@ -3,7 +3,7 @@ import gc
 import logging
 import os
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -39,8 +39,7 @@ except ImportError as e:
 
 
 class MemoryOptimizer:
-    """
-    Optimizes memory usage during analysis and patching operations.
+    """Optimizes memory usage during analysis and patching operations.
 
     This class implements various memory optimization techniques:
     1. Memory usage monitoring with configurable thresholds
@@ -51,12 +50,12 @@ class MemoryOptimizer:
     6. Performance statistics and reporting
     """
 
-    def __init__(self, app_instance: Optional[Any] = None) -> None:
-        """
-        Initialize the memory optimizer.
+    def __init__(self, app_instance: Any | None = None) -> None:
+        """Initialize the memory optimizer.
 
         Args:
             app_instance: Reference to the main application instance (optional)
+
         """
         self.app = app_instance
         self.enabled: bool = False
@@ -64,28 +63,28 @@ class MemoryOptimizer:
         self.last_usage_check: float = 0.0
         self.check_interval: float = 5.0  # Check every 5 seconds by default
 
-        self.optimization_stats: Dict[str, Union[int, float, str, None]] = {
+        self.optimization_stats: dict[str, int | float | str | None] = {
             "collections_triggered": 0,
             "memory_saved": 0,
             "last_optimization_time": None,
             "peak_memory_usage": 0,
             "current_memory_usage": 0,
             "total_optimizations": 0,
-            "average_memory_saved": 0.0
+            "average_memory_saved": 0.0,
         }
 
-        self.optimization_techniques: Dict[str, bool] = {
+        self.optimization_techniques: dict[str, bool] = {
             "garbage_collection": True,
             "memory_efficient_structures": True,
             "incremental_loading": True,
-            "leak_detection": False  # Disabled by default as it can slow down processing
+            "leak_detection": False,  # Disabled by default as it can slow down processing
         }
 
         self.logger = logging.getLogger("IntellicrackLogger.MemoryOptimizer")
 
         # Initialize memory tracking attributes
-        self._memory_history: List[float] = []
-        self._leak_history: List[Dict[str, Any]] = []
+        self._memory_history: list[float] = []
+        self._leak_history: list[dict[str, Any]] = []
 
         # Initialize memory tracking
         if PSUTIL_AVAILABLE:
@@ -123,14 +122,14 @@ class MemoryOptimizer:
                 self.logger.debug("UI utilities not available for memory optimization UI updates: %s", e)
         self.logger.info("Memory optimization disabled")
 
-    def configure(self, threshold: float = 80.0, check_interval: float = 5.0, techniques: Optional[Dict[str, bool]] = None) -> None:
-        """
-        Configure the memory optimizer.
+    def configure(self, threshold: float = 80.0, check_interval: float = 5.0, techniques: dict[str, bool] | None = None) -> None:
+        """Configure the memory optimizer.
 
         Args:
             threshold: Memory usage percentage threshold to trigger optimization (0-100)
             check_interval: Interval in seconds between memory checks
             techniques: Dictionary of optimization techniques to enable/disable
+
         """
         self.threshold_percentage = max(0.0, min(100.0, threshold))
         self.check_interval = max(1.0, check_interval)
@@ -152,12 +151,12 @@ class MemoryOptimizer:
 
         self.logger.info(config_message)
 
-    def get_current_memory_usage(self) -> Tuple[int, int, float]:
-        """
-        Get the current memory usage of the process.
+    def get_current_memory_usage(self) -> tuple[int, int, float]:
+        """Get the current memory usage of the process.
 
         Returns:
             Tuple of (used_memory_bytes, total_memory_bytes, usage_percentage)
+
         """
         if not PSUTIL_AVAILABLE:
             # Return default values when psutil is not available
@@ -177,8 +176,7 @@ class MemoryOptimizer:
 
             # Update statistics
             self.optimization_stats["current_memory_usage"] = used_memory
-            if used_memory > self.optimization_stats["peak_memory_usage"]:
-                self.optimization_stats["peak_memory_usage"] = used_memory
+            self.optimization_stats["peak_memory_usage"] = max(self.optimization_stats["peak_memory_usage"], used_memory)
 
             return (used_memory, total_memory, usage_percentage)
 
@@ -187,11 +185,11 @@ class MemoryOptimizer:
             return (0, 0, 0.0)
 
     def check_memory_usage(self) -> bool:
-        """
-        Check current memory usage and trigger optimization if necessary.
+        """Check current memory usage and trigger optimization if necessary.
 
         Returns:
             bool: True if optimization was triggered, False otherwise
+
         """
         if not self.enabled:
             return False
@@ -214,11 +212,11 @@ class MemoryOptimizer:
         return False
 
     def optimize_memory(self) -> int:
-        """
-        Run memory optimization techniques based on enabled settings.
+        """Run memory optimization techniques based on enabled settings.
 
         Returns:
             int: Estimated bytes saved by optimization
+
         """
         memory_before = self.optimization_stats["current_memory_usage"]
         techniques_used = []
@@ -283,8 +281,7 @@ class MemoryOptimizer:
             return 0
 
     def _optimize_data_structures(self) -> None:
-        """
-        Optimize data structures for memory efficiency.
+        """Optimize data structures for memory efficiency.
 
         This implementation performs actual optimization of memory-heavy data structures
         in the application context, including list compression, reference cleanup,
@@ -348,10 +345,7 @@ class MemoryOptimizer:
             for attr_name in ["temp_analysis_results", "temp_scan_data", "temp_network_data"]:
                 if hasattr(self.app, attr_name):
                     temp_data = getattr(self.app, attr_name, [])
-                    if hasattr(temp_data, "clear"):
-                        temp_data.clear()
-                        optimizations.append(f"{attr_name}_cleared")
-                    elif isinstance(temp_data, list) and len(temp_data) > 0:
+                    if hasattr(temp_data, "clear") or (isinstance(temp_data, list) and len(temp_data) > 0):
                         temp_data.clear()
                         optimizations.append(f"{attr_name}_cleared")
 
@@ -492,8 +486,7 @@ class MemoryOptimizer:
         return optimizations
 
     def check_for_memory_leaks(self) -> str:
-        """
-        Comprehensive memory leak detection and analysis.
+        """Comprehensive memory leak detection and analysis.
 
         This implementation performs deep analysis of memory usage patterns,
         object lifecycle tracking, and potential leak identification using
@@ -501,6 +494,7 @@ class MemoryOptimizer:
 
         Returns:
             str: Detailed summary of leak detection results
+
         """
         try:
             leak_details = []
@@ -601,7 +595,7 @@ class MemoryOptimizer:
                 "status": status,
                 "issues": len(critical_issues),
                 "memory_mb": current_memory,
-                "objects": gc_after
+                "objects": gc_after,
             })
 
             if len(self._leak_history) > 20:
@@ -611,9 +605,9 @@ class MemoryOptimizer:
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error during comprehensive leak detection: %s", e)
-            return f"error: {str(e)}"
+            return f"error: {e!s}"
 
-    def _find_large_objects(self) -> List[tuple]:
+    def _find_large_objects(self) -> list[tuple]:
         """Find large objects that may indicate memory leaks."""
         try:
             import sys
@@ -683,7 +677,7 @@ class MemoryOptimizer:
             self.logger.debug("Error detecting reference cycles: %s", e)
             return 0
 
-    def _check_application_leaks(self) -> List[str]:
+    def _check_application_leaks(self) -> list[str]:
         """Check for application-specific memory leaks."""
         leaks = []
 
@@ -725,7 +719,7 @@ class MemoryOptimizer:
 
         return leaks
 
-    def _check_resource_leaks(self) -> List[str]:
+    def _check_resource_leaks(self) -> list[str]:
         """Check for system resource leaks (threads, file handles)."""
         leaks = []
 
@@ -752,12 +746,12 @@ class MemoryOptimizer:
 
         return leaks
 
-    def get_optimization_stats(self) -> Dict[str, Union[int, float, str, None]]:
-        """
-        Get memory optimization statistics.
+    def get_optimization_stats(self) -> dict[str, int | float | str | None]:
+        """Get memory optimization statistics.
 
         Returns:
             dict: Dictionary of optimization statistics
+
         """
         # Update current memory usage
         _, total_memory, usage_percentage = self.get_current_memory_usage()
@@ -770,17 +764,17 @@ class MemoryOptimizer:
             "threshold_percentage": self.threshold_percentage,
             "check_interval": self.check_interval,
             "techniques_enabled": sum(1 for enabled in self.optimization_techniques.values() if enabled),
-            "total_techniques": len(self.optimization_techniques)
+            "total_techniques": len(self.optimization_techniques),
         })
 
         return stats
 
-    def get_memory_report(self) -> Dict[str, Any]:
-        """
-        Generate a comprehensive memory usage report.
+    def get_memory_report(self) -> dict[str, Any]:
+        """Generate a comprehensive memory usage report.
 
         Returns:
             dict: Detailed memory report
+
         """
         try:
             used_memory, total_memory, usage_percentage = self.get_current_memory_usage()
@@ -795,7 +789,7 @@ class MemoryOptimizer:
                     "total_mb": total_memory / (1024 * 1024),
                     "usage_percentage": usage_percentage,
                     "peak_usage_bytes": stats["peak_memory_usage"],
-                    "peak_usage_mb": stats["peak_memory_usage"] / (1024 * 1024)
+                    "peak_usage_mb": stats["peak_memory_usage"] / (1024 * 1024),
                 },
                 "optimization": {
                     "enabled": self.enabled,
@@ -805,13 +799,13 @@ class MemoryOptimizer:
                     "memory_saved_bytes": stats["memory_saved"],
                     "memory_saved_mb": stats["memory_saved"] / (1024 * 1024),
                     "average_saved_mb": stats["average_memory_saved"] / (1024 * 1024),
-                    "last_optimization": stats["last_optimization_time"]
+                    "last_optimization": stats["last_optimization_time"],
                 },
                 "system": {
                     "psutil_available": PSUTIL_AVAILABLE,
                     "gc_enabled": gc.isenabled(),
-                    "gc_thresholds": gc.get_threshold() if hasattr(gc, "get_threshold") else None
-                }
+                    "gc_thresholds": gc.get_threshold() if hasattr(gc, "get_threshold") else None,
+                },
             }
 
             return report
@@ -821,11 +815,11 @@ class MemoryOptimizer:
             return {"error": str(e)}
 
     def force_optimization(self) -> int:
-        """
-        Force memory optimization regardless of threshold.
+        """Force memory optimization regardless of threshold.
 
         Returns:
             int: Bytes saved by forced optimization
+
         """
         old_enabled = self.enabled
         self.enabled = True
@@ -845,14 +839,13 @@ class MemoryOptimizer:
             "peak_memory_usage": 0,
             "current_memory_usage": 0,
             "total_optimizations": 0,
-            "average_memory_saved": 0.0
+            "average_memory_saved": 0.0,
         }
 
         self.logger.info("Memory optimizer statistics reset")
 
     def set_technique(self, technique: str, enabled: bool) -> bool:
-        """
-        Enable or disable a specific optimization technique.
+        """Enable or disable a specific optimization technique.
 
         Args:
             technique: Name of the technique to modify
@@ -860,21 +853,21 @@ class MemoryOptimizer:
 
         Returns:
             bool: True if technique was found and modified, False otherwise
+
         """
         if technique in self.optimization_techniques:
             self.optimization_techniques[technique] = enabled
             self.logger.info(f"Optimization technique '{technique}' {'enabled' if enabled else 'disabled'}")
             return True
-        else:
-            self.logger.warning("Unknown optimization technique: %s", technique)
-            return False
+        self.logger.warning("Unknown optimization technique: %s", technique)
+        return False
 
-    def get_memory_usage_mb(self) -> Tuple[float, float, float]:
-        """
-        Get memory usage in megabytes for easier reading.
+    def get_memory_usage_mb(self) -> tuple[float, float, float]:
+        """Get memory usage in megabytes for easier reading.
 
         Returns:
             Tuple of (used_mb, total_mb, usage_percentage)
+
         """
         used_bytes, total_bytes, usage_percentage = self.get_current_memory_usage()
         used_mb = used_bytes / (1024 * 1024)
@@ -895,9 +888,8 @@ class MemoryOptimizer:
         self.disable()
 
 
-def create_memory_optimizer(app_instance: Optional[Any] = None, **kwargs) -> MemoryOptimizer:
-    """
-    Factory function to create and configure a MemoryOptimizer instance.
+def create_memory_optimizer(app_instance: Any | None = None, **kwargs) -> MemoryOptimizer:
+    """Factory function to create and configure a MemoryOptimizer instance.
 
     Args:
         app_instance: Application instance to bind to
@@ -905,6 +897,7 @@ def create_memory_optimizer(app_instance: Optional[Any] = None, **kwargs) -> Mem
 
     Returns:
         MemoryOptimizer: Configured memory optimizer instance
+
     """
     optimizer = MemoryOptimizer(app_instance)
 

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-AI Chat Interface - Terminal-based AI interaction for Intellicrack CLI
+"""AI Chat Interface - Terminal-based AI interaction for Intellicrack CLI
 
 Copyright (C) 2025 Zachary Flint
 
@@ -25,7 +24,7 @@ import os
 import sys
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Rich imports for beautiful terminal UI
 try:
@@ -54,12 +53,13 @@ sys.path.insert(0, project_root)
 class AITerminalChat:
     """Terminal-based AI chat interface with rich formatting."""
 
-    def __init__(self, binary_path: Optional[str] = None, analysis_results: Optional[Dict[str, Any]] = None):
+    def __init__(self, binary_path: str | None = None, analysis_results: dict[str, Any] | None = None):
         """Initialize AI chat interface.
 
         Args:
             binary_path: Path to current binary being analyzed
             analysis_results: Current analysis results for context
+
         """
         self.console = Console() if RICH_AVAILABLE else None
         self.binary_path = binary_path
@@ -84,7 +84,7 @@ class AITerminalChat:
             "/context": self._show_context,
             "/backend": self._switch_backend,
             "/quit": self._quit_chat,
-            "/exit": self._quit_chat
+            "/exit": self._quit_chat,
         }
 
         # Initialize AI backend
@@ -127,7 +127,7 @@ class AITerminalChat:
             "and provide insights about your analysis results.\n\n"
             "[dim]Type '/help' for commands or just ask me anything![/dim]",
             title="🤖 AI Chat Interface",
-            border_style="blue"
+            border_style="blue",
         )
         self.console.print(welcome_panel)
 
@@ -154,10 +154,9 @@ class AITerminalChat:
                         if result == "quit":
                             break
                         continue
-                    else:
-                        self.console.print(f"[red]Unknown command: {command}[/red]")
-                        self.console.print("[dim]Type '/help' for available commands[/dim]")
-                        continue
+                    self.console.print(f"[red]Unknown command: {command}[/red]")
+                    self.console.print("[dim]Type '/help' for available commands[/dim]")
+                    continue
 
                 # Process AI query
                 self._process_ai_query(user_input)
@@ -194,10 +193,9 @@ class AITerminalChat:
                         if result == "quit":
                             break
                         continue
-                    else:
-                        print(f"Unknown command: {command}")
-                        print("Type '/help' for available commands")
-                        continue
+                    print(f"Unknown command: {command}")
+                    print("Type '/help' for available commands")
+                    continue
 
                 # Process AI query
                 self._process_ai_query_basic(user_input)
@@ -213,7 +211,7 @@ class AITerminalChat:
         self.conversation_history.append({
             "timestamp": datetime.now().isoformat(),
             "type": "user",
-            "content": user_input
+            "content": user_input,
         })
 
         # Show thinking indicator with progress bar
@@ -221,7 +219,7 @@ class AITerminalChat:
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             console=self.console,
-            transient=True
+            transient=True,
         ) as progress:
             # Add tasks for different AI processing stages
             thinking_task = progress.add_task("[green]AI is analyzing your query...", total=100)
@@ -243,7 +241,7 @@ class AITerminalChat:
         self.conversation_history.append({
             "timestamp": datetime.now().isoformat(),
             "type": "ai",
-            "content": response
+            "content": response,
         })
 
         # Trim history if too long
@@ -256,7 +254,7 @@ class AITerminalChat:
         self.conversation_history.append({
             "timestamp": datetime.now().isoformat(),
             "type": "user",
-            "content": user_input
+            "content": user_input,
         })
 
         print("AI: Thinking...")
@@ -268,7 +266,7 @@ class AITerminalChat:
         self.conversation_history.append({
             "timestamp": datetime.now().isoformat(),
             "type": "ai",
-            "content": response
+            "content": response,
         })
 
     def _get_ai_response(self, user_input: str) -> str:
@@ -304,13 +302,12 @@ class AITerminalChat:
                 response = self.ai_backend.analyze_with_llm(
                     user_input,
                     context=context,
-                    analysis_type="chat"
+                    analysis_type="chat",
                 )
 
                 if isinstance(response, dict):
                     return response.get("analysis", response.get("response", str(response)))
-                else:
-                    return str(response)
+                return str(response)
 
             except Exception as e:
                 return f"AI backend error: {e}. Using fallback response."
@@ -318,7 +315,7 @@ class AITerminalChat:
         # Fallback to offline responses
         return self._get_fallback_response(user_input, context)
 
-    def _get_fallback_response(self, user_input: str, context: Dict[str, Any]) -> str:
+    def _get_fallback_response(self, user_input: str, context: dict[str, Any]) -> str:
         """Generate fallback AI responses when backend is unavailable."""
         user_lower = user_input.lower()
 
@@ -333,11 +330,10 @@ Based on the analysis results, here's what I found:
 • String extraction and pattern analysis
 
 Would you like me to focus on any specific aspect of the analysis?"""
-            else:
-                return "To analyze a binary, please load one first using the 'load' command in the main interface."
+            return "To analyze a binary, please load one first using the 'load' command in the main interface."
 
         # Vulnerability questions
-        elif any(word in user_lower for word in ["vulnerability", "vuln", "security", "exploit"]):
+        if any(word in user_lower for word in ["vulnerability", "vuln", "security", "exploit"]):
             vuln_count = len(self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", []))
             if vuln_count > 0:
                 return f"""I found {vuln_count} potential vulnerabilities in your binary:
@@ -347,11 +343,10 @@ Would you like me to focus on any specific aspect of the analysis?"""
 • Missing security mitigations (ASLR, DEP, Stack Canaries)
 
 I recommend addressing the high-severity issues first. Would you like specific remediation advice?"""
-            else:
-                return "No critical vulnerabilities detected in the current analysis. The binary appears to have good security protections."
+            return "No critical vulnerabilities detected in the current analysis. The binary appears to have good security protections."
 
         # Protection questions
-        elif any(word in user_lower for word in ["protection", "aslr", "dep", "canary", "mitigation"]):
+        if any(word in user_lower for word in ["protection", "aslr", "dep", "canary", "mitigation"]):
             protections = self.analysis_results.get("protections", {})
             if protections:
                 enabled = [k for k, v in protections.items() if v]
@@ -365,11 +360,10 @@ I recommend addressing the high-severity issues first. Would you like specific r
 
                 response += "\nI recommend enabling all available protections for better security."
                 return response
-            else:
-                return "No protection information available. Run a comprehensive analysis to check security mitigations."
+            return "No protection information available. Run a comprehensive analysis to check security mitigations."
 
         # String analysis questions
-        elif any(word in user_lower for word in ["string", "text", "password", "key"]):
+        if any(word in user_lower for word in ["string", "text", "password", "key"]):
             strings = self.analysis_results.get("strings", [])
             if strings:
                 interesting_strings = [s for s in strings if any(keyword in s.lower()
@@ -381,13 +375,11 @@ I recommend addressing the high-severity issues first. Would you like specific r
 {chr(10).join(['• ' + s[:50] + ('...' if len(s) > 50 else '') for s in interesting_strings[:5]])}
 
 These strings might indicate authentication mechanisms or sensitive data."""
-                else:
-                    return f"Found {len(strings)} strings total, but none appear particularly sensitive."
-            else:
-                return "No string analysis data available. Run string extraction first."
+                return f"Found {len(strings)} strings total, but none appear particularly sensitive."
+            return "No string analysis data available. Run string extraction first."
 
         # Help questions
-        elif any(word in user_lower for word in ["help", "what", "how", "explain"]):
+        if any(word in user_lower for word in ["help", "what", "how", "explain"]):
             return """I'm here to help you understand your binary analysis results!
 
 I can assist with:
@@ -402,8 +394,7 @@ Just ask me about any aspect of your analysis, or use commands like:
 /help - Show all available commands"""
 
         # General conversation
-        else:
-            return f"""I understand you're asking about: "{user_input}"
+        return f"""I understand you're asking about: "{user_input}"
 
 I'm specialized in binary analysis and security research. I can help you:
 • Understand analysis results
@@ -413,20 +404,20 @@ I'm specialized in binary analysis and security research. I can help you:
 
 Could you be more specific about what aspect of the analysis you'd like to explore?"""
 
-    def _build_context(self) -> Dict[str, Any]:
+    def _build_context(self) -> dict[str, Any]:
         """Build context for AI responses."""
         context = {
             "session_info": {
                 "start_time": self.session_start.isoformat(),
-                "conversation_length": len(self.conversation_history)
-            }
+                "conversation_length": len(self.conversation_history),
+            },
         }
 
         if self.binary_path:
             context["binary_info"] = {
                 "name": os.path.basename(self.binary_path),
                 "path": self.binary_path,
-                "size": os.path.getsize(self.binary_path) if os.path.exists(self.binary_path) else 0
+                "size": os.path.getsize(self.binary_path) if os.path.exists(self.binary_path) else 0,
             }
 
         if self.analysis_results:
@@ -435,7 +426,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
                 "categories": list(self.analysis_results.keys()),
                 "vulnerability_count": len(self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", [])),
                 "string_count": len(self.analysis_results.get("strings", [])),
-                "has_protections": "protections" in self.analysis_results
+                "has_protections": "protections" in self.analysis_results,
             }
 
         return context
@@ -451,7 +442,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
         layout.split_column(
             Layout(name="header", size=3),
             Layout(name="body"),
-            Layout(name="footer", size=1)
+            Layout(name="footer", size=1),
         )
 
         # Header with centered title
@@ -473,7 +464,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
             response_content,
             title="Response",
             border_style="green",
-            padding=(1, 2)
+            padding=(1, 2),
         )
         layout["body"].update(ai_panel)
 
@@ -559,7 +550,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
             self.console.print(Panel(columns, title="Analysis Summary", border_style="cyan"))
             self.console.print("\n")
 
-    def _show_help(self, args: List[str]) -> Optional[str]:
+    def _show_help(self, args: list[str]) -> str | None:
         """Show help information."""
         if self.console:
             help_table = Table(title="AI Chat Commands")
@@ -589,7 +580,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
         return None
 
-    def _clear_history(self, args: List[str]) -> Optional[str]:
+    def _clear_history(self, args: list[str]) -> str | None:
         """Clear conversation history."""
         self.conversation_history.clear()
 
@@ -600,7 +591,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
         return None
 
-    def _save_conversation(self, args: List[str]) -> Optional[str]:
+    def _save_conversation(self, args: list[str]) -> str | None:
         """Save conversation to file."""
         filename = args[0] if args else f"ai_chat_{int(time.time())}.json"
 
@@ -609,9 +600,9 @@ Could you be more specific about what aspect of the analysis you'd like to explo
                 "session_info": {
                     "start_time": self.session_start.isoformat(),
                     "end_time": datetime.now().isoformat(),
-                    "binary_path": self.binary_path
+                    "binary_path": self.binary_path,
                 },
-                "conversation": self.conversation_history
+                "conversation": self.conversation_history,
             }
 
             with open(filename, "w", encoding="utf-8") as f:
@@ -630,7 +621,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
         return None
 
-    def _analyze_current_binary(self, args: List[str]) -> Optional[str]:
+    def _analyze_current_binary(self, args: list[str]) -> str | None:
         """Provide analysis overview of current binary."""
         if not self.binary_path:
             if self.console:
@@ -644,9 +635,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
         if self.analysis_results:
             for category, data in self.analysis_results.items():
-                if isinstance(data, dict):
-                    count = len(data)
-                elif isinstance(data, list):
+                if isinstance(data, dict) or isinstance(data, list):
                     count = len(data)
                 else:
                     count = 1
@@ -658,7 +647,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
         response = {
             "timestamp": datetime.now().isoformat(),
             "type": "ai",
-            "content": overview
+            "content": overview,
         }
 
         self.conversation_history.append(response)
@@ -670,7 +659,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
         return None
 
-    def _show_context(self, args: List[str]) -> Optional[str]:
+    def _show_context(self, args: list[str]) -> str | None:
         """Show current analysis context."""
         context = self._build_context()
 
@@ -678,7 +667,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
             context_panel = Panel(
                 json.dumps(context, indent=2),
                 title="Current Context",
-                border_style="blue"
+                border_style="blue",
             )
             self.console.print(context_panel)
         else:
@@ -688,7 +677,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
         return None
 
-    def _switch_backend(self, args: List[str]) -> Optional[str]:
+    def _switch_backend(self, args: list[str]) -> str | None:
         """Switch AI backend."""
         if not args:
             # Show available backends
@@ -740,7 +729,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
                     print(msg)
 
         except Exception as e:
-            error_msg = f"Error switching backend: {str(e)}"
+            error_msg = f"Error switching backend: {e!s}"
             if self.console:
                 self.console.print(f"[red]{error_msg}[/red]")
             else:
@@ -748,7 +737,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
         return None
 
-    def _quit_chat(self, args: List[str]) -> str:
+    def _quit_chat(self, args: list[str]) -> str:
         """Exit chat session."""
         if self.auto_save and self.conversation_history:
             self._save_conversation([f"auto_save_{int(time.time())}.json"])
@@ -760,7 +749,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
         return "quit"
 
-    def _load_conversation(self, args: List[str]) -> Optional[str]:
+    def _load_conversation(self, args: list[str]) -> str | None:
         """Load conversation from file."""
         if not args:
             if self.console:
@@ -772,7 +761,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
         filename = args[0]
 
         try:
-            with open(filename, "r", encoding="utf-8") as f:
+            with open(filename, encoding="utf-8") as f:
                 data = json.load(f)
 
             self.conversation_history = data.get("conversation", [])
@@ -790,7 +779,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
         return None
 
-    def _export_conversation(self, args: List[str]) -> Optional[str]:
+    def _export_conversation(self, args: list[str]) -> str | None:
         """Export conversation in various formats."""
         format_type = args[0] if args else "txt"
         filename = f"conversation_export_{int(time.time())}.{format_type}"
@@ -861,12 +850,13 @@ Could you be more specific about what aspect of the analysis you'd like to explo
                 f.write(f"*{timestamp}*\n\n---\n\n")
 
 
-def launch_ai_chat(binary_path: Optional[str] = None, analysis_results: Optional[Dict[str, Any]] = None):
+def launch_ai_chat(binary_path: str | None = None, analysis_results: dict[str, Any] | None = None):
     """Launch AI chat interface.
 
     Args:
         binary_path: Path to current binary
         analysis_results: Current analysis results
+
     """
     try:
         chat = AITerminalChat(binary_path, analysis_results)

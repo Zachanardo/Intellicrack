@@ -26,7 +26,7 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -56,6 +56,7 @@ logger = get_logger(__name__)
 
 class PredictionType(Enum):
     """Types of predictions the system can make."""
+
     SUCCESS_PROBABILITY = "success_probability"
     EXECUTION_TIME = "execution_time"
     RESOURCE_USAGE = "resource_usage"
@@ -70,6 +71,7 @@ class PredictionType(Enum):
 
 class PredictionConfidence(Enum):
     """Confidence levels for predictions."""
+
     VERY_LOW = "very_low"
     LOW = "low"
     MEDIUM = "medium"
@@ -80,34 +82,37 @@ class PredictionConfidence(Enum):
 @dataclass
 class PredictionInput:
     """Input data for making predictions."""
+
     operation_type: str
-    context: Dict[str, Any]
-    historical_data: List[Dict[str, Any]] = field(default_factory=list)
-    features: Dict[str, float] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any]
+    historical_data: list[dict[str, Any]] = field(default_factory=list)
+    features: dict[str, float] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class PredictionResult:
     """Result of a prediction."""
+
     prediction_id: str
     prediction_type: PredictionType
     predicted_value: float
     confidence: PredictionConfidence
     confidence_score: float  # 0.0 to 1.0
-    factors: Dict[str, float]  # Contributing factors
+    factors: dict[str, float]  # Contributing factors
     reasoning: str
     timestamp: datetime = field(default_factory=datetime.now)
     model_version: str = "1.0"
-    error_bounds: Tuple[float, float] = (0.0, 0.0)
+    error_bounds: tuple[float, float] = (0.0, 0.0)
 
 
 @dataclass
 class TimeSeriesData:
     """Time series data for predictions."""
-    timestamps: List[datetime]
-    values: List[float]
-    metadata: List[Dict[str, Any]] = field(default_factory=list)
+
+    timestamps: list[datetime]
+    values: list[float]
+    metadata: list[dict[str, Any]] = field(default_factory=list)
 
 
 class FeatureExtractor:
@@ -120,13 +125,13 @@ class FeatureExtractor:
         for intelligent feature extraction from binary analysis data.
         """
         self.logger = logging.getLogger(__name__ + ".FeatureExtractor")
-        self.feature_cache: Dict[str, Any] = {}
-        self.feature_importance: Dict[str, float] = {}
+        self.feature_cache: dict[str, Any] = {}
+        self.feature_importance: dict[str, float] = {}
         self.learning_engine = get_learning_engine()
 
         logger.info("Feature extractor initialized")
 
-    def extract_operation_features(self, operation_type: str, context: Dict[str, Any]) -> Dict[str, float]:
+    def extract_operation_features(self, operation_type: str, context: dict[str, Any]) -> dict[str, float]:
         """Extract features for operation prediction."""
         features = {}
 
@@ -151,7 +156,7 @@ class FeatureExtractor:
 
         return features
 
-    def _calculate_operation_complexity(self, operation_type: str, context: Dict[str, Any]) -> float:
+    def _calculate_operation_complexity(self, operation_type: str, context: dict[str, Any]) -> float:
         """Calculate complexity score for operation."""
         complexity_map = {
             "binary_analysis": 0.7,
@@ -159,7 +164,7 @@ class FeatureExtractor:
             "exploit_generation": 0.9,
             "code_modification": 0.6,
             "semantic_analysis": 0.7,
-            "script_generation": 0.5
+            "script_generation": 0.5,
         }
 
         base_complexity = complexity_map.get(operation_type, 0.5)
@@ -177,7 +182,7 @@ class FeatureExtractor:
 
         return min(base_complexity, 2.0)
 
-    def _calculate_input_size(self, context: Dict[str, Any]) -> float:
+    def _calculate_input_size(self, context: dict[str, Any]) -> float:
         """Calculate normalized input size."""
         size_indicators = ["file_size", "data_size",
                            "input_length", "code_lines"]
@@ -192,7 +197,7 @@ class FeatureExtractor:
 
         return 0.1  # Default small size
 
-    def _get_historical_performance(self, operation_type: str) -> Dict[str, float]:
+    def _get_historical_performance(self, operation_type: str) -> dict[str, float]:
         """Get historical performance features."""
         try:
             insights = self.learning_engine.get_learning_insights()
@@ -210,7 +215,7 @@ class FeatureExtractor:
             features = {
                 "historical_success_rate": type_specific_insights.get("success_rate", insights.get("success_rate", 0.8)),
                 "avg_execution_time": type_specific_insights.get("avg_execution_time", insights.get("avg_execution_time", 5.0)),
-                "historical_confidence": type_specific_insights.get("avg_confidence", insights.get("avg_confidence", 0.7))
+                "historical_confidence": type_specific_insights.get("avg_confidence", insights.get("avg_confidence", 0.7)),
             }
 
             # Normalize execution time
@@ -225,17 +230,17 @@ class FeatureExtractor:
                 "historical_success_rate": 0.8,
                 "avg_execution_time": 5.0,
                 "historical_confidence": 0.7,
-                "normalized_exec_time": 0.08
+                "normalized_exec_time": 0.08,
             }
 
-    def _extract_system_features(self) -> Dict[str, float]:
+    def _extract_system_features(self) -> dict[str, float]:
         """Extract current system state features."""
         if not PSUTIL_AVAILABLE:
             return {
                 "cpu_usage": 0.5,
                 "memory_usage": 0.5,
                 "system_load": 0.5,
-                "disk_activity": 0.3
+                "disk_activity": 0.3,
             }
 
         try:
@@ -253,7 +258,7 @@ class FeatureExtractor:
             features = {
                 "cpu_usage": cpu_percent,
                 "memory_usage": memory_percent,
-                "system_load": min(load_avg, 2.0)
+                "system_load": min(load_avg, 2.0),
             }
 
             # Disk I/O if available
@@ -261,7 +266,7 @@ class FeatureExtractor:
                 disk_io = psutil.disk_io_counters()
                 if disk_io:
                     features["disk_activity"] = min(
-                        (disk_io.read_bytes + disk_io.write_bytes) / (1024**3), 1.0
+                        (disk_io.read_bytes + disk_io.write_bytes) / (1024**3), 1.0,
                     )
             except (AttributeError, OSError):
                 features["disk_activity"] = 0.1
@@ -274,10 +279,10 @@ class FeatureExtractor:
                 "cpu_usage": 0.3,
                 "memory_usage": 0.5,
                 "system_load": 0.4,
-                "disk_activity": 0.1
+                "disk_activity": 0.1,
             }
 
-    def _extract_time_features(self) -> Dict[str, float]:
+    def _extract_time_features(self) -> dict[str, float]:
         """Extract time-based features."""
         now = datetime.now()
 
@@ -293,10 +298,10 @@ class FeatureExtractor:
         return {
             "hour_of_day": hour_normalized,
             "day_of_week": weekday_normalized,
-            "is_business_hours": is_business_hours
+            "is_business_hours": is_business_hours,
         }
 
-    def extract_vulnerability_features(self, vulnerability_context: Dict[str, Any]) -> Dict[str, float]:
+    def extract_vulnerability_features(self, vulnerability_context: dict[str, Any]) -> dict[str, float]:
         """Extract features for vulnerability prediction."""
         features = {}
 
@@ -306,7 +311,7 @@ class FeatureExtractor:
         extension_risk = {
             ".exe": 0.9, ".dll": 0.8, ".sys": 0.95, ".bat": 0.7,
             ".ps1": 0.8, ".vbs": 0.7, ".js": 0.6, ".py": 0.5,
-            ".c": 0.4, ".cpp": 0.4, ".java": 0.3
+            ".c": 0.4, ".cpp": 0.4, ".java": 0.3,
         }
         features["file_type_risk"] = extension_risk.get(file_extension, 0.5)
 
@@ -331,7 +336,7 @@ class FeatureExtractor:
 
         return features
 
-    def extract_exploit_features(self, exploit_context: Dict[str, Any]) -> Dict[str, float]:
+    def extract_exploit_features(self, exploit_context: dict[str, Any]) -> dict[str, float]:
         """Extract features for exploit success prediction."""
         features = {}
 
@@ -342,7 +347,7 @@ class FeatureExtractor:
             "use_after_free": 0.6,
             "format_string": 0.7,
             "integer_overflow": 0.5,
-            "code_injection": 0.9
+            "code_injection": 0.9,
         }
         features["vuln_type_baseline"] = type_success_rates.get(vuln_type, 0.5)
 
@@ -372,22 +377,23 @@ class PredictiveModel:
 
         Args:
             model_name: Name identifier for the predictive model.
+
         """
         self.model_name = model_name
         self.model_version = "1.0"
-        self.training_data: List[Dict[str, Any]] = []
-        self.model_parameters: Dict[str, Any] = {}
-        self.feature_importance: Dict[str, float] = {}
-        self.last_training: Optional[datetime] = None
+        self.training_data: list[dict[str, Any]] = []
+        self.model_parameters: dict[str, Any] = {}
+        self.feature_importance: dict[str, float] = {}
+        self.last_training: datetime | None = None
 
-    def train(self, training_data: List[Dict[str, Any]]):
+    def train(self, training_data: list[dict[str, Any]]):
         """Train the model with provided data."""
         self.training_data = training_data
         self.last_training = datetime.now()
         logger.info(
             f"Model {self.model_name} trained with {len(training_data)} samples")
 
-    def predict(self, features: Dict[str, float]) -> Tuple[float, float]:
+    def predict(self, features: dict[str, float]) -> tuple[float, float]:
         """Make prediction. Returns (prediction, confidence)."""
         # Implementation should use features to make actual predictions
         if not features:
@@ -405,7 +411,7 @@ class PredictiveModel:
         raise NotImplementedError(
             f"Subclasses must implement predict method. Fallback for {feature_count} features would return {avg_value:.3f}")
 
-    def update_model(self, new_data: Dict[str, Any]):
+    def update_model(self, new_data: dict[str, Any]):
         """Update model with new data point."""
         self.training_data.append(new_data)
 
@@ -422,13 +428,14 @@ class LinearRegressionModel(PredictiveModel):
 
         Args:
             model_name: Name identifier for the model.
+
         """
         super().__init__(model_name)
-        self.weights: Dict[str, float] = {}
+        self.weights: dict[str, float] = {}
         self.bias: float = 0.0
         self.learning_rate = 0.01
 
-    def train(self, training_data: List[Dict[str, Any]]):
+    def train(self, training_data: list[dict[str, Any]]):
         """Train linear regression model."""
         super().train(training_data)
 
@@ -445,7 +452,7 @@ class LinearRegressionModel(PredictiveModel):
 
         # Initialize weights if needed
         if not self.weights:
-            self.weights = {name: 0.1 for name in feature_names}
+            self.weights = dict.fromkeys(feature_names, 0.1)
 
         # Simple gradient descent training
         for epoch in range(50):  # Limited epochs for real-time training
@@ -489,7 +496,7 @@ class LinearRegressionModel(PredictiveModel):
 
         logger.info(f"Linear model {self.model_name} training completed")
 
-    def predict(self, features: Dict[str, float]) -> Tuple[float, float]:
+    def predict(self, features: dict[str, float]) -> tuple[float, float]:
         """Make prediction using linear model."""
         if not self.weights:
             # No training data - return default prediction
@@ -540,12 +547,12 @@ class SuccessProbabilityPredictor:
 
             if NUMPY_AVAILABLE:
                 features = {
-                    "operation_complexity": np.random.uniform(complexity_base, 1.5),  # noqa: S311
-                    "system_load": np.random.uniform(0.1, 0.9),  # noqa: S311
-                    "historical_success_rate": np.random.uniform(0.6, 0.95),  # noqa: S311
-                    "input_size": np.random.uniform(0.1, 1.0),  # noqa: S311
-                    "cpu_usage": np.random.uniform(0.2, 0.8),  # noqa: S311
-                    "memory_usage": np.random.uniform(0.3, 0.9)  # noqa: S311
+                    "operation_complexity": np.random.uniform(complexity_base, 1.5),
+                    "system_load": np.random.uniform(0.1, 0.9),
+                    "historical_success_rate": np.random.uniform(0.6, 0.95),
+                    "input_size": np.random.uniform(0.1, 1.0),
+                    "cpu_usage": np.random.uniform(0.2, 0.8),
+                    "memory_usage": np.random.uniform(0.3, 0.9),
                 }
             else:
                 # Fallback random values when numpy is not available
@@ -556,7 +563,7 @@ class SuccessProbabilityPredictor:
                     "historical_success_rate": random.uniform(0.6, 0.95),  # noqa: S311
                     "input_size": random.uniform(0.1, 1.0),  # noqa: S311
                     "cpu_usage": random.uniform(0.2, 0.8),  # noqa: S311
-                    "memory_usage": random.uniform(0.3, 0.9)  # noqa: S311
+                    "memory_usage": random.uniform(0.3, 0.9),  # noqa: S311
                 }
 
             # Calculate synthetic target based on realistic relationships
@@ -577,13 +584,13 @@ class SuccessProbabilityPredictor:
 
             training_data.append({
                 "features": features,
-                "target": target
+                "target": target,
             })
 
         self.model.train(training_data)
 
     @profile_ai_operation("success_prediction")
-    def predict_success_probability(self, operation_type: str, context: Dict[str, Any]) -> PredictionResult:
+    def predict_success_probability(self, operation_type: str, context: dict[str, Any]) -> PredictionResult:
         """Predict success probability for operation."""
         # Extract features
         features = self.feature_extractor.extract_operation_features(
@@ -611,7 +618,7 @@ class SuccessProbabilityPredictor:
         error_margin = (1.0 - confidence_score) * 0.2
         error_bounds = (
             max(0.0, predicted_value - error_margin),
-            min(1.0, predicted_value + error_margin)
+            min(1.0, predicted_value + error_margin),
         )
 
         return PredictionResult(
@@ -622,10 +629,10 @@ class SuccessProbabilityPredictor:
             confidence_score=confidence_score,
             factors=self._get_important_factors(features),
             reasoning=reasoning,
-            error_bounds=error_bounds
+            error_bounds=error_bounds,
         )
 
-    def _generate_success_reasoning(self, features: Dict[str, float], predicted_value: float) -> str:
+    def _generate_success_reasoning(self, features: dict[str, float], predicted_value: float) -> str:
         """Generate reasoning for success prediction."""
         factors = []
 
@@ -651,10 +658,9 @@ class SuccessProbabilityPredictor:
 
         if factors:
             return f"Predicted {outcome} based on {', '.join(factors)}"
-        else:
-            return f"Predicted {outcome} based on overall system analysis"
+        return f"Predicted {outcome} based on overall system analysis"
 
-    def _get_important_factors(self, features: Dict[str, float]) -> Dict[str, float]:
+    def _get_important_factors(self, features: dict[str, float]) -> dict[str, float]:
         """Get most important contributing factors."""
         factor_weights = self.model.feature_importance
 
@@ -666,7 +672,7 @@ class SuccessProbabilityPredictor:
         sorted_factors = sorted(
             factor_weights.items(),
             key=lambda x: x[1],
-            reverse=True
+            reverse=True,
         )
 
         return dict(sorted_factors[:5])  # Top 5 factors
@@ -697,11 +703,11 @@ class ExecutionTimePredictor:
 
             if NUMPY_AVAILABLE:
                 features = {
-                    "operation_complexity": np.random.uniform(complexity_factor, 2.0),  # noqa: S311
-                    "input_size": np.random.uniform(0.1, 1.0),  # noqa: S311
-                    "system_load": np.random.uniform(0.1, 0.9),  # noqa: S311
-                    "cpu_usage": np.random.uniform(0.2, 0.8),  # noqa: S311
-                    "historical_success_rate": np.random.uniform(0.6, 0.95)  # noqa: S311
+                    "operation_complexity": np.random.uniform(complexity_factor, 2.0),
+                    "input_size": np.random.uniform(0.1, 1.0),
+                    "system_load": np.random.uniform(0.1, 0.9),
+                    "cpu_usage": np.random.uniform(0.2, 0.8),
+                    "historical_success_rate": np.random.uniform(0.6, 0.95),
                 }
             else:
                 import random
@@ -710,7 +716,7 @@ class ExecutionTimePredictor:
                     "input_size": random.uniform(0.1, 1.0),  # noqa: S311
                     "system_load": random.uniform(0.1, 0.9),  # noqa: S311
                     "cpu_usage": random.uniform(0.2, 0.8),  # noqa: S311
-                    "historical_success_rate": random.uniform(0.6, 0.95)  # noqa: S311
+                    "historical_success_rate": random.uniform(0.6, 0.95),  # noqa: S311
                 }
 
             # Execution time correlates with complexity and system load
@@ -731,13 +737,13 @@ class ExecutionTimePredictor:
 
             training_data.append({
                 "features": features,
-                "target": target
+                "target": target,
             })
 
         self.model.train(training_data)
 
     @profile_ai_operation("time_prediction")
-    def predict_execution_time(self, operation_type: str, context: Dict[str, Any]) -> PredictionResult:
+    def predict_execution_time(self, operation_type: str, context: dict[str, Any]) -> PredictionResult:
         """Predict execution time for operation."""
         features = self.feature_extractor.extract_operation_features(
             operation_type, context)
@@ -764,7 +770,7 @@ class ExecutionTimePredictor:
         error_margin = predicted_time * 0.2 * (1.0 - confidence_score)
         error_bounds = (
             max(0.1, predicted_time - error_margin),
-            predicted_time + error_margin
+            predicted_time + error_margin,
         )
 
         return PredictionResult(
@@ -775,16 +781,16 @@ class ExecutionTimePredictor:
             confidence_score=confidence_score,
             factors=self._get_time_factors(features),
             reasoning=reasoning,
-            error_bounds=error_bounds
+            error_bounds=error_bounds,
         )
 
-    def _get_time_factors(self, features: Dict[str, float]) -> Dict[str, float]:
+    def _get_time_factors(self, features: dict[str, float]) -> dict[str, float]:
         """Get factors affecting execution time."""
         return {
             "complexity_impact": features.get("operation_complexity", 0.5),
             "size_impact": features.get("input_size", 0.5),
             "system_load_impact": features.get("system_load", 0.5),
-            "cpu_impact": features.get("cpu_usage", 0.5)
+            "cpu_impact": features.get("cpu_usage", 0.5),
         }
 
 
@@ -813,11 +819,11 @@ class VulnerabilityPredictor:
         for vuln_sample_idx in range(300):
             # File characteristics with variation based on sample index
             if NUMPY_AVAILABLE:
-                file_type_risk = np.random.choice(  # noqa: S311
+                file_type_risk = np.random.choice(
                     [0.3, 0.5, 0.7, 0.9], p=[0.3, 0.3, 0.3, 0.1])
-                size_risk = np.random.uniform(0.1, 1.0)  # noqa: S311
-                complexity = np.random.uniform(0.2, 1.0)  # noqa: S311
-                entropy = np.random.uniform(0.3, 1.0)  # noqa: S311
+                size_risk = np.random.uniform(0.1, 1.0)
+                complexity = np.random.uniform(0.2, 1.0)
+                entropy = np.random.uniform(0.3, 1.0)
             else:
                 import random
                 file_type_risk = random.choices(  # noqa: S311
@@ -831,7 +837,7 @@ class VulnerabilityPredictor:
                 entropy *= 1.2  # Increase entropy for every 20th sample
 
             if NUMPY_AVAILABLE:
-                compiler_risk = np.random.uniform(0.2, 0.8)  # noqa: S311
+                compiler_risk = np.random.uniform(0.2, 0.8)
             else:
                 import random
                 compiler_risk = random.uniform(0.2, 0.8)  # noqa: S311
@@ -841,7 +847,7 @@ class VulnerabilityPredictor:
                 "size_risk": size_risk,
                 "function_complexity": complexity,
                 "entropy": entropy,
-                "compiler_risk": compiler_risk
+                "compiler_risk": compiler_risk,
             }
 
             # Vulnerability probability
@@ -863,13 +869,13 @@ class VulnerabilityPredictor:
 
             training_data.append({
                 "features": features,
-                "target": target
+                "target": target,
             })
 
         self.model.train(training_data)
 
     @profile_ai_operation("vulnerability_prediction")
-    def predict_vulnerability_likelihood(self, file_context: Dict[str, Any]) -> PredictionResult:
+    def predict_vulnerability_likelihood(self, file_context: dict[str, Any]) -> PredictionResult:
         """Predict likelihood of finding vulnerabilities."""
         features = self.feature_extractor.extract_vulnerability_features(
             file_context)
@@ -890,7 +896,7 @@ class VulnerabilityPredictor:
 
         error_bounds = (
             max(0.0, predicted_likelihood - 0.15),
-            min(1.0, predicted_likelihood + 0.15)
+            min(1.0, predicted_likelihood + 0.15),
         )
 
         return PredictionResult(
@@ -901,10 +907,10 @@ class VulnerabilityPredictor:
             confidence_score=confidence_score,
             factors=features,
             reasoning=reasoning,
-            error_bounds=error_bounds
+            error_bounds=error_bounds,
         )
 
-    def _generate_vuln_reasoning(self, features: Dict[str, float], likelihood: float) -> str:
+    def _generate_vuln_reasoning(self, features: dict[str, float], likelihood: float) -> str:
         """Generate reasoning for vulnerability prediction."""
         risk_factors = []
 
@@ -926,10 +932,9 @@ class VulnerabilityPredictor:
 
         if risk_factors:
             return f"{level} vulnerability likelihood due to {', '.join(risk_factors)}"
-        else:
-            return f"{level} vulnerability likelihood based on file analysis"
+        return f"{level} vulnerability likelihood based on file analysis"
 
-    def predict(self, binary_path: str) -> List[Dict[str, Any]]:
+    def predict(self, binary_path: str) -> list[dict[str, Any]]:
         """Predict vulnerabilities for a binary file."""
         try:
             import os
@@ -940,7 +945,7 @@ class VulnerabilityPredictor:
             file_context = {
                 "file_extension": os.path.splitext(binary_path)[1],
                 "file_size": os.path.getsize(binary_path),
-                "binary_path": binary_path
+                "binary_path": binary_path,
             }
 
             result = self.predict_vulnerability_likelihood(file_context)
@@ -950,7 +955,7 @@ class VulnerabilityPredictor:
                 "likelihood": result.predicted_value,
                 "confidence": result.confidence_score,
                 "reasoning": result.reasoning,
-                "factors": result.factors
+                "factors": result.factors,
             }]
 
         except Exception as e:
@@ -969,7 +974,7 @@ class VulnerabilityPredictor:
             file_context = {
                 "file_extension": os.path.splitext(binary_path)[1],
                 "file_size": os.path.getsize(binary_path),
-                "binary_path": binary_path
+                "binary_path": binary_path,
             }
 
             result = self.predict_vulnerability_likelihood(file_context)
@@ -990,21 +995,21 @@ class PredictiveIntelligenceEngine:
         self.time_predictor = ExecutionTimePredictor()
         self.vulnerability_predictor = VulnerabilityPredictor()
 
-        self.prediction_cache: Dict[str, PredictionResult] = {}
+        self.prediction_cache: dict[str, PredictionResult] = {}
         self.prediction_history: deque = deque(maxlen=1000)
 
         # Performance tracking
         self.prediction_stats = {
             "total_predictions": 0,
             "cache_hits": 0,
-            "accuracy_tracking": defaultdict(list)
+            "accuracy_tracking": defaultdict(list),
         }
 
         logger.info("Predictive intelligence engine initialized")
 
     @profile_ai_operation("make_prediction")
     def make_prediction(self, prediction_type: PredictionType,
-                        context: Dict[str, Any]) -> PredictionResult:
+                        context: dict[str, Any]) -> PredictionResult:
         """Make a prediction of specified type."""
         # Check cache first
         cache_key = self._generate_cache_key(prediction_type, context)
@@ -1019,11 +1024,11 @@ class PredictiveIntelligenceEngine:
         # Make new prediction
         if prediction_type == PredictionType.SUCCESS_PROBABILITY:
             result = self.success_predictor.predict_success_probability(
-                context.get("operation_type", "unknown"), context
+                context.get("operation_type", "unknown"), context,
             )
         elif prediction_type == PredictionType.EXECUTION_TIME:
             result = self.time_predictor.predict_execution_time(
-                context.get("operation_type", "unknown"), context
+                context.get("operation_type", "unknown"), context,
             )
         elif prediction_type == PredictionType.VULNERABILITY_DISCOVERY:
             result = self.vulnerability_predictor.predict_vulnerability_likelihood(
@@ -1037,7 +1042,7 @@ class PredictiveIntelligenceEngine:
                 confidence=PredictionConfidence.LOW,
                 confidence_score=0.3,
                 factors={},
-                reasoning="Prediction type not yet supported"
+                reasoning="Prediction type not yet supported",
             )
 
         # Cache and track
@@ -1047,7 +1052,7 @@ class PredictiveIntelligenceEngine:
 
         return result
 
-    def _generate_cache_key(self, prediction_type: PredictionType, context: Dict[str, Any]) -> str:
+    def _generate_cache_key(self, prediction_type: PredictionType, context: dict[str, Any]) -> str:
         """Generate cache key for prediction."""
         import hashlib
         key_data = f"{prediction_type.value}_{json.dumps(context, sort_keys=True)}"
@@ -1079,24 +1084,24 @@ class PredictiveIntelligenceEngine:
         if prediction.prediction_type == PredictionType.SUCCESS_PROBABILITY:
             self.success_predictor.model.update_model({
                 "features": prediction.factors,
-                "target": actual_value
+                "target": actual_value,
             })
         elif prediction.prediction_type == PredictionType.EXECUTION_TIME:
             self.time_predictor.model.update_model({
                 "features": prediction.factors,
-                "target": actual_value
+                "target": actual_value,
             })
 
         logger.info(
             f"Updated prediction accuracy for {prediction.prediction_type.value}: {accuracy:.3f}")
 
-    def get_prediction_analytics(self) -> Dict[str, Any]:
+    def get_prediction_analytics(self) -> dict[str, Any]:
         """Get analytics about prediction performance."""
         analytics = {
             "total_predictions": self.prediction_stats["total_predictions"],
             "cache_hit_rate": self.prediction_stats["cache_hits"] / max(1, self.prediction_stats["total_predictions"]),
             "recent_predictions": len(self.prediction_history),
-            "accuracy_by_type": {}
+            "accuracy_by_type": {},
         }
 
         # Calculate average accuracy by prediction type
@@ -1105,12 +1110,12 @@ class PredictiveIntelligenceEngine:
                 analytics["accuracy_by_type"][pred_type] = {
                     "avg_accuracy": sum(accuracies) / len(accuracies),
                     "sample_count": len(accuracies),
-                    "recent_accuracy": sum(accuracies[-10:]) / min(10, len(accuracies))
+                    "recent_accuracy": sum(accuracies[-10:]) / min(10, len(accuracies)),
                 }
 
         return analytics
 
-    def get_prediction_insights(self) -> Dict[str, Any]:
+    def get_prediction_insights(self) -> dict[str, Any]:
         """Get insights from prediction patterns."""
         insights = []
 
@@ -1156,17 +1161,17 @@ class PredictiveIntelligenceEngine:
         return {
             "insights": insights,
             "confidence_distribution": self._get_confidence_distribution(),
-            "prediction_type_distribution": self._get_prediction_type_distribution()
+            "prediction_type_distribution": self._get_prediction_type_distribution(),
         }
 
-    def _get_confidence_distribution(self) -> Dict[str, int]:
+    def _get_confidence_distribution(self) -> dict[str, int]:
         """Get distribution of confidence levels."""
         distribution = defaultdict(int)
         for prediction in self.prediction_history:
             distribution[prediction.confidence.value] += 1
         return dict(distribution)
 
-    def _get_prediction_type_distribution(self) -> Dict[str, int]:
+    def _get_prediction_type_distribution(self) -> dict[str, int]:
         """Get distribution of prediction types."""
         distribution = defaultdict(int)
         for prediction in self.prediction_history:

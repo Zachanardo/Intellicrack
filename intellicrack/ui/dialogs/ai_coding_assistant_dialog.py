@@ -1,5 +1,4 @@
-"""
-AI Coding Assistant Dialog with Three-Panel Layout
+"""AI Coding Assistant Dialog with Three-Panel Layout
 
 Copyright (C) 2025 Zachary Flint
 
@@ -24,7 +23,7 @@ import re
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from PyQt6.QtCore import QFileSystemWatcher, Qt, pyqtSignal
 from PyQt6.QtGui import QAction, QColor, QFont, QSyntaxHighlighter, QTextCharFormat
@@ -73,7 +72,7 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
             "def", "class", "if", "elif", "else", "for", "while", "try",
             "except", "finally", "import", "from", "return", "yield",
             "lambda", "with", "as", "pass", "break", "continue", "and",
-            "or", "not", "in", "is", "None", "True", "False"
+            "or", "not", "in", "is", "None", "True", "False",
         ]
         for keyword in keywords:
             pattern = f"\\b{keyword}\\b"
@@ -124,7 +123,7 @@ class JavaScriptSyntaxHighlighter(QSyntaxHighlighter):
             "function", "var", "let", "const", "if", "else", "for", "while",
             "do", "switch", "case", "default", "break", "continue", "return",
             "try", "catch", "finally", "throw", "new", "this", "typeof",
-            "instanceof", "true", "false", "null", "undefined"
+            "instanceof", "true", "false", "null", "undefined",
         ]
         for keyword in keywords:
             pattern = f"\\b{keyword}\\b"
@@ -194,7 +193,7 @@ class FileTreeWidget(QTreeWidget):
             ".json": "json",
             ".xml": "xml",
             ".html": "html",
-            ".css": "css"
+            ".css": "css",
         }
 
     def set_root_directory(self, root_path: str):
@@ -239,16 +238,14 @@ class FileTreeWidget(QTreeWidget):
                     # Add subdirectories (up to 3 levels deep to avoid performance issues)
                     if len(str(item).split(os.sep)) - len(str(self.current_root).split(os.sep)) < 3:
                         self._add_directory_items(tree_item, item)
+                # Set file icon based on extension
+                elif item.suffix.lower() in self.supported_extensions:
+                    tree_item.setIcon(0, self.style().standardIcon(self.style().SP_FileIcon))
                 else:
-                    # Set file icon based on extension
-                    if item.suffix.lower() in self.supported_extensions:
-                        tree_item.setIcon(0, self.style().standardIcon(self.style().SP_FileIcon))
-                    else:
-                        tree_item.setIcon(0, self.style().standardIcon(self.style().SP_ComputerIcon))
+                    tree_item.setIcon(0, self.style().standardIcon(self.style().SP_ComputerIcon))
         except PermissionError as e:
             logger.error("Permission error in ai_coding_assistant_dialog: %s", e)
             # Skip directories we can't read
-            pass
 
     def refresh_tree(self):
         """Refresh the file tree."""
@@ -258,7 +255,7 @@ class FileTreeWidget(QTreeWidget):
             self.populate_tree()
             self.restore_expanded_items(expanded_items)
 
-    def get_expanded_items(self) -> List[str]:
+    def get_expanded_items(self) -> list[str]:
         """Get list of expanded item paths."""
         expanded = []
 
@@ -276,7 +273,7 @@ class FileTreeWidget(QTreeWidget):
 
         return expanded
 
-    def restore_expanded_items(self, expanded_paths: List[str]):
+    def restore_expanded_items(self, expanded_paths: list[str]):
         """Restore expanded state of items."""
         def traverse(item):
             path = item.data(0, Qt.UserRole)
@@ -330,7 +327,7 @@ class CodeEditor(QPlainTextEdit):
     def load_file(self, file_path: str):
         """Load a file into the editor."""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             self.setPlainText(content)
@@ -800,7 +797,7 @@ class AICodingAssistantDialog(QDialog):
             reply = QMessageBox.question(
                 self, "Unsaved Changes",
                 "File has unsaved changes. Save before closing?",
-                QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
+                QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
             )
 
             if reply == QMessageBox.Save:
@@ -832,7 +829,7 @@ class AICodingAssistantDialog(QDialog):
 
         self.update_modified_status()
 
-    def get_current_editor(self) -> Optional[CodeEditor]:
+    def get_current_editor(self) -> CodeEditor | None:
         """Get the currently active code editor."""
         current_widget = self.editor_tabs.currentWidget()
         if isinstance(current_widget, CodeEditor):
@@ -892,14 +889,14 @@ class AICodingAssistantDialog(QDialog):
             self.chat_widget.add_message("AI", f"Error: {e}")
             self.ai_status_label.setText("AI Error")
 
-    def get_ai_context(self) -> Dict[str, Any]:
+    def get_ai_context(self) -> dict[str, Any]:
         """Get context information for AI processing."""
         context = {
             "project_root": str(self.current_project) if self.current_project else None,
             "current_file": None,
             "selected_text": None,
             "file_content": None,
-            "file_type": None
+            "file_type": None,
         }
 
         current_editor = self.get_current_editor()
@@ -911,7 +908,7 @@ class AICodingAssistantDialog(QDialog):
 
         return context
 
-    def process_ai_request(self, message: str, context: Dict[str, Any]) -> str:
+    def process_ai_request(self, message: str, context: dict[str, Any]) -> str:
         """Process AI request and return response."""
         try:
             # Handle specific commands first
@@ -922,7 +919,7 @@ class AICodingAssistantDialog(QDialog):
                 response = self.ai_tools.ask_question(question)
                 return response
 
-            elif "generate" in message.lower():
+            if "generate" in message.lower():
                 # Handle code generation requests
                 script_type = self.script_type_combo.currentText()
                 if context.get("file_content"):
@@ -933,35 +930,33 @@ class AICodingAssistantDialog(QDialog):
                 response = self.ai_tools.ask_question(question)
                 return response
 
-            elif "optimize" in message.lower() and context.get("selected_text"):
+            if "optimize" in message.lower() and context.get("selected_text"):
                 # Handle optimization requests
                 code_snippet = context["selected_text"][:500]
                 question = f"Please optimize this code:\n```\n{code_snippet}\n```"
                 response = self.ai_tools.ask_question(question)
                 return response
 
-            elif "debug" in message.lower() and context.get("selected_text"):
+            if "debug" in message.lower() and context.get("selected_text"):
                 # Handle debugging requests
                 code_snippet = context["selected_text"][:500]
                 question = f"Help me debug this code:\n```\n{code_snippet}\n```"
                 response = self.ai_tools.ask_question(question)
                 return response
 
-            else:
-                # For general questions, use ask_question directly
-                response = self.ai_tools.ask_question(message)
-                return response
+            # For general questions, use ask_question directly
+            response = self.ai_tools.ask_question(message)
+            return response
 
         except Exception as e:
             logger.error(f"Error processing AI request: {e}")
             # Fallback to basic responses if AI fails
             if "explain" in message.lower():
                 return "Please select some code to explain."
-            elif "generate" in message.lower():
+            if "generate" in message.lower():
                 script_type = self.script_type_combo.currentText()
                 return f"AI generation temporarily unavailable for {script_type}."
-            else:
-                return f"AI processing error: {str(e)}"
+            return f"AI processing error: {e!s}"
 
     def ai_generate_code(self):
         """Generate code using AI."""
@@ -1014,10 +1009,10 @@ def example_function():
 
         # Read script content
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 script_content = f.read()
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to read script: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to read script: {e!s}")
             return
 
         # Get target binary if available
@@ -1030,8 +1025,8 @@ def example_function():
             target_binary=target_binary,
             options={
                 "file_path": str(file_path),
-                "from_editor": True
-            }
+                "from_editor": True,
+            },
         )
 
         # Show result in chat widget
@@ -1051,9 +1046,9 @@ def example_function():
         try:
             result = subprocess.run(
                 ["python", file_path],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             output = f"Exit code: {result.returncode}\n\nStdout:\n{result.stdout}\n\nStderr:\n{result.stderr}"
@@ -1071,9 +1066,9 @@ def example_function():
         try:
             result = subprocess.run(
                 ["node", file_path],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             output = f"Exit code: {result.returncode}\n\nOutput:\n{result.stdout}\n\nErrors:\n{result.stderr}"
@@ -1115,13 +1110,13 @@ def example_function():
             try:
                 result = subprocess.run(
                     ["black", "--quiet", temp_file_path],
-                    capture_output=True,
+                    check=False, capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10,
                 )
 
                 if result.returncode == 0:
-                    with open(temp_file_path, "r") as f:
+                    with open(temp_file_path) as f:
                         formatted_content = f.read()
 
                     editor.setPlainText(formatted_content)
@@ -1162,7 +1157,7 @@ def example_function():
                     ".cpp": "cpp",
                     ".h": "c",
                     ".hpp": "cpp",
-                    ".java": "java"
+                    ".java": "java",
                 }
                 language = ext_to_lang.get(file_ext, "auto")
 
@@ -1190,10 +1185,10 @@ def example_function():
 
         except Exception as e:
             logger.error(f"Code analysis error: {e}")
-            self.chat_widget.add_message("AI", f"Error during code analysis: {str(e)}")
+            self.chat_widget.add_message("AI", f"Error during code analysis: {e!s}")
             self.ai_status_label.setText("AI Error")
 
-    def _format_analysis_results(self, analysis_result: Dict[str, Any]) -> str:
+    def _format_analysis_results(self, analysis_result: dict[str, Any]) -> str:
         """Format code analysis results for display."""
         lines = ["📊 **Code Analysis Results**\n"]
 
@@ -1243,7 +1238,7 @@ def example_function():
 
         return "\n".join(lines)
 
-    def _highlight_security_issues(self, security_issues: List[str]):
+    def _highlight_security_issues(self, security_issues: list[str]):
         """Highlight security issues in the code editor."""
         current_editor = self.get_current_editor()
         if not current_editor:
@@ -1260,7 +1255,7 @@ def example_function():
                 self,
                 "Security Issues Detected",
                 f"Found {len(security_issues)} security issue(s) in the code.\n"
-                "Please review the analysis results in the chat panel."
+                "Please review the analysis results in the chat panel.",
             )
 
     def generate_script_dialog(self):
@@ -1274,7 +1269,7 @@ def example_function():
         file_path, _ = QFileDialog.getSaveFileName(
             self, "Create New File",
             str(self.current_project) if self.current_project else "",
-            "Python Files (*.py);;JavaScript Files (*.js);;All Files (*)"
+            "Python Files (*.py);;JavaScript Files (*.js);;All Files (*)",
         )
 
         if file_path:

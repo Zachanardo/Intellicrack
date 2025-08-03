@@ -1,5 +1,4 @@
-"""
-Model Batch Tester for Intellicrack
+"""Model Batch Tester for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -21,11 +20,12 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
 from ..utils.logger import get_logger
 from .llm_backends import LLMManager, LLMMessage
@@ -37,40 +37,43 @@ logger = get_logger(__name__)
 @dataclass
 class TestCase:
     """A test case for model evaluation."""
+
     test_id: str
     prompt: str
-    expected_output: Optional[str] = None
-    expected_patterns: Optional[List[str]] = None
+    expected_output: str | None = None
+    expected_patterns: list[str] | None = None
     max_tokens: int = 100
     temperature: float = 0.7
-    system_prompt: Optional[str] = None
-    metadata: Dict[str, Any] = None
+    system_prompt: str | None = None
+    metadata: dict[str, Any] = None
 
 
 @dataclass
 class TestResult:
     """Result from a single test case."""
+
     test_id: str
     model_id: str
     success: bool
     output: str
     inference_time: float
     tokens_generated: int
-    error: Optional[str] = None
-    passed_validation: Optional[bool] = None
-    validation_details: Optional[Dict[str, Any]] = None
-    performance_metrics: Optional[Dict[str, Any]] = None
+    error: str | None = None
+    passed_validation: bool | None = None
+    validation_details: dict[str, Any] | None = None
+    performance_metrics: dict[str, Any] | None = None
 
 
 @dataclass
 class BatchTestReport:
     """Report from batch testing multiple models."""
+
     test_suite_id: str
     timestamp: datetime
-    models_tested: List[str]
-    test_cases: List[TestCase]
-    results: List[TestResult]
-    summary: Dict[str, Any]
+    models_tested: list[str]
+    test_cases: list[TestCase]
+    results: list[TestResult]
+    summary: dict[str, Any]
     duration: float
 
 
@@ -79,9 +82,9 @@ class ModelBatchTester:
 
     def __init__(
         self,
-        llm_manager: Optional[LLMManager] = None,
+        llm_manager: LLMManager | None = None,
         max_workers: int = 4,
-        timeout_per_test: float = 60.0
+        timeout_per_test: float = 60.0,
     ):
         """Initialize the batch tester.
 
@@ -89,6 +92,7 @@ class ModelBatchTester:
             llm_manager: LLM manager instance
             max_workers: Maximum concurrent tests
             timeout_per_test: Timeout for each test in seconds
+
         """
         self.llm_manager = llm_manager
         self.max_workers = max_workers
@@ -96,8 +100,8 @@ class ModelBatchTester:
         self.performance_monitor = get_performance_monitor()
 
         # Test suites storage
-        self.test_suites: Dict[str, List[TestCase]] = {}
-        self.test_reports: List[BatchTestReport] = []
+        self.test_suites: dict[str, list[TestCase]] = {}
+        self.test_reports: list[BatchTestReport] = []
 
         # Load default test suites
         self._load_default_test_suites()
@@ -111,22 +115,22 @@ class ModelBatchTester:
                 prompt="Say 'Hello, World!' and nothing else.",
                 expected_output="Hello, World!",
                 max_tokens=10,
-                temperature=0.0
+                temperature=0.0,
             ),
             TestCase(
                 test_id="simple_math",
                 prompt="What is 2 + 2? Answer with just the number.",
                 expected_patterns=["4"],
                 max_tokens=10,
-                temperature=0.0
+                temperature=0.0,
             ),
             TestCase(
                 test_id="completion",
                 prompt="The capital of France is",
                 expected_patterns=["Paris"],
                 max_tokens=20,
-                temperature=0.3
-            )
+                temperature=0.3,
+            ),
         ]
 
         # Code generation tests
@@ -136,15 +140,15 @@ class ModelBatchTester:
                 prompt="Write a Python function that prints 'Hello, World!'",
                 expected_patterns=["def", "print", "Hello, World"],
                 max_tokens=100,
-                temperature=0.5
+                temperature=0.5,
             ),
             TestCase(
                 test_id="fibonacci",
                 prompt="Write a Python function to calculate the nth Fibonacci number",
                 expected_patterns=["def", "fibonacci", "return"],
                 max_tokens=150,
-                temperature=0.5
-            )
+                temperature=0.5,
+            ),
         ]
 
         # Binary analysis tests (relevant to Intellicrack)
@@ -154,7 +158,7 @@ class ModelBatchTester:
                 prompt="What protection scheme uses XOR encryption with a rolling key?",
                 expected_patterns=["XOR", "rolling", "key"],
                 max_tokens=100,
-                temperature=0.7
+                temperature=0.7,
             ),
             TestCase(
                 test_id="reverse_engineering",
@@ -162,22 +166,23 @@ class ModelBatchTester:
                 expected_patterns=["Interceptor", "attach", "main"],
                 max_tokens=200,
                 temperature=0.5,
-                system_prompt="You are an expert in reverse engineering and Frida scripting."
-            )
+                system_prompt="You are an expert in reverse engineering and Frida scripting.",
+            ),
         ]
 
-    def add_test_suite(self, suite_id: str, test_cases: List[TestCase]):
+    def add_test_suite(self, suite_id: str, test_cases: list[TestCase]):
         """Add a custom test suite.
 
         Args:
             suite_id: Identifier for the test suite
             test_cases: List of test cases
+
         """
         self.test_suites[suite_id] = test_cases
         logger.info(
             f"Added test suite '{suite_id}' with {len(test_cases)} tests")
 
-    def load_test_suite_from_file(self, file_path: Union[str, Path]) -> str:
+    def load_test_suite_from_file(self, file_path: str | Path) -> str:
         """Load test suite from JSON file.
 
         Args:
@@ -185,10 +190,11 @@ class ModelBatchTester:
 
         Returns:
             Suite ID
+
         """
         file_path = Path(file_path)
 
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             data = json.load(f)
 
         suite_id = data.get("suite_id", file_path.stem)
@@ -203,7 +209,7 @@ class ModelBatchTester:
                 max_tokens=test_data.get("max_tokens", 100),
                 temperature=test_data.get("temperature", 0.7),
                 system_prompt=test_data.get("system_prompt"),
-                metadata=test_data.get("metadata", {})
+                metadata=test_data.get("metadata", {}),
             )
             test_cases.append(test_case)
 
@@ -214,7 +220,7 @@ class ModelBatchTester:
         self,
         model_id: str,
         test_case: TestCase,
-        llm_manager: Optional[LLMManager] = None
+        llm_manager: LLMManager | None = None,
     ) -> TestResult:
         """Run a single test case on a model.
 
@@ -225,6 +231,7 @@ class ModelBatchTester:
 
         Returns:
             Test result
+
         """
         llm_manager = llm_manager or self.llm_manager
         if not llm_manager:
@@ -235,7 +242,7 @@ class ModelBatchTester:
                 output="",
                 inference_time=0,
                 tokens_generated=0,
-                error="No LLM manager available"
+                error="No LLM manager available",
             )
 
         # Start performance tracking
@@ -279,7 +286,7 @@ class ModelBatchTester:
                 perf_context,
                 tokens_generated=tokens_generated,
                 sequence_length=len(test_case.prompt),
-                device=getattr(llm, "device", "cpu")
+                device=getattr(llm, "device", "cpu"),
             )
 
             # Validate output
@@ -312,8 +319,8 @@ class ModelBatchTester:
                 validation_details=validation_details,
                 performance_metrics={
                     "tokens_per_second": perf_metrics.tokens_per_second,
-                    "memory_mb": perf_metrics.memory_used_mb + perf_metrics.gpu_memory_mb
-                }
+                    "memory_mb": perf_metrics.memory_used_mb + perf_metrics.gpu_memory_mb,
+                },
             )
 
         except Exception as e:
@@ -322,7 +329,7 @@ class ModelBatchTester:
             self.performance_monitor.end_inference(
                 perf_context,
                 tokens_generated=0,
-                error=str(e)
+                error=str(e),
             )
 
             return TestResult(
@@ -332,15 +339,15 @@ class ModelBatchTester:
                 output="",
                 inference_time=time.time() - start_time,
                 tokens_generated=0,
-                error=str(e)
+                error=str(e),
             )
 
     def run_batch_test(
         self,
-        model_ids: List[str],
+        model_ids: list[str],
         suite_id: str = "basic",
         parallel: bool = True,
-        progress_callback: Optional[Callable[[int, int], None]] = None
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> BatchTestReport:
         """Run batch tests on multiple models.
 
@@ -352,6 +359,7 @@ class ModelBatchTester:
 
         Returns:
             Batch test report
+
         """
         if suite_id not in self.test_suites:
             raise ValueError(f"Test suite '{suite_id}' not found")
@@ -375,7 +383,7 @@ class ModelBatchTester:
                             self.run_single_test,
                             model_id,
                             test_case,
-                            self.llm_manager
+                            self.llm_manager,
                         )
                         futures.append((future, model_id, test_case))
 
@@ -394,7 +402,7 @@ class ModelBatchTester:
                             output="",
                             inference_time=self.timeout_per_test,
                             tokens_generated=0,
-                            error=f"Test failed: {str(e)}"
+                            error=f"Test failed: {e!s}",
                         ))
 
                     completed_tests += 1
@@ -424,7 +432,7 @@ class ModelBatchTester:
             test_cases=test_cases,
             results=results,
             summary=summary,
-            duration=duration
+            duration=duration,
         )
 
         self.test_reports.append(report)
@@ -435,10 +443,10 @@ class ModelBatchTester:
 
     def _generate_summary(
         self,
-        results: List[TestResult],
-        model_ids: List[str],
-        test_cases: List[TestCase]
-    ) -> Dict[str, Any]:
+        results: list[TestResult],
+        model_ids: list[str],
+        test_cases: list[TestCase],
+    ) -> dict[str, Any]:
         """Generate summary statistics from test results."""
         summary = {
             "total_tests": len(results),
@@ -447,7 +455,7 @@ class ModelBatchTester:
             "validation_passed": sum(1 for r in results if r.passed_validation is True),
             "validation_failed": sum(1 for r in results if r.passed_validation is False),
             "models": {},
-            "tests": {}
+            "tests": {},
         }
 
         # Per-model statistics
@@ -464,7 +472,7 @@ class ModelBatchTester:
                     r.tokens_generated / r.inference_time
                     for r in model_results
                     if r.success and r.inference_time > 0
-                ) / len([r for r in model_results if r.success]) if any(r.success for r in model_results) else 0
+                ) / len([r for r in model_results if r.success]) if any(r.success for r in model_results) else 0,
             }
 
         # Per-test statistics
@@ -479,17 +487,17 @@ class ModelBatchTester:
                 "fastest_model": min(
                     (r for r in test_results if r.success),
                     key=lambda r: r.inference_time,
-                    default=None
-                )
+                    default=None,
+                ),
             }
 
         return summary
 
     def compare_models(
         self,
-        model_ids: List[str],
-        suite_id: str = "basic"
-    ) -> Dict[str, Any]:
+        model_ids: list[str],
+        suite_id: str = "basic",
+    ) -> dict[str, Any]:
         """Run comparison test between models.
 
         Args:
@@ -498,6 +506,7 @@ class ModelBatchTester:
 
         Returns:
             Comparison results
+
         """
         # Run batch test
         report = self.run_batch_test(model_ids, suite_id)
@@ -505,7 +514,7 @@ class ModelBatchTester:
         comparison = {
             "test_suite": suite_id,
             "models": {},
-            "rankings": {}
+            "rankings": {},
         }
 
         # Extract model performance
@@ -515,7 +524,7 @@ class ModelBatchTester:
                 "success_rate": model_summary["success"] / model_summary["total"] if model_summary["total"] > 0 else 0,
                 "validation_rate": model_summary["validation_passed"] / model_summary["success"] if model_summary["success"] > 0 else 0,
                 "avg_inference_time": model_summary["avg_inference_time"],
-                "avg_tokens_per_second": model_summary["avg_tokens_per_second"]
+                "avg_tokens_per_second": model_summary["avg_tokens_per_second"],
             }
 
         # Generate rankings
@@ -525,14 +534,14 @@ class ModelBatchTester:
                 # Lower is better
                 ranked = sorted(
                     comparison["models"].items(),
-                    key=lambda x: x[1][metric]
+                    key=lambda x: x[1][metric],
                 )
             else:
                 # Higher is better
                 ranked = sorted(
                     comparison["models"].items(),
                     key=lambda x: x[1][metric],
-                    reverse=True
+                    reverse=True,
                 )
 
             comparison["rankings"][metric] = [
@@ -547,8 +556,8 @@ class ModelBatchTester:
     def export_report(
         self,
         report: BatchTestReport,
-        output_path: Optional[Union[str, Path]] = None,
-        format: str = "json"
+        output_path: str | Path | None = None,
+        format: str = "json",
     ) -> Path:
         """Export test report.
 
@@ -559,6 +568,7 @@ class ModelBatchTester:
 
         Returns:
             Path to exported file
+
         """
         if output_path is None:
             output_path = Path.home() / ".intellicrack" / "test_reports"
@@ -582,7 +592,7 @@ class ModelBatchTester:
                         "expected_output": tc.expected_output,
                         "expected_patterns": tc.expected_patterns,
                         "max_tokens": tc.max_tokens,
-                        "temperature": tc.temperature
+                        "temperature": tc.temperature,
                     }
                     for tc in report.test_cases
                 ],
@@ -596,10 +606,10 @@ class ModelBatchTester:
                         "tokens_generated": r.tokens_generated,
                         "passed_validation": r.passed_validation,
                         "validation_details": r.validation_details,
-                        "error": r.error
+                        "error": r.error,
                     }
                     for r in report.results
-                ]
+                ],
             }
 
             with open(output_path, "w") as f:
@@ -718,7 +728,7 @@ class ModelBatchTester:
 _BATCH_TESTER = None
 
 
-def get_batch_tester(llm_manager: Optional[LLMManager] = None) -> ModelBatchTester:
+def get_batch_tester(llm_manager: LLMManager | None = None) -> ModelBatchTester:
     """Get the global batch tester."""
     global _BATCH_TESTER
     if _BATCH_TESTER is None:

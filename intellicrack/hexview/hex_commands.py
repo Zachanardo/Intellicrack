@@ -1,5 +1,4 @@
-"""
-Command system for hex editor operations with undo/redo support.
+"""Command system for hex editor operations with undo/redo support.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,19 +22,25 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "HexCommand", "CommandManager", "OperationType",
-    "ReplaceCommand", "InsertCommand", "DeleteCommand",
-    "FillCommand", "PasteCommand"
+    "CommandManager",
+    "DeleteCommand",
+    "FillCommand",
+    "HexCommand",
+    "InsertCommand",
+    "OperationType",
+    "PasteCommand",
+    "ReplaceCommand",
 ]
 
 
 class OperationType(Enum):
     """Types of hex editor operations."""
+
     REPLACE = "replace"
     INSERT = "insert"
     DELETE = "delete"
@@ -57,56 +62,52 @@ class HexCommand(ABC):
 
     @abstractmethod
     def execute(self, file_handler) -> bool:
-        """
-        Execute the command.
+        """Execute the command.
 
         Args:
             file_handler: VirtualFileAccess instance
 
         Returns:
             True if successful, False otherwise
+
         """
-        pass
 
     @abstractmethod
     def undo(self, file_handler) -> bool:
-        """
-        Undo the command.
+        """Undo the command.
 
         Args:
             file_handler: VirtualFileAccess instance
 
         Returns:
             True if successful, False otherwise
+
         """
-        pass
 
     @abstractmethod
     def get_affected_range(self) -> tuple:
-        """
-        Get the range of bytes affected by this command.
+        """Get the range of bytes affected by this command.
 
         Returns:
             Tuple of (start_offset, end_offset)
+
         """
-        pass
 
     def can_merge_with(self, other: "HexCommand") -> bool:
-        """
-        Check if this command can be merged with another command.
+        """Check if this command can be merged with another command.
 
         Args:
             other: Another command
 
         Returns:
             True if commands can be merged
+
         """
         _other = other  # Store for potential future use
         return False
 
     def merge_with(self, other: "HexCommand") -> "HexCommand":
-        """
-        Merge this command with another command.
+        """Merge this command with another command.
 
         Args:
             other: Another command to merge with
@@ -116,6 +117,7 @@ class HexCommand(ABC):
 
         Raises:
             ValueError: If commands cannot be merged
+
         """
         # Default implementation for commands that don't support merging
         # Subclasses should override this method if they support merging
@@ -394,7 +396,7 @@ class CommandManager:
     def __init__(self, max_history: int = 100):
         """Initialize the CommandManager with maximum history size."""
         self.max_history = max_history
-        self.command_history: List[HexCommand] = []
+        self.command_history: list[HexCommand] = []
         self.current_index = -1
         self.file_handler = None
         self.auto_merge = True
@@ -404,14 +406,14 @@ class CommandManager:
         self.file_handler = file_handler
 
     def execute_command(self, command: HexCommand) -> bool:
-        """
-        Execute a command and add it to the history.
+        """Execute a command and add it to the history.
 
         Args:
             command: Command to execute
 
         Returns:
             True if successful, False otherwise
+
         """
         if not self.file_handler:
             logger.error("No file handler set for command execution")
@@ -437,9 +439,8 @@ class CommandManager:
                         self.command_history[self.current_index] = merged_command
                         logger.debug("Merged command: %s", merged_command.description)
                         return True
-                    else:
-                        # If merge fails, re-execute the last command and continue with normal execution
-                        last_command.execute(self.file_handler)
+                    # If merge fails, re-execute the last command and continue with normal execution
+                    last_command.execute(self.file_handler)
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.warning("Command merge failed: %s", e)
                     # Continue with normal execution
@@ -465,11 +466,11 @@ class CommandManager:
         return True
 
     def undo(self) -> bool:
-        """
-        Undo the last command.
+        """Undo the last command.
 
         Returns:
             True if successful, False otherwise
+
         """
         if not self.can_undo():
             return False
@@ -479,16 +480,15 @@ class CommandManager:
             self.current_index -= 1
             logger.debug("Undid command: %s", command.description)
             return True
-        else:
-            logger.error("Failed to undo command: %s", command.description)
-            return False
+        logger.error("Failed to undo command: %s", command.description)
+        return False
 
     def redo(self) -> bool:
-        """
-        Redo the next command.
+        """Redo the next command.
 
         Returns:
             True if successful, False otherwise
+
         """
         if not self.can_redo():
             return False
@@ -498,9 +498,8 @@ class CommandManager:
             self.current_index += 1
             logger.debug("Redid command: %s", command.description)
             return True
-        else:
-            logger.error("Failed to redo command: %s", command.description)
-            return False
+        logger.error("Failed to redo command: %s", command.description)
+        return False
 
     def can_undo(self) -> bool:
         """Check if undo is possible."""
@@ -516,24 +515,24 @@ class CommandManager:
         self.current_index = -1
         logger.debug("Cleared command history")
 
-    def get_undo_description(self) -> Optional[str]:
+    def get_undo_description(self) -> str | None:
         """Get description of the command that would be undone."""
         if self.can_undo():
             return self.command_history[self.current_index].description
         return None
 
-    def get_redo_description(self) -> Optional[str]:
+    def get_redo_description(self) -> str | None:
         """Get description of the command that would be redone."""
         if self.can_redo():
             return self.command_history[self.current_index + 1].description
         return None
 
-    def get_history_summary(self) -> List[Dict[str, Any]]:
-        """
-        Get a summary of the command history.
+    def get_history_summary(self) -> list[dict[str, Any]]:
+        """Get a summary of the command history.
 
         Returns:
             List of command information dictionaries
+
         """
         summary = []
         for i, command in enumerate(self.command_history):
@@ -543,7 +542,7 @@ class CommandManager:
                 "type": command.operation_type.value,
                 "executed": command.executed,
                 "is_current": i == self.current_index,
-                "affected_range": command.get_affected_range()
+                "affected_range": command.get_affected_range(),
             })
         return summary
 

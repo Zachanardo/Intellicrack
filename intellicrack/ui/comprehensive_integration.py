@@ -1,5 +1,4 @@
-"""
-Comprehensive Integration Module for All Radare2 UI Features
+"""Comprehensive Integration Module for All Radare2 UI Features
 
 Copyright (C) 2025 Zachary Flint
 
@@ -19,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Dict, Optional
 
 from PyQt6.QtWidgets import QMainWindow, QTabWidget, QWidget
 
@@ -32,8 +30,7 @@ logger = get_logger(__name__)
 
 
 class ComprehensiveR2Integration:
-    """
-    Comprehensive integration class that handles all radare2 UI features.
+    """Comprehensive integration class that handles all radare2 UI features.
 
     This class provides the main entry point for integrating all radare2
     functionality into any Intellicrack application variant.
@@ -49,18 +46,18 @@ class ComprehensiveR2Integration:
             "main_app": False,
             "menu_integration": False,
             "signal_connections": False,
-            "error_handling": False
+            "error_handling": False,
         }
 
     def integrate_with_application(self, main_app) -> bool:
-        """
-        Main integration method that handles all types of applications.
+        """Main integration method that handles all types of applications.
 
         Args:
             main_app: The main application instance (any type)
 
         Returns:
             bool: True if integration successful, False otherwise
+
         """
         try:
             self.logger.info(f"Starting comprehensive radare2 integration with {type(main_app).__name__}")
@@ -246,7 +243,7 @@ class ComprehensiveR2Integration:
             # Connect to existing signals if they exist
             if hasattr(main_app, "update_output"):
                 self.ui_manager.status_updated.connect(
-                    lambda msg: main_app.update_output.emit(f"[R2] {msg}")
+                    lambda msg: main_app.update_output.emit(f"[R2] {msg}"),
                 )
 
             # Add menu items to existing menu
@@ -290,7 +287,7 @@ class ComprehensiveR2Integration:
             # Connect analysis completion to main app
             if hasattr(main_app, "update_analysis_results"):
                 self.ui_manager.analysis_completed.connect(
-                    lambda results: main_app.update_analysis_results.emit(str(results))
+                    lambda results: main_app.update_analysis_results.emit(str(results)),
                 )
 
             # Connect progress updates
@@ -341,13 +338,13 @@ class ComprehensiveR2Integration:
                 ("Import Analysis", "imports"),
                 ("CFG Analysis", "cfg"),
                 ("AI Analysis", "ai"),
-                ("Bypass Generation", "bypass")
+                ("Bypass Generation", "bypass"),
             ]
 
             for action_name, analysis_type in analysis_actions:
                 action = r2_menu.addAction(action_name)
                 action.triggered.connect(
-                    lambda checked, t=analysis_type: self.ui_manager.start_analysis(t)
+                    lambda checked, t=analysis_type: self.ui_manager.start_analysis(t),
                 )
 
             # Add separator and utilities
@@ -373,13 +370,13 @@ class ComprehensiveR2Integration:
             quick_actions = [
                 ("Analyze", "comprehensive"),
                 ("Vulnerabilities", "vulnerability"),
-                ("License", "decompilation")
+                ("License", "decompilation"),
             ]
 
             for action_name, analysis_type in quick_actions:
                 action = toolbar.addAction(action_name)
                 action.triggered.connect(
-                    lambda checked, t=analysis_type: self.ui_manager.start_analysis(t)
+                    lambda checked, t=analysis_type: self.ui_manager.start_analysis(t),
                 )
 
             toolbar.addSeparator()
@@ -401,7 +398,7 @@ class ComprehensiveR2Integration:
 
                 # Connect status updates
                 self.ui_manager.status_updated.connect(
-                    lambda msg: status_bar.showMessage(f"R2: {msg}", 5000)
+                    lambda msg: status_bar.showMessage(f"R2: {msg}", 5000),
                 )
 
                 self.logger.info("Status bar integration completed")
@@ -434,11 +431,11 @@ class ComprehensiveR2Integration:
         except Exception as e:
             self.logger.error(f"Failed to add fallback functionality: {e}")
 
-    def get_integration_status(self) -> Dict[str, bool]:
+    def get_integration_status(self) -> dict[str, bool]:
         """Get current integration status"""
         return self.integration_status.copy()
 
-    def get_ui_manager(self) -> Optional[R2UIManager]:
+    def get_ui_manager(self) -> R2UIManager | None:
         """Get the UI manager instance"""
         return self.ui_manager
 
@@ -449,7 +446,7 @@ class ComprehensiveR2Integration:
                 self.ui_manager.cleanup()
 
             self.integrated_apps.clear()
-            self.integration_status = {key: False for key in self.integration_status}
+            self.integration_status = dict.fromkeys(self.integration_status, False)
 
             self.logger.info("Comprehensive integration cleanup completed")
 
@@ -470,8 +467,7 @@ def get_comprehensive_integration() -> ComprehensiveR2Integration:
 
 
 def integrate_radare2_comprehensive(main_app) -> bool:
-    """
-    Main entry point for comprehensive radare2 integration.
+    """Main entry point for comprehensive radare2 integration.
 
     This function provides the simplest way to integrate all radare2
     functionality into any Intellicrack application.
@@ -481,6 +477,7 @@ def integrate_radare2_comprehensive(main_app) -> bool:
 
     Returns:
         bool: True if integration successful, False otherwise
+
     """
     try:
         integration = get_comprehensive_integration()
@@ -490,7 +487,7 @@ def integrate_radare2_comprehensive(main_app) -> bool:
         return False
 
 
-def get_integration_status() -> Dict[str, bool]:
+def get_integration_status() -> dict[str, bool]:
     """Get current integration status"""
     integration = get_comprehensive_integration()
     return integration.get_integration_status()
@@ -506,8 +503,8 @@ def cleanup_integration():
 
 __all__ = [
     "ComprehensiveR2Integration",
-    "integrate_radare2_comprehensive",
+    "cleanup_integration",
     "get_comprehensive_integration",
     "get_integration_status",
-    "cleanup_integration"
+    "integrate_radare2_comprehensive",
 ]

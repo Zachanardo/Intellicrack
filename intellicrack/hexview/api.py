@@ -1,5 +1,4 @@
-"""
-API for the enhanced hex viewer/editor.
+"""API for the enhanced hex viewer/editor.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,7 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from PyQt6.QtWidgets import QApplication, QDialog
 
@@ -40,9 +39,8 @@ logger = logging.getLogger("Intellicrack.HexView")
 
 # File operations
 
-def open_hex_file(file_path: str, read_only: bool = True) -> Optional[VirtualFileAccess]:
-    """
-    Open a file for hex viewing/editing.
+def open_hex_file(file_path: str, read_only: bool = True) -> VirtualFileAccess | None:
+    """Open a file for hex viewing/editing.
 
     Args:
         file_path: Path to the file to open
@@ -50,6 +48,7 @@ def open_hex_file(file_path: str, read_only: bool = True) -> Optional[VirtualFil
 
     Returns:
         VirtualFileAccess instance or None if the file couldn't be opened
+
     """
     try:
         if not os.path.exists(file_path):
@@ -64,9 +63,8 @@ def open_hex_file(file_path: str, read_only: bool = True) -> Optional[VirtualFil
         return None
 
 
-def read_hex_region(file_path: str, offset: int, size: int) -> Optional[bytes]:
-    """
-    Read a region of a file as binary data.
+def read_hex_region(file_path: str, offset: int, size: int) -> bytes | None:
+    """Read a region of a file as binary data.
 
     Args:
         file_path: Path to the file to read
@@ -75,6 +73,7 @@ def read_hex_region(file_path: str, offset: int, size: int) -> Optional[bytes]:
 
     Returns:
         Binary data or None if the file couldn't be read
+
     """
     try:
         file_handler = open_hex_file(file_path, True)
@@ -89,8 +88,7 @@ def read_hex_region(file_path: str, offset: int, size: int) -> Optional[bytes]:
 
 
 def write_hex_region(file_path: str, offset: int, data: bytes) -> bool:
-    """
-    Write binary data to a region of a file.
+    """Write binary data to a region of a file.
 
     Args:
         file_path: Path to the file to write
@@ -99,6 +97,7 @@ def write_hex_region(file_path: str, offset: int, data: bytes) -> bool:
 
     Returns:
         True if the write was successful, False otherwise
+
     """
     try:
         file_handler = open_hex_file(file_path, False)
@@ -117,10 +116,9 @@ def write_hex_region(file_path: str, offset: int, data: bytes) -> bool:
 
 # Analysis operations
 
-def analyze_binary_data(data: bytes, query: Optional[str] = None,
-                      model_manager=None) -> Dict[str, Any]:
-    """
-    Analyze binary data using AI assistance.
+def analyze_binary_data(data: bytes, query: str | None = None,
+                      model_manager=None) -> dict[str, Any]:
+    """Analyze binary data using AI assistance.
 
     Args:
         data: Binary data to analyze
@@ -129,6 +127,7 @@ def analyze_binary_data(data: bytes, query: Optional[str] = None,
 
     Returns:
         Dictionary with analysis results
+
     """
     try:
         ai_bridge = AIBinaryBridge(model_manager)
@@ -140,9 +139,8 @@ def analyze_binary_data(data: bytes, query: Optional[str] = None,
 
 
 def search_binary_pattern(data: bytes, pattern_desc: str,
-                        model_manager=None) -> List[Dict[str, Any]]:
-    """
-    Search for a pattern in binary data using AI assistance.
+                        model_manager=None) -> list[dict[str, Any]]:
+    """Search for a pattern in binary data using AI assistance.
 
     Args:
         data: Binary data to search
@@ -151,6 +149,7 @@ def search_binary_pattern(data: bytes, pattern_desc: str,
 
     Returns:
         List of search results
+
     """
     try:
         ai_bridge = AIBinaryBridge(model_manager)
@@ -162,9 +161,8 @@ def search_binary_pattern(data: bytes, pattern_desc: str,
 
 
 def suggest_binary_edits(data: bytes, edit_intent: str,
-                       model_manager=None) -> Dict[str, Any]:
-    """
-    Suggest edits to binary data using AI assistance.
+                       model_manager=None) -> dict[str, Any]:
+    """Suggest edits to binary data using AI assistance.
 
     Args:
         data: Binary data to edit
@@ -173,6 +171,7 @@ def suggest_binary_edits(data: bytes, edit_intent: str,
 
     Returns:
         Dictionary with edit suggestions
+
     """
     try:
         ai_bridge = AIBinaryBridge(model_manager)
@@ -186,22 +185,21 @@ def suggest_binary_edits(data: bytes, edit_intent: str,
 # UI operations
 
 def create_hex_viewer_widget(parent=None) -> HexViewerWidget:
-    """
-    Create a new hex viewer widget.
+    """Create a new hex viewer widget.
 
     Args:
         parent: Parent widget
 
     Returns:
         HexViewerWidget instance
+
     """
     return HexViewerWidget(parent)
 
 
-def create_hex_viewer_dialog(parent=None, file_path: Optional[str] = None,
+def create_hex_viewer_dialog(parent=None, file_path: str | None = None,
                            read_only: bool = True) -> HexViewerDialog:
-    """
-    Create a new hex viewer dialog.
+    """Create a new hex viewer dialog.
 
     Args:
         parent: Parent widget
@@ -210,14 +208,14 @@ def create_hex_viewer_dialog(parent=None, file_path: Optional[str] = None,
 
     Returns:
         HexViewerDialog instance
+
     """
     dialog = HexViewerDialog(parent, file_path, read_only)
     return dialog
 
 
 def launch_hex_viewer(file_path: str, read_only: bool = True) -> QDialog:
-    """
-    Launch the hex viewer as a standalone application.
+    """Launch the hex viewer as a standalone application.
 
     Args:
         file_path: Path to the file to open
@@ -225,6 +223,7 @@ def launch_hex_viewer(file_path: str, read_only: bool = True) -> QDialog:
 
     Returns:
         QDialog instance
+
     """
     app = QApplication.instance() or QApplication([])
     dialog = create_hex_viewer_dialog(None, file_path, read_only)
@@ -236,27 +235,27 @@ def launch_hex_viewer(file_path: str, read_only: bool = True) -> QDialog:
 # Integration operations
 
 def integrate_with_intellicrack(app_instance) -> bool:
-    """
-    Integrate the enhanced hex viewer with Intellicrack.
+    """Integrate the enhanced hex viewer with Intellicrack.
 
     Args:
         app_instance: Intellicrack application instance
 
     Returns:
         True if integration was successful, False otherwise
+
     """
     return integrate_enhanced_hex_viewer(app_instance)
 
 
 def add_hex_viewer_to_application(app_instance) -> bool:
-    """
-    Add the enhanced hex viewer to an application.
+    """Add the enhanced hex viewer to an application.
 
     Args:
         app_instance: Application instance
 
     Returns:
         True if the hex viewer was added successfully, False otherwise
+
     """
     try:
         from .integration import add_hex_viewer_menu, add_hex_viewer_toolbar_button
@@ -275,14 +274,14 @@ def add_hex_viewer_to_application(app_instance) -> bool:
 
 
 def register_ai_tools(app_instance) -> bool:
-    """
-    Register hex viewer AI tools with the application.
+    """Register hex viewer AI tools with the application.
 
     Args:
         app_instance: Application instance
 
     Returns:
         True if tools were registered successfully, False otherwise
+
     """
     try:
         register_hex_viewer_ai_tools(app_instance)
@@ -295,8 +294,7 @@ def register_ai_tools(app_instance) -> bool:
 # Utility operations
 
 def bytes_to_hex_string(data: bytes, bytes_per_line: int = 16) -> str:
-    """
-    Convert binary data to a formatted hex string.
+    """Convert binary data to a formatted hex string.
 
     Args:
         data: Binary data to convert
@@ -304,6 +302,7 @@ def bytes_to_hex_string(data: bytes, bytes_per_line: int = 16) -> str:
 
     Returns:
         Formatted hex string
+
     """
     if not data:
         return ""
@@ -321,14 +320,14 @@ def bytes_to_hex_string(data: bytes, bytes_per_line: int = 16) -> str:
 
 
 def hex_string_to_bytes(hex_string: str) -> bytes:
-    """
-    Convert a hex string to binary data.
+    """Convert a hex string to binary data.
 
     Args:
         hex_string: Hex string to convert
 
     Returns:
         Binary data
+
     """
     # Remove formatting, spaces, line numbers, and ASCII parts
     cleaned = ""
@@ -359,27 +358,26 @@ def hex_string_to_bytes(hex_string: str) -> bytes:
         except ValueError as e:
             logger.error("Value error in api: %s", e)
             # Skip invalid hex values
-            pass
 
     return bytes(result)
 
 
-def create_binary_context(data: bytes) -> Dict[str, Any]:
-    """
-    Create a context dictionary for binary data.
+def create_binary_context(data: bytes) -> dict[str, Any]:
+    """Create a context dictionary for binary data.
 
     Args:
         data: Binary data
 
     Returns:
         Context dictionary
+
     """
     context_builder = BinaryContextBuilder()
     context = context_builder.build_context(
         data, 0, len(data),
         include_entropy=True,
         include_strings=True,
-        include_structure_hints=True
+        include_structure_hints=True,
     )
     return context
 

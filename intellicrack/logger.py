@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -31,15 +30,15 @@ logger = logging.getLogger("IntellicrackLogger")
 
 # Define what's exported from this module
 __all__ = [
-    "logger",
-    "get_logger",
-    "log_execution_time",
-    "log_exception",
-    "log_method_call",
-    "setup_logger",
     "configure_logging",
+    "get_logger",
+    "log_exception",
+    "log_execution_time",
+    "log_message",
+    "log_method_call",
+    "logger",
+    "setup_logger",
     "setup_logging",
-    "log_message"
 ]
 
 # Import and re-export from utils.logger without wildcards to avoid issues
@@ -57,8 +56,7 @@ try:
 except ImportError:
     # Fallback functions if utils.logger can't be imported
     def get_logger(name=None):
-        """
-        Get a logger instance with the specified name.
+        """Get a logger instance with the specified name.
 
         This is a fallback implementation used when the main logger utilities
         cannot be imported. It provides basic logging functionality using
@@ -74,12 +72,12 @@ except ImportError:
         Example:
             >>> logger = get_logger("MyModule")
             >>> logger.info("Starting processing")
+
         """
         return logging.getLogger(name or "IntellicrackLogger")
 
     def log_execution_time(func):
-        """
-        Decorator to log function execution time (fallback implementation).
+        """Decorator to log function execution time (fallback implementation).
 
         This is a no-op fallback that simply returns the function unchanged
         when the main logger utilities are not available.
@@ -93,12 +91,12 @@ except ImportError:
         Note:
             In production, the actual implementation from utils.logger
             would measure and log execution time.
+
         """
         return func
 
     def log_exception(func):
-        """
-        Decorator to log exceptions in functions (fallback implementation).
+        """Decorator to log exceptions in functions (fallback implementation).
 
         This is a no-op fallback that simply returns the function unchanged
         when the main logger utilities are not available.
@@ -112,12 +110,12 @@ except ImportError:
         Note:
             In production, the actual implementation from utils.logger
             would catch and log exceptions before re-raising them.
+
         """
         return func
 
     def log_method_call(func):
-        """
-        Decorator to log method calls (fallback implementation).
+        """Decorator to log method calls (fallback implementation).
 
         This is a no-op fallback that simply returns the function unchanged
         when the main logger utilities are not available.
@@ -131,12 +129,12 @@ except ImportError:
         Note:
             In production, the actual implementation from utils.logger
             would log method entry and exit with parameters.
+
         """
         return func
 
     def setup_logger(*args, **kwargs):
-        """
-        Set up a logger with the specified configuration (fallback implementation).
+        """Set up a logger with the specified configuration (fallback implementation).
 
         This fallback provides basic logger setup functionality when the main
         logger utilities are not available.
@@ -154,6 +152,7 @@ except ImportError:
         Examples:
             >>> logger = setup_logger("MyModule")
             >>> logger = setup_logger(name="MyModule", level="DEBUG")
+
         """
         # Use args to configure the logger if provided
         if args and isinstance(args[0], str):
@@ -164,8 +163,7 @@ except ImportError:
         return logger
 
     def configure_logging(*args, **kwargs):
-        """
-        Configure the logging system (fallback implementation).
+        """Configure the logging system (fallback implementation).
 
         This fallback provides basic logging configuration when the main
         logger utilities are not available. It sets up logging level and
@@ -182,6 +180,7 @@ except ImportError:
 
         Example:
             >>> configure_logging(level='DEBUG', format='%(asctime)s - %(message)s')
+
         """
         # Apply basic configuration using provided arguments
         log_level = kwargs.get("level", "INFO")
@@ -194,8 +193,7 @@ except ImportError:
             logger.addHandler(handler)
 
     def setup_logging(*args, **kwargs):
-        """
-        Set up logging with file output support (fallback implementation).
+        """Set up logging with file output support (fallback implementation).
 
         This fallback provides basic logging setup with file handler support
         when the main logger utilities are not available.
@@ -214,6 +212,7 @@ except ImportError:
         Example:
             >>> setup_logging('app.log', 'DEBUG')
             >>> setup_logging(filename='app.log', level='INFO')
+
         """
         # Setup logging with provided configuration
         log_file = kwargs.get("filename", args[0] if args else None)
@@ -226,8 +225,7 @@ except ImportError:
             logger.setLevel(getattr(logging, level))
 
     def log_message(message, level="INFO"):
-        """
-        Log a message at the specified level (fallback implementation).
+        """Log a message at the specified level (fallback implementation).
 
         This fallback provides basic message logging functionality when the
         main logger utilities are not available.
@@ -240,5 +238,6 @@ except ImportError:
         Example:
             >>> log_message("Processing started")
             >>> log_message("Error occurred", "ERROR")
+
         """
         getattr(logger, level.lower(), logger.info)(message)

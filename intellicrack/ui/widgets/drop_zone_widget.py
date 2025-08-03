@@ -134,7 +134,7 @@ class DropZoneWidget(QWidget):
             ".exe", ".dll", ".so", ".dylib", ".elf", ".bin",
             ".sys", ".drv", ".ocx", ".app", ".apk", ".ipa",
             ".dex", ".jar", ".class", ".pyc", ".pyd", ".msi",
-            ".rpm", ".deb", ".dmg", ".pkg"
+            ".rpm", ".deb", ".dmg", ".pkg",
         ]
 
         ext = os.path.splitext(file_path)[1].lower()

@@ -1,5 +1,4 @@
-"""
-Radare2 Advanced Binary Comparison and Diffing Engine
+"""Radare2 Advanced Binary Comparison and Diffing Engine
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,7 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import hashlib
 import logging
 from difflib import SequenceMatcher
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from ...utils.tools.radare2_utils import R2Exception, r2_session
 
@@ -30,8 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 class R2BinaryDiff:
-    """
-    Advanced binary comparison and diffing engine using radare2.
+    """Advanced binary comparison and diffing engine using radare2.
 
     Provides comprehensive binary analysis including:
     - Function-level comparison
@@ -44,14 +42,14 @@ class R2BinaryDiff:
     - Security enhancement detection
     """
 
-    def __init__(self, binary1_path: str, binary2_path: str, radare2_path: Optional[str] = None):
+    def __init__(self, binary1_path: str, binary2_path: str, radare2_path: str | None = None):
         """Initialize binary diff analyzer."""
         self.binary1_path = binary1_path
         self.binary2_path = binary2_path
         self.radare2_path = radare2_path
         self.logger = logging.getLogger(__name__)
 
-    def analyze_differences(self) -> Dict[str, Any]:
+    def analyze_differences(self) -> dict[str, Any]:
         """Perform comprehensive binary difference analysis."""
         result = {
             "binary1": self.binary1_path,
@@ -67,7 +65,7 @@ class R2BinaryDiff:
             "patch_analysis": {},
             "similarity_metrics": {},
             "change_summary": {},
-            "vulnerability_impact": {}
+            "vulnerability_impact": {},
         }
 
         try:
@@ -115,7 +113,7 @@ class R2BinaryDiff:
 
         return result
 
-    def _compare_metadata(self, r2_1, r2_2) -> Dict[str, Any]:
+    def _compare_metadata(self, r2_1, r2_2) -> dict[str, Any]:
         """Compare basic binary metadata."""
         try:
             info1 = r2_1.get_info()
@@ -133,26 +131,26 @@ class R2BinaryDiff:
                 "stripped_change": bin1.get("stripped") != bin2.get("stripped"),
                 "checksum_diff": {
                     "binary1": self._calculate_file_hash(self.binary1_path),
-                    "binary2": self._calculate_file_hash(self.binary2_path)
+                    "binary2": self._calculate_file_hash(self.binary2_path),
                 },
                 "build_info": {
                     "binary1": {
                         "compiler": bin1.get("compiler", "unknown"),
                         "build_id": bin1.get("buildid", ""),
-                        "debug_info": bin1.get("dbg_file", "")
+                        "debug_info": bin1.get("dbg_file", ""),
                     },
                     "binary2": {
                         "compiler": bin2.get("compiler", "unknown"),
                         "build_id": bin2.get("buildid", ""),
-                        "debug_info": bin2.get("dbg_file", "")
-                    }
-                }
+                        "debug_info": bin2.get("dbg_file", ""),
+                    },
+                },
             }
         except R2Exception as e:
             logger.error("R2Exception in radare2_binary_diff: %s", e)
             return {"error": "Failed to compare metadata"}
 
-    def _compare_functions(self, r2_1, r2_2) -> Dict[str, Any]:
+    def _compare_functions(self, r2_1, r2_2) -> dict[str, Any]:
         """Compare functions between binaries."""
         try:
             functions1 = {f["name"]: f for f in r2_1.get_functions()}
@@ -182,7 +180,7 @@ class R2BinaryDiff:
                     detailed_diff = self._compare_function_details(r2_1, r2_2, func1, func2)
                     modified_functions.append({
                         "name": name,
-                        "changes": detailed_diff
+                        "changes": detailed_diff,
                     })
                 else:
                     unchanged_functions.append(name)
@@ -190,26 +188,26 @@ class R2BinaryDiff:
             return {
                 "total_functions": {
                     "binary1": len(functions1),
-                    "binary2": len(functions2)
+                    "binary2": len(functions2),
                 },
                 "added_functions": list(added_functions),
                 "removed_functions": list(removed_functions),
                 "modified_functions": modified_functions,
                 "unchanged_functions": unchanged_functions,
                 "function_similarity": len(unchanged_functions) / max(1, len(common_functions)),
-                "major_changes": len(modified_functions) > len(common_functions) * 0.3
+                "major_changes": len(modified_functions) > len(common_functions) * 0.3,
             }
         except R2Exception as e:
             logger.error("R2Exception in radare2_binary_diff: %s", e)
             return {"error": "Failed to compare functions"}
 
-    def _compare_function_details(self, r2_1, r2_2, func1: Dict[str, Any], func2: Dict[str, Any]) -> Dict[str, Any]:
+    def _compare_function_details(self, r2_1, r2_2, func1: dict[str, Any], func2: dict[str, Any]) -> dict[str, Any]:
         """Compare detailed function properties."""
         changes = {
             "size_change": func2.get("size", 0) - func1.get("size", 0),
             "address_change": func2.get("offset", 0) - func1.get("offset", 0),
             "complexity_change": func2.get("cc", 0) - func1.get("cc", 0),
-            "instruction_changes": []
+            "instruction_changes": [],
         }
 
         try:
@@ -233,13 +231,13 @@ class R2BinaryDiff:
 
         return changes
 
-    def _compare_instructions(self, r2_1, r2_2) -> Dict[str, Any]:
+    def _compare_instructions(self, r2_1, r2_2) -> dict[str, Any]:
         """Compare instruction-level differences."""
         instruction_diff = {
             "modified_instructions": [],
             "new_instruction_patterns": [],
             "removed_instruction_patterns": [],
-            "opcode_distribution_change": {}
+            "opcode_distribution_change": {},
         }
 
         try:
@@ -277,7 +275,7 @@ class R2BinaryDiff:
 
         return instruction_diff
 
-    def _compare_strings(self, r2_1, r2_2) -> Dict[str, Any]:
+    def _compare_strings(self, r2_1, r2_2) -> dict[str, Any]:
         """Compare strings between binaries."""
         try:
             # Get strings from both binaries
@@ -305,7 +303,7 @@ class R2BinaryDiff:
             return {
                 "total_strings": {
                     "binary1": len(strings1),
-                    "binary2": len(strings2)
+                    "binary2": len(strings2),
                 },
                 "added_strings": list(added_strings)[:50],  # Limit output
                 "removed_strings": list(removed_strings)[:50],
@@ -315,13 +313,13 @@ class R2BinaryDiff:
                 "error_message_changes": error_message_changes,
                 "debug_string_changes": debug_changes,
                 "significant_additions": self._identify_significant_string_additions(added_strings),
-                "significant_removals": self._identify_significant_string_removals(removed_strings)
+                "significant_removals": self._identify_significant_string_removals(removed_strings),
             }
         except R2Exception as e:
             logger.error("R2Exception in radare2_binary_diff: %s", e)
             return {"error": "Failed to compare strings"}
 
-    def _compare_imports_exports(self, r2_1, r2_2) -> Dict[str, Any]:
+    def _compare_imports_exports(self, r2_1, r2_2) -> dict[str, Any]:
         """Compare imports and exports."""
         try:
             # Get imports
@@ -352,22 +350,22 @@ class R2BinaryDiff:
                     "removed": list(import_names1 - import_names2),
                     "total_binary1": len(imports1),
                     "total_binary2": len(imports2),
-                    "security_impact": self._assess_import_security_impact(import_names2 - import_names1, import_names1 - import_names2)
+                    "security_impact": self._assess_import_security_impact(import_names2 - import_names1, import_names1 - import_names2),
                 },
                 "export_changes": {
                     "added": list(export_names2 - export_names1),
                     "removed": list(export_names1 - export_names2),
                     "total_binary1": len(exports1),
-                    "total_binary2": len(exports2)
+                    "total_binary2": len(exports2),
                 },
                 "dll_dependency_changes": self._analyze_dll_dependency_changes(imports1, imports2),
-                "api_usage_changes": self._analyze_api_usage_changes(import_names1, import_names2)
+                "api_usage_changes": self._analyze_api_usage_changes(import_names1, import_names2),
             }
         except R2Exception as e:
             logger.error("R2Exception in radare2_binary_diff: %s", e)
             return {"error": "Failed to compare imports/exports"}
 
-    def _compare_sections(self, r2_1, r2_2) -> Dict[str, Any]:
+    def _compare_sections(self, r2_1, r2_2) -> dict[str, Any]:
         """Compare binary sections."""
         try:
             sections1_data = r2_1._execute_command("iSj", expect_json=True)
@@ -398,7 +396,7 @@ class R2BinaryDiff:
                 if sec1.get("perm") != sec2.get("perm"):
                     changes["permission_change"] = {
                         "old": sec1.get("perm", ""),
-                        "new": sec2.get("perm", "")
+                        "new": sec2.get("perm", ""),
                     }
                 if sec1.get("vaddr") != sec2.get("vaddr"):
                     changes["address_change"] = sec2.get("vaddr", 0) - sec1.get("vaddr", 0)
@@ -406,7 +404,7 @@ class R2BinaryDiff:
                 if changes:
                     modified_sections.append({
                         "name": section_name,
-                        "changes": changes
+                        "changes": changes,
                     })
 
             return {
@@ -415,15 +413,15 @@ class R2BinaryDiff:
                 "modified_sections": modified_sections,
                 "total_sections": {
                     "binary1": len(sections1),
-                    "binary2": len(sections2)
+                    "binary2": len(sections2),
                 },
-                "section_layout_change": len(added_sections) > 0 or len(removed_sections) > 0 or len(modified_sections) > 0
+                "section_layout_change": len(added_sections) > 0 or len(removed_sections) > 0 or len(modified_sections) > 0,
             }
         except R2Exception as e:
             logger.error("R2Exception in radare2_binary_diff: %s", e)
             return {"error": "Failed to compare sections"}
 
-    def _compare_entry_points(self, r2_1, r2_2) -> Dict[str, Any]:
+    def _compare_entry_points(self, r2_1, r2_2) -> dict[str, Any]:
         """Compare entry points."""
         try:
             info1 = r2_1.get_info()
@@ -436,13 +434,13 @@ class R2BinaryDiff:
                 "entry_point_change": entry1 != entry2,
                 "entry_point_binary1": hex(entry1) if entry1 else "0x0",
                 "entry_point_binary2": hex(entry2) if entry2 else "0x0",
-                "address_diff": entry2 - entry1 if entry1 and entry2 else 0
+                "address_diff": entry2 - entry1 if entry1 and entry2 else 0,
             }
         except R2Exception as e:
             self.logger.error("R2Exception in radare2_binary_diff: %s", e)
             return {"error": "Failed to compare entry points"}
 
-    def _compare_security_features(self, r2_1, r2_2) -> Dict[str, Any]:
+    def _compare_security_features(self, r2_1, r2_2) -> dict[str, Any]:
         """Compare security features."""
         try:
             info1 = r2_1.get_info()
@@ -462,7 +460,7 @@ class R2BinaryDiff:
                     changes[feature] = {
                         "binary1": val1,
                         "binary2": val2,
-                        "security_impact": self._assess_security_feature_impact(feature, val1, val2)
+                        "security_impact": self._assess_security_feature_impact(feature, val1, val2),
                     }
 
             return {
@@ -471,20 +469,20 @@ class R2BinaryDiff:
                     c.get("security_impact") == "improved" for c in changes.values()
                 ) else "degraded" if any(
                     c.get("security_impact") == "degraded" for c in changes.values()
-                ) else "unchanged"
+                ) else "unchanged",
             }
         except R2Exception as e:
             logger.error("R2Exception in radare2_binary_diff: %s", e)
             return {"error": "Failed to compare security features"}
 
-    def _analyze_patches(self, r2_1, r2_2) -> Dict[str, Any]:
+    def _analyze_patches(self, r2_1, r2_2) -> dict[str, Any]:
         """Analyze patches between binaries."""
         patch_analysis = {
             "potential_patches": [],
             "patch_categories": {},
             "security_patches": [],
             "functionality_patches": [],
-            "performance_patches": []
+            "performance_patches": [],
         }
 
         try:
@@ -505,7 +503,7 @@ class R2BinaryDiff:
                         "function": name,
                         "size_change": size_change,
                         "patch_type": self._classify_patch_type(name, size_change),
-                        "impact_assessment": self._assess_patch_impact(name, size_change)
+                        "impact_assessment": self._assess_patch_impact(name, size_change),
                     }
 
                     patch_analysis["potential_patches"].append(patch_info)
@@ -534,7 +532,7 @@ class R2BinaryDiff:
 
         return patch_analysis
 
-    def _calculate_similarity_metrics(self, diff_result: Dict[str, Any]) -> Dict[str, float]:
+    def _calculate_similarity_metrics(self, diff_result: dict[str, Any]) -> dict[str, float]:
         """Calculate various similarity metrics."""
         metrics = {}
 
@@ -572,14 +570,14 @@ class R2BinaryDiff:
 
         return metrics
 
-    def _generate_change_summary(self, diff_result: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_change_summary(self, diff_result: dict[str, Any]) -> dict[str, Any]:
         """Generate high-level change summary."""
         summary = {
             "change_type": "unknown",
             "major_changes": [],
             "minor_changes": [],
             "impact_assessment": "low",
-            "recommended_actions": []
+            "recommended_actions": [],
         }
 
         try:
@@ -623,13 +621,13 @@ class R2BinaryDiff:
 
         return summary
 
-    def _assess_vulnerability_impact(self, diff_result: Dict[str, Any]) -> Dict[str, Any]:
+    def _assess_vulnerability_impact(self, diff_result: dict[str, Any]) -> dict[str, Any]:
         """Assess vulnerability impact of changes."""
         impact = {
             "new_vulnerabilities": [],
             "fixed_vulnerabilities": [],
             "risk_level": "low",
-            "security_recommendations": []
+            "security_recommendations": [],
         }
 
         try:
@@ -647,7 +645,7 @@ class R2BinaryDiff:
                     impact["new_vulnerabilities"].append({
                         "type": "dangerous_api_addition",
                         "api": api,
-                        "risk": "high"
+                        "risk": "high",
                     })
 
             # Check for security API removals
@@ -657,7 +655,7 @@ class R2BinaryDiff:
                     impact["new_vulnerabilities"].append({
                         "type": "security_check_removal",
                         "api": api,
-                        "risk": "medium"
+                        "risk": "medium",
                     })
 
             # Analyze security feature changes
@@ -669,12 +667,12 @@ class R2BinaryDiff:
                     impact["new_vulnerabilities"].append({
                         "type": "security_feature_degradation",
                         "feature": feature,
-                        "risk": "high"
+                        "risk": "high",
                     })
                 elif change.get("security_impact") == "improved":
                     impact["fixed_vulnerabilities"].append({
                         "type": "security_feature_improvement",
-                        "feature": feature
+                        "feature": feature,
                     })
 
             # Determine overall risk level
@@ -706,7 +704,7 @@ class R2BinaryDiff:
             self.logger.error("Exception in radare2_binary_diff: %s", e)
             return "error_calculating_hash"
 
-    def _extract_instructions(self, disasm: str) -> List[str]:
+    def _extract_instructions(self, disasm: str) -> list[str]:
         """Extract instructions from disassembly."""
         instructions = []
         for line in disasm.split("\n"):
@@ -718,7 +716,7 @@ class R2BinaryDiff:
                     instructions.append(" ".join(parts[1:]))
         return instructions
 
-    def _diff_instructions(self, instructions1: List[str], instructions2: List[str]) -> List[Dict[str, Any]]:
+    def _diff_instructions(self, instructions1: list[str], instructions2: list[str]) -> list[dict[str, Any]]:
         """Diff instruction sequences."""
         matcher = SequenceMatcher(None, instructions1, instructions2)
         changes = []
@@ -729,12 +727,12 @@ class R2BinaryDiff:
                     "type": tag,
                     "old_instructions": instructions1[i1:i2],
                     "new_instructions": instructions2[j1:j2],
-                    "line_range": f"{i1}-{i2}"
+                    "line_range": f"{i1}-{i2}",
                 })
 
         return changes
 
-    def _analyze_instruction_changes(self, disasm1: str, disasm2: str, func_name: str) -> List[Dict[str, Any]]:
+    def _analyze_instruction_changes(self, disasm1: str, disasm2: str, func_name: str) -> list[dict[str, Any]]:
         """Analyze instruction-level changes."""
         instructions1 = self._extract_instructions(disasm1)
         instructions2 = self._extract_instructions(disasm2)
@@ -748,12 +746,12 @@ class R2BinaryDiff:
                     "function": func_name,
                     "change_type": tag,
                     "old_instructions": instructions1[i1:i2],
-                    "new_instructions": instructions2[j1:j2]
+                    "new_instructions": instructions2[j1:j2],
                 })
 
         return changes
 
-    def _extract_opcode_distribution(self, r2, functions: List[Dict[str, Any]]) -> Dict[str, int]:
+    def _extract_opcode_distribution(self, r2, functions: list[dict[str, Any]]) -> dict[str, int]:
         """Extract opcode distribution from functions."""
         opcodes = {}
 
@@ -773,7 +771,7 @@ class R2BinaryDiff:
 
         return opcodes
 
-    def _compare_opcode_distributions(self, opcodes1: Dict[str, int], opcodes2: Dict[str, int]) -> Dict[str, Any]:
+    def _compare_opcode_distributions(self, opcodes1: dict[str, int], opcodes2: dict[str, int]) -> dict[str, Any]:
         """Compare opcode distributions."""
         all_opcodes = set(opcodes1.keys()) | set(opcodes2.keys())
 
@@ -786,12 +784,12 @@ class R2BinaryDiff:
                 changes[opcode] = {
                     "binary1_count": count1,
                     "binary2_count": count2,
-                    "change": count2 - count1
+                    "change": count2 - count1,
                 }
 
         return changes
 
-    def _analyze_license_string_changes(self, added: Set[str], removed: Set[str]) -> Dict[str, List[str]]:
+    def _analyze_license_string_changes(self, added: set[str], removed: set[str]) -> dict[str, list[str]]:
         """Analyze license-related string changes."""
         license_keywords = ["license", "trial", "demo", "registration", "activation", "serial", "key"]
 
@@ -800,10 +798,10 @@ class R2BinaryDiff:
 
         return {
             "added_license_strings": license_added,
-            "removed_license_strings": license_removed
+            "removed_license_strings": license_removed,
         }
 
-    def _analyze_error_message_changes(self, added: Set[str], removed: Set[str]) -> Dict[str, List[str]]:
+    def _analyze_error_message_changes(self, added: set[str], removed: set[str]) -> dict[str, list[str]]:
         """Analyze error message changes."""
         error_keywords = ["error", "fail", "invalid", "cannot", "unable"]
 
@@ -812,10 +810,10 @@ class R2BinaryDiff:
 
         return {
             "added_error_messages": error_added,
-            "removed_error_messages": error_removed
+            "removed_error_messages": error_removed,
         }
 
-    def _analyze_debug_string_changes(self, added: Set[str], removed: Set[str]) -> Dict[str, List[str]]:
+    def _analyze_debug_string_changes(self, added: set[str], removed: set[str]) -> dict[str, list[str]]:
         """Analyze debug string changes."""
         debug_keywords = ["debug", "trace", "log", "verbose"]
 
@@ -824,10 +822,10 @@ class R2BinaryDiff:
 
         return {
             "added_debug_strings": debug_added,
-            "removed_debug_strings": debug_removed
+            "removed_debug_strings": debug_removed,
         }
 
-    def _identify_significant_string_additions(self, added_strings: Set[str]) -> List[str]:
+    def _identify_significant_string_additions(self, added_strings: set[str]) -> list[str]:
         """Identify significant string additions."""
         significant = []
 
@@ -838,7 +836,7 @@ class R2BinaryDiff:
 
         return significant[:10]  # Limit output
 
-    def _identify_significant_string_removals(self, removed_strings: Set[str]) -> List[str]:
+    def _identify_significant_string_removals(self, removed_strings: set[str]) -> list[str]:
         """Identify significant string removals."""
         significant = []
 
@@ -849,7 +847,7 @@ class R2BinaryDiff:
 
         return significant[:10]  # Limit output
 
-    def _assess_import_security_impact(self, added_imports: Set[str], removed_imports: Set[str]) -> str:
+    def _assess_import_security_impact(self, added_imports: set[str], removed_imports: set[str]) -> str:
         """Assess security impact of import changes."""
         dangerous_apis = ["VirtualAllocEx", "WriteProcessMemory", "CreateRemoteThread", "SetWindowsHookEx"]
         security_apis = ["IsDebuggerPresent", "CheckRemoteDebuggerPresent"]
@@ -859,12 +857,11 @@ class R2BinaryDiff:
 
         if has_dangerous_additions:
             return "high_risk"
-        elif has_security_removals:
+        if has_security_removals:
             return "medium_risk"
-        else:
-            return "low_risk"
+        return "low_risk"
 
-    def _analyze_dll_dependency_changes(self, imports1: Dict[str, Any], imports2: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_dll_dependency_changes(self, imports1: dict[str, Any], imports2: dict[str, Any]) -> dict[str, Any]:
         """Analyze DLL dependency changes."""
         libs1 = set(imp.get("libname", "") for imp in imports1.values())
         libs2 = set(imp.get("libname", "") for imp in imports2.values())
@@ -872,10 +869,10 @@ class R2BinaryDiff:
         return {
             "added_dependencies": list(libs2 - libs1),
             "removed_dependencies": list(libs1 - libs2),
-            "common_dependencies": list(libs1 & libs2)
+            "common_dependencies": list(libs1 & libs2),
         }
 
-    def _analyze_api_usage_changes(self, imports1: Set[str], imports2: Set[str]) -> Dict[str, Any]:
+    def _analyze_api_usage_changes(self, imports1: set[str], imports2: set[str]) -> dict[str, Any]:
         """Analyze API usage pattern changes."""
         crypto_apis = [api for api in (imports1 | imports2) if "crypt" in api.lower()]
         network_apis = [api for api in (imports1 | imports2) if any(net in api.lower() for net in ["socket", "http", "internet"])]
@@ -886,7 +883,7 @@ class R2BinaryDiff:
         return {
             "crypto_api_usage_change": crypto_change,
             "network_api_usage_change": network_change,
-            "overall_api_complexity_change": len(imports2) - len(imports1)
+            "overall_api_complexity_change": len(imports2) - len(imports1),
         }
 
     def _assess_security_feature_impact(self, feature: str, old_val: bool, new_val: bool) -> str:
@@ -896,7 +893,7 @@ class R2BinaryDiff:
         if feature in security_features:
             if not old_val and new_val:
                 return "improved"
-            elif old_val and not new_val:
+            if old_val and not new_val:
                 return "degraded"
 
         return "neutral"
@@ -907,14 +904,13 @@ class R2BinaryDiff:
 
         if any(keyword in name_lower for keyword in ["license", "valid", "check"]):
             return "license_validation_patch"
-        elif any(keyword in name_lower for keyword in ["security", "auth", "crypt"]):
+        if any(keyword in name_lower for keyword in ["security", "auth", "crypt"]):
             return "security_patch"
-        elif size_change > 0:
+        if size_change > 0:
             return "functionality_enhancement"
-        elif size_change < 0:
+        if size_change < 0:
             return "code_optimization"
-        else:
-            return "unknown_patch"
+        return "unknown_patch"
 
     def _assess_patch_impact(self, function_name: str, size_change: int) -> str:
         """Assess impact of patch based on size change and function importance."""
@@ -930,12 +926,12 @@ class R2BinaryDiff:
         critical_functions = [
             "main", "wmain", "DllMain", "entry", "start", "_start",
             "license", "activate", "verify", "check", "validate",
-            "decrypt", "encrypt", "hash", "sign", "auth"
+            "decrypt", "encrypt", "hash", "sign", "auth",
         ]
 
         security_functions = [
             "malloc", "free", "strcpy", "strcat", "sprintf", "scanf",
-            "gets", "system", "exec", "CreateProcess", "VirtualAlloc"
+            "gets", "system", "exec", "CreateProcess", "VirtualAlloc",
         ]
 
         # Upgrade impact if function is critical
@@ -943,17 +939,15 @@ class R2BinaryDiff:
         if any(critical in function_lower for critical in critical_functions):
             if base_impact == "low":
                 return "medium"
-            elif base_impact == "medium":
+            if base_impact == "medium":
                 return "high"
-            else:
-                return "critical"
+            return "critical"
 
         # Upgrade impact if function is security-sensitive
-        elif any(security in function_lower for security in security_functions):
+        if any(security in function_lower for security in security_functions):
             if base_impact == "low":
                 return "medium"
-            else:
-                return "high"
+            return "high"
 
         # Check for common vulnerability patterns in function name
         vuln_patterns = ["overflow", "buffer", "format", "injection", "xss", "sql"]
@@ -963,9 +957,8 @@ class R2BinaryDiff:
         return base_impact
 
 
-def compare_binaries(binary1_path: str, binary2_path: str, radare2_path: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Perform comprehensive binary comparison.
+def compare_binaries(binary1_path: str, binary2_path: str, radare2_path: str | None = None) -> dict[str, Any]:
+    """Perform comprehensive binary comparison.
 
     Args:
         binary1_path: Path to first binary
@@ -974,6 +967,7 @@ def compare_binaries(binary1_path: str, binary2_path: str, radare2_path: Optiona
 
     Returns:
         Complete binary comparison results
+
     """
     differ = R2BinaryDiff(binary1_path, binary2_path, radare2_path)
     return differ.analyze_differences()

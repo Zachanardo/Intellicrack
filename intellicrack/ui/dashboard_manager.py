@@ -1,5 +1,4 @@
-"""
-Dashboard Manager for Intellicrack application.
+"""Dashboard Manager for Intellicrack application.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -30,14 +29,13 @@ recent activities tracking, and quick access to common functions.
 import datetime
 import logging
 import os
-from typing import Any, Dict, List, Union
+from typing import Any
 
 from ..utils.core.string_utils import format_bytes
 
 
 class DashboardManager:
-    """
-    Comprehensive dashboard manager with project statistics and activity tracking.
+    """Comprehensive dashboard manager with project statistics and activity tracking.
 
     This class manages the dashboard UI, providing an intuitive interface with
     project statistics, recent activities, and quick access to common functions.
@@ -45,23 +43,22 @@ class DashboardManager:
     """
 
     def __init__(self, app: Any):
-        """
-        Initialize the dashboard manager with the main application instance.
+        """Initialize the dashboard manager with the main application instance.
 
         Args:
             app: Main application instance for accessing application state
+
         """
         self.app = app
         self.logger = logging.getLogger(__name__)
-        self.stats: Dict[str, Any] = {}
-        self.recent_activities: List[Dict[str, str]] = []
+        self.stats: dict[str, Any] = {}
+        self.recent_activities: list[dict[str, str]] = []
         self.max_recent_activities = 20
 
         self.logger.info("Dashboard manager initialized")
 
     def update_stats(self) -> None:
-        """
-        Update all dashboard statistics.
+        """Update all dashboard statistics.
 
         Refreshes all statistical information including binary stats,
         patch stats, analysis stats, license stats, and advanced analysis features.
@@ -83,8 +80,7 @@ class DashboardManager:
         self.logger.debug(f"Stats dictionary updated with keys: {list(self.stats.keys())}")
 
     def _update_binary_stats(self) -> None:
-        """
-        Update binary file statistics.
+        """Update binary file statistics.
 
         Collects information about the currently loaded binary including
         file size, path, name, and last modification time.
@@ -103,7 +99,7 @@ class DashboardManager:
                     "path": self.app.binary_path,
                     "size": binary_size,
                     "size_formatted": self._format_size(binary_size),
-                    "last_modified": datetime.datetime.fromtimestamp(last_modified).strftime("%Y-%m-%d %H:%M:%S")
+                    "last_modified": datetime.datetime.fromtimestamp(last_modified).strftime("%Y-%m-%d %H:%M:%S"),
                 }
 
                 self.logger.debug("Updated binary stats for %s", binary_name)
@@ -115,8 +111,7 @@ class DashboardManager:
             self.stats["binary"] = None
 
     def _update_patch_stats(self) -> None:
-        """
-        Update patch application statistics.
+        """Update patch application statistics.
 
         Tracks the number of patches, applied patches, and categorizes
         patches by type for comprehensive patch management overview.
@@ -124,7 +119,7 @@ class DashboardManager:
         if hasattr(self.app, "patches") and self.app.patches:
             patch_count = len(self.app.patches)
             applied_count = sum(1 for _p in self.app.patches if _p.get("applied", False))
-            patch_types: Dict[str, int] = {}
+            patch_types: dict[str, int] = {}
 
             # Count patch types
             for _patch in self.app.patches:
@@ -134,7 +129,7 @@ class DashboardManager:
             self.stats["patches"] = {
                 "count": patch_count,
                 "applied": applied_count,
-                "types": patch_types
+                "types": patch_types,
             }
 
             self.logger.debug("Updated patch stats: %s total, %s applied", patch_count, applied_count)
@@ -143,12 +138,11 @@ class DashboardManager:
             self.stats["patches"] = {
                 "count": 0,
                 "applied": 0,
-                "types": {}
+                "types": {},
             }
 
     def _update_analysis_stats(self) -> None:
-        """
-        Update analysis execution statistics.
+        """Update analysis execution statistics.
 
         Tracks analysis results count and last execution time
         for monitoring analysis activity.
@@ -160,7 +154,7 @@ class DashboardManager:
 
             self.stats["analysis"] = {
                 "count": result_count,
-                "last_run": last_run
+                "last_run": last_run,
             }
 
             self.logger.debug("Updated analysis stats: %s results", result_count)
@@ -168,12 +162,11 @@ class DashboardManager:
         else:
             self.stats["analysis"] = {
                 "count": 0,
-                "last_run": "Never"
+                "last_run": "Never",
             }
 
     def _update_license_stats(self) -> None:
-        """
-        Update license server statistics.
+        """Update license server statistics.
 
         Monitors license server status including running state
         and port configuration for network-based license operations.
@@ -184,7 +177,7 @@ class DashboardManager:
             server = self.app.license_server_instance
             self.stats["license_server"] = {
                 "running": getattr(server, "running", False),
-                "port": getattr(server, "port", None)
+                "port": getattr(server, "port", None),
             }
 
             self.logger.debug("Updated license server stats")
@@ -192,12 +185,11 @@ class DashboardManager:
         else:
             self.stats["license_server"] = {
                 "running": False,
-                "port": None
+                "port": None,
             }
 
     def _update_advanced_analysis_stats(self) -> None:
-        """
-        Update advanced analysis features statistics.
+        """Update advanced analysis features statistics.
 
         Tracks availability and status of advanced analysis components
         including taint analysis, symbolic execution, and other specialized tools.
@@ -212,7 +204,7 @@ class DashboardManager:
             "incremental_analysis": hasattr(self.app, "incremental_analysis_manager"),
             "distributed_processing": hasattr(self.app, "distributed_processing_manager"),
             "gpu_acceleration": hasattr(self.app, "gpu_accelerator"),
-            "pdf_report": hasattr(self.app, "pdf_report_generator")
+            "pdf_report": hasattr(self.app, "pdf_report_generator"),
         }
 
         # Count active features
@@ -220,20 +212,20 @@ class DashboardManager:
 
         self.stats["advanced_analysis"] = {
             **advanced_features,
-            "active_count": active_count
+            "active_count": active_count,
         }
 
         self.logger.debug("Updated advanced analysis stats: %s features active", active_count)
 
-    def update_statistics(self, stats_dict: Dict[str, Any]) -> None:
-        """
-        Update specific statistics with provided values.
+    def update_statistics(self, stats_dict: dict[str, Any]) -> None:
+        """Update specific statistics with provided values.
 
         This method is used by other components to update dashboard
         with specific statistical information.
 
         Args:
             stats_dict: Dictionary containing statistics to update
+
         """
         self.logger.info(f"Updating dashboard statistics: {list(stats_dict.keys())}")
 
@@ -251,17 +243,17 @@ class DashboardManager:
         self.logger.info("Dashboard statistics updated successfully")
 
     def add_activity(self, activity_type: str, description: str) -> None:
-        """
-        Add an activity to the recent activities list.
+        """Add an activity to the recent activities list.
 
         Args:
             activity_type: Type/category of the activity
             description: Detailed description of the activity
+
         """
         activity = {
             "type": activity_type,
             "description": description,
-            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
 
         # Insert at the beginning (most recent first)
@@ -273,38 +265,37 @@ class DashboardManager:
 
         self.logger.info("Activity added: %s - %s", activity_type, description)
 
-    def get_stats(self) -> Dict[str, Any]:
-        """
-        Get comprehensive dashboard statistics.
+    def get_stats(self) -> dict[str, Any]:
+        """Get comprehensive dashboard statistics.
 
         Returns:
             Dictionary containing all current statistics
+
         """
         self.update_stats()
         return self.stats.copy()
 
-    def get_recent_activities(self) -> List[Dict[str, str]]:
-        """
-        Get list of recent activities.
+    def get_recent_activities(self) -> list[dict[str, str]]:
+        """Get list of recent activities.
 
         Returns:
             List of recent activities with timestamps
+
         """
         return self.recent_activities.copy()
 
     def clear_activities(self) -> None:
-        """
-        Clear all recent activities from the dashboard.
+        """Clear all recent activities from the dashboard.
         """
         self.recent_activities.clear()
         self.logger.info("Recent activities cleared")
 
-    def get_summary(self) -> Dict[str, Union[str, int]]:
-        """
-        Get a summary of key dashboard metrics.
+    def get_summary(self) -> dict[str, str | int]:
+        """Get a summary of key dashboard metrics.
 
         Returns:
             Dictionary containing summary information
+
         """
         self.update_stats()
 
@@ -315,32 +306,32 @@ class DashboardManager:
             "analysis_count": self.stats.get("analysis", {}).get("count", 0),
             "license_server_running": self.stats.get("license_server", {}).get("running", False),
             "advanced_features_active": self.stats.get("advanced_analysis", {}).get("active_count", 0),
-            "recent_activity_count": len(self.recent_activities)
+            "recent_activity_count": len(self.recent_activities),
         }
 
         return summary
 
     def _format_size(self, size_bytes: int) -> str:
-        """
-        Format size in bytes to human-readable format.
+        """Format size in bytes to human-readable format.
 
         Args:
             size_bytes: Size in bytes to format
 
         Returns:
             Human-readable size string
+
         """
         return format_bytes(size_bytes)
 
     def export_stats(self, filepath: str) -> bool:
-        """
-        Export current statistics to a file.
+        """Export current statistics to a file.
 
         Args:
             filepath: Path to export statistics to
 
         Returns:
             True if export successful, False otherwise
+
         """
         try:
             import json
@@ -348,7 +339,7 @@ class DashboardManager:
             export_data = {
                 "timestamp": datetime.datetime.now().isoformat(),
                 "statistics": self.get_stats(),
-                "recent_activities": self.get_recent_activities()
+                "recent_activities": self.get_recent_activities(),
             }
 
             with open(filepath, "w", encoding="utf-8") as f:

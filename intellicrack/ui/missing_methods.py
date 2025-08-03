@@ -1,5 +1,4 @@
-"""
-Helper function to format log messages.
+"""Helper function to format log messages.
 
 Copyright (C) 2025 Zachary Flint
 

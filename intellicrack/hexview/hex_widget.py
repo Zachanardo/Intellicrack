@@ -1,5 +1,4 @@
-"""
-Hex viewer widget for displaying and editing binary data.
+"""Hex viewer widget for displaying and editing binary data.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,7 +21,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import os
-from typing import List, Optional, Tuple, Union
 
 from PyQt6.QtCore import QPoint, QRect, Qt, pyqtSignal
 from PyQt6.QtGui import (
@@ -63,8 +61,7 @@ logger = logging.getLogger("Intellicrack.HexView")
 
 
 class HexViewerWidget(QAbstractScrollArea):
-    """
-    Widget for displaying and editing binary data in a hex format.
+    """Widget for displaying and editing binary data in a hex format.
 
     This widget provides a fully featured hex viewer and editor, capable of:
     - Viewing data in hex, decimal, or binary format
@@ -90,6 +87,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         Args:
             parent: Parent widget for the hex viewer.
+
         """
         super().__init__(parent)
 
@@ -176,8 +174,7 @@ class HexViewerWidget(QAbstractScrollArea):
         self.horizontalScrollBar().valueChanged.connect(self.viewport().update)
 
     def load_file(self, file_path: str, read_only: bool = True) -> bool:
-        """
-        Load a file into the hex viewer.
+        """Load a file into the hex viewer.
 
         Args:
             file_path: Path to the file to load
@@ -185,6 +182,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         Returns:
             True if the file was loaded successfully, False otherwise
+
         """
         if not os.path.exists(file_path):
             logger.error("File not found: %s", file_path)
@@ -267,8 +265,7 @@ class HexViewerWidget(QAbstractScrollArea):
             return False
 
     def load_data(self, data: bytes, name: str = "Memory Buffer") -> bool:
-        """
-        Load binary data directly into the hex viewer.
+        """Load binary data directly into the hex viewer.
 
         Args:
             data: Binary data to load
@@ -276,6 +273,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         Returns:
             True if the data was loaded successfully, False otherwise
+
         """
         try:
             # Log the data size being loaded
@@ -476,7 +474,7 @@ class HexViewerWidget(QAbstractScrollArea):
         except Exception as calc_error:
             logger.error("Exception in hex_widget: %s", calc_error)
             painter.setPen(Qt.GlobalColor.red)
-            painter.drawText(20, 60, f"Calculation error: {str(calc_error)}")
+            painter.drawText(20, 60, f"Calculation error: {calc_error!s}")
             return
 
         # Read data with detailed error handling
@@ -499,7 +497,7 @@ class HexViewerWidget(QAbstractScrollArea):
         except (OSError, ValueError, RuntimeError) as e:
             logger.error(f"Exception reading data: {e}", exc_info=True)
             painter.setPen(Qt.GlobalColor.red)
-            painter.drawText(20, 90, f"Error reading data: {str(e)}")
+            painter.drawText(20, 90, f"Error reading data: {e!s}")
             return
 
         # Now continue with actual rendering
@@ -816,7 +814,7 @@ class HexViewerWidget(QAbstractScrollArea):
             x += 9 * self.char_width  # 8 chars + space
 
     def draw_byte_highlights(self, painter: QPainter, byte_offset: int, x: int, y: int,
-                            width: int, highlights: List[HexHighlight]):
+                            width: int, highlights: list[HexHighlight]):
         """Draw highlights for a specific byte."""
         # Check if the byte is selected
         is_selected = (self.selection_start >= 0 and
@@ -844,11 +842,11 @@ class HexViewerWidget(QAbstractScrollArea):
                 painter.fillRect(highlight_rect, highlight_color)
 
     def set_view_mode(self, mode: ViewMode):
-        """
-        Set the current view mode.
+        """Set the current view mode.
 
         Args:
             mode: The new view mode
+
         """
         if mode != self.view_mode:
             self.view_mode = mode
@@ -857,11 +855,11 @@ class HexViewerWidget(QAbstractScrollArea):
             self.view_mode_changed.emit(mode)
 
     def set_bytes_per_row(self, bytes_per_row: int):
-        """
-        Set the number of bytes per row.
+        """Set the number of bytes per row.
 
         Args:
             bytes_per_row: Number of bytes to display per row
+
         """
         if bytes_per_row != self.bytes_per_row and bytes_per_row > 0:
             self.bytes_per_row = bytes_per_row
@@ -870,11 +868,11 @@ class HexViewerWidget(QAbstractScrollArea):
             self.viewport().update()
 
     def set_group_size(self, group_size: int):
-        """
-        Set the group size for byte grouping.
+        """Set the group size for byte grouping.
 
         Args:
             group_size: Number of bytes to group together (1, 2, 4, or 8)
+
         """
         if group_size != self.group_size and group_size in (1, 2, 4, 8):
             self.group_size = group_size
@@ -882,11 +880,11 @@ class HexViewerWidget(QAbstractScrollArea):
             self.viewport().update()
 
     def jump_to_offset(self, offset: int):
-        """
-        Jump to a specific offset in the file.
+        """Jump to a specific offset in the file.
 
         Args:
             offset: Offset to jump to
+
         """
         if not self.file_handler:
             return
@@ -916,12 +914,12 @@ class HexViewerWidget(QAbstractScrollArea):
         self.selection_changed.emit(self.selection_start, self.selection_end)
 
     def select_range(self, start: int, end: int):
-        """
-        Select a range of bytes.
+        """Select a range of bytes.
 
         Args:
             start: Starting offset
             end: Ending offset (exclusive)
+
         """
         if not self.file_handler:
             return
@@ -945,7 +943,7 @@ class HexViewerWidget(QAbstractScrollArea):
             end=end,
             highlight_type=HighlightType.SELECTION,
             color="#0078D7",
-            alpha=0.3
+            alpha=0.3,
         )
 
         # Update the viewport
@@ -963,21 +961,21 @@ class HexViewerWidget(QAbstractScrollArea):
             self.viewport().update()
             self.selection_changed.emit(-1, -1)
 
-    def get_selection(self) -> Tuple[int, int]:
-        """
-        Get the current selection range.
+    def get_selection(self) -> tuple[int, int]:
+        """Get the current selection range.
 
         Returns:
             Tuple of (start, end) offsets, or (-1, -1) if no selection
+
         """
         return (self.selection_start, self.selection_end)
 
-    def get_selected_data(self) -> Optional[bytes]:
-        """
-        Get the selected data.
+    def get_selected_data(self) -> bytes | None:
+        """Get the selected data.
 
         Returns:
             Selected data as bytes, or None if no selection
+
         """
         if not self.file_handler or self.selection_start < 0 or self.selection_end <= self.selection_start:
             return None
@@ -986,13 +984,13 @@ class HexViewerWidget(QAbstractScrollArea):
         return self.file_handler.read(self.selection_start, size)
 
     def add_bookmark(self, offset: int = None, size: int = 1, description: str = ""):
-        """
-        Add a bookmark at the specified offset or current selection.
+        """Add a bookmark at the specified offset or current selection.
 
         Args:
             offset: Offset to bookmark, or None to use current selection
             size: Size of the bookmarked region
             description: Description of the bookmark
+
         """
         if not self.file_handler:
             return
@@ -1007,10 +1005,9 @@ class HexViewerWidget(QAbstractScrollArea):
         self.highlighter.add_bookmark(offset, size, description)
         self.viewport().update()
 
-    def search(self, pattern: Union[bytes, str], start_offset: int = 0,
-              case_sensitive: bool = True, direction: str = "forward") -> Optional[int]:
-        """
-        Search for a pattern in the file.
+    def search(self, pattern: bytes | str, start_offset: int = 0,
+              case_sensitive: bool = True, direction: str = "forward") -> int | None:
+        """Search for a pattern in the file.
 
         Args:
             pattern: Search pattern (bytes or string)
@@ -1020,6 +1017,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         Returns:
             Offset of the first match, or None if not found
+
         """
         if not self.file_handler:
             return None
@@ -1066,7 +1064,7 @@ class HexViewerWidget(QAbstractScrollArea):
                     # Highlight the match
                     self.highlighter.add_search_result(
                         match_offset, match_offset + len(pattern_bytes),
-                        query=pattern if isinstance(pattern, str) else pattern_bytes.hex(" ")
+                        query=pattern if isinstance(pattern, str) else pattern_bytes.hex(" "),
                     )
 
                     # Select the match
@@ -1108,7 +1106,7 @@ class HexViewerWidget(QAbstractScrollArea):
                     # Highlight the match
                     self.highlighter.add_search_result(
                         match_offset, match_offset + len(pattern_bytes),
-                        query=pattern if isinstance(pattern, str) else pattern_bytes.hex(" ")
+                        query=pattern if isinstance(pattern, str) else pattern_bytes.hex(" "),
                     )
 
                     # Select the match
@@ -1123,12 +1121,12 @@ class HexViewerWidget(QAbstractScrollArea):
         return None
 
     def edit_byte(self, offset: int, value: int):
-        """
-        Edit a single byte at the specified offset.
+        """Edit a single byte at the specified offset.
 
         Args:
             offset: Offset of the byte to edit
             value: New byte value (0-255)
+
         """
         if not self.file_handler or self.file_handler.read_only:
             return False
@@ -1157,11 +1155,11 @@ class HexViewerWidget(QAbstractScrollArea):
         return result
 
     def edit_selection(self, data: bytes):
-        """
-        Replace the selected data with new data.
+        """Replace the selected data with new data.
 
         Args:
             data: New data to write
+
         """
         if (not self.file_handler or self.file_handler.read_only or
             self.selection_start < 0 or self.selection_end <= self.selection_start):
@@ -1304,7 +1302,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         offset_str, ok = QInputDialog.getText(
             self, "Jump to Offset", "Enter offset (decimal or 0x... for hex):",
-            text=f"0x{self.current_offset:X}"
+            text=f"0x{self.current_offset:X}",
         )
 
         if ok and offset_str:
@@ -1517,7 +1515,7 @@ class HexViewerWidget(QAbstractScrollArea):
         # Get fill value
         value_str, ok = QInputDialog.getText(
             self, "Fill Selection", "Enter fill value (decimal or 0x... for hex):",
-            text="0x00"
+            text="0x00",
         )
 
         if ok and value_str:
@@ -1566,7 +1564,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         # Instructions
         instruction_label = QLabel(
-            "Edit the hex values. Maintain the same format with line numbers and ASCII representation."
+            "Edit the hex values. Maintain the same format with line numbers and ASCII representation.",
         )
         layout.addWidget(instruction_label)
 
@@ -1591,7 +1589,7 @@ class HexViewerWidget(QAbstractScrollArea):
             # Check if the data size matches the selection
             if len(edited_data) != len(data):
                 QMessageBox.warning(self, "Invalid Edit",
-                                   f"Edited data size ({len(edited_data)}) does not match " +
+                                   f"Edited data size ({len(edited_data)}) does not match "
                                    f"selection size ({len(data)}).")
                 return
 
@@ -1615,26 +1613,26 @@ class HexViewerWidget(QAbstractScrollArea):
             # Ctrl+G: Jump to offset
             self.show_jump_dialog()
             event.accept()
-            return
+            return None
 
         if key == Qt.Key_F and modifiers & Qt.ControlModifier:
             # Ctrl+F: Search
             self.show_search_dialog()
             event.accept()
-            return
+            return None
 
         if key == Qt.Key_B and modifiers & Qt.ControlModifier:
             # Ctrl+B: Add bookmark
             self.add_bookmark_dialog()
             event.accept()
-            return
+            return None
 
         if key in (Qt.Key_Home, Qt.Key_End, Qt.Key_PageUp, Qt.Key_PageDown,
                   Qt.Key_Up, Qt.Key_Down, Qt.Key_Left, Qt.Key_Right):
             # Navigation keys
             self.handle_navigation_key(key, modifiers)
             event.accept()
-            return
+            return None
 
         # For other keys, fall back to parent implementation
         super().keyPressEvent(event)
@@ -1724,7 +1722,7 @@ class HexViewerWidget(QAbstractScrollArea):
         position = event.pos()
         if position.y() < self.header_height:
             # Click in header
-            return
+            return None
 
         # Calculate offset from click position
         byte_offset = self.get_offset_from_position(position)
@@ -1755,14 +1753,14 @@ class HexViewerWidget(QAbstractScrollArea):
         event.accept()
 
     def get_offset_from_position(self, position: QPoint) -> int:
-        """
-        Get the byte offset from a position in the viewport.
+        """Get the byte offset from a position in the viewport.
 
         Args:
             position: Position in the viewport
 
         Returns:
             Byte offset, or -1 if not on a byte
+
         """
         if not self.file_handler:
             return -1
@@ -1853,20 +1851,20 @@ class HexViewerWidget(QAbstractScrollArea):
         return -1
 
     def get_performance_widget(self):
-        """
-        Get the performance monitoring widget.
+        """Get the performance monitoring widget.
 
         Returns:
             Performance monitoring widget or None if not available
+
         """
         return self.performance_monitor.create_widget(self)
 
     def get_performance_stats(self):
-        """
-        Get current performance statistics.
+        """Get current performance statistics.
 
         Returns:
             Dictionary with performance statistics
+
         """
         return self.performance_monitor.get_stats_summary()
 

@@ -97,13 +97,12 @@ class KeygenWorker(QThread):
             algorithm=self.kwargs.get("algorithm", "auto"),
             format_type=self.kwargs.get("format_type", "auto"),
             custom_length=self.kwargs.get("custom_length"),
-            validation_check=self.kwargs.get("validation_check", False)
+            validation_check=self.kwargs.get("validation_check", False),
         )
         self.key_generated.emit(result)
 
     def _generate_batch_keys(self):
         """Generate multiple license keys."""
-
         count = self.kwargs.get("count", 10)
         keys = []
 
@@ -118,7 +117,7 @@ class KeygenWorker(QThread):
                     algorithm=self.kwargs.get("algorithm", "auto"),
                     format_type=self.kwargs.get("format_type", "auto"),
                     custom_length=self.kwargs.get("custom_length"),
-                    validation_check=False  # Skip validation for batch to speed up
+                    validation_check=False,  # Skip validation for batch to speed up
                 )
                 result["batch_id"] = _i + 1
                 keys.append(result)
@@ -130,7 +129,7 @@ class KeygenWorker(QThread):
                     "key": "",
                     "error": str(e),
                     "algorithm": self.kwargs.get("algorithm", "auto"),
-                    "format": self.kwargs.get("format_type", "auto")
+                    "format": self.kwargs.get("format_type", "auto"),
                 })
 
         self.batch_completed.emit(keys)
@@ -145,7 +144,7 @@ class KeygenWorker(QThread):
         result = {
             "algorithm": algorithm,
             "format": format_type,
-            "analysis": analysis
+            "analysis": analysis,
         }
         self.key_generated.emit(result)
 
@@ -159,7 +158,6 @@ class KeygenDialog(BinarySelectionDialog):
 
     def __init__(self, parent=None, binary_path: str = ""):
         """Initialize the KeygenDialog with default values."""
-
         # Initialize UI attributes
         self.analysis_display = None
         self.analyze_keys_btn = None
@@ -249,7 +247,7 @@ class KeygenDialog(BinarySelectionDialog):
         self.algorithm_combo = QComboBox()
         self.algorithm_combo.addItems([
             "Auto-Detect", "Simple", "Formatted", "RSA", "AES",
-            "Checksum", "Hardware-Locked"
+            "Checksum", "Hardware-Locked",
         ])
         config_layout.addWidget(self.algorithm_combo, 0, 1)
 
@@ -257,7 +255,7 @@ class KeygenDialog(BinarySelectionDialog):
         config_layout.addWidget(QLabel("Format:"), 1, 0)
         self.format_combo = QComboBox()
         self.format_combo.addItems([
-            "Auto-Detect", "Alphanumeric", "Formatted", "Hex", "Base64"
+            "Auto-Detect", "Alphanumeric", "Formatted", "Hex", "Base64",
         ])
         config_layout.addWidget(self.format_combo, 1, 1)
 
@@ -341,14 +339,14 @@ class KeygenDialog(BinarySelectionDialog):
         self.batch_algorithm_combo = QComboBox()
         self.batch_algorithm_combo.addItems([
             "Auto-Detect", "Simple", "Formatted", "RSA", "AES",
-            "Checksum", "Hardware-Locked"
+            "Checksum", "Hardware-Locked",
         ])
         config_layout.addWidget(self.batch_algorithm_combo, 1, 1)
 
         config_layout.addWidget(QLabel("Format:"), 2, 0)
         self.batch_format_combo = QComboBox()
         self.batch_format_combo.addItems([
-            "Auto-Detect", "Alphanumeric", "Formatted", "Hex", "Base64"
+            "Auto-Detect", "Alphanumeric", "Formatted", "Hex", "Base64",
         ])
         config_layout.addWidget(self.batch_format_combo, 2, 1)
 
@@ -387,7 +385,7 @@ class KeygenDialog(BinarySelectionDialog):
         self.batch_table = QTableWidget()
         self.batch_table.setColumnCount(5)
         self.batch_table.setHorizontalHeaderLabels([
-            "ID", "Generated Key", "Algorithm", "Format", "Status"
+            "ID", "Generated Key", "Algorithm", "Format", "Status",
         ])
 
         # Set column widths
@@ -489,7 +487,7 @@ class KeygenDialog(BinarySelectionDialog):
                 "rsa": "RSA",
                 "aes": "AES",
                 "checksum": "Checksum",
-                "hardware": "Hardware-Locked"
+                "hardware": "Hardware-Locked",
             }
             algo_text = algo_map.get(result["algorithm"], "Simple")
 
@@ -502,7 +500,7 @@ class KeygenDialog(BinarySelectionDialog):
                 "alphanumeric": "Alphanumeric",
                 "formatted": "Formatted",
                 "hex": "Hex",
-                "base64": "Base64"
+                "base64": "Base64",
             }
             format_text = format_map.get(result["format"], "Alphanumeric")
 
@@ -576,7 +574,7 @@ class KeygenDialog(BinarySelectionDialog):
             "RSA": "rsa",
             "AES": "aes",
             "Checksum": "checksum",
-            "Hardware-Locked": "hardware"
+            "Hardware-Locked": "hardware",
         }
 
         format_map = {
@@ -584,7 +582,7 @@ class KeygenDialog(BinarySelectionDialog):
             "Alphanumeric": "alphanumeric",
             "Formatted": "formatted",
             "Hex": "hex",
-            "Base64": "base64"
+            "Base64": "base64",
         }
 
         algorithm = algorithm_map.get(self.algorithm_combo.currentText(), "auto")
@@ -598,7 +596,7 @@ class KeygenDialog(BinarySelectionDialog):
             algorithm=algorithm,
             format_type=format_type,
             custom_length=custom_length,
-            validation_check=validation_check
+            validation_check=validation_check,
         )
         self.worker.key_generated.connect(self.on_single_key_generated)
         self.worker.error_occurred.connect(self.on_error)
@@ -729,7 +727,7 @@ class KeygenDialog(BinarySelectionDialog):
             reply = QMessageBox.question(
                 self, "Key Saved",
                 f"Key saved successfully to:\n{file_path}\n\nWould you like to open the generated_keys folder?",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
 
             if reply == QMessageBox.Yes:
@@ -747,7 +745,7 @@ class KeygenDialog(BinarySelectionDialog):
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in keygen_dialog: %s", e)
-            QMessageBox.critical(self, "Save Error", f"Failed to save key: {str(e)}")
+            QMessageBox.critical(self, "Save Error", f"Failed to save key: {e!s}")
             self.status_label.setText("Error saving key")
 
     def generate_batch_keys(self):
@@ -761,7 +759,7 @@ class KeygenDialog(BinarySelectionDialog):
             reply = QMessageBox.question(
                 self, "Large Batch",
                 f"You're about to generate {count} keys. This may take a while. Continue?",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
             if reply != QMessageBox.Yes:
                 return
@@ -783,7 +781,7 @@ class KeygenDialog(BinarySelectionDialog):
             "RSA": "rsa",
             "AES": "aes",
             "Checksum": "checksum",
-            "Hardware-Locked": "hardware"
+            "Hardware-Locked": "hardware",
         }
 
         format_map = {
@@ -791,7 +789,7 @@ class KeygenDialog(BinarySelectionDialog):
             "Alphanumeric": "alphanumeric",
             "Formatted": "formatted",
             "Hex": "hex",
-            "Base64": "base64"
+            "Base64": "base64",
         }
 
         algorithm = algorithm_map.get(self.batch_algorithm_combo.currentText(), "auto")
@@ -802,7 +800,7 @@ class KeygenDialog(BinarySelectionDialog):
             self.binary_path, "batch",
             count=count,
             algorithm=algorithm,
-            format_type=format_type
+            format_type=format_type,
         )
         self.worker.batch_progress.connect(self.on_batch_progress)
         self.worker.batch_completed.connect(self.on_batch_completed)
@@ -887,7 +885,7 @@ class KeygenDialog(BinarySelectionDialog):
 
         file_path, _ = QFileDialog.getSaveFileName(
             self, "Export Keys", default_path,
-            "Text Files (*.txt);;JSON Files (*.json);;CSV Files (*.csv)"
+            "Text Files (*.txt);;JSON Files (*.json);;CSV Files (*.csv)",
         )
 
         if file_path:
@@ -906,7 +904,7 @@ class KeygenDialog(BinarySelectionDialog):
                                 _key_data.get("key", ""),
                                 _key_data.get("algorithm", ""),
                                 _key_data.get("format", ""),
-                                "Error" if "error" in _key_data else "Generated"
+                                "Error" if "error" in _key_data else "Generated",
                             ])
                 else:  # txt
                     with open(file_path, "w", encoding="utf-8") as f:
@@ -920,7 +918,7 @@ class KeygenDialog(BinarySelectionDialog):
 
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in keygen_dialog: %s", e)
-                QMessageBox.critical(self, "Export Error", f"Failed to export keys: {str(e)}")
+                QMessageBox.critical(self, "Export Error", f"Failed to export keys: {e!s}")
 
     def analyze_existing_keys(self):
         """Analyze existing keys for patterns."""
@@ -966,7 +964,7 @@ class KeygenDialog(BinarySelectionDialog):
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in keygen_dialog: %s", e)
-            QMessageBox.critical(self, "Analysis Error", f"Failed to analyze keys: {str(e)}")
+            QMessageBox.critical(self, "Analysis Error", f"Failed to analyze keys: {e!s}")
 
     def on_error(self, error_msg):
         """Handle worker thread errors."""

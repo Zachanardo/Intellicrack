@@ -1,5 +1,4 @@
-"""
-Main Protection Detection Module
+"""Main Protection Detection Module
 
 This module serves as the primary interface for protection detection in Intellicrack.
 It uses the unified protection engine which provides comprehensive protection detection
@@ -10,7 +9,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-from typing import Any, Dict, List
+from typing import Any
 
 from ..utils.logger import get_logger
 from .intellicrack_protection_core import (
@@ -27,29 +26,27 @@ logger = get_logger(__name__)
 
 
 class ProtectionDetector:
-    """
-    Main protection detection interface for Intellicrack
+    """Main protection detection interface for Intellicrack
 
     This class provides a seamless interface to the unified protection engine,
     making it appear as if all detection capabilities are native to Intellicrack.
     """
 
     def __init__(self, enable_protection: bool = True, enable_heuristics: bool = True):
-        """
-        Initialize the protection detector
+        """Initialize the protection detector
 
         Args:
             enable_protection: Enable protection analysis
             enable_heuristics: Enable behavioral analysis
+
         """
         self.engine = UnifiedProtectionEngine(
             enable_protection=enable_protection,
-            enable_heuristics=enable_heuristics
+            enable_heuristics=enable_heuristics,
         )
 
     def detect_protections(self, file_path: str, deep_scan: bool = True) -> ProtectionAnalysis:
-        """
-        Analyze a binary file for protections
+        """Analyze a binary file for protections
 
         This method maintains backward compatibility with the original DIE detector
         interface while using the unified engine underneath.
@@ -60,6 +57,7 @@ class ProtectionDetector:
 
         Returns:
             ProtectionAnalysis object with all detection results
+
         """
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
@@ -71,8 +69,7 @@ class ProtectionDetector:
         return self._convert_to_legacy_format(unified_result)
 
     def analyze(self, file_path: str, deep_scan: bool = True) -> UnifiedProtectionResult:
-        """
-        Perform unified protection analysis
+        """Perform unified protection analysis
 
         This is the modern interface that returns the full unified result.
 
@@ -82,25 +79,25 @@ class ProtectionDetector:
 
         Returns:
             UnifiedProtectionResult with comprehensive analysis
+
         """
         return self.engine.analyze(file_path, deep_scan=deep_scan)
 
-    def get_quick_summary(self, file_path: str) -> Dict[str, Any]:
-        """
-        Get a quick protection summary without deep analysis
+    def get_quick_summary(self, file_path: str) -> dict[str, Any]:
+        """Get a quick protection summary without deep analysis
 
         Args:
             file_path: Path to the binary file
 
         Returns:
             Dictionary with quick summary information
+
         """
         return self.engine.get_quick_summary(file_path)
 
     def analyze_directory(self, directory: str, recursive: bool = True,
-                         deep_scan: bool = False) -> List[ProtectionAnalysis]:
-        """
-        Analyze all executable files in a directory
+                         deep_scan: bool = False) -> list[ProtectionAnalysis]:
+        """Analyze all executable files in a directory
 
         Args:
             directory: Directory path to scan
@@ -109,6 +106,7 @@ class ProtectionDetector:
 
         Returns:
             List of ProtectionAnalysis results
+
         """
         results = []
         extensions = [".exe", ".dll", ".sys", ".ocx", ".scr", ".com", ".so", ".dylib"]
@@ -136,22 +134,21 @@ class ProtectionDetector:
 
         return results
 
-    def get_bypass_strategies(self, file_path: str) -> List[Dict[str, Any]]:
-        """
-        Get bypass strategies for protections detected in a file
+    def get_bypass_strategies(self, file_path: str) -> list[dict[str, Any]]:
+        """Get bypass strategies for protections detected in a file
 
         Args:
             file_path: Path to the binary file
 
         Returns:
             List of bypass strategy dictionaries
+
         """
         result = self.engine.analyze(file_path)
         return result.bypass_strategies
 
     def _convert_to_legacy_format(self, unified_result: UnifiedProtectionResult) -> ProtectionAnalysis:
-        """
-        Convert unified result to legacy ProtectionAnalysis format
+        """Convert unified result to legacy ProtectionAnalysis format
 
         This ensures backward compatibility with existing code.
         """
@@ -160,7 +157,7 @@ class ProtectionDetector:
             file_type=unified_result.file_type,
             architecture=unified_result.architecture,
             is_packed=unified_result.is_packed,
-            is_protected=unified_result.is_protected
+            is_protected=unified_result.is_protected,
         )
 
         # Convert protections
@@ -171,7 +168,7 @@ class ProtectionDetector:
                 type=self._map_protection_type(protection["type"]),
                 confidence=protection.get("confidence", 100.0),
                 details=protection.get("details", {}),
-                bypass_recommendations=protection.get("bypass_recommendations", [])
+                bypass_recommendations=protection.get("bypass_recommendations", []),
             )
             analysis.detections.append(det_result)
 
@@ -189,7 +186,7 @@ class ProtectionDetector:
         analysis.metadata = {
             "analysis_time": unified_result.analysis_time,
             "engines_used": unified_result.engines_used,
-            "confidence_score": unified_result.confidence_score
+            "confidence_score": unified_result.confidence_score,
         }
 
         return analysis
@@ -208,7 +205,7 @@ class ProtectionDetector:
             "license": ProtectionType.LICENSE,
             "drm": ProtectionType.DRM,
             "antidebug": ProtectionType.PROTECTOR,
-            "obfuscator": ProtectionType.PROTECTOR
+            "obfuscator": ProtectionType.PROTECTOR,
         }
 
         return type_map.get(type_str.lower(), ProtectionType.UNKNOWN)
@@ -247,8 +244,7 @@ class ProtectionDetector:
         return "\n".join(lines)
 
     def export_results(self, analysis: ProtectionAnalysis, output_format: str = "json") -> str:
-        """
-        Export analysis results in various formats
+        """Export analysis results in various formats
 
         Args:
             analysis: ProtectionAnalysis to export
@@ -256,6 +252,7 @@ class ProtectionDetector:
 
         Returns:
             Formatted string of results
+
         """
         if output_format == "json":
             import json
@@ -274,28 +271,27 @@ class ProtectionDetector:
                         "version": d.version,
                         "type": d.type.value,
                         "confidence": d.confidence,
-                        "bypass_recommendations": d.bypass_recommendations
+                        "bypass_recommendations": d.bypass_recommendations,
                     }
                     for d in analysis.detections
                 ],
-                "metadata": analysis.metadata
+                "metadata": analysis.metadata,
             }
             return json.dumps(data, indent=2)
 
-        elif output_format == "text":
+        if output_format == "text":
             return self.get_summary(analysis)
 
-        elif output_format == "csv":
+        if output_format == "csv":
             lines = ["File,Type,Architecture,Protection,Version,Category,Confidence"]
             for det in analysis.detections:
                 lines.append(
                     f"{analysis.file_path},{analysis.file_type},{analysis.architecture},"
-                    f"{det.name},{det.version or 'N/A'},{det.type.value},{det.confidence:.0f}"
+                    f"{det.name},{det.version or 'N/A'},{det.type.value},{det.confidence:.0f}",
                 )
             return "\n".join(lines)
 
-        else:
-            raise ValueError(f"Unknown output format: {output_format}")
+        raise ValueError(f"Unknown output format: {output_format}")
 
 
 # Global detector instance

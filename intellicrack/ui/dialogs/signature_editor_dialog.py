@@ -1,5 +1,4 @@
-"""
-ICP Signature Editor Dialog
+"""ICP Signature Editor Dialog
 
 Provides comprehensive signature creation and editing capabilities for the
 Intellicrack Protection Engine (ICP). Allows users to create custom signatures,
@@ -12,7 +11,6 @@ Licensed under GNU General Public License v3.0
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import (
@@ -74,7 +72,7 @@ class SignatureSyntaxHighlighter(QSyntaxHighlighter):
 
         keywords = [
             "init", "ep", "section", "header", "overlay", "entrypoint",
-            "size", "version", "options", "name", "type", "comment"
+            "size", "version", "options", "name", "type", "comment",
         ]
 
         for keyword in keywords:
@@ -121,7 +119,7 @@ class SignatureTestWorker(QThread):
     test_completed = pyqtSignal(str, bool, str)  # file_path, success, result
     progress_update = pyqtSignal(int, str)       # progress, current_file
 
-    def __init__(self, signature_content: str, test_files: List[str]):
+    def __init__(self, signature_content: str, test_files: list[str]):
         """Initialize the SignatureTestWorker with default values."""
         super().__init__()
         self.signature_content = signature_content
@@ -144,12 +142,12 @@ class SignatureTestWorker(QThread):
 
             except Exception as e:
                 self.logger.error("Exception in signature_editor_dialog: %s", e)
-                self.test_completed.emit(file_path, False, f"Error: {str(e)}")
+                self.test_completed.emit(file_path, False, f"Error: {e!s}")
 
         # Final progress update
         self.progress_update.emit(100, "Complete")
 
-    def _test_signature_on_file(self, file_path: str) -> Dict[str, any]:
+    def _test_signature_on_file(self, file_path: str) -> dict[str, any]:
         """Test signature against a single file"""
         try:
             # Create temporary signature file
@@ -162,7 +160,7 @@ class SignatureTestWorker(QThread):
             # Note: Custom signatures need to be loaded through the engine configuration
             result = self.unified_engine.analyze_file(
                 file_path,
-                deep_scan=True
+                deep_scan=True,
             )
 
             # Clean up temp file
@@ -177,19 +175,19 @@ class SignatureTestWorker(QThread):
                     if detection.name != "Unknown":
                         return {
                             "success": True,
-                            "message": f"Detected: {detection.name} (confidence: {detection.confidence:.1%})"
+                            "message": f"Detected: {detection.name} (confidence: {detection.confidence:.1%})",
                         }
 
             return {
                 "success": False,
-                "message": "Signature did not match this file"
+                "message": "Signature did not match this file",
             }
 
         except Exception as e:
             logger.error("Exception in signature_editor_dialog: %s", e)
             return {
                 "success": False,
-                "message": f"Test failed: {str(e)}"
+                "message": f"Test failed: {e!s}",
             }
 
 
@@ -204,17 +202,17 @@ class SignatureEditorDialog(QDialog):
         self.resize(1200, 800)
 
         # Data
-        self.current_signature_path: Optional[str] = None
-        self.signature_databases: Dict[str, str] = {}  # name -> path
-        self.current_signatures: List[Dict] = []
-        self.test_worker: Optional[SignatureTestWorker] = None
+        self.current_signature_path: str | None = None
+        self.signature_databases: dict[str, str] = {}  # name -> path
+        self.current_signatures: list[dict] = []
+        self.test_worker: SignatureTestWorker | None = None
 
         # UI Components
-        self.signature_list: Optional[QListWidget] = None
-        self.signature_editor: Optional[QTextEdit] = None
-        self.syntax_highlighter: Optional[SignatureSyntaxHighlighter] = None
-        self.test_results_table: Optional[QTableView] = None
-        self.test_results_model: Optional[QStandardItemModel] = None
+        self.signature_list: QListWidget | None = None
+        self.signature_editor: QTextEdit | None = None
+        self.syntax_highlighter: SignatureSyntaxHighlighter | None = None
+        self.test_results_table: QTableView | None = None
+        self.test_results_model: QStandardItemModel | None = None
 
         self.init_ui()
         self.load_signature_databases()
@@ -244,7 +242,7 @@ class SignatureEditorDialog(QDialog):
 
         # Button box
         button_box = QDialogButtonBox(
-            QDialogButtonBox.Save | QDialogButtonBox.Close
+            QDialogButtonBox.Save | QDialogButtonBox.Close,
         )
         button_box.accepted.connect(self.save_signature)
         button_box.rejected.connect(self.close)
@@ -370,7 +368,7 @@ class SignatureEditorDialog(QDialog):
         self.sig_type_combo = QComboBox()
         self.sig_type_combo.addItems([
             "Packer", "Protector", "Compiler", "Installer",
-            "Cryptor", "Virus", "Trojan", "Other"
+            "Cryptor", "Virus", "Trojan", "Other",
         ])
         info_layout.addWidget(self.sig_type_combo)
 
@@ -484,7 +482,7 @@ class SignatureEditorDialog(QDialog):
         # Results table
         self.test_results_model = QStandardItemModel()
         self.test_results_model.setHorizontalHeaderLabels([
-            "File", "Result", "Message", "File Size", "Time"
+            "File", "Result", "Message", "File Size", "Time",
         ])
 
         self.test_results_table = QTableView()
@@ -532,7 +530,7 @@ class SignatureEditorDialog(QDialog):
             logger.debug("Signature templates module not available, using fallback categories")
             categories = [
                 "Basic Patterns", "PE Headers", "Section Signatures",
-                "Import Signatures", "String Signatures", "Complex Rules"
+                "Import Signatures", "String Signatures", "Complex Rules",
             ]
 
         self.template_category_list.addItems(categories)
@@ -586,7 +584,7 @@ class SignatureEditorDialog(QDialog):
         search_paths = [
             Path(__file__).parent.parent.parent / "data" / "signatures",
             Path.home() / ".intellicrack" / "signatures",
-            Path.cwd() / "signatures"
+            Path.cwd() / "signatures",
         ]
 
         for search_path in search_paths:
@@ -607,7 +605,7 @@ class SignatureEditorDialog(QDialog):
         db_path = self.signature_databases[db_name]
 
         try:
-            with open(db_path, "r", encoding="utf-8") as f:
+            with open(db_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Parse signatures from file
@@ -616,9 +614,9 @@ class SignatureEditorDialog(QDialog):
 
         except Exception as e:
             self.logger.error("Exception in signature_editor_dialog: %s", e)
-            QMessageBox.warning(self, "Load Error", f"Failed to load database {db_name}: {str(e)}")
+            QMessageBox.warning(self, "Load Error", f"Failed to load database {db_name}: {e!s}")
 
-    def _parse_signature_file(self, content: str) -> List[Dict]:
+    def _parse_signature_file(self, content: str) -> list[dict]:
         """Parse signature file content into individual signatures"""
         signatures = []
 
@@ -634,7 +632,7 @@ class SignatureEditorDialog(QDialog):
                 "type": "Other",
                 "version": "",
                 "description": "",
-                "content": block.strip()
+                "content": block.strip(),
             }
 
             # Extract metadata from comments
@@ -700,7 +698,7 @@ class SignatureEditorDialog(QDialog):
         # Update info display
         self._update_signature_info(sig_data)
 
-    def _update_signature_info(self, sig_data: Dict):
+    def _update_signature_info(self, sig_data: dict):
         """Update signature info display"""
         info_text = f"""Name: {sig_data['name']}
 Type: {sig_data['type']}
@@ -752,12 +750,12 @@ ep:
             self,
             "Load Signature File",
             "",
-            "Signature Files (*.sg *.sig);;All Files (*.*)"
+            "Signature Files (*.sg *.sig);;All Files (*.*)",
         )
 
         if file_path:
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read()
 
                 self.current_signature_path = file_path
@@ -768,7 +766,7 @@ ep:
 
             except Exception as e:
                 self.logger.error("Exception in signature_editor_dialog: %s", e)
-                QMessageBox.critical(self, "Load Error", f"Failed to load file: {str(e)}")
+                QMessageBox.critical(self, "Load Error", f"Failed to load file: {e!s}")
 
     def _extract_metadata_from_content(self, content: str):
         """Extract metadata from signature content"""
@@ -803,7 +801,7 @@ ep:
                 self,
                 "Save Signature",
                 f"{self.sig_name_input.text() or 'signature'}.sg",
-                "Signature Files (*.sg);;All Files (*.*)"
+                "Signature Files (*.sg);;All Files (*.*)",
             )
 
         if file_path:
@@ -819,7 +817,7 @@ ep:
 
             except Exception as e:
                 logger.error("Exception in signature_editor_dialog: %s", e)
-                QMessageBox.critical(self, "Save Error", f"Failed to save file: {str(e)}")
+                QMessageBox.critical(self, "Save Error", f"Failed to save file: {e!s}")
 
     def _build_signature_content(self) -> str:
         """Build complete signature content with metadata"""
@@ -953,7 +951,7 @@ ep:
             self.template_list.setCurrentRow(0)
             self._update_template_preview()
 
-    def _get_templates_for_category(self, category: str) -> Dict[str, str]:
+    def _get_templates_for_category(self, category: str) -> dict[str, str]:
         """Get templates for a specific category"""
         try:
             from ...data.signature_templates import SignatureTemplates
@@ -970,32 +968,32 @@ ep:
             logger.warning("Signature templates module not available, using built-in templates")
             return self._get_builtin_templates(category)
 
-    def _get_builtin_templates(self, category: str) -> Dict[str, str]:
+    def _get_builtin_templates(self, category: str) -> dict[str, str]:
         """Fallback built-in templates"""
         if category == "Basic Patterns":
             return {
-                "Simple Hex Pattern": '''ep:
+                "Simple Hex Pattern": """ep:
 {
     hex = "48 65 6C 6C 6F";  // "Hello"
-}''',
-                "Wildcard Pattern": '''ep:
+}""",
+                "Wildcard Pattern": """ep:
 {
     hex = "48 ?? 6C ?? 6F";  // "H?l?o" with wildcards
-}'''
+}""",
             }
 
-        elif category == "PE Headers":
+        if category == "PE Headers":
             return {
-                "DOS Header Check": '''header:
+                "DOS Header Check": """header:
 {
     hex = "4D 5A";  // MZ signature
     offset = 0;
-}''',
-                "PE Header Check": '''header:
+}""",
+                "PE Header Check": """header:
 {
     hex = "50 45 00 00";  // PE signature
     offset = "PE_OFFSET";
-}'''
+}""",
             }
 
         return {}
@@ -1030,7 +1028,7 @@ ep:
             self,
             "Add Test File",
             "",
-            "Executable Files (*.exe *.dll *.sys);;All Files (*.*)"
+            "Executable Files (*.exe *.dll *.sys);;All Files (*.*)",
         )
 
         if file_path:
@@ -1040,7 +1038,7 @@ ep:
         """Add all files from folder for testing"""
         folder_path = QFileDialog.getExistingDirectory(
             self,
-            "Add Test Folder"
+            "Add Test Folder",
         )
 
         if folder_path:
@@ -1072,7 +1070,7 @@ ep:
         # Clear previous results
         self.test_results_model.clear()
         self.test_results_model.setHorizontalHeaderLabels([
-            "File", "Result", "Message", "File Size", "Time"
+            "File", "Result", "Message", "File Size", "Time",
         ])
 
         # Disable test button, enable stop button
@@ -1150,7 +1148,7 @@ ep:
 
         self.test_summary_label.setText(
             f"Tests completed: {matches}/{total_tests} matches ({matches/total_tests*100:.1f}%)"
-            if total_tests > 0 else "No tests completed"
+            if total_tests > 0 else "No tests completed",
         )
 
         self.test_worker = None
@@ -1161,7 +1159,7 @@ ep:
             self,
             "Add Signature Database",
             "",
-            "Signature Files (*.sg *.sig);;All Files (*.*)"
+            "Signature Files (*.sg *.sig);;All Files (*.*)",
         )
 
         if file_path:

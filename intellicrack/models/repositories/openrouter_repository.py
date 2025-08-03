@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -25,7 +24,7 @@ accessing models via OpenRouter's API.
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelInfo
@@ -42,11 +41,10 @@ class OpenRouterRepository(APIRepositoryBase):
                  api_key: str = "",
                  timeout: int = 60,
                  proxy: str = "",
-                 rate_limit_config: Optional[RateLimitConfig] = None,
-                 cache_config: Optional[Dict[str, Any]] = None,
+                 rate_limit_config: RateLimitConfig | None = None,
+                 cache_config: dict[str, Any] | None = None,
                  download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads")):
-        """
-        Initialize the OpenRouter repository.
+        """Initialize the OpenRouter repository.
 
         Args:
             repository_name: Name of the repository
@@ -57,6 +55,7 @@ class OpenRouterRepository(APIRepositoryBase):
             rate_limit_config: Rate limiting configuration
             cache_config: Cache configuration
             download_dir: Directory for downloaded models (unused for API-only repos)
+
         """
         super().__init__(
             repository_name=repository_name,
@@ -66,16 +65,16 @@ class OpenRouterRepository(APIRepositoryBase):
             proxy=proxy,
             rate_limit_config=rate_limit_config,
             cache_config=cache_config,
-            download_dir=download_dir
+            download_dir=download_dir,
         )
         self.logger = logging.getLogger(__name__)
 
-    def authenticate(self) -> Tuple[bool, str]:
-        """
-        Authenticate with the OpenRouter API.
+    def authenticate(self) -> tuple[bool, str]:
+        """Authenticate with the OpenRouter API.
 
         Returns:
             Tuple of (success, message)
+
         """
         if not self.api_key:
             return False, "API key is required for OpenRouter authentication"
@@ -85,25 +84,24 @@ class OpenRouterRepository(APIRepositoryBase):
             endpoint="v1/models",
             method="GET",
             headers={"Authorization": f"Bearer {self.api_key}"},
-            use_cache=False
+            use_cache=False,
         )
 
         if success:
             return True, "Authentication successful"
-        else:
-            return False, f"Authentication failed: {error_message}"
+        return False, f"Authentication failed: {error_message}"
 
-    def get_available_models(self) -> List[ModelInfo]:
-        """
-        Get a list of available models from OpenRouter API.
+    def get_available_models(self) -> list[ModelInfo]:
+        """Get a list of available models from OpenRouter API.
 
         Returns:
             A list of ModelInfo objects representing the available models.
+
         """
         success, data, error_message = self._make_request(
             endpoint="v1/models",
             method="GET",
-            headers={"Authorization": f"Bearer {self.api_key}"}
+            headers={"Authorization": f"Bearer {self.api_key}"},
         )
 
         if not success:
@@ -126,22 +124,22 @@ class OpenRouterRepository(APIRepositoryBase):
             logger.error(f"Error parsing OpenRouter models response: {e}")
             return []
 
-    def get_model_details(self, model_id: str) -> Optional[ModelInfo]:
-        """
-        Get detailed information about a specific model.
+    def get_model_details(self, model_id: str) -> ModelInfo | None:
+        """Get detailed information about a specific model.
 
         Args:
             model_id: The ID of the model to get details for
 
         Returns:
             A ModelInfo object containing the model details, or None if the model is not found.
+
         """
         # OpenRouter doesn't have a specific endpoint for individual model details
         # So we'll get all models and filter for the one we want
         success, data, error_message = self._make_request(
             endpoint="v1/models",
             method="GET",
-            headers={"Authorization": f"Bearer {self.api_key}"}
+            headers={"Authorization": f"Bearer {self.api_key}"},
         )
 
         if not success:
@@ -161,9 +159,8 @@ class OpenRouterRepository(APIRepositoryBase):
             logger.error(f"Error parsing OpenRouter model details for {model_id}: {e}")
             return None
 
-    def _create_model_info(self, model_id: str, model_data: Dict[str, Any]) -> Optional[ModelInfo]:
-        """
-        Create a ModelInfo object from the API data.
+    def _create_model_info(self, model_id: str, model_data: dict[str, Any]) -> ModelInfo | None:
+        """Create a ModelInfo object from the API data.
 
         Args:
             model_id: The ID of the model
@@ -171,6 +168,7 @@ class OpenRouterRepository(APIRepositoryBase):
 
         Returns:
             ModelInfo object, or None if failed
+
         """
         try:
             # Extract context window from model data
@@ -203,7 +201,7 @@ class OpenRouterRepository(APIRepositoryBase):
                 version=model_data.get("version", "1.0"),
                 checksum=None,
                 download_url=None,
-                local_path=None
+                local_path=None,
             )
 
             return model_info
@@ -212,12 +210,12 @@ class OpenRouterRepository(APIRepositoryBase):
             logger.error(f"Error creating ModelInfo for {model_id}: {e}")
             return None
 
-    def download_model(self, model_id: str, destination_path: str) -> Tuple[bool, str]:
-        """
-        OpenRouter doesn't support model downloads, this is an API-only service.
+    def download_model(self, model_id: str, destination_path: str) -> tuple[bool, str]:
+        """OpenRouter doesn't support model downloads, this is an API-only service.
 
         Returns:
             Always returns (False, "OpenRouter doesn't support model downloads")
+
         """
         self.logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
         return False, "OpenRouter doesn't support model downloads"

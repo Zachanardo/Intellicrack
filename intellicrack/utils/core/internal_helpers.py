@@ -7,7 +7,8 @@ import struct
 import subprocess
 import threading
 import time
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -76,20 +77,21 @@ logger = setup_logger(__name__)
 
 # === Protocol and Network Helpers ===
 
-def _add_protocol_fingerprinter_results(results: Dict[str, Any],
-                                       fingerprints: Dict[str, Any]) -> None:
+def _add_protocol_fingerprinter_results(results: dict[str, Any],
+                                       fingerprints: dict[str, Any]) -> None:
     """Add protocol fingerprinter results to analysis results.
 
     Args:
         results: Analysis results dictionary to update
         fingerprints: Protocol fingerprint data to add
+
     """
     if "network_analysis" not in results:
         results["network_analysis"] = {}
     results["network_analysis"]["protocol_fingerprints"] = fingerprints
 
 
-def _analyze_requests(requests: List[Dict[str, Any]]) -> Dict[str, Any]:
+def _analyze_requests(requests: list[dict[str, Any]]) -> dict[str, Any]:
     """Analyze captured network requests.
 
     Args:
@@ -97,12 +99,13 @@ def _analyze_requests(requests: List[Dict[str, Any]]) -> Dict[str, Any]:
 
     Returns:
         Dict containing analysis results including request counts, hosts, and patterns
+
     """
     analysis = {
         "total_requests": len(requests),
         "unique_hosts": set(),
         "protocols": {},
-        "suspicious_patterns": []
+        "suspicious_patterns": [],
     }
 
     for req in requests:
@@ -116,7 +119,7 @@ def _analyze_requests(requests: List[Dict[str, Any]]) -> Dict[str, Any]:
         if "license" in req.get("path", "").lower():
             analysis["suspicious_patterns"].append({
                 "type": "license_check",
-                "request": req
+                "request": req,
             })
 
     analysis["unique_hosts"] = list(analysis["unique_hosts"])
@@ -132,6 +135,7 @@ def _build_cm_packet(packet_type: str, data: bytes = b"") -> bytes:
 
     Returns:
         Bytes representing the constructed CodeMeter packet
+
     """
     # Simple packet structure: [type:1][length:4][data:n]
     packet = struct.pack("B", ord(packet_type[0]))
@@ -140,9 +144,8 @@ def _build_cm_packet(packet_type: str, data: bytes = b"") -> bytes:
     return packet
 
 
-def _handle_check_license(request_data: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Handle license check request with comprehensive validation.
+def _handle_check_license(request_data: dict[str, Any]) -> dict[str, Any]:
+    """Handle license check request with comprehensive validation.
 
     This function implements deterministic license validation by checking
     various aspects of the license request and generating appropriate responses
@@ -153,6 +156,7 @@ def _handle_check_license(request_data: Dict[str, Any]) -> Dict[str, Any]:
 
     Returns:
         Dict containing detailed license validation results
+
     """
     from datetime import datetime, timedelta
 
@@ -197,7 +201,6 @@ def _handle_check_license(request_data: Dict[str, Any]) -> Dict[str, Any]:
             features.extend(["ai_assistance", "cloud_sync"])
     except (ValueError, IndexError) as e:
         logger.error("Error in internal_helpers: %s", e)
-        pass
 
     # Generate realistic license details
     response = {
@@ -215,7 +218,7 @@ def _handle_check_license(request_data: Dict[str, Any]) -> Dict[str, Any]:
         "license_type": "perpetual" if expiry_date == "2099-12-31" else "subscription",
         "validation_timestamp": datetime.now().isoformat(),
         "server_version": "2.1.4",
-        "signature": hashlib.sha256(f"{license_hash}:{status}".encode()).hexdigest()[:32]
+        "signature": hashlib.sha256(f"{license_hash}:{status}".encode()).hexdigest()[:32],
     }
 
     # Add warnings or notices based on license status
@@ -236,6 +239,7 @@ def _handle_decrypt(data: bytes, key: bytes) -> bytes:
 
     Returns:
         Decrypted plaintext bytes
+
     """
     try:
 
@@ -254,7 +258,7 @@ def _handle_decrypt(data: bytes, key: bytes) -> bytes:
         cipher = Cipher(
             algorithms.AES(derived_key),
             modes.CBC(iv),
-            backend=default_backend()
+            backend=default_backend(),
         )
         decryptor = cipher.decryptor()
 
@@ -287,6 +291,7 @@ def _handle_encrypt(data: bytes, key: bytes) -> bytes:
 
     Returns:
         Encrypted ciphertext bytes
+
     """
     try:
 
@@ -309,7 +314,7 @@ def _handle_encrypt(data: bytes, key: bytes) -> bytes:
         cipher = Cipher(
             algorithms.AES(derived_key),
             modes.CBC(iv),
-            backend=default_backend()
+            backend=default_backend(),
         )
         encryptor = cipher.encryptor()
         ciphertext = encryptor.update(padded_data) + encryptor.finalize()
@@ -329,15 +334,15 @@ def _handle_encrypt(data: bytes, key: bytes) -> bytes:
         return data
 
 
-def _handle_get_info() -> Dict[str, Any]:
-    """
-    Handle get info request with comprehensive server information.
+def _handle_get_info() -> dict[str, Any]:
+    """Handle get info request with comprehensive server information.
 
     Returns detailed information about the license server capabilities,
     supported protocols, and current status.
 
     Returns:
         Dict containing comprehensive server information
+
     """
     import platform
     from datetime import datetime
@@ -348,7 +353,7 @@ def _handle_get_info() -> Dict[str, Any]:
         "os_version": platform.version(),
         "architecture": platform.machine(),
         "python_version": platform.python_version(),
-        "hostname": platform.node()
+        "hostname": platform.node(),
     }
 
     # Calculate uptime (simulated)
@@ -365,21 +370,21 @@ def _handle_get_info() -> Dict[str, Any]:
             "edition": "Enterprise",
             "started": datetime.fromtimestamp(start_time).isoformat(),
             "uptime": f"{uptime_hours}h {uptime_minutes}m",
-            "status": "running"
+            "status": "running",
         },
         "capabilities": {
             "basic": ["check", "issue", "revoke", "renew", "query"],
             "advanced": ["offline_activation", "floating_licenses", "grace_period"],
             "protocols": ["http", "https", "tcp", "udp"],
             "encryption": ["aes256", "rsa2048", "sha256"],
-            "license_types": ["perpetual", "subscription", "trial", "floating", "node_locked"]
+            "license_types": ["perpetual", "subscription", "trial", "floating", "node_locked"],
         },
         "limits": {
             "max_concurrent_users": 1000,
             "max_licenses_per_user": 10,
             "grace_period_days": 30,
             "trial_period_days": 30,
-            "offline_days": 7
+            "offline_days": 7,
         },
         "features": {
             "backup_enabled": True,
@@ -387,14 +392,14 @@ def _handle_get_info() -> Dict[str, Any]:
             "audit_trail": True,
             "high_availability": False,
             "load_balancing": False,
-            "geo_redundancy": False
+            "geo_redundancy": False,
         },
         "statistics": {
             "total_licenses_issued": 1247,
             "active_licenses": 892,
             "expired_licenses": 34,
             "revoked_licenses": 12,
-            "current_users": 156
+            "current_users": 156,
         },
         "system": system_info,
         "endpoints": {
@@ -402,20 +407,19 @@ def _handle_get_info() -> Dict[str, Any]:
             "license_issue": "/api/v2/license/issue",
             "license_revoke": "/api/v2/license/revoke",
             "server_status": "/api/v2/status",
-            "health_check": "/health"
+            "health_check": "/health",
         },
         "supported_vendors": [
             "Adobe", "Autodesk", "Microsoft", "FlexLM", "HASP/Sentinel",
-            "CodeMeter", "Custom Protocol"
+            "CodeMeter", "Custom Protocol",
         ],
         "timestamp": datetime.now().isoformat(),
-        "timezone": time.tzname[0]
+        "timezone": time.tzname[0],
     }
 
 
-def _handle_get_key(key_id: str) -> Optional[str]:
-    """
-    Handle get key request with comprehensive key generation.
+def _handle_get_key(key_id: str) -> str | None:
+    """Handle get key request with comprehensive key generation.
 
     This function generates realistic license keys based on the key ID,
     using multiple algorithms and formats to simulate different key types.
@@ -425,6 +429,7 @@ def _handle_get_key(key_id: str) -> Optional[str]:
 
     Returns:
         String containing the generated license key
+
     """
     import base64
     from datetime import datetime
@@ -443,53 +448,51 @@ def _handle_get_key(key_id: str) -> Optional[str]:
         segments = [base_hash[i:i+4].upper() for i in range(0, 16, 4)]
         return f"ADBE-{'-'.join(segments)}"
 
-    elif any(pattern in key_id_lower for pattern in ["autodesk", "autocad", "maya"]):
+    if any(pattern in key_id_lower for pattern in ["autodesk", "autocad", "maya"]):
         # Autodesk style key
         key_part = base_hash[:20].upper()
         return f"ADSK-{key_part[:5]}-{key_part[5:10]}-{key_part[10:15]}-{key_part[15:20]}"
 
-    elif any(pattern in key_id_lower for pattern in ["microsoft", "office", "windows"]):
+    if any(pattern in key_id_lower for pattern in ["microsoft", "office", "windows"]):
         # Microsoft style product key
         segments = [base_hash[i:i+5].upper() for i in range(0, 25, 5)]
         return "-".join(segments)
 
-    elif any(pattern in key_id_lower for pattern in ["jetbrains", "intellij", "idea"]):
+    if any(pattern in key_id_lower for pattern in ["jetbrains", "intellij", "idea"]):
         # JetBrains style key
         timestamp = int(time.time())
         encoded_data = base64.b64encode(f"{key_id}:{timestamp}".encode()).decode()[:32]
         return f"JB-{encoded_data[:8]}-{encoded_data[8:16]}-{encoded_data[16:24]}-{encoded_data[24:32]}"
 
-    elif any(pattern in key_id_lower for pattern in ["flexlm", "flex", "license"]):
+    if any(pattern in key_id_lower for pattern in ["flexlm", "flex", "license"]):
         # FlexLM style license
         feature_hash = hashlib.md5(f"feature_{key_id}".encode()).hexdigest()[:8]
         return f"FEATURE {key_id.upper()} {feature_hash} 1.0 permanent 999 HOSTID=ANY"
 
-    elif any(pattern in key_id_lower for pattern in ["hasp", "sentinel", "dongle"]):
+    if any(pattern in key_id_lower for pattern in ["hasp", "sentinel", "dongle"]):
         # HASP/Sentinel style key
         hasp_id = int(base_hash[:8], 16) % 999999
         return f"HASP-{hasp_id:06d}-{base_hash[:8].upper()}-{base_hash[8:16].upper()}"
 
-    elif any(pattern in key_id_lower for pattern in ["trial", "demo", "eval"]):
+    if any(pattern in key_id_lower for pattern in ["trial", "demo", "eval"]):
         # Trial license key with expiration
         trial_hash = base_hash[:16].upper()
         expiry_date = (datetime.now().replace(year=datetime.now().year + 1)).strftime("%Y%m%d")
         return f"TRIAL-{trial_hash[:4]}-{trial_hash[4:8]}-{trial_hash[8:12]}-{trial_hash[12:16]}-EXP{expiry_date}"
 
-    elif "enterprise" in key_id_lower or "corp" in key_id_lower:
+    if "enterprise" in key_id_lower or "corp" in key_id_lower:
         # Enterprise license key
         ent_hash = base_hash[:24].upper()
         return f"ENT-{ent_hash[:6]}-{ent_hash[6:12]}-{ent_hash[12:18]}-{ent_hash[18:24]}-UNLIMITED"
 
-    else:
-        # Generic license key format
-        segments = [base_hash[i:i+4].upper() for i in range(0, 20, 4)]
-        checksum = sum(ord(c) for c in key_id) % 100
-        return f"LIC-{'-'.join(segments)}-{checksum:02d}"
+    # Generic license key format
+    segments = [base_hash[i:i+4].upper() for i in range(0, 20, 4)]
+    checksum = sum(ord(c) for c in key_id) % 100
+    return f"LIC-{'-'.join(segments)}-{checksum:02d}"
 
 
-def _handle_get_license(license_id: str) -> Dict[str, Any]:
-    """
-    Handle get license request with comprehensive license information.
+def _handle_get_license(license_id: str) -> dict[str, Any]:
+    """Handle get license request with comprehensive license information.
 
     This function retrieves detailed license information based on the license ID,
     providing realistic license data including features, usage statistics, and metadata.
@@ -499,6 +502,7 @@ def _handle_get_license(license_id: str) -> Dict[str, Any]:
 
     Returns:
         Dict containing detailed license information
+
     """
     from datetime import datetime, timedelta
 
@@ -633,21 +637,20 @@ def _handle_get_license(license_id: str) -> Dict[str, Any]:
                 {
                     "action": "license_issued",
                     "timestamp": issued_date.isoformat(),
-                    "user": "system"
+                    "user": "system",
                 },
                 {
                     "action": "last_validation",
                     "timestamp": last_checkin.isoformat(),
-                    "user": user_id
-                }
-            ]
-        }
+                    "user": user_id,
+                },
+            ],
+        },
     }
 
 
-def _handle_license_query(query: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """
-    Handle license query request with comprehensive license database functionality.
+def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
+    """Handle license query request with comprehensive license database functionality.
 
     This function implements a license database query system, returning
     detailed license information based on the query parameters.
@@ -657,16 +660,17 @@ def _handle_license_query(query: Dict[str, Any]) -> List[Dict[str, Any]]:
 
     Returns:
         List of license dictionaries matching the query criteria
+
     """
     from datetime import datetime, timedelta
 
     # Extract query parameters
     limit = min(query.get("limit", 10), 100)  # Limit to 100 for performance
     offset = query.get("offset", 0)
-    status_filter = query.get("status", None)
-    user_filter = query.get("user", None)
-    product_filter = query.get("product", None)
-    license_type = query.get("license_type", None)
+    status_filter = query.get("status")
+    user_filter = query.get("user")
+    product_filter = query.get("product")
+    license_type = query.get("license_type")
 
     # Generate realistic license data
     licenses = []
@@ -677,32 +681,32 @@ def _handle_license_query(query: Dict[str, Any]) -> List[Dict[str, Any]]:
             "product": "Adobe Creative Suite",
             "type": "subscription",
             "features": ["photoshop", "illustrator", "premiere"],
-            "max_users": 5
+            "max_users": 5,
         },
         {
             "product": "Autodesk AutoCAD",
             "type": "perpetual",
             "features": ["2d_drafting", "3d_modeling", "rendering"],
-            "max_users": 1
+            "max_users": 1,
         },
         {
             "product": "Microsoft Office",
             "type": "subscription",
             "features": ["word", "excel", "powerpoint", "outlook"],
-            "max_users": 10
+            "max_users": 10,
         },
         {
             "product": "JetBrains IntelliJ",
             "type": "subscription",
             "features": ["ide", "debugger", "profiler"],
-            "max_users": 3
+            "max_users": 3,
         },
         {
             "product": "Enterprise Security Suite",
             "type": "enterprise",
             "features": ["antivirus", "firewall", "encryption"],
-            "max_users": 999
-        }
+            "max_users": 999,
+        },
     ]
 
     # Generate licenses based on templates
@@ -792,7 +796,7 @@ def _handle_license_query(query: Dict[str, Any]) -> List[Dict[str, Any]]:
             "billing_cycle": "monthly" if template["type"] == "subscription" else "one_time",
             "cost_center": f"CC-{(i % 20) + 1:03d}",
             "contact_email": f"{user_id}@{os.environ.get('EMAIL_DOMAIN', 'internal.local')}",
-            "notes": f"License for {template['product']} - {license_status.title()} status"
+            "notes": f"License for {template['product']} - {license_status.title()} status",
         }
 
         licenses.append(license_data)
@@ -800,9 +804,8 @@ def _handle_license_query(query: Dict[str, Any]) -> List[Dict[str, Any]]:
     return licenses
 
 
-def _handle_license_release(license_id: str) -> Dict[str, Any]:
-    """
-    Handle license release request with comprehensive release processing.
+def _handle_license_release(license_id: str) -> dict[str, Any]:
+    """Handle license release request with comprehensive release processing.
 
     This function processes license release requests, updating license status,
     calculating usage statistics, and generating detailed release information.
@@ -812,6 +815,7 @@ def _handle_license_release(license_id: str) -> Dict[str, Any]:
 
     Returns:
         Dict containing release confirmation and updated license information
+
     """
     from datetime import datetime, timedelta
 
@@ -848,7 +852,7 @@ def _handle_license_release(license_id: str) -> Dict[str, Any]:
         "session_duration_hours": round(session_hours, 2),
         "data_processed_mb": max(0, int(license_hash[12:16], 16) % 1000),
         "operations_performed": max(0, int(license_hash[16:20], 16) % 10000),
-        "peak_memory_usage_mb": max(0, int(license_hash[20:24], 16) % 2048)
+        "peak_memory_usage_mb": max(0, int(license_hash[20:24], 16) % 2048),
     }
 
     # Determine release reason based on session characteristics
@@ -870,7 +874,7 @@ def _handle_license_release(license_id: str) -> Dict[str, Any]:
         "license_valid": current_license.get("status") == "active",
         "within_user_limit": current_license.get("current_users", 0) <= current_license.get("max_users", 1),
         "features_authorized": all(feature in current_license.get("features", []) for feature in features_used),
-        "maintenance_current": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d") > release_datetime
+        "maintenance_current": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d") > release_datetime,
     }
 
     compliance_status = "compliant" if all(compliance_check.values()) else "violation_detected"
@@ -891,7 +895,7 @@ def _handle_license_release(license_id: str) -> Dict[str, Any]:
             "session_cost": session_cost,
             "cost_per_hour": round(cost_per_hour, 4),
             "billing_cycle": current_license.get("billing_cycle", "monthly"),
-            "currency": "USD"
+            "currency": "USD",
         },
         "compliance_check": compliance_check,
         "compliance_status": compliance_status,
@@ -899,12 +903,12 @@ def _handle_license_release(license_id: str) -> Dict[str, Any]:
             "seats_available": max_users - current_users,
             "seats_total": max_users,
             "seats_used": current_users,
-            "utilization_percentage": round((current_users / max_users * 100), 1) if max_users > 0 else 0
+            "utilization_percentage": round((current_users / max_users * 100), 1) if max_users > 0 else 0,
         },
         "user_information": {
             "user_id": current_license.get("user_id", "unknown"),
             "organization": current_license.get("organization", "Unknown Organization"),
-            "last_activity": current_license.get("last_checkin", "Unknown")
+            "last_activity": current_license.get("last_checkin", "Unknown"),
         },
         "audit_trail": {
             "action": "license_released",
@@ -912,24 +916,24 @@ def _handle_license_release(license_id: str) -> Dict[str, Any]:
             "server": current_license.get("license_server", "unknown"),
             "client_info": {
                 "platform": current_license.get("platform", "unknown"),
-                "version": current_license.get("version", "unknown")
-            }
+                "version": current_license.get("version", "unknown"),
+            },
         },
         "next_actions": {
             "license_available_for_reuse": True,
             "requires_compliance_review": compliance_status != "compliant",
             "maintenance_due": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d") < release_datetime,
-            "renewal_recommended": datetime.fromtimestamp(current_license.get("expires", 0)) < release_datetime + timedelta(days=30)
+            "renewal_recommended": datetime.fromtimestamp(current_license.get("expires", 0)) < release_datetime + timedelta(days=30),
         },
         "confirmation": {
             "message": f"License {license_id} has been successfully released",
             "release_signature": license_hash[:32],
-            "server_timestamp": release_timestamp
-        }
+            "server_timestamp": release_timestamp,
+        },
     }
 
 
-def _handle_license_request(request: Dict[str, Any]) -> Dict[str, Any]:
+def _handle_license_request(request: dict[str, Any]) -> dict[str, Any]:
     """Handle license request.
 
     Args:
@@ -937,16 +941,17 @@ def _handle_license_request(request: Dict[str, Any]) -> Dict[str, Any]:
 
     Returns:
         Dict containing license grant information with ID and status
+
     """
     return {
         "license_id": f"LIC-{int(time.time())}",
         "status": "granted",
         "features": request.get("features", ["basic"]),
-        "duration": request.get("duration", 86400)
+        "duration": request.get("duration", 86400),
     }
 
 
-def _handle_login(credentials: Dict[str, str]) -> Dict[str, Any]:
+def _handle_login(credentials: dict[str, str]) -> dict[str, Any]:
     """Handle login request.
 
     Args:
@@ -954,17 +959,18 @@ def _handle_login(credentials: Dict[str, str]) -> Dict[str, Any]:
 
     Returns:
         Dict containing authentication token, expiration, and user info
+
     """
     return {
         "token": hashlib.sha256(
-            f"{credentials.get('username', '')}:{time.time()}".encode()
+            f"{credentials.get('username', '')}:{time.time()}".encode(),
         ).hexdigest(),
         "expires": time.time() + 3600,
-        "user": credentials.get("username", "guest")
+        "user": credentials.get("username", "guest"),
     }
 
 
-def _handle_logout(token: str) -> Dict[str, Any]:
+def _handle_logout(token: str) -> dict[str, Any]:
     """Handle logout request.
 
     Args:
@@ -972,17 +978,17 @@ def _handle_logout(token: str) -> Dict[str, Any]:
 
     Returns:
         Dict containing logout confirmation and timestamp
+
     """
     return {
         "status": "logged_out",
         "token": token,
-        "timestamp": time.time()
+        "timestamp": time.time(),
     }
 
 
 def _handle_read_memory(address: int, size: int) -> bytes:
-    """
-    Handle read memory request with memory content generation.
+    """Handle read memory request with memory content generation.
 
     This function generates appropriate memory content based on the memory
     address range being accessed, providing realistic data patterns for testing.
@@ -993,6 +999,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
 
     Returns:
         Bytes representing the memory content at the specified address
+
     """
     # Limit size to prevent memory issues
     size = min(size, 8192)  # Max 8KB read
@@ -1001,10 +1008,10 @@ def _handle_read_memory(address: int, size: int) -> bytes:
     if address < 0x1000:
         # Null page - return zeros
         return b"\x00" * size
-    elif address < 0x10000:
+    if address < 0x10000:
         # Low memory - mix of zeros and small values
         return bytes((i % 16) for i in range(size))
-    elif 0x400000 <= address < 0x500000:
+    if 0x400000 <= address < 0x500000:
         # Typical executable region - simulate code
         # Create realistic x86 instruction patterns
         code_patterns = [
@@ -1027,13 +1034,13 @@ def _handle_read_memory(address: int, size: int) -> bytes:
                 memory_data.append(pattern[i % len(pattern)])
 
         return bytes(memory_data)
-    elif 0x600000 <= address < 0x700000:
+    if 0x600000 <= address < 0x700000:
         # Data section - simulate initialized data
         # Mix of strings, numbers, and structured data
         data_content = bytearray()
         base_strings = [
             b"license\x00", b"serial\x00", b"key\x00", b"valid\x00",
-            b"expired\x00", b"trial\x00", b"full\x00", b"demo\x00"
+            b"expired\x00", b"trial\x00", b"full\x00", b"demo\x00",
         ]
 
         string_data = b"".join(base_strings)
@@ -1045,7 +1052,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
                 data_content.append((address + i) % 256)
 
         return bytes(data_content)
-    elif 0x7F0000000000 <= address < 0x800000000000:
+    if 0x7F0000000000 <= address < 0x800000000000:
         # 64-bit stack region
         # Simulate stack frame data
         stack_data = bytearray()
@@ -1060,7 +1067,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
                 stack_data.append((i * 7 + address) % 256)
 
         return bytes(stack_data[:size])
-    elif 0x7FFE0000 <= address < 0x7FFF0000:
+    if 0x7FFE0000 <= address < 0x7FFF0000:
         # Windows shared user data region
         # Simulate system information
         system_data = bytearray()
@@ -1079,19 +1086,18 @@ def _handle_read_memory(address: int, size: int) -> bytes:
                 system_data.append((i * 3 + 0x42) % 256)
 
         return bytes(system_data)
-    else:
-        # Generic memory region
-        # Return semi-realistic mixed content
-        generic_data = bytearray()
-        for i in range(size):
-            # Create patterns that look like real memory
-            byte_val = (address + i * 13 + 0x5A) % 256
-            generic_data.append(byte_val)
+    # Generic memory region
+    # Return semi-realistic mixed content
+    generic_data = bytearray()
+    for i in range(size):
+        # Create patterns that look like real memory
+        byte_val = (address + i * 13 + 0x5A) % 256
+        generic_data.append(byte_val)
 
-        return bytes(generic_data)
+    return bytes(generic_data)
 
 
-def _handle_request(request_type: str, data: Dict[str, Any]) -> Dict[str, Any]:
+def _handle_request(request_type: str, data: dict[str, Any]) -> dict[str, Any]:
     """Handle generic requests by routing to appropriate handlers.
 
     Args:
@@ -1100,6 +1106,7 @@ def _handle_request(request_type: str, data: Dict[str, Any]) -> Dict[str, Any]:
 
     Returns:
         Dict containing response data from the appropriate handler
+
     """
     handlers = {
         "check_license": lambda d: _handle_check_license(d),
@@ -1108,19 +1115,17 @@ def _handle_request(request_type: str, data: Dict[str, Any]) -> Dict[str, Any]:
         "request_license": lambda d: _handle_license_request(d),
         "release_license": lambda d: _handle_license_release(d.get("id", "")),
         "login": lambda d: _handle_login(d),
-        "logout": lambda d: _handle_logout(d.get("token", ""))
+        "logout": lambda d: _handle_logout(d.get("token", "")),
     }
 
     handler = handlers.get(request_type)
     if handler:
         return handler(data)
-    else:
-        return {"error": f"Unknown request type: {request_type}"}
+    return {"error": f"Unknown request type: {request_type}"}
 
 
-def _handle_return_license(license_id: str) -> Dict[str, Any]:
-    """
-    Handle return license request.
+def _handle_return_license(license_id: str) -> dict[str, Any]:
+    """Handle return license request.
 
     This function is an alias for _handle_license_release to maintain
     API compatibility with different license management protocols.
@@ -1130,6 +1135,7 @@ def _handle_return_license(license_id: str) -> Dict[str, Any]:
 
     Returns:
         Dict containing release confirmation and updated license information
+
     """
     return _handle_license_release(license_id)
 
@@ -1143,6 +1149,7 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
 
     Returns:
         True if write operation succeeded
+
     """
     _ = address, data
     # Simulate successful write
@@ -1151,8 +1158,8 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
 
 # === Analysis and Comparison Helpers ===
 
-def _analyze_snapshot_differences(snapshot1: Dict[str, Any],
-                                snapshot2: Dict[str, Any]) -> Dict[str, Any]:
+def _analyze_snapshot_differences(snapshot1: dict[str, Any],
+                                snapshot2: dict[str, Any]) -> dict[str, Any]:
     """Analyze differences between two snapshots.
 
     Args:
@@ -1161,30 +1168,31 @@ def _analyze_snapshot_differences(snapshot1: Dict[str, Any],
 
     Returns:
         Dict containing differences in filesystem, memory, network, and processes
+
     """
     differences = {
         "filesystem": _compare_filesystem_state(
             snapshot1.get("filesystem", {}),
-            snapshot2.get("filesystem", {})
+            snapshot2.get("filesystem", {}),
         ),
         "memory": _compare_memory_dumps(
             snapshot1.get("memory", {}),
-            snapshot2.get("memory", {})
+            snapshot2.get("memory", {}),
         ),
         "network": _compare_network_state(
             snapshot1.get("network", {}),
-            snapshot2.get("network", {})
+            snapshot2.get("network", {}),
         ),
         "processes": _compare_process_state(
             snapshot1.get("processes", {}),
-            snapshot2.get("processes", {})
-        )
+            snapshot2.get("processes", {}),
+        ),
     }
     return differences
 
 
-def _compare_filesystem_state(state1: Dict[str, Any],
-                            state2: Dict[str, Any]) -> Dict[str, Any]:
+def _compare_filesystem_state(state1: dict[str, Any],
+                            state2: dict[str, Any]) -> dict[str, Any]:
     """Compare filesystem states.
 
     Args:
@@ -1193,6 +1201,7 @@ def _compare_filesystem_state(state1: Dict[str, Any],
 
     Returns:
         Dict containing added, removed, and modified files
+
     """
     return {
         "added_files": list(set(state2.get("files", [])) - set(state1.get("files", []))),
@@ -1201,12 +1210,12 @@ def _compare_filesystem_state(state1: Dict[str, Any],
             f for f in state1.get("files", [])
             if f in state2.get("files", []) and
             state1.get("hashes", {}).get(f) != state2.get("hashes", {}).get(f)
-        ]
+        ],
     }
 
 
-def _compare_memory_dumps(dump1: Dict[str, Any],
-                        dump2: Dict[str, Any]) -> Dict[str, Any]:
+def _compare_memory_dumps(dump1: dict[str, Any],
+                        dump2: dict[str, Any]) -> dict[str, Any]:
     """Compare memory dumps.
 
     Args:
@@ -1215,16 +1224,17 @@ def _compare_memory_dumps(dump1: Dict[str, Any],
 
     Returns:
         Dict containing size changes and region differences
+
     """
     return {
         "size_change": dump2.get("size", 0) - dump1.get("size", 0),
         "new_regions": list(set(dump2.get("regions", [])) - set(dump1.get("regions", []))),
-        "removed_regions": list(set(dump1.get("regions", [])) - set(dump2.get("regions", [])))
+        "removed_regions": list(set(dump1.get("regions", [])) - set(dump2.get("regions", []))),
     }
 
 
-def _compare_mmap_state(state1: Dict[str, Any],
-                       state2: Dict[str, Any]) -> Dict[str, Any]:
+def _compare_mmap_state(state1: dict[str, Any],
+                       state2: dict[str, Any]) -> dict[str, Any]:
     """Compare memory mapping states.
 
     Args:
@@ -1233,6 +1243,7 @@ def _compare_mmap_state(state1: Dict[str, Any],
 
     Returns:
         Dict containing new and removed memory mappings
+
     """
     return {
         "new_mappings": [
@@ -1242,12 +1253,12 @@ def _compare_mmap_state(state1: Dict[str, Any],
         "removed_mappings": [
             m for m in state1.get("mappings", [])
             if m not in state2.get("mappings", [])
-        ]
+        ],
     }
 
 
-def _compare_network_state(state1: Dict[str, Any],
-                         state2: Dict[str, Any]) -> Dict[str, Any]:
+def _compare_network_state(state1: dict[str, Any],
+                         state2: dict[str, Any]) -> dict[str, Any]:
     """Compare network states.
 
     Args:
@@ -1256,23 +1267,24 @@ def _compare_network_state(state1: Dict[str, Any],
 
     Returns:
         Dict containing new and closed connections and port changes
+
     """
     return {
         "new_connections": list(
-            set(state2.get("connections", [])) - set(state1.get("connections", []))
+            set(state2.get("connections", [])) - set(state1.get("connections", [])),
         ),
         "closed_connections": list(
-            set(state1.get("connections", [])) - set(state2.get("connections", []))
+            set(state1.get("connections", [])) - set(state2.get("connections", [])),
         ),
         "port_changes": {
             "opened": list(set(state2.get("ports", [])) - set(state1.get("ports", []))),
-            "closed": list(set(state1.get("ports", [])) - set(state2.get("ports", [])))
-        }
+            "closed": list(set(state1.get("ports", [])) - set(state2.get("ports", []))),
+        },
     }
 
 
-def _compare_process_state(state1: Dict[str, Any],
-                         state2: Dict[str, Any]) -> Dict[str, Any]:
+def _compare_process_state(state1: dict[str, Any],
+                         state2: dict[str, Any]) -> dict[str, Any]:
     """Compare process states.
 
     Args:
@@ -1281,28 +1293,30 @@ def _compare_process_state(state1: Dict[str, Any],
 
     Returns:
         Dict containing new and terminated processes and count changes
+
     """
     return {
         "new_processes": list(
-            set(state2.get("pids", [])) - set(state1.get("pids", []))
+            set(state2.get("pids", [])) - set(state1.get("pids", [])),
         ),
         "terminated_processes": list(
-            set(state1.get("pids", [])) - set(state2.get("pids", []))
+            set(state1.get("pids", [])) - set(state2.get("pids", [])),
         ),
-        "process_count_change": len(state2.get("pids", [])) - len(state1.get("pids", []))
+        "process_count_change": len(state2.get("pids", [])) - len(state1.get("pids", [])),
     }
 
 
-def _get_filesystem_state() -> Dict[str, Any]:
+def _get_filesystem_state() -> dict[str, Any]:
     """Get current filesystem state.
 
     Returns:
         Dict containing files, hashes, and timestamp of current filesystem
+
     """
     state = {
         "files": [],
         "hashes": {},
-        "timestamp": time.time()
+        "timestamp": time.time(),
     }
 
     # Get files in current directory as example
@@ -1316,9 +1330,8 @@ def _get_filesystem_state() -> Dict[str, Any]:
                 try:
                     with open(filepath, "rb") as f:
                         state["hashes"][filepath] = hashlib.sha256(f.read(1024)).hexdigest()
-                except (OSError, IOError, PermissionError) as e:
+                except (OSError, PermissionError) as e:
                     logger.error("Error in internal_helpers: %s", e)
-                    pass
             break  # Only process current directory
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error getting filesystem state: %s", e)
@@ -1326,11 +1339,12 @@ def _get_filesystem_state() -> Dict[str, Any]:
     return state
 
 
-def _get_memory_regions() -> List[Dict[str, Any]]:
+def _get_memory_regions() -> list[dict[str, Any]]:
     """Get memory regions of current process.
 
     Returns:
         List of memory region dictionaries with path, size, and permissions
+
     """
     regions = []
 
@@ -1342,7 +1356,7 @@ def _get_memory_regions() -> List[Dict[str, Any]]:
                     "path": mmap.path,
                     "rss": mmap.rss,
                     "size": mmap.size,
-                    "perm": mmap.perms
+                    "perm": mmap.perms,
                 })
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error getting memory regions: %s", e)
@@ -1350,28 +1364,30 @@ def _get_memory_regions() -> List[Dict[str, Any]]:
     return regions
 
 
-def _get_mmap_state() -> Dict[str, Any]:
+def _get_mmap_state() -> dict[str, Any]:
     """Get memory mapping state.
 
     Returns:
         Dict containing memory mappings and timestamp
+
     """
     return {
         "mappings": _get_memory_regions(),
-        "timestamp": time.time()
+        "timestamp": time.time(),
     }
 
 
-def _get_network_state() -> Dict[str, Any]:
+def _get_network_state() -> dict[str, Any]:
     """Get current network state.
 
     Returns:
         Dict containing connections, ports, and timestamp
+
     """
     state = {
         "connections": [],
         "ports": [],
-        "timestamp": time.time()
+        "timestamp": time.time(),
     }
 
     if HAS_PSUTIL:
@@ -1382,7 +1398,7 @@ def _get_network_state() -> Dict[str, Any]:
                     state["connections"].append({
                         "local": f"{conn.laddr.ip}:{conn.laddr.port}",
                         "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else None,
-                        "status": conn.status
+                        "status": conn.status,
                     })
                 if conn.laddr:
                     state["ports"].append(conn.laddr.port)
@@ -1392,16 +1408,17 @@ def _get_network_state() -> Dict[str, Any]:
     return state
 
 
-def _get_process_state() -> Dict[str, Any]:
+def _get_process_state() -> dict[str, Any]:
     """Get current process state.
 
     Returns:
         Dict containing process IDs, process info, and timestamp
+
     """
     state = {
         "pids": [],
         "processes": {},
-        "timestamp": time.time()
+        "timestamp": time.time(),
     }
 
     if HAS_PSUTIL:
@@ -1410,7 +1427,7 @@ def _get_process_state() -> Dict[str, Any]:
                 state["pids"].append(proc.info["pid"])
                 state["processes"][proc.info["pid"]] = {
                     "name": proc.info["name"],
-                    "cpu": proc.info["cpu_percent"]
+                    "cpu": proc.info["cpu_percent"],
                 }
                 if len(state["pids"]) > 50:  # Limit to 50 processes
                     break
@@ -1431,6 +1448,7 @@ def _archive_data(data: Any, archive_path: str) -> bool:
 
     Returns:
         True if archiving succeeded, False otherwise
+
     """
     try:
         with open(archive_path, "w", encoding="utf-8") as f:
@@ -1441,21 +1459,23 @@ def _archive_data(data: Any, archive_path: str) -> bool:
         return False
 
 
-def _browse_for_output() -> Optional[str]:
+def _browse_for_output() -> str | None:
     """Browse for output directory (CLI fallback).
 
     Returns:
         Output directory path or None if cancelled
+
     """
     # In non-GUI mode, return current directory
     return os.getcwd()
 
 
-def _browse_for_source() -> Optional[str]:
+def _browse_for_source() -> str | None:
     """Browse for source file (CLI fallback).
 
     Returns:
         Source file path or None if cancelled or invalid
+
     """
     # In non-GUI mode, prompt for input
     try:
@@ -1477,7 +1497,7 @@ def _browse_for_source() -> Optional[str]:
         return None
 
 
-def _build_knowledge_index(knowledge_base: List[Dict[str, Any]]) -> Dict[str, List[int]]:
+def _build_knowledge_index(knowledge_base: list[dict[str, Any]]) -> dict[str, list[int]]:
     """Build an index for the knowledge base.
 
     Args:
@@ -1485,6 +1505,7 @@ def _build_knowledge_index(knowledge_base: List[Dict[str, Any]]) -> Dict[str, Li
 
     Returns:
         Dict mapping keywords to lists of item indices
+
     """
     index = {}
 
@@ -1501,8 +1522,7 @@ def _build_knowledge_index(knowledge_base: List[Dict[str, Any]]) -> Dict[str, Li
 
 
 def _dump_memory_region(address: int, size: int) -> bytes:
-    """
-    Dump a memory region with comprehensive memory layout simulation.
+    """Dump a memory region with comprehensive memory layout simulation.
 
     This function provides a more sophisticated memory dump that includes
     realistic memory patterns, structures, and content based on the address range.
@@ -1513,8 +1533,8 @@ def _dump_memory_region(address: int, size: int) -> bytes:
 
     Returns:
         Bytes representing a realistic memory dump
-    """
 
+    """
     # Limit dump size to prevent memory issues
     size = min(size, 16384)  # Max 16KB dump
 
@@ -1550,7 +1570,7 @@ def _dump_memory_region(address: int, size: int) -> bytes:
             b"VALID_ACTIVATION",
             b"INVALID_LICENSE",
             b"EVALUATION_COPY",
-            b"FULL_VERSION"
+            b"FULL_VERSION",
         ]
 
         for i, string in enumerate(license_strings):
@@ -1587,7 +1607,7 @@ def _dump_memory_region(address: int, size: int) -> bytes:
     return bytes(dump_data)
 
 
-def _export_validation_report(report: Dict[str, Any], output_path: str) -> bool:
+def _export_validation_report(report: dict[str, Any], output_path: str) -> bool:
     """Export validation report.
 
     Args:
@@ -1596,6 +1616,7 @@ def _export_validation_report(report: Dict[str, Any], output_path: str) -> bool:
 
     Returns:
         True if export succeeded, False otherwise
+
     """
     try:
         with open(output_path, "w", encoding="utf-8") as f:
@@ -1606,7 +1627,7 @@ def _export_validation_report(report: Dict[str, Any], output_path: str) -> bool:
         return False
 
 
-def _fix_dataset_issues(dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _fix_dataset_issues(dataset: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Fix common dataset issues.
 
     Args:
@@ -1614,6 +1635,7 @@ def _fix_dataset_issues(dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
     Returns:
         List of fixed dataset items with required fields and cleaned data
+
     """
     fixed = []
 
@@ -1637,31 +1659,33 @@ def _fix_dataset_issues(dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return fixed
 
 
-def _init_response_templates() -> Dict[str, Any]:
+def _init_response_templates() -> dict[str, Any]:
     """Initialize response templates.
 
     Returns:
         Dict containing standard response templates for different status codes
+
     """
     return {
         "success": {"status": "success", "code": 200},
         "error": {"status": "error", "code": 500},
         "invalid": {"status": "invalid", "code": 400},
-        "unauthorized": {"status": "unauthorized", "code": 401}
+        "unauthorized": {"status": "unauthorized", "code": 401},
     }
 
 
-def _learn_pattern(pattern: Dict[str, Any], category: str) -> None:
+def _learn_pattern(pattern: dict[str, Any], category: str) -> None:
     """Learn a new pattern.
 
     Args:
         pattern: Pattern data to learn
         category: Category to classify the pattern under
+
     """
     logger.info("Learning pattern in category %s: %s", category, pattern)
 
 
-def _match_pattern(data: bytes, pattern: bytes) -> List[int]:
+def _match_pattern(data: bytes, pattern: bytes) -> list[int]:
     """Find pattern matches in data.
 
     Args:
@@ -1670,6 +1694,7 @@ def _match_pattern(data: bytes, pattern: bytes) -> List[int]:
 
     Returns:
         List of byte offsets where pattern matches occur
+
     """
     matches = []
     pattern_len = len(pattern)
@@ -1681,7 +1706,7 @@ def _match_pattern(data: bytes, pattern: bytes) -> List[int]:
     return matches
 
 
-def _preview_dataset(dataset: List[Dict[str, Any]], limit: int = 10) -> List[Dict[str, Any]]:
+def _preview_dataset(dataset: list[dict[str, Any]], limit: int = 10) -> list[dict[str, Any]]:
     """Preview a dataset.
 
     Args:
@@ -1690,6 +1715,7 @@ def _preview_dataset(dataset: List[Dict[str, Any]], limit: int = 10) -> List[Dic
 
     Returns:
         List containing first 'limit' items from dataset
+
     """
     return dataset[:limit]
 
@@ -1702,12 +1728,13 @@ def _release_buffer(buffer_id: str) -> bool:
 
     Returns:
         True if buffer was successfully released
+
     """
     logger.info("Releasing buffer: %s", buffer_id)
     return True
 
 
-def _save_patterns(patterns: Dict[str, Any], output_path: str) -> bool:
+def _save_patterns(patterns: dict[str, Any], output_path: str) -> bool:
     """Save patterns to file.
 
     Args:
@@ -1716,6 +1743,7 @@ def _save_patterns(patterns: Dict[str, Any], output_path: str) -> bool:
 
     Returns:
         True if patterns were successfully saved, False otherwise
+
     """
     try:
         with open(output_path, "w", encoding="utf-8") as f:
@@ -1728,7 +1756,7 @@ def _save_patterns(patterns: Dict[str, Any], output_path: str) -> bool:
 
 # === GPU/Hardware Acceleration Helpers ===
 
-def _calculate_hash_opencl(data: bytes, algorithm: str = "sha256") -> Optional[str]:
+def _calculate_hash_opencl(data: bytes, algorithm: str = "sha256") -> str | None:
     """Calculate hash using OpenCL acceleration.
 
     Args:
@@ -1737,6 +1765,7 @@ def _calculate_hash_opencl(data: bytes, algorithm: str = "sha256") -> Optional[s
 
     Returns:
         Hash digest string or None if calculation failed
+
     """
     if not HAS_OPENCL:
         # Fallback to CPU
@@ -1760,13 +1789,14 @@ def _cpu_hash_calculation(data: bytes, algorithm: str = "sha256") -> str:
 
     Returns:
         Hash digest string
+
     """
     hash_obj = hashlib.new(algorithm)
     hash_obj.update(data)
     return hash_obj.hexdigest()
 
 
-def _cuda_hash_calculation(data: bytes, algorithm: str = "sha256") -> Optional[str]:
+def _cuda_hash_calculation(data: bytes, algorithm: str = "sha256") -> str | None:
     """Calculate hash using CUDA acceleration.
 
     Args:
@@ -1775,6 +1805,7 @@ def _cuda_hash_calculation(data: bytes, algorithm: str = "sha256") -> Optional[s
 
     Returns:
         Hash digest string or None if CUDA not available
+
     """
     # CUDA implementation would require PyCUDA
     # Fallback to CPU
@@ -1789,6 +1820,7 @@ def _gpu_entropy_calculation(data: bytes) -> float:
 
     Returns:
         Entropy value as float
+
     """
     from ..analysis.entropy_utils import safe_entropy_calculation
 
@@ -1805,11 +1837,12 @@ def _opencl_entropy_calculation(data: bytes) -> float:
 
     Returns:
         Entropy value as float
+
     """
     return _gpu_entropy_calculation(data)
 
 
-def _opencl_hash_calculation(data: bytes, algorithm: str = "sha256") -> Optional[str]:
+def _opencl_hash_calculation(data: bytes, algorithm: str = "sha256") -> str | None:
     """Calculate hash using OpenCL.
 
     Args:
@@ -1818,6 +1851,7 @@ def _opencl_hash_calculation(data: bytes, algorithm: str = "sha256") -> Optional
 
     Returns:
         Hash digest string or None if OpenCL not available
+
     """
     return _calculate_hash_opencl(data, algorithm)
 
@@ -1830,6 +1864,7 @@ def _pytorch_entropy_calculation(data: bytes) -> float:
 
     Returns:
         Entropy value as float
+
     """
     if not HAS_TORCH:
         return _gpu_entropy_calculation(data)
@@ -1844,7 +1879,7 @@ def _pytorch_entropy_calculation(data: bytes) -> float:
         return _gpu_entropy_calculation(data)
 
 
-def _pytorch_hash_calculation(data: bytes, algorithm: str = "sha256") -> Optional[str]:
+def _pytorch_hash_calculation(data: bytes, algorithm: str = "sha256") -> str | None:
     """Calculate hash using PyTorch (falls back to CPU).
 
     Args:
@@ -1853,11 +1888,12 @@ def _pytorch_hash_calculation(data: bytes, algorithm: str = "sha256") -> Optiona
 
     Returns:
         Hash digest string or None if calculation failed
+
     """
     return _cpu_hash_calculation(data, algorithm)
 
 
-def _pytorch_pattern_matching(data: bytes, pattern: bytes) -> List[int]:
+def _pytorch_pattern_matching(data: bytes, pattern: bytes) -> list[int]:
     """Pattern matching using PyTorch.
 
     Args:
@@ -1866,6 +1902,7 @@ def _pytorch_pattern_matching(data: bytes, pattern: bytes) -> List[int]:
 
     Returns:
         List of byte offsets where pattern matches occur
+
     """
     if not HAS_TORCH:
         return _match_pattern(data, pattern)
@@ -1895,6 +1932,7 @@ def _tensorflow_entropy_calculation(data: bytes) -> float:
 
     Returns:
         Entropy value as float
+
     """
     if not HAS_TENSORFLOW:
         return _gpu_entropy_calculation(data)
@@ -1911,7 +1949,7 @@ def _tensorflow_entropy_calculation(data: bytes) -> float:
         return _gpu_entropy_calculation(data)
 
 
-def _tensorflow_hash_calculation(data: bytes, algorithm: str = "sha256") -> Optional[str]:
+def _tensorflow_hash_calculation(data: bytes, algorithm: str = "sha256") -> str | None:
     """Calculate hash using TensorFlow (falls back to CPU).
 
     Args:
@@ -1920,13 +1958,13 @@ def _tensorflow_hash_calculation(data: bytes, algorithm: str = "sha256") -> Opti
 
     Returns:
         Hash digest string or None if calculation failed
+
     """
     return _cpu_hash_calculation(data, algorithm)
 
 
-def _tensorflow_pattern_matching(data: bytes, pattern: bytes) -> List[int]:
-    """
-    Advanced pattern matching using TensorFlow for high-performance binary analysis.
+def _tensorflow_pattern_matching(data: bytes, pattern: bytes) -> list[int]:
+    """Advanced pattern matching using TensorFlow for high-performance binary analysis.
 
     Uses TensorFlow's convolution operations to efficiently find pattern matches
     in binary data. Falls back to simple implementation if TensorFlow unavailable.
@@ -1937,6 +1975,7 @@ def _tensorflow_pattern_matching(data: bytes, pattern: bytes) -> List[int]:
 
     Returns:
         List of byte offsets where pattern matches occur
+
     """
     if not HAS_TENSORFLOW:
         logger.debug("TensorFlow not available, using fallback pattern matching")
@@ -1957,17 +1996,16 @@ def _tensorflow_pattern_matching(data: bytes, pattern: bytes) -> List[int]:
 
         if matches is not None:
             return matches
-        else:
-            # Fallback if TensorFlow method fails
-            logger.debug("TensorFlow convolution failed, using fallback")
-            return _match_pattern(data, pattern)
+        # Fallback if TensorFlow method fails
+        logger.debug("TensorFlow convolution failed, using fallback")
+        return _match_pattern(data, pattern)
 
     except Exception as e:
         logger.error("TensorFlow pattern matching failed: %s", e)
         return _match_pattern(data, pattern)
 
 
-def _tensorflow_convolve_search(data_array: "np.ndarray", pattern_array: "np.ndarray") -> List[int]:
+def _tensorflow_convolve_search(data_array: "np.ndarray", pattern_array: "np.ndarray") -> list[int]:
     """Perform pattern matching using TensorFlow convolution.
 
     Args:
@@ -1976,6 +2014,7 @@ def _tensorflow_convolve_search(data_array: "np.ndarray", pattern_array: "np.nda
 
     Returns:
         List of indices where pattern matches occur
+
     """
     try:
 
@@ -1998,7 +2037,7 @@ def _tensorflow_convolve_search(data_array: "np.ndarray", pattern_array: "np.nda
         return []
 
 
-def _tf_convolution_search(data_array: "np.ndarray", pattern_array: "np.ndarray") -> List[int]:
+def _tf_convolution_search(data_array: "np.ndarray", pattern_array: "np.ndarray") -> list[int]:
     """Use TensorFlow convolution for pattern matching.
 
     Args:
@@ -2007,6 +2046,7 @@ def _tf_convolution_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
 
     Returns:
         List of indices where exact matches occur or None if failed
+
     """
     try:
         import numpy as np
@@ -2021,7 +2061,7 @@ def _tf_convolution_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
             data_tensor,
             pattern_tensor,
             stride=1,
-            padding="VALID"
+            padding="VALID",
         )
 
         # Calculate expected sum for exact match
@@ -2039,7 +2079,7 @@ def _tf_convolution_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
         return None
 
 
-def _numpy_correlation_search(data_array: "np.ndarray", pattern_array: "np.ndarray") -> List[int]:
+def _numpy_correlation_search(data_array: "np.ndarray", pattern_array: "np.ndarray") -> list[int]:
     """Use NumPy correlation for pattern matching.
 
     Args:
@@ -2048,6 +2088,7 @@ def _numpy_correlation_search(data_array: "np.ndarray", pattern_array: "np.ndarr
 
     Returns:
         List of indices where pattern matches occur or None if failed
+
     """
     try:
         import numpy as np
@@ -2073,7 +2114,7 @@ def _numpy_correlation_search(data_array: "np.ndarray", pattern_array: "np.ndarr
         return None
 
 
-def _sliding_window_search(data_array: "np.ndarray", pattern_array: "np.ndarray") -> List[int]:
+def _sliding_window_search(data_array: "np.ndarray", pattern_array: "np.ndarray") -> list[int]:
     """Simple sliding window pattern search.
 
     Args:
@@ -2082,6 +2123,7 @@ def _sliding_window_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
 
     Returns:
         List of indices where pattern matches occur
+
     """
     try:
         import numpy as np
@@ -2102,7 +2144,7 @@ def _sliding_window_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
         return []
 
 
-def _match_pattern(data: bytes, pattern: bytes) -> List[int]:
+def _match_pattern(data: bytes, pattern: bytes) -> list[int]:
     """Simple byte-level pattern matching fallback."""
     matches = []
     pattern_len = len(pattern)
@@ -2126,6 +2168,7 @@ def _validate_gpu_memory(required_mb: int) -> bool:
 
     Returns:
         True if sufficient GPU memory is available
+
     """
     # Check CUDA
     if HAS_TORCH and torch.cuda.is_available():
@@ -2134,7 +2177,6 @@ def _validate_gpu_memory(required_mb: int) -> bool:
             return available >= required_mb
         except (RuntimeError, AttributeError) as e:
             logger.error("Error in internal_helpers: %s", e)
-            pass
 
     # Check TensorFlow
     if HAS_TENSORFLOW:
@@ -2144,7 +2186,6 @@ def _validate_gpu_memory(required_mb: int) -> bool:
                 return True  # Assume sufficient memory if GPU available
         except (RuntimeError, AttributeError) as e:
             logger.error("Error in internal_helpers: %s", e)
-            pass
 
     return False
 
@@ -2160,6 +2201,7 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
 
     Returns:
         True if conversion succeeded, False otherwise
+
     """
     try:
         # GGUF conversion would require specific implementation
@@ -2178,7 +2220,7 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
         return False
 
 
-def _manual_gguf_conversion(model_data: Dict[str, Any], output_path: str) -> bool:
+def _manual_gguf_conversion(model_data: dict[str, Any], output_path: str) -> bool:
     """Manually convert model data to GGUF format.
 
     Args:
@@ -2187,6 +2229,7 @@ def _manual_gguf_conversion(model_data: Dict[str, Any], output_path: str) -> boo
 
     Returns:
         True if conversion succeeded, False otherwise
+
     """
     try:
         with open(output_path, "wb") as f:
@@ -2201,12 +2244,13 @@ def _manual_gguf_conversion(model_data: Dict[str, Any], output_path: str) -> boo
         return False
 
 
-def _write_gguf_metadata(file_handle: Any, metadata: Dict[str, Any]) -> None:
+def _write_gguf_metadata(file_handle: Any, metadata: dict[str, Any]) -> None:
     """Write GGUF metadata.
 
     Args:
         file_handle: File handle to write metadata to
         metadata: Metadata dictionary to write
+
     """
     # Write metadata count
     file_handle.write(struct.pack("I", len(metadata)))
@@ -2224,12 +2268,13 @@ def _write_gguf_metadata(file_handle: Any, metadata: Dict[str, Any]) -> None:
         file_handle.write(value_bytes)
 
 
-def _write_gguf_tensor_info(file_handle: Any, tensors: List[Dict[str, Any]]) -> None:
+def _write_gguf_tensor_info(file_handle: Any, tensors: list[dict[str, Any]]) -> None:
     """Write GGUF tensor information.
 
     Args:
         file_handle: File handle to write tensor info to
         tensors: List of tensor specification dictionaries
+
     """
     # Write tensor count
     file_handle.write(struct.pack("I", len(tensors)))
@@ -2250,9 +2295,8 @@ def _write_gguf_tensor_info(file_handle: Any, tensors: List[Dict[str, Any]]) -> 
         file_handle.write(struct.pack("I", 0))  # Float32
 
 
-def _write_realistic_tensor_data(file_handle: Any, tensors: List[Dict[str, Any]]) -> None:
-    """
-    Write realistic tensor data for ML model files with proper initialization.
+def _write_realistic_tensor_data(file_handle: Any, tensors: list[dict[str, Any]]) -> None:
+    """Write realistic tensor data for ML model files with proper initialization.
 
     This function generates realistic tensor data based on the tensor specifications,
     including proper weight initialization patterns, data type handling, and
@@ -2261,8 +2305,8 @@ def _write_realistic_tensor_data(file_handle: Any, tensors: List[Dict[str, Any]]
     Args:
         file_handle: File handle to write tensor data to
         tensors: List of tensor specifications with dims, types, and names
-    """
 
+    """
     try:
         for tensor_idx, tensor in enumerate(tensors):
             tensor_name = tensor.get("name", f"tensor_{tensor_idx}")
@@ -2278,7 +2322,7 @@ def _write_realistic_tensor_data(file_handle: Any, tensors: List[Dict[str, Any]]
             # Determine bytes per element based on data type
             type_sizes = {
                 "float32": 4, "float16": 2, "int32": 4, "int16": 2,
-                "int8": 1, "uint8": 1, "bool": 1, "double": 8
+                "int8": 1, "uint8": 1, "bool": 1, "double": 8,
             }
             bytes_per_element = type_sizes.get(data_type, 4)
             total_bytes = total_elements * bytes_per_element
@@ -2324,7 +2368,7 @@ def _write_realistic_tensor_data(file_handle: Any, tensors: List[Dict[str, Any]]
             file_handle.write(fallback_data)
 
 
-def _generate_embedding_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
+def _generate_embedding_data(dims: list[int], data_type: str, total_elements: int) -> bytes:
     """Generate realistic embedding table data.
 
     Args:
@@ -2334,6 +2378,7 @@ def _generate_embedding_data(dims: List[int], data_type: str, total_elements: in
 
     Returns:
         Bytes containing realistic embedding data
+
     """
     import random
 
@@ -2368,7 +2413,7 @@ def _generate_embedding_data(dims: List[int], data_type: str, total_elements: in
     return bytes(data)
 
 
-def _generate_weight_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
+def _generate_weight_data(dims: list[int], data_type: str, total_elements: int) -> bytes:
     """Generate realistic weight matrix data using proper initialization.
 
     Args:
@@ -2378,6 +2423,7 @@ def _generate_weight_data(dims: List[int], data_type: str, total_elements: int) 
 
     Returns:
         Bytes containing properly initialized weight data
+
     """
     import random
 
@@ -2415,21 +2461,20 @@ def _generate_weight_data(dims: List[int], data_type: str, total_elements: int) 
             weight = random.gauss(0, std_dev * 0.8)  # Slightly smaller for fp16
             data.extend(struct.pack("e", weight))
 
+    # Integer weights (quantized models)
+    elif data_type == "int8":
+        for i in range(total_elements):
+            # Quantized weights typically in range [-128, 127]
+            weight = random.gauss(0, 20)  # Scale for int8 range
+            weight = max(-128, min(127, int(weight)))
+            data.extend(struct.pack("b", weight))
     else:
-        # Integer weights (quantized models)
-        if data_type == "int8":
-            for i in range(total_elements):
-                # Quantized weights typically in range [-128, 127]
-                weight = random.gauss(0, 20)  # Scale for int8 range
-                weight = max(-128, min(127, int(weight)))
-                data.extend(struct.pack("b", weight))
-        else:
-            data.extend(b"\x00" * (total_elements * 4))
+        data.extend(b"\x00" * (total_elements * 4))
 
     return bytes(data)
 
 
-def _generate_bias_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
+def _generate_bias_data(dims: list[int], data_type: str, total_elements: int) -> bytes:
     """Generate realistic bias vector data.
 
     Args:
@@ -2439,6 +2484,7 @@ def _generate_bias_data(dims: List[int], data_type: str, total_elements: int) ->
 
     Returns:
         Bytes containing realistic bias data
+
     """
     _ = dims
     import random
@@ -2470,7 +2516,7 @@ def _generate_bias_data(dims: List[int], data_type: str, total_elements: int) ->
     return bytes(data)
 
 
-def _generate_norm_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
+def _generate_norm_data(dims: list[int], data_type: str, total_elements: int) -> bytes:
     """Generate realistic layer normalization parameters.
 
     Args:
@@ -2480,8 +2526,8 @@ def _generate_norm_data(dims: List[int], data_type: str, total_elements: int) ->
 
     Returns:
         Bytes containing layer normalization parameters
-    """
 
+    """
     data = bytearray()
 
     if data_type == "float32":
@@ -2506,7 +2552,7 @@ def _generate_norm_data(dims: List[int], data_type: str, total_elements: int) ->
     return bytes(data)
 
 
-def _generate_attention_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
+def _generate_attention_data(dims: list[int], data_type: str, total_elements: int) -> bytes:
     """Generate realistic attention mechanism parameters.
 
     Args:
@@ -2516,6 +2562,7 @@ def _generate_attention_data(dims: List[int], data_type: str, total_elements: in
 
     Returns:
         Bytes containing attention mechanism parameters
+
     """
     import random
 
@@ -2551,7 +2598,7 @@ def _generate_attention_data(dims: List[int], data_type: str, total_elements: in
     return bytes(data)
 
 
-def _generate_generic_tensor_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
+def _generate_generic_tensor_data(dims: list[int], data_type: str, total_elements: int) -> bytes:
     """Generate generic realistic tensor data.
 
     Args:
@@ -2561,6 +2608,7 @@ def _generate_generic_tensor_data(dims: List[int], data_type: str, total_element
 
     Returns:
         Bytes containing generic tensor data
+
     """
     _ = dims
     import random
@@ -2602,7 +2650,7 @@ def _generate_generic_tensor_data(dims: List[int], data_type: str, total_element
 
 # === Response Generation Helpers ===
 
-def _generate_error_response(error: str, code: int = 500) -> Dict[str, Any]:
+def _generate_error_response(error: str, code: int = 500) -> dict[str, Any]:
     """Generate error response.
 
     Args:
@@ -2611,16 +2659,17 @@ def _generate_error_response(error: str, code: int = 500) -> Dict[str, Any]:
 
     Returns:
         Dict containing error response with status, error, code, and timestamp
+
     """
     return {
         "status": "error",
         "error": error,
         "code": code,
-        "timestamp": time.time()
+        "timestamp": time.time(),
     }
 
 
-def _generate_generic_response(status: str, data: Any = None) -> Dict[str, Any]:
+def _generate_generic_response(status: str, data: Any = None) -> dict[str, Any]:
     """Generate generic response.
 
     Args:
@@ -2629,10 +2678,11 @@ def _generate_generic_response(status: str, data: Any = None) -> Dict[str, Any]:
 
     Returns:
         Dict containing response with status, timestamp, and optional data
+
     """
     response = {
         "status": status,
-        "timestamp": time.time()
+        "timestamp": time.time(),
     }
     if data is not None:
         response["data"] = data
@@ -2648,9 +2698,10 @@ def _generate_mitm_script(target_host: str, target_port: int) -> str:
 
     Returns:
         Python script string for MITM proxy
+
     """
     # Build script using string formatting to avoid linter confusion
-    script_template = '''#!/usr/bin/env python3
+    script_template = """#!/usr/bin/env python3
 # MITM Script for {target_host}:{target_port}
 
 import socket
@@ -2704,20 +2755,20 @@ def main():
 
 if __name__ == '__main__':
     main()
-'''
+"""
 
     script = script_template.format(
         target_host=target_host,
         target_port=target_port,
-        listen_port=target_port + 1000
+        listen_port=target_port + 1000,
     )
     return script
 
 
 # === Data Augmentation Helpers ===
 
-def _perform_augmentation(data: Dict[str, Any],
-                        augmentation_type: str) -> Dict[str, Any]:
+def _perform_augmentation(data: dict[str, Any],
+                        augmentation_type: str) -> dict[str, Any]:
     """Perform data augmentation.
 
     Args:
@@ -2726,6 +2777,7 @@ def _perform_augmentation(data: Dict[str, Any],
 
     Returns:
         Augmented data dictionary
+
     """
     augmented = data.copy()
 
@@ -2741,7 +2793,7 @@ def _perform_augmentation(data: Dict[str, Any],
         synonyms = {
             "error": "fault",
             "success": "completion",
-            "failed": "unsuccessful"
+            "failed": "unsuccessful",
         }
         for key, value in augmented.items():
             if isinstance(value, str):
@@ -2766,6 +2818,7 @@ def _run_autonomous_patching_thread(target: Callable, args: tuple) -> threading.
 
     Returns:
         Thread object running the autonomous patching function
+
     """
     thread = threading.Thread(target=target, args=args, daemon=True)
     thread.start()
@@ -2782,6 +2835,7 @@ def _run_ghidra_thread(ghidra_path: str, script: str, binary: str) -> threading.
 
     Returns:
         Thread object running Ghidra analysis
+
     """
     def run_ghidra():
         """Thread function to run Ghidra analysis."""
@@ -2791,7 +2845,7 @@ def _run_ghidra_thread(ghidra_path: str, script: str, binary: str) -> threading.
                 binary,
                 "-import",
                 "-scriptPath", os.path.dirname(script),
-                "-postScript", os.path.basename(script)
+                "-postScript", os.path.basename(script),
             ], check=True, text=True)
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Ghidra thread error: %s", e)
@@ -2802,7 +2856,7 @@ def _run_ghidra_thread(ghidra_path: str, script: str, binary: str) -> threading.
 
 
 def _run_report_generation_thread(report_func: Callable,
-                                report_data: Dict[str, Any]) -> threading.Thread:
+                                report_data: dict[str, Any]) -> threading.Thread:
     """Run report generation in a thread.
 
     Args:
@@ -2811,10 +2865,11 @@ def _run_report_generation_thread(report_func: Callable,
 
     Returns:
         Thread object running the report generation function
+
     """
     thread = threading.Thread(
         target=lambda: report_func(report_data),
-        daemon=True
+        daemon=True,
     )
     thread.start()
     return thread
@@ -2864,5 +2919,5 @@ __all__ = [
 
     # Thread Functions
     "_run_autonomous_patching_thread", "_run_ghidra_thread",
-    "_run_report_generation_thread"
+    "_run_report_generation_thread",
 ]

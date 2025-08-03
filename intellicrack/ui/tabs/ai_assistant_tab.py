@@ -34,8 +34,7 @@ from .base_tab import BaseTab
 
 
 class AIAssistantTab(BaseTab):
-    """
-    AI Assistant Tab - Comprehensive AI-powered analysis, code generation,
+    """AI Assistant Tab - Comprehensive AI-powered analysis, code generation,
     and intelligent assistance for reverse engineering and exploitation.
     """
 
@@ -123,7 +122,7 @@ class AIAssistantTab(BaseTab):
         provider_selection_layout.addWidget(QLabel("Provider:"))
         self.provider_combo = QComboBox()
         self.provider_combo.addItems(
-            ["OpenAI", "Anthropic", "Local (Ollama)", "Hugging Face", "Google Gemini", "Cohere", "Azure OpenAI"]
+            ["OpenAI", "Anthropic", "Local (Ollama)", "Hugging Face", "Google Gemini", "Cohere", "Azure OpenAI"],
         )
         self.provider_combo.currentTextChanged.connect(self.on_provider_changed)
         provider_selection_layout.addWidget(self.provider_combo)
@@ -235,7 +234,7 @@ class AIAssistantTab(BaseTab):
                 "Code Quality",
                 "Performance Analysis",
                 "Security Audit",
-            ]
+            ],
         )
         focus_layout.addWidget(self.analysis_focus_combo)
 
@@ -314,7 +313,7 @@ class AIAssistantTab(BaseTab):
                 "Memory Scanner",
 
                 "Debugging Script",
-            ]
+            ],
         )
         type_layout.addWidget(self.script_type_combo)
 
@@ -363,7 +362,7 @@ class AIAssistantTab(BaseTab):
 
         self.requirements_edit = QTextEdit()
         self.requirements_edit.setPlaceholderText(
-            "Describe specific requirements for the script:\n- Hook specific functions\n- Bypass certain protections\n- Extract specific data\n- Custom behavior requirements"
+            "Describe specific requirements for the script:\n- Hook specific functions\n- Bypass certain protections\n- Extract specific data\n- Custom behavior requirements",
         )
         self.requirements_edit.setMaximumHeight(100)
         requirements_layout.addWidget(self.requirements_edit)
@@ -403,7 +402,7 @@ class AIAssistantTab(BaseTab):
         data_source_layout.addWidget(QLabel("Data Source:"))
         self.data_source_combo = QComboBox()
         self.data_source_combo.addItems(
-            ["Analysis History", "Custom Dataset", "Binary Samples", "Script Templates", "Public Datasets"]
+            ["Analysis History", "Custom Dataset", "Binary Samples", "Script Templates", "Public Datasets"],
         )
         data_source_layout.addWidget(self.data_source_combo)
 
@@ -430,7 +429,7 @@ class AIAssistantTab(BaseTab):
         training_type_layout.addWidget(QLabel("Training Type:"))
         self.training_type_combo = QComboBox()
         self.training_type_combo.addItems(
-            ["Fine-tuning", "Transfer Learning", "Custom Training", "Reinforcement Learning"]
+            ["Fine-tuning", "Transfer Learning", "Custom Training", "Reinforcement Learning"],
         )
         training_type_layout.addWidget(self.training_type_combo)
 
@@ -665,7 +664,7 @@ class AIAssistantTab(BaseTab):
                 raise Exception("Failed to register model")
 
         except Exception as e:
-            self.log_ai_message(f"Error loading model: {str(e)}", "error")
+            self.log_ai_message(f"Error loading model: {e!s}", "error")
             self.model_progress.setVisible(False)
 
     def on_model_loaded(self, model_name, success):
@@ -689,7 +688,7 @@ class AIAssistantTab(BaseTab):
         from PyQt6.QtWidgets import QFileDialog
 
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Binary for AI Analysis", "", "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)"
+            self, "Select Binary for AI Analysis", "", "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)",
 )
 
         if file_path:
@@ -721,7 +720,7 @@ class AIAssistantTab(BaseTab):
             self._perform_real_ai_analysis(binary_path, focus, depth)
 
         except Exception as e:
-            self.log_ai_message(f"Error starting AI analysis: {str(e)}", "error")
+            self.log_ai_message(f"Error starting AI analysis: {e!s}", "error")
 
     def _perform_real_ai_analysis(self, binary_path, focus, depth):
         """Perform comprehensive AI-enhanced binary analysis using advanced techniques."""
@@ -781,7 +780,7 @@ class AIAssistantTab(BaseTab):
                     analysis_text += "\n"
             except Exception as e:
                 self.log_message(f"Binary analyzer failed: {e}", "debug")
-                analysis_text += f"[!] Binary analysis unavailable: {str(e)}\n\n"
+                analysis_text += f"[!] Binary analysis unavailable: {e!s}\n\n"
 
             # Enhanced PE analysis with advanced features
             try:
@@ -869,7 +868,7 @@ class AIAssistantTab(BaseTab):
                     }
 
                     ai_analysis = self.ai_model_manager.analyze_binary(
-                        self.current_model, binary_path, focus=focus.lower().replace(" ", "_"), context=ai_context
+                        self.current_model, binary_path, focus=focus.lower().replace(" ", "_"), context=ai_context,
                     )
 
                     if ai_analysis:
@@ -909,7 +908,7 @@ class AIAssistantTab(BaseTab):
             self.analysis_completed.emit(binary_path, "success")
 
         except Exception as e:
-            error_msg = f"Error in enhanced AI analysis: {str(e)}"
+            error_msg = f"Error in enhanced AI analysis: {e!s}"
             self.log_ai_message(error_msg, "error")
             self.analysis_results.setPlainText(f"Analysis Error:\n{error_msg}")
             self.analysis_completed.emit(binary_path, "failed")
@@ -1149,7 +1148,7 @@ class AIAssistantTab(BaseTab):
 
         # Generate comprehensive protection report
         comprehensive_report = self._generate_protection_report(
-            protections, pe_anomalies, runtime_indicators, anti_analysis
+            protections, pe_anomalies, runtime_indicators, anti_analysis,
         )
 
         # Add the comprehensive report to analysis
@@ -1202,7 +1201,7 @@ class AIAssistantTab(BaseTab):
             for section in high_entropy_sections[:3]:
                 analysis += f"│    - {section['name']}: {section['entropy']:.2f}\n"
         except Exception as e:
-            analysis += f"  - Legacy entropy analysis failed: {str(e)}\n"
+            analysis += f"  - Legacy entropy analysis failed: {e!s}\n"
 
         # Code injection indicators (legacy)
         injection_apis = [
@@ -1546,7 +1545,7 @@ class AIAssistantTab(BaseTab):
                     "Monitor registry access during license checks",
                     "Analyze network communication for online license validation",
                     "Check for hardware fingerprinting in license mechanism",
-                ]
+                ],
             )
         elif focus == "Protection Analysis":
             recommendations.extend(
@@ -1555,7 +1554,7 @@ class AIAssistantTab(BaseTab):
                     "Use anti-anti-debug techniques for protected binaries",
                     "Analyze in isolated VM environment",
                     "Monitor API calls during execution",
-                ]
+                ],
             )
         elif focus == "Vulnerability Research":
             recommendations.extend(
@@ -1564,7 +1563,7 @@ class AIAssistantTab(BaseTab):
                     "Test network input handling for buffer overflows",
                     "Examine format string vulnerabilities",
                     "Consider targeted fuzzing for specific components",
-                ]
+                ],
             )
 
         elif focus == "Security Audit":
@@ -1574,7 +1573,7 @@ class AIAssistantTab(BaseTab):
                     "Assess input validation mechanisms",
                     "Check authentication and authorization",
                     "Evaluate secure coding practices",
-                ]
+                ],
             )
         else:
             recommendations.extend(
@@ -1583,7 +1582,7 @@ class AIAssistantTab(BaseTab):
                     "Use dynamic analysis to understand runtime behavior",
                     "Focus on interesting strings and API calls",
                     "Consider reverse engineering specific functions",
-                ]
+                ],
             )
 
         # Add depth-specific recommendations
@@ -1593,7 +1592,7 @@ class AIAssistantTab(BaseTab):
                     "Perform control flow graph analysis",
                     "Use symbolic execution for path exploration",
                     "Apply machine learning for pattern recognition",
-                ]
+                ],
             )
 
         return recommendations[:8]  # Limit to 8 recommendations
@@ -1760,7 +1759,7 @@ class AIAssistantTab(BaseTab):
                         break
             if detected:
                 protections["anti_analysis"].append(
-                    {"category": category, "indicators": detected[:5]}  # Limit to first 5
+                    {"category": category, "indicators": detected[:5]},  # Limit to first 5
                 )
 
         # Code injection detection
@@ -1817,7 +1816,7 @@ class AIAssistantTab(BaseTab):
                         "virtual_size": section.Misc_VirtualSize,
                         "raw_address": section.PointerToRawData,
                         "raw_size": section.SizeOfRawData,
-                    }
+                    },
                 )
 
             for i, section1 in enumerate(sections_data):
@@ -1887,7 +1886,7 @@ class AIAssistantTab(BaseTab):
                 anomalies.append("No import table found")
 
         except Exception as e:
-            anomalies.append(f"PE analysis error: {str(e)}")
+            anomalies.append(f"PE analysis error: {e!s}")
 
         return anomalies
 
@@ -1934,7 +1933,7 @@ class AIAssistantTab(BaseTab):
                     runtime_indicators.append(f"High entropy in {high_entropy_regions}/4 regions")
 
         except Exception as e:
-            runtime_indicators.append(f"Runtime analysis error: {str(e)}")
+            runtime_indicators.append(f"Runtime analysis error: {e!s}")
 
         return runtime_indicators
 
@@ -2186,7 +2185,7 @@ class AIAssistantTab(BaseTab):
             self.log_ai_message("AI analysis stopped by user", "warning")
 
         except Exception as e:
-            self.log_ai_message(f"Error stopping analysis: {str(e)}", "error")
+            self.log_ai_message(f"Error stopping analysis: {e!s}", "error")
 
     def generate_ai_script(self):
         """Generate script using AI"""
@@ -2229,7 +2228,7 @@ class AIAssistantTab(BaseTab):
             self.script_generated.emit(script_type, "success")
 
         except Exception as e:
-            self.log_ai_message(f"Error generating script: {str(e)}", "error")
+            self.log_ai_message(f"Error generating script: {e!s}", "error")
             self.script_generated.emit(script_type, "failed")
 
     def _generate_script_content(self, script_type, target, requirements):
@@ -2247,7 +2246,7 @@ class AIAssistantTab(BaseTab):
 
                 # Generate using AI model
                 generated_script = self.ai_model_manager.generate_script(
-                    self.current_model, ai_script_type, target, requirements
+                    self.current_model, ai_script_type, target, requirements,
                 )
 
                 if generated_script:
@@ -2256,15 +2255,14 @@ class AIAssistantTab(BaseTab):
             # Fallback to template-based generation
             if script_type == "Frida Hook Script":
                 return self._generate_frida_script(target, requirements)
-            elif script_type == "Ghidra Analysis Script":
+            if script_type == "Ghidra Analysis Script":
                 return self._generate_ghidra_script(target, requirements)
-            elif script_type == "API Hook Script":
+            if script_type == "API Hook Script":
                 return self._generate_api_hook_script(target, requirements)
-            else:
-                return self._generate_generic_script(script_type, target, requirements)
+            return self._generate_generic_script(script_type, target, requirements)
 
         except Exception as e:
-            return f"// Error generating script: {str(e)}\n// Please check your requirements and try again."
+            return f"// Error generating script: {e!s}\n// Please check your requirements and try again."
 
     def _generate_frida_script(self, target, requirements):
         """Generate Frida hook script"""
@@ -2464,23 +2462,22 @@ main();
                     prompt=message,
                     context={
                         "role": "binary_analysis_assistant",
-                        "focus": "reverse_engineering"
-                    }
+                        "focus": "reverse_engineering",
+                    },
                 )
                 return response
-            else:
-                self.log_message("Error: No AI model loaded for chat", "error")
-                return "AI model not available. Please load a model first."
+            self.log_message("Error: No AI model loaded for chat", "error")
+            return "AI model not available. Please load a model first."
         except Exception as e:
-            self.log_message(f"Error generating AI response: {str(e)}", "error")
-            return f"Error generating response: {str(e)}"
+            self.log_message(f"Error generating AI response: {e!s}", "error")
+            return f"Error generating response: {e!s}"
 
     def browse_training_dataset(self):
         """Browse for training dataset"""
         from PyQt6.QtWidgets import QFileDialog
 
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Training Dataset", "", "Dataset Files (*.json *.csv *.txt);;All Files (*)"
+            self, "Select Training Dataset", "", "Dataset Files (*.json *.csv *.txt);;All Files (*)",
         )
 
         if file_path:
@@ -2524,7 +2521,7 @@ main();
                                 training_type=self.params["training_type"],
                                 epochs=self.params["epochs"],
                                 learning_rate=self.params["learning_rate"],
-                                progress_callback=lambda data: self.progress_update.emit(data)
+                                progress_callback=lambda data: self.progress_update.emit(data),
                             )
                             self.finished_training.emit(True, "Training completed successfully")
                         except Exception as e:
@@ -2537,8 +2534,8 @@ main();
                         "dataset_path": dataset_path,
                         "training_type": training_type,
                         "epochs": epochs,
-                        "learning_rate": float(learning_rate)
-                    }
+                        "learning_rate": float(learning_rate),
+                    },
                 )
 
                 # Connect signals
@@ -2552,7 +2549,7 @@ main();
             else:
                 self.log_message("Error: AI Model Manager not initialized", "error")
         except Exception as e:
-            self.log_message(f"Error starting training: {str(e)}", "error")
+            self.log_message(f"Error starting training: {e!s}", "error")
             self.training_status_label.setText("Training failed")
 
     def _update_training_progress(self, progress_data):
@@ -2565,7 +2562,7 @@ main();
 
             self.training_progress.setValue(int(progress_pct))
             self.training_status_label.setText(
-                f"Epoch {epoch} - Loss: {loss:.4f}, Accuracy: {accuracy:.2%}"
+                f"Epoch {epoch} - Loss: {loss:.4f}, Accuracy: {accuracy:.2%}",
             )
 
             if progress_pct >= 100:
@@ -2603,7 +2600,7 @@ main();
                 self.training_status_label.setText("Training stopped")
                 self.training_progress.setValue(0)
         except Exception as e:
-            self.log_message(f"Error stopping training: {str(e)}", "error")
+            self.log_message(f"Error stopping training: {e!s}", "error")
 
 
     def save_trained_model(self):
@@ -2611,7 +2608,7 @@ main();
         from PyQt6.QtWidgets import QFileDialog
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Trained Model", "", "Model Files (*.pkl *.pth *.h5);;All Files (*)"
+            self, "Save Trained Model", "", "Model Files (*.pkl *.pth *.h5);;All Files (*)",
         )
 
         if file_path:
@@ -2655,7 +2652,6 @@ main();
     def _on_response_received(self, model_name: str, response: str):
         """Handle response received from AI model"""
         # This is handled in the script generation callbacks
-        pass
 
     def _on_ai_error(self, model_name: str, error: str):
         """Handle AI model error"""

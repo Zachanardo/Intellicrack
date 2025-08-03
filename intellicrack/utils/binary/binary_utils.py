@@ -1,5 +1,4 @@
-"""
-Binary file utilities for the Intellicrack framework.
+"""Binary file utilities for the Intellicrack framework.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -24,17 +23,17 @@ import hashlib
 import logging
 import os
 import traceback
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any
 
 # Module logger
 logger = logging.getLogger(__name__)
 
 
-def compute_file_hash(file_path: Union[str, Path], algorithm: str = "sha256",
-                     progress_signal: Optional[Callable[[int], None]] = None) -> str:
-    """
-    Computes the hash of a file using the specified algorithm with optional progress updates.
+def compute_file_hash(file_path: str | Path, algorithm: str = "sha256",
+                     progress_signal: Callable[[int], None] | None = None) -> str:
+    """Computes the hash of a file using the specified algorithm with optional progress updates.
 
     Calculates the cryptographic hash of the specified file using the given algorithm, reading it
     in chunks to handle large files efficiently. Can provide progress updates
@@ -47,6 +46,7 @@ def compute_file_hash(file_path: Union[str, Path], algorithm: str = "sha256",
 
     Returns:
         str: Hexadecimal representation of the computed hash, empty string on error
+
     """
     try:
         hasher = hashlib.new(algorithm.lower())
@@ -79,7 +79,7 @@ def compute_file_hash(file_path: Union[str, Path], algorithm: str = "sha256",
         elif isinstance(e, PermissionError):
             error_message = f"Permission denied when computing hash: {file_path}"
         elif isinstance(e, IOError):
-            error_message = f"IO Error when computing hash: {file_path} - {str(e)}"
+            error_message = f"IO Error when computing hash: {file_path} - {e!s}"
         elif isinstance(e, ValueError) and "unsupported hash type" in str(e).lower():
             error_message = f"Unsupported hash algorithm '{algorithm}': {e}"
 
@@ -93,9 +93,8 @@ def compute_file_hash(file_path: Union[str, Path], algorithm: str = "sha256",
         return ""
 
 
-def get_file_hash(file_path: Union[str, Path], algorithm: str = "sha256") -> str:
-    """
-    Simple wrapper for compute_file_hash without progress callback.
+def get_file_hash(file_path: str | Path, algorithm: str = "sha256") -> str:
+    """Simple wrapper for compute_file_hash without progress callback.
 
     Args:
         file_path: Path to the file to hash
@@ -103,13 +102,13 @@ def get_file_hash(file_path: Union[str, Path], algorithm: str = "sha256") -> str
 
     Returns:
         str: Hexadecimal hash string
+
     """
     return compute_file_hash(file_path, algorithm)
 
 
-def read_binary(file_path: Union[str, Path], chunk_size: int = 8192) -> bytes:
-    """
-    Read a binary file in chunks.
+def read_binary(file_path: str | Path, chunk_size: int = 8192) -> bytes:
+    """Read a binary file in chunks.
 
     Args:
         file_path: Path to the binary file
@@ -121,6 +120,7 @@ def read_binary(file_path: Union[str, Path], chunk_size: int = 8192) -> bytes:
     Raises:
         FileNotFoundError: If file doesn't exist
         PermissionError: If file cannot be read
+
     """
     try:
         file_path = Path(file_path)
@@ -140,9 +140,8 @@ def read_binary(file_path: Union[str, Path], chunk_size: int = 8192) -> bytes:
         raise
 
 
-def write_binary(file_path: Union[str, Path], data: bytes, create_backup: bool = True) -> bool:
-    """
-    Write binary data to a file with optional backup.
+def write_binary(file_path: str | Path, data: bytes, create_backup: bool = True) -> bool:
+    """Write binary data to a file with optional backup.
 
     Args:
         file_path: Path to write to
@@ -151,6 +150,7 @@ def write_binary(file_path: Union[str, Path], data: bytes, create_backup: bool =
 
     Returns:
         bool: True if successful, False otherwise
+
     """
     try:
         file_path = Path(file_path)
@@ -174,15 +174,15 @@ def write_binary(file_path: Union[str, Path], data: bytes, create_backup: bool =
         return False
 
 
-def analyze_binary_format(file_path: Union[str, Path]) -> Dict[str, Any]:
-    """
-    Analyze the format of a binary file.
+def analyze_binary_format(file_path: str | Path) -> dict[str, Any]:
+    """Analyze the format of a binary file.
 
     Args:
         file_path: Path to the binary file
 
     Returns:
         dict: Format information including type, architecture, etc.
+
     """
     try:
         file_path = Path(file_path)
@@ -197,7 +197,7 @@ def analyze_binary_format(file_path: Union[str, Path]) -> Dict[str, Any]:
             "path": str(file_path),
             "size": file_path.stat().st_size,
             "type": "unknown",
-            "architecture": "unknown"
+            "architecture": "unknown",
         }
 
         # Check for common binary formats
@@ -238,9 +238,8 @@ def analyze_binary_format(file_path: Union[str, Path]) -> Dict[str, Any]:
         return {"error": str(e)}
 
 
-def is_binary_file(file_path: Union[str, Path], sample_size: int = 8192) -> bool:
-    """
-    Check if a file is binary by looking for null bytes.
+def is_binary_file(file_path: str | Path, sample_size: int = 8192) -> bool:
+    """Check if a file is binary by looking for null bytes.
 
     Args:
         file_path: Path to check
@@ -248,6 +247,7 @@ def is_binary_file(file_path: Union[str, Path], sample_size: int = 8192) -> bool
 
     Returns:
         bool: True if file appears to be binary
+
     """
     try:
         with open(file_path, "rb") as f:
@@ -258,9 +258,8 @@ def is_binary_file(file_path: Union[str, Path], sample_size: int = 8192) -> bool
         return False
 
 
-def get_file_entropy(file_path: Union[str, Path], block_size: int = 256) -> float:
-    """
-    Calculate the entropy of a file (useful for detecting encryption/packing).
+def get_file_entropy(file_path: str | Path, block_size: int = 256) -> float:
+    """Calculate the entropy of a file (useful for detecting encryption/packing).
 
     Args:
         file_path: Path to the file
@@ -268,6 +267,7 @@ def get_file_entropy(file_path: Union[str, Path], block_size: int = 256) -> floa
 
     Returns:
         float: Entropy value (0-8)
+
     """
     try:
         import math
@@ -300,14 +300,14 @@ def get_file_entropy(file_path: Union[str, Path], block_size: int = 256) -> floa
 
 
 def check_suspicious_pe_sections(pe_obj) -> list:
-    """
-    Check for suspicious PE sections that are both writable and executable.
+    """Check for suspicious PE sections that are both writable and executable.
 
     Args:
         pe_obj: A pefile PE object
 
     Returns:
         list: List of suspicious section names
+
     """
     suspicious_sections = []
     try:
@@ -325,8 +325,7 @@ def check_suspicious_pe_sections(pe_obj) -> list:
 
 
 def validate_binary_path(binary_path: str, logger_instance=None) -> bool:
-    """
-    Validate that a binary path exists and log appropriate error.
+    """Validate that a binary path exists and log appropriate error.
 
     This is the common pattern extracted from duplicate code in analysis modules.
 
@@ -336,6 +335,7 @@ def validate_binary_path(binary_path: str, logger_instance=None) -> bool:
 
     Returns:
         bool: True if binary exists, False otherwise
+
     """
     use_logger = logger_instance or logger
 
@@ -352,13 +352,13 @@ def validate_binary_path(binary_path: str, logger_instance=None) -> bool:
 
 # Exported functions
 __all__ = [
-    "compute_file_hash",
-    "get_file_hash",
-    "read_binary",
-    "write_binary",
     "analyze_binary_format",
-    "is_binary_file",
-    "get_file_entropy",
     "check_suspicious_pe_sections",
+    "compute_file_hash",
+    "get_file_entropy",
+    "get_file_hash",
+    "is_binary_file",
+    "read_binary",
     "validate_binary_path",
+    "write_binary",
 ]

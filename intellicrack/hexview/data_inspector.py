@@ -1,5 +1,4 @@
-"""
-Data Inspector for Hex Viewer.
+"""Data Inspector for Hex Viewer.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -47,11 +46,12 @@ from ..ui.common_imports import (
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["DataInspector", "DataType", "DataInterpreter"]
+__all__ = ["DataInspector", "DataInterpreter", "DataType"]
 
 
 class DataType(Enum):
     """Enumeration of supported data types."""
+
     # Integer types
     UINT8 = "uint8"
     INT8 = "int8"
@@ -102,8 +102,7 @@ class DataInterpreter:
 
     @staticmethod
     def interpret(data: bytes, data_type: DataType) -> str:
-        """
-        Interpret binary data as the specified data type.
+        """Interpret binary data as the specified data type.
 
         Args:
             data: Binary data to interpret
@@ -111,6 +110,7 @@ class DataInterpreter:
 
         Returns:
             String representation of the interpreted data
+
         """
         if not data:
             return "No data"
@@ -308,7 +308,7 @@ class DataInterpreter:
                 if len(data) >= 16:
                     # Parse GUID (little-endian format)
                     guid_parts = struct.unpack("<IHH8B", data[:16])
-                    return f"{guid_parts[0]:08X}-{guid_parts[1]:04X}-{guid_parts[2]:04X}-" + \
+                    return f"{guid_parts[0]:08X}-{guid_parts[1]:04X}-{guid_parts[2]:04X}-" \
                            f"{guid_parts[3]:02X}{guid_parts[4]:02X}-" + \
                            "".join(f"{guid_parts[_i]:02X}" for _i in range(5, 11))
 
@@ -332,8 +332,7 @@ class DataInterpreter:
 
 
 class DataInspector(QWidget if PYQT6_AVAILABLE else object):
-    """
-    Data inspector widget for interpreting selected bytes.
+    """Data inspector widget for interpreting selected bytes.
 
     This widget displays the selected bytes interpreted as various data types
     including integers, floats, strings, timestamps, and more.
@@ -432,7 +431,7 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
             ("32-bit unsigned", DataType.UINT32_LE, DataType.UINT32_BE),
             ("32-bit signed", DataType.INT32_LE, DataType.INT32_BE),
             ("64-bit unsigned", DataType.UINT64_LE, DataType.UINT64_BE),
-            ("64-bit signed", DataType.INT64_LE, DataType.INT64_BE)
+            ("64-bit signed", DataType.INT64_LE, DataType.INT64_BE),
         ]
 
         for i, (type_name, _, be_type) in enumerate(integer_types):
@@ -520,7 +519,7 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
             "Unix Timestamp (32-bit)",
             "Unix Timestamp (64-bit)",
             "Windows FILETIME",
-            "DOS Date/Time"
+            "DOS Date/Time",
         ]
 
         for i, type_name in enumerate(time_types):
@@ -545,7 +544,7 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
             "GUID",
             "IPv4 Address",
             "IPv6 Address",
-            "MAC Address"
+            "MAC Address",
         ]
 
         for i, type_name in enumerate(special_types):
@@ -571,7 +570,7 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
 
         self.input_type_combo = QComboBox()
         self.input_type_combo.addItems([
-            "Hex", "Decimal", "ASCII", "UTF-8", "Binary"
+            "Hex", "Decimal", "ASCII", "UTF-8", "Binary",
         ])
         input_layout.addWidget(QLabel("Type:"))
         input_layout.addWidget(self.input_type_combo)
@@ -608,12 +607,12 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
         self.layout().addWidget(mod_frame)
 
     def set_data(self, data: bytes, offset: int = 0):
-        """
-        Set the data to inspect.
+        """Set the data to inspect.
 
         Args:
             data: Binary data to inspect
             offset: Starting offset of the data
+
         """
         self.current_data = data
         self.current_offset = offset
@@ -661,7 +660,7 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
             (DataType.UINT32_LE, DataType.UINT32_BE),
             (DataType.INT32_LE, DataType.INT32_BE),
             (DataType.UINT64_LE, DataType.UINT64_BE),
-            (DataType.INT64_LE, DataType.INT64_BE)
+            (DataType.INT64_LE, DataType.INT64_BE),
         ]
 
         for i, (le_type, be_type) in enumerate(integer_types):
@@ -680,7 +679,7 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
         """Update the floating point interpretations table."""
         float_types = [
             (DataType.FLOAT32_LE, DataType.FLOAT32_BE),
-            (DataType.FLOAT64_LE, DataType.FLOAT64_BE)
+            (DataType.FLOAT64_LE, DataType.FLOAT64_BE),
         ]
 
         for i, (le_type, be_type) in enumerate(float_types):
@@ -705,7 +704,7 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
             DataType.UNIX_TIMESTAMP_32,
             DataType.UNIX_TIMESTAMP_64,
             DataType.WINDOWS_FILETIME,
-            DataType.DOS_DATETIME
+            DataType.DOS_DATETIME,
         ]
 
         for i, time_type in enumerate(time_types):
@@ -718,7 +717,7 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
             DataType.GUID,
             DataType.IPV4_ADDRESS,
             DataType.IPV6_ADDRESS,
-            DataType.MAC_ADDRESS
+            DataType.MAC_ADDRESS,
         ]
 
         for i, special_type in enumerate(special_types):
@@ -802,7 +801,7 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
                     # Pad with zeros
                     binary_clean = binary_clean.zfill((len(binary_clean) + 7) // 8 * 8)
 
-                new_data = bytes()
+                new_data = b""
                 for i in range(0, len(binary_clean), 8):
                     byte_str = binary_clean[i:i+8]
                     new_data += bytes([int(byte_str, 2)])

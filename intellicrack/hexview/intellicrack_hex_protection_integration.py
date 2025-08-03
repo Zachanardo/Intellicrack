@@ -1,5 +1,4 @@
-"""
-Intellicrack Hex Protection Integration Module
+"""Intellicrack Hex Protection Integration Module
 
 Integrates protection analysis hex viewer features with Intellicrack's advanced hex viewer.
 
@@ -8,7 +7,6 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-from typing import Dict, Optional
 
 from PyQt6.QtCore import QObject, QProcess, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
@@ -20,8 +18,7 @@ logger = get_logger(__name__)
 
 
 class IntellicrackHexProtectionIntegration(QObject):
-    """
-    Integrates protection analysis hex viewer with Intellicrack's hex viewer
+    """Integrates protection analysis hex viewer with Intellicrack's hex viewer
     """
 
     # Signals
@@ -29,24 +26,24 @@ class IntellicrackHexProtectionIntegration(QObject):
     section_requested = pyqtSignal(str)  # Request jump to section
 
     def __init__(self, hex_widget=None):
-        """
-        Initialize hex protection integration
+        """Initialize hex protection integration
 
         Args:
             hex_widget: Reference to Intellicrack's hex viewer widget
+
         """
         super().__init__()
         self.hex_widget = hex_widget
         self.protection_detector = IntellicrackProtectionCore()
         self.engine_process = None
 
-    def open_in_protection_viewer(self, file_path: str, offset: Optional[int] = None):
-        """
-        Open file in protection analysis hex viewer
+    def open_in_protection_viewer(self, file_path: str, offset: int | None = None):
+        """Open file in protection analysis hex viewer
 
         Args:
             file_path: Path to file to open
             offset: Optional offset to jump to
+
         """
         if not os.path.exists(file_path):
             logger.error(f"File not found: {file_path}")
@@ -56,7 +53,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             # Get protection viewer path
             protection_viewer_path = os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                "extensions", "engines", "protection_viewer", "protection_viewer.exe"
+                "extensions", "engines", "protection_viewer", "protection_viewer.exe",
             )
 
             if not os.path.exists(protection_viewer_path):
@@ -80,7 +77,7 @@ class IntellicrackHexProtectionIntegration(QObject):
                     with open(sync_file, "w") as f:
                         f.write(f"{offset}\n{hex(offset)}\n{file_path}")
                     logger.debug(f"Created offset sync file: {sync_file}")
-                except (OSError, IOError) as e:
+                except OSError as e:
                     logger.debug(f"Failed to create offset sync file: {e}")
             else:
                 logger.info(f"Opening {file_path} in protection viewer (no specific offset)")
@@ -105,47 +102,47 @@ class IntellicrackHexProtectionIntegration(QObject):
         try:
             protection_viewer_path = os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                "extensions", "engines", "protection_viewer", "protection_viewer.exe"
+                "extensions", "engines", "protection_viewer", "protection_viewer.exe",
             )
             sync_dir = os.path.join(os.path.dirname(protection_viewer_path), "sync")
             sync_file = os.path.join(sync_dir, "initial_offset.txt")
             if os.path.exists(sync_file):
                 os.remove(sync_file)
                 logger.debug("Cleaned up offset sync file")
-        except (OSError, IOError) as e:
+        except OSError as e:
             logger.debug(f"Failed to cleanup sync files: {e}")
 
     def sync_offset_from_protection_viewer(self, offset: int):
-        """
-        Sync offset from protection viewer to our hex viewer
+        """Sync offset from protection viewer to our hex viewer
 
         Args:
             offset: Offset to sync
+
         """
         if self.hex_widget:
             self.hex_widget.goto_offset(offset)
             self.offset_requested.emit(offset)
 
     def sync_offset_to_protection_viewer(self, offset: int):
-        """
-        Sync offset from our hex viewer to protection viewer
+        """Sync offset from our hex viewer to protection viewer
 
         Args:
             offset: Offset to sync
+
         """
         # protection viewer doesn't have an API for external control
         # This would require protection viewer modification or automation
         logger.debug(f"Cannot sync offset {offset} to protection viewer (no API)")
 
-    def get_section_offsets(self, file_path: str) -> Dict[str, int]:
-        """
-        Get section offsets from protection viewer analysis
+    def get_section_offsets(self, file_path: str) -> dict[str, int]:
+        """Get section offsets from protection viewer analysis
 
         Args:
             file_path: Path to file
 
         Returns:
             Dictionary mapping section names to offsets
+
         """
         try:
             analysis = self.die_detector.detect_protections(file_path)
@@ -164,12 +161,12 @@ class IntellicrackHexProtectionIntegration(QObject):
             logger.error(f"Error getting section offsets: {e}")
             return {}
 
-    def compare_features(self) -> Dict[str, Dict[str, bool]]:
-        """
-        Compare features between protection viewer hex viewer and our hex viewer
+    def compare_features(self) -> dict[str, dict[str, bool]]:
+        """Compare features between protection viewer hex viewer and our hex viewer
 
         Returns:
             Feature comparison dictionary
+
         """
         return {
             "protection viewer Hex Viewer": {
@@ -187,7 +184,7 @@ class IntellicrackHexProtectionIntegration(QObject):
                 "Performance Monitoring": False,
                 "Advanced Search": False,
                 "Highlighting": False,
-                "Templates": False
+                "Templates": False,
             },
             "Intellicrack Hex Viewer": {
                 "Basic Viewing": True,
@@ -204,23 +201,22 @@ class IntellicrackHexProtectionIntegration(QObject):
                 "Performance Monitoring": True,
                 "Advanced Search": True,
                 "Highlighting": True,
-                "Templates": False  # We could add this
-            }
+                "Templates": False,  # We could add this
+            },
         }
 
 
 class ProtectionIntegrationWidget(QWidget):
-    """
-    Widget for protection viewer hex viewer integration controls
+    """Widget for protection viewer hex viewer integration controls
     """
 
     def __init__(self, hex_widget=None, parent=None):
-        """
-        Initialize protection viewer integration widget
+        """Initialize protection viewer integration widget
 
         Args:
             hex_widget: Reference to hex viewer widget
             parent: Parent widget
+
         """
         super().__init__(parent)
         self.hex_widget = hex_widget
@@ -290,13 +286,13 @@ class ProtectionIntegrationWidget(QWidget):
 
 
 def create_intellicrack_hex_integration(hex_widget=None) -> IntellicrackHexProtectionIntegration:
-    """
-    Factory function to create Intellicrack hex viewer integration
+    """Factory function to create Intellicrack hex viewer integration
 
     Args:
         hex_widget: Optional hex viewer widget to integrate with
 
     Returns:
         IntellicrackHexProtectionIntegration instance
+
     """
     return IntellicrackHexProtectionIntegration(hex_widget)

@@ -1,5 +1,4 @@
-"""
-Model Comparison Tool for Intellicrack
+"""Model Comparison Tool for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -24,7 +23,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -40,53 +39,56 @@ logger = get_logger(__name__)
 @dataclass
 class ComparisonResult:
     """Result from comparing model outputs."""
+
     model_id: str
     output: str
     inference_time: float
     tokens_generated: int
     tokens_per_second: float
     memory_used_mb: float
-    similarity_scores: Dict[str, float] = None
+    similarity_scores: dict[str, float] = None
 
 
 @dataclass
 class ComparisonReport:
     """Complete comparison report."""
+
     comparison_id: str
     timestamp: datetime
     prompt: str
-    models: List[str]
-    results: List[ComparisonResult]
-    analysis: Dict[str, Any]
-    visualizations: Dict[str, Path]
+    models: list[str]
+    results: list[ComparisonResult]
+    analysis: dict[str, Any]
+    visualizations: dict[str, Path]
 
 
 class ModelComparison:
     """Tool for comparing outputs and performance of multiple models."""
 
-    def __init__(self, llm_manager: Optional[LLMManager] = None):
+    def __init__(self, llm_manager: LLMManager | None = None):
         """Initialize the model comparison tool.
 
         Args:
             llm_manager: LLM manager instance
+
         """
         self.llm_manager = llm_manager
         self.performance_monitor = get_performance_monitor()
         self.batch_tester = get_batch_tester(llm_manager)
 
         # Storage for comparison reports
-        self.reports: List[ComparisonReport] = []
+        self.reports: list[ComparisonReport] = []
         self.save_dir = Path.home() / ".intellicrack" / "model_comparisons"
         self.save_dir.mkdir(parents=True, exist_ok=True)
 
     def compare_outputs(
         self,
-        model_ids: List[str],
+        model_ids: list[str],
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         max_tokens: int = 500,
         temperature: float = 0.7,
-        num_samples: int = 1
+        num_samples: int = 1,
     ) -> ComparisonReport:
         """Compare outputs from multiple models on the same prompt.
 
@@ -100,6 +102,7 @@ class ModelComparison:
 
         Returns:
             Comparison report
+
         """
         comparison_id = f"compare_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         results = []
@@ -114,7 +117,7 @@ class ModelComparison:
                     prompt,
                     system_prompt,
                     max_tokens,
-                    temperature
+                    temperature,
                 )
 
                 if result:
@@ -142,7 +145,7 @@ class ModelComparison:
             models=model_ids,
             results=results,
             analysis=analysis,
-            visualizations=visualizations
+            visualizations=visualizations,
         )
 
         self.reports.append(report)
@@ -154,10 +157,10 @@ class ModelComparison:
         self,
         model_id: str,
         prompt: str,
-        system_prompt: Optional[str],
+        system_prompt: str | None,
         max_tokens: int,
-        temperature: float
-    ) -> Optional[ComparisonResult]:
+        temperature: float,
+    ) -> ComparisonResult | None:
         """Generate output from a single model."""
         if not self.llm_manager:
             return None
@@ -201,7 +204,7 @@ class ModelComparison:
             perf_metrics = self.performance_monitor.end_inference(
                 perf_context,
                 tokens_generated=tokens_generated,
-                sequence_length=len(prompt)
+                sequence_length=len(prompt),
             )
 
             return ComparisonResult(
@@ -210,7 +213,7 @@ class ModelComparison:
                 inference_time=inference_time,
                 tokens_generated=tokens_generated,
                 tokens_per_second=perf_metrics.tokens_per_second,
-                memory_used_mb=perf_metrics.memory_used_mb + perf_metrics.gpu_memory_mb
+                memory_used_mb=perf_metrics.memory_used_mb + perf_metrics.gpu_memory_mb,
             )
 
         except Exception as e:
@@ -222,7 +225,7 @@ class ModelComparison:
     def _average_results(
         self,
         model_id: str,
-        results: List[ComparisonResult]
+        results: list[ComparisonResult],
     ) -> ComparisonResult:
         """Average multiple results from the same model."""
         if len(results) == 1:
@@ -244,15 +247,15 @@ class ModelComparison:
             inference_time=avg_inference_time,
             tokens_generated=median_result.tokens_generated,
             tokens_per_second=avg_tokens_per_second,
-            memory_used_mb=avg_memory
+            memory_used_mb=avg_memory,
         )
 
-    def _analyze_outputs(self, results: List[ComparisonResult]) -> Dict[str, Any]:
+    def _analyze_outputs(self, results: list[ComparisonResult]) -> dict[str, Any]:
         """Analyze and compare outputs."""
         analysis = {
             "output_lengths": {},
             "performance": {},
-            "consistency": {}
+            "consistency": {},
         }
 
         # Output length analysis
@@ -260,7 +263,7 @@ class ModelComparison:
             analysis["output_lengths"][result.model_id] = {
                 "characters": len(result.output),
                 "words": len(result.output.split()),
-                "tokens": result.tokens_generated
+                "tokens": result.tokens_generated,
             }
 
         # Performance analysis
@@ -303,7 +306,7 @@ class ModelComparison:
 
         return analysis
 
-    def _calculate_similarities(self, results: List[ComparisonResult]):
+    def _calculate_similarities(self, results: list[ComparisonResult]):
         """Calculate similarity scores between outputs."""
         try:
             from sklearn.feature_extraction.text import TfidfVectorizer
@@ -333,9 +336,9 @@ class ModelComparison:
 
     def _create_visualizations(
         self,
-        results: List[ComparisonResult],
-        comparison_id: str
-    ) -> Dict[str, Path]:
+        results: list[ComparisonResult],
+        comparison_id: str,
+    ) -> dict[str, Path]:
         """Create visualization charts."""
         visualizations = {}
 
@@ -434,9 +437,9 @@ class ModelComparison:
 
     def benchmark_models(
         self,
-        model_ids: List[str],
-        test_suite: str = "basic"
-    ) -> Dict[str, Any]:
+        model_ids: list[str],
+        test_suite: str = "basic",
+    ) -> dict[str, Any]:
         """Run comprehensive benchmark on models.
 
         Args:
@@ -445,6 +448,7 @@ class ModelComparison:
 
         Returns:
             Benchmark results
+
         """
         # Use batch tester for comprehensive testing
         batch_report = self.batch_tester.run_batch_test(model_ids, test_suite)
@@ -459,7 +463,7 @@ class ModelComparison:
         benchmark_results = {
             "test_suite": test_suite,
             "timestamp": datetime.now().isoformat(),
-            "models": {}
+            "models": {},
         }
 
         for model_id in model_ids:
@@ -471,13 +475,13 @@ class ModelComparison:
                     "success_rate": model_stats.get("success", 0) / model_stats.get("total", 1),
                     "validation_rate": model_stats.get("validation_passed", 0) / model_stats.get("success", 1),
                     "avg_inference_time": model_stats.get("avg_inference_time", 0),
-                    "avg_tokens_per_second": model_stats.get("avg_tokens_per_second", 0)
+                    "avg_tokens_per_second": model_stats.get("avg_tokens_per_second", 0),
                 },
                 "resource_usage": {
                     "avg_memory_mb": perf_stats.get("benchmark", {}).get("avg_memory_mb", 0),
                     "p95_latency": perf_stats.get("benchmark", {}).get("p95_latency", 0),
-                    "device": perf_stats.get("benchmark", {}).get("device", "unknown")
-                }
+                    "device": perf_stats.get("benchmark", {}).get("device", "unknown"),
+                },
             }
 
         # Generate rankings
@@ -485,7 +489,7 @@ class ModelComparison:
             ("success_rate", True),  # Higher is better
             ("avg_tokens_per_second", True),
             ("avg_memory_mb", False),  # Lower is better
-            ("p95_latency", False)
+            ("p95_latency", False),
         ]
 
         rankings = {}
@@ -510,7 +514,7 @@ class ModelComparison:
             "success_rate": 0.3,
             "avg_tokens_per_second": 0.3,
             "avg_memory_mb": 0.2,
-            "p95_latency": 0.2
+            "p95_latency": 0.2,
         }
 
         overall_scores = {}
@@ -525,7 +529,7 @@ class ModelComparison:
         best_model = max(overall_scores.items(), key=lambda x: x[1])
         benchmark_results["recommendation"] = {
             "best_overall": best_model[0],
-            "overall_scores": overall_scores
+            "overall_scores": overall_scores,
         }
 
         return benchmark_results
@@ -548,12 +552,12 @@ class ModelComparison:
                     "tokens_generated": r.tokens_generated,
                     "tokens_per_second": r.tokens_per_second,
                     "memory_used_mb": r.memory_used_mb,
-                    "similarity_scores": r.similarity_scores
+                    "similarity_scores": r.similarity_scores,
                 }
                 for r in report.results
             ],
             "analysis": report.analysis,
-            "visualizations": {k: str(v) for k, v in report.visualizations.items()}
+            "visualizations": {k: str(v) for k, v in report.visualizations.items()},
         }
 
         with open(report_file, "w") as f:
@@ -569,6 +573,7 @@ class ModelComparison:
 
         Returns:
             Path to HTML file
+
         """
         html_file = self.save_dir / f"{report.comparison_id}_report.html"
 
@@ -685,7 +690,7 @@ class ModelComparison:
 _COMPARISON_TOOL = None
 
 
-def get_comparison_tool(llm_manager: Optional[LLMManager] = None) -> ModelComparison:
+def get_comparison_tool(llm_manager: LLMManager | None = None) -> ModelComparison:
     """Get the global model comparison tool."""
     global _COMPARISON_TOOL
     if _COMPARISON_TOOL is None:

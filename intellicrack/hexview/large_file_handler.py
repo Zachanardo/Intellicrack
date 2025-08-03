@@ -1,5 +1,4 @@
-"""
-Large File Optimization for Hex Viewer.
+"""Large File Optimization for Hex Viewer.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -26,9 +25,10 @@ import os
 import threading
 import time
 from collections import OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 # Import from common import checks
 from ..utils.core.import_checks import PSUTIL_AVAILABLE, psutil
@@ -45,13 +45,18 @@ except ImportError as e:
     QThread = object
 
 __all__ = [
-    "LargeFileHandler", "MemoryStrategy", "LoadingStrategy",
-    "FileCache", "MemoryMonitor", "BackgroundLoader"
+    "BackgroundLoader",
+    "FileCache",
+    "LargeFileHandler",
+    "LoadingStrategy",
+    "MemoryMonitor",
+    "MemoryStrategy",
 ]
 
 
 class MemoryStrategy(Enum):
     """Memory mapping strategies for different file sizes."""
+
     DIRECT_LOAD = "direct_load"        # < 100MB: Load entirely into memory
     MEMORY_MAP = "memory_map"          # 100MB - 1GB: Use memory mapping
     STREAMING = "streaming"            # > 1GB: Stream with minimal memory
@@ -60,6 +65,7 @@ class MemoryStrategy(Enum):
 
 class LoadingStrategy(Enum):
     """File loading strategies."""
+
     IMMEDIATE = "immediate"            # Load everything immediately
     PROGRESSIVE = "progressive"        # Load sections as needed
     BACKGROUND = "background"          # Load in background thread
@@ -69,6 +75,7 @@ class LoadingStrategy(Enum):
 @dataclass
 class MemoryConfig:
     """Configuration for memory usage."""
+
     max_memory_mb: int = 500           # Maximum memory usage in MB
     chunk_size_mb: int = 10            # Chunk size in MB
     cache_size_mb: int = 100           # Cache size in MB
@@ -80,9 +87,10 @@ class MemoryConfig:
 @dataclass
 class FileRegion:
     """Represents a region of a file."""
+
     offset: int
     size: int
-    data: Optional[bytes] = None
+    data: bytes | None = None
     last_accessed: float = 0.0
     ref_count: int = 0
     compressed: bool = False
@@ -98,7 +106,7 @@ class FileCache:
         self.total_memory = 0
         self.lock = threading.RLock()
 
-    def get_region(self, offset: int, size: int) -> Optional[FileRegion]:
+    def get_region(self, offset: int, size: int) -> FileRegion | None:
         """Get a cached region containing the requested data."""
         with self.lock:
             # Check if we have a region that contains this data
@@ -190,14 +198,14 @@ class FileCache:
 
             return removed_count
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         with self.lock:
             return {
                 "regions": len(self.regions),
                 "total_memory_mb": self.total_memory / (1024 * 1024),
                 "max_memory_mb": self.config.cache_size_mb,
-                "utilization": self.total_memory / (self.config.cache_size_mb * 1024 * 1024)
+                "utilization": self.total_memory / (self.config.cache_size_mb * 1024 * 1024),
             }
 
 
@@ -207,9 +215,9 @@ class MemoryMonitor:
     def __init__(self, config: MemoryConfig):
         """Initialize the MemoryMonitor with memory configuration."""
         self.config = config
-        self.callbacks: List[Callable[[float], None]] = []
+        self.callbacks: list[Callable[[float], None]] = []
         self.monitoring = False
-        self.thread: Optional[threading.Thread] = None
+        self.thread: threading.Thread | None = None
 
     def add_callback(self, callback: Callable[[float], None]):
         """Add a callback for memory usage changes."""
@@ -290,7 +298,7 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
         self.file_path = file_path
         self.cache = cache
         self.config = config
-        self.load_queue: List[Tuple[int, int]] = []
+        self.load_queue: list[tuple[int, int]] = []
         self.queue_lock = threading.Lock()
         self.should_stop = False
 
@@ -350,7 +358,7 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
 class LargeFileHandler:
     """Enhanced file handler optimized for large files."""
 
-    def __init__(self, file_path: str, read_only: bool = True, config: Optional[MemoryConfig] = None):
+    def __init__(self, file_path: str, read_only: bool = True, config: MemoryConfig | None = None):
         """Initialize the LargeFileHandler with file path, read-only mode, and configuration."""
         self.file_path = file_path
         self.read_only = read_only
@@ -359,7 +367,7 @@ class LargeFileHandler:
         # Initialize components
         self.cache = FileCache(self.config)
         self.memory_monitor = MemoryMonitor(self.config)
-        self.background_loader: Optional[BackgroundLoader] = None
+        self.background_loader: BackgroundLoader | None = None
 
         # File information
         self.file_size = 0
@@ -367,11 +375,11 @@ class LargeFileHandler:
         self.loading_strategy = LoadingStrategy.PROGRESSIVE
 
         # Memory mapped file (for medium-sized files)
-        self.mmap_file: Optional[mmap.mmap] = None
-        self.file_handle: Optional[object] = None
+        self.mmap_file: mmap.mmap | None = None
+        self.file_handle: object | None = None
 
         # Performance tracking
-        self.access_patterns: List[Tuple[int, int, float]] = []  # offset, size, timestamp
+        self.access_patterns: list[tuple[int, int, float]] = []  # offset, size, timestamp
 
         # Initialize the file
         self._initialize_file()
@@ -451,7 +459,7 @@ class LargeFileHandler:
             self.mmap_file = mmap.mmap(
                 self.file_handle.fileno(),
                 length=0,
-                access=mmap.ACCESS_READ
+                access=mmap.ACCESS_READ,
             )
             logger.debug("Memory mapped file: %s bytes", self.file_size)
 
@@ -468,8 +476,7 @@ class LargeFileHandler:
         logger.debug("Initialized streaming mode")
 
     def read(self, offset: int, size: int) -> bytes:
-        """
-        Read data from the file using the optimal strategy.
+        """Read data from the file using the optimal strategy.
 
         Args:
             offset: Starting byte offset
@@ -477,6 +484,7 @@ class LargeFileHandler:
 
         Returns:
             Read binary data
+
         """
         if offset < 0 or size <= 0 or offset >= self.file_size:
             return b""
@@ -492,10 +500,9 @@ class LargeFileHandler:
         # Try different read strategies
         if self.memory_strategy == MemoryStrategy.DIRECT_LOAD:
             return self._read_direct(offset, size)
-        elif self.memory_strategy == MemoryStrategy.MEMORY_MAP:
+        if self.memory_strategy == MemoryStrategy.MEMORY_MAP:
             return self._read_mmap(offset, size)
-        else:
-            return self._read_streaming(offset, size)
+        return self._read_streaming(offset, size)
 
     def _read_direct(self, offset: int, size: int) -> bytes:
         """Read using direct loading (cached data)."""
@@ -550,7 +557,7 @@ class LargeFileHandler:
                 chunk_region = FileRegion(
                     offset=chunk_offset,
                     size=len(chunk_data),
-                    data=chunk_data
+                    data=chunk_data,
                 )
                 self.cache.add_region(chunk_region)
 
@@ -584,7 +591,7 @@ class LargeFileHandler:
                     if not self.cache.get_region(prefetch_offset, 1):
                         self.background_loader.queue_load(
                             prefetch_offset,
-                            min(chunk_size, self.file_size - prefetch_offset)
+                            min(chunk_size, self.file_size - prefetch_offset),
                         )
 
     def _on_memory_pressure(self, memory_usage: float):
@@ -627,7 +634,7 @@ class LargeFileHandler:
         """Get the file size."""
         return self.file_size
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get performance and usage statistics."""
         cache_stats = self.cache.get_stats()
 
@@ -642,10 +649,10 @@ class LargeFileHandler:
             "cache_stats": cache_stats,
             "access_patterns": len(self.access_patterns),
             "sequential_ratio": sequential_ratio,
-            "background_loader_active": self.background_loader is not None and self.background_loader.isAlive() if hasattr(self.background_loader, "isAlive") else False
+            "background_loader_active": self.background_loader is not None and self.background_loader.isAlive() if hasattr(self.background_loader, "isAlive") else False,
         }
 
-    def _calculate_sequential_ratio(self, patterns: List[Tuple[int, int, float]]) -> float:
+    def _calculate_sequential_ratio(self, patterns: list[tuple[int, int, float]]) -> float:
         """Calculate the ratio of sequential vs random access."""
         if len(patterns) < 2:
             return 0.0

@@ -1,5 +1,4 @@
-"""
-Common import checks and availability flags.
+"""Common import checks and availability flags.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -47,7 +46,7 @@ try:
         """Get numpy version and configuration info"""
         return {
             "version": np.__version__,
-            "config": np.show_config(mode="dicts") if hasattr(np, "show_config") else {}
+            "config": np.show_config(mode="dicts") if hasattr(np, "show_config") else {},
         }
 
 except ImportError as e:
@@ -78,7 +77,7 @@ try:
             "version": torch.__version__,
             "cuda_available": torch.cuda.is_available(),
             "cuda_version": torch.version.cuda if torch.cuda.is_available() else None,
-            "device_count": torch.cuda.device_count() if torch.cuda.is_available() else 0
+            "device_count": torch.cuda.device_count() if torch.cuda.is_available() else 0,
         }
 
 except ImportError as e:
@@ -116,7 +115,7 @@ try:
         return {
             "version": tf.__version__,
             "gpu_available": len(tf.config.list_physical_devices("GPU")) > 0,
-            "gpu_devices": [gpu.name for gpu in tf.config.list_physical_devices("GPU")]
+            "gpu_devices": [gpu.name for gpu in tf.config.list_physical_devices("GPU")],
         }
 
 except ImportError as e:
@@ -148,7 +147,7 @@ try:
         """Get LIEF version and capabilities"""
         return {
             "version": lief.__version__ if hasattr(lief, "__version__") else "Unknown",
-            "formats": ["PE", "ELF", "MachO"]
+            "formats": ["PE", "ELF", "MachO"],
         }
 
 except ImportError as e:
@@ -180,14 +179,13 @@ except ImportError as e:
                     if magic[:2] == b"MZ":
                         self.architecture = "x86" # Default, would need PE parsing
                         return "PE"
-                    elif magic == b"\x7fELF":
+                    if magic == b"\x7fELF":
                         self.architecture = "x86_64" # Default, would need ELF parsing
                         return "ELF"
-                    elif magic == b"\xca\xfe\xba\xbe" or magic == b"\xce\xfa\xed\xfe":
+                    if magic == b"\xca\xfe\xba\xbe" or magic == b"\xce\xfa\xed\xfe":
                         self.architecture = "x86_64" # Default
                         return "MachO"
-                    else:
-                        return "Unknown"
+                    return "Unknown"
                 except:
                     return None
 
@@ -209,7 +207,7 @@ except ImportError as e:
                 """Get entry point address."""
                 if self.format == "PE":
                     return 0x401000  # Typical PE entry
-                elif self.format == "ELF":
+                if self.format == "ELF":
                     return 0x400000  # Typical ELF entry
                 return 0
 
@@ -229,7 +227,7 @@ try:
             "cpu_percent": psutil.cpu_percent(interval=1),
             "memory_percent": psutil.virtual_memory().percent,
             "disk_usage": psutil.disk_usage("/").percent,
-            "process_count": len(psutil.pids())
+            "process_count": len(psutil.pids()),
         }
 
     def get_process_info(pid=None):
@@ -240,7 +238,7 @@ try:
                 "pid": proc.pid,
                 "name": proc.name(),
                 "cpu_percent": proc.cpu_percent(),
-                "memory_info": proc.memory_info()._asdict()
+                "memory_info": proc.memory_info()._asdict(),
             }
         except Exception as e:
             return {"error": str(e)}
@@ -277,7 +275,7 @@ try:
             "machine": hex(pe_obj.FILE_HEADER.Machine),
             "sections": len(pe_obj.sections),
             "imports": len(getattr(pe_obj, "DIRECTORY_ENTRY_IMPORT", [])),
-            "timestamp": pe_obj.FILE_HEADER.TimeDateStamp
+            "timestamp": pe_obj.FILE_HEADER.TimeDateStamp,
         }
 
 except ImportError as e:
@@ -351,7 +349,7 @@ except ImportError as e:
                             "DEP": True,   # Check DllCharacteristics
                             "SafeSEH": False,  # Check for SEH table
                             "CFG": False,  # Check for CFG flags
-                            "Authenticode": False  # Check for signature
+                            "Authenticode": False,  # Check for signature
                         }
 
                 except Exception:
@@ -403,7 +401,7 @@ try:
             "class": elf_obj.elfclass,
             "machine": elf_obj["e_machine"],
             "entry": hex(elf_obj["e_entry"]),
-            "sections": elf_obj.num_sections()
+            "sections": elf_obj.num_sections(),
         }
 
 except ImportError as e:
@@ -461,7 +459,7 @@ except ImportError as e:
                             0x28: "arm",
                             0xb7: "arm64",
                             0x08: "mips",
-                            0x14: "powerpc"
+                            0x14: "powerpc",
                         }
                         self.architecture = arch_map.get(e_machine, "unknown")
 
@@ -473,7 +471,7 @@ except ImportError as e:
                             "PIE": self._check_pie(),
                             "RELRO": self._check_relro(),
                             "Canary": self._check_canary(),
-                            "Fortify": self._check_fortify()
+                            "Fortify": self._check_fortify(),
                         }
 
                 except Exception:
@@ -575,14 +573,14 @@ except ImportError as e:
                     "root": self._check_root_access(),
                     "debugger": self._check_debugger_access(),
                     "kernel_modules": self._check_kernel_module_access(),
-                    "ptrace": self._check_ptrace_access()
+                    "ptrace": self._check_ptrace_access(),
                 }
 
                 # Network info for remote exploitation
                 self.network = {
                     "hostname": self.name,
                     "ip_addresses": self._get_ip_addresses(),
-                    "open_ports": []  # Would scan for open ports
+                    "open_ports": [],  # Would scan for open ports
                 }
 
             def _check_root_access(self):
@@ -596,7 +594,7 @@ except ImportError as e:
                 try:
                     # Check ptrace scope on Linux
                     if platform.system() == "Linux":
-                        with open("/proc/sys/kernel/yama/ptrace_scope", "r") as f:
+                        with open("/proc/sys/kernel/yama/ptrace_scope") as f:
                             return f.read().strip() == "0"
                 except:
                     pass
@@ -653,7 +651,7 @@ try:
                 "address": insn.address,
                 "mnemonic": insn.mnemonic,
                 "op_str": insn.op_str,
-                "bytes": insn.bytes.hex()
+                "bytes": insn.bytes.hex(),
             })
         return instructions
 
@@ -699,7 +697,7 @@ except ImportError as e:
                     "x86_64": {"bits": 64, "endian": "little", "regs": ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"]},
                     "arm": {"bits": 32, "endian": "little", "regs": ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "sp", "lr", "pc"]},
                     "arm64": {"bits": 64, "endian": "little", "regs": ["x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16", "x17", "x18", "x19", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28", "x29", "x30", "sp"]},
-                    "mips": {"bits": 32, "endian": "big", "regs": ["zero", "at", "v0", "v1", "a0", "a1", "a2", "a3", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"]}
+                    "mips": {"bits": 32, "endian": "big", "regs": ["zero", "at", "v0", "v1", "a0", "a1", "a2", "a3", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"]},
                 }
 
                 # Common exploit opcodes
@@ -714,7 +712,7 @@ except ImportError as e:
                         "pop_rsi": b"\\x5e",
                         "pop_rdx": b"\\x5a",
                         "pop_rax": b"\\x58",
-                        "xor_rax_rax": b"\\x48\\x31\\xc0"
+                        "xor_rax_rax": b"\\x48\\x31\\xc0",
                     },
                     "x86": {
                         "nop": b"\\x90",
@@ -726,8 +724,8 @@ except ImportError as e:
                         "pop_ebx": b"\\x5b",
                         "pop_ecx": b"\\x59",
                         "pop_edx": b"\\x5a",
-                        "xor_eax_eax": b"\\x31\\xc0"
-                    }
+                        "xor_eax_eax": b"\\x31\\xc0",
+                    },
                 }
 
             def disasm(self, data, address=0):
@@ -799,7 +797,7 @@ except ImportError as e:
                                     "address": start,
                                     "bytes": gadget_bytes,
                                     "type": "ret",
-                                    "length": len(gadget_bytes)
+                                    "length": len(gadget_bytes),
                                 })
 
                 elif gadget_type == "jop":
@@ -812,7 +810,7 @@ except ImportError as e:
                                     "address": i,
                                     "bytes": pattern,
                                     "type": "jmp",
-                                    "length": len(pattern)
+                                    "length": len(pattern),
                                 })
 
                 return gadgets
@@ -883,7 +881,7 @@ except ImportError as e:
                     "data": [],
                     "title": "",
                     "xlabel": "",
-                    "ylabel": ""
+                    "ylabel": "",
                 }
                 self.subplots.append(subplot)
                 return subplot
@@ -895,7 +893,7 @@ except ImportError as e:
                     "y": y,
                     "label": label,
                     "style": style,
-                    "color": color
+                    "color": color,
                 })
 
             def scatter(self, x, y, label="", color="red", size=20):
@@ -906,7 +904,7 @@ except ImportError as e:
                     "label": label,
                     "type": "scatter",
                     "color": color,
-                    "size": size
+                    "size": size,
                 })
 
             def heatmap(self, data, title="Memory Heatmap"):
@@ -914,7 +912,7 @@ except ImportError as e:
                 self.data_series.append({
                     "data": data,
                     "type": "heatmap",
-                    "title": title
+                    "title": title,
                 })
 
             def hexdump_visual(self, data, offset=0):
@@ -928,7 +926,7 @@ except ImportError as e:
 
                 self.data_series.append({
                     "type": "hexdump",
-                    "lines": hex_lines
+                    "lines": hex_lines,
                 })
 
             def save(self, path):
@@ -1032,7 +1030,7 @@ except ImportError as e:
                     "max": max(self.y_data),
                     "mean": sum(self.y_data) / len(self.y_data),
                     "peaks": [],
-                    "anomalies": []
+                    "anomalies": [],
                 }
 
                 # Find peaks (potential vulnerabilities)
@@ -1194,39 +1192,28 @@ except ImportError:
     class _DummyWidget:
         def __init__(self, *args, **kwargs):
             """Initialize dummy widget placeholder with no operation."""
-            pass
         def __call__(self, *args, **kwargs):
             return self
         def addWidget(self, *args, **kwargs):
             """Stub method for adding widgets."""
-            pass
         def addLayout(self, *args, **kwargs):
             """Stub method for adding layouts."""
-            pass
         def addItems(self, *args, **kwargs):
             """Stub method for adding items."""
-            pass
         def addStretch(self, *args, **kwargs):
             """Stub method for adding stretch."""
-            pass
         def setObjectName(self, *args, **kwargs):
             """Stub method for setting object name."""
-            pass
         def setMinimum(self, *args, **kwargs):
             """Stub method for setting minimum value."""
-            pass
         def setMaximum(self, *args, **kwargs):
             """Stub method for setting maximum value."""
-            pass
         def setValue(self, *args, **kwargs):
             """Stub method for setting value."""
-            pass
         def setText(self, *args, **kwargs):
             """Stub method for setting text."""
-            pass
         def addTab(self, *args, **kwargs):
             """Stub method for adding tabs."""
-            pass
         def timeout(self):
             """Stub timeout method."""
             return self
@@ -1234,7 +1221,6 @@ except ImportError:
             pass
         def start(self, *args, **kwargs):
             """Stub method for starting operations."""
-            pass
         def __getattr__(self, name):
             logger.debug(f"Dummy widget fallback for attribute: {name}")
             return _DummyWidget()
@@ -1287,5 +1273,5 @@ __all__ = [
     "QListWidgetItem", "QPlainTextEdit", "QProgressBar", "QPushButton", "QSlider",
     "QSpinBox", "QSplitter", "QTableWidget", "QTableWidgetItem", "QTabWidget",
     "QTextEdit", "QTreeWidget", "QTreeWidgetItem", "QVBoxLayout",
-    "create_dial", "create_slider"
+    "create_dial", "create_slider",
 ]

@@ -1,5 +1,4 @@
-"""
-Unified Protection Analysis Widget
+"""Unified Protection Analysis Widget
 
 Provides a seamless, integrated protection analysis experience that combines
 DIE, ML models, and heuristics without exposing the underlying tools.
@@ -9,7 +8,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 # Import for QDateTime
 from PyQt6.QtCore import QDateTime, Qt, QThread, pyqtSignal, pyqtSlot
@@ -47,6 +46,7 @@ logger = get_logger(__name__)
 
 class UnifiedAnalysisThread(QThread):
     """Thread for running unified protection analysis"""
+
     analysis_complete = pyqtSignal(object)  # UnifiedProtectionResult
     analysis_error = pyqtSignal(str)
     analysis_progress = pyqtSignal(str, int)  # message, percentage
@@ -57,6 +57,7 @@ class UnifiedAnalysisThread(QThread):
         Args:
             file_path: Path to file for analysis
             deep_scan: Whether to perform deep scanning analysis
+
         """
         super().__init__()
         self.file_path = file_path
@@ -75,7 +76,7 @@ class UnifiedAnalysisThread(QThread):
             if quick_summary["protected"]:
                 self.analysis_progress.emit(
                     f"Detected {quick_summary['protection_count']} protection(s), analyzing...",
-                    40
+                    40,
                 )
 
             # Full analysis
@@ -97,7 +98,7 @@ class ProtectionCard(QFrame):
 
     clicked = pyqtSignal(dict)  # Emit protection data when clicked
 
-    def __init__(self, protection_data: Dict[str, Any], parent=None):
+    def __init__(self, protection_data: dict[str, Any], parent=None):
         """Initialize protection card widget with analysis data and UI setup."""
         super().__init__(parent)
         self.protection_data = protection_data
@@ -161,14 +162,13 @@ class ProtectionCard(QFrame):
         """Get user-friendly source text"""
         if source == AnalysisSource.PROTECTION_ENGINE:
             return "Pattern Analysis"
-        elif source == AnalysisSource.ML_MODEL:
+        if source == AnalysisSource.ML_MODEL:
             return "AI Detection"
-        elif source == AnalysisSource.HEURISTIC:
+        if source == AnalysisSource.HEURISTIC:
             return "Behavioral Analysis"
-        elif source == AnalysisSource.HYBRID:
+        if source == AnalysisSource.HYBRID:
             return "Multi-Engine Verification"
-        else:
-            return "Signature Match"
+        return "Signature Match"
 
     def mousePressEvent(self, event):
         """Handle mouse click"""
@@ -178,8 +178,7 @@ class ProtectionCard(QFrame):
 
 
 class UnifiedProtectionWidget(QWidget):
-    """
-    Main widget for unified protection analysis
+    """Main widget for unified protection analysis
     """
 
     # Signals
@@ -191,10 +190,11 @@ class UnifiedProtectionWidget(QWidget):
 
         Args:
             parent: Parent widget or None for top-level widget
+
         """
         super().__init__(parent)
-        self.current_result: Optional[UnifiedProtectionResult] = None
-        self.analysis_thread: Optional[UnifiedAnalysisThread] = None
+        self.current_result: UnifiedProtectionResult | None = None
+        self.analysis_thread: UnifiedAnalysisThread | None = None
         self.init_ui()
 
     def init_ui(self):
@@ -403,14 +403,14 @@ class UnifiedProtectionWidget(QWidget):
         status_widget.setLayout(status_layout)
         parent_layout.addWidget(status_widget)
 
-    def analyze_file(self, file_path: Optional[str] = None, deep_scan: bool = True):
+    def analyze_file(self, file_path: str | None = None, deep_scan: bool = True):
         """Analyze a file for protections"""
         if not file_path:
             file_path, _ = QFileDialog.getOpenFileName(
                 self,
                 "Select Binary to Analyze",
                 "",
-                "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*.*)"
+                "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*.*)",
             )
 
         if not file_path or not os.path.exists(file_path):
@@ -478,7 +478,7 @@ class UnifiedProtectionWidget(QWidget):
                         self.hex_viewer.add_protection_highlight(
                             entropy.offset,
                             entropy.size,
-                            f"{entropy.section_name} ({'Packed' if entropy.packed else 'Encrypted'})"
+                            f"{entropy.section_name} ({'Packed' if entropy.packed else 'Encrypted'})",
                         )
 
         # Re-enable buttons
@@ -491,7 +491,7 @@ class UnifiedProtectionWidget(QWidget):
         protection_count = len(result.protections)
         if protection_count > 0:
             self.status_label.setText(
-                f"Analysis complete: {protection_count} protection(s) detected"
+                f"Analysis complete: {protection_count} protection(s) detected",
             )
         else:
             self.status_label.setText("Analysis complete: No protections detected")
@@ -585,7 +585,7 @@ Overall Confidence: {result.confidence_score:.0f}%</p>
         # Add stretch at end
         self.cards_layout.addStretch()
 
-    def on_protection_clicked(self, protection_data: Dict[str, Any]):
+    def on_protection_clicked(self, protection_data: dict[str, Any]):
         """Handle protection card click"""
         # Show details for this protection
         self.show_protection_details(protection_data)
@@ -593,7 +593,7 @@ Overall Confidence: {result.confidence_score:.0f}%</p>
         # Switch to details tab
         self.details_tabs.setCurrentIndex(0)
 
-    def show_protection_details(self, protection: Dict[str, Any]):
+    def show_protection_details(self, protection: dict[str, Any]):
         """Show detailed information for a protection"""
         details = f"""
 === {protection['name']} ===
@@ -604,7 +604,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
 
 """
 
-        if "version" in protection and protection["version"]:
+        if protection.get("version"):
             details += f"Version: {protection['version']}\n"
 
         if "details" in protection:
@@ -623,14 +623,13 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
         """Format analysis source for display"""
         if source == AnalysisSource.PROTECTION_ENGINE:
             return "Pattern-based detection"
-        elif source == AnalysisSource.ML_MODEL:
+        if source == AnalysisSource.ML_MODEL:
             return "AI/ML analysis"
-        elif source == AnalysisSource.HEURISTIC:
+        if source == AnalysisSource.HEURISTIC:
             return "Heuristic analysis"
-        elif source == AnalysisSource.HYBRID:
+        if source == AnalysisSource.HYBRID:
             return "Multiple detection methods"
-        else:
-            return str(source)
+        return str(source)
 
     def display_bypass_strategies(self, result: UnifiedProtectionResult):
         """Display bypass strategies"""
@@ -653,7 +652,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
 
         self.strategies_layout.addStretch()
 
-    def _create_strategy_card(self, strategy: Dict[str, Any]):
+    def _create_strategy_card(self, strategy: dict[str, Any]):
         """Create a bypass strategy card"""
         card = QGroupBox(strategy["name"])
         layout = QVBoxLayout()
@@ -817,7 +816,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
             self,
             "Export Bypass Guide",
             "bypass_guide.md",
-            "Markdown Files (*.md);;Text Files (*.txt);;All Files (*.*)"
+            "Markdown Files (*.md);;Text Files (*.txt);;All Files (*.*)",
         )
 
         if not file_path:
@@ -831,14 +830,14 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
             QMessageBox.information(
                 self,
                 "Export Complete",
-                f"Bypass guide exported to:\n{file_path}"
+                f"Bypass guide exported to:\n{file_path}",
             )
         except Exception as e:
             logger.error("Exception in unified_protection_widget: %s", e)
             QMessageBox.critical(
                 self,
                 "Export Error",
-                f"Error exporting bypass guide:\n{str(e)}"
+                f"Error exporting bypass guide:\n{e!s}",
             )
 
     def _generate_bypass_guide(self) -> str:
@@ -853,7 +852,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
         for protection in result.protections:
             guide += f"- **{protection['name']}** ({protection['type']})\n"
             guide += f"  - Confidence: {protection.get('confidence', 0):.0f}%\n"
-            if "version" in protection and protection["version"]:
+            if protection.get("version"):
                 guide += f"  - Version: {protection['version']}\n"
 
         guide += "\n## Bypass Strategies\n\n"
@@ -902,7 +901,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
             QMessageBox.information(
                 self,
                 "No File Loaded",
-                "Please analyze a file first to access ICP features."
+                "Please analyze a file first to access ICP features.",
             )
             return
 
@@ -918,7 +917,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
             QMessageBox.critical(
                 self,
                 "ICP Features Error",
-                f"Failed to open ICP features:\n{str(e)}"
+                f"Failed to open ICP features:\n{e!s}",
             )
 
     def _show_inline_icp_features(self):
@@ -1070,7 +1069,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
                     offset = string_info.get("offset", 0)
                     string_val = string_info.get("string", "")
                     string_type = string_info.get("type", "ASCII")
-                    string_content += f"0x{offset:08X}: [{string_type}] {repr(string_val)}\n"
+                    string_content += f"0x{offset:08X}: [{string_type}] {string_val!r}\n"
 
                 if len(strings) > 50:
                     string_content += f"\n... and {len(strings) - 50} more strings\n"
@@ -1098,7 +1097,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
             QMessageBox.information(
                 self,
                 "No Protections",
-                "No protections detected to generate bypass script."
+                "No protections detected to generate bypass script.",
             )
             return
 
@@ -1110,7 +1109,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
             "Choose the type of bypass script to generate:",
             ["Frida", "Ghidra"],
             0,
-            False
+            False,
         )
 
         if ok:
@@ -1148,7 +1147,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
         # Highlight the string in hex viewer
         self.hex_viewer.highlighted_regions.clear()  # Clear previous highlights
         self.hex_viewer.highlighted_regions.append(
-            (offset, offset + len(string), QColor(255, 255, 0, 150))  # Yellow highlight
+            (offset, offset + len(string), QColor(255, 255, 0, 150)),  # Yellow highlight
         )
         self.hex_viewer.update_display()
 
@@ -1157,6 +1156,6 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
 
         # Update technical info
         info = f"\nString at offset 0x{offset:X}:\n"
-        info += f"Content: {repr(string)}\n"
+        info += f"Content: {string!r}\n"
         info += f"Length: {len(string)} bytes\n"
         self.tech_text.append(info)

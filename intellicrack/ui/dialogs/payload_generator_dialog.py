@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -25,7 +24,7 @@ obfuscation, and evasion techniques.
 
 import asyncio
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtGui import QFont
@@ -82,7 +81,7 @@ class PayloadGenerationThread(QThread):
             asyncio.set_event_loop(loop)
 
             result = loop.run_until_complete(
-                self.engine.generate_payload(**self.config)
+                self.engine.generate_payload(**self.config),
             )
 
             self.finished.emit(result)
@@ -93,8 +92,7 @@ class PayloadGenerationThread(QThread):
 
 
 class PayloadGeneratorDialog(BaseTemplateDialog):
-    """
-    Advanced payload generator dialog with comprehensive options
+    """Advanced payload generator dialog with comprehensive options
     for creating custom exploitation payloads.
     """
 
@@ -122,7 +120,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
 
         # Create main tabbed dialog layout
         layout, self.tab_widget = UILayoutHelpers.create_tabbed_dialog_layout(
-            self, "Advanced Payload Generator", (1000, 700), is_modal=False
+            self, "Advanced Payload Generator", (1000, 700), is_modal=False,
         )
 
         # Create and add tabs
@@ -131,7 +129,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
             ("Custom Payload", self.create_custom_tab()),
             ("Encoding & Obfuscation", self.create_encoding_tab()),
             ("Evasion Techniques", self.create_evasion_tab()),
-            ("Generated Payload", self.create_output_tab())
+            ("Generated Payload", self.create_output_tab()),
         ]
         UILayoutHelpers.create_tabs_from_specs(self.tab_widget, tab_specs)
 
@@ -140,7 +138,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
             ("Generate Payload", self.generate_payload, False),
             ("Save Payload", self.save_payload, False),
             ("Test Payload", self.test_payload, False),
-            ("Close", self.close, True)
+            ("Close", self.close, True),
         ]
         buttons = UILayoutHelpers.create_dialog_buttons(button_specs, layout)
 
@@ -156,7 +154,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
         # Use base class method to create template widget
         template_categories = [
             "Shell", "Persistence", "Privilege Escalation",
-            "Lateral Movement", "Steganography", "Anti-Analysis"
+            "Lateral Movement", "Steganography", "Anti-Analysis",
         ]
 
         # Get initial templates for first category
@@ -166,7 +164,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
             title="Payload Templates",
             templates=initial_templates,
             use_combo=False,
-            category_names=template_categories
+            category_names=template_categories,
         )
 
         # The base class already provides the template details widget
@@ -185,7 +183,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
         self.payload_type_combo = QComboBox()
         self.payload_type_combo.addItems([
             "Reverse Shell", "Bind Shell", "Meterpreter",
-            "Custom Shellcode", "DLL Injection", "Process Hollowing"
+            "Custom Shellcode", "DLL Injection", "Process Hollowing",
         ])
         type_layout.addWidget(self.payload_type_combo)
 
@@ -210,7 +208,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
             "  xor eax, eax\n"
             "  push eax\n"
             "  push 0x68732f2f\n"
-            "  push 0x6e69622f"
+            "  push 0x6e69622f",
         )
         shellcode_layout.addWidget(self.shellcode_editor)
 
@@ -382,7 +380,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
         self.output_format_combo = QComboBox()
         self.output_format_combo.addItems([
             "Raw Binary", "C Array", "Python String",
-            "PowerShell", "Base64", "Hex String"
+            "PowerShell", "Base64", "Hex String",
         ])
         self.output_format_combo.currentTextChanged.connect(self.update_output_display)
         format_layout.addWidget(self.output_format_combo)
@@ -519,7 +517,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
             QMessageBox.critical(self, "Error", f"Failed to generate payload: {e}")
             self.generate_btn.setEnabled(True)
 
-    def build_payload_config(self) -> Dict[str, Any]:
+    def build_payload_config(self) -> dict[str, Any]:
         """Build payload configuration from UI inputs."""
         config = {}
 
@@ -545,7 +543,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
                 "category": category,
                 "template_name": template_name,
                 "architecture": Architecture[self.arch_combo.currentText().upper()],
-                "parameters": params
+                "parameters": params,
             }
 
         elif current_tab == 1:  # Custom tab
@@ -560,7 +558,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
                 "shellcode": shellcode,
                 "is_assembly": self.asm_radio.isChecked(),
                 "null_free": self.null_free_check.isChecked(),
-                "position_independent": self.position_independent_check.isChecked()
+                "position_independent": self.position_independent_check.isChecked(),
             }
 
         # Add encoding options
@@ -615,7 +613,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
         """Handle generation progress updates."""
         self.output_display.append(message)
 
-    def on_generation_finished(self, result: Dict[str, Any]):
+    def on_generation_finished(self, result: dict[str, Any]):
         """Handle successful payload generation."""
         try:
             self.current_payload = result
@@ -767,7 +765,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
         try:
             filename, _ = QFileDialog.getSaveFileName(
                 self, "Save Payload", "",
-                "Binary Files (*.bin);;Executable Files (*.exe);;DLL Files (*.dll);;All Files (*.*)"
+                "Binary Files (*.bin);;Executable Files (*.exe);;DLL Files (*.dll);;All Files (*.*)",
             )
 
             if filename:
@@ -793,5 +791,5 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
             "Consider using:\n"
             "- Virtual machine\n"
             "- Sandbox environment\n"
-            "- Dedicated testing system"
+            "- Dedicated testing system",
         )

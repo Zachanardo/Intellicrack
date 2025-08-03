@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -43,7 +42,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext, ttk
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
@@ -51,6 +50,7 @@ from matplotlib.figure import Figure
 
 class UITheme(Enum):
     """UI themes available"""
+
     DARK = "dark"
     LIGHT = "light"
     HIGH_CONTRAST = "high_contrast"
@@ -59,6 +59,7 @@ class UITheme(Enum):
 
 class PanelType(Enum):
     """Three-panel interface types"""
+
     FILE_EXPLORER = "file_explorer"
     ANALYSIS_VIEWER = "analysis_viewer"
     SCRIPT_GENERATOR = "script_generator"
@@ -66,6 +67,7 @@ class PanelType(Enum):
 
 class AnalysisState(Enum):
     """Analysis state tracking"""
+
     IDLE = "idle"
     SCANNING = "scanning"
     ANALYZING = "analyzing"
@@ -77,6 +79,7 @@ class AnalysisState(Enum):
 @dataclass
 class UIConfig:
     """UI configuration settings"""
+
     theme: UITheme = UITheme.DARK
     font_family: str = "Consolas"
     font_size: int = 10
@@ -85,9 +88,9 @@ class UIConfig:
     max_log_entries: int = 10000
     enable_animations: bool = True
     show_tooltips: bool = True
-    panel_weights: Tuple[int, int, int] = (1, 2, 1)
+    panel_weights: tuple[int, int, int] = (1, 2, 1)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize UI configuration to a dictionary.
 
         Converts all configuration settings into a dictionary format
@@ -97,6 +100,7 @@ class UIConfig:
         Returns:
             Dict containing all UI configuration parameters with
             string keys and JSON-serializable values
+
         """
         return {
             "theme": self.theme.value,
@@ -107,11 +111,11 @@ class UIConfig:
             "max_log_entries": self.max_log_entries,
             "enable_animations": self.enable_animations,
             "show_tooltips": self.show_tooltips,
-            "panel_weights": self.panel_weights
+            "panel_weights": self.panel_weights,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "UIConfig":
+    def from_dict(cls, data: dict[str, Any]) -> "UIConfig":
         """Create UIConfig instance from dictionary data.
 
         Deserializes configuration data from a dictionary, typically
@@ -123,6 +127,7 @@ class UIConfig:
 
         Returns:
             UIConfig instance with settings from the dictionary
+
         """
         config = cls()
         config.theme = UITheme(data.get("theme", "dark"))
@@ -140,15 +145,16 @@ class UIConfig:
 @dataclass
 class AnalysisResult:
     """Analysis result container"""
+
     target_file: str
     protection_type: str
     confidence: float
-    bypass_methods: List[str]
+    bypass_methods: list[str]
     timestamp: datetime
-    details: Dict[str, Any] = field(default_factory=dict)
-    generated_scripts: List[str] = field(default_factory=list)
+    details: dict[str, Any] = field(default_factory=dict)
+    generated_scripts: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert enhancement result to dictionary representation"""
         return {
             "target_file": self.target_file,
@@ -157,7 +163,7 @@ class AnalysisResult:
             "bypass_methods": self.bypass_methods,
             "timestamp": self.timestamp.isoformat(),
             "details": self.details,
-            "generated_scripts": self.generated_scripts
+            "generated_scripts": self.generated_scripts,
         }
 
 
@@ -285,7 +291,7 @@ class LogViewer:
             bg="#1e1e1e",
             fg="#ffffff",
             insertbackground="#ffffff",
-            selectbackground="#264f78"
+            selectbackground="#264f78",
         )
         self.text_widget.pack(fill=tk.BOTH, expand=True)
 
@@ -305,7 +311,7 @@ class LogViewer:
             "timestamp": timestamp,
             "level": level,
             "source": source,
-            "message": message
+            "message": message,
         }
 
         self.log_entries.append(entry)
@@ -389,7 +395,7 @@ class LogViewer:
         """Export logs to file"""
         filename = filedialog.asksaveasfilename(
             defaultextension=".log",
-            filetypes=[("Log files", "*.log"), ("Text files", "*.txt"), ("All files", "*.*")]
+            filetypes=[("Log files", "*.log"), ("Text files", "*.txt"), ("All files", "*.*")],
         )
 
         if filename:
@@ -427,7 +433,7 @@ class ProgressTracker:
             self.frame,
             variable=self.progress_var,
             mode="determinate",
-            length=300
+            length=300,
         )
         self.progress_bar.pack(padx=10, pady=5)
 
@@ -506,14 +512,13 @@ class ProgressTracker:
         """Format time duration"""
         if seconds < 60:
             return f"{int(seconds)}s"
-        elif seconds < 3600:
+        if seconds < 3600:
             minutes = int(seconds / 60)
             secs = int(seconds % 60)
             return f"{minutes}m {secs}s"
-        else:
-            hours = int(seconds / 3600)
-            minutes = int((seconds % 3600) / 60)
-            return f"{hours}h {minutes}m"
+        hours = int(seconds / 3600)
+        minutes = int((seconds % 3600) / 60)
+        return f"{hours}h {minutes}m"
 
     def finish(self, status: str = "Complete"):
         """Finish progress tracking"""
@@ -672,7 +677,7 @@ class FileExplorerPanel:
                         "", "end",
                         text=f"{icon} {item.name}",
                         values=(size, modified, item_type),
-                        tags=("directory" if item.is_dir() else "file",)
+                        tags=("directory" if item.is_dir() else "file",),
                     )
 
                     # Store path in item
@@ -684,7 +689,7 @@ class FileExplorerPanel:
                         "path": item,
                         "is_dir": item.is_dir(),
                         "name": item.name,
-                        "size": size
+                        "size": size,
                     })
 
                 except (PermissionError, OSError):
@@ -730,7 +735,7 @@ class FileExplorerPanel:
             self._directory_analysis = {
                 "file_types": file_types,
                 "total_size": total_size,
-                "item_count": len(items)
+                "item_count": len(items),
             }
 
     def get_file_icon(self, file_path: Path) -> str:
@@ -757,7 +762,7 @@ class FileExplorerPanel:
             ".json": "⚙️",
             ".xml": "⚙️",
             ".cfg": "⚙️",
-            ".ini": "⚙️"
+            ".ini": "⚙️",
         }
 
         return icons.get(suffix, "📄")
@@ -854,9 +859,9 @@ class FileExplorerPanel:
             if sys.platform == "win32":
                 os.startfile(str(item_path.parent))
             elif sys.platform == "darwin":
-                subprocess.run(["open", str(item_path.parent)])
+                subprocess.run(["open", str(item_path.parent)], check=False)
             else:
-                subprocess.run(["xdg-open", str(item_path.parent)])
+                subprocess.run(["xdg-open", str(item_path.parent)], check=False)
 
     def copy_path(self):
         """Copy file path to clipboard"""
@@ -912,7 +917,7 @@ class AnalysisViewerPanel:
         self.file_info_text = scrolledtext.ScrolledText(
             info_frame, height=4, wrap=tk.WORD,
             font=(self.config.font_family, self.config.font_size),
-            bg="#1e1e1e", fg="#ffffff"
+            bg="#1e1e1e", fg="#ffffff",
         )
         self.file_info_text.pack(fill=tk.X, padx=5, pady=5)
 
@@ -944,7 +949,7 @@ class AnalysisViewerPanel:
             bypass_frame,
             font=(self.config.font_family, self.config.font_size),
             bg="#1e1e1e", fg="#ffffff",
-            selectbackground="#264f78"
+            selectbackground="#264f78",
         )
         self.bypass_listbox.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
@@ -980,7 +985,7 @@ class AnalysisViewerPanel:
         self.details_text = scrolledtext.ScrolledText(
             right_frame, wrap=tk.WORD,
             font=(self.config.font_family, self.config.font_size),
-            bg="#1e1e1e", fg="#ffffff"
+            bg="#1e1e1e", fg="#ffffff",
         )
         self.details_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
@@ -1133,13 +1138,13 @@ class AnalysisViewerPanel:
         elif chart_type == "Protection Distribution":
             # Calculate protection distribution from current and historical data
             protection_counts = {}
-            
+
             # Add current analysis protections
             if self.current_analysis and self.current_analysis.protections:
                 for protection in self.current_analysis.protections:
                     prot_name = protection.protection_type
                     protection_counts[prot_name] = protection_counts.get(prot_name, 0) + 1
-            
+
             # Add historical protections if available
             if hasattr(self, "analysis_history"):
                 for analysis in self.analysis_history:
@@ -1147,7 +1152,7 @@ class AnalysisViewerPanel:
                         for protection in analysis.protections:
                             prot_name = protection.protection_type
                             protection_counts[prot_name] = protection_counts.get(prot_name, 0) + 1
-            
+
             # Update chart with distribution data
             if protection_counts:
                 labels = list(protection_counts.keys())
@@ -1155,11 +1160,11 @@ class AnalysisViewerPanel:
                 self.chart.update_pie_data(labels, values, "Protection Distribution")
             else:
                 self.chart.clear_data()
-                
+
         elif chart_type == "Bypass Success Rate":
             # Calculate bypass success rate from tracked data
             bypass_stats = {"Successful": 0, "Failed": 0, "Partial": 0}
-            
+
             # Check current analysis for bypass recommendations
             if self.current_analysis and self.current_analysis.bypass_recommendations:
                 for recommendation in self.current_analysis.bypass_recommendations:
@@ -1170,12 +1175,12 @@ class AnalysisViewerPanel:
                         bypass_stats["Partial"] += 1
                     else:
                         bypass_stats["Failed"] += 1
-            
+
             # Add historical bypass data if available
             if hasattr(self, "bypass_history"):
                 for result in self.bypass_history:
                     bypass_stats[result["status"]] = bypass_stats.get(result["status"], 0) + 1
-            
+
             # Update chart with success rate data
             if sum(bypass_stats.values()) > 0:
                 labels = list(bypass_stats.keys())
@@ -1194,7 +1199,7 @@ class AnalysisViewerPanel:
                                    Path(result.target_file).name,
                                    result.protection_type,
                                    f"{result.confidence:.1f}%",
-                                   result.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                                   result.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
                                ))
 
         # Auto-scroll to latest
@@ -1236,46 +1241,46 @@ class AnalysisViewerPanel:
             # Load historical analysis details
             item = self.history_tree.item(selection[0])
             values = item["values"]
-            
+
             if len(values) >= 4:
                 file_name = values[0]
                 protection_type = values[1]
                 confidence = values[2]
                 timestamp = values[3]
-                
+
                 # Create detail window
                 detail_window = tk.Toplevel(self.parent)
                 detail_window.title(f"Analysis Details - {file_name}")
                 detail_window.geometry("600x400")
-                
+
                 # Create detail frame
                 detail_frame = ttk.Frame(detail_window, padding="10")
                 detail_frame.pack(fill=tk.BOTH, expand=True)
-                
+
                 # Add details
                 ttk.Label(detail_frame, text=f"File: {file_name}", font=("TkDefaultFont", 10, "bold")).pack(anchor="w", pady=5)
                 ttk.Label(detail_frame, text=f"Protection Type: {protection_type}").pack(anchor="w", pady=2)
                 ttk.Label(detail_frame, text=f"Confidence: {confidence}%").pack(anchor="w", pady=2)
                 ttk.Label(detail_frame, text=f"Analyzed: {timestamp}").pack(anchor="w", pady=2)
-                
+
                 # Add text area for detailed info
                 ttk.Label(detail_frame, text="Analysis Details:", font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(10, 5))
-                
+
                 detail_text = tk.Text(detail_frame, height=15, width=70, wrap=tk.WORD)
                 detail_text.pack(fill=tk.BOTH, expand=True, pady=5)
-                
+
                 # Add scrollbar
                 scrollbar = ttk.Scrollbar(detail_text)
                 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
                 detail_text.config(yscrollcommand=scrollbar.set)
                 scrollbar.config(command=detail_text.yview)
-                
+
                 # Populate with historical data if available
                 detail_info = f"File: {file_name}\n"
                 detail_info += f"Protection Type: {protection_type}\n"
                 detail_info += f"Confidence Level: {confidence}%\n"
                 detail_info += f"Analysis Timestamp: {timestamp}\n\n"
-                
+
                 # Add more details if stored in history
                 if hasattr(self, "analysis_history_details"):
                     history_key = f"{file_name}_{timestamp}"
@@ -1285,10 +1290,10 @@ class AnalysisViewerPanel:
                 else:
                     detail_info += "Detailed analysis data not available for this historical entry.\n"
                     detail_info += "Future analyses will store complete details."
-                
+
                 detail_text.insert("1.0", detail_info)
                 detail_text.config(state="disabled")
-                
+
                 # Add close button
                 ttk.Button(detail_frame, text="Close", command=detail_window.destroy).pack(pady=10)
 
@@ -1302,7 +1307,7 @@ class AnalysisViewerPanel:
         """Export analysis history"""
         filename = filedialog.asksaveasfilename(
             defaultextension=".csv",
-            filetypes=[("CSV files", "*.csv"), ("JSON files", "*.json"), ("All files", "*.*")]
+            filetypes=[("CSV files", "*.csv"), ("JSON files", "*.json"), ("All files", "*.*")],
         )
 
         if filename:
@@ -1314,7 +1319,7 @@ class AnalysisViewerPanel:
                         "file": values[0],
                         "protection": values[1],
                         "confidence": values[2],
-                        "timestamp": values[3]
+                        "timestamp": values[3],
                     })
 
                 if filename.endswith(".json"):
@@ -1395,7 +1400,7 @@ class ScriptGeneratorPanel:
             editor_frame, wrap=tk.NONE,
             font=(self.config.font_family, self.config.font_size),
             bg="#1e1e1e", fg="#ffffff",
-            insertbackground="#ffffff"
+            insertbackground="#ffffff",
         )
         self.frida_editor.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
@@ -1447,7 +1452,7 @@ class ScriptGeneratorPanel:
             editor_frame, wrap=tk.NONE,
             font=(self.config.font_family, self.config.font_size),
             bg="#1e1e1e", fg="#ffffff",
-            insertbackground="#ffffff"
+            insertbackground="#ffffff",
         )
         self.ghidra_editor.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
@@ -1498,7 +1503,7 @@ class ScriptGeneratorPanel:
             editor_frame, wrap=tk.NONE,
             font=(self.config.font_family, self.config.font_size),
             bg="#1e1e1e", fg="#ffffff",
-            insertbackground="#ffffff"
+            insertbackground="#ffffff",
         )
         self.r2_editor.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
@@ -1537,7 +1542,7 @@ class ScriptGeneratorPanel:
             editor_frame, wrap=tk.NONE,
             font=(self.config.font_family, self.config.font_size),
             bg="#1e1e1e", fg="#ffffff",
-            insertbackground="#ffffff"
+            insertbackground="#ffffff",
         )
         self.custom_editor.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
@@ -1562,7 +1567,7 @@ class ScriptGeneratorPanel:
         js_keywords = [
             "var", "let", "const", "function", "if", "else", "for", "while", "do",
             "break", "continue", "return", "try", "catch", "finally", "throw",
-            "new", "this", "typeof", "instanceof", "true", "false", "null", "undefined"
+            "new", "this", "typeof", "instanceof", "true", "false", "null", "undefined",
         ]
 
         # Bind highlighting
@@ -1580,7 +1585,7 @@ class ScriptGeneratorPanel:
             "public", "private", "protected", "class", "interface", "extends", "implements",
             "static", "final", "abstract", "void", "int", "String", "boolean", "if", "else",
             "for", "while", "do", "break", "continue", "return", "try", "catch", "finally",
-            "throw", "throws", "new", "this", "super", "true", "false", "null"
+            "throw", "throws", "new", "this", "super", "true", "false", "null",
         ]
 
         text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, java_keywords))
@@ -1596,7 +1601,7 @@ class ScriptGeneratorPanel:
         python_keywords = [
             "def", "class", "if", "elif", "else", "for", "while", "break", "continue",
             "return", "try", "except", "finally", "raise", "import", "from", "as",
-            "with", "lambda", "yield", "global", "nonlocal", "True", "False", "None"
+            "with", "lambda", "yield", "global", "nonlocal", "True", "False", "None",
         ]
 
         text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, python_keywords))
@@ -1649,7 +1654,7 @@ class ScriptGeneratorPanel:
         """Browse for target process"""
         filename = filedialog.askopenfilename(
             title="Select Target Process",
-            filetypes=[("Executable files", "*.exe"), ("All files", "*.*")]
+            filetypes=[("Executable files", "*.exe"), ("All files", "*.*")],
         )
         if filename:
             self.frida_process_var.set(filename)
@@ -1658,7 +1663,7 @@ class ScriptGeneratorPanel:
         """Browse for target binary"""
         filename = filedialog.askopenfilename(
             title="Select Target Binary",
-            filetypes=[("Executable files", "*.exe"), ("Library files", "*.dll"), ("All files", "*.*")]
+            filetypes=[("Executable files", "*.exe"), ("Library files", "*.dll"), ("All files", "*.*")],
         )
         if filename:
             self.ghidra_binary_var.set(filename)
@@ -1667,7 +1672,7 @@ class ScriptGeneratorPanel:
         """Browse for Radare2 target binary"""
         filename = filedialog.askopenfilename(
             title="Select Target Binary",
-            filetypes=[("Executable files", "*.exe"), ("Library files", "*.dll"), ("All files", "*.*")]
+            filetypes=[("Executable files", "*.exe"), ("Library files", "*.dll"), ("All files", "*.*")],
         )
         if filename:
             self.r2_binary_var.set(filename)
@@ -1733,7 +1738,7 @@ class ScriptGeneratorPanel:
             "platform": platform,
             "type": script_type,
             "content": content,
-            "timestamp": timestamp
+            "timestamp": timestamp,
         })
 
     def on_language_change(self, event=None):
@@ -1822,12 +1827,12 @@ class ScriptGeneratorPanel:
             "Batch": [("Batch files", "*.bat"), ("All files", "*.*")],
             "Bash": [("Shell files", "*.sh"), ("All files", "*.*")],
             "JavaScript": [("JavaScript files", "*.js"), ("All files", "*.*")],
-            "C++": [("C++ files", "*.cpp"), ("Header files", "*.h"), ("All files", "*.*")]
+            "C++": [("C++ files", "*.cpp"), ("Header files", "*.h"), ("All files", "*.*")],
         }
 
         self.save_script_to_file(script, f"{language} Script", filetypes.get(language, [("All files", "*.*")]))
 
-    def save_script_to_file(self, script: str, title: str, filetypes: List[Tuple[str, str]]):
+    def save_script_to_file(self, script: str, title: str, filetypes: list[tuple[str, str]]):
         """Save script content to file"""
         filename = filedialog.asksaveasfilename(title=f"Save {title}", filetypes=filetypes)
 
@@ -1855,13 +1860,13 @@ class ScriptGeneratorPanel:
         """Load custom script from file"""
         self.load_script_to_editor(self.custom_editor, "Custom Script", [("All files", "*.*")])
 
-    def load_script_to_editor(self, editor: scrolledtext.ScrolledText, title: str, filetypes: List[Tuple[str, str]]):
+    def load_script_to_editor(self, editor: scrolledtext.ScrolledText, title: str, filetypes: list[tuple[str, str]]):
         """Load script from file into editor"""
         filename = filedialog.askopenfilename(title=f"Load {title}", filetypes=filetypes)
 
         if filename:
             try:
-                with open(filename, "r", encoding="utf-8") as f:
+                with open(filename, encoding="utf-8") as f:
                     content = f.read()
 
                 editor.delete(1.0, tk.END)
@@ -1914,8 +1919,8 @@ class UIEnhancementModule:
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             handlers=[
                 logging.FileHandler("intellicrack_ui.log"),
-                logging.StreamHandler()
-            ]
+                logging.StreamHandler(),
+            ],
         )
         self.logger = logging.getLogger(__name__)
 
@@ -1925,7 +1930,7 @@ class UIEnhancementModule:
 
         if config_file.exists():
             try:
-                with open(config_file, "r", encoding="utf-8") as f:
+                with open(config_file, encoding="utf-8") as f:
                     data = json.load(f)
                 return UIConfig.from_dict(data)
             except Exception as e:
@@ -2172,7 +2177,7 @@ class UIEnhancementModule:
             AnalysisState.ANALYZING: "#00aaff",
             AnalysisState.GENERATING: "#aa00ff",
             AnalysisState.COMPLETE: "#00ff00",
-            AnalysisState.ERROR: "#ff0000"
+            AnalysisState.ERROR: "#ff0000",
         }
 
         self.state_label.config(text=self.analysis_state.value.title())
@@ -2244,7 +2249,7 @@ class UIEnhancementModule:
                 confidence=getattr(classification_result, "confidence", 0.0) * 100,
                 bypass_methods=bypass_methods,
                 timestamp=datetime.now(),
-                details=getattr(classification_result, "details", {})
+                details=getattr(classification_result, "details", {}),
             )
 
             # Update UI in main thread
@@ -2294,9 +2299,8 @@ class UIEnhancementModule:
             # Use core engine to generate script
             if hasattr(self, "core_engine"):
                 return self.core_engine.generate_frida_script(target, script_type)
-            else:
-                # Fallback template
-                return self._get_frida_template(target, script_type)
+            # Fallback template
+            return self._get_frida_template(target, script_type)
         except Exception as e:
             self.log_viewer.add_log("ERROR", f"Frida script generation failed: {e}", "ScriptGen")
             return f"// Error generating script: {e}"
@@ -2306,8 +2310,7 @@ class UIEnhancementModule:
         try:
             if hasattr(self, "core_engine"):
                 return self.core_engine.generate_ghidra_script(target, script_type)
-            else:
-                return self._get_ghidra_template(target, script_type)
+            return self._get_ghidra_template(target, script_type)
         except Exception as e:
             self.log_viewer.add_log("ERROR", f"Ghidra script generation failed: {e}", "ScriptGen")
             return f"// Error generating script: {e}"
@@ -2317,8 +2320,7 @@ class UIEnhancementModule:
         try:
             if hasattr(self, "core_engine"):
                 return self.core_engine.generate_r2_script(target, script_type)
-            else:
-                return self._get_r2_template(target, script_type)
+            return self._get_r2_template(target, script_type)
         except Exception as e:
             self.log_viewer.add_log("ERROR", f"Radare2 script generation failed: {e}", "ScriptGen")
             return f"# Error generating script: {e}"
@@ -2326,7 +2328,7 @@ class UIEnhancementModule:
     def _get_frida_template(self, target: str, script_type: str) -> str:
         """Get Frida script template"""
         templates = {
-            "License Bypass": f'''// Frida License Bypass Script for {Path(target).name}
+            "License Bypass": f"""// Frida License Bypass Script for {Path(target).name}
 // Generated by Intellicrack UI Enhancement Module
 
 Java.perform(function() {{
@@ -2346,9 +2348,9 @@ Java.perform(function() {{
     }};
 
     console.log("[+] License bypass hooks installed");
-}});''',
+}});""",
 
-            "API Hook": f'''// Frida API Hook Script for {Path(target).name}
+            "API Hook": f"""// Frida API Hook Script for {Path(target).name}
 // Generated by Intellicrack UI Enhancement Module
 
 Java.perform(function() {{
@@ -2370,7 +2372,7 @@ Java.perform(function() {{
             }}
         }});
     }}
-}});'''
+}});""",
         }
 
         return templates.get(script_type, f"// Template for {script_type} not implemented")
@@ -2378,7 +2380,7 @@ Java.perform(function() {{
     def _get_ghidra_template(self, target: str, script_type: str) -> str:
         """Get Ghidra script template"""
         templates = {
-            "License Analysis": f'''// Ghidra License Analysis Script for {Path(target).name}
+            "License Analysis": f"""// Ghidra License Analysis Script for {Path(target).name}
 // Generated by Intellicrack UI Enhancement Module
 
 import ghidra.app.script.GhidraScript;
@@ -2413,7 +2415,7 @@ public class LicenseAnalysis extends GhidraScript {{
         // Implementation would identify potential license validation functions
         println("Analyzing license validation functions");
     }}
-}}'''
+}}""",
         }
 
         return templates.get(script_type, f"// Template for {script_type} not implemented")
@@ -2461,7 +2463,7 @@ if __name__ == "__main__":
 '''
 
         templates = {
-            "License Analysis": license_template.replace("TARGET_NAME", Path(target).name).replace("TARGET_PATH", target)
+            "License Analysis": license_template.replace("TARGET_NAME", Path(target).name).replace("TARGET_PATH", target),
         }
 
         return templates.get(script_type, f"# Template for {script_type} not implemented")
@@ -2505,8 +2507,8 @@ if __name__ == "__main__":
                 ("Executable files", "*.exe"),
                 ("Library files", "*.dll"),
                 ("Binary files", "*.bin"),
-                ("All files", "*.*")
-            ]
+                ("All files", "*.*"),
+            ],
         )
 
         if filename:
@@ -2567,7 +2569,7 @@ if __name__ == "__main__":
         filename = filedialog.asksaveasfilename(
             title="Export Results",
             defaultextension=".json",
-            filetypes=[("JSON files", "*.json"), ("PDF files", "*.pdf"), ("All files", "*.*")]
+            filetypes=[("JSON files", "*.json"), ("PDF files", "*.pdf"), ("All files", "*.*")],
         )
 
         if filename:

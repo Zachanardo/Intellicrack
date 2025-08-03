@@ -1,5 +1,4 @@
-"""
-Configuration Management - Modern Dynamic Configuration System
+"""Configuration Management - Modern Dynamic Configuration System
 
 Uses the new IntellicrackConfig class with auto-discovery and platform-aware directories.
 Provides backward compatibility with legacy configuration access patterns.
@@ -24,7 +23,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 # Import the new configuration system
 from .core.config_manager import get_config as get_new_config
@@ -37,7 +36,6 @@ try:
     load_dotenv()
 except ImportError as e:
     logger.error("Import error in config: %s", e)
-    pass
 
 # Global configuration instance
 _modern_config = None
@@ -45,8 +43,7 @@ _legacy_mode = False
 
 
 def _get_modern_config():
-    """
-    Get the modern configuration instance.
+    """Get the modern configuration instance.
 
     This internal function implements a singleton pattern to ensure only one
     configuration instance exists throughout the application lifetime. It lazily
@@ -58,6 +55,7 @@ def _get_modern_config():
     Note:
         This is an internal function used by the legacy compatibility layer.
         External code should use get_config() instead.
+
     """
     global _modern_config  # pylint: disable=global-statement
     if _modern_config is None:
@@ -67,9 +65,8 @@ def _get_modern_config():
 # Tool discovery functions using new system
 
 
-def find_tool(tool_name: str, required_executables=None) -> Optional[str]:
-    """
-    Find tool executable path using the modern discovery system.
+def find_tool(tool_name: str, required_executables=None) -> str | None:
+    """Find tool executable path using the modern discovery system.
 
     This function attempts to locate external tools (Ghidra, Radare2, Frida, etc.)
     using the modern configuration system's tool discovery capabilities. If the
@@ -89,6 +86,7 @@ def find_tool(tool_name: str, required_executables=None) -> Optional[str]:
 
         >>> find_tool('radare2', ['r2', 'rabin2'])
         '/usr/bin/r2'
+
     """
     if required_executables:
         logger.debug("Tool search for %s with required executables: %s",
@@ -104,9 +102,8 @@ def find_tool(tool_name: str, required_executables=None) -> Optional[str]:
         return shutil.which(tool_name)
 
 
-def get_system_path(path_type: str) -> Optional[str]:
-    """
-    Get system-specific paths using modern configuration.
+def get_system_path(path_type: str) -> str | None:
+    """Get system-specific paths using modern configuration.
 
     This function provides a unified interface to retrieve various system paths
     like output directories, cache locations, and user folders. It uses the modern
@@ -131,6 +128,7 @@ def get_system_path(path_type: str) -> Optional[str]:
 
         >>> get_system_path("cache")
         '/home/user/.cache/intellicrack'
+
     """
     try:
         config = _get_modern_config()
@@ -160,8 +158,7 @@ def get_system_path(path_type: str) -> Optional[str]:
 
 
 class ConfigManager:
-    """
-    Legacy configuration manager that wraps the modern IntellicrackConfig.
+    """Legacy configuration manager that wraps the modern IntellicrackConfig.
 
     Provides backward compatibility for existing code while using the new
     dynamic configuration system under the hood. This class maintains the old
@@ -185,24 +182,24 @@ class ConfigManager:
         >>> config['log_dir'] = '/var/log/intellicrack'
         >>> config.save_config()
         True
+
     """
 
     def __init__(self, config_path: str = None):
-        """
-        Initialize legacy configuration manager wrapper.
+        """Initialize legacy configuration manager wrapper.
 
         Args:
             config_path: Optional path to configuration file. This parameter is
                         maintained for backward compatibility but is largely ignored
                         as the modern system uses platform-specific config locations.
+
         """
         self._modern_config = _get_modern_config()
         self.config_path = config_path or str(self._modern_config.config_file)
 
     @property
-    def config(self) -> Dict[str, Any]:
-        """
-        Get configuration as dictionary for legacy compatibility.
+    def config(self) -> dict[str, Any]:
+        """Get configuration as dictionary for legacy compatibility.
 
         This property dynamically builds a legacy-compatible configuration dictionary
         from the modern configuration system. The returned dictionary matches the
@@ -215,12 +212,12 @@ class ConfigManager:
         Note:
             The dictionary is rebuilt on each access to ensure it reflects
             the current state of the modern configuration.
+
         """
         return self._build_legacy_config()
 
-    def _build_legacy_config(self) -> Dict[str, Any]:
-        """
-        Build a legacy-compatible configuration dictionary.
+    def _build_legacy_config(self) -> dict[str, Any]:
+        """Build a legacy-compatible configuration dictionary.
 
         This internal method constructs a configuration dictionary that matches
         the structure expected by legacy code. It maps modern configuration
@@ -234,6 +231,7 @@ class ConfigManager:
         Note:
             This method is called by the config property and should not be
             used directly by external code.
+
         """
         config = self._modern_config
 
@@ -264,7 +262,7 @@ class ConfigManager:
                 "enable_console_logging": True,
                 "max_log_size": 10 * 1024 * 1024,
                 "log_rotation": 5,
-                "verbose_logging": config.get("preferences.log_level") == "DEBUG"
+                "verbose_logging": config.get("preferences.log_level") == "DEBUG",
             },
             "security": config.get("security", {}),
             "performance": {
@@ -272,14 +270,14 @@ class ConfigManager:
                 "enable_gpu_acceleration": True,
                 "cache_size": 100,
                 "chunk_size": 4096,
-                "enable_multiprocessing": True
+                "enable_multiprocessing": True,
             },
             "runtime": {},
             "plugins": {
                 "default_plugins": [],
                 "auto_load": True,
                 "check_updates": config.get("preferences.check_for_updates", True),
-                "allow_third_party": True
+                "allow_third_party": True,
             },
             "general": {
                 "first_run_completed": True,
@@ -287,36 +285,36 @@ class ConfigManager:
                 "auto_save_results": config.get("preferences.auto_backup_results", True),
                 "check_for_updates": config.get("preferences.check_for_updates", True),
                 "send_analytics": False,
-                "language": "en"
+                "language": "en",
             },
             "ai": config.get("ai", {}),
             "ml": {
                 "enable_ml_features": config.get("analysis.enable_ml_analysis", True),
                 "model_cache_size": 100,
                 "prediction_threshold": 0.7,
-                "auto_load_models": True
+                "auto_load_models": True,
             },
             "model_repositories": {
                 "local": {
                     "type": "local",
                     "enabled": True,
-                    "models_directory": str(config.get_cache_dir() / "models")
-                }
+                    "models_directory": str(config.get_cache_dir() / "models"),
+                },
             },
             "c2": {},
             "api_cache": {
                 "enabled": True,
                 "ttl": 3600,
-                "max_size_mb": 100
+                "max_size_mb": 100,
             },
             "verify_checksums": True,
             "external_services": {},
-            "api": {}
+            "api": {},
         }
 
         return legacy_config
 
-    def load_config(self) -> Dict[str, Any]:
+    def load_config(self) -> dict[str, Any]:
         """Load configuration - delegates to modern system."""
         return self.config
 
@@ -353,12 +351,12 @@ class ConfigManager:
         # Update modern config
         self._modern_config.set(key, value)
 
-    def update(self, updates: Dict[str, Any]) -> None:
+    def update(self, updates: dict[str, Any]) -> None:
         """Update multiple configuration values."""
         for key, value in updates.items():
             self.set(key, value)
 
-    def get_model_repositories(self) -> Dict[str, Any]:
+    def get_model_repositories(self) -> dict[str, Any]:
         """Get model repository configuration."""
         return self.config.get("model_repositories", {})
 
@@ -368,11 +366,11 @@ class ConfigManager:
         repo = repos.get(repo_name, {})
         return repo.get("enabled", False)
 
-    def get_ghidra_path(self) -> Optional[str]:
+    def get_ghidra_path(self) -> str | None:
         """Get the Ghidra installation path."""
         return self._modern_config.get_tool_path("ghidra")
 
-    def get_tool_path(self, tool_name: str) -> Optional[str]:
+    def get_tool_path(self, tool_name: str) -> str | None:
         """Get path for any tool."""
         return self._modern_config.get_tool_path(tool_name)
 
@@ -424,12 +422,11 @@ class ConfigManager:
 
 
 # Global configuration instance
-_config_manager: Optional[ConfigManager] = None
+_config_manager: ConfigManager | None = None
 
 
-def load_config(config_path: str = None) -> Dict[str, Any]:
-    """
-    Load configuration using the modern config system.
+def load_config(config_path: str = None) -> dict[str, Any]:
+    """Load configuration using the modern config system.
 
     This function initializes the global configuration manager if not already
     present and returns a legacy-compatible configuration dictionary. It's
@@ -452,6 +449,7 @@ def load_config(config_path: str = None) -> Dict[str, Any]:
     Note:
         New code should use get_config() to get the ConfigManager instance
         instead of working with raw dictionaries.
+
     """
     global _config_manager  # pylint: disable=global-statement
     if _config_manager is None:
@@ -460,11 +458,11 @@ def load_config(config_path: str = None) -> Dict[str, Any]:
 
 
 def get_config() -> ConfigManager:
-    """
-    Get the global configuration manager instance.
+    """Get the global configuration manager instance.
 
     Returns:
         ConfigManager instance (legacy wrapper)
+
     """
     global _config_manager  # pylint: disable=global-statement
     if _config_manager is None:
@@ -473,11 +471,11 @@ def get_config() -> ConfigManager:
 
 
 def save_config() -> bool:
-    """
-    Save the global configuration.
+    """Save the global configuration.
 
     Returns:
         True if saved successfully, False otherwise
+
     """
     if _config_manager is not None:
         return _config_manager.save_config()
@@ -498,12 +496,12 @@ DEFAULT_CONFIG = CONFIG
 
 # Export main components
 __all__ = [
-    "ConfigManager",
-    "load_config",
-    "get_config",
-    "save_config",
     "CONFIG",
     "DEFAULT_CONFIG",
+    "ConfigManager",
     "find_tool",
-    "get_system_path"
+    "get_config",
+    "get_system_path",
+    "load_config",
+    "save_config",
 ]

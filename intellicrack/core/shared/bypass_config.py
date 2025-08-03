@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -22,7 +21,7 @@ Shared Bypass Configuration
 Common bypass definitions and helper functions used across mitigation bypass modules.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 
 class BypassConfig:
@@ -34,41 +33,41 @@ class BypassConfig:
             "description": "Address Space Layout Randomization bypass",
             "target_protection": "aslr_enabled",
             "difficulty": "medium",
-            "reliability": 7
+            "reliability": 7,
         },
         "dep_bypass": {
             "description": "Data Execution Prevention bypass",
             "target_protection": "dep_enabled",
             "difficulty": "high",
-            "reliability": 8
+            "reliability": 8,
         },
         "cfi_bypass": {
             "description": "Control Flow Integrity bypass",
             "target_protection": "cfi_enabled",
             "difficulty": "high",
-            "reliability": 6
+            "reliability": 6,
         },
         "cfg_bypass": {
             "description": "Control Flow Guard bypass",
             "target_protection": "cfg_enabled",
             "difficulty": "medium",
-            "reliability": 7
+            "reliability": 7,
         },
         "cet_bypass": {
             "description": "Control-flow Enforcement Technology bypass",
             "target_protection": "cet_enabled",
             "difficulty": "very_high",
-            "reliability": 5
-        }
+            "reliability": 5,
+        },
     }
 
     @staticmethod
-    def get_available_bypasses() -> List[str]:
+    def get_available_bypasses() -> list[str]:
         """Get list of available bypass types."""
         return list(BypassConfig.BYPASS_TYPES.keys())
 
     @staticmethod
-    def analyze_bypass_capabilities(target_info: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze_bypass_capabilities(target_info: dict[str, Any]) -> dict[str, Any]:
         """Analyze available bypass capabilities for a target."""
         bypasses = []
 
@@ -80,21 +79,21 @@ class BypassConfig:
         return {
             "bypasses_available": bypasses,
             "target_info": target_info,
-            "bypass_count": len(bypasses)
+            "bypass_count": len(bypasses),
         }
 
     @staticmethod
-    def get_bypass_info(bypass_type: str) -> Dict[str, Any]:
+    def get_bypass_info(bypass_type: str) -> dict[str, Any]:
         """Get detailed information about a specific bypass type."""
         return BypassConfig.BYPASS_TYPES.get(bypass_type, {
             "description": "Unknown bypass type",
             "target_protection": "unknown",
             "difficulty": "unknown",
-            "reliability": 0
+            "reliability": 0,
         })
 
     @staticmethod
-    def get_bypasses_by_difficulty(difficulty: str) -> List[str]:
+    def get_bypasses_by_difficulty(difficulty: str) -> list[str]:
         """Get bypasses filtered by difficulty level."""
         return [
             bypass_type for bypass_type, config in BypassConfig.BYPASS_TYPES.items()
@@ -102,8 +101,8 @@ class BypassConfig:
         ]
 
     @staticmethod
-    def get_recommended_bypasses(target_info: Dict[str, Any],
-                                min_reliability: int = 6) -> List[str]:
+    def get_recommended_bypasses(target_info: dict[str, Any],
+                                min_reliability: int = 6) -> list[str]:
         """Get recommended bypasses based on target and reliability threshold."""
         analysis = BypassConfig.analyze_bypass_capabilities(target_info)
         available_bypasses = analysis["bypasses_available"]

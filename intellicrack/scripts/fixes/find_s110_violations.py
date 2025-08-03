@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -30,7 +29,7 @@ def find_exception_blocks(file_path):
     violations = []
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             lines = f.readlines()
     except:
         return violations
@@ -68,7 +67,7 @@ def find_exception_blocks(file_path):
                     violations.append({
                         "line": except_start_line,
                         "type": exception_type,
-                        "context": lines[max(0, except_start_line-2):min(len(lines), except_start_line+3)]
+                        "context": lines[max(0, except_start_line-2):min(len(lines), except_start_line+3)],
                     })
                 in_except_block = False
             elif "logger" in line or "logging" in line:
@@ -79,7 +78,7 @@ def find_exception_blocks(file_path):
         violations.append({
             "line": except_start_line,
             "type": exception_type,
-            "context": lines[max(0, except_start_line-2):min(len(lines), except_start_line+3)]
+            "context": lines[max(0, except_start_line-2):min(len(lines), except_start_line+3)],
         })
 
     return violations

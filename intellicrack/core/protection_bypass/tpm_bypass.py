@@ -1,5 +1,4 @@
-"""
-TPM Protection Bypass Module
+"""TPM Protection Bypass Module
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,15 +21,14 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import platform
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from ...utils.binary.binary_io import analyze_binary_for_strings
 from ...utils.core.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
 
 
 class TPMProtectionBypass:
-    """
-    Implements various strategies to bypass TPM (Trusted Platform Module) protection.
+    """Implements various strategies to bypass TPM (Trusted Platform Module) protection.
 
     This class provides multiple methods to bypass TPM-based license verification including:
     - API hooking to intercept TPM calls
@@ -39,25 +37,25 @@ class TPMProtectionBypass:
     - Registry manipulation to simulate TPM presence
     """
 
-    def __init__(self, app: Optional[Any] = None):
-        """
-        Initialize the TPM protection bypass engine.
+    def __init__(self, app: Any | None = None):
+        """Initialize the TPM protection bypass engine.
 
         Args:
             app: Application instance that contains the binary_path attribute
+
         """
         self.app = app
         self.logger = logging.getLogger("IntellicrackLogger.TPMBypass")
-        self.hooks: List[Dict[str, Any]] = []
-        self.patches: List[Dict[str, Any]] = []
-        self.virtual_tpm: Optional[Dict[str, Union[bytes, int]]] = None
+        self.hooks: list[dict[str, Any]] = []
+        self.patches: list[dict[str, Any]] = []
+        self.virtual_tpm: dict[str, bytes | int] | None = None
 
-    def bypass_tpm_checks(self) -> Dict[str, Any]:
-        """
-        Main method to bypass TPM protection using multiple strategies.
+    def bypass_tpm_checks(self) -> dict[str, Any]:
+        """Main method to bypass TPM protection using multiple strategies.
 
         Returns:
             dict: Results of the bypass attempt with success status and applied methods
+
         """
         from ...utils.protection.protection_helpers import create_bypass_result
         results = create_bypass_result()
@@ -68,7 +66,7 @@ class TPMProtectionBypass:
             results["methods_applied"].append("API Hooking")
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in tpm_bypass: %s", e)
-            results["errors"].append(f"API hooking failed: {str(e)}")
+            results["errors"].append(f"API hooking failed: {e!s}")
 
         # Strategy 2: Create virtual TPM responses
         try:
@@ -76,7 +74,7 @@ class TPMProtectionBypass:
             results["methods_applied"].append("Virtual TPM")
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in tpm_bypass: %s", e)
-            results["errors"].append(f"Virtual TPM creation failed: {str(e)}")
+            results["errors"].append(f"Virtual TPM creation failed: {e!s}")
 
         # Strategy 3: Patch TPM check instructions
         try:
@@ -85,7 +83,7 @@ class TPMProtectionBypass:
                 results["methods_applied"].append("Binary Patching")
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in tpm_bypass: %s", e)
-            results["errors"].append(f"Binary patching failed: {str(e)}")
+            results["errors"].append(f"Binary patching failed: {e!s}")
 
         # Strategy 4: Manipulate registry for TPM presence
         try:
@@ -93,14 +91,13 @@ class TPMProtectionBypass:
             results["methods_applied"].append("Registry Manipulation")
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in tpm_bypass: %s", e)
-            results["errors"].append(f"Registry manipulation failed: {str(e)}")
+            results["errors"].append(f"Registry manipulation failed: {e!s}")
 
         results["success"] = len(results["methods_applied"]) > 0
         return results
 
     def _hook_tpm_apis(self) -> None:
-        """
-        Hook Windows TPM APIs to return success values.
+        """Hook Windows TPM APIs to return success values.
         """
         if not FRIDA_AVAILABLE:
             self.logger.warning("Frida not available - skipping TPM API hooking")
@@ -175,13 +172,12 @@ class TPMProtectionBypass:
         self.hooks.append({
             "type": "frida",
             "script": frida_script,
-            "target": "TPM APIs"
+            "target": "TPM APIs",
         })
         self.logger.info("TPM API hooks installed")
 
     def _create_virtual_tpm(self) -> None:
-        """
-        Create a virtual TPM device that responds to application queries.
+        """Create a virtual TPM device that responds to application queries.
         """
         # Virtual TPM response data
         virtual_tpm_data = {
@@ -190,7 +186,7 @@ class TPMProtectionBypass:
             "firmware_version": b"2.0",
             "spec_level": 0x200,  # TPM 2.0
             "spec_revision": 0x138,
-            "platform_specific": b"\x00" * 32
+            "platform_specific": b"\x00" * 32,
         }
 
         # Create memory-mapped TPM responses
@@ -198,8 +194,7 @@ class TPMProtectionBypass:
         self.logger.info("Virtual TPM created with vendor: Intellicrack Virtual TPM")
 
     def _simulate_tpm_commands(self, command_data: bytes) -> bytes:
-        """
-        Simulate TPM command responses with realistic data.
+        """Simulate TPM command responses with realistic data.
         """
         self.logger.info("Simulating TPM command response")
 
@@ -326,7 +321,7 @@ class TPMProtectionBypass:
             # Generate actual RSA key pair
             private_key = rsa.generate_private_key(
                 public_exponent=65537,
-                key_size=2048
+                key_size=2048,
             )
             public_key_obj = private_key.public_key()
 
@@ -355,7 +350,7 @@ class TPMProtectionBypass:
             self._tpm_keys[f"{handle}_pem"] = private_key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
+                encryption_algorithm=serialization.NoEncryption(),
             )
 
         except ImportError as e:
@@ -448,9 +443,9 @@ class TPMProtectionBypass:
                     digest,
                     padding.PSS(
                         mgf=padding.MGF1(hashes.SHA256()),
-                        salt_length=padding.PSS.MAX_LENGTH
+                        salt_length=padding.PSS.MAX_LENGTH,
                     ),
-                    hashes.SHA256()
+                    hashes.SHA256(),
                 )
 
                 # Build TPM signature structure
@@ -519,13 +514,12 @@ class TPMProtectionBypass:
             elif i == 23:  # Application PCR
                 seed_data = f"APPLICATION_PCR_{secrets.randbelow(1000)}".encode()
                 pcr_value = hashlib.sha256(seed_data).digest()
+            # Other PCRs - some zero (unused), some with data
+            elif secrets.randbelow(2):  # 50% chance of being used
+                seed_data = f"PCR_{i}_{secrets.randbelow(1000)}".encode()
+                pcr_value = hashlib.sha256(seed_data).digest()
             else:
-                # Other PCRs - some zero (unused), some with data
-                if secrets.randbelow(2):  # 50% chance of being used
-                    seed_data = f"PCR_{i}_{secrets.randbelow(1000)}".encode()
-                    pcr_value = hashlib.sha256(seed_data).digest()
-                else:
-                    pcr_value = b"\x00" * 32  # Unused PCR
+                pcr_value = b"\x00" * 32  # Unused PCR
 
             pcr_values += pcr_value
 
@@ -560,8 +554,7 @@ class TPMProtectionBypass:
         return b""  # Empty response with success code
 
     def _patch_tpm_calls(self, binary_path: str) -> bool:
-        """
-        Advanced patching of TPM-related function calls in binary.
+        """Advanced patching of TPM-related function calls in binary.
         """
         self.logger.info(f"Patching TPM calls in {binary_path}")
 
@@ -576,28 +569,28 @@ class TPMProtectionBypass:
                     "name": "Tbsi_Context_Create call",
                     "pattern": b"\xFF\x15..\x00\x00",  # CALL [Tbsi_Context_Create]
                     "context": b"Tbsi_Context_Create",
-                    "patch": b"\x31\xC0\x90\x90\x90\x90"  # XOR EAX,EAX; NOP padding
+                    "patch": b"\x31\xC0\x90\x90\x90\x90",  # XOR EAX,EAX; NOP padding
                 },
                 {
                     "name": "Tbsi_Submit_Command call",
                     "pattern": b"\xFF\x15..\x00\x00",  # CALL [Tbsi_Submit_Command]
                     "context": b"Tbsi_Submit_Command",
-                    "patch": b"\x31\xC0\x90\x90\x90\x90"  # XOR EAX,EAX; NOP padding
+                    "patch": b"\x31\xC0\x90\x90\x90\x90",  # XOR EAX,EAX; NOP padding
                 },
                 # TPM presence checks
                 {
                     "name": "TPM version check",
                     "pattern": b"\x83\x3D..\x00\x00\x02",  # CMP [tpm_version], 2
                     "context": None,
-                    "patch": b"\x90\x90\x90\x90\x90\x90\x90"  # NOP out check
+                    "patch": b"\x90\x90\x90\x90\x90\x90\x90",  # NOP out check
                 },
                 # NCrypt TPM provider checks
                 {
                     "name": "NCrypt TPM provider",
                     "pattern": b"\x48\x8D\x15..\x00\x00",  # LEA RDX, [TPM_PROVIDER_STRING]
                     "context": b"Microsoft Platform Crypto Provider",
-                    "patch": b"\x48\x31\xD2\x90\x90\x90\x90"  # XOR RDX, RDX; NOP
-                }
+                    "patch": b"\x48\x31\xD2\x90\x90\x90\x90",  # XOR RDX, RDX; NOP
+                },
             ]
 
             patches_applied = 0
@@ -642,7 +635,7 @@ class TPMProtectionBypass:
                             "offset": offset,
                             "original": pattern,
                             "patch": patch,
-                            "name": name
+                            "name": name,
                         })
                         patches_applied += 1
                         self.logger.info(f"Applied patch '{name}' at offset 0x{offset:X}")
@@ -657,17 +650,15 @@ class TPMProtectionBypass:
                 self.logger.info(f"Saved patched binary to {patched_path}")
                 self.logger.info(f"Applied {patches_applied} TPM bypass patches")
                 return True
-            else:
-                self.logger.info("No TPM patterns found to patch")
-                return False
+            self.logger.info("No TPM patterns found to patch")
+            return False
 
         except Exception as e:
-            self.logger.error(f"Error patching TPM calls: {str(e)}")
+            self.logger.error(f"Error patching TPM calls: {e!s}")
             return False
 
     def _patch_tpm_checks(self) -> None:
-        """
-        Patch binary instructions that check for TPM presence.
+        """Patch binary instructions that check for TPM presence.
         """
         if not self.app or not hasattr(self.app, "binary_path") or not self.app.binary_path:
             return
@@ -676,8 +667,7 @@ class TPMProtectionBypass:
         self._patch_tpm_calls(self.app.binary_path)
 
     def _manipulate_tpm_registry(self) -> None:
-        """
-        Manipulate Windows registry to simulate TPM presence.
+        """Manipulate Windows registry to simulate TPM presence.
         """
         try:
             if platform.system() != "Windows":
@@ -706,17 +696,17 @@ class TPMProtectionBypass:
                     winreg.CloseKey(key)
                     self.logger.info("Set registry key %s\\%s = %s", path, name, value)
                 except (OSError, ValueError, RuntimeError) as e:
-                    self.logger.warning(f"Could not set registry key {path}\\{name}: {str(e)}")
+                    self.logger.warning(f"Could not set registry key {path}\\{name}: {e!s}")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Registry manipulation failed: {str(e)}")
+            self.logger.error(f"Registry manipulation failed: {e!s}")
 
     def generate_bypass_script(self) -> str:
-        """
-        Generate a Frida script for runtime TPM bypass.
+        """Generate a Frida script for runtime TPM bypass.
 
         Returns:
             str: Complete Frida script for TPM bypass
+
         """
         base_script = self.hooks[0]["script"] if self.hooks else ""
 
@@ -858,24 +848,23 @@ class TPMProtectionBypass:
 
         return script
 
-    def get_hook_status(self) -> Dict[str, Any]:
-        """
-        Get the current status of installed hooks.
+    def get_hook_status(self) -> dict[str, Any]:
+        """Get the current status of installed hooks.
 
         Returns:
             dict: Status information about hooks and patches
+
         """
         return {
             "hooks_installed": len(self.hooks),
             "patches_identified": len(self.patches),
             "virtual_tpm_active": self.virtual_tpm is not None,
             "frida_available": FRIDA_AVAILABLE,
-            "winreg_available": WINREG_AVAILABLE
+            "winreg_available": WINREG_AVAILABLE,
         }
 
     def clear_hooks(self) -> None:
-        """
-        Clear all installed hooks and patches.
+        """Clear all installed hooks and patches.
         """
         self.hooks.clear()
         self.patches.clear()
@@ -883,44 +872,43 @@ class TPMProtectionBypass:
         self.logger.info("Cleared all TPM bypass hooks and patches")
 
 
-def bypass_tpm_protection(app: Any) -> Dict[str, Any]:
-    """
-    Convenience function to bypass TPM protection on an application.
+def bypass_tpm_protection(app: Any) -> dict[str, Any]:
+    """Convenience function to bypass TPM protection on an application.
 
     Args:
         app: Application instance with binary_path
 
     Returns:
         dict: Results of the bypass attempt
+
     """
     bypass = TPMProtectionBypass(app)
     return bypass.bypass_tpm_checks()
 
 
 class TPMAnalyzer:
-    """
-    Analyzes TPM usage in applications for security research purposes.
+    """Analyzes TPM usage in applications for security research purposes.
     """
 
-    def __init__(self, binary_path: Optional[str] = None):
+    def __init__(self, binary_path: str | None = None):
         """Initialize TPM analyzer."""
         self.binary_path = binary_path
         self.logger = logging.getLogger("IntellicrackLogger.TPMAnalyzer")
         self.tpm_indicators = []
 
-    def analyze(self) -> Dict[str, Any]:
-        """
-        Analyze binary for TPM usage patterns.
+    def analyze(self) -> dict[str, Any]:
+        """Analyze binary for TPM usage patterns.
 
         Returns:
             dict: Analysis results including TPM usage indicators
+
         """
         results = {
             "uses_tpm": False,
             "tpm_version": None,
             "tpm_apis": [],
             "tpm_checks": [],
-            "confidence": 0.0
+            "confidence": 0.0,
         }
 
         if not self.binary_path:
@@ -933,7 +921,7 @@ class TPMAnalyzer:
             "NCryptOpenStorageProvider",
             "Microsoft Platform Crypto Provider",
             "TPM",
-            "TrustedPlatformModule"
+            "TrustedPlatformModule",
         ]
 
         string_analysis = analyze_binary_for_strings(self.binary_path, tpm_strings)
@@ -967,13 +955,12 @@ class TPMAnalyzer:
             results["indicators"] = self.tpm_indicators
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Error analyzing TPM usage: {str(e)}")
+            self.logger.error(f"Error analyzing TPM usage: {e!s}")
 
         return results
 
-    def generate_bypass(self, tpm_version: str) -> Dict[str, Any]:
-        """
-        Generate TPM bypass strategy.
+    def generate_bypass(self, tpm_version: str) -> dict[str, Any]:
+        """Generate TPM bypass strategy.
 
         This method analyzes the TPM version and usage patterns to generate
         an appropriate bypass strategy with success probability estimates.
@@ -983,6 +970,7 @@ class TPMAnalyzer:
 
         Returns:
             Dictionary containing bypass strategy and metadata
+
         """
         self.logger.info(f"Generating TPM bypass strategy for version: {tpm_version}")
 
@@ -994,7 +982,7 @@ class TPMAnalyzer:
             "strategies": [],
             "implementation": {},
             "risks": [],
-            "recommendations": []
+            "recommendations": [],
         }
 
         # Analyze TPM version capabilities
@@ -1004,27 +992,27 @@ class TPMAnalyzer:
             bypass_config["requirements"] = [
                 "Administrator privileges",
                 "TPM command interception capability",
-                "Cryptographic key generation"
+                "Cryptographic key generation",
             ]
             bypass_config["strategies"] = [
                 {
                     "name": "API Hooking",
                     "description": "Hook Tbsi.dll and NCrypt.dll APIs",
                     "success_rate": 0.85,
-                    "complexity": "medium"
+                    "complexity": "medium",
                 },
                 {
                     "name": "Virtual TPM",
                     "description": "Create software TPM emulator",
                     "success_rate": 0.70,
-                    "complexity": "high"
+                    "complexity": "high",
                 },
                 {
                     "name": "Command Spoofing",
                     "description": "Intercept and modify TPM commands",
                     "success_rate": 0.65,
-                    "complexity": "high"
-                }
+                    "complexity": "high",
+                },
             ]
 
         elif tpm_version == "1.2":
@@ -1032,21 +1020,21 @@ class TPMAnalyzer:
             bypass_config["success_probability"] = 0.85
             bypass_config["requirements"] = [
                 "Administrator privileges",
-                "TBS service manipulation"
+                "TBS service manipulation",
             ]
             bypass_config["strategies"] = [
                 {
                     "name": "TBS Service Hook",
                     "description": "Hook legacy TPM Base Services",
                     "success_rate": 0.90,
-                    "complexity": "low"
+                    "complexity": "low",
                 },
                 {
                     "name": "Registry Emulation",
                     "description": "Simulate TPM presence via registry",
                     "success_rate": 0.80,
-                    "complexity": "low"
-                }
+                    "complexity": "low",
+                },
             ]
 
         else:
@@ -1055,21 +1043,21 @@ class TPMAnalyzer:
             bypass_config["success_probability"] = 0.60
             bypass_config["requirements"] = [
                 "System analysis required",
-                "Runtime monitoring capability"
+                "Runtime monitoring capability",
             ]
             bypass_config["strategies"] = [
                 {
                     "name": "Binary Patching",
                     "description": "Patch TPM check routines",
                     "success_rate": 0.70,
-                    "complexity": "medium"
+                    "complexity": "medium",
                 },
                 {
                     "name": "Generic API Hook",
                     "description": "Hook common TPM APIs",
                     "success_rate": 0.50,
-                    "complexity": "low"
-                }
+                    "complexity": "low",
+                },
             ]
 
         # Add implementation details
@@ -1081,7 +1069,7 @@ class TPMAnalyzer:
         bypass_config["risks"] = [
             "System instability if hooks fail",
             "Detection by anti-tampering mechanisms",
-            "Potential legal implications"
+            "Potential legal implications",
         ]
 
         # Add recommendations based on indicators
@@ -1096,7 +1084,7 @@ class TPMAnalyzer:
         bypass_config["recommendations"].extend([
             "Test bypass in isolated environment first",
             "Monitor system stability after applying bypass",
-            "Consider using virtual TPM for safer emulation"
+            "Consider using virtual TPM for safer emulation",
         ])
 
         return bypass_config
@@ -1123,8 +1111,7 @@ Interceptor.attach(Tbsi_Submit_Command, {
     }
 });
 """
-        else:
-            return """
+        return """
 // TPM 1.2 Bypass Hook Script
 var tbs = Process.getModuleByName('tbs.dll');
 
@@ -1137,7 +1124,7 @@ Interceptor.attach(tbs.getExportByName('Tbsi_Context_Create'), {
 });
 """
 
-    def _identify_patch_points(self) -> List[Dict[str, Any]]:
+    def _identify_patch_points(self) -> list[dict[str, Any]]:
         """Identify potential patch points in binary."""
         patch_points = []
 
@@ -1147,12 +1134,12 @@ Interceptor.attach(tbs.getExportByName('Tbsi_Context_Create'), {
                 patch_points.append({
                     "type": "api_call",
                     "location": f"Call to {indicator}",
-                    "patch": "Replace with NOP or return success"
+                    "patch": "Replace with NOP or return success",
                 })
 
         return patch_points
 
-    def _generate_emulator_config(self, tpm_version: str) -> Dict[str, Any]:
+    def _generate_emulator_config(self, tpm_version: str) -> dict[str, Any]:
         """Generate TPM emulator configuration."""
         return {
             "version": tpm_version,
@@ -1162,41 +1149,41 @@ Interceptor.attach(tbs.getExportByName('Tbsi_Context_Create'), {
                 "TPM2_CreatePrimary",
                 "TPM2_Load",
                 "TPM2_Sign",
-                "TPM2_PCR_Read"
+                "TPM2_PCR_Read",
             ] if tpm_version == "2.0" else [
                 "TPM_Startup",
                 "TPM_CreateWrapKey",
                 "TPM_LoadKey",
-                "TPM_Sign"
+                "TPM_Sign",
             ],
             "key_storage": "memory",
-            "persistence": False
+            "persistence": False,
         }
 
 
-def analyze_tpm_protection(binary_path: str) -> Dict[str, Any]:
-    """
-    Analyze a binary for TPM protection mechanisms.
+def analyze_tpm_protection(binary_path: str) -> dict[str, Any]:
+    """Analyze a binary for TPM protection mechanisms.
 
     Args:
         binary_path: Path to the binary to analyze
 
     Returns:
         dict: Analysis results
+
     """
     analyzer = TPMAnalyzer(binary_path)
     return analyzer.analyze()
 
 
-def detect_tpm_usage(process_name: Optional[str] = None) -> bool:
-    """
-    Detect if a process is using TPM functionality.
+def detect_tpm_usage(process_name: str | None = None) -> bool:
+    """Detect if a process is using TPM functionality.
 
     Args:
         process_name: Name of the process to check (optional)
 
     Returns:
         bool: True if TPM usage detected
+
     """
     logger = logging.getLogger("IntellicrackLogger.TPMAnalyzer")
 
@@ -1211,7 +1198,7 @@ def detect_tpm_usage(process_name: Optional[str] = None) -> bool:
             ["sc", "query", "TPM"],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
         tpm_service_running = "RUNNING" in result.stdout
 
@@ -1226,7 +1213,7 @@ def detect_tpm_usage(process_name: Optional[str] = None) -> bool:
                     ["tasklist", "/m", "tbs.dll"],
                     capture_output=True,
                     text=True,
-                    check=False
+                    check=False,
                 )
                 if process_name.lower() in tasklist_result.stdout.lower():
                     logger.info(f"Process '{process_name}' is using TPM (tbs.dll loaded)")
@@ -1237,7 +1224,7 @@ def detect_tpm_usage(process_name: Optional[str] = None) -> bool:
                     ["tasklist", "/m", "ncrypt.dll"],
                     capture_output=True,
                     text=True,
-                    check=False
+                    check=False,
                 )
                 if process_name.lower() in tasklist_result.stdout.lower():
                     # Further check if using TPM provider specifically
@@ -1256,12 +1243,12 @@ def detect_tpm_usage(process_name: Optional[str] = None) -> bool:
         return False
 
 
-def tpm_research_tools() -> Dict[str, Any]:
-    """
-    Get available TPM research tools and utilities.
+def tpm_research_tools() -> dict[str, Any]:
+    """Get available TPM research tools and utilities.
 
     Returns:
         dict: Available tools and their capabilities
+
     """
     return {
         "analyzer": TPMAnalyzer,
@@ -1269,24 +1256,24 @@ def tpm_research_tools() -> Dict[str, Any]:
         "functions": {
             "analyze_tpm_protection": analyze_tpm_protection,
             "detect_tpm_usage": detect_tpm_usage,
-            "bypass_tpm_protection": bypass_tpm_protection
+            "bypass_tpm_protection": bypass_tpm_protection,
         },
         "capabilities": [
             "TPM API hooking",
             "Virtual TPM emulation",
             "Binary patching",
             "Registry manipulation",
-            "Runtime bypass"
-        ]
+            "Runtime bypass",
+        ],
     }
 
 
 # Export the main classes and functions
 __all__ = [
-    "TPMProtectionBypass",
-    "bypass_tpm_protection",
     "TPMAnalyzer",
+    "TPMProtectionBypass",
     "analyze_tpm_protection",
+    "bypass_tpm_protection",
     "detect_tpm_usage",
-    "tpm_research_tools"
+    "tpm_research_tools",
 ]

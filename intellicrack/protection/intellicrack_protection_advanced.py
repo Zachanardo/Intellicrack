@@ -1,5 +1,4 @@
-"""
-Advanced Intellicrack Protection Analysis Module
+"""Advanced Intellicrack Protection Analysis Module
 
 Enhanced features for comprehensive protection analysis capabilities.
 
@@ -15,7 +14,7 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..utils.logger import get_logger
 from .intellicrack_protection_core import (
@@ -30,6 +29,7 @@ logger = get_logger(__name__)
 
 class ScanMode(Enum):
     """Protection analysis scan modes"""
+
     NORMAL = "normal"
     DEEP = "deep"
     HEURISTIC = "heuristic"
@@ -38,6 +38,7 @@ class ScanMode(Enum):
 
 class ExportFormat(Enum):
     """Export formats supported by protection analysis"""
+
     JSON = "json"
     XML = "xml"
     TEXT = "text"
@@ -48,6 +49,7 @@ class ExportFormat(Enum):
 @dataclass
 class EntropyInfo:
     """Entropy information for file sections"""
+
     section_name: str
     offset: int
     size: int
@@ -59,6 +61,7 @@ class EntropyInfo:
 @dataclass
 class CertificateInfo:
     """Digital certificate information"""
+
     subject: str
     issuer: str
     serial_number: str
@@ -72,6 +75,7 @@ class CertificateInfo:
 @dataclass
 class ResourceInfo:
     """Resource information from PE files"""
+
     type: str
     name: str
     language: str
@@ -83,6 +87,7 @@ class ResourceInfo:
 @dataclass
 class StringInfo:
     """String information with encoding"""
+
     value: str
     offset: int
     encoding: str
@@ -93,47 +98,49 @@ class StringInfo:
 @dataclass
 class ImportHash:
     """Import hash for similarity analysis"""
+
     imphash: str
     imphash_sorted: str
-    rich_header_hash: Optional[str] = None
+    rich_header_hash: str | None = None
 
 
 @dataclass
 class AdvancedProtectionAnalysis(ProtectionAnalysis):
     """Extended protection analysis with additional features"""
-    entropy_info: List[EntropyInfo] = field(default_factory=list)
-    certificates: List[CertificateInfo] = field(default_factory=list)
-    resources: List[ResourceInfo] = field(default_factory=list)
-    suspicious_strings: List[StringInfo] = field(default_factory=list)
-    import_hash: Optional[ImportHash] = None
-    heuristic_detections: List[DetectionResult] = field(default_factory=list)
-    similarity_hash: Optional[str] = None
-    file_format_details: Dict[str, Any] = field(default_factory=dict)
+
+    entropy_info: list[EntropyInfo] = field(default_factory=list)
+    certificates: list[CertificateInfo] = field(default_factory=list)
+    resources: list[ResourceInfo] = field(default_factory=list)
+    suspicious_strings: list[StringInfo] = field(default_factory=list)
+    import_hash: ImportHash | None = None
+    heuristic_detections: list[DetectionResult] = field(default_factory=list)
+    similarity_hash: str | None = None
+    file_format_details: dict[str, Any] = field(default_factory=dict)
 
     def __init__(self,
                  file_path: str,
                  file_type: str,
                  architecture: str,
-                 detections: Optional[List[DetectionResult]] = None,
-                 compiler: Optional[str] = None,
-                 linker: Optional[str] = None,
+                 detections: list[DetectionResult] | None = None,
+                 compiler: str | None = None,
+                 linker: str | None = None,
                  is_packed: bool = False,
                  is_protected: bool = False,
                  has_overlay: bool = False,
                  has_resources: bool = False,
-                 entry_point: Optional[str] = None,
-                 sections: Optional[List[Dict[str, Any]]] = None,
-                 imports: Optional[List[str]] = None,
-                 strings: Optional[List[str]] = None,
-                 metadata: Optional[Dict[str, Any]] = None,
-                 entropy_info: Optional[List[EntropyInfo]] = None,
-                 certificates: Optional[List[CertificateInfo]] = None,
-                 resources: Optional[List[ResourceInfo]] = None,
-                 suspicious_strings: Optional[List[StringInfo]] = None,
-                 import_hash: Optional[ImportHash] = None,
-                 heuristic_detections: Optional[List[DetectionResult]] = None,
-                 similarity_hash: Optional[str] = None,
-                 file_format_details: Optional[Dict[str, Any]] = None):
+                 entry_point: str | None = None,
+                 sections: list[dict[str, Any]] | None = None,
+                 imports: list[str] | None = None,
+                 strings: list[str] | None = None,
+                 metadata: dict[str, Any] | None = None,
+                 entropy_info: list[EntropyInfo] | None = None,
+                 certificates: list[CertificateInfo] | None = None,
+                 resources: list[ResourceInfo] | None = None,
+                 suspicious_strings: list[StringInfo] | None = None,
+                 import_hash: ImportHash | None = None,
+                 heuristic_detections: list[DetectionResult] | None = None,
+                 similarity_hash: str | None = None,
+                 file_format_details: dict[str, Any] | None = None):
         """Initialize advanced protection analysis with comprehensive binary analysis data."""
         super().__init__(
             file_path=file_path,
@@ -150,7 +157,7 @@ class AdvancedProtectionAnalysis(ProtectionAnalysis):
             sections=sections or [],
             imports=imports or [],
             strings=strings or [],
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
         self.entropy_info = entropy_info or []
         self.certificates = certificates or []
@@ -164,27 +171,26 @@ class AdvancedProtectionAnalysis(ProtectionAnalysis):
 
 
 class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
-    """
-    Advanced Intellicrack protection analysis with full feature support
+    """Advanced Intellicrack protection analysis with full feature support
     """
 
-    def __init__(self, engine_path: Optional[str] = None,
-                 custom_db_path: Optional[str] = None,
+    def __init__(self, engine_path: str | None = None,
+                 custom_db_path: str | None = None,
                  enable_cache: bool = True):
-        """
-        Initialize advanced protection analyzer
+        """Initialize advanced protection analyzer
 
         Args:
             engine_path: Path to protection engine executable
             custom_db_path: Path to custom signature database
             enable_cache: Enable result caching
+
         """
         super().__init__(engine_path)
         self.custom_db_path = custom_db_path or self._find_custom_db()
         self.cache_enabled = enable_cache
         self.result_cache = {} if enable_cache else None
 
-    def _find_custom_db(self) -> Optional[str]:
+    def _find_custom_db(self) -> str | None:
         """Find custom database directory"""
         base_path = Path(self.engine_path).parent
         custom_db = base_path / "db_custom"
@@ -199,8 +205,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                                   export_format: ExportFormat = ExportFormat.JSON,
                                   extract_strings: bool = True,
                                   max_string_length: int = 1000) -> AdvancedProtectionAnalysis:
-        """
-        Advanced protection detection with full analysis features
+        """Advanced protection detection with full analysis features
 
         Args:
             file_path: Path to file to analyze
@@ -212,6 +217,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
         Returns:
             AdvancedProtectionAnalysis with comprehensive results
+
         """
         # Check cache first
         if self.cache_enabled and file_path in self.result_cache:
@@ -259,7 +265,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             # Run protection engine with extended timeout for deep scans
             timeout = 60 if scan_mode in [ScanMode.DEEP, ScanMode.ALL] else 30
             result = subprocess.run(cmd,
-                                  capture_output=True,
+                                  check=False, capture_output=True,
                                   text=True,
                                   timeout=timeout)
 
@@ -268,7 +274,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 return AdvancedProtectionAnalysis(
                     file_path=file_path,
                     file_type="Error",
-                    architecture="Unknown"
+                    architecture="Unknown",
                 )
 
             # Parse output based on format
@@ -283,7 +289,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             # Extract additional information
             if extract_strings:
                 analysis.suspicious_strings = self._extract_suspicious_strings(
-                    file_path, max_string_length
+                    file_path, max_string_length,
                 )
 
             # Calculate import hash
@@ -304,14 +310,14 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             return AdvancedProtectionAnalysis(
                 file_path=file_path,
                 file_type="Timeout",
-                architecture="Unknown"
+                architecture="Unknown",
             )
         except Exception as e:
             logger.error(f"Error in advanced analysis: {e}")
             return AdvancedProtectionAnalysis(
                 file_path=file_path,
                 file_type="Error",
-                architecture="Unknown"
+                architecture="Unknown",
             )
 
     def _parse_advanced_json(self, file_path: str, json_output: str) -> AdvancedProtectionAnalysis:
@@ -335,7 +341,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             sections=basic_analysis.sections,
             imports=basic_analysis.imports,
             strings=basic_analysis.strings,
-            metadata=basic_analysis.metadata
+            metadata=basic_analysis.metadata,
         )
 
         # Parse additional information
@@ -350,7 +356,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                     size=section.get("size", 0),
                     entropy=section.get("entropy", 0.0),
                     packed=section.get("entropy", 0.0) > 7.0,
-                    encrypted=section.get("entropy", 0.0) > 7.5
+                    encrypted=section.get("entropy", 0.0) > 7.5,
                 )
                 analysis.entropy_info.append(entropy_info)
 
@@ -365,7 +371,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                     valid_to=cert.get("valid_to", ""),
                     algorithm=cert.get("algorithm", ""),
                     is_valid=cert.get("valid", False),
-                    is_trusted=cert.get("trusted", False)
+                    is_trusted=cert.get("trusted", False),
                 )
                 analysis.certificates.append(cert_info)
 
@@ -378,7 +384,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                     language=resource.get("language", ""),
                     size=resource.get("size", 0),
                     offset=resource.get("offset", 0),
-                    data_hash=resource.get("hash", "")
+                    data_hash=resource.get("hash", ""),
                 )
                 analysis.resources.append(resource_info)
 
@@ -390,7 +396,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                     version=heur.get("version"),
                     type=self._categorize_detection(heur.get("type", "")),
                     confidence=heur.get("confidence", 50.0),
-                    details={"heuristic": True}
+                    details={"heuristic": True},
                 )
                 analysis.heuristic_detections.append(det_result)
 
@@ -401,7 +407,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         analysis = AdvancedProtectionAnalysis(
             file_path=file_path,
             file_type="Unknown",
-            architecture="Unknown"
+            architecture="Unknown",
         )
 
         try:
@@ -419,7 +425,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                     name=detection.get("name", "Unknown"),
                     version=detection.get("version"),
                     type=self._categorize_detection(detection.get("type", "")),
-                    confidence=float(detection.get("confidence", "100"))
+                    confidence=float(detection.get("confidence", "100")),
                 )
                 analysis.detections.append(det_result)
 
@@ -429,7 +435,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                     section_name=section.get("name", ""),
                     offset=int(section.get("offset", "0"), 16),
                     size=int(section.get("size", "0")),
-                    entropy=float(section.get("entropy", "0.0"))
+                    entropy=float(section.get("entropy", "0.0")),
                 )
                 analysis.entropy_info.append(entropy_info)
 
@@ -443,7 +449,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         analysis = AdvancedProtectionAnalysis(
             file_path=file_path,
             file_type="Unknown",
-            architecture="Unknown"
+            architecture="Unknown",
         )
 
         # Parse text output line by line
@@ -482,7 +488,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                         name=name,
                         type=ProtectionType.PROTECTOR if det_type == "protector" else ProtectionType.PACKER,
                         confidence=80.0,  # Default confidence for text parsing
-                        details={"raw": line}
+                        details={"raw": line},
                     )
                     analysis.detections.append(det_result)
 
@@ -493,7 +499,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
         return analysis
 
-    def _extract_suspicious_strings(self, file_path: str, max_length: int) -> List[StringInfo]:
+    def _extract_suspicious_strings(self, file_path: str, max_length: int) -> list[StringInfo]:
         """Extract suspicious strings from file"""
         suspicious_patterns = [
             "kernel32", "ntdll", "VirtualProtect", "IsDebuggerPresent",
@@ -502,7 +508,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             "eval", "demo", "unregistered", "http://", "https://", "ftp://",
             "cmd.exe", "powershell", "reg.exe", "wmic", "\\x00\\x00\\x00",
             "SELECT", "INSERT", "UPDATE", "DELETE", "DROP", "password",
-            "passwd", "pwd", "admin", "root", "sa", "dbo"
+            "passwd", "pwd", "admin", "root", "sa", "dbo",
         ]
 
         suspicious_strings = []
@@ -510,7 +516,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         try:
             # Use protection engine's string extraction
             cmd = [self.engine_path, "-s", file_path]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30)
 
             if result.returncode == 0:
                 for line in result.stdout.split("\n"):
@@ -525,7 +531,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                                 offset=0,  # Would need additional parsing
                                 encoding="UTF-8",  # Assumption
                                 length=len(line),
-                                suspicious=True
+                                suspicious=True,
                             )
                             suspicious_strings.append(string_info)
 
@@ -534,7 +540,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
         return suspicious_strings
 
-    def _calculate_import_hash(self, file_path: str) -> Optional[ImportHash]:
+    def _calculate_import_hash(self, file_path: str) -> ImportHash | None:
         """Calculate import hash for file"""
         try:
             # Use pefile or similar library to calculate imphash
@@ -546,13 +552,13 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             return ImportHash(
                 imphash=imphash,
                 imphash_sorted=imphash,  # Would need proper implementation
-                rich_header_hash=None
+                rich_header_hash=None,
             )
         except Exception as e:
             logger.error(f"Error calculating import hash: {e}")
             return None
 
-    def _calculate_similarity_hash(self, file_path: str) -> Optional[str]:
+    def _calculate_similarity_hash(self, file_path: str) -> str | None:
         """Calculate similarity hash (ssdeep or similar)"""
         try:
             # This would use ssdeep or similar fuzzy hashing
@@ -571,11 +577,10 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         except:
             return ""
 
-    def batch_analyze(self, file_paths: List[str],
+    def batch_analyze(self, file_paths: list[str],
                      max_workers: int = 4,
-                     scan_mode: ScanMode = ScanMode.NORMAL) -> Dict[str, AdvancedProtectionAnalysis]:
-        """
-        Analyze multiple files in parallel
+                     scan_mode: ScanMode = ScanMode.NORMAL) -> dict[str, AdvancedProtectionAnalysis]:
+        """Analyze multiple files in parallel
 
         Args:
             file_paths: List of files to analyze
@@ -584,6 +589,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
         Returns:
             Dictionary mapping file paths to analysis results
+
         """
         results = {}
 
@@ -593,7 +599,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 executor.submit(
                     self.detect_protections_advanced,
                     path,
-                    scan_mode
+                    scan_mode,
                 ): path
                 for path in file_paths
             }
@@ -608,7 +614,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                     results[path] = AdvancedProtectionAnalysis(
                         file_path=path,
                         file_type="Error",
-                        architecture="Unknown"
+                        architecture="Unknown",
                     )
 
         return results
@@ -618,8 +624,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                               pattern: bytes,
                               offset: int = 0,
                               description: str = "") -> bool:
-        """
-        Create custom signature for protection analysis
+        """Create custom signature for protection analysis
 
         Args:
             name: Signature name
@@ -629,6 +634,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
         Returns:
             True if signature created successfully
+
         """
         if not self.custom_db_path:
             logger.error("Custom database path not set")
@@ -664,14 +670,14 @@ function detect(bShowType, bShowVersion, bShowOptions)
             return False
 
     def export_to_yara(self, analysis: AdvancedProtectionAnalysis) -> str:
-        """
-        Export detection results as YARA rules
+        """Export detection results as YARA rules
 
         Args:
             analysis: Analysis results to export
 
         Returns:
             YARA rule string
+
         """
         yara_rules = []
 
@@ -696,15 +702,15 @@ rule {rule_name}_Detection {{
 
         return "\n".join(yara_rules)
 
-    def get_format_capabilities(self, file_path: str) -> Dict[str, bool]:
-        """
-        Check what protection engine can detect for this file format
+    def get_format_capabilities(self, file_path: str) -> dict[str, bool]:
+        """Check what protection engine can detect for this file format
 
         Args:
             file_path: Path to file
 
         Returns:
             Dictionary of capability flags
+
         """
         # Determine file type first
         basic_analysis = self.detect_protections(file_path)
@@ -720,7 +726,7 @@ rule {rule_name}_Detection {{
             "strings": True,
             "overlay": "PE" in basic_analysis.file_type,
             "heuristics": True,
-            "signatures": True
+            "signatures": True,
         }
 
         return capabilities
@@ -735,7 +741,7 @@ def advanced_analyze(file_path: str,
     return analyzer.detect_protections_advanced(
         file_path,
         scan_mode=scan_mode,
-        enable_heuristic=enable_heuristic
+        enable_heuristic=enable_heuristic,
     )
 
 

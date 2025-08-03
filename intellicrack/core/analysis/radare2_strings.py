@@ -1,7 +1,7 @@
 """Radare2 string analysis module for extracting and analyzing string data."""
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -32,8 +32,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 class R2StringAnalyzer:
-    """
-    Advanced string analysis engine using radare2's comprehensive string detection.
+    """Advanced string analysis engine using radare2's comprehensive string detection.
 
     Provides sophisticated string analysis for:
     - License key and validation string detection
@@ -44,22 +43,21 @@ class R2StringAnalyzer:
     - File paths and registry keys
     """
 
-    def __init__(self, binary_path: str, radare2_path: Optional[str] = None):
-        """
-        Initialize string analyzer.
+    def __init__(self, binary_path: str, radare2_path: str | None = None):
+        """Initialize string analyzer.
 
         Args:
             binary_path: Path to binary file
             radare2_path: Optional path to radare2 executable
+
         """
         self.binary_path = binary_path
         self.radare2_path = radare2_path
         self.logger = logging.getLogger(__name__)
         self.string_cache = {}
 
-    def analyze_all_strings(self, min_length: int = 4, encoding: str = "auto") -> Dict[str, Any]:
-        """
-        Perform comprehensive string analysis on the binary.
+    def analyze_all_strings(self, min_length: int = 4, encoding: str = "auto") -> dict[str, Any]:
+        """Perform comprehensive string analysis on the binary.
 
         Args:
             min_length: Minimum string length to consider
@@ -67,6 +65,7 @@ class R2StringAnalyzer:
 
         Returns:
             Complete string analysis results
+
         """
         result = {
             "binary_path": self.binary_path,
@@ -87,7 +86,7 @@ class R2StringAnalyzer:
             "categorized_stats": {},
             "cross_references": {},
             "string_entropy_analysis": {},
-            "suspicious_patterns": []
+            "suspicious_patterns": [],
         }
 
         try:
@@ -121,7 +120,7 @@ class R2StringAnalyzer:
 
         return result
 
-    def _get_comprehensive_strings(self, r2: R2Session, min_length: int, encoding: str) -> List[Dict[str, Any]]:
+    def _get_comprehensive_strings(self, r2: R2Session, min_length: int, encoding: str) -> list[dict[str, Any]]:
         """Get strings using multiple radare2 commands for comprehensive coverage."""
         all_strings = []
 
@@ -164,7 +163,6 @@ class R2StringAnalyzer:
                                 all_strings.append(wide_string)
                 except R2Exception as e:
                     logger.error("R2Exception in radare2_strings: %s", e)
-                    pass
 
             # For specific encodings, filter strings accordingly
             if encoding in ["ascii", "utf8"] and encoding != "auto":
@@ -196,7 +194,7 @@ class R2StringAnalyzer:
             self.logger.error(f"Failed to extract strings: {e}")
             return []
 
-    def _normalize_string_data(self, string_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _normalize_string_data(self, string_data: dict[str, Any]) -> dict[str, Any] | None:
         """Normalize string data from radare2 output."""
         if not isinstance(string_data, dict):
             return None
@@ -216,7 +214,7 @@ class R2StringAnalyzer:
             "section": string_data.get("section", ""),
             "type": string_data.get("type", "ascii"),
             "encoding": string_data.get("encoding", "ascii"),
-            "is_wide": string_data.get("is_wide", False)
+            "is_wide": string_data.get("is_wide", False),
         }
 
         # Calculate additional metrics
@@ -226,7 +224,7 @@ class R2StringAnalyzer:
 
         return normalized
 
-    def _analyze_strings_by_section(self, r2: R2Session, strings: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_strings_by_section(self, r2: R2Session, strings: list[dict[str, Any]]) -> dict[str, Any]:
         """Analyze string distribution by binary sections."""
         sections = {}
 
@@ -239,11 +237,10 @@ class R2StringAnalyzer:
                         "address": section.get("vaddr", 0),
                         "size": section.get("vsize", 0),
                         "permissions": section.get("perm", ""),
-                        "strings": []
+                        "strings": [],
                     }
         except R2Exception as e:
             self.logger.error("R2Exception in radare2_strings: %s", e)
-            pass
 
         # Distribute strings to sections
         for string_data in strings:
@@ -263,7 +260,7 @@ class R2StringAnalyzer:
 
         return sections
 
-    def _categorize_strings(self, strings: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    def _categorize_strings(self, strings: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
         """Categorize strings based on content patterns."""
         categories = {
             "license_strings": [],
@@ -277,7 +274,7 @@ class R2StringAnalyzer:
             "compiler_strings": [],
             "debug_strings": [],
             "user_interface_strings": [],
-            "network_strings": []
+            "network_strings": [],
         }
 
         for string_data in strings:
@@ -350,7 +347,7 @@ class R2StringAnalyzer:
             r"\bcrack\w*\b",
             r"\bpirat\w*\b",
             r"\billegal\b.*\bcopy\b",
-            r"\bgenuine\b.*\bsoftware\b"
+            r"\bgenuine\b.*\bsoftware\b",
         ]
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in license_patterns)
@@ -366,7 +363,7 @@ class R2StringAnalyzer:
             r"\b(ssl|tls|x509|pkcs|asn1)\b",
             r"\b(iv|salt|nonce|padding|key)\b.*\b(size|length)\b",
             r"\bcrypto\w*\b",
-            r"\bcipher\w*\b"
+            r"\bcipher\w*\b",
         ]
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in crypto_patterns)
@@ -381,7 +378,7 @@ class R2StringAnalyzer:
             r"^\w+(A|W)$",  # ANSI/Wide API variants
             r"^\w+Ex$",     # Extended API variants
             r"^_\w+$",      # C runtime functions
-            r"^__\w+$"      # Compiler intrinsics
+            r"^__\w+$",      # Compiler intrinsics
         ]
 
         # Check length (API names are typically not too long)
@@ -399,7 +396,7 @@ class R2StringAnalyzer:
             r"\b\w+\.\w+\.\w+\b",  # Domain names
             r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b",  # IP addresses
             r":\d{1,5}$",  # Port numbers
-            r"\.com|\.org|\.net|\.gov|\.edu|\.mil"
+            r"\.com|\.org|\.net|\.gov|\.edu|\.mil",
         ]
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in url_patterns)
@@ -413,7 +410,7 @@ class R2StringAnalyzer:
             r"\.\w{1,4}$", # File extension
             r"\\[^\\]+\\", # Windows path separators
             r"/[^/]+/",    # Unix path separators
-            r"\.(exe|dll|sys|bat|cmd|ini|cfg|log|txt|xml|json)$"
+            r"\.(exe|dll|sys|bat|cmd|ini|cfg|log|txt|xml|json)$",
         ]
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in path_patterns)
@@ -430,7 +427,7 @@ class R2StringAnalyzer:
             r"\\SYSTEM\\",
             r"\\Microsoft\\",
             r"\\Windows\\",
-            r"\\CurrentVersion\\"
+            r"\\CurrentVersion\\",
         ]
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in registry_patterns)
@@ -449,7 +446,7 @@ class R2StringAnalyzer:
             r"\bcorrupt\w*\b",
             r"\bmissing\b",
             r"\bnot found\b",
-            r"\baccess\b.*\bdenied\b"
+            r"\baccess\b.*\bdenied\b",
         ]
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in error_patterns)
@@ -462,7 +459,7 @@ class R2StringAnalyzer:
             r"\bbuild\b.*\d+",
             r"\bcopyright\b",
             r"\b(c)\b.*\d{4}",
-            r"\ball rights reserved\b"
+            r"\ball rights reserved\b",
         ]
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in version_patterns)
@@ -476,7 +473,7 @@ class R2StringAnalyzer:
             r"\bcompiled with\b",
             r"\b\.pdb$",
             r"\b\.obj$",
-            r"\b\.lib$"
+            r"\b\.lib$",
         ]
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in compiler_patterns)
@@ -493,7 +490,7 @@ class R2StringAnalyzer:
             r"^\s*\*.*",  # Block comments
             r"\b__FILE__\b",
             r"\b__LINE__\b",
-            r"\b__FUNCTION__\b"
+            r"\b__FUNCTION__\b",
         ]
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in debug_patterns)
@@ -509,7 +506,7 @@ class R2StringAnalyzer:
             r"\bwarning\b",
             r"\bconfirm\b",
             r"&\w+",  # Mnemonics
-            r"\.\.\.$"  # Ellipsis
+            r"\.\.\.$",  # Ellipsis
         ]
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in ui_patterns)
@@ -524,12 +521,12 @@ class R2StringAnalyzer:
             r"\bhost\b.*\bname\b",
             r"\bproxy\b",
             r"\bgateway\b",
-            r"\bfirewall\b"
+            r"\bfirewall\b",
         ]
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in network_patterns)
 
-    def _get_string_cross_references(self, r2: R2Session, strings: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    def _get_string_cross_references(self, r2: R2Session, strings: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
         """Get cross-references for important strings."""
         xrefs = {}
 
@@ -546,7 +543,7 @@ class R2StringAnalyzer:
                     if isinstance(xref_data, list) and xref_data:
                         xrefs[hex(addr)] = {
                             "string_content": string_data.get("content", ""),
-                            "references": xref_data
+                            "references": xref_data,
                         }
                 except R2Exception as e:
                     self.logger.error("R2Exception in radare2_strings: %s", e)
@@ -554,13 +551,13 @@ class R2StringAnalyzer:
 
         return xrefs
 
-    def _analyze_string_entropy(self, strings: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_string_entropy(self, strings: list[dict[str, Any]]) -> dict[str, Any]:
         """Analyze string entropy for encoded/encrypted content detection."""
         entropy_analysis = {
             "high_entropy_strings": [],
             "low_entropy_strings": [],
             "average_entropy": 0,
-            "entropy_distribution": {"0-1": 0, "1-2": 0, "2-3": 0, "3-4": 0, "4+": 0}
+            "entropy_distribution": {"0-1": 0, "1-2": 0, "2-3": 0, "3-4": 0, "4+": 0},
         }
 
         total_entropy = 0
@@ -587,7 +584,7 @@ class R2StringAnalyzer:
 
         return entropy_analysis
 
-    def _detect_suspicious_patterns(self, strings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _detect_suspicious_patterns(self, strings: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Detect suspicious string patterns."""
         suspicious = []
 
@@ -599,7 +596,7 @@ class R2StringAnalyzer:
                 suspicious.append({
                     "string": string_data,
                     "pattern_type": "base64_like",
-                    "description": "Possible Base64 encoded data"
+                    "description": "Possible Base64 encoded data",
                 })
 
             # Hex-like patterns
@@ -607,7 +604,7 @@ class R2StringAnalyzer:
                 suspicious.append({
                     "string": string_data,
                     "pattern_type": "hex_data",
-                    "description": "Long hexadecimal string (possible hash/key)"
+                    "description": "Long hexadecimal string (possible hash/key)",
                 })
 
             # High entropy short strings (possible keys)
@@ -615,7 +612,7 @@ class R2StringAnalyzer:
                 suspicious.append({
                     "string": string_data,
                     "pattern_type": "high_entropy",
-                    "description": "High entropy string (possible encrypted data/key)"
+                    "description": "High entropy string (possible encrypted data/key)",
                 })
 
             # Suspicious license keywords
@@ -623,7 +620,7 @@ class R2StringAnalyzer:
                 suspicious.append({
                     "string": string_data,
                     "pattern_type": "crack_related",
-                    "description": "Contains crack/keygen related keywords"
+                    "description": "Contains crack/keygen related keywords",
                 })
 
         return suspicious
@@ -648,7 +645,7 @@ class R2StringAnalyzer:
 
         return entropy
 
-    def _generate_category_statistics(self, result: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_category_statistics(self, result: dict[str, Any]) -> dict[str, Any]:
         """Generate statistics for categorized strings."""
         stats = {}
 
@@ -656,7 +653,7 @@ class R2StringAnalyzer:
             "license_strings", "crypto_strings", "api_strings", "url_strings",
             "file_path_strings", "registry_strings", "error_message_strings",
             "version_strings", "compiler_strings", "debug_strings",
-            "user_interface_strings", "network_strings"
+            "user_interface_strings", "network_strings",
         ]
 
         for category in categories:
@@ -664,12 +661,12 @@ class R2StringAnalyzer:
             stats[category] = {
                 "count": len(category_strings),
                 "percentage": (len(category_strings) / max(1, result.get("total_strings", 1))) * 100,
-                "average_length": sum(len(s.get("content", "")) for s in category_strings) / max(1, len(category_strings))
+                "average_length": sum(len(s.get("content", "")) for s in category_strings) / max(1, len(category_strings)),
             }
 
         return stats
 
-    def search_license_validation_strings(self) -> Dict[str, Any]:
+    def search_license_validation_strings(self) -> dict[str, Any]:
         """Specialized search for license validation related strings."""
         try:
             with r2_session(self.binary_path, self.radare2_path) as r2:
@@ -679,7 +676,7 @@ class R2StringAnalyzer:
                 license_search_terms = [
                     "license", "registration", "activation", "serial", "key",
                     "trial", "demo", "expire", "valid", "authentic", "genuine",
-                    "pirat", "crack", "illegal", "stolen", "tamper"
+                    "pirat", "crack", "illegal", "stolen", "tamper",
                 ]
 
                 for term in license_search_terms:
@@ -698,7 +695,7 @@ class R2StringAnalyzer:
                                                 "content": string_content.strip(),
                                                 "address": hex(addr),
                                                 "search_term": term,
-                                                "context": "license_validation"
+                                                "context": "license_validation",
                                             })
                                     except R2Exception as e:
                                         logger.error("R2Exception in radare2_strings: %s", e)
@@ -710,7 +707,7 @@ class R2StringAnalyzer:
                 return {
                     "validation_strings": validation_strings,
                     "total_found": len(validation_strings),
-                    "search_terms_used": license_search_terms
+                    "search_terms_used": license_search_terms,
                 }
 
         except R2Exception as e:
@@ -718,10 +715,9 @@ class R2StringAnalyzer:
             return {"error": str(e)}
 
 
-def analyze_binary_strings(binary_path: str, radare2_path: Optional[str] = None,
-                          min_length: int = 4) -> Dict[str, Any]:
-    """
-    Perform comprehensive string analysis on a binary.
+def analyze_binary_strings(binary_path: str, radare2_path: str | None = None,
+                          min_length: int = 4) -> dict[str, Any]:
+    """Perform comprehensive string analysis on a binary.
 
     Args:
         binary_path: Path to binary file
@@ -730,6 +726,7 @@ def analyze_binary_strings(binary_path: str, radare2_path: Optional[str] = None,
 
     Returns:
         Complete string analysis results
+
     """
     analyzer = R2StringAnalyzer(binary_path, radare2_path)
     return analyzer.analyze_all_strings(min_length=min_length)

@@ -1,5 +1,4 @@
-"""
-GPU Acceleration Module
+"""GPU Acceleration Module
 
 Copyright (C) 2025 Zachary Flint
 
@@ -19,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import List, Optional
 
 from intellicrack.logger import logger
 
@@ -59,6 +57,7 @@ class GPUAccelerationManager:
         Args:
             use_intel_pytorch: Whether to try Intel Extension for PyTorch (default: True)
             prefer_intel: Whether to prefer Intel GPUs when multiple GPUs are available (default: True)
+
         """
         self.logger = get_logger(f"{__name__}.{self.__class__.__name__}")
         self.use_intel_pytorch = use_intel_pytorch
@@ -92,28 +91,25 @@ class GPUAccelerationManager:
         if OPENCL_AVAILABLE and self.gpu_type not in ["intel_xpu", "nvidia_cuda", "amd_rocm"]:
             self._init_opencl()
 
-    def _determine_backend(self) -> Optional[str]:
+    def _determine_backend(self) -> str | None:
         """Determine the backend based on GPU type and configuration"""
         if self.gpu_type == "intel_xpu":
             if self.use_intel_pytorch and self._ipex:
                 return "intel_pytorch"
-            elif OPENCL_AVAILABLE:
+            if OPENCL_AVAILABLE:
                 return "pyopencl"
-            else:
-                return "intel_pytorch"  # fallback even without IPEX
-        elif self.gpu_type == "nvidia_cuda":
+            return "intel_pytorch"  # fallback even without IPEX
+        if self.gpu_type == "nvidia_cuda":
             if CUPY_AVAILABLE:
                 return "cupy"
-            else:
-                return "pytorch"
-        elif self.gpu_type == "amd_rocm":
             return "pytorch"
-        elif self.gpu_type == "directml":
+        if self.gpu_type == "amd_rocm":
+            return "pytorch"
+        if self.gpu_type == "directml":
             return "directml"
-        elif OPENCL_AVAILABLE:
+        if OPENCL_AVAILABLE:
             return "pyopencl"
-        else:
-            return None
+        return None
 
     def _init_opencl(self):
         """Initialize OpenCL context if needed"""
@@ -145,17 +141,16 @@ class GPUAccelerationManager:
         """Check if GPU acceleration is available."""
         return self.gpu_available
 
-    def get_gpu_type(self) -> Optional[str]:
+    def get_gpu_type(self) -> str | None:
         """Get the type of GPU acceleration available."""
         return self.gpu_type
 
-    def get_backend(self) -> Optional[str]:
+    def get_backend(self) -> str | None:
         """Get the GPU backend type."""
         return self.gpu_backend
 
-    def accelerate_pattern_matching(self, data: bytes, patterns: List[bytes]) -> List[int]:
-        """
-        GPU-accelerated pattern matching.
+    def accelerate_pattern_matching(self, data: bytes, patterns: list[bytes]) -> list[int]:
+        """GPU-accelerated pattern matching.
 
         Args:
             data: Binary data to search in
@@ -163,6 +158,7 @@ class GPUAccelerationManager:
 
         Returns:
             List of match positions
+
         """
         if not self.gpu_available:
             self.logger.warning("GPU acceleration not available, falling back to CPU")
@@ -171,18 +167,17 @@ class GPUAccelerationManager:
         try:
             if self.gpu_backend == "pyopencl" and self.context:
                 return self._opencl_pattern_matching(data, patterns)
-            elif self.gpu_backend == "cupy" and cp:
+            if self.gpu_backend == "cupy" and cp:
                 return self._cupy_pattern_matching(data, patterns)
-            elif self._torch:
+            if self._torch:
                 return self._torch_pattern_matching(data, patterns)
-            else:
-                self.logger.warning("Pattern matching not implemented for backend: %s", self.gpu_backend)
-                return self._cpu_pattern_matching(data, patterns)
+            self.logger.warning("Pattern matching not implemented for backend: %s", self.gpu_backend)
+            return self._cpu_pattern_matching(data, patterns)
         except Exception as e:
             self.logger.error("GPU pattern matching failed: %s", e)
             return self._cpu_pattern_matching(data, patterns)
 
-    def _cpu_pattern_matching(self, data: bytes, patterns: List[bytes]) -> List[int]:
+    def _cpu_pattern_matching(self, data: bytes, patterns: list[bytes]) -> list[int]:
         """Fallback CPU pattern matching."""
         matches = []
         for pattern in patterns:
@@ -195,7 +190,7 @@ class GPUAccelerationManager:
                 pos += 1
         return sorted(matches)
 
-    def _torch_pattern_matching(self, data: bytes, patterns: List[bytes]) -> List[int]:
+    def _torch_pattern_matching(self, data: bytes, patterns: list[bytes]) -> list[int]:
         """PyTorch-based pattern matching for Intel XPU/CUDA/ROCm."""
         if not self._torch:
             return self._cpu_pattern_matching(data, patterns)
@@ -229,7 +224,7 @@ class GPUAccelerationManager:
 
         return sorted(all_matches)
 
-    def _opencl_pattern_matching(self, data: bytes, patterns: List[bytes]) -> List[int]:
+    def _opencl_pattern_matching(self, data: bytes, patterns: list[bytes]) -> list[int]:
         """OpenCL-based pattern matching."""
         if not self.cl or not self.context:
             return self._cpu_pattern_matching(data, patterns)
@@ -294,7 +289,7 @@ class GPUAccelerationManager:
                 self.queue, global_size, local_size,
                 data_buffer, np.int32(len(data_array)),
                 pattern_buffer, np.int32(len(pattern_array)),
-                matches_buffer, count_buffer
+                matches_buffer, count_buffer,
             )
 
             self.cl.enqueue_copy(self.queue, matches_array, matches_buffer)
@@ -309,7 +304,7 @@ class GPUAccelerationManager:
 
         return sorted(all_matches)
 
-    def _cupy_pattern_matching(self, data: bytes, patterns: List[bytes]) -> List[int]:
+    def _cupy_pattern_matching(self, data: bytes, patterns: list[bytes]) -> list[int]:
         """CUDA-based pattern matching using CuPy."""
         if not cp:
             return self._cpu_pattern_matching(data, patterns)
@@ -317,7 +312,7 @@ class GPUAccelerationManager:
         import numpy as np
 
         # CUDA kernel for pattern matching
-        pattern_match_kernel = cp.RawKernel(r'''
+        pattern_match_kernel = cp.RawKernel(r"""
         extern "C" __global__
         void pattern_match(
             const unsigned char* data,
@@ -348,7 +343,7 @@ class GPUAccelerationManager:
                 }
             }
         }
-        ''', "pattern_match")
+        """, "pattern_match")
 
         all_matches = []
 
@@ -365,7 +360,7 @@ class GPUAccelerationManager:
 
             pattern_match_kernel(
                 (blocks_per_grid,), (threads_per_block,),
-                (data_gpu, len(data), pattern_gpu, len(pattern), matches_gpu, match_count_gpu)
+                (data_gpu, len(data), pattern_gpu, len(pattern), matches_gpu, match_count_gpu),
             )
 
             cp.cuda.Stream.null.synchronize()
@@ -381,8 +376,7 @@ class GPUAccelerationManager:
 
 
 class GPUAccelerator(GPUAccelerationManager):
-    """
-    Legacy GPUAccelerator class for backward compatibility.
+    """Legacy GPUAccelerator class for backward compatibility.
     Now inherits from GPUAccelerationManager and uses the unified GPU system.
     """
 
@@ -410,7 +404,7 @@ class GPUAccelerator(GPUAccelerationManager):
                 "index": 0,
                 "name": self.gpu_info.get("device_name", "Unknown GPU"),
                 "memory": self.gpu_info.get("total_memory", "Unknown"),
-                "backend": self.gpu_backend
+                "backend": self.gpu_backend,
             }
 
             if self.gpu_type == "nvidia_cuda":
@@ -439,32 +433,28 @@ class GPUAccelerator(GPUAccelerationManager):
         """Detect GPU vendor from type"""
         if self.gpu_type and "intel" in self.gpu_type:
             return "Intel"
-        elif self.gpu_type and ("nvidia" in self.gpu_type or "cuda" in self.gpu_type):
+        if self.gpu_type and ("nvidia" in self.gpu_type or "cuda" in self.gpu_type):
             return "NVIDIA"
-        elif self.gpu_type and ("amd" in self.gpu_type or "rocm" in self.gpu_type):
+        if self.gpu_type and ("amd" in self.gpu_type or "rocm" in self.gpu_type):
             return "AMD"
-        else:
-            return "Unknown"
+        return "Unknown"
 
     def _check_available_backends(self):
         """Legacy method for compatibility"""
-        pass
 
     def _select_preferred_backend(self):
         """Legacy method for compatibility"""
-        pass
 
     def _run_initial_benchmarks(self):
         """Legacy method for compatibility"""
-        pass
 
 
 def create_gpu_acceleration_manager():
-    """
-    Factory function to create a GPU acceleration manager.
+    """Factory function to create a GPU acceleration manager.
 
     Returns:
         GPUAccelerationManager: Configured GPU acceleration manager instance
+
     """
     try:
         return GPUAccelerationManager()
@@ -474,11 +464,11 @@ def create_gpu_acceleration_manager():
 
 
 def create_gpu_accelerator():
-    """
-    Factory function to create a GPU accelerator.
+    """Factory function to create a GPU accelerator.
 
     Returns:
         GPUAccelerator: Configured GPU accelerator instance
+
     """
     try:
         return GPUAccelerator()
@@ -488,11 +478,11 @@ def create_gpu_accelerator():
 
 
 def is_gpu_acceleration_available():
-    """
-    Check if GPU acceleration is available on this system.
+    """Check if GPU acceleration is available on this system.
 
     Returns:
         bool: True if GPU acceleration is available, False otherwise
+
     """
     try:
         gpu_info = get_gpu_info()

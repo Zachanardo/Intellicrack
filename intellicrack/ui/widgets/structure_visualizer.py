@@ -1,5 +1,4 @@
-"""
-Structure Visualization Widget
+"""Structure Visualization Widget
 
 Provides interactive visualization for binary file structures (PE/ELF/Mach-O),
 showing headers, sections, imports/exports, and other structural elements.
@@ -8,7 +7,7 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from typing import Any, Dict, Union
+from typing import Any
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QBrush, QColor
@@ -66,7 +65,7 @@ class StructureVisualizerWidget(QWidget):
             "Sections",
             "Imports/Exports",
             "Resources",
-            "Memory Map"
+            "Memory Map",
         ])
         self.view_combo.currentTextChanged.connect(self.update_view)
         controls_layout.addWidget(self.view_combo)
@@ -134,7 +133,7 @@ class StructureVisualizerWidget(QWidget):
         self.sections_table.setColumnCount(6)
         self.sections_table.setHorizontalHeaderLabels([
             "Name", "Virtual Addr", "Virtual Size",
-            "Raw Addr", "Raw Size", "Characteristics"
+            "Raw Addr", "Raw Size", "Characteristics",
         ])
         self.sections_table.itemSelectionChanged.connect(self._on_section_selection)
         self.structure_widget.addTab(self.sections_table, "Sections")
@@ -163,7 +162,7 @@ class StructureVisualizerWidget(QWidget):
             self.memory_map.setLabel("bottom", "Memory Address")
             self.structure_widget.addTab(self.memory_map, "Memory Map")
 
-    def set_structure_data(self, data: Dict[str, Any]):
+    def set_structure_data(self, data: dict[str, Any]):
         """Set structure data for visualization"""
         self.structure_data = data
         self.binary_format = data.get("format", "Unknown")
@@ -330,7 +329,7 @@ class StructureVisualizerWidget(QWidget):
 
         self.tree_view.expandAll()
 
-    def _add_dict_to_tree(self, data: Union[dict, list], parent: QTreeWidgetItem):
+    def _add_dict_to_tree(self, data: dict | list, parent: QTreeWidgetItem):
         """Recursively add dictionary/list data to tree"""
         if isinstance(data, dict):
             for key, value in data.items():
@@ -588,7 +587,7 @@ class StructureVisualizerWidget(QWidget):
         self.details_text.setText(details)
 
     # Helper methods
-    def _is_suspicious_section(self, section: Dict[str, Any]) -> bool:
+    def _is_suspicious_section(self, section: dict[str, Any]) -> bool:
         """Check if a section has suspicious characteristics"""
         name = section.get("name", "").lower()
 
@@ -629,28 +628,28 @@ class StructureVisualizerWidget(QWidget):
             "OpenProcess", "TerminateProcess",
             "RegSetValue", "RegCreateKey",
             "WinExec", "ShellExecute",
-            "IsDebuggerPresent", "CheckRemoteDebuggerPresent"
+            "IsDebuggerPresent", "CheckRemoteDebuggerPresent",
         ]
 
         return func_name in suspicious_funcs
 
-    def _is_executable_section(self, section: Dict[str, Any]) -> bool:
+    def _is_executable_section(self, section: dict[str, Any]) -> bool:
         """Check if section is executable"""
         chars = section.get("characteristics", 0)
 
         if self.binary_format == "PE":
             return bool(chars & 0x20000000)  # IMAGE_SCN_MEM_EXECUTE
-        elif self.binary_format == "ELF":
+        if self.binary_format == "ELF":
             return bool(chars & 0x1)  # PF_X
 
         return False
-    def _is_writable_section(self, section: Dict[str, Any]) -> bool:
+    def _is_writable_section(self, section: dict[str, Any]) -> bool:
         """Check if section is writable"""
         chars = section.get("characteristics", 0)
 
         if self.binary_format == "PE":
             return bool(chars & 0x80000000)  # IMAGE_SCN_MEM_WRITE
-        elif self.binary_format == "ELF":
+        if self.binary_format == "ELF":
             return bool(chars & 0x2)  # PF_W
 
         return False
@@ -662,7 +661,7 @@ class StructureVisualizerWidget(QWidget):
             0x8664: "x64 (AMD64)",
             0x01c0: "ARM",
             0xaa64: "ARM64",
-            0x0200: "IA64"
+            0x0200: "IA64",
         }
         return machines.get(machine, f"Unknown (0x{machine:04X})")
 
@@ -681,7 +680,7 @@ class StructureVisualizerWidget(QWidget):
             12: "EFI Runtime Driver",
             13: "EFI ROM",
             14: "Xbox",
-            16: "Windows Boot Application"
+            16: "Windows Boot Application",
         }
         return subsystems.get(subsystem, f"Unknown ({subsystem})")
     def _populate_elf_headers(self):
@@ -757,7 +756,7 @@ class StructureVisualizerWidget(QWidget):
             self,
             "Export Structure Data",
             "structure_analysis.json",
-            "JSON Files (*.json);;Text Files (*.txt);;All Files (*)"
+            "JSON Files (*.json);;Text Files (*.txt);;All Files (*)",
         )
 
         if filename:
@@ -776,7 +775,7 @@ class StructureVisualizerWidget(QWidget):
 
             except Exception as e:
                 from PyQt6.QtWidgets import QMessageBox
-                QMessageBox.critical(self, "Export Error", f"Failed to export: {str(e)}")
+                QMessageBox.critical(self, "Export Error", f"Failed to export: {e!s}")
 
     def _format_structure_text(self) -> str:
         """Format structure data as readable text"""

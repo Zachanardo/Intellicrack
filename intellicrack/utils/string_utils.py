@@ -1,5 +1,4 @@
-"""
-String utilities module.
+"""String utilities module.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,6 +22,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 from .core.string_utils import extract_ascii_strings, format_bytes
 
 __all__ = [
+    "extract_ascii_strings",
     "format_bytes",
-    "extract_ascii_strings"
 ]

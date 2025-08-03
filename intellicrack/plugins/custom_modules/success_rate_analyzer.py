@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -42,12 +41,12 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.stats as stats
 from matplotlib.backends.backend_pdf import PdfPages
+from scipy import stats
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.linear_model import BayesianRidge
 from sklearn.preprocessing import StandardScaler
@@ -57,6 +56,7 @@ warnings.filterwarnings("ignore")
 
 class EventType(Enum):
     """Types of events to track"""
+
     PROTECTION_DETECTION = "protection_detection"
     BYPASS_ATTEMPT = "bypass_attempt"
     CLASSIFICATION = "classification"
@@ -68,6 +68,7 @@ class EventType(Enum):
 
 class OutcomeType(Enum):
     """Event outcome types"""
+
     SUCCESS = "success"
     FAILURE = "failure"
     PARTIAL = "partial"
@@ -77,6 +78,7 @@ class OutcomeType(Enum):
 
 class ProtectionCategory(Enum):
     """Protection categories for analysis"""
+
     SERIAL_KEY = "serial_key"
     DONGLE = "dongle"
     ONLINE_VALIDATION = "online_validation"
@@ -92,6 +94,7 @@ class ProtectionCategory(Enum):
 @dataclass
 class AnalysisEvent:
     """Individual analysis event for tracking"""
+
     event_id: str
     event_type: EventType
     outcome: OutcomeType
@@ -99,7 +102,7 @@ class AnalysisEvent:
     component: str
     timestamp: float
     duration: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     error_details: str = ""
 
     def __post_init__(self):
@@ -116,33 +119,35 @@ class AnalysisEvent:
 @dataclass
 class StatisticalResult:
     """Statistical analysis result"""
+
     metric_name: str
     value: float
-    confidence_interval: Tuple[float, float]
-    p_value: Optional[float] = None
+    confidence_interval: tuple[float, float]
+    p_value: float | None = None
     significance_level: float = 0.05
     sample_size: int = 0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class TrendAnalysis:
     """Trend analysis result"""
+
     component: str
     protection_category: ProtectionCategory
     trend_direction: str  # "increasing", "decreasing", "stable"
     trend_strength: float  # 0-1 scale
-    forecast_values: List[float]
-    forecast_intervals: List[Tuple[float, float]]
+    forecast_values: list[float]
+    forecast_intervals: list[tuple[float, float]]
     seasonal_pattern: bool = False
-    change_points: List[float] = field(default_factory=list)
+    change_points: list[float] = field(default_factory=list)
 
 
 class WilsonScoreInterval:
     """Wilson score interval for binomial confidence intervals"""
 
     @staticmethod
-    def calculate(successes: int, total: int, confidence_level: float = 0.95) -> Tuple[float, float]:
+    def calculate(successes: int, total: int, confidence_level: float = 0.95) -> tuple[float, float]:
         """Calculate Wilson score confidence interval"""
         if total == 0:
             return (0.0, 1.0)
@@ -168,7 +173,7 @@ class BayesianAnalyzer:
         self.prior_alpha = prior_alpha
         self.prior_beta = prior_beta
 
-    def update_posterior(self, successes: int, failures: int) -> Tuple[float, float]:
+    def update_posterior(self, successes: int, failures: int) -> tuple[float, float]:
         """Update Beta posterior parameters"""
         posterior_alpha = self.prior_alpha + successes
         posterior_beta = self.prior_beta + failures
@@ -179,7 +184,7 @@ class BayesianAnalyzer:
         alpha, beta = self.update_posterior(successes, failures)
         return alpha / (alpha + beta)
 
-    def credible_interval(self, successes: int, failures: int, confidence: float = 0.95) -> Tuple[float, float]:
+    def credible_interval(self, successes: int, failures: int, confidence: float = 0.95) -> tuple[float, float]:
         """Calculate Bayesian credible interval"""
         alpha, beta = self.update_posterior(successes, failures)
         lower_percentile = (1 - confidence) / 2
@@ -207,7 +212,7 @@ class SurvivalAnalyzer:
         """Add survival observation"""
         self.survival_data.append((duration, not censored))  # True = event occurred
 
-    def kaplan_meier_estimate(self) -> Tuple[List[float], List[float]]:
+    def kaplan_meier_estimate(self) -> tuple[list[float], list[float]]:
         """Calculate Kaplan-Meier survival function"""
         if not self.survival_data:
             return ([], [])
@@ -243,7 +248,7 @@ class SurvivalAnalyzer:
 
         return (times, survival_probs)
 
-    def median_survival_time(self) -> Optional[float]:
+    def median_survival_time(self) -> float | None:
         """Calculate median survival time"""
         times, survival_probs = self.kaplan_meier_estimate()
 
@@ -269,7 +274,7 @@ class TimeSeriesAnalyzer:
         """Add time series data point"""
         self.history[component].append((timestamp, value))
 
-    def detect_trend(self, component: str, window_size: int = 30) -> Dict[str, Any]:
+    def detect_trend(self, component: str, window_size: int = 30) -> dict[str, Any]:
         """Detect trend using linear regression"""
         if component not in self.history or len(self.history[component]) < window_size:
             return {"trend": "insufficient_data", "strength": 0.0}
@@ -297,10 +302,10 @@ class TimeSeriesAnalyzer:
             "strength": abs(r_value),
             "slope": slope,
             "r_squared": r_value**2,
-            "p_value": p_value
+            "p_value": p_value,
         }
 
-    def seasonal_decomposition(self, component: str, period: int = 24) -> Dict[str, Any]:
+    def seasonal_decomposition(self, component: str, period: int = 24) -> dict[str, Any]:
         """Perform seasonal decomposition"""
         if component not in self.history or len(self.history[component]) < period * 2:
             return {"seasonal": False, "components": {}}
@@ -342,11 +347,11 @@ class TimeSeriesAnalyzer:
             "components": {
                 "trend": trend.tolist(),
                 "seasonal": seasonal.tolist(),
-                "residual": residual.tolist()
-            }
+                "residual": residual.tolist(),
+            },
         }
 
-    def forecast_arima(self, component: str, periods: int = 10) -> Tuple[List[float], List[Tuple[float, float]]]:
+    def forecast_arima(self, component: str, periods: int = 10) -> tuple[list[float], list[tuple[float, float]]]:
         """Simple ARIMA-like forecasting"""
         if component not in self.history or len(self.history[component]) < 10:
             return ([], [])
@@ -387,7 +392,7 @@ class StatisticalTester:
     """Statistical hypothesis testing"""
 
     @staticmethod
-    def chi_square_test(observed: List[int], expected: List[int] = None) -> Dict[str, float]:
+    def chi_square_test(observed: list[int], expected: list[int] = None) -> dict[str, float]:
         """Chi-square goodness of fit test"""
         if expected is None:
             expected = [sum(observed) / len(observed)] * len(observed)
@@ -397,11 +402,11 @@ class StatisticalTester:
         return {
             "chi2_statistic": chi2_stat,
             "p_value": p_value,
-            "degrees_of_freedom": len(observed) - 1
+            "degrees_of_freedom": len(observed) - 1,
         }
 
     @staticmethod
-    def fishers_exact_test(success1: int, total1: int, success2: int, total2: int) -> Dict[str, float]:
+    def fishers_exact_test(success1: int, total1: int, success2: int, total2: int) -> dict[str, float]:
         """Fisher's exact test for comparing two proportions"""
         # Create contingency table
         table = [[success1, total1 - success1], [success2, total2 - success2]]
@@ -410,17 +415,17 @@ class StatisticalTester:
 
         return {
             "odds_ratio": odds_ratio,
-            "p_value": p_value
+            "p_value": p_value,
         }
 
     @staticmethod
-    def mann_whitney_u_test(group1: List[float], group2: List[float]) -> Dict[str, float]:
+    def mann_whitney_u_test(group1: list[float], group2: list[float]) -> dict[str, float]:
         """Mann-Whitney U test for comparing two independent groups"""
         statistic, p_value = stats.mannwhitneyu(group1, group2, alternative="two-sided")
 
         return {
             "u_statistic": statistic,
-            "p_value": p_value
+            "p_value": p_value,
         }
 
 
@@ -428,7 +433,7 @@ class PerformanceMetrics:
     """Performance metrics calculator"""
 
     @staticmethod
-    def confusion_matrix_metrics(tp: int, tn: int, fp: int, fn: int) -> Dict[str, float]:
+    def confusion_matrix_metrics(tp: int, tn: int, fp: int, fn: int) -> dict[str, float]:
         """Calculate metrics from confusion matrix"""
         total = tp + tn + fp + fn
         if total == 0:
@@ -448,11 +453,11 @@ class PerformanceMetrics:
             "f1_score": f1_score,
             "sensitivity": recall,
             "true_positive_rate": recall,
-            "false_positive_rate": fp / (fp + tn) if (fp + tn) > 0 else 0.0
+            "false_positive_rate": fp / (fp + tn) if (fp + tn) > 0 else 0.0,
         }
 
     @staticmethod
-    def auc_roc(y_true: List[int], y_scores: List[float]) -> float:
+    def auc_roc(y_true: list[int], y_scores: list[float]) -> float:
         """Calculate AUC-ROC using trapezoidal rule"""
         if len(set(y_true)) != 2:
             return 0.5  # Cannot calculate ROC for non-binary classification
@@ -579,13 +584,13 @@ class EventTracker:
                     event.timestamp,
                     event.duration,
                     json.dumps(event.metadata),
-                    event.error_details
+                    event.error_details,
                 ))
 
                 conn.commit()
 
     def get_events(self, component: str = None, protection_category: ProtectionCategory = None,
-                   start_time: float = None, end_time: float = None) -> List[AnalysisEvent]:
+                   start_time: float = None, end_time: float = None) -> list[AnalysisEvent]:
         """Retrieve events from database with filtering"""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
@@ -625,7 +630,7 @@ class EventTracker:
                     timestamp=row[5],
                     duration=row[6],
                     metadata=json.loads(row[7]) if row[7] else {},
-                    error_details=row[8] or ""
+                    error_details=row[8] or "",
                 )
                 events.append(event)
 
@@ -633,7 +638,7 @@ class EventTracker:
 
     def get_success_counts(self, component: str = None,
                           protection_category: ProtectionCategory = None,
-                          start_time: float = None, end_time: float = None) -> Tuple[int, int]:
+                          start_time: float = None, end_time: float = None) -> tuple[int, int]:
         """Get success and total counts"""
         events = self.get_events(component, protection_category, start_time, end_time)
 
@@ -651,13 +656,13 @@ class MLPredictor:
         self.models = {
             "random_forest": RandomForestRegressor(n_estimators=100, random_state=42),
             "gradient_boosting": GradientBoostingRegressor(n_estimators=100, random_state=42),
-            "bayesian_ridge": BayesianRidge()
+            "bayesian_ridge": BayesianRidge(),
         }
         self.scaler = StandardScaler()
         self.is_trained = False
         self.feature_names = []
 
-    def prepare_features(self, events: List[AnalysisEvent]) -> Tuple[np.ndarray, np.ndarray]:
+    def prepare_features(self, events: list[AnalysisEvent]) -> tuple[np.ndarray, np.ndarray]:
         """Prepare features for machine learning"""
         if not events:
             return np.array([]), np.array([])
@@ -716,12 +721,12 @@ class MLPredictor:
 
         self.feature_names = [
             "total_count", "avg_duration", "hour_of_day", "day_of_week",
-            "num_categories", "num_components", "dominant_category_ratio", "dominant_component_ratio"
+            "num_categories", "num_components", "dominant_category_ratio", "dominant_component_ratio",
         ]
 
         return np.array(features), np.array(targets)
 
-    def train(self, events: List[AnalysisEvent]):
+    def train(self, events: list[AnalysisEvent]):
         """Train prediction models"""
         X, y = self.prepare_features(events)
 
@@ -736,11 +741,11 @@ class MLPredictor:
             try:
                 model.fit(X_scaled, y)
             except Exception as e:
-                logging.error(f"Error training {name} model: {e}")
+                logging.exception(f"Error training {name} model: {e}")
 
         self.is_trained = True
 
-    def predict(self, recent_events: List[AnalysisEvent], horizon: int = 24) -> Dict[str, Any]:
+    def predict(self, recent_events: list[AnalysisEvent], horizon: int = 24) -> dict[str, Any]:
         """Predict future success rates"""
         if not self.is_trained or not recent_events:
             return {}
@@ -760,7 +765,7 @@ class MLPredictor:
                 pred = model.predict(X_scaled)[0]
                 predictions[name] = max(0.0, min(1.0, pred))  # Clamp to [0, 1]
             except Exception as e:
-                logging.error(f"Error predicting with {name}: {e}")
+                logging.exception(f"Error predicting with {name}: {e}")
 
         # Ensemble prediction (average)
         if predictions:
@@ -817,7 +822,7 @@ class ReportGenerator:
 
             # Trend over time
             recent_events = analyzer.event_tracker.get_events(
-                start_time=time.time() - 30 * 24 * 3600  # Last 30 days
+                start_time=time.time() - 30 * 24 * 3600,  # Last 30 days
             )
             if recent_events:
                 daily_success = self._calculate_daily_success_rates(recent_events)
@@ -904,7 +909,7 @@ class ReportGenerator:
 
         return str(report_path)
 
-    def _calculate_daily_success_rates(self, events: List[AnalysisEvent]) -> Dict[int, float]:
+    def _calculate_daily_success_rates(self, events: list[AnalysisEvent]) -> dict[int, float]:
         """Calculate daily success rates"""
         daily_events = defaultdict(list)
         current_time = time.time()
@@ -921,7 +926,7 @@ class ReportGenerator:
 
         return daily_success
 
-    def _prepare_correlation_data(self, analyzer: "SuccessRateAnalyzer") -> Optional[np.ndarray]:
+    def _prepare_correlation_data(self, analyzer: "SuccessRateAnalyzer") -> np.ndarray | None:
         """Prepare correlation matrix data"""
         try:
             component_stats = analyzer.get_component_statistics()
@@ -966,7 +971,7 @@ class SuccessRateAnalyzer:
                 try:
                     # Update ML models every hour
                     recent_events = self.event_tracker.get_events(
-                        start_time=time.time() - 7 * 24 * 3600  # Last 7 days
+                        start_time=time.time() - 7 * 24 * 3600,  # Last 7 days
                     )
 
                     if len(recent_events) > 100:
@@ -985,14 +990,14 @@ class SuccessRateAnalyzer:
                     time.sleep(3600)  # Run every hour
 
                 except Exception as e:
-                    logging.error(f"Error in background analysis: {e}")
+                    logging.exception(f"Error in background analysis: {e}")
                     time.sleep(600)  # Wait 10 minutes on error
 
         threading.Thread(target=background_worker, daemon=True).start()
 
     def log_event(self, event_type: EventType, outcome: OutcomeType,
                   protection_category: ProtectionCategory, component: str,
-                  duration: float = 0.0, metadata: Dict[str, Any] = None,
+                  duration: float = 0.0, metadata: dict[str, Any] = None,
                   error_details: str = ""):
         """Log analysis event"""
         event = AnalysisEvent(
@@ -1004,7 +1009,7 @@ class SuccessRateAnalyzer:
             timestamp=time.time(),
             duration=duration,
             metadata=metadata or {},
-            error_details=error_details
+            error_details=error_details,
         )
 
         self.event_tracker.log_event(event)
@@ -1032,7 +1037,7 @@ class SuccessRateAnalyzer:
             start_time = time.time() - time_window
 
         success_count, total_count = self.event_tracker.get_success_counts(
-            component, protection_category, start_time
+            component, protection_category, start_time,
         )
 
         if total_count == 0:
@@ -1040,7 +1045,7 @@ class SuccessRateAnalyzer:
                 metric_name="success_rate",
                 value=0.0,
                 confidence_interval=(0.0, 1.0),
-                sample_size=0
+                sample_size=0,
             )
         else:
             success_rate = success_count / total_count
@@ -1050,7 +1055,7 @@ class SuccessRateAnalyzer:
                 metric_name="success_rate",
                 value=success_rate,
                 confidence_interval=(ci_lower, ci_upper),
-                sample_size=total_count
+                sample_size=total_count,
             )
 
         # Cache result
@@ -1060,7 +1065,7 @@ class SuccessRateAnalyzer:
         return result
 
     def get_bayesian_success_rate(self, component: str = None,
-                                 protection_category: ProtectionCategory = None) -> Dict[str, Any]:
+                                 protection_category: ProtectionCategory = None) -> dict[str, Any]:
         """Get Bayesian success rate analysis"""
         success_count, total_count = self.event_tracker.get_success_counts(component, protection_category)
         failure_count = total_count - success_count
@@ -1079,11 +1084,11 @@ class SuccessRateAnalyzer:
             "probability_above_50_percent": prob_above_50,
             "probability_above_80_percent": prob_above_80,
             "probability_above_90_percent": prob_above_90,
-            "sample_size": total_count
+            "sample_size": total_count,
         }
 
     def compare_success_rates(self, component1: str, component2: str,
-                             protection_category: ProtectionCategory = None) -> Dict[str, Any]:
+                             protection_category: ProtectionCategory = None) -> dict[str, Any]:
         """Compare success rates between components"""
         success1, total1 = self.event_tracker.get_success_counts(component1, protection_category)
         success2, total2 = self.event_tracker.get_success_counts(component2, protection_category)
@@ -1103,16 +1108,16 @@ class SuccessRateAnalyzer:
             "component1": {
                 "name": component1,
                 "success_rate": p1,
-                "sample_size": total1
+                "sample_size": total1,
             },
             "component2": {
                 "name": component2,
                 "success_rate": p2,
-                "sample_size": total2
+                "sample_size": total2,
             },
             "statistical_test": fisher_result,
             "effect_size_cohens_h": cohens_h,
-            "significant_difference": fisher_result["p_value"] < 0.05
+            "significant_difference": fisher_result["p_value"] < 0.05,
         }
 
     def get_trend_analysis(self, component: str,
@@ -1129,10 +1134,10 @@ class SuccessRateAnalyzer:
             trend_strength=trend_data.get("strength", 0.0),
             forecast_values=forecasts,
             forecast_intervals=intervals,
-            seasonal_pattern=seasonal_data.get("seasonal", False)
+            seasonal_pattern=seasonal_data.get("seasonal", False),
         )
 
-    def get_component_statistics(self) -> Dict[str, Dict[str, Any]]:
+    def get_component_statistics(self) -> dict[str, dict[str, Any]]:
         """Get statistics for all components"""
         # Get all unique components
         all_events = self.event_tracker.get_events()
@@ -1148,12 +1153,12 @@ class SuccessRateAnalyzer:
                 "confidence_interval": success_rate_result.confidence_interval,
                 "sample_size": success_rate_result.sample_size,
                 "bayesian_mean": bayesian_result["posterior_mean"],
-                "credible_interval": bayesian_result["credible_interval"]
+                "credible_interval": bayesian_result["credible_interval"],
             }
 
         return stats
 
-    def get_category_statistics(self) -> Dict[str, Dict[str, Any]]:
+    def get_category_statistics(self) -> dict[str, dict[str, Any]]:
         """Get statistics for all protection categories"""
         stats = {}
         for category in ProtectionCategory:
@@ -1163,12 +1168,12 @@ class SuccessRateAnalyzer:
                 stats[category.value] = {
                     "success_rate": success_rate_result.value,
                     "confidence_interval": success_rate_result.confidence_interval,
-                    "sample_size": success_rate_result.sample_size
+                    "sample_size": success_rate_result.sample_size,
                 }
 
         return stats
 
-    def generate_performance_dashboard(self) -> Dict[str, Any]:
+    def generate_performance_dashboard(self) -> dict[str, Any]:
         """Generate real-time performance dashboard data"""
         current_time = time.time()
 
@@ -1192,7 +1197,7 @@ class SuccessRateAnalyzer:
                 "events": len(component_events),
                 "successes": component_successes,
                 "success_rate": component_successes / len(component_events) if component_events else 0,
-                "avg_duration": np.mean([e.duration for e in component_events if e.duration > 0]) if component_events else 0
+                "avg_duration": np.mean([e.duration for e in component_events if e.duration > 0]) if component_events else 0,
             }
 
         # Recent trends
@@ -1211,14 +1216,14 @@ class SuccessRateAnalyzer:
             "overall_metrics": {
                 "total_events_24h": total_events,
                 "successful_events_24h": successful_events,
-                "overall_success_rate_24h": overall_success_rate
+                "overall_success_rate_24h": overall_success_rate,
             },
             "component_performance": component_performance,
             "trend_analysis": trend_analysis,
             "ml_predictions": predictions,
             "survival_analysis": {
-                "median_survival_time": self.survival_analyzer.median_survival_time()
-            }
+                "median_survival_time": self.survival_analyzer.median_survival_time(),
+            },
         }
 
     def generate_comprehensive_report(self) -> str:
@@ -1236,7 +1241,7 @@ class SuccessRateAnalyzer:
                 "export_timestamp": timestamp,
                 "component_statistics": self.get_component_statistics(),
                 "category_statistics": self.get_category_statistics(),
-                "dashboard_data": self.generate_performance_dashboard()
+                "dashboard_data": self.generate_performance_dashboard(),
             }
 
             if include_raw_events:
@@ -1251,7 +1256,7 @@ class SuccessRateAnalyzer:
                         "timestamp": e.timestamp,
                         "duration": e.duration,
                         "metadata": e.metadata,
-                        "error_details": e.error_details
+                        "error_details": e.error_details,
                     }
                     for e in events
                 ]
@@ -1261,7 +1266,7 @@ class SuccessRateAnalyzer:
 
             return output_file
 
-        elif format == "csv":
+        if format == "csv":
             output_file = f"intellicrack_analysis_{timestamp}.csv"
 
             # Export component statistics as CSV
@@ -1278,13 +1283,12 @@ class SuccessRateAnalyzer:
                         stats["success_rate"],
                         stats["confidence_interval"][0],
                         stats["confidence_interval"][1],
-                        stats["sample_size"]
+                        stats["sample_size"],
                     ])
 
             return output_file
 
-        else:
-            raise ValueError(f"Unsupported export format: {format}")
+        raise ValueError(f"Unsupported export format: {format}")
 
     def shutdown(self):
         """Shutdown analyzer"""
@@ -1331,7 +1335,7 @@ def track_success(event_type: EventType, protection_category: ProtectionCategory
                     outcome=outcome,
                     protection_category=protection_category,
                     component=func_component,
-                    duration=duration
+                    duration=duration,
                 )
 
                 return result
@@ -1344,7 +1348,7 @@ def track_success(event_type: EventType, protection_category: ProtectionCategory
                     protection_category=protection_category,
                     component=func_component,
                     duration=duration,
-                    error_details=str(e)
+                    error_details=str(e),
                 )
                 raise
 
@@ -1392,7 +1396,7 @@ if __name__ == "__main__":
             protection_category=category,
             component=component,
             timestamp=time.time() - timestamp_offset,
-            duration=duration
+            duration=duration,
         )
 
         analyzer.event_tracker.log_event(event)

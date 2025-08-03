@@ -1,5 +1,4 @@
-"""
-Model Performance Monitor for Intellicrack
+"""Model Performance Monitor for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -25,7 +24,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -95,6 +94,7 @@ logger = get_logger(__name__)
 @dataclass
 class PerformanceMetrics:
     """Performance metrics for a single inference."""
+
     model_id: str
     timestamp: datetime
     inference_time: float  # seconds
@@ -106,14 +106,15 @@ class PerformanceMetrics:
     gpu_percent: float
     batch_size: int
     sequence_length: int
-    quantization: Optional[str] = None
+    quantization: str | None = None
     device: str = "cpu"
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
 class ModelBenchmark:
     """Benchmark results for a model."""
+
     model_id: str
     avg_tokens_per_second: float
     avg_inference_time: float
@@ -125,23 +126,24 @@ class ModelBenchmark:
     total_tokens: int
     error_rate: float
     device: str
-    quantization: Optional[str] = None
+    quantization: str | None = None
     benchmark_date: datetime = field(default_factory=datetime.now)
 
 
 class ModelPerformanceMonitor:
     """Monitors and tracks model performance metrics."""
 
-    def __init__(self, history_size: int = 1000, save_dir: Optional[str] = None):
+    def __init__(self, history_size: int = 1000, save_dir: str | None = None):
         """Initialize the performance monitor.
 
         Args:
             history_size: Number of metrics to keep in memory
             save_dir: Directory to save metrics
+
         """
         self.history_size = history_size
-        self.metrics_history: Dict[str, deque] = {}
-        self.benchmarks: Dict[str, ModelBenchmark] = {}
+        self.metrics_history: dict[str, deque] = {}
+        self.benchmarks: dict[str, ModelBenchmark] = {}
 
         if save_dir is None:
             save_dir = Path.home() / ".intellicrack" / "performance_metrics"
@@ -181,7 +183,7 @@ class ModelPerformanceMonitor:
         benchmark_file = self.save_dir / "benchmarks.json"
         if benchmark_file.exists():
             try:
-                with open(benchmark_file, "r") as f:
+                with open(benchmark_file) as f:
                     data = json.load(f)
                     for model_id, bench_data in data.items():
                         self.benchmarks[model_id] = ModelBenchmark(
@@ -198,7 +200,7 @@ class ModelPerformanceMonitor:
                             device=bench_data["device"],
                             quantization=bench_data.get("quantization"),
                             benchmark_date=datetime.fromisoformat(
-                                bench_data["benchmark_date"])
+                                bench_data["benchmark_date"]),
                         )
             except Exception as e:
                 logger.error(f"Failed to load benchmarks: {e}")
@@ -221,7 +223,7 @@ class ModelPerformanceMonitor:
                     "error_rate": benchmark.error_rate,
                     "device": benchmark.device,
                     "quantization": benchmark.quantization,
-                    "benchmark_date": benchmark.benchmark_date.isoformat()
+                    "benchmark_date": benchmark.benchmark_date.isoformat(),
                 }
 
             with open(benchmark_file, "w") as f:
@@ -229,7 +231,7 @@ class ModelPerformanceMonitor:
         except Exception as e:
             logger.error(f"Failed to save benchmarks: {e}")
 
-    def start_inference(self, model_id: str) -> Dict[str, Any]:
+    def start_inference(self, model_id: str) -> dict[str, Any]:
         """Start tracking an inference.
 
         Args:
@@ -237,12 +239,13 @@ class ModelPerformanceMonitor:
 
         Returns:
             Context dictionary to pass to end_inference
+
         """
         context = {
             "model_id": model_id,
             "start_time": time.time(),
             "start_memory": self._get_memory_usage(),
-            "start_cpu": psutil.cpu_percent(interval=0.1) if HAS_PSUTIL else 0.0
+            "start_cpu": psutil.cpu_percent(interval=0.1) if HAS_PSUTIL else 0.0,
         }
 
         if self.has_gpu:
@@ -253,12 +256,12 @@ class ModelPerformanceMonitor:
 
     def end_inference(
         self,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         tokens_generated: int,
         batch_size: int = 1,
         sequence_length: int = 0,
-        error: Optional[str] = None,
-        **kwargs
+        error: str | None = None,
+        **kwargs,
     ) -> PerformanceMetrics:
         """End tracking an inference and record metrics.
 
@@ -272,6 +275,7 @@ class ModelPerformanceMonitor:
 
         Returns:
             Performance metrics
+
         """
         end_time = time.time()
         inference_time = end_time - context["start_time"]
@@ -318,7 +322,7 @@ class ModelPerformanceMonitor:
             sequence_length=sequence_length,
             quantization=kwargs.get("quantization"),
             device=device,
-            error=error
+            error=error,
         )
 
         # Add to history
@@ -338,8 +342,7 @@ class ModelPerformanceMonitor:
         if HAS_PSUTIL:
             process = psutil.Process()
             return process.memory_info().rss / (1024 * 1024)
-        else:
-            return 0.0
+        return 0.0
 
     def _get_gpu_memory_usage(self) -> float:
         """Get GPU memory usage in MB."""
@@ -354,14 +357,12 @@ class ModelPerformanceMonitor:
                     info = pynvml.nvmlDeviceGetMemoryInfo(handle)
                     total_memory += info.used / (1024 * 1024)
                 return total_memory
-            else:
-                # Fallback to unified GPU system or PyTorch
-                if GPU_AUTOLOADER_AVAILABLE and memory_allocated:
-                    return memory_allocated() / (1024 * 1024)
-                elif HAS_TORCH and torch.cuda.is_available():
-                    return torch.cuda.memory_allocated() / (1024 * 1024)
-                else:
-                    return 0.0
+            # Fallback to unified GPU system or PyTorch
+            if GPU_AUTOLOADER_AVAILABLE and memory_allocated:
+                return memory_allocated() / (1024 * 1024)
+            if HAS_TORCH and torch.cuda.is_available():
+                return torch.cuda.memory_allocated() / (1024 * 1024)
+            return 0.0
         except (AttributeError, RuntimeError, OSError):
             return 0
 
@@ -378,21 +379,19 @@ class ModelPerformanceMonitor:
                     util = pynvml.nvmlDeviceGetUtilizationRates(handle)
                     total_util += util.gpu
                 return total_util / self.gpu_count
-            else:
-                # Estimate based on memory usage
-                if GPU_AUTOLOADER_AVAILABLE and memory_allocated and memory_reserved:
-                    used_mem = memory_allocated()
-                    total_mem = memory_reserved()
-                    return (used_mem / total_mem) * 100 if total_mem > 0 else 0
-                elif HAS_TORCH and torch.cuda.is_available():
-                    total_mem = sum(
-                        torch.cuda.get_device_properties(i).total_memory
-                        for i in range(torch.cuda.device_count())
-                    )
-                    used_mem = torch.cuda.memory_allocated()
-                    return (used_mem / total_mem) * 100 if total_mem > 0 else 0
-                else:
-                    return 0.0
+            # Estimate based on memory usage
+            if GPU_AUTOLOADER_AVAILABLE and memory_allocated and memory_reserved:
+                used_mem = memory_allocated()
+                total_mem = memory_reserved()
+                return (used_mem / total_mem) * 100 if total_mem > 0 else 0
+            if HAS_TORCH and torch.cuda.is_available():
+                total_mem = sum(
+                    torch.cuda.get_device_properties(i).total_memory
+                    for i in range(torch.cuda.device_count())
+                )
+                used_mem = torch.cuda.memory_allocated()
+                return (used_mem / total_mem) * 100 if total_mem > 0 else 0
+            return 0.0
         except (RuntimeError, AttributeError):
             return 0
 
@@ -438,14 +437,14 @@ class ModelPerformanceMonitor:
             total_tokens=sum(m.tokens_generated for m in history),
             error_rate=error_rate,
             device=metrics.device,
-            quantization=metrics.quantization
+            quantization=metrics.quantization,
         )
 
         # Save periodically
         if len(history) % 10 == 0:
             self._save_benchmarks()
 
-    def get_metrics_summary(self, model_id: str) -> Dict[str, Any]:
+    def get_metrics_summary(self, model_id: str) -> dict[str, Any]:
         """Get summary metrics for a model.
 
         Args:
@@ -453,6 +452,7 @@ class ModelPerformanceMonitor:
 
         Returns:
             Summary dictionary
+
         """
         if model_id not in self.metrics_history:
             return {"error": "No metrics found for model"}
@@ -472,8 +472,8 @@ class ModelPerformanceMonitor:
                 "avg_tokens_per_second": (np.mean(recent_tps) if HAS_NUMPY else sum(recent_tps)/len(recent_tps)) if recent_tps else 0,
                 "avg_latency": (np.mean(recent_latency) if HAS_NUMPY else sum(recent_latency)/len(recent_latency)) if recent_latency else 0,
                 "min_latency": (np.min(recent_latency) if HAS_NUMPY else min(recent_latency)) if recent_latency else 0,
-                "max_latency": (np.max(recent_latency) if HAS_NUMPY else max(recent_latency)) if recent_latency else 0
-            }
+                "max_latency": (np.max(recent_latency) if HAS_NUMPY else max(recent_latency)) if recent_latency else 0,
+            },
         }
 
         if benchmark:
@@ -486,7 +486,7 @@ class ModelPerformanceMonitor:
                 "p99_latency": benchmark.p99_latency,
                 "error_rate": benchmark.error_rate,
                 "device": benchmark.device,
-                "quantization": benchmark.quantization
+                "quantization": benchmark.quantization,
             }
 
         # Resource usage
@@ -498,16 +498,16 @@ class ModelPerformanceMonitor:
                 "tokens_per_second": latest.tokens_per_second,
                 "memory_mb": latest.memory_used_mb + latest.gpu_memory_mb,
                 "cpu_percent": latest.cpu_percent,
-                "gpu_percent": latest.gpu_percent
+                "gpu_percent": latest.gpu_percent,
             }
 
         return summary
 
     def compare_models(
         self,
-        model_ids: List[str],
-        metric: str = "tokens_per_second"
-    ) -> Dict[str, Any]:
+        model_ids: list[str],
+        metric: str = "tokens_per_second",
+    ) -> dict[str, Any]:
         """Compare performance across multiple models.
 
         Args:
@@ -516,10 +516,11 @@ class ModelPerformanceMonitor:
 
         Returns:
             Comparison results
+
         """
         comparison = {
             "metric": metric,
-            "models": {}
+            "models": {},
         }
 
         for model_id in model_ids:
@@ -541,7 +542,7 @@ class ModelPerformanceMonitor:
                     "value": value,
                     "device": benchmark.device,
                     "quantization": benchmark.quantization,
-                    "total_inferences": benchmark.total_inferences
+                    "total_inferences": benchmark.total_inferences,
                 }
 
         # Find best performer
@@ -551,14 +552,14 @@ class ModelPerformanceMonitor:
                 best_model = min(
                     comparison["models"].items(),
                     key=lambda x: x[1]["value"] if x[1]["value"] is not None else float(
-                        "inf")
+                        "inf"),
                 )
             else:
                 # Higher is better
                 best_model = max(
                     comparison["models"].items(),
                     key=lambda x: x[1]["value"] if x[1]["value"] is not None else -
-                    float("inf")
+                    float("inf"),
                 )
 
             comparison["best_model"] = best_model[0]
@@ -574,6 +575,7 @@ class ModelPerformanceMonitor:
 
         Returns:
             Optimized model
+
         """
         if GPU_AUTOLOADER_AVAILABLE:
             try:
@@ -607,9 +609,9 @@ class ModelPerformanceMonitor:
 
     def export_metrics(
         self,
-        model_id: Optional[str] = None,
-        format: str = "json"
-    ) -> Optional[Path]:
+        model_id: str | None = None,
+        format: str = "json",
+    ) -> Path | None:
         """Export metrics data.
 
         Args:
@@ -618,6 +620,7 @@ class ModelPerformanceMonitor:
 
         Returns:
             Path to exported file
+
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -637,7 +640,7 @@ class ModelPerformanceMonitor:
                             "memory_mb": m.memory_used_mb + m.gpu_memory_mb,
                             "device": m.device,
                             "quantization": m.quantization,
-                            "error": m.error
+                            "error": m.error,
                         }
                         for m in self.metrics_history[model_id]
                     ]
@@ -652,7 +655,7 @@ class ModelPerformanceMonitor:
                             "memory_mb": m.memory_used_mb + m.gpu_memory_mb,
                             "device": m.device,
                             "quantization": m.quantization,
-                            "error": m.error
+                            "error": m.error,
                         }
                         for m in history
                     ]
@@ -662,7 +665,7 @@ class ModelPerformanceMonitor:
 
             return filepath
 
-        elif format == "csv":
+        if format == "csv":
             import csv
 
             filename = f"metrics_{model_id or 'all'}_{timestamp}.csv"
@@ -672,7 +675,7 @@ class ModelPerformanceMonitor:
                 writer = csv.writer(f)
                 writer.writerow([
                     "model_id", "timestamp", "inference_time", "tokens_generated",
-                    "tokens_per_second", "memory_mb", "device", "quantization", "error"
+                    "tokens_per_second", "memory_mb", "device", "quantization", "error",
                 ])
 
                 if model_id and model_id in self.metrics_history:
@@ -681,7 +684,7 @@ class ModelPerformanceMonitor:
                             model_id, m.timestamp.isoformat(), m.inference_time,
                             m.tokens_generated, m.tokens_per_second,
                             m.memory_used_mb + m.gpu_memory_mb, m.device,
-                            m.quantization, m.error
+                            m.quantization, m.error,
                         ])
                 else:
                     for mid, history in self.metrics_history.items():
@@ -690,18 +693,19 @@ class ModelPerformanceMonitor:
                                 mid, m.timestamp.isoformat(), m.inference_time,
                                 m.tokens_generated, m.tokens_per_second,
                                 m.memory_used_mb + m.gpu_memory_mb, m.device,
-                                m.quantization, m.error
+                                m.quantization, m.error,
                             ])
 
             return filepath
 
         return None
 
-    def clear_metrics(self, model_id: Optional[str] = None):
+    def clear_metrics(self, model_id: str | None = None):
         """Clear metrics data.
 
         Args:
             model_id: Specific model or None for all
+
         """
         if model_id:
             if model_id in self.metrics_history:

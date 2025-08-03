@@ -1,5 +1,4 @@
-"""
-C2 Infrastructure Manager
+"""C2 Infrastructure Manager
 
 Central manager for C2 infrastructure operations.
 
@@ -21,10 +20,10 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Dict
+from typing import Any
 
-from .c2_server import C2Server
 from ...utils.logger import get_logger
+from .c2_server import C2Server
 
 
 class C2Manager:
@@ -51,14 +50,14 @@ class C2Manager:
                     "protocol": config.get("protocol", "tcp"),
                     "port": config.get("port", 4444),
                     "interface": config.get("interface", "0.0.0.0"),
-                    "startup_result": result
-                }
+                    "startup_result": result,
+                },
             }
         except Exception as e:
             self.logger.error("Exception in c2_manager: %s", e)
             return {
                 "success": False,
-                "error": str(e)
+                "error": str(e),
             }
 
     def stop_server(self):
@@ -78,11 +77,11 @@ class C2Manager:
             "sessions": [{
                 "id": session.get("id", "unknown"),
                 "remote_ip": session.get("remote_ip", "unknown"),
-                "platform": session.get("platform", "unknown")
-            } for session in active_sessions]
+                "platform": session.get("platform", "unknown"),
+            } for session in active_sessions],
         }
 
-    def wait_for_callback(self, session_id: str = None, timeout: int = 300) -> Dict[str, Any]:
+    def wait_for_callback(self, session_id: str = None, timeout: int = 300) -> dict[str, Any]:
         """Wait for a callback from an agent."""
         try:
             import time
@@ -102,31 +101,30 @@ class C2Manager:
                                 "success": True,
                                 "session_id": session_id,
                                 "session_info": session,
-                                "wait_time": time.time() - start_time
+                                "wait_time": time.time() - start_time,
                             }
-                else:
-                    # Wait for any callback
-                    if active_sessions:
-                        return {
-                            "success": True,
-                            "session_id": active_sessions[0].get("id"),
-                            "session_info": active_sessions[0],
-                            "wait_time": time.time() - start_time
-                        }
+                # Wait for any callback
+                elif active_sessions:
+                    return {
+                        "success": True,
+                        "session_id": active_sessions[0].get("id"),
+                        "session_info": active_sessions[0],
+                        "wait_time": time.time() - start_time,
+                    }
 
                 time.sleep(1)  # Check every second
 
             return {
                 "success": False,
                 "error": f"No callback received within {timeout} seconds",
-                "wait_time": timeout
+                "wait_time": timeout,
             }
 
         except Exception as e:
             self.logger.error("Exception in c2_manager: %s", e)
             return {"success": False, "error": str(e)}
 
-    def establish_session(self, target_info: Dict[str, Any], payload_info: Dict[str, Any]) -> Dict[str, Any]:
+    def establish_session(self, target_info: dict[str, Any], payload_info: dict[str, Any]) -> dict[str, Any]:
         """Establish a C2 session with a target."""
         try:
             import time
@@ -144,7 +142,7 @@ class C2Manager:
                 "platform": target_info.get("platform", "unknown"),
                 "payload_type": payload_info.get("type", "unknown"),
                 "established_at": time.time(),
-                "status": "establishing"
+                "status": "establishing",
             }
 
             # Try to establish connection
@@ -162,17 +160,15 @@ class C2Manager:
                         "success": True,
                         "session_id": session_id,
                         "session_info": session_info,
-                        "callback_time": callback_result.get("wait_time", 0)
+                        "callback_time": callback_result.get("wait_time", 0),
                     }
-                else:
-                    session_info["status"] = "failed"
-                    return {
-                        "success": False,
-                        "error": "Failed to receive initial callback",
-                        "session_id": session_id
-                    }
-            else:
-                return {"success": False, "error": "C2 server not running"}
+                session_info["status"] = "failed"
+                return {
+                    "success": False,
+                    "error": "Failed to receive initial callback",
+                    "session_id": session_id,
+                }
+            return {"success": False, "error": "C2 server not running"}
 
         except Exception as e:
             self.logger.error("Exception in c2_manager: %s", e)

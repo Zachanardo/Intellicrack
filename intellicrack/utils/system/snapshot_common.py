@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -20,12 +19,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Common snapshot comparison utilities to avoid code duplication.
 """
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 
 def validate_snapshots(snapshots_dict, snapshot1, snapshot2, logger=None):
-    """
-    Validate that both snapshots exist.
+    """Validate that both snapshots exist.
 
     Args:
         snapshots_dict: Dictionary containing snapshots
@@ -35,6 +33,7 @@ def validate_snapshots(snapshots_dict, snapshot1, snapshot2, logger=None):
 
     Returns:
         tuple: (is_valid, error_message)
+
     """
     if snapshot1 not in snapshots_dict:
         error_msg = f"Snapshot '{snapshot1}' not found"
@@ -52,22 +51,21 @@ def validate_snapshots(snapshots_dict, snapshot1, snapshot2, logger=None):
 
 
 def log_comparison_start(snapshot1, snapshot2, logger=None):
-    """
-    Log the start of snapshot comparison.
+    """Log the start of snapshot comparison.
 
     Args:
         snapshot1: Name of first snapshot
         snapshot2: Name of second snapshot
         logger: Optional logger instance
+
     """
     if logger:
         logger.info("Comparing snapshots: %s vs %s", snapshot1, snapshot2)
 
 
-def start_snapshot_comparison(snapshots_dict: Dict[str, Any], snapshot1: str, snapshot2: str,
-                            logger=None) -> Tuple[bool, Optional[Dict], Optional[str]]:
-    """
-    Start snapshot comparison with validation and logging.
+def start_snapshot_comparison(snapshots_dict: dict[str, Any], snapshot1: str, snapshot2: str,
+                            logger=None) -> tuple[bool, dict | None, str | None]:
+    """Start snapshot comparison with validation and logging.
 
     Args:
         snapshots_dict: Dictionary containing snapshots
@@ -78,6 +76,7 @@ def start_snapshot_comparison(snapshots_dict: Dict[str, Any], snapshot1: str, sn
     Returns:
         tuple: (success, snapshot_data, error_message)
                snapshot_data is dict with s1 and s2 if successful
+
     """
     # Validate snapshots exist
     is_valid, error_msg = validate_snapshots(snapshots_dict, snapshot1, snapshot2, logger)
@@ -95,15 +94,14 @@ def start_snapshot_comparison(snapshots_dict: Dict[str, Any], snapshot1: str, sn
         return True, {"s1": s1, "s2": s2}, None
 
     except Exception as e:
-        error_msg = f"Error starting comparison: {str(e)}"
+        error_msg = f"Error starting comparison: {e!s}"
         if logger:
             logger.error(error_msg)
         return False, None, error_msg
 
 
 def get_snapshot_data(snapshots_dict, snapshot_name):
-    """
-    Get snapshot data safely.
+    """Get snapshot data safely.
 
     Args:
         snapshots_dict: Dictionary containing snapshots
@@ -111,13 +109,13 @@ def get_snapshot_data(snapshots_dict, snapshot_name):
 
     Returns:
         dict: Snapshot data or empty dict if not found
+
     """
     return snapshots_dict.get(snapshot_name, {})
 
 
 def compare_file_lists(files1_data, files2_data, limit=100):
-    """
-    Compare file lists between two snapshots.
+    """Compare file lists between two snapshots.
 
     Args:
         files1_data: File data from first snapshot
@@ -126,6 +124,7 @@ def compare_file_lists(files1_data, files2_data, limit=100):
 
     Returns:
         dict: Dictionary with new_files, deleted_files, and modified_files lists
+
     """
     files1 = set(files1_data.splitlines() if files1_data else [])
     files2 = set(files2_data.splitlines() if files2_data else [])
@@ -137,5 +136,5 @@ def compare_file_lists(files1_data, files2_data, limit=100):
     return {
         "new_files": new_files,
         "deleted_files": deleted_files,
-        "modified_files": modified_files
+        "modified_files": modified_files,
     }

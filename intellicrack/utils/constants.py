@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -43,7 +42,7 @@ ADOBE_PROCESSES = [
     "Substance 3D Painter.exe",
     "Substance 3D Sampler.exe",
     "Substance 3D Stager.exe",
-    "Substance 3D Modeler.exe"
+    "Substance 3D Modeler.exe",
 ]
 
 # Common file size formatting breakpoints
@@ -51,26 +50,26 @@ SIZE_UNITS = [
     (1024 ** 3, "GB"),
     (1024 ** 2, "MB"),
     (1024, "KB"),
-    (1, "B")
+    (1, "B"),
 ]
 
 # C2 Server default configuration
 C2_DEFAULTS = {
     "http": {
         "host": os.environ.get("C2_HTTP_HOST", "127.0.0.1"),
-        "port": int(os.environ.get("C2_HTTP_PORT", "8080"))
+        "port": int(os.environ.get("C2_HTTP_PORT", "8080")),
     },
     "https": {
         "host": os.environ.get("C2_HTTPS_HOST", "127.0.0.1"),
-        "port": int(os.environ.get("C2_HTTPS_PORT", "8443"))
+        "port": int(os.environ.get("C2_HTTPS_PORT", "8443")),
     },
     "dns": {
         "host": os.environ.get("C2_DNS_HOST", "127.0.0.1"),
         "port": int(os.environ.get("C2_DNS_PORT", "5353")),
-        "domain": os.environ.get("C2_DNS_DOMAIN", "localhost.localdomain")
+        "domain": os.environ.get("C2_DNS_DOMAIN", "localhost.localdomain"),
     },
     "tcp": {
         "host": os.environ.get("C2_TCP_HOST", "127.0.0.1"),
-        "port": int(os.environ.get("C2_TCP_PORT", "4444"))
-    }
+        "port": int(os.environ.get("C2_TCP_PORT", "4444")),
+    },
 }

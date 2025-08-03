@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -23,6 +22,7 @@ Basic template for straightforward binary analysis tasks
 
 class SimpleAnalysisPlugin:
     """Simple analysis plugin for basic binary examination."""
+
     def __init__(self):
         """Initialize the simple analysis plugin."""
         super().__init__()

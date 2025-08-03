@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -25,15 +24,13 @@ This module consolidates PE parsing patterns to reduce code duplication.
 import io
 import logging
 import struct
-from typing import Dict, List, Optional
 
 from PIL import Image
 
 logger = logging.getLogger(__name__)
 
-def analyze_pe_imports(pe, target_apis: Dict[str, List[str]]) -> Dict[str, List[str]]:
-    """
-    Analyze PE imports for specific API categories.
+def analyze_pe_imports(pe, target_apis: dict[str, list[str]]) -> dict[str, list[str]]:
+    """Analyze PE imports for specific API categories.
 
     Args:
         pe: PE file object
@@ -41,19 +38,20 @@ def analyze_pe_imports(pe, target_apis: Dict[str, List[str]]) -> Dict[str, List[
 
     Returns:
         Dictionary mapping categories to detected APIs
+
     """
     from ..network_api_common import analyze_network_apis
     return analyze_network_apis(pe, target_apis)
 
-def get_pe_sections_info(pe) -> List[Dict]:
-    """
-    Extract PE section information.
+def get_pe_sections_info(pe) -> list[dict]:
+    """Extract PE section information.
 
     Args:
         pe: PE file object
 
     Returns:
         List of section information dictionaries
+
     """
     sections = []
 
@@ -63,15 +61,14 @@ def get_pe_sections_info(pe) -> List[Dict]:
             "virtual_address": section.VirtualAddress,
             "virtual_size": section.Misc_VirtualSize,
             "raw_size": section.SizeOfRawData,
-            "characteristics": section.Characteristics
+            "characteristics": section.Characteristics,
         }
         sections.append(section_info)
 
     return sections
 
-def extract_pe_icon(pe_path: str, output_path: Optional[str] = None) -> Optional[Image.Image]:
-    """
-    Extract icon from PE file.
+def extract_pe_icon(pe_path: str, output_path: str | None = None) -> Image.Image | None:
+    """Extract icon from PE file.
 
     Args:
         pe_path: Path to PE file
@@ -79,6 +76,7 @@ def extract_pe_icon(pe_path: str, output_path: Optional[str] = None) -> Optional
 
     Returns:
         PIL Image object or None if no icon found
+
     """
     try:
         import pefile
@@ -108,15 +106,15 @@ def extract_pe_icon(pe_path: str, output_path: Optional[str] = None) -> Optional
         logger.error(f"Error extracting PE icon: {e}")
         return None
 
-def extract_icon_from_resources(pe) -> Optional[bytes]:
-    """
-    Extract icon data from PE resources.
+def extract_icon_from_resources(pe) -> bytes | None:
+    """Extract icon data from PE resources.
 
     Args:
         pe: pefile.PE object
 
     Returns:
         Icon data bytes or None
+
     """
     try:
         # RT_ICON = 3, RT_GROUP_ICON = 14
@@ -168,7 +166,7 @@ def extract_icon_from_resources(pe) -> Optional[bytes]:
                 if offset + 14 <= len(group_data):
                     # GRPICONDIRENTRY structure
                     width, height, colors, _, planes, bits, size, icon_id = struct.unpack(
-                        "<BBBBHHIH", group_data[offset:offset+14]
+                        "<BBBBHHIH", group_data[offset:offset+14],
                     )
                     offset += 14
 
@@ -190,15 +188,15 @@ def extract_icon_from_resources(pe) -> Optional[bytes]:
         logger.error(f"Error extracting icon from resources: {e}")
         return None
 
-def create_image_from_icon_data(icon_data: bytes) -> Optional[Image.Image]:
-    """
-    Create PIL Image from icon data.
+def create_image_from_icon_data(icon_data: bytes) -> Image.Image | None:
+    """Create PIL Image from icon data.
 
     Args:
         icon_data: Raw icon data bytes
 
     Returns:
         PIL Image object or None
+
     """
     try:
         # Try to load as ICO format first
@@ -252,9 +250,8 @@ def create_image_from_icon_data(icon_data: bytes) -> Optional[Image.Image]:
         logger.error(f"Error creating image from icon data: {e}")
         return None
 
-def extract_all_pe_icons(pe_path: str, output_dir: str) -> List[str]:
-    """
-    Extract all icons from PE file.
+def extract_all_pe_icons(pe_path: str, output_dir: str) -> list[str]:
+    """Extract all icons from PE file.
 
     Args:
         pe_path: Path to PE file
@@ -262,6 +259,7 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> List[str]:
 
     Returns:
         List of saved icon file paths
+
     """
     saved_icons = []
 
@@ -314,22 +312,22 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> List[str]:
         logger.error(f"Error extracting all PE icons: {e}")
         return saved_icons
 
-def get_pe_icon_info(pe_path: str) -> Dict[str, any]:
-    """
-    Get information about icons in PE file.
+def get_pe_icon_info(pe_path: str) -> dict[str, any]:
+    """Get information about icons in PE file.
 
     Args:
         pe_path: Path to PE file
 
     Returns:
         Dictionary with icon information
+
     """
     icon_info = {
         "has_icon": False,
         "icon_count": 0,
         "icon_groups": 0,
         "icon_sizes": [],
-        "largest_icon": None
+        "largest_icon": None,
     }
 
     try:
@@ -369,7 +367,7 @@ def get_pe_icon_info(pe_path: str) -> Dict[str, any]:
                 if icon_sizes:
                     icon_info["largest_icon"] = {
                         "size": max(icon_sizes),
-                        "size_kb": max(icon_sizes) / 1024
+                        "size_kb": max(icon_sizes) / 1024,
                     }
 
         return icon_info

@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -29,7 +28,6 @@ import hashlib
 import json
 import logging
 import os
-from typing import List, Optional, Tuple
 
 from .interface import DownloadProgressCallback, ModelInfo, ModelRepositoryInterface
 
@@ -40,11 +38,11 @@ class LocalFileRepository(ModelRepositoryInterface):
     """Repository adapter for the local file system."""
 
     def __init__(self, models_directory: str = "models"):
-        """
-        Initialize the local file repository.
+        """Initialize the local file repository.
 
         Args:
             models_directory: Directory where models are stored
+
         """
         self.models_directory = models_directory
         self.models_metadata_file = os.path.join(models_directory, "models_metadata.json")
@@ -60,7 +58,7 @@ class LocalFileRepository(ModelRepositoryInterface):
         """Load metadata for local models."""
         if os.path.exists(self.models_metadata_file):
             try:
-                with open(self.models_metadata_file, "r") as f:
+                with open(self.models_metadata_file) as f:
                     metadata = json.load(f)
 
                     # Convert metadata to ModelInfo objects
@@ -70,7 +68,7 @@ class LocalFileRepository(ModelRepositoryInterface):
                     }
 
                 logger.info(f"Loaded metadata for {len(self.models_cache)} local models")
-            except (json.JSONDecodeError, IOError) as e:
+            except (OSError, json.JSONDecodeError) as e:
                 logger.warning(f"Failed to load local models metadata: {e}")
                 self.models_cache = {}
 
@@ -84,7 +82,7 @@ class LocalFileRepository(ModelRepositoryInterface):
         try:
             with open(self.models_metadata_file, "w") as f:
                 json.dump(metadata, f, indent=2)
-        except IOError as e:
+        except OSError as e:
             logger.warning(f"Failed to save local models metadata: {e}")
 
     def _scan_for_models(self):
@@ -112,7 +110,7 @@ class LocalFileRepository(ModelRepositoryInterface):
                     size_bytes=file_size,
                     format="gguf",
                     provider="local",
-                    local_path=file_path
+                    local_path=file_path,
                 )
 
                 # Compute checksum asynchronously (not blocking the UI)
@@ -126,11 +124,11 @@ class LocalFileRepository(ModelRepositoryInterface):
         self._save_metadata()
 
     def _compute_checksum(self, model_info: ModelInfo):
-        """
-        Compute the SHA256 checksum for a model file.
+        """Compute the SHA256 checksum for a model file.
 
         Args:
             model_info: ModelInfo object to update with the checksum
+
         """
         if not model_info.local_path or not os.path.exists(model_info.local_path):
             return
@@ -143,15 +141,15 @@ class LocalFileRepository(ModelRepositoryInterface):
                     sha256_hash.update(byte_block)
 
             model_info.checksum = sha256_hash.hexdigest()
-        except IOError as e:
+        except OSError as e:
             logger.warning(f"Failed to compute checksum for {model_info.name}: {e}")
 
-    def get_available_models(self) -> List[ModelInfo]:
-        """
-        Get a list of available models from the local repository.
+    def get_available_models(self) -> list[ModelInfo]:
+        """Get a list of available models from the local repository.
 
         Returns:
             A list of ModelInfo objects representing the available models.
+
         """
         # Scan for new models first
         self._scan_for_models()
@@ -159,15 +157,15 @@ class LocalFileRepository(ModelRepositoryInterface):
         # Return all models
         return list(self.models_cache.values())
 
-    def get_model_details(self, model_id: str) -> Optional[ModelInfo]:
-        """
-        Get detailed information about a specific model.
+    def get_model_details(self, model_id: str) -> ModelInfo | None:
+        """Get detailed information about a specific model.
 
         Args:
             model_id: The ID of the model to get details for
 
         Returns:
             A ModelInfo object containing the model details, or None if the model is not found.
+
         """
         # Check if the model is in our cache
         if model_id in self.models_cache:
@@ -179,9 +177,8 @@ class LocalFileRepository(ModelRepositoryInterface):
 
     # pylint: disable=too-many-locals
     def download_model(self, model_id: str, destination_path: str,
-                      progress_callback: Optional[DownloadProgressCallback] = None) -> Tuple[bool, str]:
-        """
-        "Download" a model from the local repository (copy the file).
+                      progress_callback: DownloadProgressCallback | None = None) -> tuple[bool, str]:
+        """"Download" a model from the local repository (copy the file).
 
         Args:
             model_id: ID of the model to download
@@ -190,6 +187,7 @@ class LocalFileRepository(ModelRepositoryInterface):
 
         Returns:
             Tuple of (success, message)
+
         """
         # Get model details
         model_info = self.get_model_details(model_id)
@@ -230,21 +228,21 @@ class LocalFileRepository(ModelRepositoryInterface):
 
             return True, "Copy complete"
 
-        except IOError as e:
+        except OSError as e:
             logger.error("IO error in local_repository: %s", e)
             if progress_callback:
-                progress_callback.on_complete(False, f"Copy failed: {str(e)}")
-            return False, f"Copy failed: {str(e)}"
+                progress_callback.on_complete(False, f"Copy failed: {e!s}")
+            return False, f"Copy failed: {e!s}"
 
-    def add_model(self, file_path: str) -> Optional[ModelInfo]:
-        """
-        Add a model file to the repository.
+    def add_model(self, file_path: str) -> ModelInfo | None:
+        """Add a model file to the repository.
 
         Args:
             file_path: Path to the model file
 
         Returns:
             ModelInfo object for the added model, or None if failed
+
         """
         if not os.path.exists(file_path):
             logger.warning(f"Model file not found: {file_path}")
@@ -266,7 +264,7 @@ class LocalFileRepository(ModelRepositoryInterface):
                     dst.write(src.read())
 
                 file_path = dest_path
-            except IOError as e:
+            except OSError as e:
                 logger.error(f"Failed to copy model file: {e}")
                 return None
 
@@ -282,7 +280,7 @@ class LocalFileRepository(ModelRepositoryInterface):
             size_bytes=file_size,
             format="gguf",
             provider="local",
-            local_path=file_path
+            local_path=file_path,
         )
 
         # Compute checksum asynchronously
@@ -296,24 +294,24 @@ class LocalFileRepository(ModelRepositoryInterface):
 
         return model_info
 
-    def authenticate(self) -> Tuple[bool, str]:
-        """
-        Authenticate with the repository (no-op for local repository).
+    def authenticate(self) -> tuple[bool, str]:
+        """Authenticate with the repository (no-op for local repository).
 
         Returns:
             Always returns (True, "Local repository doesn't require authentication")
+
         """
         return True, "Local repository doesn't require authentication"
 
     def remove_model(self, model_id: str) -> bool:
-        """
-        Remove a model from the repository.
+        """Remove a model from the repository.
 
         Args:
             model_id: ID of the model to remove
 
         Returns:
             True if the model was removed, False otherwise
+
         """
         if model_id not in self.models_cache:
             return False
@@ -324,7 +322,7 @@ class LocalFileRepository(ModelRepositoryInterface):
         if model_info.local_path and os.path.exists(model_info.local_path):
             try:
                 os.remove(model_info.local_path)
-            except IOError as e:
+            except OSError as e:
                 logger.warning(f"Failed to remove model file: {e}")
                 return False
 

@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -48,6 +47,7 @@ except ImportError as e:
     from enum import Enum
     class VulnerabilityLevel(Enum):
         """Fallback vulnerability severity levels when module unavailable."""
+
         CRITICAL = "critical"
         HIGH = "high"
         MEDIUM = "medium"
@@ -58,8 +58,8 @@ except ImportError as e:
 # Export main interface
 __all__ = [
     "ModelManager",
+    "SeverityLevel",
     "VulnerabilityLevel",
-    "SeverityLevel"
 ]
 
 if get_protection_knowledge_base is not None:

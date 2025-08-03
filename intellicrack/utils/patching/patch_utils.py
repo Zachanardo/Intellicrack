@@ -1,5 +1,4 @@
-"""
-Patching utilities for the Intellicrack framework.
+"""Patching utilities for the Intellicrack framework.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -25,7 +24,7 @@ import re
 import shutil
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 # Module logger
 logger = logging.getLogger(__name__)
@@ -37,9 +36,8 @@ except ImportError as e:
     pefile = None
 
 
-def parse_patch_instructions(text: str) -> List[Dict[str, Any]]:
-    """
-    Parse patch instructions from AI-generated or formatted text.
+def parse_patch_instructions(text: str) -> list[dict[str, Any]]:
+    """Parse patch instructions from AI-generated or formatted text.
 
     Handles variations in formatting and logs skipped lines.
     Expected format: "Address: 0x12345 NewBytes: 90 90 90 // Comment"
@@ -49,13 +47,14 @@ def parse_patch_instructions(text: str) -> List[Dict[str, Any]]:
 
     Returns:
         list: Patch instructions with address (int), new_bytes (bytes), and description (str)
+
     """
     instructions = []
 
     # Regex to find lines with Address and NewBytes
     pattern = re.compile(
         r"^\s*Address:\s*(?:0x)?([0-9A-Fa-f]+)\s*NewBytes:\s*([0-9A-Fa-f\s]+)(?:\s*//\s*(.*))?$",
-        re.IGNORECASE | re.MULTILINE
+        re.IGNORECASE | re.MULTILINE,
     )
 
     logger.info("Parsing patch instructions from text...")
@@ -77,7 +76,7 @@ def parse_patch_instructions(text: str) -> List[Dict[str, Any]]:
             # Ensure hex bytes string has an even number of characters
             if len(new_bytes_hex) % 2 != 0:
                 logger.warning(
-                    f"Skipped line {lines_processed}: Odd number of hex characters: '{new_bytes_hex_raw}'"
+                    f"Skipped line {lines_processed}: Odd number of hex characters: '{new_bytes_hex_raw}'",
                 )
                 continue
 
@@ -86,24 +85,24 @@ def parse_patch_instructions(text: str) -> List[Dict[str, Any]]:
 
             if not new_bytes:
                 logger.warning(
-                    f"Skipped line {lines_processed}: Empty byte string for '{new_bytes_hex_raw}'"
+                    f"Skipped line {lines_processed}: Empty byte string for '{new_bytes_hex_raw}'",
                 )
                 continue
 
             instructions.append({
                 "address": address,
                 "new_bytes": new_bytes,
-                "description": description
+                "description": description,
             })
             logger.info(
                 f"Parsed instruction: Address=0x{address:X}, "
-                f"Bytes='{new_bytes.hex().upper()}', Desc='{description}'"
+                f"Bytes='{new_bytes.hex().upper()}', Desc='{description}'",
             )
 
         except ValueError as e:
             logger.warning(
                 f"Skipped line {lines_processed}: Error parsing hex values: "
-                f"Address='{address_hex}', Bytes='{new_bytes_hex_raw}'. Error: {e}"
+                f"Address='{address_hex}', Bytes='{new_bytes_hex_raw}'. Error: {e}",
             )
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Unexpected error parsing line %s: %s", lines_processed, e)
@@ -114,16 +113,15 @@ def parse_patch_instructions(text: str) -> List[Dict[str, Any]]:
     else:
         logger.info(
             f"Found {len(instructions)} valid patch instruction(s) "
-            f"out of {potential_matches} potential matches"
+            f"out of {potential_matches} potential matches",
         )
 
     return instructions
 
 
 def create_patch(original_data: bytes, modified_data: bytes,
-                 base_address: int = 0) -> List[Dict[str, Any]]:
-    """
-    Create patch instructions by comparing original and modified data.
+                 base_address: int = 0) -> list[dict[str, Any]]:
+    """Create patch instructions by comparing original and modified data.
 
     Args:
         original_data: Original binary data
@@ -132,6 +130,7 @@ def create_patch(original_data: bytes, modified_data: bytes,
 
     Returns:
         list: Patch instructions for the differences
+
     """
     patches = []
 
@@ -153,7 +152,7 @@ def create_patch(original_data: bytes, modified_data: bytes,
             patches.append({
                 "address": base_address + start,
                 "new_bytes": bytes(changed_bytes),
-                "description": f"Patch at offset 0x{start:X}"
+                "description": f"Patch at offset 0x{start:X}",
             })
         else:
             i += 1
@@ -162,10 +161,9 @@ def create_patch(original_data: bytes, modified_data: bytes,
     return patches
 
 
-def apply_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]],
-                create_backup: bool = True) -> Tuple[bool, Optional[str]]:
-    """
-    Apply patches to a binary file.
+def apply_patch(file_path: str | Path, patches: list[dict[str, Any]],
+                create_backup: bool = True) -> tuple[bool, str | None]:
+    """Apply patches to a binary file.
 
     Args:
         file_path: Path to the file to patch
@@ -174,6 +172,7 @@ def apply_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]],
 
     Returns:
         tuple: (success, patched_file_path)
+
     """
     file_path = Path(file_path)
 
@@ -221,7 +220,7 @@ def apply_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]],
                     applied_count += 1
                     logger.info(
                         f"Applied patch {i+1}: {len(new_bytes)} bytes "
-                        f"at 0x{address:X} - {description}"
+                        f"at 0x{address:X} - {description}",
                     )
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error(f"Failed to apply patch {i+1}: {e}")
@@ -229,11 +228,10 @@ def apply_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]],
         if applied_count > 0:
             logger.info("Successfully applied %s patches to %s", applied_count, patched_path)
             return True, str(patched_path)
-        else:
-            logger.warning("No patches were applied")
-            # Clean up unused file
-            patched_path.unlink(missing_ok=True)
-            return False, None
+        logger.warning("No patches were applied")
+        # Clean up unused file
+        patched_path.unlink(missing_ok=True)
+        return False, None
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error during patching: %s", e)
@@ -243,9 +241,8 @@ def apply_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]],
         return False, None
 
 
-def validate_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]]) -> bool:
-    """
-    Validate that patches have been correctly applied.
+def validate_patch(file_path: str | Path, patches: list[dict[str, Any]]) -> bool:
+    """Validate that patches have been correctly applied.
 
     Args:
         file_path: Path to the patched file
@@ -253,6 +250,7 @@ def validate_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]]) -
 
     Returns:
         bool: True if all patches are validated
+
     """
     file_path = Path(file_path)
 
@@ -272,11 +270,10 @@ def validate_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]]) -
                 if actual_bytes != expected_bytes:
                     logger.error(
                         f"Patch {i+1} validation failed at 0x{address:X}: "
-                        f"Expected {expected_bytes.hex()}, got {actual_bytes.hex()}"
+                        f"Expected {expected_bytes.hex()}, got {actual_bytes.hex()}",
                     )
                     return False
-                else:
-                    logger.debug(f"Patch {i+1} validated successfully")
+                logger.debug(f"Patch {i+1} validated successfully")
 
         logger.info("All patches validated successfully")
         return True
@@ -286,9 +283,8 @@ def validate_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]]) -
         return False
 
 
-def convert_rva_to_offset(file_path: Union[str, Path], rva: int) -> Optional[int]:
-    """
-    Convert RVA (Relative Virtual Address) to file offset for PE files.
+def convert_rva_to_offset(file_path: str | Path, rva: int) -> int | None:
+    """Convert RVA (Relative Virtual Address) to file offset for PE files.
 
     Args:
         file_path: Path to PE file
@@ -296,6 +292,7 @@ def convert_rva_to_offset(file_path: Union[str, Path], rva: int) -> Optional[int
 
     Returns:
         Optional[int]: File offset, or None if conversion fails
+
     """
     if pefile is None:
         logger.error("pefile module not available")
@@ -311,15 +308,15 @@ def convert_rva_to_offset(file_path: Union[str, Path], rva: int) -> Optional[int
         return None
 
 
-def get_section_info(file_path: Union[str, Path]) -> List[Dict[str, Any]]:
-    """
-    Get section information from a PE file.
+def get_section_info(file_path: str | Path) -> list[dict[str, Any]]:
+    """Get section information from a PE file.
 
     Args:
         file_path: Path to PE file
 
     Returns:
         list: Section information including names, addresses, and sizes
+
     """
     if pefile is None:
         logger.error("pefile module not available")
@@ -337,7 +334,7 @@ def get_section_info(file_path: Union[str, Path]) -> List[Dict[str, Any]]:
                 "virtual_size": section.Misc_VirtualSize,
                 "raw_address": section.PointerToRawData,
                 "raw_size": section.SizeOfRawData,
-                "characteristics": section.Characteristics
+                "characteristics": section.Characteristics,
             }
             sections.append(section_info)
 
@@ -349,9 +346,8 @@ def get_section_info(file_path: Union[str, Path]) -> List[Dict[str, Any]]:
     return sections
 
 
-def create_nop_patch(address: int, length: int, arch: str = "x86") -> Dict[str, Any]:
-    """
-    Create a NOP (No Operation) patch of specified length.
+def create_nop_patch(address: int, length: int, arch: str = "x86") -> dict[str, Any]:
+    """Create a NOP (No Operation) patch of specified length.
 
     Args:
         address: Address to patch
@@ -360,12 +356,13 @@ def create_nop_patch(address: int, length: int, arch: str = "x86") -> Dict[str, 
 
     Returns:
         dict: Patch instruction with NOP bytes
+
     """
     nop_bytes = {
         "x86": b"\x90",      # NOP
         "x64": b"\x90",      # NOP (same as x86)
         "arm": b"\x00\xBF",  # NOP (Thumb)
-        "arm64": b"\x1F\x20\x03\xD5"  # NOP
+        "arm64": b"\x1F\x20\x03\xD5",  # NOP
     }
 
     nop = nop_bytes.get(arch.lower(), b"\x90")
@@ -377,23 +374,23 @@ def create_nop_patch(address: int, length: int, arch: str = "x86") -> Dict[str, 
     if remainder != 0:
         logger.warning(
             f"Length {length} not divisible by NOP size {len(nop)} for {arch}. "
-            f"Padding with {remainder} extra bytes."
+            f"Padding with {remainder} extra bytes.",
         )
 
     return {
         "address": address,
         "new_bytes": nop * nop_count + nop[:remainder],
-        "description": f"NOP patch ({length} bytes)"
+        "description": f"NOP patch ({length} bytes)",
     }
 
 
 # Exported functions
 __all__ = [
-    "parse_patch_instructions",
-    "create_patch",
     "apply_patch",
-    "validate_patch",
     "convert_rva_to_offset",
-    "get_section_info",
     "create_nop_patch",
+    "create_patch",
+    "get_section_info",
+    "parse_patch_instructions",
+    "validate_patch",
 ]

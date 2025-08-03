@@ -1,5 +1,4 @@
-"""
-LoRA/QLoRA Adapter Manager for Intellicrack
+"""LoRA/QLoRA Adapter Manager for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,7 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -73,16 +72,17 @@ except ImportError as e:
 @dataclass
 class AdapterConfig:
     """Configuration for a LoRA/QLoRA adapter."""
+
     adapter_type: str  # "lora", "qlora", "adalora"
     r: int = 16  # LoRA rank
     lora_alpha: int = 32  # LoRA alpha parameter
-    target_modules: List[str] = None  # Modules to apply LoRA to
+    target_modules: list[str] = None  # Modules to apply LoRA to
     lora_dropout: float = 0.1  # Dropout rate
     bias: str = "none"  # Bias configuration
     task_type: str = "CAUSAL_LM"  # Task type
     inference_mode: bool = True  # Whether in inference mode
     fan_in_fan_out: bool = False  # For GPT-2 style models
-    modules_to_save: List[str] = None  # Additional modules to save
+    modules_to_save: list[str] = None  # Additional modules to save
     # AdaLoRA specific
     target_r: int = 8  # Target rank for AdaLoRA
     init_r: int = 12  # Initial rank for AdaLoRA
@@ -91,11 +91,12 @@ class AdapterConfig:
 class LoRAAdapterManager:
     """Manages LoRA and QLoRA adapters for efficient fine-tuning."""
 
-    def __init__(self, cache_dir: Optional[str] = None):
+    def __init__(self, cache_dir: str | None = None):
         """Initialize the LoRA adapter manager.
 
         Args:
             cache_dir: Directory to cache downloaded adapters
+
         """
         if cache_dir is None:
             cache_dir = Path.home() / ".intellicrack" / "lora_adapters"
@@ -116,10 +117,10 @@ class LoRAAdapterManager:
         adapter_type: str = "lora",
         r: int = 16,
         lora_alpha: int = 32,
-        target_modules: Optional[List[str]] = None,
+        target_modules: list[str] | None = None,
         lora_dropout: float = 0.1,
-        **kwargs
-    ) -> Optional[Any]:
+        **kwargs,
+    ) -> Any | None:
         """Create a LoRA configuration.
 
         Args:
@@ -132,6 +133,7 @@ class LoRAAdapterManager:
 
         Returns:
             PEFT configuration or None
+
         """
         if not HAS_PEFT:
             logger.error("PEFT required for LoRA configuration")
@@ -153,7 +155,7 @@ class LoRAAdapterManager:
                     task_type=kwargs.get("task_type", TaskType.CAUSAL_LM),
                     inference_mode=kwargs.get("inference_mode", False),
                     target_r=kwargs.get("target_r", 8),
-                    init_r=kwargs.get("init_r", 12)
+                    init_r=kwargs.get("init_r", 12),
                 )
             else:
                 config = LoraConfig(
@@ -165,7 +167,7 @@ class LoRAAdapterManager:
                     task_type=kwargs.get("task_type", TaskType.CAUSAL_LM),
                     inference_mode=kwargs.get("inference_mode", False),
                     fan_in_fan_out=kwargs.get("fan_in_fan_out", False),
-                    modules_to_save=kwargs.get("modules_to_save")
+                    modules_to_save=kwargs.get("modules_to_save"),
                 )
 
             return config
@@ -174,7 +176,7 @@ class LoRAAdapterManager:
             logger.error(f"Failed to create LoRA config: {e}")
             return None
 
-    def _get_default_target_modules(self, model_type: Optional[str] = None) -> List[str]:
+    def _get_default_target_modules(self, model_type: str | None = None) -> list[str]:
         """Get default target modules for common model architectures.
 
         Args:
@@ -182,6 +184,7 @@ class LoRAAdapterManager:
 
         Returns:
             List of target module names
+
         """
         # Common patterns for different architectures
         default_patterns = {
@@ -206,8 +209,8 @@ class LoRAAdapterManager:
         self,
         model: Any,
         lora_config: Any,
-        adapter_name: str = "default"
-    ) -> Optional[Any]:
+        adapter_name: str = "default",
+    ) -> Any | None:
         """Apply LoRA adapter to a model.
 
         Args:
@@ -217,6 +220,7 @@ class LoRAAdapterManager:
 
         Returns:
             Model with LoRA adapter or None
+
         """
         if not HAS_PEFT:
             logger.error("PEFT required to apply LoRA")
@@ -235,7 +239,7 @@ class LoRAAdapterManager:
             logger.info(
                 f"Applied LoRA adapter '{adapter_name}': "
                 f"{trainable_params:,} trainable params / {total_params:,} total params "
-                f"({100 * trainable_params / total_params:.2f}% trainable)"
+                f"({100 * trainable_params / total_params:.2f}% trainable)",
             )
 
             return peft_model
@@ -247,10 +251,10 @@ class LoRAAdapterManager:
     def load_adapter(
         self,
         base_model: Any,
-        adapter_path: Union[str, Path],
+        adapter_path: str | Path,
         adapter_name: str = "default",
-        **kwargs
-    ) -> Optional[Any]:
+        **kwargs,
+    ) -> Any | None:
         """Load a LoRA adapter from disk.
 
         Args:
@@ -261,6 +265,7 @@ class LoRAAdapterManager:
 
         Returns:
             Model with loaded adapter or None
+
         """
         if not HAS_PEFT:
             logger.error("PEFT required to load adapters")
@@ -282,7 +287,7 @@ class LoRAAdapterManager:
                 adapter_name=adapter_name,
                 torch_dtype=kwargs.get("torch_dtype", torch.float16),
                 device_map=kwargs.get("device_map", "auto"),
-                is_trainable=kwargs.get("is_trainable", False)
+                is_trainable=kwargs.get("is_trainable", False),
             )
 
             # Merge adapter if requested
@@ -303,9 +308,9 @@ class LoRAAdapterManager:
     def save_adapter(
         self,
         model: Any,
-        save_path: Union[str, Path],
+        save_path: str | Path,
         adapter_name: str = "default",
-        save_config: bool = True
+        save_config: bool = True,
     ) -> bool:
         """Save a LoRA adapter to disk.
 
@@ -317,6 +322,7 @@ class LoRAAdapterManager:
 
         Returns:
             True if successful, False otherwise
+
         """
         if not HAS_PEFT:
             logger.error("PEFT required to save adapters")
@@ -331,13 +337,12 @@ class LoRAAdapterManager:
                 model.save_pretrained(
                     str(save_path),
                     adapter_name=adapter_name,
-                    save_config=save_config
+                    save_config=save_config,
                 )
                 logger.info(f"Saved LoRA adapter to {save_path}")
                 return True
-            else:
-                logger.error("Model does not support save_pretrained")
-                return False
+            logger.error("Model does not support save_pretrained")
+            return False
 
         except Exception as e:
             logger.error(f"Failed to save adapter: {e}")
@@ -347,7 +352,7 @@ class LoRAAdapterManager:
         self,
         model: Any,
         use_gradient_checkpointing: bool = True,
-        gradient_checkpointing_kwargs: Optional[Dict] = None
+        gradient_checkpointing_kwargs: dict | None = None,
     ) -> Any:
         """Prepare a model for QLoRA training.
 
@@ -358,6 +363,7 @@ class LoRAAdapterManager:
 
         Returns:
             Prepared model
+
         """
         if not HAS_PEFT:
             logger.error("PEFT required for QLoRA preparation")
@@ -368,7 +374,7 @@ class LoRAAdapterManager:
             model = prepare_model_for_kbit_training(
                 model,
                 use_gradient_checkpointing=use_gradient_checkpointing,
-                gradient_checkpointing_kwargs=gradient_checkpointing_kwargs
+                gradient_checkpointing_kwargs=gradient_checkpointing_kwargs,
             )
 
             logger.info("Prepared model for QLoRA training")
@@ -378,7 +384,7 @@ class LoRAAdapterManager:
             logger.error(f"Failed to prepare model for QLoRA: {e}")
             return model
 
-    def list_adapters(self, model: Any) -> List[str]:
+    def list_adapters(self, model: Any) -> list[str]:
         """List all adapters loaded in a model.
 
         Args:
@@ -386,6 +392,7 @@ class LoRAAdapterManager:
 
         Returns:
             List of adapter names
+
         """
         if hasattr(model, "peft_config"):
             return list(model.peft_config.keys())
@@ -400,15 +407,15 @@ class LoRAAdapterManager:
 
         Returns:
             True if successful, False otherwise
+
         """
         try:
             if hasattr(model, "set_adapter"):
                 model.set_adapter(adapter_name)
                 logger.info(f"Activated adapter: {adapter_name}")
                 return True
-            else:
-                logger.error("Model does not support multiple adapters")
-                return False
+            logger.error("Model does not support multiple adapters")
+            return False
 
         except Exception as e:
             logger.error(f"Failed to set adapter: {e}")
@@ -417,9 +424,9 @@ class LoRAAdapterManager:
     def merge_adapters(
         self,
         model: Any,
-        adapter_names: List[str],
-        weights: Optional[List[float]] = None,
-        new_adapter_name: str = "merged"
+        adapter_names: list[str],
+        weights: list[float] | None = None,
+        new_adapter_name: str = "merged",
     ) -> bool:
         """Merge multiple adapters with weighted combination.
 
@@ -431,6 +438,7 @@ class LoRAAdapterManager:
 
         Returns:
             True if successful, False otherwise
+
         """
         try:
             if not hasattr(model, "add_weighted_adapter"):
@@ -443,7 +451,7 @@ class LoRAAdapterManager:
             model.add_weighted_adapter(
                 adapter_names,
                 weights,
-                new_adapter_name
+                new_adapter_name,
             )
 
             logger.info(
@@ -454,7 +462,7 @@ class LoRAAdapterManager:
             logger.error(f"Failed to merge adapters: {e}")
             return False
 
-    def compare_adapter_configs(self, config1_path: Union[str, Path], config2_path: Union[str, Path]) -> Dict[str, Any]:
+    def compare_adapter_configs(self, config1_path: str | Path, config2_path: str | Path) -> dict[str, Any]:
         """Compare two PEFT adapter configurations.
 
         Args:
@@ -463,12 +471,13 @@ class LoRAAdapterManager:
 
         Returns:
             Comparison results with differences
+
         """
         results = {
             "compatible": True,
             "differences": [],
             "config1_details": {},
-            "config2_details": {}
+            "config2_details": {},
         }
 
         if not HAS_PEFT or not PeftConfig:
@@ -485,7 +494,7 @@ class LoRAAdapterManager:
             if config1.peft_type != config2.peft_type:
                 results["compatible"] = False
                 results["differences"].append(
-                    f"Different PEFT types: {config1.peft_type} vs {config2.peft_type}"
+                    f"Different PEFT types: {config1.peft_type} vs {config2.peft_type}",
                 )
 
             # Compare important parameters
@@ -497,7 +506,7 @@ class LoRAAdapterManager:
 
                 if val1 != val2:
                     results["differences"].append(
-                        f"Different {param}: {val1} vs {val2}"
+                        f"Different {param}: {val1} vs {val2}",
                     )
 
                     # Some differences don't affect compatibility
@@ -536,9 +545,9 @@ class LoRAAdapterManager:
     def download_adapter(
         self,
         adapter_id: str,
-        cache_dir: Optional[str] = None,
-        revision: Optional[str] = None
-    ) -> Optional[Path]:
+        cache_dir: str | None = None,
+        revision: str | None = None,
+    ) -> Path | None:
         """Download a LoRA adapter from Hugging Face Hub.
 
         Args:
@@ -548,6 +557,7 @@ class LoRAAdapterManager:
 
         Returns:
             Path to downloaded adapter or None
+
         """
         try:
             from huggingface_hub import snapshot_download
@@ -558,7 +568,7 @@ class LoRAAdapterManager:
             local_path = snapshot_download(
                 repo_id=adapter_id,
                 cache_dir=cache_dir,
-                revision=revision
+                revision=revision,
             )
 
             logger.info(f"Downloaded adapter: {adapter_id}")
@@ -571,7 +581,7 @@ class LoRAAdapterManager:
             logger.error(f"Failed to download adapter: {e}")
             return None
 
-    def get_adapter_info(self, adapter_path: Union[str, Path]) -> Dict[str, Any]:
+    def get_adapter_info(self, adapter_path: str | Path) -> dict[str, Any]:
         """Get information about a LoRA adapter.
 
         Args:
@@ -579,6 +589,7 @@ class LoRAAdapterManager:
 
         Returns:
             Dictionary with adapter information
+
         """
         adapter_path = Path(adapter_path)
         info = {
@@ -588,7 +599,7 @@ class LoRAAdapterManager:
             "peft_config": None,
             "size_mb": 0,
             "adapter_type": None,
-            "target_modules": None
+            "target_modules": None,
         }
 
         if not adapter_path.exists():
@@ -598,7 +609,7 @@ class LoRAAdapterManager:
         config_path = adapter_path / "adapter_config.json"
         if config_path.exists():
             try:
-                with open(config_path, "r") as f:
+                with open(config_path) as f:
                     info["config"] = json.load(f)
 
                 # Try to parse as PeftConfig if PEFT is available
@@ -626,7 +637,7 @@ class LoRAAdapterManager:
 
         return info
 
-    def validate_adapter_config(self, config_path: Union[str, Path]) -> Dict[str, Any]:
+    def validate_adapter_config(self, config_path: str | Path) -> dict[str, Any]:
         """Validate a PEFT adapter configuration file.
 
         Args:
@@ -634,13 +645,14 @@ class LoRAAdapterManager:
 
         Returns:
             Validation results with any issues found
+
         """
         config_path = Path(config_path)
         results = {
             "valid": False,
             "errors": [],
             "warnings": [],
-            "config_details": {}
+            "config_details": {},
         }
 
         if not config_path.exists():
@@ -651,7 +663,7 @@ class LoRAAdapterManager:
             results["warnings"].append("PEFT not available for full validation")
             # Basic JSON validation only
             try:
-                with open(config_path, "r") as f:
+                with open(config_path) as f:
                     config_data = json.load(f)
                 results["config_details"] = config_data
                 results["valid"] = True
@@ -698,6 +710,7 @@ class LoRAAdapterManager:
 
         Args:
             keep_recent: Number of recent adapters to keep
+
         """
         if len(self.loaded_adapters) <= keep_recent:
             return

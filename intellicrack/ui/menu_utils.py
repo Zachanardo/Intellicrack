@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -33,8 +32,7 @@ except ImportError as e:
 
 
 def find_or_create_menu(menu_bar: QMenuBar, menu_name: str) -> QMenu:
-    """
-    Find an existing menu by name or create a new one if it doesn't exist.
+    """Find an existing menu by name or create a new one if it doesn't exist.
 
     Args:
         menu_bar: The menu bar to search in
@@ -42,6 +40,7 @@ def find_or_create_menu(menu_bar: QMenuBar, menu_name: str) -> QMenu:
 
     Returns:
         The found or newly created menu
+
     """
     # Search for existing menu
     for action in menu_bar.actions():

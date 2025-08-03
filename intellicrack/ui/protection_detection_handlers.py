@@ -1,5 +1,4 @@
-"""
-Protection Detection Handlers for Intellicrack UI
+"""Protection Detection Handlers for Intellicrack UI
 
 Copyright (C) 2025 Zachary Flint
 
@@ -69,18 +68,17 @@ class ProtectionDetectionHandlers:
 
             if results.get("error"):
                 output += f"Error: {results['error']}\n"
-            else:
-                if results.get("protections_found"):
-                    output += f"Found {len(results['protections_found'])} commercial protections:\n\n"
-                    for _protection in results["protections_found"]:
-                        confidence = results.get("confidence_scores", {}).get(_protection, 0.0)
-                        output += f"• {_protection} (Confidence: {confidence:.1%})\n"
+            elif results.get("protections_found"):
+                output += f"Found {len(results['protections_found'])} commercial protections:\n\n"
+                for _protection in results["protections_found"]:
+                    confidence = results.get("confidence_scores", {}).get(_protection, 0.0)
+                    output += f"• {_protection} (Confidence: {confidence:.1%})\n"
 
-                    output += "\nDetection Indicators:\n"
-                    for _indicator in results.get("indicators", []):
-                        output += f"  - {_indicator}\n"
-                else:
-                    output += "No commercial protections detected.\n"
+                output += "\nDetection Indicators:\n"
+                for _indicator in results.get("indicators", []):
+                    output += f"  - {_indicator}\n"
+            else:
+                output += "No commercial protections detected.\n"
 
             # Update the protection results text area
             if hasattr(self, "protection_results"):
@@ -90,7 +88,7 @@ class ProtectionDetectionHandlers:
             logger.info(f"Commercial protection scan complete: {len(results.get('protections_found', []))} found")
 
         except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error during commercial protection scan: {str(e)}"
+            error_msg = f"Error during commercial protection scan: {e!s}"
             logger.error(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)
@@ -117,7 +115,7 @@ class ProtectionDetectionHandlers:
             logger.info("Hardware dongle detection complete")
 
         except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error during hardware dongle detection: {str(e)}"
+            error_msg = f"Error during hardware dongle detection: {e!s}"
             logger.error(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)
@@ -156,7 +154,7 @@ class ProtectionDetectionHandlers:
             logger.info(f"TPM detection complete: Present={results['tpm_present']}")
 
         except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error during TPM detection: {str(e)}"
+            error_msg = f"Error during TPM detection: {e!s}"
             logger.error(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)
@@ -179,21 +177,20 @@ class ProtectionDetectionHandlers:
 
             if results.get("error"):
                 output += f"Error: {results['error']}\n"
+            elif results["checksum_verification_detected"]:
+                output += "✓ Checksum/Integrity verification detected!\n\n"
+
+                if results.get("algorithms_found"):
+                    output += "Hash Algorithms Found:\n"
+                    for _algo in results["algorithms_found"]:
+                        output += f"  • {_algo}\n"
+
+                if results.get("indicators"):
+                    output += "\nDetection Indicators:\n"
+                    for _indicator in results["indicators"]:
+                        output += f"  - {_indicator}\n"
             else:
-                if results["checksum_verification_detected"]:
-                    output += "✓ Checksum/Integrity verification detected!\n\n"
-
-                    if results.get("algorithms_found"):
-                        output += "Hash Algorithms Found:\n"
-                        for _algo in results["algorithms_found"]:
-                            output += f"  • {_algo}\n"
-
-                    if results.get("indicators"):
-                        output += "\nDetection Indicators:\n"
-                        for _indicator in results["indicators"]:
-                            output += f"  - {_indicator}\n"
-                else:
-                    output += "No checksum/integrity verification detected.\n"
+                output += "No checksum/integrity verification detected.\n"
 
             # Update the protection results text area
             if hasattr(self, "protection_results"):
@@ -203,7 +200,7 @@ class ProtectionDetectionHandlers:
             logger.info(f"Checksum detection complete: Detected={results['checksum_verification_detected']}")
 
         except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error during checksum detection: {str(e)}"
+            error_msg = f"Error during checksum detection: {e!s}"
             logger.error(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)
@@ -226,21 +223,20 @@ class ProtectionDetectionHandlers:
 
             if results.get("error"):
                 output += f"Error: {results['error']}\n"
+            elif results["self_healing_detected"]:
+                output += "✓ Self-healing/self-modifying code detected!\n\n"
+
+                if results.get("techniques"):
+                    output += "Techniques Found:\n"
+                    for _technique in results["techniques"]:
+                        output += f"  • {_technique}\n"
+
+                if results.get("indicators"):
+                    output += "\nAPI Indicators:\n"
+                    for _indicator in results["indicators"]:
+                        output += f"  - {_indicator}\n"
             else:
-                if results["self_healing_detected"]:
-                    output += "✓ Self-healing/self-modifying code detected!\n\n"
-
-                    if results.get("techniques"):
-                        output += "Techniques Found:\n"
-                        for _technique in results["techniques"]:
-                            output += f"  • {_technique}\n"
-
-                    if results.get("indicators"):
-                        output += "\nAPI Indicators:\n"
-                        for _indicator in results["indicators"]:
-                            output += f"  - {_indicator}\n"
-                else:
-                    output += "No self-healing code detected.\n"
+                output += "No self-healing code detected.\n"
 
             # Update the protection results text area
             if hasattr(self, "protection_results"):
@@ -250,7 +246,7 @@ class ProtectionDetectionHandlers:
             logger.info(f"Self-healing code detection complete: Detected={results['self_healing_detected']}")
 
         except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error during self-healing code detection: {str(e)}"
+            error_msg = f"Error during self-healing code detection: {e!s}"
             logger.error(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)
@@ -297,7 +293,7 @@ class ProtectionDetectionHandlers:
             logger.info(f"TPM bypass complete: Success={results['success']}")
 
         except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error during TPM bypass: {str(e)}"
+            error_msg = f"Error during TPM bypass: {e!s}"
             logger.error(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)
@@ -344,7 +340,7 @@ class ProtectionDetectionHandlers:
             logger.info(f"VM detection bypass complete: Success={results['success']}")
 
         except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error during VM detection bypass: {str(e)}"
+            error_msg = f"Error during VM detection bypass: {e!s}"
             logger.error(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)
@@ -394,7 +390,7 @@ class ProtectionDetectionHandlers:
             logger.info(f"Dongle emulation complete: Success={results['success']}")
 
         except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error during hardware dongle emulation: {str(e)}"
+            error_msg = f"Error during hardware dongle emulation: {e!s}"
             logger.error(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)
@@ -429,7 +425,7 @@ class ProtectionDetectionHandlers:
             logger.info("Embedded script detection complete")
 
         except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error during embedded script detection: {str(e)}"
+            error_msg = f"Error during embedded script detection: {e!s}"
             logger.error(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)

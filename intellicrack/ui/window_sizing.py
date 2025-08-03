@@ -60,26 +60,26 @@ def get_dialog_size(dialog_type="standard"):
             "width_pct": 0.4,
             "height_pct": 0.3,
             "min_width": 400,
-            "min_height": 200
+            "min_height": 200,
         },
         "standard": {
             "width_pct": 0.6,
             "height_pct": 0.5,
             "min_width": 600,
-            "min_height": 400
+            "min_height": 400,
         },
         "large": {
             "width_pct": 0.8,
             "height_pct": 0.7,
             "min_width": 800,
-            "min_height": 600
+            "min_height": 600,
         },
         "full": {
             "width_pct": 0.9,
             "height_pct": 0.85,
             "min_width": 1000,
-            "min_height": 700
-        }
+            "min_height": 700,
+        },
     }
 
     config = dialog_configs.get(dialog_type, dialog_configs["standard"])

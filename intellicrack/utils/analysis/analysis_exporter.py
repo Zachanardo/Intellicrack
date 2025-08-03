@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -26,22 +25,20 @@ between binary_differ.py and vulnerability_analyzer.py.
 import csv
 import json
 import logging
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class AnalysisExporter:
-    """
-    Shared exporter for analysis results across different analysis engines.
+    """Shared exporter for analysis results across different analysis engines.
     Provides consistent export formats and error handling.
     """
 
     @staticmethod
-    def export_analysis(result: Dict[str, Any], output_file: str,
+    def export_analysis(result: dict[str, Any], output_file: str,
                        format: str = "json", analysis_type: str = "generic") -> bool:
-        """
-        Export analysis results to file in specified format.
+        """Export analysis results to file in specified format.
 
         Args:
             result: Analysis results dictionary
@@ -51,26 +48,26 @@ class AnalysisExporter:
 
         Returns:
             True if export successful, False otherwise
+
         """
         try:
             if format == "json":
                 return AnalysisExporter._export_json(result, output_file)
-            elif format == "html":
+            if format == "html":
                 return AnalysisExporter._export_html(result, output_file, analysis_type)
-            elif format == "csv":
+            if format == "csv":
                 return AnalysisExporter._export_csv(result, output_file, analysis_type)
-            elif format == "text":
+            if format == "text":
                 return AnalysisExporter._export_text(result, output_file)
-            else:
-                logger.error(f"Unsupported export format: {format}")
-                return False
+            logger.error(f"Unsupported export format: {format}")
+            return False
 
         except Exception as e:
             logger.error(f"Analysis export failed: {e}")
             return False
 
     @staticmethod
-    def _export_json(result: Dict[str, Any], output_file: str) -> bool:
+    def _export_json(result: dict[str, Any], output_file: str) -> bool:
         """Export results as JSON."""
         try:
             with open(output_file, "w") as f:
@@ -81,7 +78,7 @@ class AnalysisExporter:
             return False
 
     @staticmethod
-    def _export_html(result: Dict[str, Any], output_file: str, analysis_type: str) -> bool:
+    def _export_html(result: dict[str, Any], output_file: str, analysis_type: str) -> bool:
         """Export results as HTML."""
         try:
             if analysis_type == "vulnerability":
@@ -99,7 +96,7 @@ class AnalysisExporter:
             return False
 
     @staticmethod
-    def _export_csv(result: Dict[str, Any], output_file: str, analysis_type: str) -> bool:
+    def _export_csv(result: dict[str, Any], output_file: str, analysis_type: str) -> bool:
         """Export results as CSV."""
         try:
             with open(output_file, "w", newline="") as f:
@@ -118,7 +115,7 @@ class AnalysisExporter:
             return False
 
     @staticmethod
-    def _export_text(result: Dict[str, Any], output_file: str) -> bool:
+    def _export_text(result: dict[str, Any], output_file: str) -> bool:
         """Export results as plain text."""
         try:
             with open(output_file, "w") as f:
@@ -129,7 +126,7 @@ class AnalysisExporter:
             return False
 
     @staticmethod
-    def _write_vulnerability_csv(writer, result: Dict[str, Any]) -> None:
+    def _write_vulnerability_csv(writer, result: dict[str, Any]) -> None:
         """Write vulnerability-specific CSV format."""
         writer.writerow(["Type", "File", "Line", "Severity", "Confidence", "Description"])
 
@@ -140,11 +137,11 @@ class AnalysisExporter:
                 vuln.get("line", ""),
                 vuln.get("severity", ""),
                 vuln.get("confidence", ""),
-                vuln.get("description", "")
+                vuln.get("description", ""),
             ])
 
     @staticmethod
-    def _write_diff_csv(writer, result: Dict[str, Any]) -> None:
+    def _write_diff_csv(writer, result: dict[str, Any]) -> None:
         """Write binary diff-specific CSV format."""
         writer.writerow(["Type", "Old_Value", "New_Value", "Severity", "Description"])
 
@@ -154,11 +151,11 @@ class AnalysisExporter:
                 diff.get("old_value", ""),
                 diff.get("new_value", ""),
                 diff.get("severity", ""),
-                diff.get("description", "")
+                diff.get("description", ""),
             ])
 
     @staticmethod
-    def _write_generic_csv(writer, result: Dict[str, Any]) -> None:
+    def _write_generic_csv(writer, result: dict[str, Any]) -> None:
         """Write generic CSV format."""
         if not result:
             return
@@ -178,7 +175,7 @@ class AnalysisExporter:
                         writer.writerow([key] + row)
 
     @staticmethod
-    def _generate_vulnerability_html(result: Dict[str, Any]) -> str:
+    def _generate_vulnerability_html(result: dict[str, Any]) -> str:
         """Generate HTML report for vulnerability analysis."""
         html = """
 <!DOCTYPE html>
@@ -251,11 +248,11 @@ class AnalysisExporter:
             high_count=high_count,
             medium_count=medium_count,
             low_count=low_count,
-            vulnerability_list=vuln_html
+            vulnerability_list=vuln_html,
         )
 
     @staticmethod
-    def _generate_diff_html(result: Dict[str, Any]) -> str:
+    def _generate_diff_html(result: dict[str, Any]) -> str:
         """Generate HTML report for binary diff analysis."""
         html = """
 <!DOCTYPE html>
@@ -324,11 +321,11 @@ class AnalysisExporter:
             added_count=added_count,
             removed_count=removed_count,
             modified_count=modified_count,
-            difference_list=diff_html
+            difference_list=diff_html,
         )
 
     @staticmethod
-    def _generate_generic_html(result: Dict[str, Any]) -> str:
+    def _generate_generic_html(result: dict[str, Any]) -> str:
         """Generate generic HTML report."""
         import time
 

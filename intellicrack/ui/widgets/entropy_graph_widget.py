@@ -1,5 +1,4 @@
-"""
-Entropy Visualization Widget
+"""Entropy Visualization Widget
 
 Provides graphical entropy visualization for protection analysis using PyQtGraph.
 Replaces text-only entropy display with interactive bar charts.
@@ -8,7 +7,7 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from typing import Any, List
+from typing import Any
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
@@ -46,12 +45,10 @@ except ImportError as e:
     except ImportError as e:
         logger.error("Import error in entropy_graph_widget: %s", e)
         # Already initialized to None above
-        pass
 
 
 class EntropyGraphWidget(QWidget):
-    """
-    Interactive entropy visualization widget using PyQtGraph.
+    """Interactive entropy visualization widget using PyQtGraph.
 
     Displays entropy values as a bar chart with color coding
     to indicate likelihood of packing/encryption.
@@ -167,7 +164,7 @@ class EntropyGraphWidget(QWidget):
             angle=0,
             pen=pg.mkPen(color=(255, 152, 0, 100), width=2, style=Qt.DashLine),
             label="Medium",
-            labelOpts={"position": 0.95, "color": (255, 152, 0, 200)}
+            labelOpts={"position": 0.95, "color": (255, 152, 0, 200)},
         )
         self.plot_widget.addItem(medium_line)
 
@@ -177,17 +174,17 @@ class EntropyGraphWidget(QWidget):
             angle=0,
             pen=pg.mkPen(color=(244, 67, 54, 100), width=2, style=Qt.DashLine),
             label="High",
-            labelOpts={"position": 0.95, "color": (244, 67, 54, 200)}
+            labelOpts={"position": 0.95, "color": (244, 67, 54, 200)},
         )
         self.plot_widget.addItem(high_line)
 
-    def update_entropy_data(self, entropy_info: List[Any]):
-        """
-        Update the entropy visualization with new data.
+    def update_entropy_data(self, entropy_info: list[Any]):
+        """Update the entropy visualization with new data.
 
         Args:
             entropy_info: List of entropy information objects with attributes:
                          section_name, entropy, packed, encrypted
+
         """
         self.entropy_data = entropy_info
 
@@ -241,7 +238,7 @@ class EntropyGraphWidget(QWidget):
 
         self.summary_label.setText(summary)
 
-    def _update_pyqtgraph(self, sections: List[str], entropies: List[float], colors: List[str]):
+    def _update_pyqtgraph(self, sections: list[str], entropies: list[float], colors: list[str]):
         """Update PyQtGraph visualization"""
         if not PYQTGRAPH_AVAILABLE:
             return
@@ -260,7 +257,7 @@ class EntropyGraphWidget(QWidget):
             x=x_pos,
             height=entropies,
             width=0.8,
-            brushes=brushes
+            brushes=brushes,
         )
 
         # Make bars clickable
@@ -276,7 +273,7 @@ class EntropyGraphWidget(QWidget):
         # Adjust view
         self.plot_widget.setXRange(-0.5, len(sections) - 0.5)
 
-    def _update_matplotlib(self, sections: List[str], entropies: List[float], colors: List[str]):
+    def _update_matplotlib(self, sections: list[str], entropies: list[float], colors: list[str]):
         """Update matplotlib visualization (fallback)"""
         self.ax.clear()
 
@@ -292,7 +289,7 @@ class EntropyGraphWidget(QWidget):
                 f"{entropy:.2f}",
                 ha="center",
                 va="bottom",
-                fontsize=8
+                fontsize=8,
             )
 
         # Customize plot
@@ -325,7 +322,7 @@ class EntropyGraphWidget(QWidget):
                 section = self.entropy_data[index]
                 self.section_clicked.emit(
                     section.section_name,
-                    section.entropy
+                    section.entropy,
                 )
 
     def get_entropy_summary(self) -> dict:
@@ -337,7 +334,7 @@ class EntropyGraphWidget(QWidget):
                 "max_entropy": 0,
                 "packed_sections": 0,
                 "encrypted_sections": 0,
-                "high_entropy_sections": 0
+                "high_entropy_sections": 0,
             }
 
         entropies = [info.entropy for info in self.entropy_data]
@@ -348,7 +345,7 @@ class EntropyGraphWidget(QWidget):
             "max_entropy": max(entropies),
             "packed_sections": sum(1 for info in self.entropy_data if info.packed),
             "encrypted_sections": sum(1 for info in self.entropy_data if info.encrypted),
-            "high_entropy_sections": sum(1 for e in entropies if e >= 7.0)
+            "high_entropy_sections": sum(1 for e in entropies if e >= 7.0),
         }
 
     def export_graph(self, file_path: str):

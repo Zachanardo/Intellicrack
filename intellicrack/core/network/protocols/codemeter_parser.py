@@ -1,5 +1,4 @@
-"""
-CodeMeter License Protocol Parser and Response Generator
+"""CodeMeter License Protocol Parser and Response Generator
 
 Copyright (C) 2025 Zachary Flint
 
@@ -25,7 +24,7 @@ import struct
 import time
 import uuid
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ...utils.logger import get_logger
 
@@ -34,6 +33,7 @@ logger = get_logger(__name__)
 @dataclass
 class CodeMeterRequest:
     """CodeMeter request structure"""
+
     command: int
     request_id: int
     firm_code: int
@@ -41,21 +41,22 @@ class CodeMeterRequest:
     feature_map: int
     version: str
     client_id: str
-    session_context: Dict[str, Any]
+    session_context: dict[str, Any]
     challenge_data: bytes
-    additional_data: Dict[str, Any]
+    additional_data: dict[str, Any]
 
 @dataclass
 class CodeMeterResponse:
     """CodeMeter response structure"""
+
     status: int
     request_id: int
     firm_code: int
     product_code: int
-    license_info: Dict[str, Any]
+    license_info: dict[str, Any]
     response_data: bytes
-    container_info: Dict[str, Any]
-    expiry_data: Dict[str, Any]
+    container_info: dict[str, Any]
+    expiry_data: dict[str, Any]
 
 class CodeMeterProtocolParser:
     """Real CodeMeter protocol parser and response generator"""
@@ -81,7 +82,7 @@ class CodeMeterProtocolParser:
         0x1010: "CM_CHECK_RECEIPT",
         0x1011: "CM_UPDATE_CONTAINER",
         0x1012: "CM_BACKUP_CONTAINER",
-        0x1013: "CM_RESTORE_CONTAINER"
+        0x1013: "CM_RESTORE_CONTAINER",
     }
 
     # CodeMeter status codes
@@ -104,7 +105,7 @@ class CodeMeterProtocolParser:
         0x0000000F: "CM_GCM_CONTAINER_LOCKED",
         0x00000010: "CM_GCM_INVALID_CONTAINER",
         0x00000011: "CM_GCM_NETWORK_ERROR",
-        0x00000012: "CM_GCM_ENCRYPTION_ERROR"
+        0x00000012: "CM_GCM_ENCRYPTION_ERROR",
     }
 
     def __init__(self):
@@ -126,7 +127,7 @@ class CodeMeterProtocolParser:
                 "expiry": "31-dec-2025",
                 "license_type": "permanent",
                 "encryption_supported": True,
-                "signing_supported": True
+                "signing_supported": True,
             },
             (500001, 2): {
                 "name": "CAD_STANDARD",
@@ -135,7 +136,7 @@ class CodeMeterProtocolParser:
                 "expiry": "31-dec-2025",
                 "license_type": "permanent",
                 "encryption_supported": True,
-                "signing_supported": False
+                "signing_supported": False,
             },
             (500002, 1): {  # Sample Engineering software
                 "name": "ENGINEERING_SUITE",
@@ -144,7 +145,7 @@ class CodeMeterProtocolParser:
                 "expiry": "31-dec-2025",
                 "license_type": "permanent",
                 "encryption_supported": True,
-                "signing_supported": True
+                "signing_supported": True,
             },
             (500003, 1): {  # Sample Media software
                 "name": "MEDIA_EDITOR_PRO",
@@ -153,7 +154,7 @@ class CodeMeterProtocolParser:
                 "expiry": "31-dec-2025",
                 "license_type": "subscription",
                 "encryption_supported": True,
-                "signing_supported": True
+                "signing_supported": True,
             },
             (500004, 1): {  # Sample Development tools
                 "name": "DEVELOPMENT_TOOLS",
@@ -162,7 +163,7 @@ class CodeMeterProtocolParser:
                 "expiry": "permanent",
                 "license_type": "permanent",
                 "encryption_supported": True,
-                "signing_supported": True
+                "signing_supported": True,
             },
             (999999, 1): {  # Generic product for testing
                 "name": "GENERIC_PRODUCT",
@@ -171,11 +172,11 @@ class CodeMeterProtocolParser:
                 "expiry": "permanent",
                 "license_type": "permanent",
                 "encryption_supported": True,
-                "signing_supported": True
-            }
+                "signing_supported": True,
+            },
         }
 
-    def _generate_container_info(self) -> Dict[str, Any]:
+    def _generate_container_info(self) -> dict[str, Any]:
         """Generate realistic CodeMeter container information"""
         return {
             "serial_number": random.randint(1000000, 9999999),
@@ -188,18 +189,18 @@ class CodeMeterProtocolParser:
             "firm_update_count": random.randint(0, 10),
             "product_update_count": random.randint(0, 50),
             "device_id": str(uuid.uuid4()).upper(),
-            "firmware_version": "6.90.5317.500"
+            "firmware_version": "6.90.5317.500",
         }
 
-    def parse_request(self, data: bytes) -> Optional[CodeMeterRequest]:
-        """
-        Parse incoming CodeMeter request
+    def parse_request(self, data: bytes) -> CodeMeterRequest | None:
+        """Parse incoming CodeMeter request
 
         Args:
             data: Raw CodeMeter request data
 
         Returns:
             Parsed CodeMeterRequest object or None if invalid
+
         """
         try:
             if len(data) < 24:  # Minimum CodeMeter header
@@ -286,7 +287,7 @@ class CodeMeterProtocolParser:
                 client_id=client_id,
                 session_context=session_context,
                 challenge_data=challenge_data,
-                additional_data=additional_data
+                additional_data=additional_data,
             )
 
             command_name = self.CODEMETER_COMMANDS.get(command, f"UNKNOWN_{command:04X}")
@@ -297,7 +298,7 @@ class CodeMeterProtocolParser:
             self.logger.error(f"Failed to parse CodeMeter request: {e}")
             return None
 
-    def _parse_session_context(self, data: bytes) -> Dict[str, Any]:
+    def _parse_session_context(self, data: bytes) -> dict[str, Any]:
         """Parse CodeMeter session context data"""
         context = {}
         try:
@@ -328,7 +329,7 @@ class CodeMeterProtocolParser:
 
         return context
 
-    def _parse_additional_data(self, data: bytes) -> Dict[str, Any]:
+    def _parse_additional_data(self, data: bytes) -> dict[str, Any]:
         """Parse additional CodeMeter data fields"""
         additional = {}
         try:
@@ -362,52 +363,51 @@ class CodeMeterProtocolParser:
         return additional
 
     def generate_response(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """
-        Generate appropriate CodeMeter response based on request
+        """Generate appropriate CodeMeter response based on request
 
         Args:
             request: Parsed CodeMeter request
 
         Returns:
             CodeMeter response object
+
         """
         command_name = self.CODEMETER_COMMANDS.get(request.command, "UNKNOWN")
         self.logger.info(f"Generating response for {command_name} command")
 
         if request.command == 0x1000:  # CM_LOGIN
             return self._handle_login(request)
-        elif request.command == 0x1001:  # CM_LOGOUT
+        if request.command == 0x1001:  # CM_LOGOUT
             return self._handle_logout(request)
-        elif request.command == 0x1002:  # CM_CHALLENGE
+        if request.command == 0x1002:  # CM_CHALLENGE
             return self._handle_challenge(request)
-        elif request.command == 0x1003:  # CM_RESPONSE
+        if request.command == 0x1003:  # CM_RESPONSE
             return self._handle_response(request)
-        elif request.command == 0x1004:  # CM_GET_INFO
+        if request.command == 0x1004:  # CM_GET_INFO
             return self._handle_get_info(request)
-        elif request.command == 0x1006:  # CM_ENCRYPT
+        if request.command == 0x1006:  # CM_ENCRYPT
             return self._handle_encrypt(request)
-        elif request.command == 0x1007:  # CM_DECRYPT
+        if request.command == 0x1007:  # CM_DECRYPT
             return self._handle_decrypt(request)
-        elif request.command == 0x1008:  # CM_SIGN
+        if request.command == 0x1008:  # CM_SIGN
             return self._handle_sign(request)
-        elif request.command == 0x1009:  # CM_VERIFY
+        if request.command == 0x1009:  # CM_VERIFY
             return self._handle_verify(request)
-        elif request.command == 0x100A:  # CM_GET_LICENSE
+        if request.command == 0x100A:  # CM_GET_LICENSE
             return self._handle_get_license(request)
-        elif request.command == 0x100B:  # CM_RELEASE_LICENSE
+        if request.command == 0x100B:  # CM_RELEASE_LICENSE
             return self._handle_release_license(request)
-        elif request.command == 0x100C:  # CM_HEARTBEAT
+        if request.command == 0x100C:  # CM_HEARTBEAT
             return self._handle_heartbeat(request)
-        elif request.command == 0x100D:  # CM_GET_CONTAINER_INFO
+        if request.command == 0x100D:  # CM_GET_CONTAINER_INFO
             return self._handle_get_container_info(request)
-        elif request.command == 0x100E:  # CM_ENUM_PRODUCTS
+        if request.command == 0x100E:  # CM_ENUM_PRODUCTS
             return self._handle_enum_products(request)
-        elif request.command == 0x100F:  # CM_TRANSFER_RECEIPT
+        if request.command == 0x100F:  # CM_TRANSFER_RECEIPT
             return self._handle_transfer_receipt(request)
-        elif request.command == 0x1010:  # CM_CHECK_RECEIPT
+        if request.command == 0x1010:  # CM_CHECK_RECEIPT
             return self._handle_check_receipt(request)
-        else:
-            return self._handle_unknown_command(request)
+        return self._handle_unknown_command(request)
 
     def _handle_login(self, request: CodeMeterRequest) -> CodeMeterResponse:
         """Handle CodeMeter login request"""
@@ -422,7 +422,7 @@ class CodeMeterProtocolParser:
                 license_info={},
                 response_data=b"",
                 container_info={},
-                expiry_data={}
+                expiry_data={},
             )
 
         product = self.products[product_key]
@@ -435,7 +435,7 @@ class CodeMeterProtocolParser:
             "request": request,
             "product": product,
             "login_time": time.time(),
-            "access_count": 0
+            "access_count": 0,
         }
 
         return CodeMeterResponse(
@@ -446,14 +446,14 @@ class CodeMeterProtocolParser:
             license_info={
                 "session_id": session_hash,
                 "features_granted": product["features"] & request.feature_map,
-                "access_mode": "exclusive" if product["max_users"] == 1 else "shared"
+                "access_mode": "exclusive" if product["max_users"] == 1 else "shared",
             },
             response_data=hashlib.sha256(session_id.encode()).digest()[:16],
             container_info=self.container_info,
             expiry_data={
                 "expiry_date": product["expiry"],
-                "license_type": product["license_type"]
-            }
+                "license_type": product["license_type"],
+            },
         )
 
     def _handle_logout(self, request: CodeMeterRequest) -> CodeMeterResponse:
@@ -474,7 +474,7 @@ class CodeMeterProtocolParser:
             license_info={"logout_time": int(time.time())},
             response_data=b"",
             container_info={},
-            expiry_data={}
+            expiry_data={},
         )
 
     def _handle_challenge(self, request: CodeMeterRequest) -> CodeMeterResponse:
@@ -483,7 +483,7 @@ class CodeMeterProtocolParser:
         challenge_response = hashlib.sha256(
             request.challenge_data +
             str(request.firm_code).encode() +
-            str(request.product_code).encode()
+            str(request.product_code).encode(),
         ).digest()
 
         return CodeMeterResponse(
@@ -494,7 +494,7 @@ class CodeMeterProtocolParser:
             license_info={},
             response_data=challenge_response,
             container_info={},
-            expiry_data={}
+            expiry_data={},
         )
 
     def _handle_response(self, request: CodeMeterRequest) -> CodeMeterResponse:
@@ -508,7 +508,7 @@ class CodeMeterProtocolParser:
             license_info={"authentication": "verified"},
             response_data=b"\x01",  # Success
             container_info={},
-            expiry_data={}
+            expiry_data={},
         )
 
     def _handle_get_info(self, request: CodeMeterRequest) -> CodeMeterResponse:
@@ -522,11 +522,11 @@ class CodeMeterProtocolParser:
                 "runtime_version": "7.60.6089.500",
                 "api_version": "7.60",
                 "containers_found": 1,
-                "server_running": True
+                "server_running": True,
             },
             response_data=b"",
             container_info=self.container_info,
-            expiry_data={}
+            expiry_data={},
         )
 
     def _handle_encrypt(self, request: CodeMeterRequest) -> CodeMeterResponse:
@@ -546,7 +546,7 @@ class CodeMeterProtocolParser:
             license_info={},
             response_data=bytes(encrypted_data),
             container_info={},
-            expiry_data={}
+            expiry_data={},
         )
 
     def _handle_decrypt(self, request: CodeMeterRequest) -> CodeMeterResponse:
@@ -559,7 +559,7 @@ class CodeMeterProtocolParser:
         # Generate signature hash
         signature = hashlib.sha256(
             request.challenge_data +
-            struct.pack("<II", request.firm_code, request.product_code)
+            struct.pack("<II", request.firm_code, request.product_code),
         ).digest()
 
         return CodeMeterResponse(
@@ -570,7 +570,7 @@ class CodeMeterProtocolParser:
             license_info={"signature_algorithm": "SHA256"},
             response_data=signature,
             container_info={},
-            expiry_data={}
+            expiry_data={},
         )
 
     def _handle_verify(self, request: CodeMeterRequest) -> CodeMeterResponse:
@@ -584,7 +584,7 @@ class CodeMeterProtocolParser:
             license_info={"verification": "valid"},
             response_data=b"\x01",  # Valid
             container_info={},
-            expiry_data={}
+            expiry_data={},
         )
 
     def _handle_get_license(self, request: CodeMeterRequest) -> CodeMeterResponse:
@@ -603,20 +603,19 @@ class CodeMeterProtocolParser:
                 container_info=self.container_info,
                 expiry_data={
                     "expiry_date": product["expiry"],
-                    "license_type": product["license_type"]
-                }
+                    "license_type": product["license_type"],
+                },
             )
-        else:
-            return CodeMeterResponse(
-                status=0x00000002,  # CM_GCM_NO_LICENSE
-                request_id=request.request_id,
-                firm_code=request.firm_code,
-                product_code=request.product_code,
-                license_info={},
-                response_data=b"",
-                container_info={},
-                expiry_data={}
-            )
+        return CodeMeterResponse(
+            status=0x00000002,  # CM_GCM_NO_LICENSE
+            request_id=request.request_id,
+            firm_code=request.firm_code,
+            product_code=request.product_code,
+            license_info={},
+            response_data=b"",
+            container_info={},
+            expiry_data={},
+        )
 
     def _handle_release_license(self, request: CodeMeterRequest) -> CodeMeterResponse:
         """Handle release license request"""
@@ -628,7 +627,7 @@ class CodeMeterProtocolParser:
             license_info={"release_time": int(time.time())},
             response_data=b"",
             container_info={},
-            expiry_data={}
+            expiry_data={},
         )
 
     def _handle_heartbeat(self, request: CodeMeterRequest) -> CodeMeterResponse:
@@ -646,7 +645,7 @@ class CodeMeterProtocolParser:
             license_info={"heartbeat_time": int(time.time())},
             response_data=b"",
             container_info={},
-            expiry_data={}
+            expiry_data={},
         )
 
     def _handle_get_container_info(self, request: CodeMeterRequest) -> CodeMeterResponse:
@@ -659,7 +658,7 @@ class CodeMeterProtocolParser:
             license_info={},
             response_data=b"",
             container_info=self.container_info,
-            expiry_data={}
+            expiry_data={},
         )
 
     def _handle_enum_products(self, request: CodeMeterRequest) -> CodeMeterResponse:
@@ -672,7 +671,7 @@ class CodeMeterProtocolParser:
                     "product_code": product_code,
                     "name": product["name"],
                     "features": product["features"],
-                    "max_users": product["max_users"]
+                    "max_users": product["max_users"],
                 })
 
         return CodeMeterResponse(
@@ -683,20 +682,20 @@ class CodeMeterProtocolParser:
             license_info={"products": products_list},
             response_data=b"",
             container_info=self.container_info,
-            expiry_data={}
+            expiry_data={},
         )
 
     def _handle_transfer_receipt(self, request: CodeMeterRequest) -> CodeMeterResponse:
         """Handle transfer receipt request"""
         receipt_id = hashlib.md5(
-            f"{request.firm_code}:{request.product_code}:{time.time()}".encode()
+            f"{request.firm_code}:{request.product_code}:{time.time()}".encode(),
         ).hexdigest()
 
         self.license_receipts[receipt_id] = {
             "firm_code": request.firm_code,
             "product_code": request.product_code,
             "transfer_time": time.time(),
-            "client_id": request.client_id
+            "client_id": request.client_id,
         }
 
         return CodeMeterResponse(
@@ -707,7 +706,7 @@ class CodeMeterProtocolParser:
             license_info={"receipt_id": receipt_id},
             response_data=receipt_id.encode(),
             container_info={},
-            expiry_data={}
+            expiry_data={},
         )
 
     def _handle_check_receipt(self, request: CodeMeterRequest) -> CodeMeterResponse:
@@ -724,19 +723,18 @@ class CodeMeterProtocolParser:
                 license_info=receipt,
                 response_data=b"",
                 container_info={},
-                expiry_data={}
+                expiry_data={},
             )
-        else:
-            return CodeMeterResponse(
-                status=0x00000002,  # CM_GCM_NO_LICENSE
-                request_id=request.request_id,
-                firm_code=request.firm_code,
-                product_code=request.product_code,
-                license_info={},
-                response_data=b"",
-                container_info={},
-                expiry_data={}
-            )
+        return CodeMeterResponse(
+            status=0x00000002,  # CM_GCM_NO_LICENSE
+            request_id=request.request_id,
+            firm_code=request.firm_code,
+            product_code=request.product_code,
+            license_info={},
+            response_data=b"",
+            container_info={},
+            expiry_data={},
+        )
 
     def _handle_unknown_command(self, request: CodeMeterRequest) -> CodeMeterResponse:
         """Handle unknown command"""
@@ -749,18 +747,18 @@ class CodeMeterProtocolParser:
             license_info={},
             response_data=b"",
             container_info={},
-            expiry_data={}
+            expiry_data={},
         )
 
     def serialize_response(self, response: CodeMeterResponse) -> bytes:
-        """
-        Serialize CodeMeter response to bytes
+        """Serialize CodeMeter response to bytes
 
         Args:
             response: CodeMeter response object
 
         Returns:
             Serialized response bytes
+
         """
         try:
             packet = bytearray()
@@ -806,7 +804,7 @@ class CodeMeterProtocolParser:
             # Return minimal error response
             return struct.pack("<III", 0x434D4554, response.status, response.request_id)
 
-    def _serialize_dict(self, data: Dict[str, Any]) -> bytes:
+    def _serialize_dict(self, data: dict[str, Any]) -> bytes:
         """Serialize dictionary to bytes"""
         serialized = bytearray()
 
@@ -818,9 +816,7 @@ class CodeMeterProtocolParser:
                     value_bytes = value.encode("utf-8")
                 elif isinstance(value, int):
                     value_bytes = struct.pack("<I", value)
-                elif isinstance(value, list):
-                    value_bytes = str(value).encode("utf-8")
-                elif isinstance(value, dict):
+                elif isinstance(value, list) or isinstance(value, dict):
                     value_bytes = str(value).encode("utf-8")
                 else:
                     value_bytes = str(value).encode("utf-8")

@@ -1,5 +1,4 @@
-"""
-Script Generation Handler
+"""Script Generation Handler
 
 Manages the generation of bypass scripts (Frida/Ghidra) based on
 detected protections using the ProtectionAwareScriptGenerator.
@@ -8,7 +7,6 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from typing import Optional
 
 from PyQt6.QtCore import QObject, QRunnable, QThreadPool, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont, QTextDocument
@@ -45,6 +43,7 @@ except ImportError:
 
         Returns:
             A logging.Logger instance
+
         """
         return logging.getLogger(name)
 
@@ -53,6 +52,7 @@ logger = get_logger(__name__)
 
 class ScriptGenerationWorkerSignals(QObject):
     """Signals for script generation worker"""
+
     finished = pyqtSignal()
     error = pyqtSignal(tuple)
     result = pyqtSignal(dict)
@@ -69,6 +69,7 @@ class ScriptGenerationWorker(QRunnable):
             file_path: Path to the file being analyzed.
             script_type: Type of script to generate (e.g., 'frida', 'ghidra').
             protections: List of detected protections to generate scripts for.
+
         """
         super().__init__()
         self.file_path = file_path
@@ -94,7 +95,7 @@ class ScriptGenerationWorker(QRunnable):
             else:
                 result = {
                     "success": False,
-                    "error": f"Unknown script type: {self.script_type}"
+                    "error": f"Unknown script type: {self.script_type}",
                 }
 
             self.signals.result.emit(result)
@@ -116,6 +117,7 @@ class ScriptDisplayDialog(QDialog):
         Args:
             script_data: Dictionary containing the generated script data and metadata.
             parent: Optional parent widget for Qt integration.
+
         """
         super().__init__(parent)
         self.script_data = script_data
@@ -169,7 +171,7 @@ class ScriptDisplayDialog(QDialog):
         layout.addWidget(self.script_text)
 
         # Warnings section
-        if "warnings" in self.script_data and self.script_data["warnings"]:
+        if self.script_data.get("warnings"):
             warnings_label = QLabel("⚠️ Warnings:")
             warnings_label.setStyleSheet("color: orange; font-weight: bold;")
             layout.addWidget(warnings_label)
@@ -248,7 +250,7 @@ class ScriptDisplayDialog(QDialog):
                 cursor = self.script_text.document().find(
                     keyword,
                     cursor,
-                    QTextDocument.FindWholeWords
+                    QTextDocument.FindWholeWords,
                 )
                 if cursor.isNull():
                     break
@@ -286,7 +288,7 @@ class ScriptDisplayDialog(QDialog):
             self,
             "Save Bypass Script",
             default_name,
-            file_filter
+            file_filter,
         )
 
         if file_path:
@@ -297,20 +299,19 @@ class ScriptDisplayDialog(QDialog):
                 QMessageBox.information(
                     self,
                     "Script Saved",
-                    f"Script saved to:\n{file_path}"
+                    f"Script saved to:\n{file_path}",
                 )
             except Exception as e:
                 logger.error("Exception in script_generation_handler: %s", e)
                 QMessageBox.critical(
                     self,
                     "Save Error",
-                    f"Failed to save script:\n{str(e)}"
+                    f"Failed to save script:\n{e!s}",
                 )
 
 
 class ScriptGenerationHandler(QObject):
-    """
-    Handler for bypass script generation based on protection analysis.
+    """Handler for bypass script generation based on protection analysis.
 
     Integrates with ProtectionAwareScriptGenerator to create
     Frida and Ghidra scripts for bypassing detected protections.
@@ -326,27 +327,27 @@ class ScriptGenerationHandler(QObject):
 
         Args:
             parent: Optional parent widget for Qt integration.
+
         """
         super().__init__(parent)
         self.thread_pool = QThreadPool.globalInstance()
-        self.current_result: Optional[UnifiedProtectionResult] = None
+        self.current_result: UnifiedProtectionResult | None = None
         self.parent_widget = parent
 
     def on_analysis_complete(self, result: UnifiedProtectionResult):
-        """
-        Main slot called when protection analysis completes.
+        """Main slot called when protection analysis completes.
         """
         self.current_result = result
         logger.info(
             f"Script generation handler received analysis for: {result.file_path}")
 
     def generate_script(self, script_type: str = "frida", parent_widget=None):
-        """
-        Generate a bypass script of the specified type.
+        """Generate a bypass script of the specified type.
 
         Args:
             script_type: Type of script to generate ("frida" or "ghidra")
             parent_widget: Parent widget for dialog (optional)
+
         """
         if not self.current_result:
             self.script_error.emit("No analysis result available")
@@ -363,11 +364,11 @@ class ScriptGenerationHandler(QObject):
         worker = ScriptGenerationWorker(
             self.current_result.file_path,
             script_type,
-            protections
+            protections,
         )
 
         worker.signals.result.connect(
-            lambda result: self._on_script_ready(result, parent_widget)
+            lambda result: self._on_script_ready(result, parent_widget),
         )
         worker.signals.error.connect(self._on_worker_error)
         worker.signals.progress.connect(self.script_progress.emit)
@@ -393,7 +394,7 @@ class ScriptGenerationHandler(QObject):
                 QMessageBox.warning(
                     parent_widget,
                     "Script Generation Failed",
-                    error_msg
+                    error_msg,
                 )
 
     def _on_worker_error(self, error_tuple):

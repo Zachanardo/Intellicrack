@@ -1,5 +1,4 @@
-"""
-Cache Management Widget
+"""Cache Management Widget
 
 Provides UI for monitoring and managing the analysis cache.
 
@@ -7,7 +6,7 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont
@@ -91,7 +90,7 @@ class CacheStatsWidget(QWidget):
 
         self.setLayout(layout)
 
-    def update_stats(self, stats: Dict[str, Any]):
+    def update_stats(self, stats: dict[str, Any]):
         """Update displayed statistics"""
         try:
             stats_data = stats.get("stats", {})
@@ -290,7 +289,7 @@ class CacheManagementWidget(QWidget):
         except Exception as e:
             logger.error(f"Failed to refresh cache stats: {e}")
 
-    def update_details(self, stats: Dict[str, Any]):
+    def update_details(self, stats: dict[str, Any]):
         """Update cache details text"""
         details = []
 
@@ -356,7 +355,7 @@ class CacheManagementWidget(QWidget):
             QMessageBox.information(
                 self,
                 "Cache Cleanup",
-                f"Cleaned up {removed} invalid cache entries."
+                f"Cleaned up {removed} invalid cache entries.",
             )
 
             self.cache_cleaned.emit(removed)
@@ -367,7 +366,7 @@ class CacheManagementWidget(QWidget):
             QMessageBox.critical(
                 self,
                 "Cleanup Error",
-                f"Failed to cleanup cache: {e}"
+                f"Failed to cleanup cache: {e}",
             )
 
     def save_cache(self):
@@ -378,7 +377,7 @@ class CacheManagementWidget(QWidget):
             QMessageBox.information(
                 self,
                 "Cache Saved",
-                "Cache has been saved to disk successfully."
+                "Cache has been saved to disk successfully.",
             )
 
         except Exception as e:
@@ -386,7 +385,7 @@ class CacheManagementWidget(QWidget):
             QMessageBox.critical(
                 self,
                 "Save Error",
-                f"Failed to save cache: {e}"
+                f"Failed to save cache: {e}",
             )
 
     def clear_cache(self):
@@ -397,7 +396,7 @@ class CacheManagementWidget(QWidget):
             "Are you sure you want to clear all cache entries?\n"
             "This will remove all cached analysis results including AI coordination cache.",
             QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
+            QMessageBox.No,
         )
 
         if reply == QMessageBox.Yes:
@@ -424,7 +423,7 @@ class CacheManagementWidget(QWidget):
                 QMessageBox.information(
                     self,
                     "Cache Cleared",
-                    "All cache entries have been cleared including AI coordination cache."
+                    "All cache entries have been cleared including AI coordination cache.",
                 )
 
                 self.cache_cleared.emit()
@@ -435,7 +434,7 @@ class CacheManagementWidget(QWidget):
                 QMessageBox.critical(
                     self,
                     "Clear Error",
-                    f"Failed to clear cache: {e}"
+                    f"Failed to clear cache: {e}",
                 )
 
     def closeEvent(self, event):

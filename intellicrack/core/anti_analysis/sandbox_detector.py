@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -23,7 +22,7 @@ import platform
 import socket
 import subprocess
 import time
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from .base_detector import BaseDetector
 
@@ -36,8 +35,7 @@ Cuckoo, VMRay, Joe Sandbox, and others.
 
 
 class SandboxDetector(BaseDetector):
-    """
-    Comprehensive sandbox detection using behavioral and environmental checks.
+    """Comprehensive sandbox detection using behavioral and environmental checks.
     """
 
     def __init__(self):
@@ -55,7 +53,7 @@ class SandboxDetector(BaseDetector):
             "process_monitoring": self._check_process_monitoring,
             "time_acceleration": self._check_time_acceleration,
             "api_hooks": self._check_api_hooks,
-            "mouse_movement": self._check_mouse_movement
+            "mouse_movement": self._check_mouse_movement,
         }
 
         # Known sandbox signatures
@@ -64,26 +62,26 @@ class SandboxDetector(BaseDetector):
                 "files": [os.path.join(os.environ.get("SystemDrive", "C:"), "analyzer"), os.path.join(os.environ.get("SystemDrive", "C:"), "sandbox"), "/tmp/.cuckoo-*"],
                 "processes": ["python.exe", "analyzer.py"],
                 "network": ["192.168.56.0/24"],  # Common Cuckoo network
-                "artifacts": ["cuckoo", "analyzer", "auxiliary"]
+                "artifacts": ["cuckoo", "analyzer", "auxiliary"],
             },
             "vmray": {
                 "files": [os.path.join(os.environ.get("SystemDrive", "C:"), "vmray")],
                 "processes": ["vmray_controller.exe"],
-                "artifacts": ["vmray", "controller"]
+                "artifacts": ["vmray", "controller"],
             },
             "joe_sandbox": {
                 "files": [os.path.join(os.environ.get("SystemDrive", "C:"), "joe")],
                 "processes": ["joeboxcontrol.exe", "joeboxserver.exe"],
-                "artifacts": ["joe", "joebox"]
+                "artifacts": ["joe", "joebox"],
             },
             "threatgrid": {
                 "artifacts": ["threatgrid", "tgrid"],
-                "network": ["192.168.2.0/24"]
+                "network": ["192.168.2.0/24"],
             },
             "hybrid_analysis": {
                 "artifacts": ["falcon", "hybrid-analysis"],
-                "files": [os.path.join(os.environ.get("SystemDrive", "C:"), "falcon")]
-            }
+                "files": [os.path.join(os.environ.get("SystemDrive", "C:"), "falcon")],
+            },
         }
 
         # Sandbox behavioral patterns
@@ -92,38 +90,38 @@ class SandboxDetector(BaseDetector):
                 "paths": [
                     os.path.expanduser("~/Documents"),
                     os.path.expanduser("~/Desktop"),
-                    os.path.expanduser("~/Downloads")
+                    os.path.expanduser("~/Downloads"),
                 ],
-                "min_files": 5  # Real systems have user files
+                "min_files": 5,  # Real systems have user files
             },
             "limited_processes": {
                 "min_processes": 50,  # Real systems run many processes
-                "common_processes": ["explorer.exe", "svchost.exe", "chrome.exe", "firefox.exe"]
+                "common_processes": ["explorer.exe", "svchost.exe", "chrome.exe", "firefox.exe"],
             },
             "fast_boot": {
-                "max_uptime": 300  # 5 minutes - sandboxes often have fresh boots
+                "max_uptime": 300,  # 5 minutes - sandboxes often have fresh boots
             },
             "limited_network": {
-                "min_connections": 5  # Real systems have network activity
-            }
+                "min_connections": 5,  # Real systems have network activity
+            },
         }
 
-    def detect_sandbox(self, aggressive: bool = False) -> Dict[str, Any]:
-        """
-        Perform sandbox detection using multiple techniques.
+    def detect_sandbox(self, aggressive: bool = False) -> dict[str, Any]:
+        """Perform sandbox detection using multiple techniques.
 
         Args:
             aggressive: Use aggressive detection that might affect analysis
 
         Returns:
             Detection results with confidence scores
+
         """
         results = {
             "is_sandbox": False,
             "confidence": 0.0,
             "sandbox_type": None,
             "detections": {},
-            "evasion_difficulty": 0
+            "evasion_difficulty": 0,
         }
 
         try:
@@ -151,7 +149,7 @@ class SandboxDetector(BaseDetector):
             self.logger.error(f"Sandbox detection failed: {e}")
             return results
 
-    def _check_environment(self) -> Tuple[bool, float, Dict]:
+    def _check_environment(self) -> tuple[bool, float, dict]:
         """Check for sandbox-specific environment variables and settings."""
         details = {"suspicious_env": [], "username": None, "computername": None}
 
@@ -184,7 +182,7 @@ class SandboxDetector(BaseDetector):
                 "CUCKOO", "CUCKOO_ROOT", "CUCKOO_ANALYSIS",
                 "VMRAY", "VMRAY_ANALYSIS",
                 "JOEBOX", "JOESANDBOX",
-                "SANDBOX", "SANDBOXIE"
+                "SANDBOX", "SANDBOXIE",
             ]
 
             for var in sandbox_env_vars:
@@ -200,7 +198,7 @@ class SandboxDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_behavioral(self) -> Tuple[bool, float, Dict]:
+    def _check_behavioral(self) -> tuple[bool, float, dict]:
         """Check for behavioral indicators of sandbox environment."""
         details = {"anomalies": []}
 
@@ -220,10 +218,10 @@ class SandboxDetector(BaseDetector):
 
             # Check process count
             if platform.system() == "Windows":
-                result = subprocess.run(["tasklist"], capture_output=True, text=True)
+                result = subprocess.run(["tasklist"], check=False, capture_output=True, text=True)
                 process_count = len(result.stdout.strip().split("\n")) - 3  # Header lines
             else:
-                result = subprocess.run(["ps", "aux"], capture_output=True, text=True)
+                result = subprocess.run(["ps", "aux"], check=False, capture_output=True, text=True)
                 process_count = len(result.stdout.strip().split("\n")) - 1  # Header line
 
             if process_count < self.behavioral_patterns["limited_processes"]["min_processes"]:
@@ -243,7 +241,7 @@ class SandboxDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_resource_limits(self) -> Tuple[bool, float, Dict]:
+    def _check_resource_limits(self) -> tuple[bool, float, dict]:
         """Check for resource limitations typical of sandboxes."""
         details = {"limitations": []}
 
@@ -265,7 +263,7 @@ class SandboxDetector(BaseDetector):
                     self.logger.error("Import error in sandbox_detector: %s", e)
             else:
                 try:
-                    with open("/proc/meminfo", "r") as f:
+                    with open("/proc/meminfo") as f:
                         for line in f:
                             if line.startswith("MemTotal:"):
                                 total_kb = int(line.split()[1])
@@ -281,17 +279,16 @@ class SandboxDetector(BaseDetector):
                 free_bytes = ctypes.c_ulonglong(0)
                 total_bytes = ctypes.c_ulonglong(0)
                 ctypes.windll.kernel32.GetDiskFreeSpaceExW(
-                    "C:\\", ctypes.byref(free_bytes), ctypes.byref(total_bytes), None
+                    "C:\\", ctypes.byref(free_bytes), ctypes.byref(total_bytes), None,
                 )
                 total_gb = total_bytes.value / (1024**3)
                 if total_gb < 60:
                     details["limitations"].append(f"Small disk: {total_gb:.1f}GB")
-            else:
-                if hasattr(os, "statvfs"):
-                    stat = os.statvfs("/")
-                    total_gb = (stat.f_blocks * stat.f_frsize) / (1024**3)
-                    if total_gb < 60:
-                        details["limitations"].append(f"Small disk: {total_gb:.1f}GB")
+            elif hasattr(os, "statvfs"):
+                stat = os.statvfs("/")
+                total_gb = (stat.f_blocks * stat.f_frsize) / (1024**3)
+                if total_gb < 60:
+                    details["limitations"].append(f"Small disk: {total_gb:.1f}GB")
 
             if details["limitations"]:
                 confidence = min(0.7, len(details["limitations"]) * 0.25)
@@ -302,16 +299,16 @@ class SandboxDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_network(self) -> Tuple[bool, float, Dict]:
+    def _check_network(self) -> tuple[bool, float, dict]:
         """Check network connectivity and configuration."""
         details = {"network_anomalies": [], "connections": 0}
 
         try:
             # Check network connections
             if platform.system() == "Windows":
-                result = subprocess.run(["netstat", "-an"], capture_output=True, text=True)
+                result = subprocess.run(["netstat", "-an"], check=False, capture_output=True, text=True)
             else:
-                result = subprocess.run(["ss", "-an"], capture_output=True, text=True)
+                result = subprocess.run(["ss", "-an"], check=False, capture_output=True, text=True)
 
             connections = len([l for l in result.stdout.split("\n") if "ESTABLISHED" in l])
             details["connections"] = connections
@@ -360,7 +357,7 @@ class SandboxDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_user_interaction(self) -> Tuple[bool, float, Dict]:
+    def _check_user_interaction(self) -> tuple[bool, float, dict]:
         """Check for signs of user interaction."""
         details = {"interaction_signs": []}
 
@@ -379,7 +376,7 @@ class SandboxDetector(BaseDetector):
                 "chrome": os.path.join(os.environ.get("LOCALAPPDATA", ""),
                                      "Google\\Chrome\\User Data\\Default\\History"),
                 "firefox": os.path.join(os.environ.get("APPDATA", ""),
-                                      "Mozilla\\Firefox\\Profiles")
+                                      "Mozilla\\Firefox\\Profiles"),
             }
 
             browser_found = False
@@ -399,7 +396,7 @@ class SandboxDetector(BaseDetector):
                         "discord.exe", "slack.exe"]
 
             if platform.system() == "Windows":
-                result = subprocess.run(["tasklist"], capture_output=True, text=True)
+                result = subprocess.run(["tasklist"], check=False, capture_output=True, text=True)
                 processes = result.stdout.lower()
 
                 running_apps = [app for app in user_apps if app in processes]
@@ -415,7 +412,7 @@ class SandboxDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_file_system_artifacts(self) -> Tuple[bool, float, Dict]:
+    def _check_file_system_artifacts(self) -> tuple[bool, float, dict]:
         """Check for sandbox-specific files and directories."""
         details = {"artifacts_found": []}
 
@@ -434,7 +431,7 @@ class SandboxDetector(BaseDetector):
                 os.path.join(os.environ.get("SystemDrive", "C:"), "malware"),
                 "/tmp/analysis/",
                 "/tmp/cuckoo/",
-                "/opt/sandbox/"
+                "/opt/sandbox/",
             ]
 
             for path in suspicious_paths:
@@ -446,7 +443,7 @@ class SandboxDetector(BaseDetector):
                 "C:\\\\Windows\\\\System32\\\\drivers\\\\monitor.sys",
                 "C:\\\\Windows\\\\System32\\\\api_monitor.dll",
                 "C:\\\\hook.dll",
-                "C:\\\\inject.dll"
+                "C:\\\\inject.dll",
             ]
 
             for file_path in monitoring_files:
@@ -462,7 +459,7 @@ class SandboxDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_process_monitoring(self) -> Tuple[bool, float, Dict]:
+    def _check_process_monitoring(self) -> tuple[bool, float, dict]:
         """Check for process monitoring and injection."""
         details = {"monitoring_signs": []}
 
@@ -471,7 +468,7 @@ class SandboxDetector(BaseDetector):
             monitoring_processes = [
                 "procmon.exe", "procexp.exe", "apimonitor.exe",
                 "wireshark.exe", "tcpdump", "strace", "ltrace",
-                "sysmon.exe", "autoruns.exe"
+                "sysmon.exe", "autoruns.exe",
             ]
 
             # Use base class method to get process list
@@ -515,7 +512,7 @@ class SandboxDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_time_acceleration(self) -> Tuple[bool, float, Dict]:
+    def _check_time_acceleration(self) -> tuple[bool, float, dict]:
         """Check for time acceleration used by sandboxes."""
         details = {"time_anomaly": False, "drift": 0}
 
@@ -561,7 +558,7 @@ class SandboxDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_api_hooks(self) -> Tuple[bool, float, Dict]:
+    def _check_api_hooks(self) -> tuple[bool, float, dict]:
         """Check for API hooking commonly used by sandboxes."""
         details = {"hooked_apis": []}
 
@@ -575,7 +572,7 @@ class SandboxDetector(BaseDetector):
                     ("ws2_32.dll", "send"),
                     ("ws2_32.dll", "recv"),
                     ("ntdll.dll", "NtCreateFile"),
-                    ("ntdll.dll", "NtOpenProcess")
+                    ("ntdll.dll", "NtOpenProcess"),
                 ]
 
                 kernel32 = ctypes.windll.kernel32
@@ -590,9 +587,7 @@ class SandboxDetector(BaseDetector):
                             first_byte = ctypes.c_ubyte.from_address(api_addr).value
 
                             # Check for common hook patterns
-                            if first_byte == 0xE9:  # JMP
-                                details["hooked_apis"].append(f"{dll_name}!{api_name}")
-                            elif first_byte == 0x68:  # PUSH
+                            if first_byte == 0xE9 or first_byte == 0x68:  # JMP
                                 details["hooked_apis"].append(f"{dll_name}!{api_name}")
 
                     except Exception as e:
@@ -607,7 +602,7 @@ class SandboxDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_mouse_movement(self) -> Tuple[bool, float, Dict]:
+    def _check_mouse_movement(self) -> tuple[bool, float, dict]:
         """Check for human-like mouse movement."""
         details = {"mouse_active": False, "movement_count": 0}
 
@@ -621,6 +616,7 @@ class SandboxDetector(BaseDetector):
                         # Create mock POINT structure
                         class MockPOINT(ctypes.Structure):
                             """Mock POINT structure for Windows API compatibility."""
+
                             _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
                         wintypes.POINT = MockPOINT
                 except (ImportError, AttributeError) as e:
@@ -628,8 +624,10 @@ class SandboxDetector(BaseDetector):
                     # Fallback if wintypes is not available
                     class MockWintypes:
                         """Mock wintypes implementation for compatibility."""
+
                         class POINT(ctypes.Structure):
                             """Mock POINT structure definition."""
+
                             _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
                     from types import SimpleNamespace
                     wintypes = SimpleNamespace()
@@ -667,10 +665,9 @@ class SandboxDetector(BaseDetector):
             if platform.system() == "Windows":
                 kernel32 = ctypes.windll.kernel32
                 return kernel32.GetTickCount64() // 1000
-            else:
-                with open("/proc/uptime", "r") as f:
-                    uptime = float(f.readline().split()[0])
-                    return int(uptime)
+            with open("/proc/uptime") as f:
+                uptime = float(f.readline().split()[0])
+                return int(uptime)
         except:
             return None
 
@@ -687,7 +684,7 @@ class SandboxDetector(BaseDetector):
             # Check if first 3 octets match (assuming /24)
             return ip_parts[:3] == network_parts[:3]
 
-    def _identify_sandbox_type(self, detections: Dict[str, Any]) -> str:
+    def _identify_sandbox_type(self, detections: dict[str, Any]) -> str:
         """Identify specific sandbox based on detections."""
         sandbox_scores = {}
 
@@ -726,7 +723,7 @@ class SandboxDetector(BaseDetector):
         # Generic sandbox if no specific type identified
         return "Generic Sandbox"
 
-    def _calculate_evasion_difficulty(self, detections: Dict[str, Any]) -> int:
+    def _calculate_evasion_difficulty(self, detections: dict[str, Any]) -> int:
         """Calculate how difficult it is to evade sandbox detection."""
         # Methods that are hard to evade
         hard_methods = ["file_system", "process_monitoring", "api_hooks"]
@@ -817,7 +814,7 @@ Sleep(30000);  // 30 seconds
 """
         return code
 
-    def get_aggressive_methods(self) -> List[str]:
+    def get_aggressive_methods(self) -> list[str]:
         """Get list of method names that are considered aggressive."""
         return ["time_acceleration", "mouse_movement"]
 

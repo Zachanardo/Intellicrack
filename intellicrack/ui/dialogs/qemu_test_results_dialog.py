@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -27,7 +26,7 @@ import re
 import time
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QFont, QTextCursor
@@ -54,15 +53,16 @@ logger = get_logger(__name__)
 @dataclass
 class TestResults:
     """Container for real test results from QEMU execution."""
+
     success: bool
     duration: float
     output: str
-    errors: List[str]
-    warnings: List[str]
-    memory_changes: List[Dict[str, Any]]
-    api_calls: List[Dict[str, Any]]
-    network_activity: List[Dict[str, Any]]
-    file_operations: List[Dict[str, Any]]
+    errors: list[str]
+    warnings: list[str]
+    memory_changes: list[dict[str, Any]]
+    api_calls: list[dict[str, Any]]
+    network_activity: list[dict[str, Any]]
+    file_operations: list[dict[str, Any]]
     process_state: str
     exit_code: int
 
@@ -118,7 +118,7 @@ class QEMUExecutionThread(QThread):
                 network_activity=[],
                 file_operations=[],
                 process_state="error",
-                exit_code=-1
+                exit_code=-1,
             )
             self.execution_complete.emit(error_results)
 
@@ -135,7 +135,7 @@ class QEMUExecutionThread(QThread):
             self.snapshot_id,
             self.script_content,
             self.binary_path,
-            output_callback
+            output_callback,
         )
 
         return result
@@ -159,7 +159,7 @@ class QEMUExecutionThread(QThread):
                     memory_changes.append({
                         "type": "discovery",
                         "address": addr_match.group(1),
-                        "description": line
+                        "description": line,
                     })
 
             elif "Patched" in line or "Hooked" in line:
@@ -167,7 +167,7 @@ class QEMUExecutionThread(QThread):
                 api_calls.append({
                     "type": "hook",
                     "description": line,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 })
 
             elif "WARNING" in line or "Warning" in line:
@@ -191,7 +191,7 @@ class QEMUExecutionThread(QThread):
             network_activity=[],  # Could be enhanced with network monitoring
             file_operations=[],   # Could be enhanced with file monitoring
             process_state=process_state,
-            exit_code=result.exit_code
+            exit_code=result.exit_code,
         )
 
 
@@ -343,7 +343,7 @@ class QEMUTestResultsDialog(QDialog):
         # Create snapshot for testing
         snapshot_id = self.qemu_manager.create_script_test_snapshot(
             self.script_info.get("binary_path", ""),
-            self.script_info.get("platform", "windows")
+            self.script_info.get("platform", "windows"),
         )
 
         # Start execution thread
@@ -352,7 +352,7 @@ class QEMUTestResultsDialog(QDialog):
             snapshot_id,
             self.script_info.get("script_content", ""),
             self.script_info.get("binary_path", ""),
-            self.script_info.get("script_type", "frida")
+            self.script_info.get("script_type", "frida"),
         )
 
         # Connect signals
@@ -446,7 +446,7 @@ class QEMUTestResultsDialog(QDialog):
                 change.get("address", "Unknown"),
                 change.get("original", "N/A"),
                 change.get("patched", "N/A"),
-                change.get("description", "")
+                change.get("description", ""),
             ])
             self.memory_tree.addTopLevelItem(item)
 
@@ -459,7 +459,7 @@ class QEMUTestResultsDialog(QDialog):
                 call.get("timestamp", "N/A"),
                 call.get("api", "Unknown"),
                 call.get("parameters", ""),
-                call.get("result", "")
+                call.get("result", ""),
             ])
             self.api_tree.addTopLevelItem(item)
 
@@ -492,8 +492,8 @@ class QEMUTestResultsDialog(QDialog):
                 "memory_changes": self.test_results.memory_changes,
                 "api_calls": self.test_results.api_calls,
                 "process_state": self.test_results.process_state,
-                "exit_code": self.test_results.exit_code
-            }
+                "exit_code": self.test_results.exit_code,
+            },
         }
 
         # Save to file
@@ -501,7 +501,7 @@ class QEMUTestResultsDialog(QDialog):
         filename, _ = QFileDialog.getSaveFileName(
             self, "Export Test Results",
             f"qemu_test_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-            "JSON Files (*.json)"
+            "JSON Files (*.json)",
         )
 
         if filename:

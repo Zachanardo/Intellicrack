@@ -1,5 +1,4 @@
-"""
-Ghidra Script Selector Dialog
+"""Ghidra Script Selector Dialog
 
 Provides a user-friendly interface for selecting and managing Ghidra scripts.
 
@@ -22,7 +21,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
-from typing import Optional
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont
@@ -128,7 +126,7 @@ class ScriptInfoWidget(QWidget):
         layout.addStretch()
         self.setLayout(layout)
 
-    def update_script_info(self, script: Optional[GhidraScript]):
+    def update_script_info(self, script: GhidraScript | None):
         """Update displayed information for a script."""
         self.current_script = script
 
@@ -371,14 +369,13 @@ class GhidraScriptSelector(QDialog):
 
                     if has_scripts:
                         self.script_tree.addTopLevelItem(category_item)
-            else:
-                # Show single category
-                if selected_category in categories_dict:
-                    for script in categories_dict[selected_category]:
-                        if not self.show_invalid and not script.is_valid:
-                            continue
+            # Show single category
+            elif selected_category in categories_dict:
+                for script in categories_dict[selected_category]:
+                    if not self.show_invalid and not script.is_valid:
+                        continue
 
-                        self._add_script_item(script)
+                    self._add_script_item(script)
 
         # Resize columns
         for i in range(3):
@@ -494,7 +491,7 @@ class GhidraScriptSelector(QDialog):
             self,
             "Select Ghidra Script",
             "",
-            "Ghidra Scripts (*.java *.py);;Java Scripts (*.java);;Python Scripts (*.py)"
+            "Ghidra Scripts (*.java *.py);;Java Scripts (*.java);;Python Scripts (*.py)",
         )
 
         if not file_path:
@@ -507,14 +504,14 @@ class GhidraScriptSelector(QDialog):
             QMessageBox.information(
                 self,
                 "Script Added",
-                f"Script '{script.name}' has been added to user scripts."
+                f"Script '{script.name}' has been added to user scripts.",
             )
             self._refresh_scripts()
         else:
             QMessageBox.warning(
                 self,
                 "Failed to Add Script",
-                "The script could not be added. Please check that it's a valid Ghidra script."
+                "The script could not be added. Please check that it's a valid Ghidra script.",
             )
 
     def _open_scripts_folder(self):
@@ -531,17 +528,17 @@ class GhidraScriptSelector(QDialog):
             if system == "Windows" and hasattr(os, "startfile"):
                 os.startfile(user_scripts_dir)  # pylint: disable=no-member
             elif system == "Darwin":  # macOS
-                subprocess.run(["open", user_scripts_dir])
+                subprocess.run(["open", user_scripts_dir], check=False)
             else:  # Linux and others
-                subprocess.run(["xdg-open", user_scripts_dir])
+                subprocess.run(["xdg-open", user_scripts_dir], check=False)
         except Exception as e:
             logger.error(f"Failed to open folder: {e}")
             QMessageBox.warning(
                 self,
                 "Error",
-                f"Could not open folder: {user_scripts_dir}\n\nError: {str(e)}"
+                f"Could not open folder: {user_scripts_dir}\n\nError: {e!s}",
             )
 
-    def get_selected_script(self) -> Optional[str]:
+    def get_selected_script(self) -> str | None:
         """Get the selected script path."""
         return self.selected_script_path

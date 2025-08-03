@@ -1,5 +1,4 @@
-"""
-Model Cache Manager for Intellicrack
+"""Model Cache Manager for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -30,7 +29,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -69,7 +68,7 @@ class RestrictedUnpickler(pickle.Unpickler):
             "pandas", "pandas.core.frame", "pandas.core.series",
             "sklearn", "torch", "tensorflow",
             "__builtin__", "builtins",
-            "collections", "collections.abc"
+            "collections", "collections.abc",
         }
 
         # Allow model classes from our own modules
@@ -105,7 +104,7 @@ def secure_pickle_load(file_path):
     except ImportError:
         # Fallback to restricted pickle unpickler
         import io
-        return RestrictedUnpickler(io.BytesIO(data)).load()  # noqa: S301
+        return RestrictedUnpickler(io.BytesIO(data)).load()
 empty_cache = None
 gpu_autoloader = None
 
@@ -136,18 +135,19 @@ logger = get_logger(__name__)
 @dataclass
 class CacheEntry:
     """Information about a cached model."""
+
     model_id: str
     model_type: str  # "pytorch", "tensorflow", "onnx", etc.
     model_object: Any
-    tokenizer_object: Optional[Any]
-    config: Dict[str, Any]
+    tokenizer_object: Any | None
+    config: dict[str, Any]
     memory_size: int  # bytes
     last_accessed: datetime
     access_count: int
     load_time: float  # seconds
     device: str
-    quantization: Optional[str] = None
-    adapter_info: Optional[Dict[str, Any]] = None
+    quantization: str | None = None
+    adapter_info: dict[str, Any] | None = None
 
 
 class ModelCacheManager:
@@ -156,8 +156,8 @@ class ModelCacheManager:
     def __init__(
         self,
         max_memory_gb: float = 8.0,
-        cache_dir: Optional[str] = None,
-        enable_disk_cache: bool = True
+        cache_dir: str | None = None,
+        enable_disk_cache: bool = True,
     ):
         """Initialize the model cache manager.
 
@@ -165,6 +165,7 @@ class ModelCacheManager:
             max_memory_gb: Maximum memory to use for caching (GB)
             cache_dir: Directory for disk-based cache
             enable_disk_cache: Whether to enable disk caching
+
         """
         self.max_memory_bytes = int(max_memory_gb * 1024 * 1024 * 1024)
         self.enable_disk_cache = enable_disk_cache
@@ -185,20 +186,20 @@ class ModelCacheManager:
             "hits": 0,
             "misses": 0,
             "evictions": 0,
-            "total_load_time": 0.0
+            "total_load_time": 0.0,
         }
 
         # Disk cache index
         self.disk_index_file = self.cache_dir / "index.json"
         self.disk_index = self._load_disk_index()
 
-    def _load_disk_index(self) -> Dict[str, Any]:
+    def _load_disk_index(self) -> dict[str, Any]:
         """Load disk cache index."""
         if not self.enable_disk_cache or not self.disk_index_file.exists():
             return {}
 
         try:
-            with open(self.disk_index_file, "r") as f:
+            with open(self.disk_index_file) as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load disk cache index: {e}")
@@ -223,6 +224,7 @@ class ModelCacheManager:
 
         Returns:
             Estimated memory in bytes
+
         """
         total_size = 0
 
@@ -263,8 +265,8 @@ class ModelCacheManager:
     def get(
         self,
         model_id: str,
-        load_function: Optional[callable] = None
-    ) -> Optional[Tuple[Any, Optional[Any]]]:
+        load_function: callable | None = None,
+    ) -> tuple[Any, Any | None] | None:
         """Get a model from cache or load it.
 
         Args:
@@ -273,6 +275,7 @@ class ModelCacheManager:
 
         Returns:
             Tuple of (model, tokenizer) or None
+
         """
         # Check in-memory cache
         if model_id in self.cache:
@@ -319,7 +322,7 @@ class ModelCacheManager:
                     model_id=model_id,
                     model=model,
                     tokenizer=tokenizer,
-                    load_time=load_time
+                    load_time=load_time,
                 )
 
                 return model, tokenizer
@@ -334,11 +337,11 @@ class ModelCacheManager:
         self,
         model_id: str,
         model: Any,
-        tokenizer: Optional[Any] = None,
+        tokenizer: Any | None = None,
         model_type: str = "auto",
-        config: Optional[Dict[str, Any]] = None,
+        config: dict[str, Any] | None = None,
         load_time: float = 0.0,
-        **kwargs
+        **kwargs,
     ):
         """Add a model to the cache.
 
@@ -350,6 +353,7 @@ class ModelCacheManager:
             config: Model configuration
             load_time: Time taken to load
             **kwargs: Additional metadata
+
         """
         # Auto-detect model type
         if model_type == "auto":
@@ -392,7 +396,7 @@ class ModelCacheManager:
             load_time=load_time,
             device=device,
             quantization=kwargs.get("quantization"),
-            adapter_info=kwargs.get("adapter_info")
+            adapter_info=kwargs.get("adapter_info"),
         )
 
         # Add to cache
@@ -412,7 +416,7 @@ class ModelCacheManager:
 
         logger.info(
             f"Cached model {model_id}: {memory_size / (1024**2):.1f}MB, "
-            f"total cache: {self.current_memory_usage / (1024**2):.1f}MB"
+            f"total cache: {self.current_memory_usage / (1024**2):.1f}MB",
         )
 
     def _evict_lru(self):
@@ -451,6 +455,7 @@ class ModelCacheManager:
 
         Returns:
             True if saved successfully
+
         """
         if not self.enable_disk_cache:
             return False
@@ -481,7 +486,7 @@ class ModelCacheManager:
                 "device": entry.device,
                 "quantization": entry.quantization,
                 "adapter_info": entry.adapter_info,
-                "has_tokenizer": entry.tokenizer_object is not None
+                "has_tokenizer": entry.tokenizer_object is not None,
             }
 
             metadata_path = model_dir / "metadata.json"
@@ -492,7 +497,7 @@ class ModelCacheManager:
             self.disk_index[model_id] = {
                 "path": str(model_dir),
                 "saved_at": datetime.now().isoformat(),
-                "size_mb": entry.memory_size / (1024 * 1024)
+                "size_mb": entry.memory_size / (1024 * 1024),
             }
             self._save_disk_index()
 
@@ -503,7 +508,7 @@ class ModelCacheManager:
             logger.error(f"Failed to save model to disk: {e}")
             return False
 
-    def _load_from_disk(self, model_id: str) -> Optional[Tuple[Any, Optional[Any]]]:
+    def _load_from_disk(self, model_id: str) -> tuple[Any, Any | None] | None:
         """Load model from disk cache.
 
         Args:
@@ -511,6 +516,7 @@ class ModelCacheManager:
 
         Returns:
             Tuple of (model, tokenizer) or None
+
         """
         if not self.enable_disk_cache or model_id not in self.disk_index:
             return None
@@ -522,7 +528,7 @@ class ModelCacheManager:
 
             # Load metadata
             metadata_path = model_dir / "metadata.json"
-            with open(metadata_path, "r") as f:
+            with open(metadata_path) as f:
                 metadata = json.load(f)
 
             # Load model
@@ -553,7 +559,7 @@ class ModelCacheManager:
                 config=metadata["config"],
                 load_time=metadata["load_time"],
                 quantization=metadata.get("quantization"),
-                adapter_info=metadata.get("adapter_info")
+                adapter_info=metadata.get("adapter_info"),
             )
 
             logger.info(f"Loaded model from disk cache: {model_id}")
@@ -568,6 +574,7 @@ class ModelCacheManager:
 
         Args:
             clear_disk: Also clear disk cache
+
         """
         # Clear memory cache
         self.cache.clear()
@@ -593,11 +600,12 @@ class ModelCacheManager:
 
         logger.info("Cleared model cache")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics.
 
         Returns:
             Dictionary with cache statistics
+
         """
         hit_rate = 0.0
         total_requests = self.stats["hits"] + self.stats["misses"]
@@ -609,12 +617,12 @@ class ModelCacheManager:
                 "entries": len(self.cache),
                 "memory_used_mb": self.current_memory_usage / (1024 * 1024),
                 "memory_limit_mb": self.max_memory_bytes / (1024 * 1024),
-                "memory_usage_percent": (self.current_memory_usage / self.max_memory_bytes) * 100
+                "memory_usage_percent": (self.current_memory_usage / self.max_memory_bytes) * 100,
             },
             "disk_cache": {
                 "enabled": self.enable_disk_cache,
                 "entries": len(self.disk_index),
-                "cache_dir": str(self.cache_dir)
+                "cache_dir": str(self.cache_dir),
             },
             "statistics": {
                 "hits": self.stats["hits"],
@@ -624,8 +632,8 @@ class ModelCacheManager:
                 "avg_load_time": (
                     self.stats["total_load_time"] / self.stats["misses"]
                     if self.stats["misses"] > 0 else 0
-                )
-            }
+                ),
+            },
         }
 
         # Add GPU memory stats if available
@@ -635,16 +643,17 @@ class ModelCacheManager:
                 stats_dict["gpu_memory"] = {
                     "allocated_mb": memory_allocated() / (1024 * 1024),
                     "reserved_mb": memory_reserved() / (1024 * 1024),
-                    "gpu_info": gpu_info
+                    "gpu_info": gpu_info,
                 }
 
         return stats_dict
 
-    def list_cached_models(self) -> List[Dict[str, Any]]:
+    def list_cached_models(self) -> list[dict[str, Any]]:
         """List all cached models.
 
         Returns:
             List of model information
+
         """
         models = []
 
@@ -658,7 +667,7 @@ class ModelCacheManager:
                 "last_accessed": entry.last_accessed.isoformat(),
                 "access_count": entry.access_count,
                 "device": entry.device,
-                "quantization": entry.quantization
+                "quantization": entry.quantization,
             })
 
         # Disk cache
@@ -668,17 +677,18 @@ class ModelCacheManager:
                     "model_id": model_id,
                     "location": "disk",
                     "size_mb": info.get("size_mb", 0),
-                    "saved_at": info.get("saved_at", "")
+                    "saved_at": info.get("saved_at", ""),
                 })
 
         return models
 
-    def preload_models(self, model_ids: List[str], load_functions: Dict[str, callable]):
+    def preload_models(self, model_ids: list[str], load_functions: dict[str, callable]):
         """Preload multiple models into cache.
 
         Args:
             model_ids: List of model IDs to preload
             load_functions: Dictionary of model_id -> load_function
+
         """
         for model_id in model_ids:
             if model_id in self.cache:
@@ -693,6 +703,7 @@ class ModelCacheManager:
 
         Args:
             max_memory_gb: New memory limit in GB
+
         """
         self.max_memory_bytes = int(max_memory_gb * 1024 * 1024 * 1024)
 

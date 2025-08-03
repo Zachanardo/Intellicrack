@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -25,8 +24,7 @@ Common report generation utilities to avoid code duplication.
 
 
 def generate_analysis_report(app, report_type, results_data, generator_func=None):
-    """
-    Common function to generate analysis reports.
+    """Common function to generate analysis reports.
 
     Args:
         app: Application instance for UI dialogs
@@ -36,6 +34,7 @@ def generate_analysis_report(app, report_type, results_data, generator_func=None
 
     Returns:
         str or None: Path to generated report file, or None if cancelled
+
     """
     try:
         from ..ui.ui_common import ask_yes_no_question, show_file_dialog
@@ -47,7 +46,7 @@ def generate_analysis_report(app, report_type, results_data, generator_func=None
     generate_report = ask_yes_no_question(
         app,
         "Generate Report",
-        f"Do you want to generate a report of the {report_type} results?"
+        f"Do you want to generate a report of the {report_type} results?",
     )
 
     if not generate_report:
@@ -71,8 +70,7 @@ def generate_analysis_report(app, report_type, results_data, generator_func=None
 
 
 def _generate_default_report(filename, report_type, results_data):
-    """
-    Generate a default HTML report.
+    """Generate a default HTML report.
 
     Args:
         filename: Output filename
@@ -81,6 +79,7 @@ def _generate_default_report(filename, report_type, results_data):
 
     Returns:
         str: Path to generated report
+
     """
     html_content = f"""
     <!DOCTYPE html>
@@ -98,7 +97,7 @@ def _generate_default_report(filename, report_type, results_data):
         <h1>{report_type.title()} Report</h1>
         <div class="results">
             <h2>Results</h2>
-            <pre>{str(results_data)}</pre>
+            <pre>{results_data!s}</pre>
         </div>
     </body>
     </html>
@@ -115,14 +114,14 @@ def _generate_default_report(filename, report_type, results_data):
 
 
 def ensure_html_extension(filename):
-    """
-    Ensure filename has .html extension.
+    """Ensure filename has .html extension.
 
     Args:
         filename: Input filename
 
     Returns:
         str: Filename with .html extension
+
     """
     if not filename.endswith(".html"):
         return filename + ".html"
@@ -130,8 +129,7 @@ def ensure_html_extension(filename):
 
 
 def handle_pyqt6_report_generation(app, report_type, generator):
-    """
-    Handle PyQt6 report generation workflow.
+    """Handle PyQt6 report generation workflow.
 
     Args:
         app: Application instance for UI dialogs
@@ -140,6 +138,7 @@ def handle_pyqt6_report_generation(app, report_type, generator):
 
     Returns:
         str or None: Path to generated report file, or None if cancelled
+
     """
     try:
         # Check if PyQt6 is available
@@ -157,7 +156,7 @@ def handle_pyqt6_report_generation(app, report_type, generator):
     generate_report = ask_yes_no_question(
         app,
         "Generate Report",
-        f"Do you want to generate a report of the {report_type} results?"
+        f"Do you want to generate a report of the {report_type} results?",
     )
 
     if generate_report:

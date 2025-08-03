@@ -1,5 +1,4 @@
-"""
-LLM Integration Handler
+"""LLM Integration Handler
 
 Manages the integration between protection analysis results and LLM tools,
 allowing AI models to answer questions about detected protections.
@@ -8,7 +7,7 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
 
@@ -40,6 +39,7 @@ except ImportError:
 
         Returns:
             A logging.Logger instance
+
         """
         return logging.getLogger(name)
 
@@ -48,6 +48,7 @@ logger = get_logger(__name__)
 
 class LLMWorkerSignals(QObject):
     """Signals for LLM worker thread"""
+
     finished = pyqtSignal()
     error = pyqtSignal(tuple)
     result = pyqtSignal(object)
@@ -64,6 +65,7 @@ class LLMAnalysisWorker(QRunnable):
             operation: The type of LLM operation to perform.
             analysis_result: The unified protection result to analyze.
             **kwargs: Additional keyword arguments for the operation.
+
         """
         super().__init__()
         self.operation = operation
@@ -108,7 +110,7 @@ class LLMAnalysisWorker(QRunnable):
         finally:
             self.signals.finished.emit()
 
-    def _build_llm_context(self, result: UnifiedProtectionResult) -> Dict[str, Any]:
+    def _build_llm_context(self, result: UnifiedProtectionResult) -> dict[str, Any]:
         """Build context dictionary for LLM"""
         context = {
             "file_path": result.file_path,
@@ -118,7 +120,7 @@ class LLMAnalysisWorker(QRunnable):
                 {
                     "name": p["name"],
                     "type": p["type"],
-                    "confidence": p.get("confidence", 0)
+                    "confidence": p.get("confidence", 0),
                 }
                 for p in result.protections
             ],
@@ -128,7 +130,7 @@ class LLMAnalysisWorker(QRunnable):
             "has_anti_vm": result.has_anti_vm,
             "has_licensing": result.has_licensing,
             "protection_count": len(result.protections),
-            "confidence_score": result.confidence_score
+            "confidence_score": result.confidence_score,
         }
 
         # Add bypass strategies if available
@@ -136,7 +138,7 @@ class LLMAnalysisWorker(QRunnable):
             context["bypass_strategies"] = [
                 {
                     "name": s["name"],
-                    "difficulty": s.get("difficulty", "Unknown")
+                    "difficulty": s.get("difficulty", "Unknown"),
                 }
                 for s in result.bypass_strategies
             ]
@@ -191,8 +193,7 @@ Please provide:
 
 
 class LLMHandler(QObject):
-    """
-    Handler for LLM integration with protection analysis results.
+    """Handler for LLM integration with protection analysis results.
 
     This handler manages the interaction between protection analysis
     and LLM tools, enabling AI-powered insights and suggestions.
@@ -208,10 +209,11 @@ class LLMHandler(QObject):
 
         Args:
             parent: Optional parent widget for Qt integration.
+
         """
         super().__init__(parent)
         self.thread_pool = QThreadPool.globalInstance()
-        self.current_result: Optional[UnifiedProtectionResult] = None
+        self.current_result: UnifiedProtectionResult | None = None
         self.die_tool = DIEAnalysisTool()
 
         # Register the tool with LLM manager
@@ -229,8 +231,7 @@ class LLMHandler(QObject):
             logger.error(f"Failed to register LLM tool: {e}")
 
     def on_analysis_complete(self, result: UnifiedProtectionResult):
-        """
-        Main slot called when protection analysis completes.
+        """Main slot called when protection analysis completes.
 
         This method runs in the main thread and kicks off background
         LLM operations.
@@ -272,7 +273,7 @@ class LLMHandler(QObject):
 
         self.thread_pool.start(worker)
 
-    def get_cached_result(self) -> Optional[UnifiedProtectionResult]:
+    def get_cached_result(self) -> UnifiedProtectionResult | None:
         """Get the current cached analysis result"""
         return self.current_result
 
@@ -282,7 +283,7 @@ class LLMHandler(QObject):
             logger.info("Protection analysis context registered with LLM")
             self.llm_result_ready.emit({
                 "type": "context_registered",
-                "context": result["context"]
+                "context": result["context"],
             })
         else:
             self.llm_error.emit(result.get("error", "Unknown error"))
@@ -292,7 +293,7 @@ class LLMHandler(QObject):
         if result["success"]:
             self.llm_result_ready.emit({
                 "type": "summary",
-                "content": result["summary"]
+                "content": result["summary"],
             })
         else:
             self.llm_error.emit(result.get("error", "Unknown error"))
@@ -302,7 +303,7 @@ class LLMHandler(QObject):
         if result["success"]:
             self.llm_result_ready.emit({
                 "type": "bypass_suggestions",
-                "content": result["suggestions"]
+                "content": result["suggestions"],
             })
         else:
             self.llm_error.emit(result.get("error", "Unknown error"))

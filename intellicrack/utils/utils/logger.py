@@ -1,5 +1,4 @@
-"""
-Simple logger utilities.
+"""Simple logger utilities.
 
 Copyright (C) 2025 Zachary Flint
 

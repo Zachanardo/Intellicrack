@@ -1,5 +1,4 @@
-"""
-Hex Viewer Widget for Protection Analysis
+"""Hex Viewer Widget for Protection Analysis
 
 Provides hex view capabilities integrated with the Intellicrack Protection Engine.
 Supports navigation, search, and highlighting of important binary regions.
@@ -10,7 +9,6 @@ Licensed under GNU General Public License v3.0
 
 import os
 import struct
-from typing import List, Optional, Tuple
 
 from PyQt6.QtCore import QModelIndex, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QBrush, QColor, QFont, QTextCharFormat, QTextCursor
@@ -43,11 +41,12 @@ logger = get_logger(__name__)
 
 class HexViewerThread(QThread):
     """Thread for loading large binary files"""
+
     data_loaded = pyqtSignal(bytes)
     progress_update = pyqtSignal(int)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, file_path: str, offset: int = 0, size: Optional[int] = None):
+    def __init__(self, file_path: str, offset: int = 0, size: int | None = None):
         """Initialize hex viewer thread with file path, offset, and optional size parameters."""
         super().__init__()
         self.file_path = file_path
@@ -91,8 +90,7 @@ class HexViewerThread(QThread):
 
 
 class HexViewerWidget(QWidget):
-    """
-    Hex viewer widget with protection analysis integration
+    """Hex viewer widget with protection analysis integration
     """
 
     # Signals
@@ -102,15 +100,15 @@ class HexViewerWidget(QWidget):
     def __init__(self, parent=None):
         """Initialize hex viewer widget with file data, PE analysis components, and UI setup."""
         super().__init__(parent)
-        self.file_path: Optional[str] = None
-        self.file_data: Optional[bytes] = None
+        self.file_path: str | None = None
+        self.file_data: bytes | None = None
         self.current_offset = 0
         self.bytes_per_line = 16
-        self.highlighted_regions: List[Tuple[int, int, QColor]] = []
+        self.highlighted_regions: list[tuple[int, int, QColor]] = []
 
         # PE analysis components
-        self.file_model: Optional[PEFileModel] = None
-        self.structure_model: Optional[PEStructureModel] = None
+        self.file_model: PEFileModel | None = None
+        self.structure_model: PEStructureModel | None = None
 
         self.init_ui()
 
@@ -323,7 +321,7 @@ class HexViewerWidget(QWidget):
         widget.setLayout(layout)
         return widget
 
-    def load_file(self, file_path: str, offset: int = 0, size: Optional[int] = None):
+    def load_file(self, file_path: str, offset: int = 0, size: int | None = None):
         """Load a binary file with PE analysis"""
         if not os.path.exists(file_path):
             QMessageBox.warning(self, "File Not Found", f"File not found: {file_path}")
@@ -390,14 +388,14 @@ class HexViewerWidget(QWidget):
         # Update status
         self.status_label.setText(
             f"Loaded: {os.path.basename(self.file_path)} "
-            f"({len(data):,} bytes from offset 0x{self.current_offset:X})"
+            f"({len(data):,} bytes from offset 0x{self.current_offset:X})",
         )
 
     @pyqtSlot(int)
     def on_load_progress(self, progress: int):
         """Handle load progress"""
         self.status_label.setText(
-            f"Loading {os.path.basename(self.file_path)}... {progress}%"
+            f"Loading {os.path.basename(self.file_path)}... {progress}%",
         )
 
     @pyqtSlot(str)
@@ -548,20 +546,20 @@ class HexViewerWidget(QWidget):
 
                 # Highlight found data
                 self.highlighted_regions.append(
-                    (found_offset, found_offset + len(pattern_bytes), QColor(255, 255, 0, 100))
+                    (found_offset, found_offset + len(pattern_bytes), QColor(255, 255, 0, 100)),
                 )
                 self.update_display()
 
                 QMessageBox.information(
                     self,
                     "Search Result",
-                    f"Pattern found at offset 0x{found_offset:X}"
+                    f"Pattern found at offset 0x{found_offset:X}",
                 )
             else:
                 QMessageBox.information(
                     self,
                     "Search Result",
-                    "Pattern not found in current view"
+                    "Pattern not found in current view",
                 )
 
         except Exception as e:
@@ -569,7 +567,7 @@ class HexViewerWidget(QWidget):
             QMessageBox.warning(
                 self,
                 "Search Error",
-                f"Invalid search pattern: {str(e)}"
+                f"Invalid search pattern: {e!s}",
             )
 
     def add_protection_highlight(self, offset: int, size: int, protection_name: str):
@@ -717,7 +715,7 @@ class HexViewerWidget(QWidget):
                 self,
                 "Export Selection",
                 "selection.bin",
-                "Binary Files (*.bin);;All Files (*.*)"
+                "Binary Files (*.bin);;All Files (*.*)",
             )
 
             if file_path:
@@ -729,7 +727,7 @@ class HexViewerWidget(QWidget):
                 QMessageBox.information(
                     self,
                     "Export Successful",
-                    f"Exported {len(binary_data)} bytes to:\n{file_path}"
+                    f"Exported {len(binary_data)} bytes to:\n{file_path}",
                 )
 
                 # Log the export
@@ -739,20 +737,20 @@ class HexViewerWidget(QWidget):
             QMessageBox.critical(
                 self,
                 "Export Error",
-                f"Invalid hex data: {str(e)}"
+                f"Invalid hex data: {e!s}",
             )
-        except IOError as e:
+        except OSError as e:
             QMessageBox.critical(
                 self,
                 "Export Error",
-                f"Failed to write file: {str(e)}"
+                f"Failed to write file: {e!s}",
             )
         except Exception as e:
             self.logger.error(f"Export error: {e}")
             QMessageBox.critical(
                 self,
                 "Export Error",
-                f"Unexpected error: {str(e)}"
+                f"Unexpected error: {e!s}",
             )  # Implementation needed
 
     def clear_highlights(self):

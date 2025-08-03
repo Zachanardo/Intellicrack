@@ -1,5 +1,4 @@
-"""
-Plugin System Configuration and Exports
+"""Plugin System Configuration and Exports
 
 Copyright (C) 2025 Zachary Flint
 

@@ -1,5 +1,4 @@
-"""
-Dependency checking utilities for Intellicrack.
+"""Dependency checking utilities for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,17 +22,17 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import os
 import sys
-from typing import Any, Dict, List
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-def check_weasyprint_dependencies() -> List[str]:
-    """
-    Check WeasyPrint dependencies with detailed logging.
+def check_weasyprint_dependencies() -> list[str]:
+    """Check WeasyPrint dependencies with detailed logging.
 
     Returns:
         List[str]: List of missing dependencies
+
     """
     missing_deps = []
 
@@ -69,7 +68,7 @@ def check_weasyprint_dependencies() -> List[str]:
             gtk_paths = [
                 os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"), "GTK3-Runtime Win64", "bin"),
                 r"C:\GTK\bin",
-                os.environ.get("GTK_BASEPATH", "") + "\\bin"
+                os.environ.get("GTK_BASEPATH", "") + "\\bin",
             ]
             logger.info("Checking GTK paths: %s", gtk_paths)
             dll_found = False
@@ -97,18 +96,18 @@ def check_weasyprint_dependencies() -> List[str]:
 
 
 def check_and_install_dependencies() -> bool:
-    """
-    Check for required dependencies and attempt to install missing ones.
+    """Check for required dependencies and attempt to install missing ones.
 
     Returns:
         bool: True if all dependencies are available, False otherwise
+
     """
     missing_deps = []
 
     # Core dependencies
     core_deps = [
         "psutil", "requests", "pefile", "capstone", "keystone",
-        "unicorn", "lief", "yara", "cryptography"
+        "unicorn", "lief", "yara", "cryptography",
     ]
 
     for dep in core_deps:
@@ -128,7 +127,7 @@ def check_and_install_dependencies() -> bool:
         "networkx": "Graph analysis",
         "frida": "Dynamic analysis",
         "angr": "Symbolic execution",
-        "manticore": "Concolic execution"
+        "manticore": "Concolic execution",
     }
 
     for dep, description in optional_deps.items():
@@ -141,15 +140,15 @@ def check_and_install_dependencies() -> bool:
     return len(missing_deps) == 0
 
 
-def install_dependencies(deps: List[str]) -> bool:
-    """
-    Attempt to install missing dependencies using pip.
+def install_dependencies(deps: list[str]) -> bool:
+    """Attempt to install missing dependencies using pip.
 
     Args:
         deps: List of dependency names to install
 
     Returns:
         bool: True if installation succeeded, False otherwise
+
     """
     import subprocess
 
@@ -157,7 +156,7 @@ def install_dependencies(deps: List[str]) -> bool:
         for dep in deps:
             logger.info("Installing %s...", dep)
             result = subprocess.run([
-                sys.executable, "-m", "pip", "install", dep
+                sys.executable, "-m", "pip", "install", dep,
             ], capture_output=True, text=True, check=False)
 
             if result.returncode == 0:
@@ -173,12 +172,12 @@ def install_dependencies(deps: List[str]) -> bool:
         return False
 
 
-def setup_required_environment() -> Dict[str, Any]:
-    """
-    Set up the required environment for Intellicrack operation.
+def setup_required_environment() -> dict[str, Any]:
+    """Set up the required environment for Intellicrack operation.
 
     Returns:
         Dict with environment setup status and available features
+
     """
     env_status = {
         "core_available": True,
@@ -186,7 +185,7 @@ def setup_required_environment() -> Dict[str, Any]:
         "ml_available": False,
         "dynamic_analysis_available": False,
         "symbolic_execution_available": False,
-        "missing_dependencies": []
+        "missing_dependencies": [],
     }
 
     # Check GUI availability

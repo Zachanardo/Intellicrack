@@ -1,5 +1,4 @@
-"""
-Report generation utilities for the Intellicrack framework.
+"""Report generation utilities for the Intellicrack framework.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -24,7 +23,7 @@ import datetime
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 # Module logger
 logger = logging.getLogger(__name__)
@@ -34,11 +33,11 @@ class ReportGenerator:
     """Base class for report generation with common functionality."""
 
     def __init__(self, output_dir: str = "reports"):
-        """
-        Initialize the report generator.
+        """Initialize the report generator.
 
         Args:
             output_dir: Directory to save generated reports
+
         """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
@@ -46,7 +45,7 @@ class ReportGenerator:
         self.metadata = {
             "title": "Analysis Report",
             "author": "Intellicrack",
-            "generated": datetime.datetime.now().isoformat()
+            "generated": datetime.datetime.now().isoformat(),
         }
 
     def set_metadata(self, title: str = None, author: str = None, **kwargs):
@@ -58,8 +57,7 @@ class ReportGenerator:
         self.metadata.update(kwargs)
 
     def add_section(self, title: str, content: Any) -> int:
-        """
-        Add a section to the report.
+        """Add a section to the report.
 
         Args:
             title: Section title
@@ -67,20 +65,20 @@ class ReportGenerator:
 
         Returns:
             int: Section index
+
         """
         section = {
             "title": title,
             "content": content,
-            "timestamp": datetime.datetime.now().isoformat()
+            "timestamp": datetime.datetime.now().isoformat(),
         }
         self.sections.append(section)
         return len(self.sections) - 1
 
 
-def generate_report(analysis_results: Dict[str, Any], output_format: str = "text",
-                   output_path: Optional[Union[str, Path]] = None) -> str:
-    """
-    Generate an analysis report in the specified format.
+def generate_report(analysis_results: dict[str, Any], output_format: str = "text",
+                   output_path: str | Path | None = None) -> str:
+    """Generate an analysis report in the specified format.
 
     Args:
         analysis_results: Dictionary containing analysis results
@@ -89,6 +87,7 @@ def generate_report(analysis_results: Dict[str, Any], output_format: str = "text
 
     Returns:
         str: Path to the generated report
+
     """
     if output_path is None:
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -117,15 +116,15 @@ def generate_report(analysis_results: Dict[str, Any], output_format: str = "text
     return str(output_path)
 
 
-def generate_text_report(results: Dict[str, Any]) -> str:
-    """
-    Generate a text-based report.
+def generate_text_report(results: dict[str, Any]) -> str:
+    """Generate a text-based report.
 
     Args:
         results: Analysis results
 
     Returns:
         str: Text report content
+
     """
     lines = []
     lines.append("=" * 80)
@@ -174,15 +173,15 @@ def generate_text_report(results: Dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def generate_html_report(results: Dict[str, Any]) -> str:
-    """
-    Generate an HTML report.
+def generate_html_report(results: dict[str, Any]) -> str:
+    """Generate an HTML report.
 
     Args:
         results: Analysis results
 
     Returns:
         str: HTML report content
+
     """
     html_parts = ["""
 <!DOCTYPE html>
@@ -247,9 +246,8 @@ def generate_html_report(results: Dict[str, Any]) -> str:
     return "\n".join(html_parts)
 
 
-def export_report(report_data: Dict[str, Any], format: str = "pdf") -> Optional[str]:  # pylint: disable=redefined-builtin
-    """
-    Export report in various formats.
+def export_report(report_data: dict[str, Any], format: str = "pdf") -> str | None:  # pylint: disable=redefined-builtin
+    """Export report in various formats.
 
     Args:
         report_data: Report data to export
@@ -257,6 +255,7 @@ def export_report(report_data: Dict[str, Any], format: str = "pdf") -> Optional[
 
     Returns:
         Optional[str]: Path to exported file
+
     """
     try:
         import json
@@ -326,7 +325,7 @@ def export_report(report_data: Dict[str, Any], format: str = "pdf") -> Optional[
         return None
 
 
-def _generate_html_report(report_data: Dict[str, Any]) -> str:
+def _generate_html_report(report_data: dict[str, Any]) -> str:
     """Generate HTML report from report data"""
     html_parts = [
         "<html><head><title>Intellicrack Analysis Report</title>",
@@ -334,7 +333,7 @@ def _generate_html_report(report_data: Dict[str, Any]) -> str:
         "h1{color:#2c3e50;}h2{color:#34495e;border-bottom:1px solid #bdc3c7;}",
         ".finding{margin:10px 0;padding:10px;border-left:4px solid #3498db;}",
         ".high{border-color:#e74c3c;}.medium{border-color:#f39c12;}.low{border-color:#27ae60;}",
-        "</style></head><body>"
+        "</style></head><body>",
     ]
 
     # Title and metadata
@@ -369,13 +368,13 @@ def _generate_html_report(report_data: Dict[str, Any]) -> str:
     return "\n".join(html_parts)
 
 
-def _generate_text_report(report_data: Dict[str, Any]) -> str:
+def _generate_text_report(report_data: dict[str, Any]) -> str:
     """Generate plain text report from report data"""
     text_parts = [
         "=" * 60,
         f"  {report_data.get('title', 'INTELLICRACK ANALYSIS REPORT')}",
         "=" * 60,
-        ""
+        "",
     ]
 
     # Metadata
@@ -387,7 +386,7 @@ def _generate_text_report(report_data: Dict[str, Any]) -> str:
             f"Target: {metadata.get('target', 'Unknown')}",
             f"Timestamp: {metadata.get('timestamp', 'Unknown')}",
             f"Analysis Type: {metadata.get('analysis_type', 'Unknown')}",
-            ""
+            "",
         ])
 
     # Summary
@@ -396,21 +395,21 @@ def _generate_text_report(report_data: Dict[str, Any]) -> str:
             "EXECUTIVE SUMMARY",
             "-" * 40,
             report_data["summary"],
-            ""
+            "",
         ])
 
     # Findings
     if "findings" in report_data:
         text_parts.extend([
             "FINDINGS",
-            "-" * 40
+            "-" * 40,
         ])
 
         for i, finding in enumerate(report_data["findings"], 1):
             text_parts.extend([
                 f"{i}. {finding.get('title', 'Finding')}",
                 f"   Severity: {finding.get('severity', 'Unknown')}",
-                f"   Description: {finding.get('description', 'No description')}"
+                f"   Description: {finding.get('description', 'No description')}",
             ])
 
             if "recommendation" in finding:
@@ -421,9 +420,8 @@ def _generate_text_report(report_data: Dict[str, Any]) -> str:
     return "\n".join(text_parts)
 
 
-def format_findings(findings: List[Dict[str, Any]], include_remediation: bool = True) -> str:
-    """
-    Format analysis findings for _report inclusion.
+def format_findings(findings: list[dict[str, Any]], include_remediation: bool = True) -> str:
+    """Format analysis findings for _report inclusion.
 
     Args:
         findings: List of finding dictionaries
@@ -431,6 +429,7 @@ def format_findings(findings: List[Dict[str, Any]], include_remediation: bool = 
 
     Returns:
         str: Formatted findings text
+
     """
     formatted = []
 
@@ -451,9 +450,8 @@ def format_findings(findings: List[Dict[str, Any]], include_remediation: bool = 
     return "\n".join(formatted)
 
 
-def create_summary_report(binary_path: str, key_findings: List[str]) -> Dict[str, Any]:
-    """
-    Create a summary report structure.
+def create_summary_report(binary_path: str, key_findings: list[str]) -> dict[str, Any]:
+    """Create a summary report structure.
 
     Args:
         binary_path: Path to analyzed binary
@@ -461,24 +459,25 @@ def create_summary_report(binary_path: str, key_findings: List[str]) -> Dict[str
 
     Returns:
         dict: Summary report structure
+
     """
     return {
         "binary": binary_path,
         "timestamp": datetime.datetime.now().isoformat(),
         "summary": {
             "total_findings": len(key_findings),
-            "key_findings": key_findings
-        }
+            "key_findings": key_findings,
+        },
     }
 
 
 # Exported functions
 __all__ = [
     "ReportGenerator",
-    "generate_report",
-    "generate_text_report",
-    "generate_html_report",
+    "create_summary_report",
     "export_report",
     "format_findings",
-    "create_summary_report",
+    "generate_html_report",
+    "generate_report",
+    "generate_text_report",
 ]

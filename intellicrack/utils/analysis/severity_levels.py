@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -27,6 +26,7 @@ from enum import Enum
 
 class SeverityLevel(Enum):
     """Common severity levels used across the application."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"

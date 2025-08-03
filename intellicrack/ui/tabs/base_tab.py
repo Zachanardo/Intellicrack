@@ -9,8 +9,7 @@ from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 
 class BaseTab(QWidget):
-    """
-    Base class for all main application tabs.
+    """Base class for all main application tabs.
     Provides common functionality including loading states, shared context, and consistent styling.
     """
 
@@ -31,8 +30,7 @@ class BaseTab(QWidget):
         layout.addWidget(loading_label)
 
     def lazy_load_content(self):
-        """
-        Override this method in subclasses to implement lazy loading.
+        """Override this method in subclasses to implement lazy loading.
         This method should create and setup the actual tab content.
         """
         if not self.is_loaded:
@@ -42,7 +40,6 @@ class BaseTab(QWidget):
 
     def setup_content(self):
         """Override this method to setup the actual tab content"""
-        pass
 
     def clear_layout(self):
         """Clear all widgets from the current layout"""

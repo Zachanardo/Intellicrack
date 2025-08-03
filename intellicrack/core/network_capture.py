@@ -1,5 +1,4 @@
-"""
-Network packet capture and analysis functionality.
+"""Network packet capture and analysis functionality.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,14 +21,13 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import socket
 import time
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int = 100) -> Dict[str, Any]:
-    """
-    Capture network packets using Scapy for real-time traffic analysis.
+def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int = 100) -> dict[str, Any]:
+    """Capture network packets using Scapy for real-time traffic analysis.
 
     Args:
         interface: Network interface to capture on ('any' for all)
@@ -38,6 +36,7 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
 
     Returns:
         Dictionary with capture results and statistics
+
     """
     try:
         from scapy.all import DNS, IP, TCP, UDP, Raw, sniff
@@ -55,7 +54,7 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
                 "timestamp": time.time(),
                 "size": len(packet),
                 "layers": [],
-                "summary": packet.summary() if hasattr(packet, "summary") else ""
+                "summary": packet.summary() if hasattr(packet, "summary") else "",
             }
 
             # Extract IP layer information
@@ -93,7 +92,7 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
                     license_keywords = [
                         b"license", b"activation", b"serial", b"key", b"auth",
                         b"validate", b"register", b"subscription", b"trial",
-                        b"flexlm", b"rlm", b"hasp", b"sentinel", b"wibu"
+                        b"flexlm", b"rlm", b"hasp", b"sentinel", b"wibu",
                     ]
                     if any(keyword in payload.lower() for keyword in license_keywords):
                         packet_info["license_related"] = True
@@ -119,7 +118,7 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
             count=count,
             prn=packet_handler,
             timeout=10,
-            store=False  # Don't store packets in memory
+            store=False,  # Don't store packets in memory
         )
 
         # Log capture completion status
@@ -156,7 +155,7 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
             "dns_queries": list(set(dns_queries))[:20],  # Top 20 unique DNS queries
             "top_ports": top_ports,
             "protocol_distribution": protocol_distribution,
-            "packets": captured_packets[:20]  # Return first 20 packets for analysis
+            "packets": captured_packets[:20],  # Return first 20 packets for analysis
         }
 
     except Exception as e:
@@ -164,15 +163,15 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
         return {"error": str(e), "success": False}
 
 
-def analyze_pcap_with_pyshark(pcap_file: str) -> Dict[str, Any]:
-    """
-    Analyze PCAP file using PyShark for deep packet inspection.
+def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
+    """Analyze PCAP file using PyShark for deep packet inspection.
 
     Args:
         pcap_file: Path to PCAP file to analyze
 
     Returns:
         Dictionary with analysis results
+
     """
     try:
         import pyshark
@@ -187,7 +186,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> Dict[str, Any]:
             pcap_file,
             display_filter="tcp or udp",
             use_json=True,
-            include_raw=True
+            include_raw=True,
         )
 
         packet_summary = {
@@ -198,7 +197,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> Dict[str, Any]:
             "http_requests": [],
             "tls_handshakes": [],
             "suspicious_ports": [],
-            "license_traffic": []
+            "license_traffic": [],
         }
 
         suspicious_ports = [1337, 31337, 4444, 5555, 8080, 8888, 9999]
@@ -227,7 +226,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> Dict[str, Any]:
                             "src": src,
                             "dst": dst,
                             "port": port,
-                            "timestamp": getattr(packet, "sniff_timestamp", "unknown")
+                            "timestamp": getattr(packet, "sniff_timestamp", "unknown"),
                         })
 
             # Extract DNS queries
@@ -241,7 +240,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> Dict[str, Any]:
                     packet_summary["license_traffic"].append({
                         "type": "DNS",
                         "query": dns_name,
-                        "timestamp": getattr(packet, "sniff_timestamp", "unknown")
+                        "timestamp": getattr(packet, "sniff_timestamp", "unknown"),
                     })
 
             # Extract HTTP requests
@@ -251,7 +250,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> Dict[str, Any]:
                         "method": str(packet.http.request_method),
                         "uri": str(getattr(packet.http, "request_uri", "unknown")),
                         "host": str(getattr(packet.http, "host", "unknown")),
-                        "user_agent": str(getattr(packet.http, "user_agent", "unknown"))
+                        "user_agent": str(getattr(packet.http, "user_agent", "unknown")),
                     }
                     packet_summary["http_requests"].append(http_info)
 
@@ -260,7 +259,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> Dict[str, Any]:
                         packet_summary["license_traffic"].append({
                             "type": "HTTP",
                             "details": http_info,
-                            "timestamp": getattr(packet, "sniff_timestamp", "unknown")
+                            "timestamp": getattr(packet, "sniff_timestamp", "unknown"),
                         })
 
             # Extract TLS handshakes
@@ -277,7 +276,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> Dict[str, Any]:
                         "port": dstport,
                         "src": getattr(packet.ip, "src", "unknown") if hasattr(packet, "ip") else "unknown",
                         "dst": getattr(packet.ip, "dst", "unknown") if hasattr(packet, "ip") else "unknown",
-                        "flags": str(getattr(packet.tcp, "flags", "unknown"))
+                        "flags": str(getattr(packet.tcp, "flags", "unknown")),
                     })
 
         cap.close()
@@ -288,7 +287,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> Dict[str, Any]:
         packet_summary["top_talkers"] = sorted(
             packet_summary["conversations"].items(),
             key=lambda x: x[1],
-            reverse=True
+            reverse=True,
         )[:10]
 
         return packet_summary
@@ -298,15 +297,15 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> Dict[str, Any]:
         return {"error": str(e), "success": False}
 
 
-def parse_pcap_with_dpkt(pcap_file: str) -> Dict[str, Any]:
-    """
-    Parse PCAP file using dpkt for low-level binary analysis.
+def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
+    """Parse PCAP file using dpkt for low-level binary analysis.
 
     Args:
         pcap_file: Path to PCAP file to parse
 
     Returns:
         Dictionary with parsing results and statistics
+
     """
     try:
         import dpkt
@@ -327,7 +326,7 @@ def parse_pcap_with_dpkt(pcap_file: str) -> Dict[str, Any]:
             "icmp_packets": 0,
             "unique_connections": set(),
             "port_scan_indicators": [],
-            "data_exfiltration_suspects": []
+            "data_exfiltration_suspects": [],
         }
 
         with open(pcap_file, "rb") as f:
@@ -368,7 +367,7 @@ def parse_pcap_with_dpkt(pcap_file: str) -> Dict[str, Any]:
                                 connection_data[conn_key] = {
                                     "bytes": 0,
                                     "packets": 0,
-                                    "start_time": timestamp
+                                    "start_time": timestamp,
                                 }
                             connection_data[conn_key]["bytes"] += len(tcp.data)
                             connection_data[conn_key]["packets"] += 1
@@ -380,7 +379,7 @@ def parse_pcap_with_dpkt(pcap_file: str) -> Dict[str, Any]:
                                     "src": src_ip,
                                     "dst": dst_ip,
                                     "port": tcp.dport,
-                                    "timestamp": timestamp
+                                    "timestamp": timestamp,
                                 })
 
                         elif isinstance(ip.data, dpkt.udp.UDP):
@@ -425,7 +424,7 @@ def parse_pcap_with_dpkt(pcap_file: str) -> Dict[str, Any]:
                     "connection": conn,
                     "bytes": data["bytes"],
                     "duration": duration,
-                    "rate_mbps": (data["bytes"] * 8 / 1024 / 1024) / max(duration, 1)
+                    "rate_mbps": (data["bytes"] * 8 / 1024 / 1024) / max(duration, 1),
                 })
 
         # Convert set to count for JSON serialization

@@ -1,5 +1,4 @@
-"""
-Dialog for the Hex Viewer/Editor.
+"""Dialog for the Hex Viewer/Editor.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,7 +21,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import os
-from typing import Optional
 
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QAction
@@ -51,21 +49,20 @@ logger = logging.getLogger("Intellicrack.HexView")
 
 
 class HexViewerDialog(QDialog):
-    """
-    Dialog window for hex viewer/editor.
+    """Dialog window for hex viewer/editor.
 
     This dialog integrates the hex viewer widget with additional controls
     for navigation, searching, and display options.
     """
 
-    def __init__(self, parent=None, file_path: Optional[str] = None, read_only: bool = True):
-        """
-        Initialize the hex viewer dialog.
+    def __init__(self, parent=None, file_path: str | None = None, read_only: bool = True):
+        """Initialize the hex viewer dialog.
 
         Args:
             parent: Parent widget
             file_path: Path to the file to open (optional)
             read_only: Whether to open the file in read-only mode
+
         """
         super().__init__(parent)
 
@@ -79,7 +76,7 @@ class HexViewerDialog(QDialog):
         size = self.geometry()
         self.move(
             (screen.width() - size.width()) // 2,
-            (screen.height() - size.height()) // 2
+            (screen.height() - size.height()) // 2,
         )
 
         # Create main layout
@@ -153,11 +150,11 @@ class HexViewerDialog(QDialog):
         logger.debug("HexViewerDialog initialized")
 
     def create_toolbar(self) -> QToolBar:
-        """
-        Create the toolbar with controls.
+        """Create the toolbar with controls.
 
         Returns:
             Configured toolbar
+
         """
         toolbar = QToolBar()
         toolbar.setIconSize(QSize(16, 16))
@@ -241,11 +238,11 @@ class HexViewerDialog(QDialog):
         return toolbar
 
     def create_sidebar(self) -> QFrame:
-        """
-        Create the sidebar with bookmark list and other panels.
+        """Create the sidebar with bookmark list and other panels.
 
         Returns:
             Configured sidebar frame
+
         """
         sidebar = QFrame()
         sidebar.setFrameShape(QFrame.StyledPanel)
@@ -283,8 +280,7 @@ class HexViewerDialog(QDialog):
         return sidebar
 
     def load_file(self, file_path: str, read_only: bool = True) -> bool:
-        """
-        Load a file into the hex viewer.
+        """Load a file into the hex viewer.
 
         Args:
             file_path: Path to the file to load
@@ -292,6 +288,7 @@ class HexViewerDialog(QDialog):
 
         Returns:
             True if the file was loaded successfully, False otherwise
+
         """
         try:
             logger.info("HexDialog.load_file: Attempting to load %s, read_only=%s", file_path, read_only)
@@ -344,7 +341,7 @@ class HexViewerDialog(QDialog):
 
             return result
         except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error loading file: {str(e)}"
+            error_msg = f"Error loading file: {e!s}"
             logger.error(error_msg, exc_info=True)
             self.status_bar.showMessage(error_msg)
             return False
@@ -352,7 +349,7 @@ class HexViewerDialog(QDialog):
     def open_file(self):
         """Show file open dialog and load the selected file."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Open File", "", "All Files (*)"
+            self, "Open File", "", "All Files (*)",
         )
 
         if file_path:
@@ -361,7 +358,7 @@ class HexViewerDialog(QDialog):
                 self, "Open Mode",
                 "Open file in read-only mode?",
                 QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.Yes
+                QMessageBox.Yes,
             ) == QMessageBox.Yes
 
             self.load_file(file_path, read_only)
@@ -423,12 +420,12 @@ class HexViewerDialog(QDialog):
 
 
     def update_status_bar(self, start: int = 0, end: int = None):
-        """
-        Update the status bar with current selection and offset information.
+        """Update the status bar with current selection and offset information.
 
         Args:
             start: Start offset of selection or current position
             end: End offset of selection (optional)
+
         """
         if not hasattr(self.hex_viewer, "file_handler") or not self.hex_viewer.file_handler:
             self.status_bar.showMessage("No file loaded")
@@ -503,20 +500,20 @@ class HexViewerDialog(QDialog):
         self.status_bar.showMessage(info)
 
     def update_view_mode_combo(self, mode: ViewMode):
-        """
-        Update the view mode combo box to match the current view mode.
+        """Update the view mode combo box to match the current view mode.
 
         Args:
             mode: Current view mode
+
         """
         self.view_mode_combo.setCurrentText(mode.name.capitalize())
 
     def change_view_mode(self, mode_text: str):
-        """
-        Change the view mode based on combo box selection.
+        """Change the view mode based on combo box selection.
 
         Args:
             mode_text: View mode name
+
         """
         for mode in ViewMode:
             if mode.name.capitalize() == mode_text:
@@ -524,39 +521,37 @@ class HexViewerDialog(QDialog):
                 break
 
     def change_bytes_per_row(self, value_text: str):
-        """
-        Change the number of bytes per row.
+        """Change the number of bytes per row.
 
         Args:
             value_text: Number of bytes per row as string
+
         """
         try:
             value = int(value_text)
             self.hex_viewer.set_bytes_per_row(value)
         except ValueError as e:
             self.logger.error("Value error in hex_dialog: %s", e)
-            pass
 
     def change_group_size(self, value_text: str):
-        """
-        Change the byte grouping size.
+        """Change the byte grouping size.
 
         Args:
             value_text: Group size as string
+
         """
         try:
             value = int(value_text)
             self.hex_viewer.set_group_size(value)
         except ValueError as e:
             self.logger.error("Value error in hex_dialog: %s", e)
-            pass
 
     def show_bookmark_context_menu(self, position):
-        """
-        Show context menu for bookmarks list.
+        """Show context menu for bookmarks list.
 
         Args:
             position: Position where the menu should be shown
+
         """
         item = self.bookmarks_list.itemAt(position)
         if not item:
@@ -573,11 +568,11 @@ class HexViewerDialog(QDialog):
         menu.exec_(self.bookmarks_list.mapToGlobal(position))
 
     def show_search_context_menu(self, position):
-        """
-        Show context menu for search results list.
+        """Show context menu for search results list.
 
         Args:
             position: Position where the menu should be shown
+
         """
         item = self.search_list.itemAt(position)
         if not item:
@@ -594,11 +589,11 @@ class HexViewerDialog(QDialog):
         menu.exec_(self.search_list.mapToGlobal(position))
 
     def jump_to_bookmark(self, item):
-        """
-        Jump to the location of a bookmark.
+        """Jump to the location of a bookmark.
 
         Args:
             item: List widget item for the bookmark
+
         """
         highlight_id = item.data(Qt.UserRole)
         highlight = self.hex_viewer.highlighter.get_highlight_by_id(highlight_id)
@@ -607,11 +602,11 @@ class HexViewerDialog(QDialog):
             self.hex_viewer.select_range(highlight.start, highlight.end)
 
     def remove_bookmark(self, item):
-        """
-        Remove a bookmark.
+        """Remove a bookmark.
 
         Args:
             item: List widget item for the bookmark
+
         """
         highlight_id = item.data(Qt.UserRole)
         if self.hex_viewer.highlighter.remove_highlight(highlight_id):
@@ -623,11 +618,11 @@ class HexViewerDialog(QDialog):
             self.hex_viewer.viewport().update()
 
     def jump_to_search_result(self, item):
-        """
-        Jump to the location of a search result.
+        """Jump to the location of a search result.
 
         Args:
             item: List widget item for the search result
+
         """
         highlight_id = item.data(Qt.UserRole)
         highlight = self.hex_viewer.highlighter.get_highlight_by_id(highlight_id)

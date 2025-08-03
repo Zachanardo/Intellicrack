@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Terminal-based Hex Viewer with ncurses - Advanced hex editing capabilities for CLI
+"""Terminal-based Hex Viewer with ncurses - Advanced hex editing capabilities for CLI
 
 Copyright (C) 2025 Zachary Flint
 
@@ -39,6 +38,7 @@ class TerminalHexViewer:
 
         Args:
             filepath: Path to file to view/edit
+
         """
         self.filepath = filepath
         self.file_size = 0
@@ -75,7 +75,7 @@ class TerminalHexViewer:
             "search": 4,
             "ascii": 5,
             "status": 6,
-            "help": 7
+            "help": 7,
         }
 
         self._load_file()
@@ -98,14 +98,14 @@ class TerminalHexViewer:
                 with self.file_handle:
                     self.data = self.file_handle.read()
                 self.file_handle = None
-        except IOError as e:
+        except OSError as e:
             # Try read-only mode
             try:
                 with open(self.filepath, "rb") as f:
                     self.data = f.read()
                 self.file_handle = None
-            except IOError:
-                raise IOError(f"Cannot open file: {e}")
+            except OSError:
+                raise OSError(f"Cannot open file: {e}")
 
     def _setup_colors(self):
         """Setup color pairs for the interface."""
@@ -312,7 +312,7 @@ class TerminalHexViewer:
             "  F1            - Toggle this help",
             "  r             - Refresh display",
             "",
-            "Press any key to continue..."
+            "Press any key to continue...",
         ]
 
         start_y = max(0, (self.screen_height - len(help_lines)) // 2)
@@ -336,8 +336,7 @@ class TerminalHexViewer:
 
         if self.edit_mode:
             return self._handle_edit_input(key)
-        else:
-            return self._handle_view_input(key)
+        return self._handle_view_input(key)
 
     def _handle_view_input(self, key: int) -> bool:
         """Handle input in view mode."""
@@ -347,7 +346,7 @@ class TerminalHexViewer:
                     return True
             return False
 
-        elif key == ord("e"):
+        if key == ord("e"):
             self.edit_mode = True
 
         elif key == curses.KEY_F1:
@@ -439,12 +438,11 @@ class TerminalHexViewer:
             elif 97 <= key <= 102:  # a-f
                 digit = key - 97 + 10
                 self._edit_hex_digit(digit)
-        else:
-            # ASCII editing
-            if 32 <= key <= 126:  # Printable ASCII
-                self.modifications[self.cursor_offset] = key
-                self.modified = True
-                self._move_cursor(1)
+        # ASCII editing
+        elif 32 <= key <= 126:  # Printable ASCII
+            self.modifications[self.cursor_offset] = key
+            self.modified = True
+            self._move_cursor(1)
 
     def _edit_hex_digit(self, digit: int):
         """Edit a single hex digit."""
@@ -573,15 +571,16 @@ class TerminalHexViewer:
             self.modifications.clear()
             self.modified = False
 
-        except IOError as e:
+        except OSError as e:
             # Show error message dialog
-            self._show_error_dialog(f"Failed to save changes: {str(e)}")
+            self._show_error_dialog(f"Failed to save changes: {e!s}")
 
     def _confirm_exit(self) -> bool:
         """Show confirmation dialog for unsaved changes.
 
         Returns:
             True if user wants to exit, False otherwise
+
         """
         # Save current screen state
         curses.def_prog_mode()
@@ -615,13 +614,13 @@ class TerminalHexViewer:
                 self.stdscr.refresh()
                 return True
 
-            elif key in [ord("n"), ord("N"), 27]:  # 27 is ESC
+            if key in [ord("n"), ord("N"), 27]:  # 27 is ESC
                 # Don't exit
                 curses.reset_prog_mode()
                 self.stdscr.refresh()
                 return False
 
-            elif key in [ord("s"), ord("S")]:
+            if key in [ord("s"), ord("S")]:
                 # Save and exit
                 self._save_changes()
                 curses.reset_prog_mode()
@@ -633,6 +632,7 @@ class TerminalHexViewer:
 
         Args:
             error_message: The error message to display
+
         """
         # Save current screen state
         curses.def_prog_mode()
@@ -704,6 +704,7 @@ def launch_hex_viewer(filepath: str):
 
     Args:
         filepath: Path to file to view
+
     """
     try:
         viewer = TerminalHexViewer(filepath)

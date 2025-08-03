@@ -1,5 +1,4 @@
-"""
-Copyright (C) 2025 Zachary Flint
+"""Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
 
@@ -24,4 +23,4 @@ from .binary.pe_common import (
     iterate_pe_imports_with_dll,
 )
 
-__all__ = ["extract_pe_imports", "iterate_pe_imports_with_dll", "analyze_pe_import_security"]
+__all__ = ["analyze_pe_import_security", "extract_pe_imports", "iterate_pe_imports_with_dll"]

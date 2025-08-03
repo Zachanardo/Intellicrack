@@ -1,5 +1,4 @@
-"""
-Security utilities for Intellicrack
+"""Security utilities for Intellicrack
 Provides secure alternatives to common operations
 """
 
@@ -7,18 +6,17 @@ import hashlib
 import json
 import shlex
 import subprocess
-from typing import Any, List, Optional, Union
+from typing import Any
 
 import yaml
 
 
 class SecurityError(Exception):
     """Raised when a security policy is violated"""
-    pass
 
-def secure_hash(data: Union[str, bytes], algorithm: str = "sha256") -> str:
-    """
-    Generate a secure hash of the given data
+
+def secure_hash(data: str | bytes, algorithm: str = "sha256") -> str:
+    """Generate a secure hash of the given data
 
     Args:
         data: Data to hash
@@ -26,6 +24,7 @@ def secure_hash(data: Union[str, bytes], algorithm: str = "sha256") -> str:
 
     Returns:
         Hex digest of the hash
+
     """
     if isinstance(data, str):
         data = data.encode("utf-8")
@@ -33,19 +32,17 @@ def secure_hash(data: Union[str, bytes], algorithm: str = "sha256") -> str:
     if algorithm == "md5":
         # MD5 only for non-security purposes
         return hashlib.md5(data, usedforsecurity=False).hexdigest()
-    elif algorithm == "sha256":
+    if algorithm == "sha256":
         return hashlib.sha256(data).hexdigest()
-    elif algorithm == "sha512":
+    if algorithm == "sha512":
         return hashlib.sha512(data).hexdigest()
-    else:
-        raise ValueError(f"Unsupported algorithm: {algorithm}")
+    raise ValueError(f"Unsupported algorithm: {algorithm}")
 
-def secure_subprocess(command: Union[str, List[str]],
+def secure_subprocess(command: str | list[str],
                      shell: bool = False,
-                     timeout: Optional[int] = 30,
+                     timeout: int | None = 30,
                      **kwargs) -> subprocess.CompletedProcess:
-    """
-    Execute a subprocess command securely
+    """Execute a subprocess command securely
 
     Args:
         command: Command to execute
@@ -58,11 +55,12 @@ def secure_subprocess(command: Union[str, List[str]],
 
     Raises:
         SecurityError: If shell=True without whitelist
+
     """
     if shell:
         raise SecurityError(
             "shell=True is not allowed for security reasons. "
-            "Use a list of arguments instead."
+            "Use a list of arguments instead.",
         )
 
     if isinstance(command, str):
@@ -75,36 +73,35 @@ def secure_subprocess(command: Union[str, List[str]],
         timeout=timeout,
         capture_output=True,
         text=True,
-        **kwargs
+        **kwargs,
     )
 
 def secure_yaml_load(data: str) -> Any:
-    """
-    Safely load YAML data
+    """Safely load YAML data
 
     Args:
         data: YAML string to parse
 
     Returns:
         Parsed YAML data
+
     """
     return yaml.safe_load(data)
 
 def secure_json_load(data: str) -> Any:
-    """
-    Safely load JSON data
+    """Safely load JSON data
 
     Args:
         data: JSON string to parse
 
     Returns:
         Parsed JSON data
+
     """
     return json.loads(data)
 
-def validate_file_path(path: str, allowed_extensions: Optional[List[str]] = None) -> bool:
-    """
-    Validate a file path for security
+def validate_file_path(path: str, allowed_extensions: list[str] | None = None) -> bool:
+    """Validate a file path for security
 
     Args:
         path: File path to validate
@@ -115,6 +112,7 @@ def validate_file_path(path: str, allowed_extensions: Optional[List[str]] = None
 
     Raises:
         SecurityError: If path is invalid or insecure
+
     """
     import os
 
@@ -131,8 +129,7 @@ def validate_file_path(path: str, allowed_extensions: Optional[List[str]] = None
     return True
 
 def sanitize_input(text: str, max_length: int = 1024) -> str:
-    """
-    Sanitize user input
+    """Sanitize user input
 
     Args:
         text: Input text to sanitize
@@ -140,6 +137,7 @@ def sanitize_input(text: str, max_length: int = 1024) -> str:
 
     Returns:
         Sanitized text
+
     """
     # Remove null bytes
     text = text.replace("\x00", "")

@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -130,6 +129,7 @@ def create_numpy_fallback():
     """Create a minimal numpy fallback."""
     class NumpyFallback:
         """Minimal numpy replacement for when numpy is unavailable."""
+
         __version__ = "fallback-1.0.0"
 
         # Define ndarray as the list type for compatibility
@@ -147,7 +147,7 @@ def create_numpy_fallback():
             """Create array of zeros with given shape."""
             if isinstance(shape, int):
                 return [0] * shape
-            elif isinstance(shape, tuple) and len(shape) == 2:
+            if isinstance(shape, tuple) and len(shape) == 2:
                 return [[0] * shape[1] for _ in range(shape[0])]
             return []
 
@@ -170,22 +170,22 @@ def create_numpy_fallback():
 
         class random:
             """Random number generation fallback."""
+
             @staticmethod
             def randn(*shape):
                 """Generate random normal distribution."""
                 import random
                 if len(shape) == 0:
                     return random.gauss(0, 1)
-                elif len(shape) == 1:
+                if len(shape) == 1:
                     return [random.gauss(0, 1) for _ in range(shape[0])]
-                elif len(shape) == 2:
+                if len(shape) == 2:
                     return [[random.gauss(0, 1) for _ in range(shape[1])] for _ in range(shape[0])]
-                elif len(shape) == 3:
+                if len(shape) == 3:
                     return [[[random.gauss(0, 1) for _ in range(shape[2])] for _ in range(shape[1])] for _ in range(shape[0])]
-                elif len(shape) == 4:
+                if len(shape) == 4:
                     return [[[[random.gauss(0, 1) for _ in range(shape[3])] for _ in range(shape[2])] for _ in range(shape[1])] for _ in range(shape[0])]
-                else:
-                    raise ValueError("Too many dimensions for fallback randn")
+                raise ValueError("Too many dimensions for fallback randn")
 
             @staticmethod
             def rand(*shape):
@@ -193,12 +193,11 @@ def create_numpy_fallback():
                 import random
                 if len(shape) == 0:
                     return random.random()  # noqa: S311
-                elif len(shape) == 1:
+                if len(shape) == 1:
                     return [random.random() for _ in range(shape[0])]  # noqa: S311
-                elif len(shape) == 2:
+                if len(shape) == 2:
                     return [[random.random() for _ in range(shape[1])] for _ in range(shape[0])]  # noqa: S311
-                else:
-                    raise ValueError("Too many dimensions for fallback rand")
+                raise ValueError("Too many dimensions for fallback rand")
 
             @staticmethod
             def randint(low, high, size=None):
@@ -206,10 +205,9 @@ def create_numpy_fallback():
                 import random
                 if size is None:
                     return random.randint(low, high - 1)  # noqa: S311
-                elif isinstance(size, int):
+                if isinstance(size, int):
                     return [random.randint(low, high - 1) for _ in range(size)]  # noqa: S311
-                else:
-                    raise ValueError("Complex sizes not supported in fallback")
+                raise ValueError("Complex sizes not supported in fallback")
 
             @staticmethod
             def uniform(low, high, size=None):
@@ -217,10 +215,9 @@ def create_numpy_fallback():
                 import random
                 if size is None:
                     return random.uniform(low, high)  # noqa: S311
-                elif isinstance(size, int):
+                if isinstance(size, int):
                     return [random.uniform(low, high) for _ in range(size)]  # noqa: S311
-                else:
-                    raise ValueError("Complex sizes not supported in fallback")
+                raise ValueError("Complex sizes not supported in fallback")
 
             @staticmethod
             def normal(loc=0.0, scale=1.0, size=None):
@@ -228,10 +225,9 @@ def create_numpy_fallback():
                 import random
                 if size is None:
                     return random.gauss(loc, scale)
-                elif isinstance(size, int):
+                if isinstance(size, int):
                     return [random.gauss(loc, scale) for _ in range(size)]
-                else:
-                    raise ValueError("Complex sizes not supported in fallback")
+                raise ValueError("Complex sizes not supported in fallback")
 
             @staticmethod
             def choice(a, size=None, p=None):
@@ -241,13 +237,10 @@ def create_numpy_fallback():
                     # Weighted choice
                     if size is None:
                         return random.choices(a, weights=p, k=1)[0]  # noqa: S311
-                    else:
-                        return random.choices(a, weights=p, k=size)  # noqa: S311
-                else:
-                    if size is None:
-                        return random.choice(a)  # noqa: S311
-                    else:
-                        return [random.choice(a) for _ in range(size)]  # noqa: S311
+                    return random.choices(a, weights=p, k=size)  # noqa: S311
+                if size is None:
+                    return random.choice(a)  # noqa: S311
+                return [random.choice(a) for _ in range(size)]  # noqa: S311
 
             @staticmethod
             def random(size=None):
@@ -255,10 +248,9 @@ def create_numpy_fallback():
                 import random
                 if size is None:
                     return random.random()  # noqa: S311
-                elif isinstance(size, int):
+                if isinstance(size, int):
                     return [random.random() for _ in range(size)]  # noqa: S311
-                else:
-                    raise ValueError("Complex sizes not supported in fallback")
+                raise ValueError("Complex sizes not supported in fallback")
 
     return NumpyFallback()
 
@@ -286,6 +278,7 @@ def create_pandas_fallback():
 
     class PandasFallback:
         """Minimal pandas replacement for when pandas is unavailable."""
+
         __version__ = "fallback-1.0.0"
         DataFrame = DataFrameFallback
 
@@ -341,18 +334,22 @@ def create_sklearn_fallback():
 
     class ClusterModule:
         """Sklearn cluster module fallback."""
+
         DBSCAN = DBSCANFallback
 
     class EnsembleModule:
         """Sklearn ensemble module fallback."""
+
         RandomForestClassifier = RandomForestFallback
 
     class PreprocessingModule:
         """Sklearn preprocessing module fallback."""
+
         StandardScaler = StandardScalerFallback
 
     class SklearnFallback:
         """Minimal sklearn replacement for when sklearn is unavailable."""
+
         __version__ = "fallback-1.0.0"
         cluster = ClusterModule()
         ensemble = EnsembleModule()
@@ -364,6 +361,7 @@ def create_lief_fallback():
     """Create a minimal lief fallback."""
     class LiefFallback:
         """Minimal lief replacement for when lief is unavailable."""
+
         __version__ = "fallback-1.0.0"
 
         class ELF:
@@ -373,13 +371,11 @@ def create_lief_fallback():
             def parse(filename):
                 """Parse ELF file (fallback returns None)."""
                 logger.debug(f"ELF fallback parse called for: {filename}")
-                return None
 
         @staticmethod
         def parse(filename):
             """Parse binary file (fallback returns None)."""
             logger.debug(f"Lief fallback parse called for: {filename}")
-            return None
 
     return LiefFallback()
 
@@ -454,7 +450,7 @@ def get_dependency_status():
         "pandas": PANDAS_AVAILABLE,
         "sklearn": SKLEARN_AVAILABLE,
         "lief": LIEF_AVAILABLE,
-        "pyelftools": PYELFTOOLS_AVAILABLE
+        "pyelftools": PYELFTOOLS_AVAILABLE,
     }
 
     working_deps = sum(status.values())

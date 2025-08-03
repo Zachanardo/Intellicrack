@@ -1,5 +1,4 @@
-"""
-Advanced Visualization & Analytics for AI Operations
+"""Advanced Visualization & Analytics for AI Operations
 
 Copyright (C) 2025 Zachary Flint
 
@@ -24,11 +23,12 @@ import math
 import time
 import uuid
 from collections import defaultdict, deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from ..utils.logger import get_logger
 from .exploit_chain_builder import ChainComplexity, ExploitType
@@ -48,6 +48,7 @@ except ImportError as e:
 
 class ChartType(Enum):
     """Types of visualization charts."""
+
     LINE_CHART = "line_chart"
     BAR_CHART = "bar_chart"
     PIE_CHART = "pie_chart"
@@ -62,6 +63,7 @@ class ChartType(Enum):
 
 class MetricType(Enum):
     """Types of metrics to visualize."""
+
     PERFORMANCE = "performance"
     SUCCESS_RATE = "success_rate"
     RESOURCE_USAGE = "resource_usage"
@@ -77,34 +79,37 @@ class MetricType(Enum):
 @dataclass
 class DataPoint:
     """Single data point for visualization."""
+
     timestamp: datetime
     value: float
     label: str
     category: str = "default"
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class ChartData:
     """Chart data structure."""
+
     chart_id: str
     title: str
     chart_type: ChartType
-    data_points: List[DataPoint]
+    data_points: list[DataPoint]
     x_axis_label: str = "Time"
     y_axis_label: str = "Value"
     color_scheme: str = "default"
-    options: Dict[str, Any] = field(default_factory=dict)
+    options: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class Dashboard:
     """Dashboard configuration."""
+
     dashboard_id: str
     name: str
     description: str
-    charts: List[ChartData]
-    layout: Dict[str, Any] = field(default_factory=dict)
+    charts: list[ChartData]
+    layout: dict[str, Any] = field(default_factory=dict)
     refresh_interval: int = 30  # seconds
     created_at: datetime = field(default_factory=datetime.now)
     last_updated: datetime = field(default_factory=datetime.now)
@@ -120,9 +125,9 @@ class DataCollector:
         data gathering from various AI components for real-time
         visualization and analytics.
         """
-        self.data_store: Dict[str, deque] = defaultdict(
+        self.data_store: dict[str, deque] = defaultdict(
             lambda: deque(maxlen=1000))
-        self.collectors: Dict[MetricType, Callable] = {}
+        self.collectors: dict[MetricType, Callable] = {}
         self.collection_enabled = True
         self.collection_interval = 10  # seconds
         self.learning_engine = get_learning_engine()
@@ -144,7 +149,7 @@ class DataCollector:
             MetricType.ERROR_RATE: self._collect_error_rate_metrics,
             MetricType.LEARNING_PROGRESS: self._collect_learning_metrics,
             MetricType.EXPLOIT_CHAINS: self._collect_exploit_chain_metrics,
-            MetricType.AGENT_ACTIVITY: self._collect_agent_activity_metrics
+            MetricType.AGENT_ACTIVITY: self._collect_agent_activity_metrics,
         }
 
     def _start_data_collection(self):
@@ -169,7 +174,7 @@ class DataCollector:
         thread.start()
         logger.info("Started data collection worker")
 
-    def _collect_performance_metrics(self) -> List[DataPoint]:
+    def _collect_performance_metrics(self) -> list[DataPoint]:
         """Collect performance metrics."""
         try:
             metrics_summary = performance_monitor.get_metrics_summary()
@@ -182,7 +187,7 @@ class DataCollector:
                     timestamp=datetime.now(),
                     value=system_health.get("score", 0),
                     label="System Health Score",
-                    category="health"
+                    category="health",
                 ))
 
             # Operation performance
@@ -193,7 +198,7 @@ class DataCollector:
                     timestamp=datetime.now(),
                     value=avg_time,
                     label=f"{op_name} Avg Time",
-                    category="execution_time"
+                    category="execution_time",
                 ))
 
             return data_points
@@ -202,7 +207,7 @@ class DataCollector:
             logger.error(f"Error collecting performance metrics: {e}")
             return []
 
-    def _collect_success_rate_metrics(self) -> List[DataPoint]:
+    def _collect_success_rate_metrics(self) -> list[DataPoint]:
         """Collect success rate metrics."""
         try:
             # Get learning insights for success rates
@@ -215,7 +220,7 @@ class DataCollector:
                     value=insights["success_rate"] *
                     100,  # Convert to percentage
                     label="Overall Success Rate",
-                    category="success_rate"
+                    category="success_rate",
                 ))
 
             if "avg_confidence" in insights:
@@ -223,7 +228,7 @@ class DataCollector:
                     timestamp=datetime.now(),
                     value=insights["avg_confidence"] * 100,
                     label="Average Confidence",
-                    category="confidence"
+                    category="confidence",
                 ))
 
             return data_points
@@ -232,7 +237,7 @@ class DataCollector:
             logger.error(f"Error collecting success rate metrics: {e}")
             return []
 
-    def _collect_resource_usage_metrics(self) -> List[DataPoint]:
+    def _collect_resource_usage_metrics(self) -> list[DataPoint]:
         """Collect resource usage metrics."""
         data_points = []
 
@@ -243,14 +248,14 @@ class DataCollector:
                     timestamp=datetime.now(),
                     value=50.0,
                     label="CPU Usage",
-                    category="cpu"
+                    category="cpu",
                 ),
                 DataPoint(
                     timestamp=datetime.now(),
                     value=60.0,
                     label="Memory Usage",
-                    category="memory"
-                )
+                    category="memory",
+                ),
             ])
             return data_points
 
@@ -261,7 +266,7 @@ class DataCollector:
                 timestamp=datetime.now(),
                 value=cpu_percent,
                 label="CPU Usage",
-                category="cpu"
+                category="cpu",
             ))
 
             # Memory usage
@@ -270,7 +275,7 @@ class DataCollector:
                 timestamp=datetime.now(),
                 value=memory.percent,
                 label="Memory Usage",
-                category="memory"
+                category="memory",
             ))
 
             # Disk I/O
@@ -280,7 +285,7 @@ class DataCollector:
                     timestamp=datetime.now(),
                     value=disk_io.read_bytes / (1024 * 1024),  # MB
                     label="Disk Read MB",
-                    category="disk_io"
+                    category="disk_io",
                 ))
 
             return data_points
@@ -289,7 +294,7 @@ class DataCollector:
             logger.error(f"Error collecting resource usage metrics: {e}")
             return []
 
-    def _collect_error_rate_metrics(self) -> List[DataPoint]:
+    def _collect_error_rate_metrics(self) -> list[DataPoint]:
         """Collect error rate metrics."""
         try:
             # Get recent learning records to calculate error rates
@@ -303,7 +308,7 @@ class DataCollector:
                 timestamp=current_time,
                 value=error_rate,
                 label="Error Rate",
-                category="errors"
+                category="errors",
             ))
 
             return data_points
@@ -312,7 +317,7 @@ class DataCollector:
             logger.error(f"Error collecting error rate metrics: {e}")
             return []
 
-    def _collect_learning_metrics(self) -> List[DataPoint]:
+    def _collect_learning_metrics(self) -> list[DataPoint]:
         """Collect learning progress metrics."""
         try:
             insights = self.learning_engine.get_learning_insights()
@@ -323,7 +328,7 @@ class DataCollector:
                     timestamp=datetime.now(),
                     value=insights["total_records"],
                     label="Total Learning Records",
-                    category="learning_volume"
+                    category="learning_volume",
                 ))
 
             # Learning stats
@@ -334,7 +339,7 @@ class DataCollector:
                         timestamp=datetime.now(),
                         value=value,
                         label=f"Learning {stat_name}",
-                        category="learning_progress"
+                        category="learning_progress",
                     ))
 
             return data_points
@@ -343,7 +348,7 @@ class DataCollector:
             logger.error(f"Error collecting learning metrics: {e}")
             return []
 
-    def _collect_exploit_chain_metrics(self) -> List[DataPoint]:
+    def _collect_exploit_chain_metrics(self) -> list[DataPoint]:
         """Collect exploit chain metrics."""
         try:
             # Would integrate with exploit chain builder
@@ -357,7 +362,7 @@ class DataCollector:
                     timestamp=datetime.now(),
                     value=stats["total_chains"],
                     label="Total Exploit Chains",
-                    category="exploit_chains"
+                    category="exploit_chains",
                 ))
 
             if "avg_success_probability" in stats:
@@ -365,7 +370,7 @@ class DataCollector:
                     timestamp=datetime.now(),
                     value=stats["avg_success_probability"] * 100,
                     label="Avg Chain Success Rate",
-                    category="chain_success"
+                    category="chain_success",
                 ))
 
             return data_points
@@ -374,7 +379,7 @@ class DataCollector:
             logger.error(f"Error collecting exploit chain metrics: {e}")
             return []
 
-    def _collect_agent_activity_metrics(self) -> List[DataPoint]:
+    def _collect_agent_activity_metrics(self) -> list[DataPoint]:
         """Collect multi-agent activity metrics."""
         try:
             # Would integrate with multi-agent system
@@ -388,14 +393,14 @@ class DataCollector:
                 timestamp=datetime.now(),
                 value=active_agents,
                 label="Active Agents",
-                category="agent_activity"
+                category="agent_activity",
             ))
 
             data_points.append(DataPoint(
                 timestamp=datetime.now(),
                 value=total_tasks,
                 label="Total Tasks Processed",
-                category="task_volume"
+                category="task_volume",
             ))
 
             return data_points
@@ -404,7 +409,7 @@ class DataCollector:
             logger.error(f"Error collecting agent activity metrics: {e}")
             return []
 
-    def get_data(self, metric_type: MetricType, time_range: int = 3600) -> List[DataPoint]:
+    def get_data(self, metric_type: MetricType, time_range: int = 3600) -> list[DataPoint]:
         """Get collected data for metric type."""
         if metric_type.value not in self.data_store:
             return []
@@ -433,13 +438,14 @@ class ChartGenerator:
         Args:
             data_collector: Data collector instance providing
                 metrics and data for visualization.
+
         """
         self.data_collector = data_collector
         self.chart_templates = self._load_chart_templates()
 
         logger.info("Chart generator initialized")
 
-    def _load_chart_templates(self) -> Dict[str, Dict[str, Any]]:
+    def _load_chart_templates(self) -> dict[str, dict[str, Any]]:
         """Load chart configuration templates."""
         return {
             "performance_overview": {
@@ -447,40 +453,40 @@ class ChartGenerator:
                 "title": "Performance Overview",
                 "metrics": [MetricType.PERFORMANCE],
                 "time_range": 3600,
-                "options": {"smooth": True, "show_points": True}
+                "options": {"smooth": True, "show_points": True},
             },
             "resource_utilization": {
                 "chart_type": ChartType.BAR_CHART,
                 "title": "Resource Utilization",
                 "metrics": [MetricType.RESOURCE_USAGE],
                 "time_range": 1800,
-                "options": {"stacked": False}
+                "options": {"stacked": False},
             },
             "success_trends": {
                 "chart_type": ChartType.LINE_CHART,
                 "title": "Success Rate Trends",
                 "metrics": [MetricType.SUCCESS_RATE],
                 "time_range": 7200,
-                "options": {"smooth": True, "threshold_lines": [80, 90]}
+                "options": {"smooth": True, "threshold_lines": [80, 90]},
             },
             "exploit_chain_analysis": {
                 "chart_type": ChartType.PIE_CHART,
                 "title": "Exploit Chain Distribution",
                 "metrics": [MetricType.EXPLOIT_CHAINS],
                 "time_range": 86400,
-                "options": {"show_labels": True, "show_percentages": True}
+                "options": {"show_labels": True, "show_percentages": True},
             },
             "learning_progress": {
                 "chart_type": ChartType.HISTOGRAM,
                 "title": "Learning Progress",
                 "metrics": [MetricType.LEARNING_PROGRESS],
                 "time_range": 3600,
-                "options": {"bins": 20, "show_stats": True}
-            }
+                "options": {"bins": 20, "show_stats": True},
+            },
         }
 
     @profile_ai_operation("chart_generation")
-    def generate_chart(self, template_name: str, custom_options: Dict[str, Any] = None) -> ChartData:
+    def generate_chart(self, template_name: str, custom_options: dict[str, Any] = None) -> ChartData:
         """Generate chart from template."""
         if template_name not in self.chart_templates:
             raise ValueError(f"Unknown chart template: {template_name}")
@@ -504,12 +510,12 @@ class ChartGenerator:
             title=template["title"],
             chart_type=template["chart_type"],
             data_points=all_data_points,
-            options=options
+            options=options,
         )
 
         return chart_data
 
-    def generate_custom_chart(self, chart_config: Dict[str, Any]) -> ChartData:
+    def generate_custom_chart(self, chart_config: dict[str, Any]) -> ChartData:
         """Generate custom chart from configuration."""
         chart_type = ChartType(chart_config.get("chart_type", "line_chart"))
         metric_types = [MetricType(m) for m in chart_config.get("metrics", [])]
@@ -528,7 +534,7 @@ class ChartGenerator:
             data_points=all_data_points,
             x_axis_label=chart_config.get("x_axis_label", "Time"),
             y_axis_label=chart_config.get("y_axis_label", "Value"),
-            options=chart_config.get("options", {})
+            options=chart_config.get("options", {}),
         )
 
         return chart_data
@@ -558,7 +564,7 @@ class ChartGenerator:
                 label=exploit_type.value,
                 category="exploit_type",
                 metadata={"node_type": "exploit",
-                          "color": "#ff6b6b", "usage_count": usage_count}
+                          "color": "#ff6b6b", "usage_count": usage_count},
             ))
 
         # Add nodes for complexity levels
@@ -568,7 +574,7 @@ class ChartGenerator:
                 value=0.8,
                 label=complexity.value,
                 category="complexity",
-                metadata={"node_type": "complexity", "color": "#4ecdc4"}
+                metadata={"node_type": "complexity", "color": "#4ecdc4"},
             ))
 
         chart_data = ChartData(
@@ -580,8 +586,8 @@ class ChartGenerator:
                 "layout": "force_directed",
                 "show_labels": True,
                 "node_size_field": "value",
-                "color_field": "metadata.color"
-            }
+                "color_field": "metadata.color",
+            },
         )
 
         return chart_data
@@ -605,7 +611,7 @@ class ChartGenerator:
                     label=f"{exploit_type.value}-{severity}",
                     category="heatmap_cell",
                     metadata={
-                        "x": i, "y": j, "exploit_type": exploit_type.value, "severity": severity}
+                        "x": i, "y": j, "exploit_type": exploit_type.value, "severity": severity},
                 ))
 
         chart_data = ChartData(
@@ -618,8 +624,8 @@ class ChartGenerator:
             options={
                 "color_scale": "viridis",
                 "show_values": True,
-                "grid_lines": True
-            }
+                "grid_lines": True,
+            },
         )
 
         return chart_data
@@ -634,10 +640,11 @@ class DashboardManager:
         Args:
             data_collector: Data collector instance providing
                 metrics for dashboard visualization.
+
         """
         self.data_collector = data_collector
         self.chart_generator = ChartGenerator(data_collector)
-        self.dashboards: Dict[str, Dashboard] = {}
+        self.dashboards: dict[str, Dashboard] = {}
         self.dashboard_templates = self._load_dashboard_templates()
 
         # Create default dashboards
@@ -645,7 +652,7 @@ class DashboardManager:
 
         logger.info("Dashboard manager initialized")
 
-    def _load_dashboard_templates(self) -> Dict[str, Dict[str, Any]]:
+    def _load_dashboard_templates(self) -> dict[str, dict[str, Any]]:
         """Load dashboard templates."""
         return {
             "ai_overview": {
@@ -655,9 +662,9 @@ class DashboardManager:
                     "performance_overview",
                     "resource_utilization",
                     "success_trends",
-                    "learning_progress"
+                    "learning_progress",
                 ],
-                "layout": {"rows": 2, "cols": 2}
+                "layout": {"rows": 2, "cols": 2},
             },
             "security_analysis": {
                 "name": "Security Analysis Dashboard",
@@ -665,19 +672,19 @@ class DashboardManager:
                 "charts": [
                     "exploit_chain_analysis",
                     "vulnerability_heatmap",
-                    "exploit_chain_network"
+                    "exploit_chain_network",
                 ],
-                "layout": {"rows": 2, "cols": 2}
+                "layout": {"rows": 2, "cols": 2},
             },
             "performance_monitoring": {
                 "name": "Performance Monitoring",
                 "description": "Detailed performance metrics and optimization",
                 "charts": [
                     "performance_overview",
-                    "resource_utilization"
+                    "resource_utilization",
                 ],
-                "layout": {"rows": 1, "cols": 2}
-            }
+                "layout": {"rows": 1, "cols": 2},
+            },
         }
 
     def _create_default_dashboards(self):
@@ -689,7 +696,7 @@ class DashboardManager:
                 logger.info(f"Created default dashboard: {template['name']}")
 
     @profile_ai_operation("dashboard_creation")
-    def create_dashboard_from_template(self, template_name: str) -> Optional[Dashboard]:
+    def create_dashboard_from_template(self, template_name: str) -> Dashboard | None:
         """Create dashboard from template."""
         if template_name not in self.dashboard_templates:
             logger.error(f"Unknown dashboard template: {template_name}")
@@ -716,13 +723,13 @@ class DashboardManager:
             name=template["name"],
             description=template["description"],
             charts=charts,
-            layout=template["layout"]
+            layout=template["layout"],
         )
 
         return dashboard
 
     def create_custom_dashboard(self, name: str, description: str,
-                                chart_configs: List[Dict[str, Any]]) -> Dashboard:
+                                chart_configs: list[dict[str, Any]]) -> Dashboard:
         """Create custom dashboard."""
         charts = []
 
@@ -738,7 +745,7 @@ class DashboardManager:
             dashboard_id=str(uuid.uuid4()),
             name=name,
             description=description,
-            charts=charts
+            charts=charts,
         )
 
         self.dashboards[dashboard.dashboard_id] = dashboard
@@ -765,7 +772,7 @@ class DashboardManager:
         dashboard.last_updated = datetime.now()
         return True
 
-    def _refresh_chart(self, chart: ChartData) -> Optional[ChartData]:
+    def _refresh_chart(self, chart: ChartData) -> ChartData | None:
         """Refresh individual chart."""
         # Try to match with known templates
         for template_name in self.chart_generator.chart_templates:
@@ -778,16 +785,16 @@ class DashboardManager:
             "chart_type": chart.chart_type.value,
             "title": chart.title,
             "metrics": [],  # Would need to extract from original chart
-            "options": chart.options
+            "options": chart.options,
         }
 
         return self.chart_generator.generate_custom_chart(chart_config)
 
-    def get_dashboard(self, dashboard_id: str) -> Optional[Dashboard]:
+    def get_dashboard(self, dashboard_id: str) -> Dashboard | None:
         """Get dashboard by ID."""
         return self.dashboards.get(dashboard_id)
 
-    def list_dashboards(self) -> List[Dict[str, str]]:
+    def list_dashboards(self) -> list[dict[str, str]]:
         """List all dashboards."""
         return [
             {
@@ -795,7 +802,7 @@ class DashboardManager:
                 "name": dashboard.name,
                 "description": dashboard.description,
                 "chart_count": len(dashboard.charts),
-                "last_updated": dashboard.last_updated.isoformat()
+                "last_updated": dashboard.last_updated.isoformat(),
             }
             for dashboard in self.dashboards.values()
         ]
@@ -818,11 +825,11 @@ class DashboardManager:
                     "title": chart.title,
                     "chart_type": chart.chart_type.value,
                     "options": chart.options,
-                    "data_point_count": len(chart.data_points)
+                    "data_point_count": len(chart.data_points),
                 }
                 for chart in dashboard.charts
             ],
-            "exported_at": datetime.now().isoformat()
+            "exported_at": datetime.now().isoformat(),
         }
 
         try:
@@ -843,14 +850,15 @@ class AnalyticsEngine:
         Args:
             data_collector: Data collector instance providing
                 metrics for analysis and reporting.
+
         """
         self.data_collector = data_collector
-        self.analysis_cache: Dict[str, Any] = {}
+        self.analysis_cache: dict[str, Any] = {}
 
         logger.info("Analytics engine initialized")
 
     @profile_ai_operation("trend_analysis")
-    def analyze_performance_trends(self, time_range: int = 86400) -> Dict[str, Any]:
+    def analyze_performance_trends(self, time_range: int = 86400) -> dict[str, Any]:
         """Analyze performance trends over time."""
         performance_data = self.data_collector.get_data(
             MetricType.PERFORMANCE, time_range)
@@ -896,13 +904,13 @@ class AnalyticsEngine:
             "std_deviation": std_dev,
             "data_points": n,
             "time_range_hours": time_range / 3600,
-            "analysis": f"Performance trend is {trend} with slope {slope:.4f}"
+            "analysis": f"Performance trend is {trend} with slope {slope:.4f}",
         }
 
         return analysis_result
 
     @profile_ai_operation("success_rate_analysis")
-    def analyze_success_patterns(self) -> Dict[str, Any]:
+    def analyze_success_patterns(self) -> dict[str, Any]:
         """Analyze success rate patterns."""
         success_data = self.data_collector.get_data(
             MetricType.SUCCESS_RATE, 86400)
@@ -945,22 +953,21 @@ class AnalyticsEngine:
             "min_success_rate": min_success,
             "variance": variance,
             "patterns": patterns,
-            "recommendation": self._get_success_rate_recommendation(mean_success, patterns)
+            "recommendation": self._get_success_rate_recommendation(mean_success, patterns),
         }
 
-    def _get_success_rate_recommendation(self, mean_success: float, patterns: List[str]) -> str:
+    def _get_success_rate_recommendation(self, mean_success: float, patterns: list[str]) -> str:
         """Get recommendation based on success rate analysis."""
         if mean_success < 70:
             return "Focus on improving error handling and algorithm reliability"
-        elif mean_success < 85:
+        if mean_success < 85:
             return "Good performance, consider optimization for edge cases"
-        elif "High variability" in str(patterns):
+        if "High variability" in str(patterns):
             return "Investigate causes of success rate variability"
-        else:
-            return "Excellent performance, maintain current approach"
+        return "Excellent performance, maintain current approach"
 
     @profile_ai_operation("resource_efficiency_analysis")
-    def analyze_resource_efficiency(self) -> Dict[str, Any]:
+    def analyze_resource_efficiency(self) -> dict[str, Any]:
         """Analyze resource usage efficiency."""
         resource_data = self.data_collector.get_data(
             MetricType.RESOURCE_USAGE, 3600)
@@ -1004,36 +1011,35 @@ class AnalyticsEngine:
                 "mean_usage": mean_usage,
                 "peak_usage": peak_usage,
                 "efficiency_rating": efficiency,
-                "data_points": len(values)
+                "data_points": len(values),
             }
 
         return {
             "resource_efficiency": efficiency_analysis,
-            "overall_rating": self._calculate_overall_efficiency(efficiency_analysis)
+            "overall_rating": self._calculate_overall_efficiency(efficiency_analysis),
         }
 
-    def _calculate_overall_efficiency(self, efficiency_analysis: Dict[str, Dict[str, Any]]) -> str:
+    def _calculate_overall_efficiency(self, efficiency_analysis: dict[str, dict[str, Any]]) -> str:
         """Calculate overall efficiency rating."""
         ratings = [analysis["efficiency_rating"]
                    for analysis in efficiency_analysis.values()]
 
         if "concerning" in ratings:
             return "needs_optimization"
-        elif "high_usage" in ratings:
+        if "high_usage" in ratings:
             return "monitor_closely"
-        elif all(r in ["optimal", "good"] for r in ratings):
+        if all(r in ["optimal", "good"] for r in ratings):
             return "excellent"
-        else:
-            return "good"
+        return "good"
 
-    def generate_insights_report(self) -> Dict[str, Any]:
+    def generate_insights_report(self) -> dict[str, Any]:
         """Generate comprehensive insights report."""
         report = {
             "generated_at": datetime.now().isoformat(),
             "performance_trends": self.analyze_performance_trends(),
             "success_patterns": self.analyze_success_patterns(),
             "resource_efficiency": self.analyze_resource_efficiency(),
-            "recommendations": []
+            "recommendations": [],
         }
 
         # Generate overall recommendations
@@ -1078,11 +1084,11 @@ class VisualizationAnalytics:
 
         logger.info("Visualization and analytics system initialized")
 
-    def get_dashboard(self, dashboard_id: str) -> Optional[Dashboard]:
+    def get_dashboard(self, dashboard_id: str) -> Dashboard | None:
         """Get dashboard by ID."""
         return self.dashboard_manager.get_dashboard(dashboard_id)
 
-    def list_dashboards(self) -> List[Dict[str, str]]:
+    def list_dashboards(self) -> list[dict[str, str]]:
         """List all available dashboards."""
         return self.dashboard_manager.list_dashboards()
 
@@ -1091,15 +1097,15 @@ class VisualizationAnalytics:
         return self.dashboard_manager.refresh_dashboard(dashboard_id)
 
     def create_custom_dashboard(self, name: str, description: str,
-                                chart_configs: List[Dict[str, Any]]) -> Dashboard:
+                                chart_configs: list[dict[str, Any]]) -> Dashboard:
         """Create custom dashboard."""
         return self.dashboard_manager.create_custom_dashboard(name, description, chart_configs)
 
-    def generate_insights_report(self) -> Dict[str, Any]:
+    def generate_insights_report(self) -> dict[str, Any]:
         """Generate comprehensive analytics report."""
         return self.analytics_engine.generate_insights_report()
 
-    def get_system_status(self) -> Dict[str, Any]:
+    def get_system_status(self) -> dict[str, Any]:
         """Get system status including visualization metrics."""
         return {
             "data_collector_active": self.data_collector.collection_enabled,
@@ -1107,7 +1113,7 @@ class VisualizationAnalytics:
             "data_points_collected": sum(
                 len(queue) for queue in self.data_collector.data_store.values()
             ),
-            "last_collection": datetime.now().isoformat()
+            "last_collection": datetime.now().isoformat(),
         }
 
 

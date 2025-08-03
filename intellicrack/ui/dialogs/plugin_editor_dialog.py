@@ -1,6 +1,5 @@
 
-"""
-Plugin Editor Dialog for Intellicrack.
+"""Plugin Editor Dialog for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -111,7 +110,7 @@ class PluginEditorDialog(QDialog):
 
         # Dialog buttons
         buttons = QDialogButtonBox(
-            QDialogButtonBox.Save | QDialogButtonBox.Close
+            QDialogButtonBox.Save | QDialogButtonBox.Close,
         )
         buttons.button(QDialogButtonBox.Save).clicked.connect(self.save_plugin)
         buttons.rejected.connect(self.reject)
@@ -195,7 +194,7 @@ class PluginEditorDialog(QDialog):
             "Patching API",
             "Network API",
             "Frida API",
-            "Ghidra API"
+            "Ghidra API",
         ])
         self.api_list.currentItemChanged.connect(self.show_api_docs)
         api_layout.addWidget(self.api_list)
@@ -314,7 +313,7 @@ Process.enumerateModules().forEach(function(module) {
     });
 });
                 </pre>
-            """
+            """,
         }
 
         return docs.get(topic, f"<h2>{topic}</h2><p>Documentation not available yet.</p>")
@@ -323,14 +322,14 @@ Process.enumerateModules().forEach(function(module) {
         """Load a plugin file"""
         self.plugin_path = path
         try:
-            with open(path, "r") as f:
+            with open(path) as f:
                 content = f.read()
             self.editor.set_code(content)
             self.editor.current_file = path
             self.setWindowTitle(f"Plugin Editor - {os.path.basename(path)}")
         except Exception as e:
             self.logger.error("Exception in plugin_editor_dialog: %s", e)
-            QMessageBox.critical(self, "Error", f"Failed to load plugin:\n{str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to load plugin:\n{e!s}")
 
     def save_plugin(self):
         """Save the plugin"""
@@ -355,7 +354,7 @@ Process.enumerateModules().forEach(function(module) {
         from PyQt6.QtWidgets import QFileDialog
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Select Test Binary",
-            "", "Executable Files (*.exe *.dll *.so);;All Files (*.*)"
+            "", "Executable Files (*.exe *.dll *.so);;All Files (*.*)",
         )
         if file_path:
             self.test_file_edit.setText(file_path)
@@ -390,7 +389,7 @@ Process.enumerateModules().forEach(function(module) {
             self.logger.error("Import error in plugin_editor_dialog: %s", e)
             QMessageBox.warning(
                 self, "Not Available",
-                "Debugger not available.\nPlease check installation."
+                "Debugger not available.\nPlease check installation.",
             )
 
     def run_test(self):
@@ -472,7 +471,7 @@ Process.enumerateModules().forEach(function(module) {
             self.logger.error("Import error in plugin_editor_dialog: %s", e)
             QMessageBox.warning(
                 self, "Not Available",
-                "Test generator not available.\nPlease check installation."
+                "Test generator not available.\nPlease check installation.",
             )
 
     def open_ci_cd(self):
@@ -491,5 +490,5 @@ Process.enumerateModules().forEach(function(module) {
             self.logger.error("Import error in plugin_editor_dialog: %s", e)
             QMessageBox.warning(
                 self, "Not Available",
-                "CI/CD pipeline not available.\nPlease check installation."
+                "CI/CD pipeline not available.\nPlease check installation.",
             )

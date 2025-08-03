@@ -1,5 +1,4 @@
-"""
-Logging utilities for the Intellicrack framework.
+"""Logging utilities for the Intellicrack framework.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -24,7 +23,8 @@ import functools
 import inspect
 import logging
 import sys
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 # Type variable for decorators
 F = TypeVar("F", bound=Callable[..., Any])
@@ -34,12 +34,12 @@ logger = logging.getLogger(__name__)
 
 
 def log_message(message: str, level: str = "INFO") -> None:
-    """
-    Log a message at the specified level.
+    """Log a message at the specified level.
 
     Args:
         message: The message to log
         level: The log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+
     """
     level = level.upper()
     if level == "DEBUG":
@@ -57,14 +57,14 @@ def log_message(message: str, level: str = "INFO") -> None:
 
 
 def log_function_call(func: F) -> F:
-    """
-    Decorator to log function entry, exit, arguments, return value, and exceptions.
+    """Decorator to log function entry, exit, arguments, return value, and exceptions.
 
     Args:
         func: The function to decorate
 
     Returns:
         The wrapped function with logging
+
     """
     # Thread-local storage to prevent recursion
     import threading
@@ -176,14 +176,14 @@ def log_function_call(func: F) -> F:
 
 
 def log_all_methods(cls):
-    """
-    Class decorator to apply log_function_call to all methods of a class.
+    """Class decorator to apply log_function_call to all methods of a class.
 
     Args:
         cls: The class to decorate
 
     Returns:
         The class with all methods decorated
+
     """
     for attr_name, attr_value in cls.__dict__.items():
         if callable(attr_value) and not attr_name.startswith("__"):
@@ -193,8 +193,7 @@ def log_all_methods(cls):
 
 def setup_logger(name: str = "Intellicrack", level: int = logging.INFO,
                  log_file: str = None, format_string: str = None) -> logging.Logger:
-    """
-    Set up a logger with the specified configuration.
+    """Set up a logger with the specified configuration.
 
     Args:
         name: Logger name
@@ -204,6 +203,7 @@ def setup_logger(name: str = "Intellicrack", level: int = logging.INFO,
 
     Returns:
         Configured logger instance
+
     """
     target_logger = logging.getLogger(name)
     target_logger.setLevel(level)
@@ -231,14 +231,14 @@ def setup_logger(name: str = "Intellicrack", level: int = logging.INFO,
 
 
 def get_logger(name: str = None) -> logging.Logger:
-    """
-    Get a logger instance.
+    """Get a logger instance.
 
     Args:
         name: Logger name (default: caller's module name)
 
     Returns:
         Logger instance
+
     """
     if name is None:
         # Get the caller's module name
@@ -253,14 +253,14 @@ def get_logger(name: str = None) -> logging.Logger:
 
 def configure_logging(level: int = logging.INFO, log_file: str = None,
                      format_string: str = None, enable_comprehensive: bool = False):
-    """
-    Configure logging for the entire application.
+    """Configure logging for the entire application.
 
     Args:
         level: Logging level
         log_file: Optional log file path
         format_string: Optional format string
         enable_comprehensive: Whether to enable comprehensive function logging
+
     """
     # Set up the root logger
     setup_logger("Intellicrack", level, log_file, format_string)
@@ -275,8 +275,7 @@ def configure_logging(level: int = logging.INFO, log_file: str = None,
 def setup_logging(level: str = "INFO", log_file: str = None,
                   enable_rotation: bool = True, max_bytes: int = 10485760,
                   backup_count: int = 5) -> None:
-    """
-    Set up logging for the application with optional log rotation.
+    """Set up logging for the application with optional log rotation.
 
     Args:
         level: The logging level as a string (DEBUG, INFO, WARNING, ERROR, CRITICAL)
@@ -284,6 +283,7 @@ def setup_logging(level: str = "INFO", log_file: str = None,
         enable_rotation: Whether to enable log rotation
         max_bytes: Max size of each log file before rotation (default: 10MB)
         backup_count: Number of backup files to keep (default: 5)
+
     """
     # Convert string level to logging constant
     numeric_level = getattr(logging, level.upper(), None)
@@ -298,7 +298,7 @@ def setup_logging(level: str = "INFO", log_file: str = None,
     console_handler.setLevel(numeric_level)
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
     console_handler.setFormatter(formatter)
     handlers.append(console_handler)
@@ -310,7 +310,7 @@ def setup_logging(level: str = "INFO", log_file: str = None,
             file_handler = RotatingFileHandler(
                 log_file,
                 maxBytes=max_bytes,
-                backupCount=backup_count
+                backupCount=backup_count,
             )
         else:
             file_handler = logging.FileHandler(log_file)
@@ -323,15 +323,14 @@ def setup_logging(level: str = "INFO", log_file: str = None,
     logging.basicConfig(
         level=numeric_level,
         handlers=handlers,
-        force=True  # Force reconfiguration
+        force=True,  # Force reconfiguration
     )
 
 
 def setup_persistent_logging(log_dir: str = None, log_name: str = "intellicrack",
                             enable_rotation: bool = True, max_bytes: int = 10485760,
                             backup_count: int = 5) -> str:
-    """
-    Set up persistent logging with automatic rotation.
+    """Set up persistent logging with automatic rotation.
 
     Args:
         log_dir: Directory for log files (default: ~/intellicrack/logs)
@@ -342,6 +341,7 @@ def setup_persistent_logging(log_dir: str = None, log_name: str = "intellicrack"
 
     Returns:
         str: Path to the log file
+
     """
     import os
     from datetime import datetime
@@ -364,7 +364,7 @@ def setup_persistent_logging(log_dir: str = None, log_name: str = "intellicrack"
         log_file=log_file,
         enable_rotation=enable_rotation,
         max_bytes=max_bytes,
-        backup_count=backup_count
+        backup_count=backup_count,
     )
 
     logger.info("Persistent logging initialized. Log file: %s", log_file)
@@ -381,16 +381,16 @@ log_method_call = log_function_call
 
 # Exported functions and classes
 __all__ = [
-    "log_function_call",
-    "log_all_methods",
-    "setup_logger",
-    "get_logger",
     "configure_logging",
-    "setup_logging",
-    "setup_persistent_logging",
-    "log_message",
-    "log_execution_time",
+    "get_logger",
+    "log_all_methods",
     "log_exception",
+    "log_execution_time",
+    "log_function_call",
+    "log_message",
     "log_method_call",
     "logger",
+    "setup_logger",
+    "setup_logging",
+    "setup_persistent_logging",
 ]

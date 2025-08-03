@@ -1,5 +1,4 @@
-"""
-Configuration Profile System for Intellicrack CLI Allows saving and loading of analysis configurations
+"""Configuration Profile System for Intellicrack CLI Allows saving and loading of analysis configurations
 
 Copyright (C) 2025 Zachary Flint
 
@@ -28,7 +27,7 @@ Allows saving and loading of analysis configurations
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from rich import box
 from rich.console import Console
@@ -52,7 +51,7 @@ class ConfigProfile:
         self.plugins_enabled = []
         self.custom_scripts = []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert profile to dictionary"""
         return {
             "name": self.name,
@@ -63,11 +62,11 @@ class ConfigProfile:
             "analysis_options": self.analysis_options,
             "output_format": self.output_format,
             "plugins_enabled": self.plugins_enabled,
-            "custom_scripts": self.custom_scripts
+            "custom_scripts": self.custom_scripts,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ConfigProfile":
+    def from_dict(cls, data: dict[str, Any]) -> "ConfigProfile":
         """Create profile from dictionary"""
         profile = cls(data["name"], data.get("description", ""))
         profile.created_at = datetime.fromisoformat(data["created_at"])
@@ -84,7 +83,7 @@ class ConfigProfile:
 class ProfileManager:
     """Manages configuration profiles"""
 
-    def __init__(self, profile_dir: Optional[str] = None):
+    def __init__(self, profile_dir: str | None = None):
         """Initialize profile manager with directory setup and profile loading."""
         self.console = Console()
 
@@ -101,13 +100,13 @@ class ProfileManager:
         # Load existing profiles
         self.profiles = self._load_profiles()
 
-    def _load_profiles(self) -> Dict[str, ConfigProfile]:
+    def _load_profiles(self) -> dict[str, ConfigProfile]:
         """Load all profiles from disk"""
         profiles = {}
 
         for profile_file in self.profile_dir.glob("*.json"):
             try:
-                with open(profile_file, "r") as f:
+                with open(profile_file) as f:
                     data = json.load(f)
                     profile = ConfigProfile.from_dict(data)
                     profiles[profile.name] = profile
@@ -138,7 +137,7 @@ class ProfileManager:
         del self.profiles[name]
         return True
 
-    def get_profile(self, name: str) -> Optional[ConfigProfile]:
+    def get_profile(self, name: str) -> ConfigProfile | None:
         """Get a profile by name"""
         profile = self.profiles.get(name)
         if profile:
@@ -165,7 +164,7 @@ class ProfileManager:
                 profile.description[:30] + "..." if len(profile.description) > 30 else profile.description,
                 profile.created_at.strftime("%Y-%m-%d"),
                 profile.last_used.strftime("%Y-%m-%d") if profile.last_used else "Never",
-                f"{len(profile.analysis_options)} options"
+                f"{len(profile.analysis_options)} options",
             )
 
         self.console.print(table)
@@ -197,7 +196,7 @@ class ProfileManager:
             ("strings", "String Extraction"),
             ("entropy", "Entropy Analysis"),
             ("signature", "Signature Matching"),
-            ("ml_predict", "ML Prediction")
+            ("ml_predict", "ML Prediction"),
         ]
 
         for opt_id, opt_name in available_options:
@@ -210,7 +209,7 @@ class ProfileManager:
         profile.output_format = Prompt.ask(
             "Choose format",
             choices=formats,
-            default="json"
+            default="json",
         )
 
         # Advanced settings
@@ -272,7 +271,7 @@ def create_default_profiles():
     full_analysis = ConfigProfile("full_analysis", "Comprehensive analysis with all features")
     full_analysis.analysis_options = [
         "static", "dynamic", "vulnerability", "protection",
-        "network", "license", "strings", "entropy", "signature", "ml_predict"
+        "network", "license", "strings", "entropy", "signature", "ml_predict",
     ]
     full_analysis.settings = {"timeout": 600, "threads": 8, "verbose": True}
     full_analysis.output_format = "html"
@@ -281,13 +280,13 @@ def create_default_profiles():
     # Malware analysis profile
     malware = ConfigProfile("malware_analysis", "Specialized malware analysis")
     malware.analysis_options = [
-        "static", "dynamic", "strings", "network", "protection", "signature"
+        "static", "dynamic", "strings", "network", "protection", "signature",
     ]
     malware.settings = {
         "timeout": 300,
         "sandbox": True,
         "network_monitoring": True,
-        "behavioral_analysis": True
+        "behavioral_analysis": True,
     }
     manager.save_profile(malware)
 
@@ -307,7 +306,7 @@ def main():
 
     console.print(Panel(
         "[bold cyan]Intellicrack Configuration Profile Manager[/bold cyan]",
-        box=box.DOUBLE
+        box=box.DOUBLE,
     ))
 
     manager = ProfileManager()
@@ -348,7 +347,7 @@ def main():
                     f"[bold]Output Format:[/bold] {profile.output_format}\n"
                     f"[bold]Settings:[/bold] {json.dumps(profile.settings, indent=2)}",
                     title=f"Profile: {profile.name}",
-                    box=box.ROUNDED
+                    box=box.ROUNDED,
                 )
                 console.print(details)
 

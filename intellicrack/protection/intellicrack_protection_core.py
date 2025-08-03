@@ -1,5 +1,4 @@
-"""
-Intellicrack Protection Core Module
+"""Intellicrack Protection Core Module
 
 This module provides comprehensive protection detection capabilities for
 detecting packers, protectors, compilers, and licensing schemes in binary files.
@@ -14,7 +13,6 @@ import os
 import sys
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional
 
 from ..utils.logger import get_logger
 from .icp_backend import ICPBackend, ICPScanResult, ScanMode
@@ -24,6 +22,7 @@ logger = get_logger(__name__)
 
 class ProtectionType(Enum):
     """Types of protections that can be detected"""
+
     PACKER = "packer"
     PROTECTOR = "protector"
     COMPILER = "compiler"
@@ -40,37 +39,38 @@ class ProtectionType(Enum):
 @dataclass
 class DetectionResult:
     """Result of a single detection"""
+
     name: str
-    version: Optional[str] = None
+    version: str | None = None
     type: ProtectionType = ProtectionType.UNKNOWN
     confidence: float = 100.0
-    details: Dict[str, any] = field(default_factory=dict)
-    bypass_recommendations: List[str] = field(default_factory=list)
+    details: dict[str, any] = field(default_factory=dict)
+    bypass_recommendations: list[str] = field(default_factory=list)
 
 
 @dataclass
 class ProtectionAnalysis:
     """Complete analysis results for a binary"""
+
     file_path: str
     file_type: str
     architecture: str
-    detections: List[DetectionResult] = field(default_factory=list)
-    compiler: Optional[str] = None
-    linker: Optional[str] = None
+    detections: list[DetectionResult] = field(default_factory=list)
+    compiler: str | None = None
+    linker: str | None = None
     is_packed: bool = False
     is_protected: bool = False
     has_overlay: bool = False
     has_resources: bool = False
-    entry_point: Optional[str] = None
-    sections: List[Dict[str, any]] = field(default_factory=list)
-    imports: List[str] = field(default_factory=list)
-    strings: List[str] = field(default_factory=list)
-    metadata: Dict[str, any] = field(default_factory=dict)
+    entry_point: str | None = None
+    sections: list[dict[str, any]] = field(default_factory=list)
+    imports: list[str] = field(default_factory=list)
+    strings: list[str] = field(default_factory=list)
+    metadata: dict[str, any] = field(default_factory=dict)
 
 
 class IntellicrackProtectionCore:
-    """
-    Main class for detecting protections using native ICP Engine integration.
+    """Main class for detecting protections using native ICP Engine integration.
 
     This class provides comprehensive protection detection capabilities by integrating
     with the native die-python library instead of relying on external executables.
@@ -95,6 +95,7 @@ class IntellicrackProtectionCore:
             print(f"Found: {detection.name} ({detection.type.value})")
             for recommendation in detection.bypass_recommendations:
                 print(f"  - {recommendation}")
+
     """
 
     # Known protection schemes and their bypass recommendations
@@ -103,17 +104,17 @@ class IntellicrackProtectionCore:
         "UPX": [
             "Use 'upx -d' to unpack",
             "Manual unpacking: Find OEP, dump process, fix imports",
-            "Use x64dbg with Scylla for import reconstruction"
+            "Use x64dbg with Scylla for import reconstruction",
         ],
         "ASPack": [
             "Use ASPack unpacker tools",
             "Set breakpoint on GetProcAddress",
-            "Dump at OEP and fix imports"
+            "Dump at OEP and fix imports",
         ],
         "PECompact": [
             "Use PECompact unpacker",
             "Breakpoint on VirtualProtect calls",
-            "Dump when code is decompressed"
+            "Dump when code is decompressed",
         ],
 
         # Protectors
@@ -121,23 +122,23 @@ class IntellicrackProtectionCore:
             "Use Themida unpacker scripts",
             "Requires kernel driver bypass",
             "Consider VM-based analysis",
-            "Look for Themida-specific API hooks"
+            "Look for Themida-specific API hooks",
         ],
         "VMProtect": [
             "Extremely difficult to unpack",
             "Use VMProtect devirtualizer tools",
             "Consider dynamic analysis instead",
-            "Focus on API monitoring"
+            "Focus on API monitoring",
         ],
         "Enigma": [
             "Use Enigma Virtual Box unpacker",
             "Monitor file system virtualization",
-            "Extract embedded files from process"
+            "Extract embedded files from process",
         ],
         "ASProtect": [
             "Use ASProtect unpacker",
             "Set hardware breakpoints",
-            "Dump after decompression routine"
+            "Dump after decompression routine",
         ],
 
         # Licensing Systems
@@ -145,31 +146,31 @@ class IntellicrackProtectionCore:
             "Monitor HASP API calls",
             "Use HASP emulator/logger",
             "Patch license check functions",
-            "Analyze hasp_login parameters"
+            "Analyze hasp_login parameters",
         ],
         "Sentinel": [
             "Use Sentinel emulator",
             "Monitor WinTrust API calls",
             "Patch SuperPro driver checks",
-            "Analyze license file format"
+            "Analyze license file format",
         ],
         "CodeMeter": [
             "Monitor CodeMeter API",
             "Use WibuKey emulator",
             "Patch CmAccess calls",
-            "Analyze license container"
+            "Analyze license container",
         ],
         "FlexLM": [
             "Monitor lmgrd daemon",
             "Patch lc_checkout calls",
             "Analyze license.dat format",
-            "Use FlexLM emulator"
+            "Use FlexLM emulator",
         ],
         "CrypKey": [
             "Patch CrypKey API calls",
             "Monitor registry access",
             "Analyze license validation",
-            "Use CrypKey tools"
+            "Use CrypKey tools",
         ],
 
         # DRM Systems
@@ -177,28 +178,28 @@ class IntellicrackProtectionCore:
             "Extremely difficult protection",
             "Requires extensive RE skills",
             "Focus on trigger analysis",
-            "Consider waiting for scene crack"
+            "Consider waiting for scene crack",
         ],
         "SecuROM": [
             "Use SecuROM removal tools",
             "Patch driver checks",
             "Monitor CD/DVD checks",
-            "Analyze activation routines"
+            "Analyze activation routines",
         ],
         "SafeDisc": [
             "Use SafeDisc unwrapper",
             "Patch ICD checks",
             "Fix import table",
-            "Remove driver dependencies"
-        ]
+            "Remove driver dependencies",
+        ],
     }
 
-    def __init__(self, engine_path: Optional[str] = None):
-        """
-        Initialize protection detector using native die-python integration
+    def __init__(self, engine_path: str | None = None):
+        """Initialize protection detector using native die-python integration
 
         Args:
             engine_path: Legacy parameter for compatibility, ignored in favor of native integration
+
         """
         self.engine_path = engine_path  # Keep for compatibility
         self.icp_backend = ICPBackend()
@@ -223,14 +224,14 @@ class IntellicrackProtectionCore:
             return False
 
     def detect_protections(self, file_path: str) -> ProtectionAnalysis:
-        """
-        Analyze a binary file for protections, packers, and licensing schemes using native die-python
+        """Analyze a binary file for protections, packers, and licensing schemes using native die-python
 
         Args:
             file_path: Path to the binary file to analyze
 
         Returns:
             ProtectionAnalysis object with all detection results
+
         """
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
@@ -240,7 +241,7 @@ class IntellicrackProtectionCore:
             return ProtectionAnalysis(
                 file_path=file_path,
                 file_type="Unknown",
-                architecture="Unknown"
+                architecture="Unknown",
             )
 
         try:
@@ -250,7 +251,7 @@ class IntellicrackProtectionCore:
             try:
                 # Run native die-python analysis
                 icp_result = loop.run_until_complete(
-                    self.icp_backend.analyze_file(file_path, ScanMode.DEEP, timeout=30.0)
+                    self.icp_backend.analyze_file(file_path, ScanMode.DEEP, timeout=30.0),
                 )
             finally:
                 loop.close()
@@ -260,7 +261,7 @@ class IntellicrackProtectionCore:
                 return ProtectionAnalysis(
                     file_path=file_path,
                     file_type="Error",
-                    architecture="Unknown"
+                    architecture="Unknown",
                 )
 
             # Convert ICPScanResult to ProtectionAnalysis
@@ -271,7 +272,7 @@ class IntellicrackProtectionCore:
             return ProtectionAnalysis(
                 file_path=file_path,
                 file_type="Error",
-                architecture="Unknown"
+                architecture="Unknown",
             )
 
     def _convert_icp_result(self, icp_result: ICPScanResult) -> ProtectionAnalysis:
@@ -287,11 +288,12 @@ class IntellicrackProtectionCore:
 
         Returns:
             ProtectionAnalysis: Converted analysis in standard format
+
         """
         analysis = ProtectionAnalysis(
             file_path=icp_result.file_path,
             file_type="Unknown",
-            architecture="Unknown"
+            architecture="Unknown",
         )
 
         if not icp_result.file_infos:
@@ -321,7 +323,7 @@ class IntellicrackProtectionCore:
                 name=detection.name,
                 version=detection.version if detection.version else None,
                 type=det_type,
-                confidence=detection.confidence * 100.0  # Convert to percentage
+                confidence=detection.confidence * 100.0,  # Convert to percentage
             )
 
             # Add bypass recommendations
@@ -334,9 +336,7 @@ class IntellicrackProtectionCore:
             # Set analysis flags
             if det_type == ProtectionType.PACKER:
                 analysis.is_packed = True
-            elif det_type in [ProtectionType.PROTECTOR, ProtectionType.CRYPTOR]:
-                analysis.is_protected = True
-            elif det_type in [ProtectionType.LICENSE, ProtectionType.DONGLE, ProtectionType.DRM]:
+            elif det_type in [ProtectionType.PROTECTOR, ProtectionType.CRYPTOR] or det_type in [ProtectionType.LICENSE, ProtectionType.DONGLE, ProtectionType.DRM]:
                 analysis.is_protected = True
 
             analysis.detections.append(det_result)
@@ -349,7 +349,7 @@ class IntellicrackProtectionCore:
         analysis.metadata = {
             "engine_version": self.icp_backend.get_engine_version(),
             "scan_mode": "DEEP",
-            "native_integration": True
+            "native_integration": True,
         }
 
         # Add entropy info if available
@@ -358,7 +358,7 @@ class IntellicrackProtectionCore:
 
         return analysis
 
-    def _parse_json_output(self, file_path: str, engine_data: Dict) -> ProtectionAnalysis:
+    def _parse_json_output(self, file_path: str, engine_data: dict) -> ProtectionAnalysis:
         """Parse legacy JSON output into structured results (kept for compatibility)"""
         analysis = ProtectionAnalysis(file_path=file_path, file_type="Unknown", architecture="Unknown")
 
@@ -406,7 +406,7 @@ class IntellicrackProtectionCore:
                     name=name,
                     version=version if version else None,
                     type=det_type,
-                    confidence=100.0  # Signature-based detections have high confidence
+                    confidence=100.0,  # Signature-based detections have high confidence
                 )
 
                 # Add bypass recommendations
@@ -415,9 +415,7 @@ class IntellicrackProtectionCore:
                 # Add to appropriate flags
                 if det_type == ProtectionType.PACKER:
                     analysis.is_packed = True
-                elif det_type in [ProtectionType.PROTECTOR, ProtectionType.CRYPTOR]:
-                    analysis.is_protected = True
-                elif det_type in [ProtectionType.LICENSE, ProtectionType.DONGLE, ProtectionType.DRM]:
+                elif det_type in [ProtectionType.PROTECTOR, ProtectionType.CRYPTOR] or det_type in [ProtectionType.LICENSE, ProtectionType.DONGLE, ProtectionType.DRM]:
                     analysis.is_protected = True
 
                 analysis.detections.append(det_result)
@@ -440,7 +438,7 @@ class IntellicrackProtectionCore:
         analysis.metadata = {
             "engine_version": engine_data.get("version", "Unknown"),
             "scan_time": engine_data.get("scantime", "Unknown"),
-            "file_size": engine_data.get("filesize", 0)
+            "file_size": engine_data.get("filesize", 0),
         }
 
         return analysis
@@ -474,7 +472,7 @@ class IntellicrackProtectionCore:
                     detection = DetectionResult(
                         name=name,
                         version=version,
-                        type=self._categorize_detection(det_type)
+                        type=self._categorize_detection(det_type),
                     )
                     detection.bypass_recommendations = self._get_bypass_recommendations(name)
 
@@ -494,28 +492,27 @@ class IntellicrackProtectionCore:
 
         if "pack" in type_lower:
             return ProtectionType.PACKER
-        elif "protect" in type_lower:
+        if "protect" in type_lower:
             return ProtectionType.PROTECTOR
-        elif "compil" in type_lower:
+        if "compil" in type_lower:
             return ProtectionType.COMPILER
-        elif "install" in type_lower:
+        if "install" in type_lower:
             return ProtectionType.INSTALLER
-        elif "crypt" in type_lower:
+        if "crypt" in type_lower:
             return ProtectionType.CRYPTOR
-        elif "dongle" in type_lower or "hasp" in type_lower or "sentinel" in type_lower:
+        if "dongle" in type_lower or "hasp" in type_lower or "sentinel" in type_lower:
             return ProtectionType.DONGLE
-        elif "licens" in type_lower or "flexlm" in type_lower:
+        if "licens" in type_lower or "flexlm" in type_lower:
             return ProtectionType.LICENSE
-        elif "drm" in type_lower:
+        if "drm" in type_lower:
             return ProtectionType.DRM
-        elif "library" in type_lower or "lib" in type_lower:
+        if "library" in type_lower or "lib" in type_lower:
             return ProtectionType.LIBRARY
-        elif "overlay" in type_lower:
+        if "overlay" in type_lower:
             return ProtectionType.OVERLAY
-        else:
-            return ProtectionType.UNKNOWN
+        return ProtectionType.UNKNOWN
 
-    def _get_bypass_recommendations(self, protection_name: str) -> List[str]:
+    def _get_bypass_recommendations(self, protection_name: str) -> list[str]:
         """Get bypass recommendations for a specific protection"""
         # Check exact match first
         if protection_name in self.PROTECTION_BYPASSES:
@@ -532,26 +529,25 @@ class IntellicrackProtectionCore:
             return [
                 "Try generic unpacking tools",
                 "Set breakpoint at OEP",
-                "Dump process memory and reconstruct"
+                "Dump process memory and reconstruct",
             ]
-        elif "protect" in name_lower or "crypt" in name_lower:
+        if "protect" in name_lower or "crypt" in name_lower:
             return [
                 "Use debugger with anti-anti-debug plugins",
                 "Monitor API calls for license checks",
-                "Analyze protection-specific signatures"
+                "Analyze protection-specific signatures",
             ]
-        elif "licens" in name_lower or "dongle" in name_lower:
+        if "licens" in name_lower or "dongle" in name_lower:
             return [
                 "Monitor licensing API calls",
                 "Use API hooks to bypass checks",
-                "Analyze license validation logic"
+                "Analyze license validation logic",
             ]
 
         return ["Manual analysis required for this protection"]
 
-    def analyze_directory(self, directory: str, recursive: bool = True) -> List[ProtectionAnalysis]:
-        """
-        Analyze all executable files in a directory
+    def analyze_directory(self, directory: str, recursive: bool = True) -> list[ProtectionAnalysis]:
+        """Analyze all executable files in a directory
 
         Args:
             directory: Directory path to scan
@@ -559,6 +555,7 @@ class IntellicrackProtectionCore:
 
         Returns:
             List of ProtectionAnalysis results
+
         """
         results = []
         extensions = [".exe", ".dll", ".sys", ".ocx", ".scr", ".com"]
@@ -609,8 +606,7 @@ class IntellicrackProtectionCore:
         return "\n".join(lines)
 
     def export_results(self, analysis: ProtectionAnalysis, output_format: str = "json") -> str:
-        """
-        Export analysis results in various formats
+        """Export analysis results in various formats
 
         Args:
             analysis: ProtectionAnalysis to export
@@ -618,6 +614,7 @@ class IntellicrackProtectionCore:
 
         Returns:
             Formatted string of results
+
         """
         if output_format == "json":
             # Convert to dict for JSON serialization
@@ -634,25 +631,24 @@ class IntellicrackProtectionCore:
                         "version": d.version,
                         "type": d.type.value,
                         "confidence": d.confidence,
-                        "bypass_recommendations": d.bypass_recommendations
+                        "bypass_recommendations": d.bypass_recommendations,
                     }
                     for d in analysis.detections
                 ],
-                "metadata": analysis.metadata
+                "metadata": analysis.metadata,
             }
             return json.dumps(data, indent=2)
 
-        elif output_format == "text":
+        if output_format == "text":
             return self.get_summary(analysis)
 
-        elif output_format == "csv":
+        if output_format == "csv":
             lines = ["File,Type,Architecture,Protection,Version,Category"]
             for det in analysis.detections:
                 lines.append(f"{analysis.file_path},{analysis.file_type},{analysis.architecture},{det.name},{det.version or 'N/A'},{det.type.value}")
             return "\n".join(lines)
 
-        else:
-            raise ValueError(f"Unknown output format: {output_format}")
+        raise ValueError(f"Unknown output format: {output_format}")
 
 
 # Convenience function for quick analysis

@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -32,7 +31,7 @@ import threading
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -44,15 +43,14 @@ DOWNLOAD_DIR = DATA_DIR / "c2_downloads"
 DB_PATH = DATA_DIR / "c2_sessions.db"
 
 def migrate_resource_if_needed(old_path: str, new_path: Path):
-    """
-    Checks for a resource at the old path. If found, moves it to the new path.
+    """Checks for a resource at the old path. If found, moves it to the new path.
     Logs a warning about the migration.
     """
     old_path_obj = Path(old_path)
     if old_path_obj.exists() and not new_path.exists():
         logger.warning(
             f"Legacy path detected. Migrating '{old_path}' to '{new_path}'. "
-            "This is a one-time operation."
+            "This is a one-time operation.",
         )
         try:
             # Ensure parent directory of the new path exists
@@ -66,7 +64,7 @@ def migrate_resource_if_needed(old_path: str, new_path: Path):
 class Session:
     """Represents a C2 session with a client."""
 
-    def __init__(self, session_id: str, connection_info: Dict[str, Any]):
+    def __init__(self, session_id: str, connection_info: dict[str, Any]):
         """Initialize a C2 session with client connection information."""
         self.session_id = session_id
         self.connection_info = connection_info
@@ -87,14 +85,14 @@ class Session:
             "user": connection_info.get("user", "unknown"),
             "privileges": connection_info.get("privileges", "user"),
             "ip_address": connection_info.get("ip", "unknown"),
-            "user_agent": connection_info.get("user_agent", "unknown")
+            "user_agent": connection_info.get("user_agent", "unknown"),
         }
 
         # Command history
-        self.command_history: List[Dict[str, Any]] = []
+        self.command_history: list[dict[str, Any]] = []
 
         # Active tasks
-        self.active_tasks: Dict[str, Any] = {}
+        self.active_tasks: dict[str, Any] = {}
 
         self.logger.info(f"New session created: {session_id}")
 
@@ -106,7 +104,7 @@ class Session:
         self.last_seen = time.time()
         self.stats["last_beacon"] = self.last_seen
 
-    def add_task(self, task: Dict[str, Any]):
+    def add_task(self, task: dict[str, Any]):
         """Add task to session queue."""
         task["created_at"] = time.time()
         task["status"] = "pending"
@@ -128,11 +126,11 @@ class Session:
                     self.stats["failed_tasks"] += 1
                 break
 
-    def get_pending_tasks(self) -> List[Dict[str, Any]]:
+    def get_pending_tasks(self) -> list[dict[str, Any]]:
         """Get list of pending tasks."""
         return [task for task in self.tasks if task.get("status") == "pending"]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert session to dictionary representation."""
         return {
             "session_id": self.session_id,
@@ -145,13 +143,12 @@ class Session:
             "stats": self.stats,
             "uptime": time.time() - self.created_at,
             "task_count": len(self.tasks),
-            "pending_tasks": len(self.get_pending_tasks())
+            "pending_tasks": len(self.get_pending_tasks()),
         }
 
 
 class SessionManager:
-    """
-    Advanced session manager for C2 infrastructure.
+    """Advanced session manager for C2 infrastructure.
 
     Handles session lifecycle, task management, file transfers,
     and persistent storage of session data.
@@ -160,7 +157,7 @@ class SessionManager:
     def __init__(self, db_path: str = None):
         """Initialize the session manager with database and directory configuration."""
         self.db_path = db_path or os.path.join(
-            os.path.dirname(__file__), "..", "..", "data", "sessions.db"
+            os.path.dirname(__file__), "..", "..", "data", "sessions.db",
         )
         self.logger = logging.getLogger(__name__)
 
@@ -170,7 +167,7 @@ class SessionManager:
             os.makedirs(db_dir, exist_ok=True)
 
         # Active sessions
-        self.sessions: Dict[str, Session] = {}
+        self.sessions: dict[str, Session] = {}
 
         # Session configuration
         self.config = {
@@ -178,7 +175,7 @@ class SessionManager:
             "max_sessions": 1000,
             "cleanup_interval": 300,  # 5 minutes
             "heartbeat_interval": 60,  # 1 minute
-            "max_command_history": 100
+            "max_command_history": 100,
         }
 
         # Threading
@@ -191,7 +188,7 @@ class SessionManager:
             "total_sessions": 0,
             "active_sessions": 0,
             "expired_sessions": 0,
-            "total_commands": 0
+            "total_commands": 0,
         }
 
         # Initialize database
@@ -222,7 +219,7 @@ class SessionManager:
             cursor = conn.cursor()
 
             # Sessions table
-            cursor.execute('''
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS sessions (
                     session_id TEXT PRIMARY KEY,
                     connection_info TEXT,
@@ -233,10 +230,10 @@ class SessionManager:
                     status TEXT,
                     stats TEXT
                 )
-            ''')
+            """)
 
             # Tasks table
-            cursor.execute('''
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS tasks (
                     task_id TEXT PRIMARY KEY,
                     session_id TEXT,
@@ -248,10 +245,10 @@ class SessionManager:
                     completed_at REAL,
                     FOREIGN KEY (session_id) REFERENCES sessions (session_id)
                 )
-            ''')
+            """)
 
             # Files table
-            cursor.execute('''
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS files (
                     file_id TEXT PRIMARY KEY,
                     session_id TEXT,
@@ -263,7 +260,7 @@ class SessionManager:
                     file_type TEXT,
                     FOREIGN KEY (session_id) REFERENCES sessions (session_id)
                 )
-            ''')
+            """)
 
             conn.commit()
             conn.close()
@@ -273,7 +270,7 @@ class SessionManager:
         except Exception as e:
             self.logger.error(f"Failed to initialize database: {e}")
 
-    async def create_session(self, connection_info: Dict[str, Any]) -> Session:
+    async def create_session(self, connection_info: dict[str, Any]) -> Session:
         """Create a new C2 session."""
         try:
             session_id = str(uuid.uuid4())
@@ -296,11 +293,11 @@ class SessionManager:
             self.logger.error(f"Failed to create session: {e}")
             raise
 
-    def get_session(self, session_id: str) -> Optional[Session]:
+    def get_session(self, session_id: str) -> Session | None:
         """Get session by ID."""
         return self.sessions.get(session_id)
 
-    def get_active_sessions(self) -> List[Dict[str, Any]]:
+    def get_active_sessions(self) -> list[dict[str, Any]]:
         """Get list of active sessions."""
         try:
             active_sessions = []
@@ -333,7 +330,7 @@ class SessionManager:
         except Exception as e:
             self.logger.error(f"Failed to mark session inactive: {e}")
 
-    async def update_session_info(self, session_id: str, client_info: Dict[str, Any]):
+    async def update_session_info(self, session_id: str, client_info: dict[str, Any]):
         """Update session client information."""
         try:
             if session_id in self.sessions:
@@ -353,7 +350,7 @@ class SessionManager:
         except Exception as e:
             self.logger.error(f"Failed to update session info: {e}")
 
-    async def create_task(self, session_id: str, task_type: str, task_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_task(self, session_id: str, task_type: str, task_data: dict[str, Any]) -> dict[str, Any]:
         """Create a new task for a session."""
         try:
             task_id = str(uuid.uuid4())
@@ -365,7 +362,7 @@ class SessionManager:
                 "data": task_data,
                 "status": "pending",
                 "created_at": time.time(),
-                "priority": task_data.get("priority", "normal")
+                "priority": task_data.get("priority", "normal"),
             }
 
             # Add to session
@@ -388,7 +385,7 @@ class SessionManager:
             self.logger.error(f"Failed to create task: {e}")
             raise
 
-    async def get_pending_tasks(self, session_id: str) -> List[Dict[str, Any]]:
+    async def get_pending_tasks(self, session_id: str) -> list[dict[str, Any]]:
         """Get pending tasks for a session."""
         try:
             if session_id in self.sessions:
@@ -429,7 +426,7 @@ class SessionManager:
             self.task_results[task_id] = {
                 "result": result,
                 "success": success,
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
 
             # Update in database
@@ -464,7 +461,7 @@ class SessionManager:
                 "file_size": len(file_data),
                 "file_hash": file_hash,
                 "upload_time": time.time(),
-                "file_type": "upload"
+                "file_type": "upload",
             }
 
             # Add to session
@@ -514,7 +511,7 @@ class SessionManager:
         except Exception as e:
             self.logger.error(f"Error cleaning up sessions: {e}")
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get session manager statistics."""
         try:
             # Update active session count
@@ -527,7 +524,7 @@ class SessionManager:
                 "pending_task_count": sum(len(tasks) for tasks in self.pending_tasks.values()),
                 "task_result_count": len(self.task_results),
                 "average_session_uptime": self._calculate_average_uptime(),
-                "most_active_session": self._get_most_active_session()
+                "most_active_session": self._get_most_active_session(),
             })
 
             return detailed_stats
@@ -553,7 +550,7 @@ class SessionManager:
             self.logger.error(f"Error calculating average uptime: {e}")
             return 0.0
 
-    def _get_most_active_session(self) -> Optional[str]:
+    def _get_most_active_session(self) -> str | None:
         """Get ID of most active session."""
         try:
             if not self.sessions:
@@ -561,7 +558,7 @@ class SessionManager:
 
             most_active = max(
                 self.sessions.values(),
-                key=lambda s: s.stats["total_tasks"]
+                key=lambda s: s.stats["total_tasks"],
             )
 
             return most_active.session_id
@@ -599,12 +596,12 @@ class SessionManager:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            cursor.execute('''
+            cursor.execute("""
                 INSERT OR REPLACE INTO sessions
                 (session_id, connection_info, client_info, capabilities,
                  created_at, last_seen, status, stats)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
+            """, (
                 session.session_id,
                 json.dumps(session.connection_info),
                 json.dumps(session.client_info),
@@ -612,7 +609,7 @@ class SessionManager:
                 session.created_at,
                 session.last_seen,
                 session.status,
-                json.dumps(session.stats)
+                json.dumps(session.stats),
             ))
 
             conn.commit()
@@ -621,23 +618,23 @@ class SessionManager:
         except Exception as e:
             self.logger.error(f"Failed to persist session: {e}")
 
-    async def _persist_task(self, task: Dict[str, Any]):
+    async def _persist_task(self, task: dict[str, Any]):
         """Persist task to database."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            cursor.execute('''
+            cursor.execute("""
                 INSERT INTO tasks
                 (task_id, session_id, task_type, task_data, status, created_at)
                 VALUES (?, ?, ?, ?, ?, ?)
-            ''', (
+            """, (
                 task["task_id"],
                 task["session_id"],
                 task["type"],
                 json.dumps(task["data"]),
                 task["status"],
-                task["created_at"]
+                task["created_at"],
             ))
 
             conn.commit()
@@ -652,9 +649,9 @@ class SessionManager:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            cursor.execute('''
+            cursor.execute("""
                 UPDATE tasks SET status = ? WHERE task_id = ?
-            ''', (status, task_id))
+            """, (status, task_id))
 
             conn.commit()
             conn.close()
@@ -668,11 +665,11 @@ class SessionManager:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            cursor.execute('''
+            cursor.execute("""
                 UPDATE tasks
                 SET status = ?, result = ?, completed_at = ?
                 WHERE task_id = ?
-            ''', (status, json.dumps(result), time.time(), task_id))
+            """, (status, json.dumps(result), time.time(), task_id))
 
             conn.commit()
             conn.close()
@@ -680,18 +677,18 @@ class SessionManager:
         except Exception as e:
             self.logger.error(f"Failed to update task result: {e}")
 
-    async def _persist_file(self, file_info: Dict[str, Any]):
+    async def _persist_file(self, file_info: dict[str, Any]):
         """Persist file information to database."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            cursor.execute('''
+            cursor.execute("""
                 INSERT INTO files
                 (file_id, session_id, filename, file_path, file_size,
                  file_hash, upload_time, file_type)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
+            """, (
                 file_info["file_id"],
                 file_info["session_id"],
                 file_info["filename"],
@@ -699,7 +696,7 @@ class SessionManager:
                 file_info["file_size"],
                 file_info["file_hash"],
                 file_info["upload_time"],
-                file_info["file_type"]
+                file_info["file_type"],
             ))
 
             conn.commit()
@@ -739,7 +736,7 @@ class SessionManager:
         except Exception as e:
             self.logger.error(f"Failed to load sessions from database: {e}")
 
-    async def export_session_data(self, session_id: str) -> Optional[Dict[str, Any]]:
+    async def export_session_data(self, session_id: str) -> dict[str, Any] | None:
         """Export all data for a session."""
         try:
             if session_id not in self.sessions:
@@ -763,7 +760,7 @@ class SessionManager:
                 "session": session.to_dict(),
                 "tasks": [dict(zip([col[0] for col in cursor.description], row, strict=False)) for row in task_rows],
                 "files": [dict(zip([col[0] for col in cursor.description], row, strict=False)) for row in file_rows],
-                "export_time": time.time()
+                "export_time": time.time(),
             }
 
             return export_data

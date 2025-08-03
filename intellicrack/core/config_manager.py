@@ -1,5 +1,4 @@
-"""
-Dynamic Configuration Manager for Intellicrack
+"""Dynamic Configuration Manager for Intellicrack
 
 Auto-configures itself with platform-aware directories and tool discovery.
 Creates configuration files dynamically without requiring manual setup.
@@ -29,14 +28,13 @@ import shutil
 import sys
 import threading
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class IntellicrackConfig:
-    """
-    Platform-aware configuration manager that auto-configures Intellicrack.
+    """Platform-aware configuration manager that auto-configures Intellicrack.
 
     Features:
     - Platform-specific config directories (Windows/Linux/macOS)
@@ -50,8 +48,7 @@ class IntellicrackConfig:
     _lock = threading.Lock()
 
     def __new__(cls):
-        """
-        Singleton pattern for global config access.
+        """Singleton pattern for global config access.
 
         Ensures only one instance of IntellicrackConfig exists throughout
         the application lifecycle. Uses double-checked locking for thread safety.
@@ -62,6 +59,7 @@ class IntellicrackConfig:
         Complexity:
             Time: O(1) after first instantiation
             Space: O(1)
+
         """
         if cls._instance is None:
             with cls._lock:
@@ -71,8 +69,7 @@ class IntellicrackConfig:
         return cls._instance
 
     def __init__(self):
-        """
-        Initialize configuration manager.
+        """Initialize configuration manager.
 
         Sets up platform-specific directories, loads or creates configuration,
         and ensures all necessary directories exist. Uses initialization guard
@@ -130,17 +127,15 @@ class IntellicrackConfig:
             # Windows: Use APPDATA environment variable
             base = os.environ.get("APPDATA", os.path.expanduser("~"))
             return Path(base) / "Intellicrack"
-        elif sys.platform == "darwin":
+        if sys.platform == "darwin":
             # macOS: Use Application Support directory
             return Path.home() / "Library" / "Application Support" / "Intellicrack"
-        else:
-            # Linux/Unix: Follow XDG Base Directory specification
-            xdg_config = os.environ.get("XDG_CONFIG_HOME", "~/.config")
-            return Path(xdg_config).expanduser() / "intellicrack"
+        # Linux/Unix: Follow XDG Base Directory specification
+        xdg_config = os.environ.get("XDG_CONFIG_HOME", "~/.config")
+        return Path(xdg_config).expanduser() / "intellicrack"
 
     def _ensure_directories_exist(self):
-        """
-        Create necessary directories if they don't exist.
+        """Create necessary directories if they don't exist.
 
         Creates all required directories for configuration, cache, logs,
         and output. Handles errors gracefully and continues even if some
@@ -181,7 +176,7 @@ class IntellicrackConfig:
     def _load_config(self):
         """Load configuration from file."""
         try:
-            with open(self.config_file, "r", encoding="utf-8") as f:
+            with open(self.config_file, encoding="utf-8") as f:
                 with self._config_lock:
                     self._config = json.load(f)
             logger.info(f"Configuration loaded from {self.config_file}")
@@ -190,8 +185,7 @@ class IntellicrackConfig:
             self._create_default_config()
 
     def _create_default_config(self):
-        """
-        Create intelligent default configuration.
+        """Create intelligent default configuration.
 
         Generates a comprehensive default configuration with:
         - Platform-specific paths
@@ -226,7 +220,7 @@ class IntellicrackConfig:
                 "output": str(self.output_dir),
                 "logs": str(self.logs_dir),
                 "cache": str(self.cache_dir),
-                "temp": str(Path.home() / "tmp" if sys.platform != "win32" else Path.home() / "AppData" / "Local" / "Temp")
+                "temp": str(Path.home() / "tmp" if sys.platform != "win32" else Path.home() / "AppData" / "Local" / "Temp"),
             },
             "tools": self._auto_discover_tools(),
             "preferences": {
@@ -236,40 +230,40 @@ class IntellicrackConfig:
                 "max_analysis_threads": os.cpu_count() or 4,
                 "auto_backup_results": True,
                 "ui_theme": "dark",
-                "check_for_updates": True
+                "check_for_updates": True,
             },
             "analysis": {
                 "default_timeout": 300,
                 "max_memory_usage": "2GB",
                 "enable_ml_analysis": True,
                 "enable_ai_features": True,
-                "save_intermediate_results": True
+                "save_intermediate_results": True,
             },
             "network": {
                 "proxy_enabled": False,
                 "proxy_host": "",
                 "proxy_port": 8080,
                 "ssl_verify": True,
-                "timeout": 30
+                "timeout": 30,
             },
             "security": {
                 "sandbox_analysis": True,
                 "allow_network_access": False,
                 "log_sensitive_data": False,
-                "encrypt_config": False
+                "encrypt_config": False,
             },
             "patching": {
                 "backup_original": True,
                 "verify_patches": True,
                 "max_patch_size": "10MB",
-                "patch_format": "binary"
+                "patch_format": "binary",
             },
             "ui": {
                 "theme": "dark",
                 "font_size": 10,
                 "show_tooltips": True,
                 "auto_save_layout": True,
-                "hex_view_columns": 16
+                "hex_view_columns": 16,
             },
             "ai": {
                 "enabled": True,
@@ -277,8 +271,8 @@ class IntellicrackConfig:
                 "temperature": 0.7,
                 "max_tokens": 2048,
                 "cache_responses": True,
-                "background_loading": True
-            }
+                "background_loading": True,
+            },
         }
 
         with self._config_lock:
@@ -287,9 +281,8 @@ class IntellicrackConfig:
         self._save_config()
         logger.info("Default configuration created successfully")
 
-    def _auto_discover_tools(self) -> Dict[str, Any]:
-        """
-        Auto-discover tools and their configurations.
+    def _auto_discover_tools(self) -> dict[str, Any]:
+        """Auto-discover tools and their configurations.
 
         Searches for common reverse engineering and analysis tools:
         - Ghidra: Reverse engineering framework
@@ -317,6 +310,7 @@ class IntellicrackConfig:
         Complexity:
             Time: O(n*m) where n is number of tools, m is search paths
             Space: O(n)
+
         """
         logger.info("Auto-discovering tools...")
         tools = {}
@@ -327,32 +321,32 @@ class IntellicrackConfig:
                 "executables": ["ghidra", "ghidraRun", "ghidraRun.bat"],
                 "search_paths": self._get_ghidra_search_paths(),
                 "version_flag": "--version",
-                "required": False  # Optional - app works without it
+                "required": False,  # Optional - app works without it
             },
             "radare2": {
                 "executables": ["r2", "radare2"],
                 "search_paths": self._get_radare2_search_paths(),
                 "version_flag": "-v",
-                "required": False
+                "required": False,
             },
             "python3": {
                 "executables": ["python3", "python"],
                 "search_paths": [],  # Use PATH only
                 "version_flag": "--version",
-                "required": True
+                "required": True,
             },
             "frida": {
                 "executables": ["frida"],
                 "search_paths": [],
                 "version_flag": "--version",
-                "required": False
+                "required": False,
             },
             "qemu": {
                 "executables": ["qemu-system-x86_64", "qemu-system-i386"],
                 "search_paths": self._get_qemu_search_paths(),
                 "version_flag": "--version",
-                "required": False
-            }
+                "required": False,
+            },
         }
 
         for tool_name, config in tool_patterns.items():
@@ -368,7 +362,7 @@ class IntellicrackConfig:
                         "path": None,
                         "version": None,
                         "auto_discovered": True,
-                        "last_check": None
+                        "last_check": None,
                     }
             except Exception as e:
                 logger.error(f"Error discovering {tool_name}: {e}")
@@ -376,9 +370,8 @@ class IntellicrackConfig:
 
         return tools
 
-    def _discover_tool(self, tool_name: str, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """
-        Discover a specific tool and return its information.
+    def _discover_tool(self, tool_name: str, config: dict[str, Any]) -> dict[str, Any] | None:
+        """Discover a specific tool and return its information.
 
         Searches for tools in the following order:
         1. System PATH (using shutil.which)
@@ -400,6 +393,7 @@ class IntellicrackConfig:
             ...           'search_paths': ['/opt/ghidra'],
             ...           'version_flag': '--version'}
             >>> tool_info = self._discover_tool('ghidra', config)
+
         """
         logger.debug(
             f"Discovering tool: {tool_name} with config keys: {list(config.keys())}")
@@ -421,9 +415,8 @@ class IntellicrackConfig:
 
         return None
 
-    def _validate_tool(self, tool_path: str, version_flag: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Validate tool and get version information.
+    def _validate_tool(self, tool_path: str, version_flag: str | None = None) -> dict[str, Any]:
+        """Validate tool and get version information.
 
         Executes the tool with version flag to verify it works and extract
         version information. Uses timeout to prevent hanging on broken tools.
@@ -447,6 +440,7 @@ class IntellicrackConfig:
         Complexity:
             Time: O(1) + external process time
             Space: O(1)
+
         """
         import subprocess
         import time
@@ -456,16 +450,16 @@ class IntellicrackConfig:
             "path": tool_path,
             "version": None,
             "auto_discovered": True,
-            "last_check": time.time()
+            "last_check": time.time(),
         }
 
         if version_flag:
             try:
                 result = subprocess.run(
                     [tool_path, version_flag],
-                    capture_output=True,
+                    check=False, capture_output=True,
                     text=True,
-                    timeout=10  # Prevent hanging on broken tools
+                    timeout=10,  # Prevent hanging on broken tools
                 )
                 if result.returncode == 0:
                     # Limit version string length to prevent huge outputs
@@ -475,7 +469,7 @@ class IntellicrackConfig:
 
         return tool_info
 
-    def _get_ghidra_search_paths(self) -> List[str]:
+    def _get_ghidra_search_paths(self) -> list[str]:
         """Get platform-specific Ghidra search paths."""
         paths = []
 
@@ -486,7 +480,7 @@ class IntellicrackConfig:
                 r"C:\Tools\ghidra",
                 os.path.expanduser(r"~\ghidra"),
                 os.path.join(os.environ.get("PROGRAMFILES", ""), "Ghidra"),
-                os.path.join(os.environ.get("PROGRAMFILES(X86)", ""), "Ghidra")
+                os.path.join(os.environ.get("PROGRAMFILES(X86)", ""), "Ghidra"),
             ])
         else:
             paths.extend([
@@ -495,12 +489,12 @@ class IntellicrackConfig:
                 "/usr/share/ghidra",
                 os.path.expanduser("~/ghidra"),
                 os.path.expanduser("~/Tools/ghidra"),
-                "/Applications/ghidra"  # macOS
+                "/Applications/ghidra",  # macOS
             ])
 
         return [p for p in paths if p]  # Remove empty strings
 
-    def _get_radare2_search_paths(self) -> List[str]:
+    def _get_radare2_search_paths(self) -> list[str]:
         """Get platform-specific radare2 search paths."""
         paths = []
 
@@ -509,19 +503,19 @@ class IntellicrackConfig:
                 r"C:\Program Files\radare2",
                 r"C:\radare2",
                 r"C:\Tools\radare2",
-                os.path.expanduser(r"~\radare2")
+                os.path.expanduser(r"~\radare2"),
             ])
         else:
             paths.extend([
                 "/usr/bin",
                 "/usr/local/bin",
                 "/opt/radare2",
-                os.path.expanduser("~/radare2")
+                os.path.expanduser("~/radare2"),
             ])
 
         return paths
 
-    def _get_qemu_search_paths(self) -> List[str]:
+    def _get_qemu_search_paths(self) -> list[str]:
         """Get platform-specific QEMU search paths."""
         paths = []
 
@@ -529,13 +523,13 @@ class IntellicrackConfig:
             paths.extend([
                 r"C:\Program Files\qemu",
                 r"C:\qemu",
-                os.path.join(os.environ.get("PROGRAMFILES", ""), "qemu")
+                os.path.join(os.environ.get("PROGRAMFILES", ""), "qemu"),
             ])
         else:
             paths.extend([
                 "/usr/bin",
                 "/usr/local/bin",
-                "/opt/qemu/bin"
+                "/opt/qemu/bin",
             ])
 
         return paths
@@ -587,12 +581,12 @@ class IntellicrackConfig:
                     "config": str(self.config_dir),
                     "output": str(Path.home()),
                     "logs": str(Path.home()),
-                    "cache": str(Path.home())
+                    "cache": str(Path.home()),
                 },
                 "tools": {},
                 "preferences": {
-                    "log_level": "WARNING"
-                }
+                    "log_level": "WARNING",
+                },
             }
 
     def _save_config(self):
@@ -608,8 +602,7 @@ class IntellicrackConfig:
     # Public API methods
 
     def get(self, key: str, default: Any = None) -> Any:
-        """
-        Get configuration value with dot notation support.
+        """Get configuration value with dot notation support.
 
         Retrieves nested configuration values using dot-separated keys.
         Thread-safe access using read lock.
@@ -630,6 +623,7 @@ class IntellicrackConfig:
         Complexity:
             Time: O(n) where n is the number of dots in key
             Space: O(1)
+
         """
         with self._config_lock:
             keys = key.split(".")
@@ -644,8 +638,7 @@ class IntellicrackConfig:
                 return default
 
     def set(self, key: str, value: Any, save: bool = True):
-        """
-        Set configuration value with dot notation support.
+        """Set configuration value with dot notation support.
 
         Updates nested configuration values using dot-separated keys.
         Creates intermediate dictionaries as needed. Thread-safe.
@@ -667,6 +660,7 @@ class IntellicrackConfig:
         Complexity:
             Time: O(n) where n is the number of dots in key
             Space: O(n) for creating intermediate dictionaries
+
         """
         with self._config_lock:
             keys = key.split(".")
@@ -685,9 +679,8 @@ class IntellicrackConfig:
         if save:
             self._save_config()
 
-    def get_tool_path(self, tool_name: str) -> Optional[str]:
-        """
-        Get path to a specific tool.
+    def get_tool_path(self, tool_name: str) -> str | None:
+        """Get path to a specific tool.
 
         Retrieves the filesystem path for an available tool.
 
@@ -701,6 +694,7 @@ class IntellicrackConfig:
             >>> path = config.get_tool_path('ghidra')
             >>> if path:
             ...     subprocess.run([path, '--analyze', 'binary.exe'])
+
         """
         tool_config = self.get(f"tools.{tool_name}")
         if tool_config and tool_config.get("available"):
@@ -708,8 +702,7 @@ class IntellicrackConfig:
         return None
 
     def is_tool_available(self, tool_name: str) -> bool:
-        """
-        Check if a tool is available.
+        """Check if a tool is available.
 
         Verifies whether a tool has been discovered and is available for use.
 
@@ -722,13 +715,13 @@ class IntellicrackConfig:
         Example:
             >>> if config.is_tool_available('frida'):
             ...     print("Frida dynamic analysis available")
+
         """
         tool_config = self.get(f"tools.{tool_name}")
         return tool_config and tool_config.get("available", False)
 
     def refresh_tool_discovery(self):
-        """
-        Re-run tool discovery and update configuration.
+        """Re-run tool discovery and update configuration.
 
         Performs a fresh scan for all tools, updating paths and versions.
         Useful after installing new tools or changing system configuration.
@@ -741,14 +734,14 @@ class IntellicrackConfig:
         Example:
             >>> config.refresh_tool_discovery()
             >>> print(f"Ghidra now at: {config.get_tool_path('ghidra')}")
+
         """
         logger.info("Refreshing tool discovery")
         tools = self._auto_discover_tools()
         self.set("tools", tools)
 
     def get_output_dir(self) -> Path:
-        """
-        Get user's preferred output directory.
+        """Get user's preferred output directory.
 
         Returns the configured output directory for analysis results,
         reports, and generated files.
@@ -759,12 +752,12 @@ class IntellicrackConfig:
         Example:
             >>> output_dir = config.get_output_dir()
             >>> report_file = output_dir / 'analysis_report.pdf'
+
         """
         return Path(self.get("directories.output", self.output_dir))
 
     def get_cache_dir(self) -> Path:
-        """
-        Get cache directory.
+        """Get cache directory.
 
         Returns the directory for cached analysis results, downloaded
         signatures, and temporary processing files.
@@ -775,12 +768,12 @@ class IntellicrackConfig:
         Example:
             >>> cache_dir = config.get_cache_dir()
             >>> signature_cache = cache_dir / 'signatures'
+
         """
         return Path(self.get("directories.cache", self.cache_dir))
 
     def get_logs_dir(self) -> Path:
-        """
-        Get logs directory.
+        """Get logs directory.
 
         Returns the directory for application logs, debug output,
         and analysis traces.
@@ -791,12 +784,12 @@ class IntellicrackConfig:
         Example:
             >>> logs_dir = config.get_logs_dir()
             >>> today_log = logs_dir / f'{datetime.now():%Y-%m-%d}.log'
+
         """
         return Path(self.get("directories.logs", self.logs_dir))
 
-    def export_config(self, file_path: Union[str, Path]) -> bool:
-        """
-        Export configuration to a file.
+    def export_config(self, file_path: str | Path) -> bool:
+        """Export configuration to a file.
 
         Saves the current configuration to a JSON file for backup,
         sharing, or migration purposes.
@@ -815,6 +808,7 @@ class IntellicrackConfig:
             >>> success = config.export_config('my_config_backup.json')
             >>> if success:
             ...     print("Configuration exported successfully")
+
         """
         try:
             with open(file_path, "w", encoding="utf-8") as f:
@@ -825,9 +819,8 @@ class IntellicrackConfig:
             logger.error(f"Failed to export config: {e}")
             return False
 
-    def import_config(self, file_path: Union[str, Path]) -> bool:
-        """
-        Import configuration from a file.
+    def import_config(self, file_path: str | Path) -> bool:
+        """Import configuration from a file.
 
         Loads configuration from a JSON file, merging with existing
         configuration. Existing values are overwritten by imported values.
@@ -851,9 +844,10 @@ class IntellicrackConfig:
         Security Note:
             Only import configurations from trusted sources as they
             can modify tool paths and execution settings.
+
         """
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 imported_config = json.load(f)
 
             with self._config_lock:
@@ -871,8 +865,7 @@ _global_config = None
 
 
 def get_config() -> IntellicrackConfig:
-    """
-    Get global configuration instance.
+    """Get global configuration instance.
 
     Returns the singleton IntellicrackConfig instance, creating it
     on first access. Thread-safe through singleton pattern in the class.
@@ -891,6 +884,7 @@ def get_config() -> IntellicrackConfig:
     Complexity:
         Time: O(1) after first call
         Space: O(1)
+
     """
     global _global_config
     if _global_config is None:

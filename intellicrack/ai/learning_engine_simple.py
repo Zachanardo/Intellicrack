@@ -1,11 +1,10 @@
-"""
-Simple learning engine to replace the complex one temporarily.
+"""Simple learning engine to replace the complex one temporarily.
 """
 
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +12,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class LearningRecord:
     """Record of AI learning experience."""
+
     record_id: str
     task_type: str
     input_hash: str
@@ -21,14 +21,15 @@ class LearningRecord:
     confidence: float
     execution_time: float
     memory_usage: int
-    error_message: Optional[str] = None
-    context: Dict[str, Any] = field(default_factory=dict)
+    error_message: str | None = None
+    context: dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
 
 
 @dataclass
 class PatternRule:
     """Pattern rule for AI behavior."""
+
     rule_id: str
     pattern: str
     action: str
@@ -40,32 +41,34 @@ class PatternRule:
 @dataclass
 class FailureAnalysis:
     """Analysis of AI failure patterns."""
+
     failure_id: str
     failure_type: str
     frequency: int
     pattern_signature: str
-    suggested_fixes: List[str]
-    affected_components: List[str] = field(default_factory=list)
-    mitigation_strategies: List[str] = field(default_factory=list)
+    suggested_fixes: list[str]
+    affected_components: list[str] = field(default_factory=list)
+    mitigation_strategies: list[str] = field(default_factory=list)
     resolution_status: str = "open"
 
 
 class AILearningEngine:
     """Simplified AI learning engine."""
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: str | None = None):
         """Initialize the simplified AI learning engine.
 
         Args:
             db_path: Optional path to the database file (currently unused in
                      simplified implementation)
+
         """
         self.learning_enabled = True
         self.learning_stats = {
             "records_processed": 0,
             "patterns_evolved": 0,
             "failures_analyzed": 0,
-            "success_rate": 0.0
+            "success_rate": 0.0,
         }
         logger.info("Simplified AI learning engine initialized")
 

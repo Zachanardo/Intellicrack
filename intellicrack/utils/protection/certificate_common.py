@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -24,16 +23,15 @@ This module consolidates certificate creation patterns.
 
 import datetime
 import logging
-from typing import Tuple
 
 logger = logging.getLogger(__name__)
 
 def create_certificate_builder():
-    """
-    Create a certificate builder with common settings.
+    """Create a certificate builder with common settings.
 
     Returns:
         Certificate builder object or None if cryptography not available
+
     """
     try:
         from cryptography import x509
@@ -46,7 +44,7 @@ def create_certificate_builder():
                 x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
                 x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Test Org"),
                 x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
-            ])
+            ]),
         ).issuer_name(
             x509.Name([
                 x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
@@ -54,9 +52,9 @@ def create_certificate_builder():
                 x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
                 x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Test Org"),
                 x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
-            ])
+            ]),
         ).serial_number(
-            x509.random_serial_number()
+            x509.random_serial_number(),
         )
 
         # Set validity dates
@@ -69,15 +67,15 @@ def create_certificate_builder():
         return None
 
 
-def get_certificate_validity_dates(valid_days: int = 365) -> Tuple[datetime.datetime, datetime.datetime]:
-    """
-    Get certificate validity dates.
+def get_certificate_validity_dates(valid_days: int = 365) -> tuple[datetime.datetime, datetime.datetime]:
+    """Get certificate validity dates.
 
     Args:
         valid_days: Number of days the certificate should be valid
 
     Returns:
         Tuple of (not_valid_before, not_valid_after) datetimes
+
     """
     not_valid_before = datetime.datetime.utcnow()
     not_valid_after = not_valid_before + datetime.timedelta(days=valid_days)

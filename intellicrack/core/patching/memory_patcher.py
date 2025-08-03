@@ -1,5 +1,4 @@
-"""
-Memory Patching Module for Intellicrack
+"""Memory Patching Module for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,7 +22,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import datetime
 import os
 import sys
-from typing import Any, Optional
+from typing import Any
 
 from PyQt6.QtWidgets import QMessageBox
 
@@ -47,13 +46,16 @@ def _get_wintypes():
         # Create basic wintypes replacement
         class MockWintypes:
             """Mock Windows types for cross-platform compatibility."""
+
             class DWORD:
                 """Mock DWORD type."""
+
                 def __init__(self):
                     """Initialize DWORD mock type with default value."""
                     self.value = 0
             class BOOL:
                 """Mock BOOL type."""
+
                 def __init__(self):
                     """Initialize BOOL mock type with default value."""
                     self.value = 0
@@ -75,9 +77,8 @@ def log_message(msg: str) -> str:
     return f"[{msg}]"
 
 
-def generate_launcher_script(app: Any, patching_strategy: str = "memory") -> Optional[str]:
-    """
-    Generates a launcher script that uses Frida to patch the target program in memory.
+def generate_launcher_script(app: Any, patching_strategy: str = "memory") -> str | None:
+    """Generates a launcher script that uses Frida to patch the target program in memory.
 
     This function creates a Python script that launches the target application
     and applies patches in memory using Frida's dynamic instrumentation. This
@@ -89,6 +90,7 @@ def generate_launcher_script(app: Any, patching_strategy: str = "memory") -> Opt
 
     Returns:
         Path to generated launcher script, or None on error
+
     """
     if not app.binary_path:
         app.update_output.emit(log_message(
@@ -104,7 +106,7 @@ def generate_launcher_script(app: Any, patching_strategy: str = "memory") -> Opt
     base_name = os.path.splitext(os.path.basename(app.binary_path))[0]
     launcher_path = os.path.join(
         os.path.dirname(app.binary_path),
-        f"{base_name}_launcher.py"
+        f"{base_name}_launcher.py",
     )
 
     app.update_output.emit(log_message(
@@ -270,7 +272,7 @@ if __name__ == "__main__":
         patching_strategy=patching_strategy,
         patches_str=patches_str,
         patches_js=patches_str,
-        base_address=0x400000  # Default base address for PE files
+        base_address=0x400000,  # Default base address for PE files
     )
 
     # Handle patches format conversion
@@ -279,14 +281,14 @@ if __name__ == "__main__":
         patch_dict = {
             "address": _patch.get("address", 0),
             "new_bytes": list(_patch.get("new_bytes", b"")) if isinstance(_patch.get("new_bytes"), bytes) else _patch.get("new_bytes", []),
-            "description": _patch.get("description", "Unknown patch")
+            "description": _patch.get("description", "Unknown patch"),
         }
         patches_formatted.append(patch_dict)
 
     # Replace patches in script
     script_content = script_content.replace(
-        f"PATCHES = {str(app.potential_patches)}",
-        f"PATCHES = {str(patches_formatted)}"
+        f"PATCHES = {app.potential_patches!s}",
+        f"PATCHES = {patches_formatted!s}",
     )
 
     # Write launcher script
@@ -320,8 +322,7 @@ if __name__ == "__main__":
 
 
 def setup_memory_patching(app: Any) -> None:
-    """
-    Sets up a memory patching environment for heavily protected binaries.
+    """Sets up a memory patching environment for heavily protected binaries.
 
     This function detects various protection mechanisms and configures
     appropriate memory patching strategies. It's used when static patching
@@ -329,6 +330,7 @@ def setup_memory_patching(app: Any) -> None:
 
     Args:
         app: Application instance with binary path and UI elements
+
     """
     if not app.binary_path:
         app.update_output.emit(log_message(
@@ -369,7 +371,7 @@ def setup_memory_patching(app: Any) -> None:
             "No special protections detected.\\n\\n"
             "Static patching might work for this binary.\\n"
             "Do you still want to set up memory patching?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         )
 
         if response != QMessageBox.Yes:
@@ -389,7 +391,7 @@ def setup_memory_patching(app: Any) -> None:
             app,
             "Memory Patching Required",
             msg,
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         )
 
         if response != QMessageBox.Yes:
@@ -403,7 +405,7 @@ def setup_memory_patching(app: Any) -> None:
             app,
             "No Patches",
             "No patches are available to apply.\\n\\n"
-            "Please run analysis to identify patches first."
+            "Please run analysis to identify patches first.",
         )
         return
 
@@ -425,8 +427,7 @@ def setup_memory_patching(app: Any) -> None:
 
 # Export functions
 def bypass_memory_protection(address: int, size: int, protection: int = None) -> bool:
-    """
-    Bypass memory protection using VirtualProtect (Windows) or mprotect (Unix)
+    """Bypass memory protection using VirtualProtect (Windows) or mprotect (Unix)
 
     Args:
         address: Memory address to modify protection for
@@ -435,6 +436,7 @@ def bypass_memory_protection(address: int, size: int, protection: int = None) ->
 
     Returns:
         True if protection changed successfully, False otherwise
+
     """
     import platform
 
@@ -442,16 +444,14 @@ def bypass_memory_protection(address: int, size: int, protection: int = None) ->
 
     if system == "Windows":
         return _bypass_memory_protection_windows(address, size, protection)
-    elif system in ["Linux", "Darwin"]:
+    if system in ["Linux", "Darwin"]:
         return _bypass_memory_protection_unix(address, size, protection)
-    else:
-        logger.error(f"Unsupported platform for memory protection bypass: {system}")
-        return False
+    logger.error(f"Unsupported platform for memory protection bypass: {system}")
+    return False
 
 
 def _bypass_memory_protection_windows(address: int, size: int, protection: int = None) -> bool:
-    """
-    Bypass memory protection on Windows using VirtualProtect
+    """Bypass memory protection on Windows using VirtualProtect
 
     Args:
         address: Memory address to modify protection for
@@ -460,6 +460,7 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
 
     Returns:
         True if protection changed successfully, False otherwise
+
     """
     try:
         import ctypes
@@ -477,7 +478,7 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
             ctypes.c_void_p,     # lpAddress
             ctypes.c_size_t,     # dwSize
             wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong,      # flNewProtect
-            ctypes.POINTER(wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong)  # lpflOldProtect
+            ctypes.POINTER(wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong),  # lpflOldProtect
         ]
         VirtualProtect.restype = wintypes.BOOL if HAS_WINTYPES else ctypes.c_int
 
@@ -489,17 +490,16 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
             ctypes.c_void_p(address),
             size,
             protection,
-            ctypes.byref(old_protection)
+            ctypes.byref(old_protection),
         )
 
         if success:
             logger.info(f"Successfully changed memory protection at {hex(address)}")
             logger.info(f"Old protection: {hex(old_protection.value)}, New protection: {hex(protection)}")
             return True
-        else:
-            error = ctypes.get_last_error()
-            logger.error(f"VirtualProtect failed with error code: {error}")
-            return False
+        error = ctypes.get_last_error()
+        logger.error(f"VirtualProtect failed with error code: {error}")
+        return False
 
     except Exception as e:
         logger.error(f"Exception during Windows memory protection bypass: {e}")
@@ -507,8 +507,7 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
 
 
 def _bypass_memory_protection_unix(address: int, size: int, protection: int = None) -> bool:
-    """
-    Bypass memory protection on Unix-like systems using mprotect
+    """Bypass memory protection on Unix-like systems using mprotect
 
     Args:
         address: Memory address to modify protection for
@@ -517,6 +516,7 @@ def _bypass_memory_protection_unix(address: int, size: int, protection: int = No
 
     Returns:
         True if protection changed successfully, False otherwise
+
     """
     try:
         import ctypes
@@ -544,7 +544,7 @@ def _bypass_memory_protection_unix(address: int, size: int, protection: int = No
         mprotect.argtypes = [
             ctypes.c_void_p,     # addr
             ctypes.c_size_t,     # len
-            ctypes.c_int         # prot
+            ctypes.c_int,         # prot
         ]
         mprotect.restype = ctypes.c_int
 
@@ -560,17 +560,16 @@ def _bypass_memory_protection_unix(address: int, size: int, protection: int = No
         result = mprotect(
             ctypes.c_void_p(aligned_address),
             aligned_size,
-            protection
+            protection,
         )
 
         if result == 0:
             logger.info(f"Successfully changed memory protection at {hex(aligned_address)}")
             logger.info(f"Protection flags: {hex(protection)}")
             return True
-        else:
-            errno = ctypes.get_errno()
-            logger.error(f"mprotect failed with errno: {errno}")
-            return False
+        errno = ctypes.get_errno()
+        logger.error(f"mprotect failed with errno: {errno}")
+        return False
 
     except Exception as e:
         logger.error(f"Exception during Unix memory protection bypass: {e}")
@@ -578,8 +577,7 @@ def _bypass_memory_protection_unix(address: int, size: int, protection: int = No
 
 
 def patch_memory_direct(process_id: int, address: int, data: bytes) -> bool:
-    """
-    Directly patch memory in a running process
+    """Directly patch memory in a running process
 
     Args:
         process_id: Process ID to patch
@@ -588,6 +586,7 @@ def patch_memory_direct(process_id: int, address: int, data: bytes) -> bool:
 
     Returns:
         True if patching successful, False otherwise
+
     """
     import platform
 
@@ -595,16 +594,14 @@ def patch_memory_direct(process_id: int, address: int, data: bytes) -> bool:
 
     if system == "Windows":
         return _patch_memory_windows(process_id, address, data)
-    elif system in ["Linux", "Darwin"]:
+    if system in ["Linux", "Darwin"]:
         return _patch_memory_unix(process_id, address, data)
-    else:
-        logger.error(f"Unsupported platform for memory patching: {system}")
-        return False
+    logger.error(f"Unsupported platform for memory patching: {system}")
+    return False
 
 
 def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
-    """
-    Patch memory on Windows using WriteProcessMemory
+    """Patch memory on Windows using WriteProcessMemory
 
     Args:
         process_id: Process ID to patch
@@ -613,6 +610,7 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
 
     Returns:
         True if patching successful, False otherwise
+
     """
     try:
         import ctypes
@@ -637,7 +635,7 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
                 ctypes.c_void_p(address),
                 len(data),
                 PAGE_EXECUTE_READWRITE,
-                ctypes.byref(old_protection)
+                ctypes.byref(old_protection),
             )
 
             if not success:
@@ -651,7 +649,7 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
                 ctypes.c_void_p(address),
                 data,
                 len(data),
-                ctypes.byref(bytes_written)
+                ctypes.byref(bytes_written),
             )
 
             if success and bytes_written.value == len(data):
@@ -663,13 +661,12 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
                     ctypes.c_void_p(address),
                     len(data),
                     old_protection.value,
-                    ctypes.byref(old_protection)
+                    ctypes.byref(old_protection),
                 )
 
                 return True
-            else:
-                logger.error("Failed to write process memory")
-                return False
+            logger.error("Failed to write process memory")
+            return False
 
         finally:
             # Always close handle
@@ -681,8 +678,7 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
 
 
 def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
-    """
-    Patch memory on Unix-like systems using ptrace or /proc/pid/mem
+    """Patch memory on Unix-like systems using ptrace or /proc/pid/mem
 
     Args:
         process_id: Process ID to patch
@@ -691,6 +687,7 @@ def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
 
     Returns:
         True if patching successful, False otherwise
+
     """
     try:
         # Try using /proc/pid/mem first (requires appropriate permissions)
@@ -706,7 +703,7 @@ def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
                 logger.info(f"Successfully patched {len(data)} bytes at {hex(address)} via /proc/pid/mem")
                 return True
 
-            except (IOError, OSError) as e:
+            except OSError as e:
                 logger.warning(f"Failed to patch via /proc/pid/mem: {e}")
 
         # Fallback to ptrace
@@ -750,8 +747,7 @@ def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
 
 # Export functions
 def handle_guard_pages(address: int, size: int, process_handle: int = None) -> bool:
-    """
-    Handle PAGE_GUARD protected memory regions
+    """Handle PAGE_GUARD protected memory regions
 
     Args:
         address: Memory address that may have guard pages
@@ -760,6 +756,7 @@ def handle_guard_pages(address: int, size: int, process_handle: int = None) -> b
 
     Returns:
         True if guard pages handled successfully, False otherwise
+
     """
     import platform
 
@@ -767,17 +764,15 @@ def handle_guard_pages(address: int, size: int, process_handle: int = None) -> b
 
     if system == "Windows":
         return _handle_guard_pages_windows(address, size, process_handle)
-    elif system in ["Linux", "Darwin"]:
+    if system in ["Linux", "Darwin"]:
         return _handle_guard_pages_unix(address, size, process_handle)
-    else:
-        logger.error(f"Unsupported platform for guard page handling: {system}")
-        return False
+    logger.error(f"Unsupported platform for guard page handling: {system}")
+    return False
 
 
 def _handle_guard_pages_windows(address: int, size: int,
                                 process_handle: int = None) -> bool:
-    """
-    Handle PAGE_GUARD on Windows
+    """Handle PAGE_GUARD on Windows
 
     Args:
         address: Memory address
@@ -786,6 +781,7 @@ def _handle_guard_pages_windows(address: int, size: int,
 
     Returns:
         True if successful, False otherwise
+
     """
     try:
         import ctypes
@@ -796,6 +792,7 @@ def _handle_guard_pages_windows(address: int, size: int,
         # MEMORY_BASIC_INFORMATION structure
         class MEMORY_BASIC_INFORMATION(ctypes.Structure):
             """Windows MEMORY_BASIC_INFORMATION structure for memory queries."""
+
             _fields_ = [
                 ("BaseAddress", ctypes.c_void_p),
                 ("AllocationBase", ctypes.c_void_p),
@@ -803,7 +800,7 @@ def _handle_guard_pages_windows(address: int, size: int,
                 ("RegionSize", ctypes.c_size_t),
                 ("State", wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong),
                 ("Protect", wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong),
-                ("Type", wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong)
+                ("Type", wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong),
             ]
 
         mbi = MEMORY_BASIC_INFORMATION()
@@ -815,14 +812,14 @@ def _handle_guard_pages_windows(address: int, size: int,
                 process_handle,
                 ctypes.c_void_p(address),
                 ctypes.byref(mbi),
-                ctypes.sizeof(mbi)
+                ctypes.sizeof(mbi),
             )
         else:
             # Current process
             result = kernel32.VirtualQuery(
                 ctypes.c_void_p(address),
                 ctypes.byref(mbi),
-                ctypes.sizeof(mbi)
+                ctypes.sizeof(mbi),
             )
 
         if not result:
@@ -845,7 +842,7 @@ def _handle_guard_pages_windows(address: int, size: int,
                     ctypes.c_void_p(address),
                     size,
                     new_protection,
-                    ctypes.byref(old_protection)
+                    ctypes.byref(old_protection),
                 )
             else:
                 # Current process
@@ -853,7 +850,7 @@ def _handle_guard_pages_windows(address: int, size: int,
                     ctypes.c_void_p(address),
                     size,
                     new_protection,
-                    ctypes.byref(old_protection)
+                    ctypes.byref(old_protection),
                 )
 
             if success:
@@ -867,16 +864,13 @@ def _handle_guard_pages_windows(address: int, size: int,
                         ctypes.memmove(ctypes.byref(dummy), address, 1)
                     except (OSError, ValueError, Exception) as e:
                         logger.error("Error in memory_patcher: %s", e)
-                        pass
 
                 return True
-            else:
-                error = ctypes.get_last_error()
-                logger.error(f"Failed to remove PAGE_GUARD: {error}")
-                return False
-        else:
-            logger.debug(f"No PAGE_GUARD at {hex(address)}")
-            return True
+            error = ctypes.get_last_error()
+            logger.error(f"Failed to remove PAGE_GUARD: {error}")
+            return False
+        logger.debug(f"No PAGE_GUARD at {hex(address)}")
+        return True
 
     except Exception as e:
         logger.error(f"Exception handling guard pages: {e}")
@@ -885,8 +879,7 @@ def _handle_guard_pages_windows(address: int, size: int,
 
 def _handle_guard_pages_unix(address: int, size: int,
                             process_handle: int = None) -> bool:
-    """
-    Handle guard pages on Unix-like systems
+    """Handle guard pages on Unix-like systems
 
     Args:
         address: Memory address
@@ -895,6 +888,7 @@ def _handle_guard_pages_unix(address: int, size: int,
 
     Returns:
         True if successful, False otherwise
+
     """
     try:
         import ctypes
@@ -919,7 +913,7 @@ def _handle_guard_pages_unix(address: int, size: int,
 
         # Read memory mappings
         try:
-            with open(maps_file, "r") as f:
+            with open(maps_file) as f:
                 for line in f:
                     parts = line.split()
                     if len(parts) >= 5:
@@ -957,17 +951,16 @@ def _handle_guard_pages_unix(address: int, size: int,
                                 result = mprotect(
                                     ctypes.c_void_p(aligned_addr),
                                     aligned_size,
-                                    PROT_READ | PROT_WRITE
+                                    PROT_READ | PROT_WRITE,
                                 )
 
                                 if result == 0:
                                     logger.info(f"Successfully removed guard page protection for {aligned_size} bytes")
                                     return True
-                                else:
-                                    logger.error("Failed to change guard page permissions")
-                                    return False
+                                logger.error("Failed to change guard page permissions")
+                                return False
 
-        except IOError:
+        except OSError:
             logger.warning(f"Cannot read {maps_file}")
 
         return True
@@ -979,8 +972,7 @@ def _handle_guard_pages_unix(address: int, size: int,
 
 def detect_and_bypass_guard_pages(process_handle: int, address: int,
                                  size: int) -> bool:
-    """
-    Detect and bypass guard pages before memory operations
+    """Detect and bypass guard pages before memory operations
 
     Args:
         process_handle: Handle to process
@@ -989,6 +981,7 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int,
 
     Returns:
         True if safe to proceed, False otherwise
+
     """
     try:
         # First, handle any guard pages
@@ -1007,6 +1000,7 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int,
             # Check if memory is committed
             class MEMORY_BASIC_INFORMATION(ctypes.Structure):
                 """Memory basic information structure for allocation checking."""
+
                 _fields_ = [
                     ("BaseAddress", ctypes.c_void_p),
                     ("AllocationBase", ctypes.c_void_p),
@@ -1014,7 +1008,7 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int,
                     ("RegionSize", ctypes.c_size_t),
                     ("State", wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong),
                     ("Protect", wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong),
-                    ("Type", wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong)
+                    ("Type", wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong),
                 ]
 
             mbi = MEMORY_BASIC_INFORMATION()
@@ -1022,7 +1016,7 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int,
                 process_handle,
                 ctypes.c_void_p(address),
                 ctypes.byref(mbi),
-                ctypes.sizeof(mbi)
+                ctypes.sizeof(mbi),
             )
 
             if result:
@@ -1045,10 +1039,10 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int,
 
 # Export functions
 __all__ = [
-    "generate_launcher_script",
-    "setup_memory_patching",
     "bypass_memory_protection",
-    "patch_memory_direct",
+    "detect_and_bypass_guard_pages",
+    "generate_launcher_script",
     "handle_guard_pages",
-    "detect_and_bypass_guard_pages"
+    "patch_memory_direct",
+    "setup_memory_patching",
 ]

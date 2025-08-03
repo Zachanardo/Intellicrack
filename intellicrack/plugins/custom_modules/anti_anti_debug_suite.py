@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -38,13 +37,14 @@ import time
 import winreg
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import psutil
 
 
 class AntiDebugTechnique(Enum):
     """Types of anti-debug techniques"""
+
     API_HOOKS = "api_hooks"
     PEB_FLAGS = "peb_flags"
     HARDWARE_BREAKPOINTS = "hardware_breakpoints"
@@ -59,6 +59,7 @@ class AntiDebugTechnique(Enum):
 
 class BypassResult(Enum):
     """Results of bypass attempts"""
+
     SUCCESS = "success"
     FAILED = "failed"
     PARTIAL = "partial"
@@ -68,12 +69,13 @@ class BypassResult(Enum):
 @dataclass
 class BypassOperation:
     """Bypass operation tracking"""
+
     technique: AntiDebugTechnique
     description: str
     result: BypassResult
     details: str = ""
     timestamp: float = field(default_factory=time.time)
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class WindowsAPIHooker:
@@ -99,7 +101,7 @@ class WindowsAPIHooker:
             # Get function address
             func_addr = self.kernel32.GetProcAddress(
                 self.kernel32.GetModuleHandleW("kernel32.dll"),
-                b"IsDebuggerPresent"
+                b"IsDebuggerPresent",
             )
 
             if not func_addr:
@@ -119,7 +121,7 @@ class WindowsAPIHooker:
             self.kernel32.VirtualProtect(
                 func_addr, len(hook_code),
                 0x40,  # PAGE_EXECUTE_READWRITE
-                ctypes.byref(old_protect)
+                ctypes.byref(old_protect),
             )
 
             # Install hook
@@ -129,7 +131,7 @@ class WindowsAPIHooker:
             self.kernel32.VirtualProtect(
                 func_addr, len(hook_code),
                 old_protect.value,
-                ctypes.byref(old_protect)
+                ctypes.byref(old_protect),
             )
 
             self.active_hooks.add("IsDebuggerPresent")
@@ -145,7 +147,7 @@ class WindowsAPIHooker:
         try:
             func_addr = self.kernel32.GetProcAddress(
                 self.kernel32.GetModuleHandleW("kernel32.dll"),
-                b"CheckRemoteDebuggerPresent"
+                b"CheckRemoteDebuggerPresent",
             )
 
             if not func_addr:
@@ -163,13 +165,13 @@ class WindowsAPIHooker:
 
             old_protect = ctypes.c_ulong()
             self.kernel32.VirtualProtect(
-                func_addr, len(hook_code), 0x40, ctypes.byref(old_protect)
+                func_addr, len(hook_code), 0x40, ctypes.byref(old_protect),
             )
 
             ctypes.memmove(func_addr, hook_code, len(hook_code))
 
             self.kernel32.VirtualProtect(
-                func_addr, len(hook_code), old_protect.value, ctypes.byref(old_protect)
+                func_addr, len(hook_code), old_protect.value, ctypes.byref(old_protect),
             )
 
             self.active_hooks.add("CheckRemoteDebuggerPresent")
@@ -216,7 +218,7 @@ class WindowsAPIHooker:
         try:
             func_addr = self.kernel32.GetProcAddress(
                 self.kernel32.GetModuleHandleW("kernel32.dll"),
-                b"OutputDebugStringA"
+                b"OutputDebugStringA",
             )
 
             if not func_addr:
@@ -227,13 +229,13 @@ class WindowsAPIHooker:
 
             old_protect = ctypes.c_ulong()
             self.kernel32.VirtualProtect(
-                func_addr, 1, 0x40, ctypes.byref(old_protect)
+                func_addr, 1, 0x40, ctypes.byref(old_protect),
             )
 
             ctypes.memmove(func_addr, hook_code, 1)
 
             self.kernel32.VirtualProtect(
-                func_addr, 1, old_protect.value, ctypes.byref(old_protect)
+                func_addr, 1, old_protect.value, ctypes.byref(old_protect),
             )
 
             self.active_hooks.add("OutputDebugStringA")
@@ -244,7 +246,7 @@ class WindowsAPIHooker:
             self.logger.error(f"Failed to hook OutputDebugStringA: {e}")
             return False
 
-    def install_all_hooks(self) -> List[str]:
+    def install_all_hooks(self) -> list[str]:
         """Install all API hooks"""
         results = []
 
@@ -253,7 +255,7 @@ class WindowsAPIHooker:
             ("CheckRemoteDebuggerPresent", self.hook_check_remote_debugger_present),
             ("NtQueryInformationProcess", self.hook_nt_query_information_process),
             ("NtSetInformationThread", self.hook_nt_set_information_thread),
-            ("OutputDebugString", self.hook_output_debug_string)
+            ("OutputDebugString", self.hook_output_debug_string),
         ]
 
         for name, hook_func in hooks:
@@ -273,13 +275,13 @@ class WindowsAPIHooker:
             for func_addr, original_bytes in self.original_functions.items():
                 old_protect = ctypes.c_ulong()
                 self.kernel32.VirtualProtect(
-                    func_addr, len(original_bytes), 0x40, ctypes.byref(old_protect)
+                    func_addr, len(original_bytes), 0x40, ctypes.byref(old_protect),
                 )
 
                 ctypes.memmove(func_addr, original_bytes, len(original_bytes))
 
                 self.kernel32.VirtualProtect(
-                    func_addr, len(original_bytes), old_protect.value, ctypes.byref(old_protect)
+                    func_addr, len(original_bytes), old_protect.value, ctypes.byref(old_protect),
                 )
 
             self.active_hooks.clear()
@@ -305,7 +307,7 @@ class PEBManipulator:
         self.PEB_NT_GLOBAL_FLAG_OFFSET = 0x68
         self.PEB_HEAP_FLAGS_OFFSET = 0x70
 
-    def get_peb_address(self) -> Optional[int]:
+    def get_peb_address(self) -> int | None:
         """Get PEB address for current process"""
         try:
             # Get current process handle
@@ -318,7 +320,7 @@ class PEBManipulator:
                     ("PebBaseAddress", ctypes.c_void_p),
                     ("Reserved2", ctypes.c_void_p * 2),
                     ("UniqueProcessId", ctypes.c_void_p),
-                    ("Reserved3", ctypes.c_void_p)
+                    ("Reserved3", ctypes.c_void_p),
                 ]
 
             pbi = PROCESS_BASIC_INFORMATION()
@@ -330,7 +332,7 @@ class PEBManipulator:
                 0,  # ProcessBasicInformation
                 ctypes.byref(pbi),
                 ctypes.sizeof(pbi),
-                ctypes.byref(return_length)
+                ctypes.byref(return_length),
             )
 
             if status == 0:  # STATUS_SUCCESS
@@ -360,7 +362,7 @@ class PEBManipulator:
                 flag_addr,
                 ctypes.byref(current_value),
                 1,
-                ctypes.byref(bytes_read)
+                ctypes.byref(bytes_read),
             ):
                 return False
 
@@ -373,7 +375,7 @@ class PEBManipulator:
                 flag_addr,
                 ctypes.byref(new_value),
                 1,
-                ctypes.byref(bytes_written)
+                ctypes.byref(bytes_written),
             )
 
             if success:
@@ -403,7 +405,7 @@ class PEBManipulator:
                 flag_addr,
                 ctypes.byref(current_value),
                 4,
-                ctypes.byref(bytes_read)
+                ctypes.byref(bytes_read),
             ):
                 return False
 
@@ -420,7 +422,7 @@ class PEBManipulator:
                 flag_addr,
                 ctypes.byref(new_value),
                 4,
-                ctypes.byref(bytes_written)
+                ctypes.byref(bytes_written),
             )
 
             if success:
@@ -466,9 +468,8 @@ class PEBManipulator:
                     ctypes.c_uint32.from_address(heap_addr).value = heap_flags
                     self.logger.info(f"Heap flags patched: 0x{original_flags:08x} -> 0x{heap_flags:08x}")
                     return True
-                else:
-                    self.logger.info("No debug heap flags found to patch")
-                    return False
+                self.logger.info("No debug heap flags found to patch")
+                return False
 
             except Exception as heap_error:
                 self.logger.error(f"Failed to access heap at 0x{heap_addr:08x}: {heap_error}")
@@ -479,14 +480,14 @@ class PEBManipulator:
 
         return False
 
-    def patch_all_peb_flags(self) -> List[str]:
+    def patch_all_peb_flags(self) -> list[str]:
         """Patch all PEB-related anti-debug flags"""
         results = []
 
         patches = [
             ("BeingDebugged", self.patch_being_debugged_flag),
             ("NtGlobalFlag", self.patch_nt_global_flag),
-            ("HeapFlags", self.patch_heap_flags)
+            ("HeapFlags", self.patch_heap_flags),
         ]
 
         for name, patch_func in patches:
@@ -510,7 +511,7 @@ class HardwareDebugProtector:
         self.kernel32 = ctypes.windll.kernel32
         self.saved_context = None
 
-    def get_thread_context(self) -> Optional[Any]:
+    def get_thread_context(self) -> Any | None:
         """Get current thread context"""
         try:
             # CONTEXT structure for x64
@@ -568,7 +569,7 @@ class HardwareDebugProtector:
                     "Dr2": context.Dr2,
                     "Dr3": context.Dr3,
                     "Dr6": context.Dr6,
-                    "Dr7": context.Dr7
+                    "Dr7": context.Dr7,
                 }
 
             # Clear debug registers
@@ -590,7 +591,7 @@ class HardwareDebugProtector:
 
         return False
 
-    def monitor_debug_registers(self) -> Dict[str, int]:
+    def monitor_debug_registers(self) -> dict[str, int]:
         """Monitor current debug register values"""
         try:
             context = self.get_thread_context()
@@ -601,7 +602,7 @@ class HardwareDebugProtector:
                     "Dr2": context.Dr2,
                     "Dr3": context.Dr3,
                     "Dr6": context.Dr6,
-                    "Dr7": context.Dr7
+                    "Dr7": context.Dr7,
                 }
         except Exception as e:
             self.logger.error(f"Failed to monitor debug registers: {e}")
@@ -699,14 +700,14 @@ class TimingNormalizer:
         delay = random.uniform(0.001, 0.01)  # 1-10ms
         time.sleep(delay)
 
-    def apply_timing_normalizations(self) -> List[str]:
+    def apply_timing_normalizations(self) -> list[str]:
         """Apply all timing normalizations"""
         self.measure_baseline_timing()
 
         results = []
         normalizations = [
             ("GetTickCount", self.normalize_get_tick_count),
-            ("RDTSC", self.normalize_rdtsc)
+            ("RDTSC", self.normalize_rdtsc),
         ]
 
         for name, norm_func in normalizations:
@@ -752,10 +753,10 @@ class MemoryPatcher:
             "vm_detection": [
                 b"\\x0F\\x01\\x0D\\x00\\x00\\x00\\x00",  # sidt
                 b"\\x0F\\x01\\x4D\\x00",  # sgdt
-            ]
+            ],
         }
 
-    def find_patterns_in_memory(self, start_addr: int, size: int) -> List[Tuple[str, int]]:
+    def find_patterns_in_memory(self, start_addr: int, size: int) -> list[tuple[str, int]]:
         """Find anti-debug patterns in memory region"""
         found_patterns = []
 
@@ -769,7 +770,7 @@ class MemoryPatcher:
                 start_addr,
                 buffer,
                 size,
-                ctypes.byref(bytes_read)
+                ctypes.byref(bytes_read),
             ):
                 return found_patterns
 
@@ -801,7 +802,7 @@ class MemoryPatcher:
                 address,
                 len(new_bytes),
                 0x40,  # PAGE_EXECUTE_READWRITE
-                ctypes.byref(old_protect)
+                ctypes.byref(old_protect),
             ):
                 return False
 
@@ -812,7 +813,7 @@ class MemoryPatcher:
                 address,
                 new_bytes,
                 len(new_bytes),
-                ctypes.byref(bytes_written)
+                ctypes.byref(bytes_written),
             )
 
             # Restore protection
@@ -820,14 +821,14 @@ class MemoryPatcher:
                 address,
                 len(new_bytes),
                 old_protect.value,
-                ctypes.byref(old_protect)
+                ctypes.byref(old_protect),
             )
 
             if success:
                 self.patches_applied.append({
                     "address": address,
                     "size": len(new_bytes),
-                    "timestamp": time.time()
+                    "timestamp": time.time(),
                 })
                 return True
 
@@ -845,7 +846,7 @@ class MemoryPatcher:
         # Replace with: xor eax, eax; nop
         return self.patch_memory_location(address, b"\x33\xC0\x90")
 
-    def scan_and_patch_module(self, module_name: str) -> List[str]:
+    def scan_and_patch_module(self, module_name: str) -> list[str]:
         """Scan and patch a specific module"""
         results = []
 
@@ -860,7 +861,7 @@ class MemoryPatcher:
                 _fields_ = [
                     ("lpBaseOfDll", ctypes.c_void_p),
                     ("SizeOfImage", ctypes.c_ulong),
-                    ("EntryPoint", ctypes.c_void_p)
+                    ("EntryPoint", ctypes.c_void_p),
                 ]
 
             mod_info = MODULEINFO()
@@ -868,14 +869,14 @@ class MemoryPatcher:
                 self.kernel32.GetCurrentProcess(),
                 handle,
                 ctypes.byref(mod_info),
-                ctypes.sizeof(mod_info)
+                ctypes.sizeof(mod_info),
             ):
                 return [f"✗ Could not get {module_name} info"]
 
             # Scan for patterns
             patterns = self.find_patterns_in_memory(
                 mod_info.lpBaseOfDll,
-                mod_info.SizeOfImage
+                mod_info.SizeOfImage,
             )
 
             # Apply patches
@@ -895,7 +896,7 @@ class MemoryPatcher:
 
         return results
 
-    def scan_all_modules(self) -> List[str]:
+    def scan_all_modules(self) -> list[str]:
         """Scan and patch all loaded modules"""
         results = []
 
@@ -946,18 +947,17 @@ class ExceptionHandler:
                     # Mask debugging-related exceptions
                     return 0  # EXCEPTION_CONTINUE_EXECUTION
 
-                elif "single_step" in exception_str or "trap" in exception_str:
+                if "single_step" in exception_str or "trap" in exception_str:
                     self.logger.info(f"Single-step/trap exception: {exception_info}")
                     # Continue execution to bypass step detection
                     return 0  # EXCEPTION_CONTINUE_EXECUTION
 
-                elif "access_violation" in exception_str:
+                if "access_violation" in exception_str:
                     self.logger.warning(f"Access violation detected: {exception_info}")
                     # Let access violations through normally
                     return 1  # EXCEPTION_EXECUTE_HANDLER
 
-                else:
-                    self.logger.debug(f"Standard exception handling for: {exception_info}")
+                self.logger.debug(f"Standard exception handling for: {exception_info}")
 
             return 1  # EXCEPTION_EXECUTE_HANDLER
 
@@ -1003,7 +1003,7 @@ class EnvironmentSanitizer:
         self.logger = logging.getLogger(f"{__name__}.EnvironmentSanitizer")
         self.original_values = {}
 
-    def clean_environment_variables(self) -> List[str]:
+    def clean_environment_variables(self) -> list[str]:
         """Clean debugging-related environment variables"""
         results = []
 
@@ -1013,7 +1013,7 @@ class EnvironmentSanitizer:
             "WINDBG_CMD_LINE",
             "OD_SCRIPT_PATH",
             "DEBUG",
-            "DEBUGGER"
+            "DEBUGGER",
         ]
 
         for var in debug_vars:
@@ -1030,7 +1030,7 @@ class EnvironmentSanitizer:
 
         return results
 
-    def hide_debugger_processes(self) -> List[str]:
+    def hide_debugger_processes(self) -> list[str]:
         """Attempt to hide debugger processes from detection"""
         results = []
 
@@ -1042,7 +1042,7 @@ class EnvironmentSanitizer:
             "ida.exe",
             "ida64.exe",
             "cheatengine.exe",
-            "processhacker.exe"
+            "processhacker.exe",
         ]
 
         try:
@@ -1059,13 +1059,13 @@ class EnvironmentSanitizer:
 
         return results
 
-    def clean_registry_artifacts(self) -> List[str]:
+    def clean_registry_artifacts(self) -> list[str]:
         """Clean debugging-related registry entries"""
         results = []
 
         debug_keys = [
             r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug",
-            r"SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\AeDebug"
+            r"SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\AeDebug",
         ]
 
         for key_path in debug_keys:
@@ -1089,7 +1089,7 @@ class EnvironmentSanitizer:
 
         return results
 
-    def sanitize_file_system(self) -> List[str]:
+    def sanitize_file_system(self) -> list[str]:
         """Remove debugging-related files and artifacts"""
         results = []
 
@@ -1097,7 +1097,7 @@ class EnvironmentSanitizer:
             "debug.log",
             "trace.log",
             "ollydbg.ini",
-            "x64dbg.ini"
+            "x64dbg.ini",
         ]
 
         for filename in debug_files:
@@ -1112,7 +1112,7 @@ class EnvironmentSanitizer:
 
         return results
 
-    def sanitize_all(self) -> List[str]:
+    def sanitize_all(self) -> list[str]:
         """Run all sanitization procedures"""
         all_results = []
 
@@ -1120,7 +1120,7 @@ class EnvironmentSanitizer:
             ("Environment Variables", self.clean_environment_variables),
             ("Debugger Processes", self.hide_debugger_processes),
             ("Registry Artifacts", self.clean_registry_artifacts),
-            ("File System", self.sanitize_file_system)
+            ("File System", self.sanitize_file_system),
         ]
 
         for name, sanitizer_func in sanitizers:
@@ -1155,7 +1155,7 @@ class TargetAnalyzer:
         self.logger = logging.getLogger(f"{__name__}.TargetAnalyzer")
         self.detected_techniques = set()
 
-    def analyze_pe_headers(self, file_path: str) -> List[AntiDebugTechnique]:
+    def analyze_pe_headers(self, file_path: str) -> list[AntiDebugTechnique]:
         """Analyze PE headers for anti-debug indicators"""
         techniques = []
 
@@ -1190,7 +1190,7 @@ class TargetAnalyzer:
 
         return techniques
 
-    def analyze_imports(self, file_path: str) -> List[AntiDebugTechnique]:
+    def analyze_imports(self, file_path: str) -> list[AntiDebugTechnique]:
         """Analyze import table for anti-debug APIs"""
         techniques = []
 
@@ -1206,7 +1206,7 @@ class TargetAnalyzer:
                     b"NtQueryInformationProcess",
                     b"OutputDebugString",
                     b"GetTickCount",
-                    b"QueryPerformanceCounter"
+                    b"QueryPerformanceCounter",
                 ]
 
                 for api in debug_apis:
@@ -1224,7 +1224,7 @@ class TargetAnalyzer:
 
         return techniques
 
-    def analyze_runtime_behavior(self) -> List[AntiDebugTechnique]:
+    def analyze_runtime_behavior(self) -> list[AntiDebugTechnique]:
         """Analyze runtime behavior for anti-debug techniques"""
         techniques = []
 
@@ -1268,10 +1268,9 @@ class TargetAnalyzer:
                         return True
                     except FileNotFoundError:
                         pass
-                else:
-                    # File check
-                    if os.path.exists(indicator):
-                        return True
+                # File check
+                elif os.path.exists(indicator):
+                    return True
 
             return False
 
@@ -1279,13 +1278,13 @@ class TargetAnalyzer:
             self.logger.error(f"VM detection failed: {e}")
             return False
 
-    def analyze_target(self, file_path: Optional[str] = None) -> Dict[str, Any]:
+    def analyze_target(self, file_path: str | None = None) -> dict[str, Any]:
         """Perform comprehensive target analysis"""
         analysis_results = {
             "techniques_detected": [],
             "vm_environment": False,
             "risk_level": "low",
-            "recommended_bypasses": []
+            "recommended_bypasses": [],
         }
 
         try:
@@ -1323,13 +1322,13 @@ class TargetAnalyzer:
                 AntiDebugTechnique.HARDWARE_BREAKPOINTS: "Hardware debug protection",
                 AntiDebugTechnique.TIMING_CHECKS: "Timing normalization",
                 AntiDebugTechnique.EXCEPTION_HANDLING: "Exception handling",
-                AntiDebugTechnique.PROCESS_ENVIRONMENT: "Environment sanitization"
+                AntiDebugTechnique.PROCESS_ENVIRONMENT: "Environment sanitization",
             }
 
             for technique in analysis_results["techniques_detected"]:
                 if technique in technique_bypass_map:
                     analysis_results["recommended_bypasses"].append(
-                        technique_bypass_map[technique]
+                        technique_bypass_map[technique],
                     )
 
             self.logger.info(f"Target analysis complete: {analysis_results['risk_level']} risk")
@@ -1369,7 +1368,7 @@ class AntiAntiDebugSuite:
             "bypasses_attempted": 0,
             "bypasses_successful": 0,
             "targets_analyzed": 0,
-            "uptime": time.time()
+            "uptime": time.time(),
         }
 
         # Configuration
@@ -1377,10 +1376,10 @@ class AntiAntiDebugSuite:
             "auto_apply_bypasses": True,
             "selective_bypasses": True,
             "stealth_mode": True,
-            "log_level": "INFO"
+            "log_level": "INFO",
         }
 
-    def analyze_target(self, file_path: Optional[str] = None) -> Dict[str, Any]:
+    def analyze_target(self, file_path: str | None = None) -> dict[str, Any]:
         """Analyze target and recommend bypasses"""
         self.statistics["targets_analyzed"] += 1
         return self.target_analyzer.analyze_target(file_path)
@@ -1392,7 +1391,7 @@ class AntiAntiDebugSuite:
         operation = BypassOperation(
             technique=technique,
             description=f"Applying {technique.value} bypass",
-            result=BypassResult.FAILED
+            result=BypassResult.FAILED,
         )
 
         try:
@@ -1448,7 +1447,7 @@ class AntiAntiDebugSuite:
         self.bypass_history.append(operation)
         return operation
 
-    def apply_selective_bypasses(self, target_analysis: Dict[str, Any]) -> List[BypassOperation]:
+    def apply_selective_bypasses(self, target_analysis: dict[str, Any]) -> list[BypassOperation]:
         """Apply bypasses based on target analysis"""
         operations = []
 
@@ -1459,7 +1458,7 @@ class AntiAntiDebugSuite:
             basic_techniques = [
                 AntiDebugTechnique.API_HOOKS,
                 AntiDebugTechnique.PEB_FLAGS,
-                AntiDebugTechnique.PROCESS_ENVIRONMENT
+                AntiDebugTechnique.PROCESS_ENVIRONMENT,
             ]
             detected_techniques = basic_techniques
 
@@ -1473,7 +1472,7 @@ class AntiAntiDebugSuite:
 
         return operations
 
-    def apply_all_bypasses(self) -> List[BypassOperation]:
+    def apply_all_bypasses(self) -> list[BypassOperation]:
         """Apply all available bypasses"""
         operations = []
 
@@ -1483,19 +1482,19 @@ class AntiAntiDebugSuite:
 
         return operations
 
-    def monitor_bypasses(self) -> Dict[str, Any]:
+    def monitor_bypasses(self) -> dict[str, Any]:
         """Monitor status of active bypasses"""
         status = {
             "active_bypasses": list(self.active_bypasses),
             "bypass_count": len(self.active_bypasses),
             "hardware_registers": self.hw_protector.monitor_debug_registers(),
             "statistics": self.statistics.copy(),
-            "uptime_seconds": time.time() - self.statistics["uptime"]
+            "uptime_seconds": time.time() - self.statistics["uptime"],
         }
 
         return status
 
-    def remove_bypasses(self) -> List[str]:
+    def remove_bypasses(self) -> list[str]:
         """Remove all active bypasses"""
         results = []
 
@@ -1531,7 +1530,7 @@ class AntiAntiDebugSuite:
 
         return results
 
-    def get_report(self) -> Dict[str, Any]:
+    def get_report(self) -> dict[str, Any]:
         """Generate comprehensive bypass report"""
         successful_bypasses = [op for op in self.bypass_history if op.result == BypassResult.SUCCESS]
         failed_bypasses = [op for op in self.bypass_history if op.result == BypassResult.FAILED]
@@ -1542,7 +1541,7 @@ class AntiAntiDebugSuite:
                 "successful_bypasses": len(successful_bypasses),
                 "failed_bypasses": len(failed_bypasses),
                 "currently_active": len(self.active_bypasses),
-                "success_rate": len(successful_bypasses) / len(self.bypass_history) * 100 if self.bypass_history else 0
+                "success_rate": len(successful_bypasses) / len(self.bypass_history) * 100 if self.bypass_history else 0,
             },
             "active_bypasses": [bypass.value for bypass in self.active_bypasses],
             "bypass_history": [
@@ -1551,12 +1550,12 @@ class AntiAntiDebugSuite:
                     "result": op.result.value,
                     "details": op.details,
                     "timestamp": op.timestamp,
-                    "error": op.error
+                    "error": op.error,
                 }
                 for op in self.bypass_history
             ],
             "statistics": self.statistics,
-            "configuration": self.config
+            "configuration": self.config,
         }
 
         return report
@@ -1586,7 +1585,7 @@ class AntiAntiDebugSuite:
                 if command == "quit" or command == "exit":
                     break
 
-                elif command == "analyze":
+                if command == "analyze":
                     file_path = input("Target file path (optional): ").strip()
                     if not file_path:
                         file_path = None
@@ -1688,7 +1687,7 @@ def main():
     log_level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(
         level=log_level,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     # Initialize suite

@@ -1,5 +1,4 @@
-"""
-Theme Manager for Intellicrack UI
+"""Theme Manager for Intellicrack UI
 Handles dynamic theme switching and stylesheet application
 """
 
@@ -16,7 +15,7 @@ class ThemeManager:
         """Initialize theme manager with default themes and UI styling options."""
         self.themes = {
             "dark": "dark_theme.qss",
-            "light": "light_theme.qss"
+            "light": "light_theme.qss",
         }
 
         # Directory for theme files
@@ -44,11 +43,11 @@ class ThemeManager:
         self.settings.setValue("theme", self.current_theme)
 
     def set_theme(self, theme_name):
-        """
-        Set the application theme
+        """Set the application theme
 
         Args:
             theme_name: Name of the theme ("dark" or "light")
+
         """
         if theme_name not in self.themes:
             print(f"Warning: Unknown theme '{theme_name}', using light theme")
@@ -85,7 +84,7 @@ class ThemeManager:
         # Try to load from file first
         if os.path.exists(theme_path):
             try:
-                with open(theme_path, "r", encoding="utf-8") as f:
+                with open(theme_path, encoding="utf-8") as f:
                     return f.read()
             except Exception as e:
                 print(f"Error loading theme file {theme_path}: {e}")
@@ -97,8 +96,7 @@ class ThemeManager:
         """Get built-in theme stylesheet when external files are not available"""
         if self.current_theme == "dark":
             return self._get_builtin_dark_stylesheet()
-        else:
-            return self._get_builtin_light_stylesheet()
+        return self._get_builtin_light_stylesheet()
 
     def _get_builtin_dark_stylesheet(self):
         """Built-in dark theme stylesheet with proper contrast"""

@@ -1,5 +1,4 @@
-"""
-Model Manager Dialog for Local GGUF Models
+"""Model Manager Dialog for Local GGUF Models
 
 Copyright (C) 2025 Zachary Flint
 
@@ -243,7 +242,7 @@ class ModelManagerDialog(QDialog):
         self.models_table = QTableWidget()
         self.models_table.setColumnCount(5)
         self.models_table.setHorizontalHeaderLabels([
-            "Model Name", "Size (MB)", "Status", "Path", "Actions"
+            "Model Name", "Size (MB)", "Status", "Path", "Actions",
         ])
 
         # Configure table
@@ -285,7 +284,7 @@ class ModelManagerDialog(QDialog):
         self.recommended_table = QTableWidget()
         self.recommended_table.setColumnCount(4)
         self.recommended_table.setHorizontalHeaderLabels([
-            "Model Name", "Description", "Size", "Actions"
+            "Model Name", "Description", "Size", "Actions",
         ])
 
         # Configure table
@@ -455,7 +454,7 @@ class ModelManagerDialog(QDialog):
             download_btn = QPushButton("Download")
             download_btn.clicked.connect(
                 lambda checked, url=model["url"], name=model["name"]:
-                self.download_model(url, name)
+                self.download_model(url, name),
             )
             self.recommended_table.setCellWidget(row, 3, download_btn)
 
@@ -488,7 +487,7 @@ class ModelManagerDialog(QDialog):
             load_btn = QPushButton("Load")
             load_btn.setEnabled(status != "Loaded")
             load_btn.clicked.connect(
-                lambda checked, name=model_name: self.load_model(name)
+                lambda checked, name=model_name: self.load_model(name),
             )
             self.models_table.setCellWidget(row, 4, load_btn)
 
@@ -520,7 +519,7 @@ Server URL: {gguf_manager.get_server_url()}"""
                 context_length=self.context_length_input.value(),
                 gpu_layers=self.gpu_layers_input.value(),
                 use_mmap=self.use_mmap_checkbox.isChecked(),
-                use_mlock=self.use_mlock_checkbox.isChecked()
+                use_mlock=self.use_mlock_checkbox.isChecked(),
             )
 
             if success:
@@ -560,7 +559,7 @@ Server URL: {gguf_manager.get_server_url()}"""
             reply = QMessageBox.question(
                 self, "Confirm Delete",
                 f"Are you sure you want to delete model '{model_name}'?",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
 
             if reply == QMessageBox.Yes:
@@ -590,7 +589,7 @@ Server URL: {gguf_manager.get_server_url()}"""
     def add_local_model(self):
         """Add a local model file."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select GGUF Model File", "", "GGUF Files (*.gguf);;All Files (*)"
+            self, "Select GGUF Model File", "", "GGUF Files (*.gguf);;All Files (*)",
         )
 
         if file_path:
@@ -634,10 +633,10 @@ Server URL: {gguf_manager.get_server_url()}"""
         # Create download thread
         download_thread = ModelDownloadThread(model_url, model_name)
         download_thread.progress_updated.connect(
-            lambda name, progress: progress_bar.setValue(int(progress)) if name == model_name else None
+            lambda name, progress: progress_bar.setValue(int(progress)) if name == model_name else None,
         )
         download_thread.download_finished.connect(
-            lambda name, success: self.on_download_finished(name, success, progress_widget)
+            lambda name, success: self.on_download_finished(name, success, progress_widget),
         )
         download_thread.log_message.connect(self.add_download_log)
 
@@ -660,7 +659,7 @@ Server URL: {gguf_manager.get_server_url()}"""
             "raw.githubusercontent.com",
             "ollama.ai",
             "anthropic.com",
-            "openai.com"
+            "openai.com",
         ]
 
         try:

@@ -9,7 +9,7 @@ import socket
 import sys
 import tempfile
 import threading
-from typing import Any, List, Optional
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -43,20 +43,19 @@ __all__ = ["RemotePluginExecutor"]
 
 
 class RemotePluginExecutor:
-    """
-    Execute plugins on remote systems.
+    """Execute plugins on remote systems.
 
     Provides secure remote plugin execution capabilities with serialization
     and network communication for distributed analysis tasks.
     """
 
-    def __init__(self, remote_host: Optional[str] = None, remote_port: Optional[int] = None):
-        """
-        Initialize the remote plugin executor.
+    def __init__(self, remote_host: str | None = None, remote_port: int | None = None):
+        """Initialize the remote plugin executor.
 
         Args:
             remote_host: Remote host to connect to (default: localhost)
             remote_port: Remote port to connect to (default: 8765)
+
         """
         self.remote_host = remote_host or "localhost"
         self.remote_port = remote_port or 8765
@@ -78,14 +77,14 @@ class RemotePluginExecutor:
         self.shared_secret = secret.encode()
 
     def _serialize_safe(self, data: Any) -> str:
-        """
-        Safely serialize data to JSON only - no pickle allowed for security.
+        """Safely serialize data to JSON only - no pickle allowed for security.
 
         Args:
             data: Data to serialize
 
         Returns:
             Base64-encoded serialized data
+
         """
         try:
             # Try JSON serialization
@@ -107,8 +106,7 @@ class RemotePluginExecutor:
             return base64.b64encode(json_str.encode("utf-8")).decode("ascii")
 
     def _deserialize_safe(self, encoded_data: str, expected_type: str = "json") -> Any:
-        """
-        Safely deserialize data - only JSON allowed for security.
+        """Safely deserialize data - only JSON allowed for security.
 
         Args:
             encoded_data: Base64-encoded data
@@ -116,6 +114,7 @@ class RemotePluginExecutor:
 
         Returns:
             Deserialized data
+
         """
         if expected_type != "json":
             raise ValueError(f"Unsupported serialization type: {expected_type}. Only JSON is allowed for security.")
@@ -128,9 +127,8 @@ class RemotePluginExecutor:
             self.logger.error(f"Failed to deserialize as JSON: {e}")
             raise ValueError("Invalid JSON data")
 
-    def execute_plugin(self, plugin_path: str, method_name: str, *args, **kwargs) -> List[str]:
-        """
-        Execute a plugin on a remote system.
+    def execute_plugin(self, plugin_path: str, method_name: str, *args, **kwargs) -> list[str]:
+        """Execute a plugin on a remote system.
 
         Args:
             plugin_path: Path to the plugin file
@@ -140,6 +138,7 @@ class RemotePluginExecutor:
 
         Returns:
             Results from the plugin method, or error messages
+
         """
         try:
             # Read plugin file
@@ -157,7 +156,7 @@ class RemotePluginExecutor:
                 "method_name": method_name,
                 "args": encoded_args,
                 "kwargs": encoded_kwargs,
-                "serialization": "json"  # Indicate serialization method
+                "serialization": "json",  # Indicate serialization method
             }
 
             # Add HMAC signature for authentication
@@ -210,7 +209,7 @@ class RemotePluginExecutor:
             error_msg = f"Connection error: {e}"
             self.logger.error(error_msg)
             return [error_msg]
-        except socket.timeout:
+        except TimeoutError:
             error_msg = "Connection timeout"
             self.logger.error(error_msg)
             return [error_msg]
@@ -221,21 +220,21 @@ class RemotePluginExecutor:
 
     @staticmethod
     def start_server(host: str = "localhost", port: int = 8765) -> None:
-        """
-        Start a remote plugin execution server.
+        """Start a remote plugin execution server.
 
         Args:
             host: Host to bind to
             port: Port to bind to
+
         """
         logger = logging.getLogger(__name__)
 
         def handle_client(client_socket: socket.socket) -> None:
-            """
-            Handle a client connection.
+            """Handle a client connection.
 
             Args:
                 client_socket: Client socket connection
+
             """
             try:
                 # Set timeout for client operations
@@ -329,7 +328,7 @@ class RemotePluginExecutor:
                     response = {
                         "status": "success",
                         "results": encoded_results,
-                        "serialization": "json"  # Indicate serialization type
+                        "serialization": "json",  # Indicate serialization type
                     }
 
                 except (OSError, ValueError, RuntimeError) as e:
@@ -337,7 +336,7 @@ class RemotePluginExecutor:
                     logger.error("Plugin execution error: %s", e)
                     response = {
                         "status": "error",
-                        "error": str(e)
+                        "error": str(e),
                     }
 
                 finally:
@@ -346,7 +345,6 @@ class RemotePluginExecutor:
                         os.unlink(plugin_path)
                     except OSError as e:
                         logger.error("OS error in remote_executor: %s", e)
-                        pass
 
                     # Remove plugin path from sys.path
                     plugin_dir = os.path.dirname(plugin_path)
@@ -364,20 +362,19 @@ class RemotePluginExecutor:
                 try:
                     response = {
                         "status": "error",
-                        "error": str(e)
+                        "error": str(e),
                     }
                     response_data = json.dumps(response).encode("utf-8") + b"\n"
                     client_socket.sendall(response_data)
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error in remote_executor: %s", e)
-                    pass  # Client may have disconnected
+                    # Client may have disconnected
 
             finally:
                 try:
                     client_socket.close()
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error in remote_executor: %s", e)
-                    pass
 
         # Create server socket
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -400,7 +397,7 @@ class RemotePluginExecutor:
                     client_thread = threading.Thread(
                         target=handle_client,
                         args=(client_socket,),
-                        daemon=True
+                        daemon=True,
                     )
                     client_thread.start()
 
@@ -417,14 +414,13 @@ class RemotePluginExecutor:
                 server_socket.close()
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in remote_executor: %s", e)
-                pass
 
     def test_connection(self) -> bool:
-        """
-        Test connection to the remote server.
+        """Test connection to the remote server.
 
         Returns:
             True if connection successful, False otherwise
+
         """
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -436,9 +432,8 @@ class RemotePluginExecutor:
             return False
 
 
-def _run_plugin_in_sandbox(plugin_instance: Any, method_name: str, *args, **kwargs) -> List[str]:
-    """
-    Run plugin method in a sandboxed environment.
+def _run_plugin_in_sandbox(plugin_instance: Any, method_name: str, *args, **kwargs) -> list[str]:
+    """Run plugin method in a sandboxed environment.
 
     Args:
         plugin_instance: Plugin instance to execute
@@ -448,6 +443,7 @@ def _run_plugin_in_sandbox(plugin_instance: Any, method_name: str, *args, **kwar
 
     Returns:
         Results from plugin method execution
+
     """
     try:
         # Check if method exists
@@ -464,12 +460,10 @@ def _run_plugin_in_sandbox(plugin_instance: Any, method_name: str, *args, **kwar
             # Ensure result is a list of strings
             if isinstance(result, list):
                 return [str(item) for item in result]
-            elif isinstance(result, str):
+            if isinstance(result, str):
                 return [result]
-            else:
-                return [str(result)]
-        else:
-            return [f"'{method_name}' is not callable"]
+            return [str(result)]
+        return [f"'{method_name}' is not callable"]
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in remote_executor: %s", e)
@@ -477,8 +471,7 @@ def _run_plugin_in_sandbox(plugin_instance: Any, method_name: str, *args, **kwar
 
 
 def create_remote_executor(host: str = "localhost", port: int = 8765) -> RemotePluginExecutor:
-    """
-    Factory function to create a RemotePluginExecutor.
+    """Factory function to create a RemotePluginExecutor.
 
     Args:
         host: Remote host address
@@ -486,5 +479,6 @@ def create_remote_executor(host: str = "localhost", port: int = 8765) -> RemoteP
 
     Returns:
         Configured RemotePluginExecutor instance
+
     """
     return RemotePluginExecutor(host, port)

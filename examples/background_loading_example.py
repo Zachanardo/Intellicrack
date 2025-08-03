@@ -26,7 +26,7 @@ from PyQt6.QtWidgets import (
 )
 
 # Add parent directory to path for imports
-sys.path.insert(0, '..')
+sys.path.insert(0, "..")
 
 from intellicrack.ai.background_loader import PrintProgressCallback, QueuedProgressCallback
 from intellicrack.ai.llm_backends import get_llm_manager
@@ -172,20 +172,20 @@ class BackgroundLoadingExample(QMainWindow):
                 provider=LLMProvider.OLLAMA,
                 model_name="llama2",
                 api_url="http://localhost:11434",
-                max_tokens=2048
+                max_tokens=2048,
             ),
             "openai": LLMConfig(
                 provider=LLMProvider.OPENAI,
                 model_name="gpt-3.5-turbo",
                 api_key="your-api-key-here",
-                max_tokens=2048
+                max_tokens=2048,
             ),
             "local": LLMConfig(
                 provider=LLMProvider.LOCAL_GGUF,
                 model_path="/path/to/model.gguf",
                 model_name="local-model",
-                max_tokens=2048
-            )
+                max_tokens=2048,
+            ),
         }
 
         if model_type not in configs:
@@ -204,7 +204,7 @@ class BackgroundLoadingExample(QMainWindow):
         task = self.llm_manager.load_model_in_background(
             llm_id=model_id,
             config=config,
-            priority=priority
+            priority=priority,
         )
 
         if task:

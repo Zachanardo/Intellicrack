@@ -1,7 +1,6 @@
 """Entropy visualization widget for binary analysis."""
 import math
 from collections import Counter
-from typing import List
 
 import numpy as np
 import pyqtgraph as pg
@@ -39,7 +38,7 @@ class EntropyVisualizer(QWidget):
         # Add entropy plot
         self.entropy_curve = self.plot_widget.plot(
             pen=pg.mkPen(color=(0, 255, 0), width=2),
-            name="Entropy"
+            name="Entropy",
         )
 
         # Add threshold lines
@@ -47,7 +46,7 @@ class EntropyVisualizer(QWidget):
             pos=7.5,
             angle=0,
             pen=pg.mkPen("r", style=Qt.PenStyle.DashLine),
-            label="High Entropy (7.5)"
+            label="High Entropy (7.5)",
         )
         self.plot_widget.addItem(self.high_entropy_line)
 
@@ -55,7 +54,7 @@ class EntropyVisualizer(QWidget):
             pos=1.0,
             angle=0,
             pen=pg.mkPen("b", style=Qt.PenStyle.DashLine),
-            label="Low Entropy (1.0)"
+            label="Low Entropy (1.0)",
         )
         self.plot_widget.addItem(self.low_entropy_line)
 
@@ -63,14 +62,14 @@ class EntropyVisualizer(QWidget):
         self.high_entropy_region = pg.LinearRegionItem(
             values=(7.5, 8.0),
             orientation="horizontal",
-            brush=pg.mkBrush(255, 0, 0, 50)
+            brush=pg.mkBrush(255, 0, 0, 50),
         )
         self.plot_widget.addItem(self.high_entropy_region)
 
         self.low_entropy_region = pg.LinearRegionItem(
             values=(0, 1.0),
             orientation="horizontal",
-            brush=pg.mkBrush(0, 0, 255, 50)
+            brush=pg.mkBrush(0, 0, 255, 50),
         )
         self.plot_widget.addItem(self.low_entropy_region)
 
@@ -146,7 +145,7 @@ class EntropyVisualizer(QWidget):
         # Emit signal for other components
         self.entropy_calculated.emit(self.block_positions, self.entropy_data)
 
-    def find_suspicious_regions(self) -> List[tuple]:
+    def find_suspicious_regions(self) -> list[tuple]:
         """Find regions with suspicious entropy patterns."""
         suspicious = []
 
@@ -160,7 +159,7 @@ class EntropyVisualizer(QWidget):
                 suspicious.append((
                     self.block_positions[i],
                     "Sudden entropy change",
-                    f"Δ = {diff:.2f}"
+                    f"Δ = {diff:.2f}",
                 ))
 
         # Look for packed/encrypted sections
@@ -169,13 +168,13 @@ class EntropyVisualizer(QWidget):
                 suspicious.append((
                     self.block_positions[i],
                     "Possible encryption/compression",
-                    f"Entropy = {entropy:.2f}"
+                    f"Entropy = {entropy:.2f}",
                 ))
             elif entropy < 0.5:
                 suspicious.append((
                     self.block_positions[i],
                     "Possible padding/null bytes",
-                    f"Entropy = {entropy:.2f}"
+                    f"Entropy = {entropy:.2f}",
                 ))
 
         return suspicious

@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -30,7 +29,7 @@ import json
 import logging
 import os
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 # Create module logger
 logger = logging.getLogger(__name__)
@@ -58,8 +57,7 @@ except ImportError as e:
 
 
 class EncryptionManager:
-    """
-    Advanced encryption manager with AES-256, RSA key exchange,
+    """Advanced encryption manager with AES-256, RSA key exchange,
     and perfect forward secrecy for C2 communications.
     """
 
@@ -102,7 +100,7 @@ class EncryptionManager:
             "encryptions": 0,
             "decryptions": 0,
             "key_rotations": 0,
-            "last_key_rotation": time.time()
+            "last_key_rotation": time.time(),
         }
 
     def _initialize_encryption(self):
@@ -126,7 +124,7 @@ class EncryptionManager:
             self.rsa_private_key = rsa.generate_private_key(
                 public_exponent=65537,
                 key_size=2048,
-                backend=default_backend()
+                backend=default_backend(),
             )
 
             self.rsa_public_key = self.rsa_private_key.public_key()
@@ -138,8 +136,7 @@ class EncryptionManager:
             raise
 
     def encrypt(self, plaintext: str, session_id: str = None) -> bytes:
-        """
-        Encrypt plaintext using AES-256-CBC with HMAC authentication.
+        """Encrypt plaintext using AES-256-CBC with HMAC authentication.
 
         Args:
             plaintext: Data to encrypt
@@ -147,6 +144,7 @@ class EncryptionManager:
 
         Returns:
             Encrypted data with IV and HMAC
+
         """
         try:
             # Get encryption key
@@ -159,7 +157,7 @@ class EncryptionManager:
             cipher = Cipher(
                 algorithms.AES(key),
                 modes.CBC(iv),
-                backend=default_backend()
+                backend=default_backend(),
             )
             encryptor = cipher.encryptor()
 
@@ -181,8 +179,7 @@ class EncryptionManager:
             raise
 
     def decrypt(self, encrypted_data: bytes, session_id: str = None) -> str:
-        """
-        Decrypt data using AES-256-CBC with HMAC verification.
+        """Decrypt data using AES-256-CBC with HMAC verification.
 
         Args:
             encrypted_data: Encrypted data to decrypt
@@ -190,6 +187,7 @@ class EncryptionManager:
 
         Returns:
             Decrypted plaintext
+
         """
         try:
             if len(encrypted_data) < self.iv_size + self.hmac_size:
@@ -214,7 +212,7 @@ class EncryptionManager:
             cipher = Cipher(
                 algorithms.AES(key),
                 modes.CBC(iv),
-                backend=default_backend()
+                backend=default_backend(),
             )
             decryptor = cipher.decryptor()
 
@@ -239,7 +237,7 @@ class EncryptionManager:
             self.session_keys[session_id] = {
                 "key": session_key,
                 "created_at": time.time(),
-                "used_count": 0
+                "used_count": 0,
             }
 
             self.logger.info(f"Created session key for {session_id}")
@@ -249,21 +247,21 @@ class EncryptionManager:
             self.logger.error(f"Failed to create session key: {e}")
             raise
 
-    def exchange_keys(self, client_public_key_pem: bytes) -> Dict[str, Any]:
-        """
-        Perform RSA key exchange with client.
+    def exchange_keys(self, client_public_key_pem: bytes) -> dict[str, Any]:
+        """Perform RSA key exchange with client.
 
         Args:
             client_public_key_pem: Client's RSA public key in PEM format
 
         Returns:
             Key exchange response with encrypted session key
+
         """
         try:
             # Load client public key
             client_public_key = serialization.load_pem_public_key(
                 client_public_key_pem,
-                backend=default_backend()
+                backend=default_backend(),
             )
 
             # Generate session key
@@ -276,28 +274,28 @@ class EncryptionManager:
                 padding.OAEP(
                     mgf=padding.MGF1(algorithm=hashes.SHA256()),
                     algorithm=hashes.SHA256(),
-                    label=None
-                )
+                    label=None,
+                ),
             )
 
             # Store session key
             self.session_keys[session_id] = {
                 "key": session_key,
                 "created_at": time.time(),
-                "used_count": 0
+                "used_count": 0,
             }
 
             # Get our public key for client
             server_public_key_pem = self.rsa_public_key.public_bytes(
                 encoding=serialization.Encoding.PEM,
-                format=serialization.PublicFormat.SubjectPublicKeyInfo
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
             )
 
             return {
                 "session_id": session_id,
                 "encrypted_session_key": base64.b64encode(encrypted_session_key).decode("utf-8"),
                 "server_public_key": server_public_key_pem.decode("utf-8"),
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
 
         except Exception as e:
@@ -346,7 +344,7 @@ class EncryptionManager:
         try:
             public_key_pem = self.rsa_public_key.public_bytes(
                 encoding=serialization.Encoding.PEM,
-                format=serialization.PublicFormat.SubjectPublicKeyInfo
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
             )
             return public_key_pem.decode("utf-8")
 
@@ -355,8 +353,7 @@ class EncryptionManager:
             return ""
 
     def encrypt_file(self, file_path: str, output_path: str = None, session_id: str = None) -> str:
-        """
-        Encrypt a file using AES-256.
+        """Encrypt a file using AES-256.
 
         Args:
             file_path: Path to file to encrypt
@@ -365,6 +362,7 @@ class EncryptionManager:
 
         Returns:
             Path to encrypted file
+
         """
         try:
             if not output_path:
@@ -389,8 +387,7 @@ class EncryptionManager:
             raise
 
     def decrypt_file(self, encrypted_file_path: str, output_path: str = None, session_id: str = None) -> str:
-        """
-        Decrypt a file using AES-256.
+        """Decrypt a file using AES-256.
 
         Args:
             encrypted_file_path: Path to encrypted file
@@ -399,6 +396,7 @@ class EncryptionManager:
 
         Returns:
             Path to decrypted file
+
         """
         try:
             if not output_path:
@@ -445,7 +443,7 @@ class EncryptionManager:
             length=32,
             salt=salt,
             iterations=100000,
-            backend=default_backend()
+            backend=default_backend(),
         )
         return kdf.derive(encryption_key)
 
@@ -486,7 +484,7 @@ class EncryptionManager:
                 length=self.key_size,
                 salt=salt,
                 iterations=100000,
-                backend=default_backend()
+                backend=default_backend(),
             )
 
             return kdf.derive(password.encode("utf-8"))
@@ -495,7 +493,7 @@ class EncryptionManager:
             self.logger.error(f"Key derivation failed: {e}")
             raise
 
-    def get_session_statistics(self) -> Dict[str, Any]:
+    def get_session_statistics(self) -> dict[str, Any]:
         """Get encryption session statistics."""
         try:
             current_time = time.time()
@@ -505,7 +503,7 @@ class EncryptionManager:
                 "active_sessions": 0,
                 "total_encryptions": 0,
                 "last_key_rotation": self.last_key_rotation,
-                "time_until_rotation": max(0, self.key_rotation_interval - (current_time - self.last_key_rotation))
+                "time_until_rotation": max(0, self.key_rotation_interval - (current_time - self.last_key_rotation)),
             }
 
             # Calculate active sessions and usage
@@ -540,7 +538,7 @@ class EncryptionManager:
         except Exception as e:
             self.logger.error(f"Error cleaning up sessions: {e}")
 
-    def export_session_key(self, session_id: str) -> Optional[str]:
+    def export_session_key(self, session_id: str) -> str | None:
         """Export session key for backup/transfer."""
         try:
             if session_id not in self.session_keys:
@@ -551,7 +549,7 @@ class EncryptionManager:
                 "session_id": session_id,
                 "key": base64.b64encode(key_data["key"]).decode("utf-8"),
                 "created_at": key_data["created_at"],
-                "used_count": key_data["used_count"]
+                "used_count": key_data["used_count"],
             }
 
             return base64.b64encode(json.dumps(exported_key).encode()).decode("utf-8")
@@ -573,7 +571,7 @@ class EncryptionManager:
             self.session_keys[session_id] = {
                 "key": session_key,
                 "created_at": key_data["created_at"],
-                "used_count": key_data["used_count"]
+                "used_count": key_data["used_count"],
             }
 
             self.logger.info(f"Imported session key for {session_id}")

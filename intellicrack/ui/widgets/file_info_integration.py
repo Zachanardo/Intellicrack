@@ -1,5 +1,4 @@
-"""
-Integration example for file metadata display functionality.
+"""Integration example for file metadata display functionality.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -27,11 +26,11 @@ logger = logging.getLogger(__name__)
 
 
 def add_file_metadata_to_app(app_instance):
-    """
-    Add file metadata display functionality to the main application.
+    """Add file metadata display functionality to the main application.
 
     Args:
         app_instance: Main application instance
+
     """
     from .file_metadata_widget import FileMetadataWidget, FileTimestampTracker
 
@@ -71,12 +70,12 @@ def add_file_metadata_to_app(app_instance):
 
 
 def update_status_with_timestamp(app_instance, message: str):
-    """
-    Update application status with timestamp.
+    """Update application status with timestamp.
 
     Args:
         app_instance: Main application instance
         message: Status message to display
+
     """
     current_time = QDateTime.currentDateTime()
     timestamp = current_time.toString("yyyy-MM-dd hh:mm:ss")
@@ -92,11 +91,11 @@ def update_status_with_timestamp(app_instance, message: str):
 
 
 def track_binary_modifications(app_instance):
-    """
-    Track modifications to the loaded binary file.
+    """Track modifications to the loaded binary file.
 
     Args:
         app_instance: Main application instance
+
     """
     if not hasattr(app_instance, "timestamp_tracker"):
         from .file_metadata_widget import FileTimestampTracker
@@ -109,7 +108,7 @@ def track_binary_modifications(app_instance):
         if check_result.get("changed", False):
             update_status_with_timestamp(
                 app_instance,
-                f"Binary file modified: {app_instance.binary_path}"
+                f"Binary file modified: {app_instance.binary_path}",
             )
 
             # Update metadata display if available
@@ -118,12 +117,12 @@ def track_binary_modifications(app_instance):
 
 
 def display_pe_timestamps(app_instance, pe_file):
-    """
-    Display PE file timestamps using QDateTime.
+    """Display PE file timestamps using QDateTime.
 
     Args:
         app_instance: Main application instance
         pe_file: pefile.PE object
+
     """
     if not hasattr(pe_file, "FILE_HEADER"):
         return
@@ -164,14 +163,14 @@ def display_pe_timestamps(app_instance, pe_file):
 
 
 def get_file_metadata_summary(file_path: str) -> str:
-    """
-    Get a formatted summary of file metadata.
+    """Get a formatted summary of file metadata.
 
     Args:
         file_path: Path to the file
 
     Returns:
         Formatted metadata summary string
+
     """
     file_info = QFileInfo(file_path)
 
@@ -214,13 +213,11 @@ def _format_size(size: int) -> str:
 
 # Example usage in main_app.py
 def integrate_file_metadata_display(app):
-    """
-    Example integration function for main_app.py
+    """Example integration function for main_app.py
 
     This function shows how to integrate the file metadata functionality
     into the main application.
     """
-
     # Add metadata widget to the application
     metadata_widget, timestamp_tracker = add_file_metadata_to_app(app)
 

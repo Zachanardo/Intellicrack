@@ -1,6 +1,6 @@
 """Radare2 import/export analysis module for binary function analysis."""
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -31,8 +31,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 class R2ImportExportAnalyzer:
-    """
-    Advanced import/export analysis engine using radare2's comprehensive API detection.
+    """Advanced import/export analysis engine using radare2's comprehensive API detection.
 
     Provides sophisticated analysis for:
     - Windows API function imports
@@ -45,25 +44,25 @@ class R2ImportExportAnalyzer:
     - Anti-analysis API detection
     """
 
-    def __init__(self, binary_path: str, radare2_path: Optional[str] = None):
-        """
-        Initialize import/export analyzer.
+    def __init__(self, binary_path: str, radare2_path: str | None = None):
+        """Initialize import/export analyzer.
 
         Args:
             binary_path: Path to binary file
             radare2_path: Optional path to radare2 executable
+
         """
         self.binary_path = binary_path
         self.radare2_path = radare2_path
         self.logger = logging.getLogger(__name__)
         self.api_cache = {}
 
-    def analyze_imports_exports(self) -> Dict[str, Any]:
-        """
-        Perform comprehensive import/export analysis on the binary.
+    def analyze_imports_exports(self) -> dict[str, Any]:
+        """Perform comprehensive import/export analysis on the binary.
 
         Returns:
             Complete import/export analysis results
+
         """
         result = {
             "binary_path": self.binary_path,
@@ -85,7 +84,7 @@ class R2ImportExportAnalyzer:
             "debug_apis": [],
             "api_statistics": {},
             "security_assessment": {},
-            "cross_references": {}
+            "cross_references": {},
         }
 
         try:
@@ -143,7 +142,7 @@ class R2ImportExportAnalyzer:
 
         return result
 
-    def _analyze_imports(self, r2: R2Session) -> List[Dict[str, Any]]:
+    def _analyze_imports(self, r2: R2Session) -> list[dict[str, Any]]:
         """Analyze imported functions."""
         imports = []
 
@@ -160,7 +159,7 @@ class R2ImportExportAnalyzer:
                         "library": imp.get("libname", ""),
                         "type": imp.get("type", ""),
                         "bind": imp.get("bind", ""),
-                        "is_weak": imp.get("is_weak", False)
+                        "is_weak": imp.get("is_weak", False),
                     }
 
                     # Add additional analysis
@@ -178,14 +177,13 @@ class R2ImportExportAnalyzer:
                     self._parse_plt_data(plt_data, imports)
             except R2Exception as e:
                 logger.error("R2Exception in radare2_imports: %s", e)
-                pass
 
         except R2Exception as e:
             self.logger.error(f"Failed to analyze imports: {e}")
 
         return imports
 
-    def _analyze_exports(self, r2: R2Session) -> List[Dict[str, Any]]:
+    def _analyze_exports(self, r2: R2Session) -> list[dict[str, Any]]:
         """Analyze exported functions."""
         exports = []
 
@@ -201,7 +199,7 @@ class R2ImportExportAnalyzer:
                         "ordinal": exp.get("ordinal", 0),
                         "size": exp.get("size", 0),
                         "type": exp.get("type", ""),
-                        "is_forwarded": exp.get("forwarder", "") != ""
+                        "is_forwarded": exp.get("forwarder", "") != "",
                     }
 
                     # Add additional analysis
@@ -215,7 +213,7 @@ class R2ImportExportAnalyzer:
 
         return exports
 
-    def _analyze_dll_dependencies(self, r2: R2Session) -> List[Dict[str, Any]]:
+    def _analyze_dll_dependencies(self, r2: R2Session) -> list[dict[str, Any]]:
         """Analyze DLL dependencies and libraries."""
         dependencies = []
 
@@ -229,7 +227,7 @@ class R2ImportExportAnalyzer:
                         "name": lib.get("name", ""),
                         "path": lib.get("path", ""),
                         "base_address": lib.get("baddr", 0),
-                        "size": lib.get("size", 0)
+                        "size": lib.get("size", 0),
                     }
 
                     # Analyze library characteristics
@@ -244,7 +242,7 @@ class R2ImportExportAnalyzer:
 
         return dependencies
 
-    def _analyze_symbols(self, r2: R2Session) -> List[Dict[str, Any]]:
+    def _analyze_symbols(self, r2: R2Session) -> list[dict[str, Any]]:
         """Analyze symbols in the binary."""
         symbols = []
 
@@ -260,7 +258,7 @@ class R2ImportExportAnalyzer:
                         "size": sym.get("size", 0),
                         "type": sym.get("type", ""),
                         "bind": sym.get("bind", ""),
-                        "is_imported": sym.get("is_imported", False)
+                        "is_imported": sym.get("is_imported", False),
                     }
 
                     # Additional symbol analysis
@@ -274,7 +272,7 @@ class R2ImportExportAnalyzer:
 
         return symbols
 
-    def _analyze_relocations(self, r2: R2Session) -> List[Dict[str, Any]]:
+    def _analyze_relocations(self, r2: R2Session) -> list[dict[str, Any]]:
         """Analyze relocations in the binary."""
         relocations = []
 
@@ -289,7 +287,7 @@ class R2ImportExportAnalyzer:
                         "type": reloc.get("type", ""),
                         "name": reloc.get("name", ""),
                         "addend": reloc.get("addend", 0),
-                        "target": reloc.get("target", 0)
+                        "target": reloc.get("target", 0),
                     }
 
                     # Additional relocation analysis
@@ -302,7 +300,7 @@ class R2ImportExportAnalyzer:
 
         return relocations
 
-    def _categorize_apis(self, imports: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    def _categorize_apis(self, imports: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
         """Categorize APIs by functionality."""
         categories = {
             "system_info": [],
@@ -316,7 +314,7 @@ class R2ImportExportAnalyzer:
             "debugging": [],
             "security": [],
             "time_date": [],
-            "error_handling": []
+            "error_handling": [],
         }
 
         for imp in imports:
@@ -372,7 +370,7 @@ class R2ImportExportAnalyzer:
 
         return categories
 
-    def _detect_suspicious_apis(self, imports: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _detect_suspicious_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Detect suspicious API usage patterns."""
         suspicious = []
 
@@ -382,7 +380,7 @@ class R2ImportExportAnalyzer:
             "persistence": ["regsetvalueex", "createservice", "setwinhook", "createfile.*startup"],
             "evasion": ["isdebuggerpresent", "checkremotedebugger", "gettickcount", "sleep"],
             "data_theft": ["cryptdecrypt", "cryptencrypt", "internetreadfile", "ftpputfile"],
-            "privilege_escalation": ["adjusttokenprivileges", "seservicestatus", "impersonateloggedonuser"]
+            "privilege_escalation": ["adjusttokenprivileges", "seservicestatus", "impersonateloggedonuser"],
         }
 
         for imp in imports:
@@ -394,13 +392,13 @@ class R2ImportExportAnalyzer:
                         "api": imp,
                         "category": category,
                         "risk_level": "high",
-                        "description": f'API commonly used for {category.replace("_", " ")}'
+                        "description": f'API commonly used for {category.replace("_", " ")}',
                     })
                     break
 
         return suspicious
 
-    def _identify_license_apis(self, imports: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _identify_license_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Identify APIs commonly used for license validation."""
         license_apis = []
 
@@ -410,7 +408,7 @@ class R2ImportExportAnalyzer:
             "file_licensing": ["createfile", "readfile", "writefile", "getfileattributes"],
             "network_licensing": ["internetopen", "internetconnect", "httpsendrequest"],
             "crypto_licensing": ["cryptcreatehash", "crypthashdata", "cryptdecrypt", "cryptencrypt"],
-            "time_licensing": ["getsystemtime", "getlocaltime", "comparesystemtime"]
+            "time_licensing": ["getsystemtime", "getlocaltime", "comparesystemtime"],
         }
 
         for imp in imports:
@@ -422,13 +420,13 @@ class R2ImportExportAnalyzer:
                         "api": imp,
                         "license_category": category,
                         "usage_purpose": self._get_license_usage_purpose(category),
-                        "bypass_difficulty": self._assess_bypass_difficulty(category)
+                        "bypass_difficulty": self._assess_bypass_difficulty(category),
                     })
                     break
 
         return license_apis
 
-    def _identify_crypto_apis(self, imports: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _identify_crypto_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Identify cryptographic APIs."""
         crypto_apis = []
 
@@ -438,7 +436,7 @@ class R2ImportExportAnalyzer:
             "hashing": ["cryptcreatehash", "crypthashdata", "cryptgethashparam"],
             "key_management": ["cryptgenkey", "cryptderivekey", "cryptdestroykey"],
             "random_generation": ["cryptgenrandom", "rtlgenrandom"],
-            "certificate": ["certopensystemstore", "certfindcertificateinstore"]
+            "certificate": ["certopensystemstore", "certfindcertificateinstore"],
         }
 
         for imp in imports:
@@ -450,13 +448,13 @@ class R2ImportExportAnalyzer:
                         "api": imp,
                         "crypto_category": category,
                         "algorithm_type": self._identify_crypto_algorithm(api_name),
-                        "security_strength": self._assess_crypto_strength(api_name)
+                        "security_strength": self._assess_crypto_strength(api_name),
                     })
                     break
 
         return crypto_apis
 
-    def _identify_anti_analysis_apis(self, imports: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _identify_anti_analysis_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Identify anti-analysis and anti-debugging APIs."""
         anti_analysis_apis = []
 
@@ -464,7 +462,7 @@ class R2ImportExportAnalyzer:
             "debugger_detection": ["isdebuggerpresent", "checkremotedebugger", "ntqueryinformationprocess"],
             "vm_detection": ["getmodulehandle.*vbox", "getmodulehandle.*vmware", "createfile.*pipe"],
             "analysis_evasion": ["virtualprotect", "gettickcount", "sleep", "timegettime"],
-            "code_obfuscation": ["virtualalloc", "heapalloc", "memcpy", "memmove"]
+            "code_obfuscation": ["virtualalloc", "heapalloc", "memcpy", "memmove"],
         }
 
         for imp in imports:
@@ -476,13 +474,13 @@ class R2ImportExportAnalyzer:
                         "api": imp,
                         "anti_analysis_category": category,
                         "evasion_technique": self._identify_evasion_technique(category),
-                        "countermeasure": self._suggest_countermeasure(category)
+                        "countermeasure": self._suggest_countermeasure(category),
                     })
                     break
 
         return anti_analysis_apis
 
-    def _identify_network_apis(self, imports: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _identify_network_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Identify network-related APIs."""
         network_apis = []
 
@@ -494,12 +492,12 @@ class R2ImportExportAnalyzer:
                 network_apis.append({
                     "api": imp,
                     "network_purpose": self._identify_network_purpose(api_name),
-                    "protocol": self._identify_network_protocol(api_name)
+                    "protocol": self._identify_network_protocol(api_name),
                 })
 
         return network_apis
 
-    def _identify_file_system_apis(self, imports: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _identify_file_system_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Identify file system APIs."""
         file_apis = []
 
@@ -511,12 +509,12 @@ class R2ImportExportAnalyzer:
                 file_apis.append({
                     "api": imp,
                     "file_operation": self._identify_file_operation(api_name),
-                    "access_type": self._identify_file_access_type(api_name)
+                    "access_type": self._identify_file_access_type(api_name),
                 })
 
         return file_apis
 
-    def _identify_registry_apis(self, imports: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _identify_registry_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Identify registry APIs."""
         registry_apis = []
 
@@ -528,12 +526,12 @@ class R2ImportExportAnalyzer:
                 registry_apis.append({
                     "api": imp,
                     "registry_operation": self._identify_registry_operation(api_name),
-                    "typical_usage": self._identify_registry_usage(api_name)
+                    "typical_usage": self._identify_registry_usage(api_name),
                 })
 
         return registry_apis
 
-    def _identify_process_apis(self, imports: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _identify_process_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Identify process management APIs."""
         process_apis = []
 
@@ -545,12 +543,12 @@ class R2ImportExportAnalyzer:
                 process_apis.append({
                     "api": imp,
                     "process_operation": self._identify_process_operation(api_name),
-                    "security_implications": self._assess_process_security_implications(api_name)
+                    "security_implications": self._assess_process_security_implications(api_name),
                 })
 
         return process_apis
 
-    def _identify_memory_apis(self, imports: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _identify_memory_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Identify memory management APIs."""
         memory_apis = []
 
@@ -562,12 +560,12 @@ class R2ImportExportAnalyzer:
                 memory_apis.append({
                     "api": imp,
                     "memory_operation": self._identify_memory_operation(api_name),
-                    "allocation_type": self._identify_allocation_type(api_name)
+                    "allocation_type": self._identify_allocation_type(api_name),
                 })
 
         return memory_apis
 
-    def _identify_debug_apis(self, imports: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _identify_debug_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Identify debugging-related APIs."""
         debug_apis = []
 
@@ -579,7 +577,7 @@ class R2ImportExportAnalyzer:
                 debug_apis.append({
                     "api": imp,
                     "debug_purpose": self._identify_debug_purpose(api_name),
-                    "anti_debug_potential": self._assess_anti_debug_potential(api_name)
+                    "anti_debug_potential": self._assess_anti_debug_potential(api_name),
                 })
 
         return debug_apis
@@ -591,16 +589,15 @@ class R2ImportExportAnalyzer:
 
         if any(pattern in name_lower for pattern in ["file", "read", "write"]):
             return "file_io"
-        elif any(pattern in name_lower for pattern in ["reg", "registry"]):
+        if any(pattern in name_lower for pattern in ["reg", "registry"]):
             return "registry"
-        elif any(pattern in name_lower for pattern in ["process", "thread"]):
+        if any(pattern in name_lower for pattern in ["process", "thread"]):
             return "process_management"
-        elif any(pattern in name_lower for pattern in ["crypt", "hash"]):
+        if any(pattern in name_lower for pattern in ["crypt", "hash"]):
             return "cryptography"
-        elif any(pattern in name_lower for pattern in ["socket", "internet", "http"]):
+        if any(pattern in name_lower for pattern in ["socket", "internet", "http"]):
             return "network"
-        else:
-            return "general"
+        return "general"
 
     def _assess_api_risk(self, api_name: str) -> str:
         """Assess the risk level of an API."""
@@ -611,10 +608,9 @@ class R2ImportExportAnalyzer:
 
         if any(api in name_lower for api in high_risk_apis):
             return "high"
-        elif any(api in name_lower for api in medium_risk_apis):
+        if any(api in name_lower for api in medium_risk_apis):
             return "medium"
-        else:
-            return "low"
+        return "low"
 
     def _get_api_description(self, api_name: str) -> str:
         """Get a description of what the API does."""
@@ -626,12 +622,12 @@ class R2ImportExportAnalyzer:
             "regqueryvalueex": "Queries a registry value",
             "createprocess": "Creates a new process",
             "virtualallocex": "Allocates memory in another process",
-            "isdebuggerpresent": "Checks if a debugger is present"
+            "isdebuggerpresent": "Checks if a debugger is present",
         }
 
         return api_descriptions.get(api_name.lower(), "Unknown API function")
 
-    def _parse_plt_data(self, plt_data: str, imports: List[Dict[str, Any]]):
+    def _parse_plt_data(self, plt_data: str, imports: list[dict[str, Any]]):
         """Parse PLT data and add to imports."""
         import re
 
@@ -664,7 +660,7 @@ class R2ImportExportAnalyzer:
                     "address": hex(address),
                     "type": "plt",
                     "source": "PLT section",
-                    "calling_convention": "cdecl"  # Default for PLT
+                    "calling_convention": "cdecl",  # Default for PLT
                 })
 
     def _guess_library_from_function(self, function_name: str) -> str:
@@ -726,7 +722,7 @@ class R2ImportExportAnalyzer:
             "RegOpenKeyExA": "advapi32.dll",
             "RegOpenKeyExW": "advapi32.dll",
             "CryptAcquireContextA": "advapi32.dll",
-            "CryptAcquireContextW": "advapi32.dll"
+            "CryptAcquireContextW": "advapi32.dll",
         }
 
         # Check direct mapping
@@ -761,12 +757,11 @@ class R2ImportExportAnalyzer:
 
         if any(lib in name_lower for lib in system_libs):
             return "system"
-        elif any(lib in name_lower for lib in crypto_libs):
+        if any(lib in name_lower for lib in crypto_libs):
             return "cryptography"
-        elif any(lib in name_lower for lib in network_libs):
+        if any(lib in name_lower for lib in network_libs):
             return "network"
-        else:
-            return "application"
+        return "application"
 
     def _assess_library_security_impact(self, lib_name: str) -> str:
         """Assess the security impact of a library."""
@@ -775,18 +770,17 @@ class R2ImportExportAnalyzer:
 
         if any(lib in lib_name.lower() for lib in high_impact_libs):
             return "high"
-        elif any(lib in lib_name.lower() for lib in medium_impact_libs):
+        if any(lib in lib_name.lower() for lib in medium_impact_libs):
             return "medium"
-        else:
-            return "low"
+        return "low"
 
-    def _get_common_apis_for_library(self, lib_name: str) -> List[str]:
+    def _get_common_apis_for_library(self, lib_name: str) -> list[str]:
         """Get common APIs for a library."""
         common_apis = {
             "kernel32": ["CreateFile", "ReadFile", "WriteFile", "CreateProcess"],
             "user32": ["MessageBox", "CreateWindow", "ShowWindow"],
             "advapi32": ["RegOpenKeyEx", "RegQueryValueEx", "AdjustTokenPrivileges"],
-            "ws2_32": ["WSAStartup", "socket", "connect", "send", "recv"]
+            "ws2_32": ["WSAStartup", "socket", "connect", "send", "recv"],
         }
 
         return common_apis.get(lib_name.lower(), [])
@@ -802,7 +796,7 @@ class R2ImportExportAnalyzer:
             "file_licensing": "Read/write license files",
             "network_licensing": "Validate license online",
             "crypto_licensing": "Encrypt/decrypt license data",
-            "time_licensing": "Check license expiration"
+            "time_licensing": "Check license expiration",
         }
         return purposes.get(category, "Unknown purpose")
 
@@ -814,7 +808,7 @@ class R2ImportExportAnalyzer:
             "file_licensing": "low",
             "network_licensing": "high",
             "crypto_licensing": "high",
-            "time_licensing": "medium"
+            "time_licensing": "medium",
         }
         return difficulty_map.get(category, "unknown")
 
@@ -822,14 +816,13 @@ class R2ImportExportAnalyzer:
         """Identify crypto algorithm from API name."""
         if "aes" in api_name.lower():
             return "AES"
-        elif "des" in api_name.lower():
+        if "des" in api_name.lower():
             return "DES"
-        elif "rsa" in api_name.lower():
+        if "rsa" in api_name.lower():
             return "RSA"
-        elif "hash" in api_name.lower():
+        if "hash" in api_name.lower():
             return "Hash"
-        else:
-            return "Unknown"
+        return "Unknown"
 
     def _assess_crypto_strength(self, api_name: str) -> str:
         """Assess cryptographic strength."""
@@ -839,10 +832,9 @@ class R2ImportExportAnalyzer:
         name_lower = api_name.lower()
         if any(algo in name_lower for algo in strong_algos):
             return "strong"
-        elif any(algo in name_lower for algo in weak_algos):
+        if any(algo in name_lower for algo in weak_algos):
             return "weak"
-        else:
-            return "medium"
+        return "medium"
 
     def _identify_evasion_technique(self, category: str) -> str:
         """Identify evasion technique."""
@@ -850,7 +842,7 @@ class R2ImportExportAnalyzer:
             "debugger_detection": "Anti-debugging",
             "vm_detection": "Anti-VM",
             "analysis_evasion": "Anti-analysis",
-            "code_obfuscation": "Code obfuscation"
+            "code_obfuscation": "Code obfuscation",
         }
         return techniques.get(category, "Unknown")
 
@@ -860,7 +852,7 @@ class R2ImportExportAnalyzer:
             "debugger_detection": "Patch debugger checks or use stealthier debugger",
             "vm_detection": "Use physical machine or better VM hiding",
             "analysis_evasion": "Use dynamic analysis or emulation",
-            "code_obfuscation": "Use deobfuscation tools or manual analysis"
+            "code_obfuscation": "Use deobfuscation tools or manual analysis",
         }
         return countermeasures.get(category, "Manual analysis required")
 
@@ -869,36 +861,33 @@ class R2ImportExportAnalyzer:
         """Identify network API purpose."""
         if "socket" in api_name.lower():
             return "Socket operations"
-        elif "http" in api_name.lower():
+        if "http" in api_name.lower():
             return "HTTP communications"
-        elif "ftp" in api_name.lower():
+        if "ftp" in api_name.lower():
             return "FTP operations"
-        else:
-            return "General networking"
+        return "General networking"
 
     def _identify_network_protocol(self, api_name: str) -> str:
         """Identify network protocol."""
         if "tcp" in api_name.lower():
             return "TCP"
-        elif "udp" in api_name.lower():
+        if "udp" in api_name.lower():
             return "UDP"
-        elif "http" in api_name.lower():
+        if "http" in api_name.lower():
             return "HTTP"
-        else:
-            return "Unknown"
+        return "Unknown"
 
     def _identify_file_operation(self, api_name: str) -> str:
         """Identify file operation type."""
         if "create" in api_name.lower():
             return "Create/Open"
-        elif "read" in api_name.lower():
+        if "read" in api_name.lower():
             return "Read"
-        elif "write" in api_name.lower():
+        if "write" in api_name.lower():
             return "Write"
-        elif "delete" in api_name.lower():
+        if "delete" in api_name.lower():
             return "Delete"
-        else:
-            return "Unknown"
+        return "Unknown"
 
     def _identify_file_access_type(self, api_name: str) -> str:
         """Identify file access type based on API name."""
@@ -912,7 +901,7 @@ class R2ImportExportAnalyzer:
             "readfile", "getfileattributes", "getfilesize", "findfirst", "findnext",
             "getfileinformationbyhandle", "readfileex", "readfilescatter",
             "openfile", "createfile.*generic_read", "_read", "fread", "fgets",
-            "getprivateprofilestring", "loadlibrary", "loadimage"
+            "getprivateprofilestring", "loadlibrary", "loadimage",
         ]
 
         # Write access patterns
@@ -920,20 +909,20 @@ class R2ImportExportAnalyzer:
             "writefile", "setfileattributes", "setendoffile", "createfile.*generic_write",
             "writefileex", "writefilegather", "_write", "fwrite", "fputs",
             "setprivateprofilestring", "copyfile", "movefile", "deletefile",
-            "createfile.*file_write", "flushfilebuffers"
+            "createfile.*file_write", "flushfilebuffers",
         ]
 
         # Execute access patterns
         execute_patterns = [
             "createprocess", "shellexecute", "winexec", "loadlibrary",
-            "createfile.*file_execute", "mapviewoffile.*file_map_execute"
+            "createfile.*file_execute", "mapviewoffile.*file_map_execute",
         ]
 
         # Modify/Delete patterns
         modify_patterns = [
             "setfilepointer", "setfiletime", "setfilevaliddata",
             "deletefile", "removedirectory", "movefileex", "replaceifle",
-            "truncatefile", "setfileinformationbyhandle"
+            "truncatefile", "setfileinformationbyhandle",
         ]
 
         # Check for read access
@@ -998,21 +987,19 @@ class R2ImportExportAnalyzer:
         # Format the result
         if len(access_types) == 1:
             return access_types[0]
-        else:
-            # Remove duplicates and sort
-            unique_types = sorted(list(set(access_types)))
-            return "/".join(unique_types)
+        # Remove duplicates and sort
+        unique_types = sorted(list(set(access_types)))
+        return "/".join(unique_types)
 
     def _identify_registry_operation(self, api_name: str) -> str:
         """Identify registry operation."""
         if "open" in api_name.lower():
             return "Open key"
-        elif "query" in api_name.lower():
+        if "query" in api_name.lower():
             return "Query value"
-        elif "set" in api_name.lower():
+        if "set" in api_name.lower():
             return "Set value"
-        else:
-            return "Unknown"
+        return "Unknown"
 
     def _identify_registry_usage(self, api_name: str) -> str:
         """Identify typical registry usage based on API name."""
@@ -1024,55 +1011,55 @@ class R2ImportExportAnalyzer:
         license_patterns = [
             "software\\microsoft\\windows\\currentversion\\uninstall",
             "software\\licenses", "software\\registration", "activation",
-            "serial", "productkey", "licensekey", "trial", "evaluation"
+            "serial", "productkey", "licensekey", "trial", "evaluation",
         ]
 
         # Configuration/Settings patterns
         config_patterns = [
             "software\\microsoft\\windows\\currentversion\\run",
             "software\\policies", "settings", "preferences", "configuration",
-            "options", "parameters", "software\\classes"
+            "options", "parameters", "software\\classes",
         ]
 
         # Security/Permission patterns
         security_patterns = [
             "sam\\sam", "security\\policy", "system\\currentcontrolset\\control\\lsa",
             "software\\microsoft\\windows\\currentversion\\policies",
-            "privileges", "accesscontrol", "permissions"
+            "privileges", "accesscontrol", "permissions",
         ]
 
         # System Information patterns
         system_patterns = [
             "hardware\\description\\system", "system\\currentcontrolset\\control",
             "software\\microsoft\\windows nt\\currentversion",
-            "processor", "bios", "systeminfo"
+            "processor", "bios", "systeminfo",
         ]
 
         # Persistence/Autostart patterns
         persistence_patterns = [
             "run", "runonce", "runonceex", "startup", "services",
             "software\\microsoft\\windows\\currentversion\\explorer\\shell folders",
-            "userinit", "winlogon", "bootexecute"
+            "userinit", "winlogon", "bootexecute",
         ]
 
         # Network Configuration patterns
         network_patterns = [
             "system\\currentcontrolset\\services\\tcpip",
             "software\\microsoft\\windows\\currentversion\\internet settings",
-            "networkaddress", "proxy", "dns"
+            "networkaddress", "proxy", "dns",
         ]
 
         # User/Account patterns
         user_patterns = [
             "software\\microsoft\\windows\\currentversion\\explorer",
-            "identities", "profilelist", "userdata", "accounts"
+            "identities", "profilelist", "userdata", "accounts",
         ]
 
         # Software Installation patterns
         install_patterns = [
             "uninstall", "installer", "components", "setup",
             "software\\microsoft\\windows\\currentversion\\installer",
-            "installdate", "displayversion"
+            "installdate", "displayversion",
         ]
 
         # Check for specific usage patterns
@@ -1146,103 +1133,92 @@ class R2ImportExportAnalyzer:
         # Format the result
         if len(usage_types) == 1:
             return usage_types[0]
-        else:
-            # Remove duplicates and join
-            unique_types = list(dict.fromkeys(usage_types))  # Preserves order
-            return "; ".join(unique_types)
+        # Remove duplicates and join
+        unique_types = list(dict.fromkeys(usage_types))  # Preserves order
+        return "; ".join(unique_types)
 
     def _identify_process_operation(self, api_name: str) -> str:
         """Identify process operation."""
         if "create" in api_name.lower():
             return "Create process"
-        elif "open" in api_name.lower():
+        if "open" in api_name.lower():
             return "Open process"
-        elif "terminate" in api_name.lower():
+        if "terminate" in api_name.lower():
             return "Terminate process"
-        else:
-            return "Unknown"
+        return "Unknown"
 
     def _assess_process_security_implications(self, api_name: str) -> str:
         """Assess security implications of process APIs."""
         dangerous_apis = ["createremotethread", "writeprocessmemory"]
         if any(api in api_name.lower() for api in dangerous_apis):
             return "High - Potential code injection"
-        else:
-            return "Medium - Process manipulation"
+        return "Medium - Process manipulation"
 
     def _identify_memory_operation(self, api_name: str) -> str:
         """Identify memory operation."""
         if "alloc" in api_name.lower():
             return "Allocate"
-        elif "free" in api_name.lower():
+        if "free" in api_name.lower():
             return "Free"
-        elif "copy" in api_name.lower():
+        if "copy" in api_name.lower():
             return "Copy"
-        else:
-            return "Unknown"
+        return "Unknown"
 
     def _identify_allocation_type(self, api_name: str) -> str:
         """Identify memory allocation type."""
         if "virtual" in api_name.lower():
             return "Virtual memory"
-        elif "heap" in api_name.lower():
+        if "heap" in api_name.lower():
             return "Heap memory"
-        else:
-            return "General"
+        return "General"
 
     def _identify_debug_purpose(self, api_name: str) -> str:
         """Identify debug API purpose."""
         if "present" in api_name.lower():
             return "Debugger detection"
-        elif "output" in api_name.lower():
+        if "output" in api_name.lower():
             return "Debug output"
-        else:
-            return "Debug control"
+        return "Debug control"
 
     def _assess_anti_debug_potential(self, api_name: str) -> str:
         """Assess anti-debug potential."""
         if "present" in api_name.lower():
             return "High"
-        else:
-            return "Low"
+        return "Low"
 
     def _categorize_symbol(self, symbol_name: str) -> str:
         """Categorize symbol by type."""
         if symbol_name.startswith("_"):
             return "private"
-        elif symbol_name.isupper():
+        if symbol_name.isupper():
             return "constant"
-        else:
-            return "public"
+        return "public"
 
     def _assess_symbol_relevance(self, symbol_name: str) -> str:
         """Assess symbol relevance for analysis."""
         important_patterns = ["main", "entry", "init", "license", "key", "validate"]
         if any(pattern in symbol_name.lower() for pattern in important_patterns):
             return "high"
-        else:
-            return "low"
+        return "low"
 
     def _analyze_export_purpose(self, export_name: str) -> str:
         """Analyze export function purpose."""
         if "main" in export_name.lower():
             return "Entry point"
-        elif "dll" in export_name.lower():
+        if "dll" in export_name.lower():
             return "DLL function"
-        else:
-            return "Library function"
+        return "Library function"
 
-    def _analyze_relocation_purpose(self, relocation: Dict[str, Any]) -> str:
+    def _analyze_relocation_purpose(self, relocation: dict[str, Any]) -> str:
         """Analyze relocation purpose."""
         reloc_type = relocation.get("type", "")
         if "absolute" in reloc_type.lower():
             return "Absolute address relocation"
-        elif "relative" in reloc_type.lower():
+        if "relative" in reloc_type.lower():
             return "Relative address relocation"
-        else:
-            return "Unknown relocation"
+        return "Unknown relocation"
 
-    def _generate_api_statistics(self, result: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_api_statistics(self, result: dict[str, Any]) -> dict[str, Any]:
         """Generate comprehensive API statistics."""
         stats = {
             "total_imports": len(result.get("imports", [])),
@@ -1253,7 +1229,7 @@ class R2ImportExportAnalyzer:
             "license_api_count": len(result.get("license_apis", [])),
             "crypto_api_count": len(result.get("crypto_apis", [])),
             "anti_analysis_api_count": len(result.get("anti_analysis_apis", [])),
-            "category_distribution": {}
+            "category_distribution": {},
         }
 
         # Calculate category distribution
@@ -1263,13 +1239,13 @@ class R2ImportExportAnalyzer:
 
         return stats
 
-    def _perform_security_assessment(self, result: Dict[str, Any]) -> Dict[str, Any]:
+    def _perform_security_assessment(self, result: dict[str, Any]) -> dict[str, Any]:
         """Perform overall security assessment."""
         assessment = {
             "risk_level": "low",
             "security_concerns": [],
             "recommendations": [],
-            "threat_indicators": {}
+            "threat_indicators": {},
         }
 
         # Analyze risk factors
@@ -1293,7 +1269,7 @@ class R2ImportExportAnalyzer:
 
         return assessment
 
-    def _get_api_cross_references(self, r2: R2Session, imports: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _get_api_cross_references(self, r2: R2Session, imports: list[dict[str, Any]]) -> dict[str, Any]:
         """Get cross-references for important APIs."""
         xrefs = {}
 
@@ -1316,9 +1292,8 @@ class R2ImportExportAnalyzer:
         return xrefs
 
 
-def analyze_binary_imports_exports(binary_path: str, radare2_path: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Perform comprehensive import/export analysis on a binary.
+def analyze_binary_imports_exports(binary_path: str, radare2_path: str | None = None) -> dict[str, Any]:
+    """Perform comprehensive import/export analysis on a binary.
 
     Args:
         binary_path: Path to binary file
@@ -1326,6 +1301,7 @@ def analyze_binary_imports_exports(binary_path: str, radare2_path: Optional[str]
 
     Returns:
         Complete import/export analysis results
+
     """
     analyzer = R2ImportExportAnalyzer(binary_path, radare2_path)
     return analyzer.analyze_imports_exports()

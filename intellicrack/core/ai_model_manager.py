@@ -1,5 +1,4 @@
-"""
-AI Model Manager for Intellicrack
+"""AI Model Manager for Intellicrack
 
 Manages AI/LLM models for script generation, code analysis, and intelligent assistance.
 Supports multiple model providers including OpenAI, Anthropic, Groq, and local models.
@@ -15,7 +14,7 @@ import struct
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
@@ -26,6 +25,7 @@ logger = get_logger(__name__)
 
 class ModelProvider(Enum):
     """Supported AI model providers"""
+
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GROQ = "groq"
@@ -37,27 +37,27 @@ class ModelProvider(Enum):
 @dataclass
 class ModelConfig:
     """Configuration for an AI model"""
+
     name: str
     provider: ModelProvider
     model_id: str
-    api_key: Optional[str] = None
-    endpoint: Optional[str] = None
+    api_key: str | None = None
+    endpoint: str | None = None
     temperature: float = 0.7
     max_tokens: int = 2000
-    system_prompt: Optional[str] = None
-    model_path: Optional[str] = None
-    model_directory: Optional[str] = None
-    context_length: Optional[int] = None
-    threads: Optional[int] = None
-    gpu_layers: Optional[int] = None
+    system_prompt: str | None = None
+    model_path: str | None = None
+    model_directory: str | None = None
+    context_length: int | None = None
+    threads: int | None = None
+    gpu_layers: int | None = None
     gpu_enabled: bool = False
-    quantization: Optional[str] = None
-    capabilities: List[str] = field(default_factory=list)
+    quantization: str | None = None
+    capabilities: list[str] = field(default_factory=list)
 
 
 class AIModelManager(QObject):
-    """
-    Manages AI models for intelligent code generation and analysis
+    """Manages AI models for intelligent code generation and analysis
     """
 
     # Signals
@@ -74,9 +74,9 @@ class AIModelManager(QObject):
         Groq, etc.) for intelligent code generation and analysis.
         """
         super().__init__()
-        self.models: Dict[str, ModelConfig] = {}
-        self.active_models: Dict[str, Any] = {}
-        self.providers: Dict[ModelProvider, Any] = {}
+        self.models: dict[str, ModelConfig] = {}
+        self.active_models: dict[str, Any] = {}
+        self.providers: dict[ModelProvider, Any] = {}
         self._initialize_providers()
 
     def _initialize_providers(self):
@@ -104,14 +104,14 @@ class AIModelManager(QObject):
             logger.debug("Groq not available")
 
     def register_model(self, config: ModelConfig) -> bool:
-        """
-        Register a new AI model
+        """Register a new AI model
 
         Args:
             config: Model configuration
 
         Returns:
             bool: Success status
+
         """
         try:
             self.models[config.name] = config
@@ -122,14 +122,14 @@ class AIModelManager(QObject):
             return False
 
     def load_model(self, model_name: str) -> bool:
-        """
-        Load and initialize a registered model
+        """Load and initialize a registered model
 
         Args:
             model_name: Name of the model to load
 
         Returns:
             bool: Success status
+
         """
         if model_name not in self.models:
             logger.error(f"Model not registered: {model_name}")
@@ -186,7 +186,7 @@ class AIModelManager(QObject):
             self.active_models[config.model_id] = {
                 "client": client,
                 "config": config,
-                "provider": ModelProvider.ANTHROPIC
+                "provider": ModelProvider.ANTHROPIC,
             }
             return True
         except Exception as e:
@@ -211,15 +211,14 @@ class AIModelManager(QObject):
             # Detect model type based on file extension or config
             if model_path.endswith(".gguf") or "llama" in config.model_id.lower():
                 return self._load_llama_cpp_model(config)
-            elif model_path.endswith(".onnx"):
+            if model_path.endswith(".onnx"):
                 return self._load_onnx_model(config)
-            elif model_path.endswith((".pt", ".pth", ".bin")):
+            if model_path.endswith((".pt", ".pth", ".bin")):
                 return self._load_transformers_model(config)
-            elif "gpt4all" in config.model_id.lower():
+            if "gpt4all" in config.model_id.lower():
                 return self._load_gpt4all_model(config)
-            else:
-                # Try auto-detection
-                return self._auto_detect_and_load_model(config)
+            # Try auto-detection
+            return self._auto_detect_and_load_model(config)
 
         except Exception as e:
             logger.error(f"Failed to load local model {config.model_id}: {e}")
@@ -277,7 +276,7 @@ class AIModelManager(QObject):
             model = ort.InferenceSession(
                 config.model_path,
                 sess_options=session_options,
-                providers=providers
+                providers=providers,
             )
 
             self.active_models[config.model_id] = model
@@ -304,7 +303,7 @@ class AIModelManager(QObject):
             tokenizer = AutoTokenizer.from_pretrained(
                 config.model_path,
                 trust_remote_code=True,
-                local_files_only=True
+                local_files_only=True,
             )
 
             # Model loading arguments
@@ -332,7 +331,7 @@ class AIModelManager(QObject):
             self.active_models[config.model_id] = {
                 "model": model,
                 "tokenizer": tokenizer,
-                "device": device
+                "device": device,
             }
 
             self.model_loaded.emit(config.model_id)
@@ -355,7 +354,7 @@ class AIModelManager(QObject):
                 model_name=config.model_path,
                 model_path=config.model_directory or ".",
                 allow_download=False,
-                device="gpu" if config.gpu_enabled else "cpu"
+                device="gpu" if config.gpu_enabled else "cpu",
             )
 
             self.active_models[config.model_id] = model
@@ -384,11 +383,11 @@ class AIModelManager(QObject):
                     if pattern == "*.gguf":
                         config.model_path = str(files[0])
                         return self._load_llama_cpp_model(config)
-                    elif pattern == "config.json":
+                    if pattern == "config.json":
                         # Likely a Hugging Face model
                         config.model_path = str(model_path)
                         return self._load_transformers_model(config)
-                    elif pattern == "*.onnx":
+                    if pattern == "*.onnx":
                         config.model_path = str(files[0])
                         return self._load_onnx_model(config)
 
@@ -408,15 +407,14 @@ class AIModelManager(QObject):
             if isinstance(model_data, dict) and "model" in model_data:
                 # Transformers model
                 return self._generate_transformers(model_data, prompt, **kwargs)
-            elif callable(model_data):
+            if callable(model_data):
                 # Llama.cpp model
                 return self._generate_llama_cpp(model_data, prompt, **kwargs)
-            elif hasattr(model_data, "generate"):
+            if hasattr(model_data, "generate"):
                 # GPT4All model
                 return self._generate_gpt4all(model_data, prompt, **kwargs)
-            else:
-                logger.error(f"Unknown model type for {model_id}")
-                return None
+            logger.error(f"Unknown model type for {model_id}")
+            return None
 
         except Exception as e:
             logger.error(f"Error generating with local model: {e}")
@@ -431,7 +429,7 @@ class AIModelManager(QObject):
             temperature=kwargs.get("temperature", 0.7),
             top_p=kwargs.get("top_p", 0.95),
             echo=False,
-            stop=kwargs.get("stop", [])
+            stop=kwargs.get("stop", []),
         )
         return response["choices"][0]["text"]
 
@@ -455,7 +453,7 @@ class AIModelManager(QObject):
                 temperature=kwargs.get("temperature", 0.7),
                 top_p=kwargs.get("top_p", 0.95),
                 do_sample=True,
-                pad_token_id=tokenizer.eos_token_id
+                pad_token_id=tokenizer.eos_token_id,
             )
 
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
@@ -469,14 +467,13 @@ class AIModelManager(QObject):
             prompt,
             max_tokens=kwargs.get("max_tokens", 2048),
             temp=kwargs.get("temperature", 0.7),
-            top_p=kwargs.get("top_p", 0.95)
+            top_p=kwargs.get("top_p", 0.95),
         )
         return response
 
     def generate_script(self, model_name: str, script_type: str,
-                       target: str, requirements: str) -> Optional[str]:
-        """
-        Generate a script using the specified model
+                       target: str, requirements: str) -> str | None:
+        """Generate a script using the specified model
 
         Args:
             model_name: Name of the model to use
@@ -486,6 +483,7 @@ class AIModelManager(QObject):
 
         Returns:
             Generated script or None on error
+
         """
         if model_name not in self.active_models:
             logger.error(f"Model not loaded: {model_name}")
@@ -568,7 +566,7 @@ The script should:
 4. Support both user and kernel mode
 5. Handle edge cases
 
-Generate complete hooking implementation."""
+Generate complete hooking implementation.""",
         }
 
         return prompts.get(script_type.lower(), f"""Generate a {script_type} script for:
@@ -591,10 +589,10 @@ Generate complete, working code with proper error handling and documentation."""
                 model=config.model_id,
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": prompt},
                 ],
                 temperature=config.temperature,
-                max_tokens=config.max_tokens
+                max_tokens=config.max_tokens,
             )
             return response.choices[0].message.content
         except Exception as e:
@@ -619,7 +617,7 @@ Generate complete, working code with proper error handling and documentation."""
                 system=system_prompt,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=config.temperature,
-                max_tokens=config.max_tokens
+                max_tokens=config.max_tokens,
             )
             return response.content[0].text
         except Exception as e:
@@ -656,17 +654,17 @@ def analyze():
     pass
 
 if __name__ == "__main__":
-    analyze()"""
+    analyze()""",
         }
 
         return templates.get(script_type.lower(), f"// Generated script for {target}\n// {requirements}")
 
 
-    def get_available_models(self) -> List[str]:
+    def get_available_models(self) -> list[str]:
         """Get list of registered models"""
         return list(self.models.keys())
 
-    def get_loaded_models(self) -> List[str]:
+    def get_loaded_models(self) -> list[str]:
         """Get list of currently loaded models"""
         return list(self.active_models.keys())
 
@@ -693,7 +691,7 @@ if __name__ == "__main__":
                 "system_prompt": config.system_prompt,
                 "model_path": config.model_path,
                 "model_directory": config.model_directory,
-                "context_length": config.context_length
+                "context_length": config.context_length,
             }
 
             with open(config_path, "w") as f:
@@ -705,7 +703,7 @@ if __name__ == "__main__":
             logger.error(f"Failed to save model config: {e}")
             return False
 
-    def validate_model_file(self, model_path: str) -> Union[bool, str]:
+    def validate_model_file(self, model_path: str) -> bool | str:
         """Validate model file integrity using hashlib and struct"""
         try:
             if not os.path.exists(model_path):
@@ -738,11 +736,10 @@ if __name__ == "__main__":
             return True
         except Exception as e:
             logger.error(f"Model validation failed: {e}")
-            return f"Validation error: {str(e)}"
+            return f"Validation error: {e!s}"
 
-    def analyze_binary(self, model_name: str, binary_path: str) -> Optional[Dict[str, Any]]:
-        """
-        Analyze a binary using AI model with comprehensive feature extraction
+    def analyze_binary(self, model_name: str, binary_path: str) -> dict[str, Any] | None:
+        """Analyze a binary using AI model with comprehensive feature extraction
 
         Args:
             model_name: Name of the model to use
@@ -750,6 +747,7 @@ if __name__ == "__main__":
 
         Returns:
             Analysis results or None on error
+
         """
         if model_name not in self.active_models:
             logger.error(f"Model not loaded: {model_name}")
@@ -777,7 +775,7 @@ if __name__ == "__main__":
                 analysis_result = self._analyze_binary_heuristic(features)
 
             structured_analysis = self._structure_analysis_results(
-                features, analysis_result, binary_path
+                features, analysis_result, binary_path,
             )
 
             self.response_received.emit(model_name, str(structured_analysis))
@@ -788,7 +786,7 @@ if __name__ == "__main__":
             self.error_occurred.emit(model_name, str(e))
             return None
 
-    def _extract_binary_features(self, binary_path: str) -> Optional[Dict[str, Any]]:
+    def _extract_binary_features(self, binary_path: str) -> dict[str, Any] | None:
         """Extract comprehensive features from binary for AI analysis"""
         try:
             features = {
@@ -802,7 +800,7 @@ if __name__ == "__main__":
                 "entropy": {},
                 "opcodes": [],
                 "hashes": {},
-                "metadata": {}
+                "metadata": {},
             }
 
             file_path = Path(binary_path)
@@ -812,7 +810,7 @@ if __name__ == "__main__":
             features["file_info"] = {
                 "size": file_path.stat().st_size,
                 "name": file_path.name,
-                "extension": file_path.suffix
+                "extension": file_path.suffix,
             }
 
             features["hashes"] = self._calculate_hashes(binary_path)
@@ -838,7 +836,7 @@ if __name__ == "__main__":
             logger.error(f"Feature extraction failed: {e}")
             return None
 
-    def _calculate_hashes(self, file_path: str) -> Dict[str, str]:
+    def _calculate_hashes(self, file_path: str) -> dict[str, str]:
         """Calculate multiple hash values for the file"""
         hashes = {}
         try:
@@ -851,7 +849,7 @@ if __name__ == "__main__":
             logger.error(f"Hash calculation failed: {e}")
         return hashes
 
-    def _extract_strings(self, data: bytes, min_length: int = 4) -> List[str]:
+    def _extract_strings(self, data: bytes, min_length: int = 4) -> list[str]:
         """Extract printable strings from binary data"""
         strings = []
         current_string = ""
@@ -866,7 +864,7 @@ if __name__ == "__main__":
             strings.append(current_string)
         return strings[:100]
 
-    def _calculate_entropy(self, data: bytes) -> Dict[str, float]:
+    def _calculate_entropy(self, data: bytes) -> dict[str, float]:
         """Calculate Shannon entropy for different data segments"""
         import math
 
@@ -896,7 +894,7 @@ if __name__ == "__main__":
             "total": total_entropy,
             "segments": segment_entropies,
             "average_segment": sum(segment_entropies) / len(segment_entropies) if segment_entropies else 0,
-            "max_segment": max(segment_entropies) if segment_entropies else 0
+            "max_segment": max(segment_entropies) if segment_entropies else 0,
         }
 
     def _is_pe_file(self, data: bytes) -> bool:
@@ -910,7 +908,7 @@ if __name__ == "__main__":
             return False
         return data[pe_offset:pe_offset + 4] == b"PE\x00\x00"
 
-    def _analyze_pe_structure(self, data: bytes) -> Dict[str, Any]:
+    def _analyze_pe_structure(self, data: bytes) -> dict[str, Any]:
         """Analyze PE structure and extract metadata"""
         try:
             pe_offset = struct.unpack("<I", data[60:64])[0]
@@ -927,7 +925,7 @@ if __name__ == "__main__":
                 "num_sections": num_sections,
                 "timestamp": timestamp,
                 "characteristics": characteristics,
-                "optional_header_size": opt_header_size
+                "optional_header_size": opt_header_size,
             }
 
             if opt_header_size > 0:
@@ -942,7 +940,7 @@ if __name__ == "__main__":
             logger.error(f"PE analysis failed: {e}")
             return {}
 
-    def _extract_pe_sections(self, data: bytes) -> List[Dict[str, Any]]:
+    def _extract_pe_sections(self, data: bytes) -> list[dict[str, Any]]:
         """Extract PE section information"""
         sections = []
         try:
@@ -969,19 +967,19 @@ if __name__ == "__main__":
                     "virtual_address": virtual_address,
                     "raw_size": raw_size,
                     "raw_address": raw_address,
-                    "characteristics": characteristics
+                    "characteristics": characteristics,
                 })
         except Exception as e:
             logger.error(f"Section extraction failed: {e}")
         return sections
 
-    def _extract_pe_imports(self, data: bytes) -> List[str]:
+    def _extract_pe_imports(self, data: bytes) -> list[str]:
         """Extract PE import table information"""
         imports = []
         try:
             common_dlls = [
                 "kernel32.dll", "user32.dll", "advapi32.dll", "ntdll.dll",
-                "msvcrt.dll", "shell32.dll", "ws2_32.dll", "wininet.dll"
+                "msvcrt.dll", "shell32.dll", "ws2_32.dll", "wininet.dll",
             ]
             data_str = data.lower()
             for dll in common_dlls:
@@ -991,7 +989,7 @@ if __name__ == "__main__":
             logger.error(f"Import extraction failed: {e}")
         return imports
 
-    def _extract_pe_exports(self, data: bytes) -> List[str]:
+    def _extract_pe_exports(self, data: bytes) -> list[str]:
         """Extract PE export table information"""
         exports = []
         try:
@@ -1006,7 +1004,7 @@ if __name__ == "__main__":
             logger.error(f"Export extraction failed: {e}")
         return exports
 
-    def _extract_opcodes(self, data: bytes) -> List[str]:
+    def _extract_opcodes(self, data: bytes) -> list[str]:
         """Extract common opcodes/instruction patterns"""
         opcodes = []
         try:
@@ -1020,7 +1018,7 @@ if __name__ == "__main__":
                 b"\x90": "nop",
                 b"\xe8": "call",
                 b"\xff\x15": "call dword ptr",
-                b"\x68": "push imm32"
+                b"\x68": "push imm32",
             }
             for pattern, description in common_patterns.items():
                 count = data.count(pattern)
@@ -1030,7 +1028,7 @@ if __name__ == "__main__":
             logger.error(f"Opcode extraction failed: {e}")
         return opcodes
 
-    def _analyze_metadata(self, data: bytes) -> Dict[str, Any]:
+    def _analyze_metadata(self, data: bytes) -> dict[str, Any]:
         """Analyze file metadata and patterns"""
         metadata = {}
         try:
@@ -1045,7 +1043,7 @@ if __name__ == "__main__":
 
             packing_indicators = [
                 b"UPX", b"VMProtect", b"Themida", b"Armadillo",
-                b"ASProtect", b"PECompact", b"FSG"
+                b"ASProtect", b"PECompact", b"FSG",
             ]
             detected_packers = []
             for packer in packing_indicators:
@@ -1056,7 +1054,7 @@ if __name__ == "__main__":
             anti_analysis = []
             anti_patterns = [
                 b"IsDebuggerPresent", b"CheckRemoteDebuggerPresent",
-                b"NtQueryInformationProcess", b"GetTickCount"
+                b"NtQueryInformationProcess", b"GetTickCount",
             ]
             for pattern in anti_patterns:
                 if pattern in data:
@@ -1066,7 +1064,7 @@ if __name__ == "__main__":
             suspicious_patterns = [
                 "cmd.exe", "powershell", "reg.exe", "netsh",
                 "http://", "https://", "ftp://",
-                "CreateProcess", "WriteProcessMemory", "VirtualAlloc"
+                "CreateProcess", "WriteProcessMemory", "VirtualAlloc",
             ]
             found_suspicious = []
             data_str = data.decode("ascii", errors="ignore").lower()
@@ -1078,7 +1076,7 @@ if __name__ == "__main__":
             logger.error(f"Metadata analysis failed: {e}")
         return metadata
 
-    def _build_binary_analysis_prompt(self, features: Dict[str, Any]) -> str:
+    def _build_binary_analysis_prompt(self, features: dict[str, Any]) -> str:
         """Build comprehensive prompt for AI binary analysis"""
         return f"""Analyze this binary file and provide detailed security assessment:
 
@@ -1115,7 +1113,7 @@ Please provide:
 5. **IOCs** - Key indicators of compromise
 6. **Mitigation Strategies** - How to protect against this binary"""
 
-    def _analyze_binary_heuristic(self, features: Dict[str, Any]) -> str:
+    def _analyze_binary_heuristic(self, features: dict[str, Any]) -> str:
         """Fallback heuristic analysis when AI is not available"""
         analysis = []
         file_type = features["metadata"].get("file_type", "Unknown")
@@ -1153,8 +1151,8 @@ Please provide:
 
         return "\n".join(analysis) if analysis else "Basic binary - no obvious threats detected"
 
-    def _structure_analysis_results(self, features: Dict[str, Any],
-                                   ai_analysis: str, binary_path: str) -> Dict[str, Any]:
+    def _structure_analysis_results(self, features: dict[str, Any],
+                                   ai_analysis: str, binary_path: str) -> dict[str, Any]:
         """Structure the analysis results into a comprehensive report"""
         return {
             "binary_path": binary_path,
@@ -1171,10 +1169,10 @@ Please provide:
             "metadata": features["metadata"],
             "ai_analysis": ai_analysis,
             "risk_score": self._calculate_risk_score(features),
-            "recommendations": self._generate_recommendations(features)
+            "recommendations": self._generate_recommendations(features),
         }
 
-    def _calculate_risk_score(self, features: Dict[str, Any]) -> int:
+    def _calculate_risk_score(self, features: dict[str, Any]) -> int:
         """Calculate risk score based on binary features (0-100)"""
         score = 0
         max_entropy = features["entropy"].get("max_segment", 0)
@@ -1193,7 +1191,7 @@ Please provide:
             score += 10
         return min(score, 100)
 
-    def _generate_recommendations(self, features: Dict[str, Any]) -> List[str]:
+    def _generate_recommendations(self, features: dict[str, Any]) -> list[str]:
         """Generate analysis recommendations based on features"""
         recommendations = []
         if features["entropy"].get("max_segment", 0) > 7.5:
@@ -1210,6 +1208,6 @@ Please provide:
             "Verify file signature and certificates",
             "Check against threat intelligence databases",
             "Perform static analysis with disassembler",
-            "Run in isolated analysis environment"
+            "Run in isolated analysis environment",
         ])
         return recommendations

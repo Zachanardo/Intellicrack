@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -23,15 +22,14 @@ This module provides shared utilities for comparing system snapshots.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-def compare_snapshots(snapshot1: Dict[str, Any],
-                     snapshot2: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Compare two system snapshots and return differences.
+def compare_snapshots(snapshot1: dict[str, Any],
+                     snapshot2: dict[str, Any]) -> dict[str, Any]:
+    """Compare two system snapshots and return differences.
 
     Args:
         snapshot1: First snapshot
@@ -39,26 +37,27 @@ def compare_snapshots(snapshot1: Dict[str, Any],
 
     Returns:
         Dictionary containing differences between snapshots
+
     """
     differences = {
         "files": {
             "added": [],
             "removed": [],
-            "modified": []
+            "modified": [],
         },
         "registry": {
             "added": [],
             "removed": [],
-            "modified": []
+            "modified": [],
         },
         "network": {
             "new_connections": [],
-            "closed_connections": []
+            "closed_connections": [],
         },
         "processes": {
             "started": [],
-            "terminated": []
-        }
+            "terminated": [],
+        },
     }
 
     try:

@@ -1,5 +1,4 @@
-"""
-GPU-accelerated binary analysis functions.
+"""GPU-accelerated binary analysis functions.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -21,7 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 
@@ -35,9 +34,8 @@ NUMBA_CUDA_AVAILABLE = False
 # Try importing GPU frameworks
 try:
     import pycuda.autoinit  # noqa: F401 - Required for CUDA initialization
-    import pycuda.compiler as compiler
     import pycuda.driver as cuda
-    from pycuda import gpuarray
+    from pycuda import compiler, gpuarray
     PYCUDA_AVAILABLE = True
     logger.info("PyCUDA initialized successfully")
 except ImportError:
@@ -72,14 +70,13 @@ class GPUAccelerator:
         """Detect the best available GPU framework"""
         if CUPY_AVAILABLE:
             return "cupy"
-        elif NUMBA_CUDA_AVAILABLE:
+        if NUMBA_CUDA_AVAILABLE:
             return "numba"
-        elif PYCUDA_AVAILABLE:
+        if PYCUDA_AVAILABLE:
             return "pycuda"
-        else:
-            return "cpu"
+        return "cpu"
 
-    def _get_device_info(self) -> Dict[str, Any]:
+    def _get_device_info(self) -> dict[str, Any]:
         """Get GPU device information"""
         info = {}
 
@@ -91,7 +88,7 @@ class GPUAccelerator:
                     "compute_capability": device.compute_capability,
                     "memory_total": device.mem_info[1],
                     "memory_free": device.mem_info[0],
-                    "multiprocessor_count": device.attributes["MultiProcessorCount"]
+                    "multiprocessor_count": device.attributes["MultiProcessorCount"],
                 }
             except Exception as e:
                 logger.error(f"Failed to get CuPy device info: {e}")
@@ -104,7 +101,7 @@ class GPUAccelerator:
                     "name": device.name(),
                     "compute_capability": device.compute_capability(),
                     "memory_total": device.total_memory(),
-                    "multiprocessor_count": attributes[cuda.device_attribute.MULTIPROCESSOR_COUNT]
+                    "multiprocessor_count": attributes[cuda.device_attribute.MULTIPROCESSOR_COUNT],
                 }
             except Exception as e:
                 logger.error(f"Failed to get PyCUDA device info: {e}")
@@ -116,16 +113,15 @@ class GPUAccelerator:
                     "name": device.name.decode(),
                     "compute_capability": device.compute_capability,
                     "memory_total": device.get_memory_info()[1],
-                    "memory_free": device.get_memory_info()[0]
+                    "memory_free": device.get_memory_info()[0],
                 }
             except Exception as e:
                 logger.error(f"Failed to get Numba device info: {e}")
 
         return info
 
-    def parallel_pattern_search(self, data: bytes, pattern: bytes) -> Dict[str, Any]:
-        """
-        GPU-accelerated pattern search in binary data.
+    def parallel_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
+        """GPU-accelerated pattern search in binary data.
 
         Args:
             data: Binary data to search in
@@ -133,6 +129,7 @@ class GPUAccelerator:
 
         Returns:
             Dictionary with match count and positions
+
         """
         start_time = time.time()
 
@@ -149,7 +146,7 @@ class GPUAccelerator:
         result["framework"] = self.framework
         return result
 
-    def _cupy_pattern_search(self, data: bytes, pattern: bytes) -> Dict[str, Any]:
+    def _cupy_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
         """CuPy implementation of pattern search"""
         try:
             # Convert to GPU arrays
@@ -157,7 +154,7 @@ class GPUAccelerator:
             pattern_gpu = cp.asarray(np.frombuffer(pattern, dtype=np.uint8))
 
             # Create custom kernel for pattern matching
-            kernel_code = '''
+            kernel_code = """
             extern "C" __global__
             void pattern_match(const unsigned char* data, int data_size,
                              const unsigned char* pattern, int pattern_size,
@@ -179,7 +176,7 @@ class GPUAccelerator:
                     }
                 }
             }
-            '''
+            """
 
             # Compile kernel
             kernel = cp.RawKernel(kernel_code, "pattern_match")
@@ -202,14 +199,14 @@ class GPUAccelerator:
             return {
                 "match_count": match_count,
                 "positions": positions,
-                "method": "cupy_kernel"
+                "method": "cupy_kernel",
             }
 
         except Exception as e:
             logger.error(f"CuPy pattern search failed: {e}")
             return self._cpu_pattern_search(data, pattern)
 
-    def _numba_pattern_search(self, data: bytes, pattern: bytes) -> Dict[str, Any]:
+    def _numba_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
         """Numba CUDA implementation of pattern search"""
         try:
             data_np = np.frombuffer(data, dtype=np.uint8)
@@ -242,7 +239,7 @@ class GPUAccelerator:
 
             # Launch kernel
             pattern_match_kernel[blocks, threads_per_block](
-                d_data, d_pattern, d_matches, d_positions
+                d_data, d_pattern, d_matches, d_positions,
             )
 
             # Get results
@@ -252,14 +249,14 @@ class GPUAccelerator:
             return {
                 "match_count": match_count,
                 "positions": positions,
-                "method": "numba_cuda"
+                "method": "numba_cuda",
             }
 
         except Exception as e:
             logger.error(f"Numba pattern search failed: {e}")
             return self._cpu_pattern_search(data, pattern)
 
-    def _pycuda_pattern_search(self, data: bytes, pattern: bytes) -> Dict[str, Any]:
+    def _pycuda_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
         """PyCUDA implementation of pattern search"""
         try:
             # Convert to numpy arrays
@@ -309,7 +306,7 @@ class GPUAccelerator:
                 pattern_gpu, np.int32(len(pattern_np)),
                 matches_gpu, positions_gpu,
                 block=(threads_per_block, 1, 1),
-                grid=(blocks, 1)
+                grid=(blocks, 1),
             )
 
             # Get results
@@ -319,14 +316,14 @@ class GPUAccelerator:
             return {
                 "match_count": match_count,
                 "positions": positions,
-                "method": "pycuda"
+                "method": "pycuda",
             }
 
         except Exception as e:
             logger.error(f"PyCUDA pattern search failed: {e}")
             return self._cpu_pattern_search(data, pattern)
 
-    def _cpu_pattern_search(self, data: bytes, pattern: bytes) -> Dict[str, Any]:
+    def _cpu_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
         """CPU fallback for pattern search"""
         positions = []
         start = 0
@@ -342,12 +339,11 @@ class GPUAccelerator:
         return {
             "match_count": len(positions),
             "positions": positions,
-            "method": "cpu"
+            "method": "cpu",
         }
 
-    def entropy_calculation(self, data: bytes, block_size: int = 1024) -> Dict[str, Any]:
-        """
-        GPU-accelerated entropy calculation.
+    def entropy_calculation(self, data: bytes, block_size: int = 1024) -> dict[str, Any]:
+        """GPU-accelerated entropy calculation.
 
         Args:
             data: Binary data to analyze
@@ -355,6 +351,7 @@ class GPUAccelerator:
 
         Returns:
             Dictionary with entropy values
+
         """
         start_time = time.time()
 
@@ -369,7 +366,7 @@ class GPUAccelerator:
         result["framework"] = self.framework
         return result
 
-    def _cupy_entropy(self, data: bytes, block_size: int) -> Dict[str, Any]:
+    def _cupy_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
         """CuPy implementation of entropy calculation"""
         try:
             data_np = np.frombuffer(data, dtype=np.uint8)
@@ -394,14 +391,14 @@ class GPUAccelerator:
                 "average_entropy": np.mean(entropies),
                 "max_entropy": np.max(entropies),
                 "min_entropy": np.min(entropies),
-                "method": "cupy"
+                "method": "cupy",
             }
 
         except Exception as e:
             logger.error(f"CuPy entropy calculation failed: {e}")
             return self._cpu_entropy(data, block_size)
 
-    def _numba_entropy(self, data: bytes, block_size: int) -> Dict[str, Any]:
+    def _numba_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
         """Numba CUDA implementation of entropy calculation"""
         try:
             @numba_cuda.jit
@@ -448,14 +445,14 @@ class GPUAccelerator:
                 "average_entropy": np.mean(entropies),
                 "max_entropy": np.max(entropies),
                 "min_entropy": np.min(entropies),
-                "method": "numba_cuda"
+                "method": "numba_cuda",
             }
 
         except Exception as e:
             logger.error(f"Numba entropy calculation failed: {e}")
             return self._cpu_entropy(data, block_size)
 
-    def _cpu_entropy(self, data: bytes, block_size: int) -> Dict[str, Any]:
+    def _cpu_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
         """CPU fallback for entropy calculation"""
         data_np = np.frombuffer(data, dtype=np.uint8)
         num_blocks = len(data_np) // block_size
@@ -478,12 +475,11 @@ class GPUAccelerator:
             "average_entropy": np.mean(entropies) if entropies else 0,
             "max_entropy": np.max(entropies) if entropies else 0,
             "min_entropy": np.min(entropies) if entropies else 0,
-            "method": "cpu"
+            "method": "cpu",
         }
 
-    def hash_computation(self, data: bytes, algorithms: List[str] = None) -> Dict[str, Any]:
-        """
-        GPU-accelerated hash computation.
+    def hash_computation(self, data: bytes, algorithms: list[str] = None) -> dict[str, Any]:
+        """GPU-accelerated hash computation.
 
         Args:
             data: Binary data to hash
@@ -491,6 +487,7 @@ class GPUAccelerator:
 
         Returns:
             Dictionary with hash values
+
         """
         if algorithms is None:
             algorithms = ["crc32", "adler32"]
@@ -512,7 +509,7 @@ class GPUAccelerator:
         return {
             "hashes": results,
             "execution_time": time.time() - start_time,
-            "framework": self.framework
+            "framework": self.framework,
         }
 
     def _cupy_crc32(self, data: bytes) -> str:

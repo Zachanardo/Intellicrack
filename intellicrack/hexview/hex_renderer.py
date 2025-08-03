@@ -3,7 +3,7 @@ import logging
 import re
 import struct
 from enum import Enum, auto
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -33,20 +33,20 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 class ViewMode(Enum):
     """Enum for different view modes."""
+
     HEX = auto()
     DECIMAL = auto()
     BINARY = auto()
     STRUCTURE = auto()
 
     @classmethod
-    def names(cls) -> List[str]:
+    def names(cls) -> list[str]:
         """Get a list of all view mode names."""
         return [mode.name.capitalize() for mode in cls]
 
 
 class HexViewRenderer:
-    """
-    Handles rendering of binary data in various formats.
+    """Handles rendering of binary data in various formats.
 
     This class is responsible for converting raw binary data into formatted
     text for _display in the hex viewer.
@@ -72,11 +72,11 @@ class HexViewRenderer:
                 self.bytes_per_row = self.group_size
 
     def set_bytes_per_row(self, bytes_per_row: int):
-        """
-        Set the number of bytes per row.
+        """Set the number of bytes per row.
 
         Args:
             bytes_per_row: Number of bytes to display per row
+
         """
         if bytes_per_row > 0:
             # Ensure bytes_per_row is a multiple of group_size
@@ -85,11 +85,11 @@ class HexViewRenderer:
                 self.bytes_per_row = self.group_size
 
     def set_group_size(self, group_size: int):
-        """
-        Set the group size for byte grouping.
+        """Set the group size for byte grouping.
 
         Args:
             group_size: Number of bytes to group together (1, 2, 4, or 8)
+
         """
         if group_size in (1, 2, 4, 8):
             self.group_size = group_size
@@ -99,9 +99,8 @@ class HexViewRenderer:
                 self.bytes_per_row = self.group_size
 
     def render_hex_view(self, data: bytes, offset: int = 0,
-                        highlight_ranges: Optional[List[Tuple[int, int, str]]] = None) -> str:
-        """
-        Render data in traditional hex view format.
+                        highlight_ranges: list[tuple[int, int, str]] | None = None) -> str:
+        """Render data in traditional hex view format.
 
         Args:
             data: Binary data to render
@@ -110,6 +109,7 @@ class HexViewRenderer:
 
         Returns:
             Formatted hex view string
+
         """
         if not data:
             return "Empty data"
@@ -187,8 +187,7 @@ class HexViewRenderer:
         return "\n".join(result)
 
     def render_decimal_view(self, data: bytes, offset: int = 0) -> str:
-        """
-        Render data in decimal view format.
+        """Render data in decimal view format.
 
         Args:
             data: Binary data to render
@@ -196,6 +195,7 @@ class HexViewRenderer:
 
         Returns:
             Formatted decimal view string
+
         """
         if not data:
             return "Empty data"
@@ -250,8 +250,7 @@ class HexViewRenderer:
         return "\n".join(result)
 
     def render_binary_view(self, data: bytes, offset: int = 0) -> str:
-        """
-        Render data in binary view format.
+        """Render data in binary view format.
 
         Args:
             data: Binary data to render
@@ -259,6 +258,7 @@ class HexViewRenderer:
 
         Returns:
             Formatted binary view string
+
         """
         if not data:
             return "Empty data"
@@ -298,10 +298,9 @@ class HexViewRenderer:
 
         return "\n".join(result)
 
-    def render_structure_view(self, data: bytes, structure_def: Dict[str, Any],
+    def render_structure_view(self, data: bytes, structure_def: dict[str, Any],
                              offset: int = 0) -> str:
-        """
-        Render data according to a structure definition.
+        """Render data according to a structure definition.
 
         Args:
             data: Binary data to render
@@ -310,6 +309,7 @@ class HexViewRenderer:
 
         Returns:
             Formatted structure view string
+
         """
         if not data or not structure_def:
             return "No data or structure definition"
@@ -362,8 +362,7 @@ class HexViewRenderer:
                         null_pos = data.find(0)
                         if null_pos >= 0:
                             return f'"{data[:null_pos].decode("ascii", errors="replace")}"'
-                        else:
-                            return f'"{data.decode("ascii", errors="replace")}"'
+                        return f'"{data.decode("ascii", errors="replace")}"'
                     except Exception as e:
                         self.logger.error("Exception in hex_renderer: %s", e)
                         return " ".join(f"{b:02X}" for b in data)
@@ -381,47 +380,45 @@ class HexViewRenderer:
             # Handle various scalar types
             if field_type == "uint8":
                 return f"{data[0]} (0x{data[0]:02X})"
-            elif field_type == "int8":
+            if field_type == "int8":
                 val = struct.unpack("b", data)[0]
                 return f"{val} (0x{data[0]:02X})"
-            elif field_type == "uint16":
+            if field_type == "uint16":
                 val = struct.unpack("<H", data)[0]
                 return f"{val} (0x{val:04X})"
-            elif field_type == "int16":
+            if field_type == "int16":
                 val = struct.unpack("<h", data)[0]
                 return f"{val} (0x{val & 0xFFFF:04X})"
-            elif field_type == "uint32":
+            if field_type == "uint32":
                 val = struct.unpack("<I", data)[0]
                 return f"{val} (0x{val:08X})"
-            elif field_type == "int32":
+            if field_type == "int32":
                 val = struct.unpack("<i", data)[0]
                 return f"{val} (0x{val & 0xFFFFFFFF:08X})"
-            elif field_type == "uint64":
+            if field_type == "uint64":
                 val = struct.unpack("<Q", data)[0]
                 return f"{val} (0x{val:016X})"
-            elif field_type == "int64":
+            if field_type == "int64":
                 val = struct.unpack("<q", data)[0]
                 return f"{val} (0x{val & 0xFFFFFFFFFFFFFFFF:016X})"
-            elif field_type == "float":
+            if field_type == "float":
                 val = struct.unpack("<f", data)[0]
                 return f"{val}"
-            elif field_type == "double":
+            if field_type == "double":
                 val = struct.unpack("<d", data)[0]
                 return f"{val}"
-            elif field_type == "char":
+            if field_type == "char":
                 c = chr(data[0]) if 32 <= data[0] <= 126 else "."
                 return f"'{c}' (0x{data[0]:02X})"
-            else:
-                # Default to hex representation
-                return " ".join(f"{b:02X}" for b in data)
+            # Default to hex representation
+            return " ".join(f"{b:02X}" for b in data)
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in hex_renderer: %s", e)
-            return f"<error: {str(e)}>"
+            return f"<error: {e!s}>"
 
 
-def parse_hex_view(hex_view: str, bytes_per_row: int = 16, offset_radix: int = 16) -> Tuple[int, bytes]:  # pylint: disable=unused-argument
-    """
-    Parse a hex view string back to binary data.
+def parse_hex_view(hex_view: str, bytes_per_row: int = 16, offset_radix: int = 16) -> tuple[int, bytes]:  # pylint: disable=unused-argument
+    """Parse a hex view string back to binary data.
 
     Args:
         hex_view: Formatted hex view string to parse
@@ -430,6 +427,7 @@ def parse_hex_view(hex_view: str, bytes_per_row: int = 16, offset_radix: int = 1
 
     Returns:
         Tuple of (starting_offset, binary_data)
+
     """
     result = bytearray()
     start_offset = None

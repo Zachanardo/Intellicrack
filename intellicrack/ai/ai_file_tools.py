@@ -1,5 +1,4 @@
-"""
-AI File System Tools
+"""AI File System Tools
 
 Copyright (C) 2025 Zachary Flint
 
@@ -24,7 +23,7 @@ import fnmatch
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from ..ui.common_imports import (
     QDialog,
@@ -37,8 +36,12 @@ from ..ui.common_imports import (
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["AIFileTools", "FileSearchTool",
-           "FileReadTool", "create_approval_dialog"]
+__all__ = [
+    "AIFileTools",
+    "FileReadTool",
+    "FileSearchTool",
+    "create_approval_dialog",
+]
 
 
 class FileApprovalDialog(QDialog):
@@ -105,12 +108,11 @@ class FileSearchTool:
             "*license*", "*licensing*", "*lic*", "*auth*", "*activation*",
             "*register*", "*serial*", "*key*", "*crack*", "*patch*",
             "*trial*", "*demo*", "*evaluation*", "*expire*", "*validity*",
-            "*.cfg", "*.ini", "*.conf", "*.reg", "*.dat", "*.db", "*.sqlite"
+            "*.cfg", "*.ini", "*.conf", "*.reg", "*.dat", "*.db", "*.sqlite",
         ]
 
-    def search_license_files(self, search_path: str, custom_patterns: List[str] = None) -> Dict[str, Any]:
-        """
-        Search for license-related files in the specified path.
+    def search_license_files(self, search_path: str, custom_patterns: list[str] = None) -> dict[str, Any]:
+        """Search for license-related files in the specified path.
 
         Args:
             search_path: Directory to search in
@@ -118,6 +120,7 @@ class FileSearchTool:
 
         Returns:
             Dictionary with search results and metadata
+
         """
         # Request user approval
         details = f"""Search Path: {search_path}
@@ -136,7 +139,7 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
                 "search_path": search_path,
                 "files_found": [],
                 "directories_scanned": 0,
-                "total_files_checked": 0
+                "total_files_checked": 0,
             }
 
             patterns = self.common_license_patterns + (custom_patterns or [])
@@ -161,7 +164,7 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
                                 "name": _file,
                                 "size": file_path.stat().st_size if file_path.exists() else 0,
                                 "matched_pattern": _pattern,
-                                "directory": str(Path(root))
+                                "directory": str(Path(root)),
                             }
                             results["files_found"].append(file_info)
                             break
@@ -173,7 +176,7 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
             # Log results
             if self.app_instance and hasattr(self.app_instance, "update_output"):
                 self.app_instance.update_output.emit(
-                    f"[AI File Search] Found {len(results['files_found'])} license-related files"
+                    f"[AI File Search] Found {len(results['files_found'])} license-related files",
                 )
 
             return results
@@ -182,19 +185,19 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
             logger.error("Error in file search: %s", e)
             return {"status": "error", "message": str(e)}
 
-    def quick_license_scan(self, program_directory: str) -> Dict[str, Any]:
-        """
-        Quick scan for obvious license files in a program's directory.
+    def quick_license_scan(self, program_directory: str) -> dict[str, Any]:
+        """Quick scan for obvious license files in a program's directory.
 
         Args:
             program_directory: Main program directory to scan
 
         Returns:
             Dictionary with found license files
+
         """
         high_priority_patterns = [
             "license.txt", "license.dat", "license.key", "serial.txt",
-            "activation.dat", "auth.cfg", "registration.ini", "*.lic"
+            "activation.dat", "auth.cfg", "registration.ini", "*.lic",
         ]
 
         return self.search_license_files(program_directory, high_priority_patterns)
@@ -208,9 +211,8 @@ class FileReadTool:
         self.app_instance = app_instance
         self.max_file_size = 10 * 1024 * 1024  # 10MB limit
 
-    def read_file_content(self, file_path: str, purpose: str = "License analysis") -> Dict[str, Any]:
-        """
-        Read the content of a file with user approval.
+    def read_file_content(self, file_path: str, purpose: str = "License analysis") -> dict[str, Any]:
+        """Read the content of a file with user approval.
 
         Args:
             file_path: Path to the file to read
@@ -218,6 +220,7 @@ class FileReadTool:
 
         Returns:
             Dictionary with file content and metadata
+
         """
         file_path = Path(file_path)
 
@@ -231,7 +234,7 @@ class FileReadTool:
         if file_size > self.max_file_size:
             return {
                 "status": "error",
-                "message": f"File too large: {file_size} bytes (limit: {self.max_file_size})"
+                "message": f"File too large: {file_size} bytes (limit: {self.max_file_size})",
             }
 
         # Request user approval
@@ -250,14 +253,14 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
             encoding = "utf-8"
 
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read()
             except UnicodeDecodeError as e:
                 logger.error("UnicodeDecodeError in ai_file_tools: %s", e)
                 # Try common encodings
                 for _enc in ["latin-1", "cp1252", "ascii"]:
                     try:
-                        with open(file_path, "r", encoding=_enc) as f:
+                        with open(file_path, encoding=_enc) as f:
                             content = f.read()
                             encoding = _enc
                             break
@@ -279,13 +282,13 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
                 "content": content,
                 "size": file_size,
                 "encoding": encoding,
-                "is_binary": encoding == "binary"
+                "is_binary": encoding == "binary",
             }
 
             # Log the read operation
             if self.app_instance and hasattr(self.app_instance, "update_output"):
                 self.app_instance.update_output.emit(
-                    f"[AI File Read] Read {file_path.name} ({file_size:,} bytes)"
+                    f"[AI File Read] Read {file_path.name} ({file_size:,} bytes)",
                 )
 
             return result
@@ -294,9 +297,8 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
             logger.error("Error reading file %s: %s", file_path, e)
             return {"status": "error", "message": str(e)}
 
-    def read_multiple_files(self, file_paths: List[str], purpose: str = "License analysis") -> Dict[str, Any]:
-        """
-        Read multiple files with a single approval request.
+    def read_multiple_files(self, file_paths: list[str], purpose: str = "License analysis") -> dict[str, Any]:
+        """Read multiple files with a single approval request.
 
         Args:
             file_paths: List of file paths to read
@@ -304,6 +306,7 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
 
         Returns:
             Dictionary with results for each file
+
         """
         # Calculate total size
         total_size = 0
@@ -333,7 +336,7 @@ Files:
             "status": "success",
             "files_read": [],
             "total_files": len(valid_paths),
-            "total_size": total_size
+            "total_size": total_size,
         }
 
         for _file_path in valid_paths:
@@ -354,27 +357,27 @@ class AIFileTools:
         self.search_tool = FileSearchTool(app_instance)
         self.read_tool = FileReadTool(app_instance)
 
-    def search_for_license_files(self, base_path: str, custom_patterns: List[str] = None) -> Dict[str, Any]:
+    def search_for_license_files(self, base_path: str, custom_patterns: list[str] = None) -> dict[str, Any]:
         """Search for license-related files."""
         return self.search_tool.search_license_files(base_path, custom_patterns)
 
-    def read_file(self, file_path: str, purpose: str = "License analysis") -> Dict[str, Any]:
+    def read_file(self, file_path: str, purpose: str = "License analysis") -> dict[str, Any]:
         """Read a single file."""
         return self.read_tool.read_file_content(file_path, purpose)
 
-    def read_multiple_files(self, file_paths: List[str], purpose: str = "License analysis") -> Dict[str, Any]:
+    def read_multiple_files(self, file_paths: list[str], purpose: str = "License analysis") -> dict[str, Any]:
         """Read multiple files."""
         return self.read_tool.read_multiple_files(file_paths, purpose)
 
-    def analyze_program_directory(self, program_path: str) -> Dict[str, Any]:
-        """
-        Comprehensive analysis of a program's directory structure for licensing.
+    def analyze_program_directory(self, program_path: str) -> dict[str, Any]:
+        """Comprehensive analysis of a program's directory structure for licensing.
 
         Args:
             program_path: Path to the main program executable
 
         Returns:
             Dictionary with comprehensive analysis results
+
         """
         program_path = Path(program_path)
         program_dir = program_path.parent
@@ -391,7 +394,7 @@ class AIFileTools:
             "program_directory": str(program_dir),
             "license_files_found": license_scan["files_found"],
             "file_contents": {},
-            "analysis_summary": {}
+            "analysis_summary": {},
         }
 
         # If we found potential license files, offer to read them
@@ -401,7 +404,7 @@ class AIFileTools:
 
             read_results = self.read_multiple_files(
                 file_paths,
-                f"Analyze licensing mechanism in {program_path.name}"
+                f"Analyze licensing mechanism in {program_path.name}",
             )
 
             if read_results["status"] == "success":
@@ -414,7 +417,7 @@ class AIFileTools:
             "license_files_count": len(license_scan["files_found"]),
             "files_analyzed": len(analysis["file_contents"]),
             "program_name": program_path.stem,
-            "directory_scanned": str(program_dir)
+            "directory_scanned": str(program_dir),
         }
 
         return analysis

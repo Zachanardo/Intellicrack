@@ -1,5 +1,4 @@
-"""
-Intellicrack UI Dialogs Package
+"""Intellicrack UI Dialogs Package
 
 Copyright (C) 2025 Zachary Flint
 
@@ -169,25 +168,25 @@ if GuidedWorkflowWizard is not None:
     __all__.append("GuidedWorkflowWizard")
 
 if ModelFinetuningDialog is not None:
-    __all__.extend(["ModelFinetuningDialog", "TrainingConfig", "AugmentationConfig", "TrainingThread"])
+    __all__.extend(["AugmentationConfig", "ModelFinetuningDialog", "TrainingConfig", "TrainingThread"])
 
 if PluginManagerDialog is not None:
     __all__.append("PluginManagerDialog")
 
 if ReportManagerDialog is not None:
-    __all__.extend(["ReportManagerDialog", "ReportGenerationThread"])
+    __all__.extend(["ReportGenerationThread", "ReportManagerDialog"])
 
 if BinarySimilaritySearchDialog is not None:
     __all__.append("BinarySimilaritySearchDialog")
 
 if BinarySelectionDialog is not None and BaseTemplateDialog is not None:
-    __all__.extend(["BinarySelectionDialog", "BaseTemplateDialog"])
+    __all__.extend(["BaseTemplateDialog", "BinarySelectionDialog"])
 
 if SplashScreen is not None:
     __all__.append("SplashScreen")
 
 if TextEditorDialog is not None:
-    __all__.extend(["TextEditorDialog", "PythonSyntaxHighlighter", "FindReplaceDialog"])
+    __all__.extend(["FindReplaceDialog", "PythonSyntaxHighlighter", "TextEditorDialog"])
 
 if VisualPatchEditorDialog is not None:
     __all__.append("VisualPatchEditorDialog")

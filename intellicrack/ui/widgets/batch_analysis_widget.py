@@ -1,5 +1,4 @@
-"""
-Batch Analysis Widget for File Browser Integration
+"""Batch Analysis Widget for File Browser Integration
 
 Provides batch processing capabilities for analyzing multiple files with the
 Intellicrack Protection Engine (ICP). Supports parallel processing, progress tracking,
@@ -13,7 +12,7 @@ import os
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QBrush, QColor, QFont
@@ -46,12 +45,13 @@ logger = get_logger(__name__)
 @dataclass
 class BatchAnalysisResult:
     """Result of batch analysis for a single file"""
+
     file_path: str
     file_size: int
     analysis_time: float
     success: bool
     error_message: str = ""
-    protections: List[Dict[str, Any]] = field(default_factory=list)
+    protections: list[dict[str, Any]] = field(default_factory=list)
     is_packed: bool = False
     is_protected: bool = False
     file_type: str = "Unknown"
@@ -65,12 +65,11 @@ class BatchAnalysisResult:
         """Get analysis status string"""
         if not self.success:
             return "Failed"
-        elif self.is_protected:
+        if self.is_protected:
             return "Protected"
-        elif self.is_packed:
+        if self.is_packed:
             return "Packed"
-        else:
-            return "Clean"
+        return "Clean"
 
 
 class BatchAnalysisWorker(QThread):
@@ -82,13 +81,14 @@ class BatchAnalysisWorker(QThread):
     analysis_finished = pyqtSignal(list)  # all results
     error_occurred = pyqtSignal(str)  # error message
 
-    def __init__(self, file_paths: List[str], max_workers: int = 4, deep_scan: bool = False):
+    def __init__(self, file_paths: list[str], max_workers: int = 4, deep_scan: bool = False):
         """Initialize batch analysis thread.
 
         Args:
             file_paths: List of file paths to analyze
             max_workers: Maximum number of worker threads for parallel processing
             deep_scan: Whether to perform deep scanning analysis
+
         """
         super().__init__()
         self.file_paths = file_paths
@@ -140,7 +140,7 @@ class BatchAnalysisWorker(QThread):
                             file_size=0,
                             analysis_time=0.0,
                             success=False,
-                            error_message=str(e)
+                            error_message=str(e),
                         )
                         results.append(failed_result)
                         completed += 1
@@ -152,7 +152,7 @@ class BatchAnalysisWorker(QThread):
 
         except Exception as e:
             logger.error("Exception in batch_analysis_widget: %s", e)
-            self.error_occurred.emit(f"Batch analysis failed: {str(e)}")
+            self.error_occurred.emit(f"Batch analysis failed: {e!s}")
 
     def _analyze_file(self, file_path: str) -> BatchAnalysisResult:
         """Analyze a single file"""
@@ -197,7 +197,7 @@ class BatchAnalysisWorker(QThread):
                 architecture=architecture,
                 entropy=entropy,
                 icp_detections=icp_detections,
-                confidence_score=confidence_score
+                confidence_score=confidence_score,
             )
 
         except Exception as e:
@@ -209,7 +209,7 @@ class BatchAnalysisWorker(QThread):
                 file_size=os.path.getsize(file_path) if os.path.exists(file_path) else 0,
                 analysis_time=analysis_time,
                 success=False,
-                error_message=str(e)
+                error_message=str(e),
             )
 
 
@@ -223,9 +223,9 @@ class BatchAnalysisWidget(QWidget):
     def __init__(self, parent=None):
         """Initialize the batch analysis widget with UI components and analysis functionality."""
         super().__init__(parent)
-        self.results: List[BatchAnalysisResult] = []
-        self.worker: Optional[BatchAnalysisWorker] = None
-        self.selected_files: List[str] = []
+        self.results: list[BatchAnalysisResult] = []
+        self.worker: BatchAnalysisWorker | None = None
+        self.selected_files: list[str] = []
         self.init_ui()
 
     def init_ui(self):
@@ -299,7 +299,7 @@ class BatchAnalysisWidget(QWidget):
         self.file_filter_combo = QComboBox()
         self.file_filter_combo.addItems([
             "All Files", "PE Files (*.exe, *.dll)", "Archives (*.zip, *.rar)",
-            "Scripts (*.js, *.py)", "Documents (*.pdf, *.doc)"
+            "Scripts (*.js, *.py)", "Documents (*.pdf, *.doc)",
         ])
         options_layout.addWidget(self.file_filter_combo)
 
@@ -346,7 +346,7 @@ class BatchAnalysisWidget(QWidget):
         # Set columns
         headers = [
             "File Name", "Path", "Size", "Status", "Type", "Architecture",
-            "Protections", "ICP Detections", "Confidence", "Time (s)", "Details"
+            "Protections", "ICP Detections", "Confidence", "Time (s)", "Details",
         ]
         table.setColumnCount(len(headers))
         table.setHorizontalHeaderLabels(headers)
@@ -400,7 +400,7 @@ class BatchAnalysisWidget(QWidget):
             self,
             "Select Files for Batch Analysis",
             "",
-            "All Files (*.*)"
+            "All Files (*.*)",
         )
 
         if files:
@@ -411,7 +411,7 @@ class BatchAnalysisWidget(QWidget):
         """Select folder and scan for files"""
         folder = QFileDialog.getExistingDirectory(
             self,
-            "Select Folder for Batch Analysis"
+            "Select Folder for Batch Analysis",
         )
 
         if folder:
@@ -426,10 +426,10 @@ class BatchAnalysisWidget(QWidget):
                 QMessageBox.information(
                     self,
                     "No Files Found",
-                    f"No matching files found in {folder}"
+                    f"No matching files found in {folder}",
                 )
 
-    def _scan_folder(self, folder_path: str, filter_type: str) -> List[str]:
+    def _scan_folder(self, folder_path: str, filter_type: str) -> list[str]:
         """Scan folder for files matching filter"""
         files = []
 
@@ -439,7 +439,7 @@ class BatchAnalysisWidget(QWidget):
             "PE Files (*.exe, *.dll)": [".exe", ".dll", ".sys", ".scr"],
             "Archives (*.zip, *.rar)": [".zip", ".rar", ".7z", ".tar", ".gz"],
             "Scripts (*.js, *.py)": [".js", ".py", ".vbs", ".ps1", ".bat"],
-            "Documents (*.pdf, *.doc)": [".pdf", ".doc", ".docx", ".rtf"]
+            "Documents (*.pdf, *.doc)": [".pdf", ".doc", ".docx", ".rtf"],
         }
 
         target_extensions = extensions.get(filter_type)
@@ -534,7 +534,7 @@ class BatchAnalysisWidget(QWidget):
             self,
             "Export Batch Analysis Results",
             "batch_analysis_results.csv",
-            "CSV Files (*.csv);;All Files (*.*)"
+            "CSV Files (*.csv);;All Files (*.*)",
         )
 
         if file_path:
@@ -543,14 +543,14 @@ class BatchAnalysisWidget(QWidget):
                 QMessageBox.information(
                     self,
                     "Export Complete",
-                    f"Results exported to {file_path}"
+                    f"Results exported to {file_path}",
                 )
             except Exception as e:
                 logger.error("Exception in batch_analysis_widget: %s", e)
                 QMessageBox.critical(
                     self,
                     "Export Failed",
-                    f"Failed to export results: {str(e)}"
+                    f"Failed to export results: {e!s}",
                 )
 
     def _export_to_csv(self, file_path: str):
@@ -565,7 +565,7 @@ class BatchAnalysisWidget(QWidget):
                 "File Name", "File Path", "Size (bytes)", "Status", "File Type",
                 "Architecture", "Is Packed", "Is Protected", "Protection Count",
                 "ICP Detections", "Confidence Score", "Entropy", "Analysis Time (s)",
-                "Protections", "Error Message"
+                "Protections", "Error Message",
             ])
 
             # Write data
@@ -589,7 +589,7 @@ class BatchAnalysisWidget(QWidget):
                     f"{result.entropy:.2f}",
                     f"{result.analysis_time:.2f}",
                     "; ".join(protection_names),
-                    result.error_message
+                    result.error_message,
                 ])
 
     @pyqtSlot(int, int)
@@ -606,7 +606,7 @@ class BatchAnalysisWidget(QWidget):
         self._add_result_to_table(result)
 
     @pyqtSlot(list)
-    def _on_analysis_finished(self, results: List[BatchAnalysisResult]):
+    def _on_analysis_finished(self, results: list[BatchAnalysisResult]):
         """Handle analysis completion"""
         self._reset_ui_state()
 
@@ -618,7 +618,7 @@ class BatchAnalysisWidget(QWidget):
 
         self.status_label.setText(
             f"Analysis complete: {total} files, {protected} protected, "
-            f"{packed} packed, {failed} failed"
+            f"{packed} packed, {failed} failed",
         )
 
     @pyqtSlot(str)
@@ -754,18 +754,18 @@ class BatchAnalysisWidget(QWidget):
         else:
             self.error_log_text.setPlainText("No errors")
 
-    def add_files_from_list(self, file_paths: List[str]):
+    def add_files_from_list(self, file_paths: list[str]):
         """Add files from external source (e.g., file browser)"""
         self.selected_files.extend(file_paths)
         # Remove duplicates
         self.selected_files = list(set(self.selected_files))
         self._update_file_selection()
 
-    def get_analysis_results(self) -> List[BatchAnalysisResult]:
+    def get_analysis_results(self) -> list[BatchAnalysisResult]:
         """Get current analysis results"""
         return self.results.copy()
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get analysis statistics"""
         if not self.results:
             return {}
@@ -788,5 +788,5 @@ class BatchAnalysisWidget(QWidget):
             "clean": successful - protected - packed,
             "average_analysis_time": avg_time,
             "average_confidence": avg_confidence,
-            "success_rate": (successful / total) * 100 if total > 0 else 0
+            "success_rate": (successful / total) * 100 if total > 0 else 0,
         }

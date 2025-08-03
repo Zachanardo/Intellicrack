@@ -128,7 +128,7 @@ class ModelTestThread(QThread):
                 # Send a simple test message
                 from ...ai.llm_backends import LLMMessage
                 test_messages = [
-                    LLMMessage(role="user", content="Hello! Please respond with 'Test successful' to confirm the connection.")
+                    LLMMessage(role="user", content="Hello! Please respond with 'Test successful' to confirm the connection."),
                 ]
 
                 response = llm_manager.chat(test_messages, test_id)
@@ -142,7 +142,7 @@ class ModelTestThread(QThread):
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in llm_config_dialog: %s", e)
-            self.test_complete.emit(False, f"Test failed: {str(e)}")
+            self.test_complete.emit(False, f"Test failed: {e!s}")
 
 
 class LLMConfigDialog(QDialog):
@@ -150,7 +150,6 @@ class LLMConfigDialog(QDialog):
 
     def __init__(self, parent=None):
         """Initialize the LLMConfigDialog with default values."""
-
         # Initialize UI attributes
         self.anthropic_api_key = None
         self.anthropic_max_tokens = None
@@ -362,7 +361,7 @@ class LLMConfigDialog(QDialog):
             "gpt-4-turbo-preview",
             "gpt-4o",
             "gpt-3.5-turbo",
-            "gpt-3.5-turbo-16k"
+            "gpt-3.5-turbo-16k",
         ])
         layout.addRow("Model:", self.openai_model)
 
@@ -421,7 +420,7 @@ class LLMConfigDialog(QDialog):
             "claude-3-sonnet-20240229",
             "claude-3-haiku-20240307",
             "claude-2.1",
-            "claude-instant-1.2"
+            "claude-instant-1.2",
         ])
         layout.addRow("Model:", self.anthropic_model)
 
@@ -1009,7 +1008,7 @@ class LLMConfigDialog(QDialog):
             self,
             "Select GGUF Model File",
             "",
-            "GGUF Files (*.gguf);;All Files (*)"
+            "GGUF Files (*.gguf);;All Files (*)",
         )
 
         if file_path:
@@ -1053,7 +1052,7 @@ class LLMConfigDialog(QDialog):
             self,
             "Select ONNX Model File",
             "",
-            "ONNX Files (*.onnx);;All Files (*)"
+            "ONNX Files (*.onnx);;All Files (*)",
         )
 
         if file_path:
@@ -1080,7 +1079,7 @@ class LLMConfigDialog(QDialog):
         """Browse for GPTQ model directory."""
         directory = QFileDialog.getExistingDirectory(
             self,
-            "Select GPTQ Model Directory"
+            "Select GPTQ Model Directory",
         )
 
         if directory:
@@ -1094,7 +1093,7 @@ class LLMConfigDialog(QDialog):
         """Browse for Hugging Face model directory."""
         directory = QFileDialog.getExistingDirectory(
             self,
-            "Select Hugging Face Model Directory"
+            "Select Hugging Face Model Directory",
         )
 
         if directory:
@@ -1115,7 +1114,7 @@ class LLMConfigDialog(QDialog):
             api_base=self.openai_base_url.text().strip() or None,
             temperature=self.openai_temp.value(),
             max_tokens=self.openai_max_tokens.value(),
-            tools_enabled=self.openai_tools.isChecked()
+            tools_enabled=self.openai_tools.isChecked(),
         )
 
         model_id = f"openai_{self.openai_model.currentText()}"
@@ -1132,7 +1131,7 @@ class LLMConfigDialog(QDialog):
             api_key=self.anthropic_api_key.text().strip(),
             temperature=self.anthropic_temp.value(),
             max_tokens=self.anthropic_max_tokens.value(),
-            tools_enabled=self.anthropic_tools.isChecked()
+            tools_enabled=self.anthropic_tools.isChecked(),
         )
 
         model_id = f"anthropic_{self.anthropic_model.currentText().replace('-', '_')}"
@@ -1158,7 +1157,7 @@ class LLMConfigDialog(QDialog):
             context_length=self.gguf_context.value(),
             temperature=self.gguf_temp.value(),
             max_tokens=self.gguf_max_tokens.value(),
-            tools_enabled=self.gguf_tools.isChecked()
+            tools_enabled=self.gguf_tools.isChecked(),
         )
 
         model_id = f"gguf_{model_name.replace(' ', '_').replace('-', '_')}"
@@ -1174,7 +1173,7 @@ class LLMConfigDialog(QDialog):
             model_name=self.ollama_model.text().strip(),
             api_base=self.ollama_url.text().strip(),
             temperature=self.ollama_temp.value(),
-            max_tokens=self.ollama_max_tokens.value()
+            max_tokens=self.ollama_max_tokens.value(),
         )
 
         model_id = f"ollama_{self.ollama_model.text().strip().replace(':', '_')}"
@@ -1199,7 +1198,7 @@ class LLMConfigDialog(QDialog):
             model_name=model_name,
             temperature=self.pytorch_temp.value(),
             max_tokens=self.pytorch_max_tokens.value(),
-            device=self.pytorch_device.currentText()
+            device=self.pytorch_device.currentText(),
         )
 
         model_id = f"pytorch_{model_name.replace(' ', '_').replace('-', '_')}"
@@ -1224,7 +1223,7 @@ class LLMConfigDialog(QDialog):
             model_name=model_name,
             temperature=self.tensorflow_temp.value(),
             max_tokens=self.tensorflow_max_tokens.value(),
-            device=self.tensorflow_device.currentText()
+            device=self.tensorflow_device.currentText(),
         )
 
         model_id = f"tensorflow_{model_name.replace(' ', '_').replace('-', '_')}"
@@ -1249,7 +1248,7 @@ class LLMConfigDialog(QDialog):
             model_name=model_name,
             temperature=self.onnx_temp.value(),
             max_tokens=self.onnx_max_tokens.value(),
-            providers=[self.onnx_providers.currentText()]
+            providers=[self.onnx_providers.currentText()],
         )
 
         model_id = f"onnx_{model_name.replace(' ', '_').replace('-', '_')}"
@@ -1274,7 +1273,7 @@ class LLMConfigDialog(QDialog):
             model_name=model_name,
             temperature=self.safetensors_temp.value(),
             max_tokens=self.safetensors_max_tokens.value(),
-            device=self.safetensors_device.currentText()
+            device=self.safetensors_device.currentText(),
         )
 
         model_id = f"safetensors_{model_name.replace(' ', '_').replace('-', '_')}"
@@ -1299,7 +1298,7 @@ class LLMConfigDialog(QDialog):
             model_name=model_name,
             temperature=self.gptq_temp.value(),
             max_tokens=self.gptq_max_tokens.value(),
-            device=self.gptq_device.currentText()
+            device=self.gptq_device.currentText(),
         )
 
         model_id = f"gptq_{model_name.replace(' ', '_').replace('-', '_')}"
@@ -1325,7 +1324,7 @@ class LLMConfigDialog(QDialog):
             model_name=model_name,
             temperature=self.huggingface_temp.value(),
             max_tokens=self.huggingface_max_tokens.value(),
-            device=self.huggingface_device.currentText()
+            device=self.huggingface_device.currentText(),
         )
 
         model_id = f"huggingface_{model_name.replace(' ', '_').replace('-', '_')}"
@@ -1346,7 +1345,7 @@ class LLMConfigDialog(QDialog):
             if self.config_manager:
                 metadata = {
                     "auto_load": True,
-                    "created_by": "llm_config_dialog"
+                    "created_by": "llm_config_dialog",
                 }
                 self.config_manager.save_model_config(model_id, config, metadata)
 
@@ -1400,7 +1399,7 @@ class LLMConfigDialog(QDialog):
         reply = QMessageBox.question(
             self, "Remove Model",
             f"Are you sure you want to remove model: {model_id}?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         )
 
         if reply == QMessageBox.Yes:
@@ -1433,7 +1432,7 @@ class LLMConfigDialog(QDialog):
         config = create_openai_config(
             model_name=self.openai_model.currentText(),
             api_key=self.openai_api_key.text().strip(),
-            api_base=self.openai_base_url.text().strip() or None
+            api_base=self.openai_base_url.text().strip() or None,
         )
         self.test_model_config(config)
 
@@ -1445,7 +1444,7 @@ class LLMConfigDialog(QDialog):
 
         config = create_anthropic_config(
             model_name=self.anthropic_model.currentText(),
-            api_key=self.anthropic_api_key.text().strip()
+            api_key=self.anthropic_api_key.text().strip(),
         )
         self.test_model_config(config)
 
@@ -1457,7 +1456,7 @@ class LLMConfigDialog(QDialog):
 
         config = create_gguf_config(
             model_path=self.gguf_model_path.text(),
-            model_name=self.gguf_model_name.text() or "test_model"
+            model_name=self.gguf_model_name.text() or "test_model",
         )
         self.test_model_config(config)
 
@@ -1469,7 +1468,7 @@ class LLMConfigDialog(QDialog):
 
         config = create_ollama_config(
             model_name=self.ollama_model.text().strip(),
-            api_base=self.ollama_url.text().strip()
+            api_base=self.ollama_url.text().strip(),
         )
         self.test_model_config(config)
 
@@ -1482,7 +1481,7 @@ class LLMConfigDialog(QDialog):
         config = create_pytorch_config(
             model_path=self.pytorch_model_path.text(),
             model_name=self.pytorch_model_name.text() or "test_model",
-            device=self.pytorch_device.currentText()
+            device=self.pytorch_device.currentText(),
         )
         self.test_model_config(config)
 
@@ -1495,7 +1494,7 @@ class LLMConfigDialog(QDialog):
         config = create_tensorflow_config(
             model_path=self.tensorflow_model_path.text(),
             model_name=self.tensorflow_model_name.text() or "test_model",
-            device=self.tensorflow_device.currentText()
+            device=self.tensorflow_device.currentText(),
         )
         self.test_model_config(config)
 
@@ -1508,7 +1507,7 @@ class LLMConfigDialog(QDialog):
         config = create_onnx_config(
             model_path=self.onnx_model_path.text(),
             model_name=self.onnx_model_name.text() or "test_model",
-            providers=[self.onnx_providers.currentText()]
+            providers=[self.onnx_providers.currentText()],
         )
         self.test_model_config(config)
 
@@ -1521,7 +1520,7 @@ class LLMConfigDialog(QDialog):
         config = create_safetensors_config(
             model_path=self.safetensors_model_path.text(),
             model_name=self.safetensors_model_name.text() or "test_model",
-            device=self.safetensors_device.currentText()
+            device=self.safetensors_device.currentText(),
         )
         self.test_model_config(config)
 
@@ -1534,7 +1533,7 @@ class LLMConfigDialog(QDialog):
         config = create_gptq_config(
             model_path=self.gptq_model_path.text(),
             model_name=self.gptq_model_name.text() or "test_model",
-            device=self.gptq_device.currentText()
+            device=self.gptq_device.currentText(),
         )
         self.test_model_config(config)
 
@@ -1548,7 +1547,7 @@ class LLMConfigDialog(QDialog):
         config = create_huggingface_local_config(
             model_path=self.huggingface_model_path.text(),
             model_name=self.huggingface_model_name.text() or "test_model",
-            device=self.huggingface_device.currentText()
+            device=self.huggingface_device.currentText(),
         )
         self.test_model_config(config)
 
@@ -1616,7 +1615,7 @@ class LLMConfigDialog(QDialog):
         """Browse for LoRA adapter directory."""
         directory = QFileDialog.getExistingDirectory(
             self,
-            "Select LoRA Adapter Directory"
+            "Select LoRA Adapter Directory",
         )
 
         if directory:
@@ -1654,7 +1653,7 @@ class LLMConfigDialog(QDialog):
                         base_llm.model,
                         self.lora_adapter_path.text(),
                         adapter_name=adapter_name,
-                        merge_adapter=self.lora_merge_adapter.isChecked()
+                        merge_adapter=self.lora_merge_adapter.isChecked(),
                     )
 
                     if model_with_adapter:
@@ -1672,7 +1671,7 @@ class LLMConfigDialog(QDialog):
                         QMessageBox.information(
                             self,
                             "Success",
-                            f"LoRA adapter loaded successfully!\nModel ID: {new_model_id}"
+                            f"LoRA adapter loaded successfully!\nModel ID: {new_model_id}",
                         )
                     else:
                         QMessageBox.critical(self, "Error", "Failed to load LoRA adapter")
@@ -1680,14 +1679,14 @@ class LLMConfigDialog(QDialog):
                     QMessageBox.warning(
                         self,
                         "Model Not Loaded",
-                        "The base model is not loaded. Please ensure it's properly initialized."
+                        "The base model is not loaded. Please ensure it's properly initialized.",
                     )
             else:
                 QMessageBox.warning(self, "Model Not Found", f"Base model '{base_model_id}' not found")
 
         except Exception as e:
             logger.error(f"Failed to load LoRA adapter: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to load LoRA adapter: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to load LoRA adapter: {e!s}")
 
     def test_lora_adapter(self):
         """Test a LoRA adapter configuration."""
@@ -1723,7 +1722,7 @@ class LLMConfigDialog(QDialog):
 
         except Exception as e:
             logger.error("Exception in llm_config_dialog: %s", e)
-            QMessageBox.critical(self, "Error", f"Failed to get adapter info: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to get adapter info: {e!s}")
 
     def create_lora_adapter(self):
         """Create a new LoRA adapter configuration."""
@@ -1741,7 +1740,7 @@ class LLMConfigDialog(QDialog):
                 adapter_type=self.lora_adapter_type.currentText(),
                 r=self.lora_rank.value(),
                 lora_alpha=self.lora_alpha.value(),
-                lora_dropout=self.lora_dropout.value()
+                lora_dropout=self.lora_dropout.value(),
             )
 
             if lora_config:
@@ -1754,14 +1753,14 @@ class LLMConfigDialog(QDialog):
                         peft_model = adapter_manager.apply_lora_to_model(
                             base_llm.model,
                             lora_config,
-                            adapter_name=adapter_name
+                            adapter_name=adapter_name,
                         )
 
                         if peft_model:
                             # Ask where to save
                             save_path = QFileDialog.getExistingDirectory(
                                 self,
-                                "Save LoRA Adapter To"
+                                "Save LoRA Adapter To",
                             )
 
                             if save_path:
@@ -1769,18 +1768,18 @@ class LLMConfigDialog(QDialog):
                                 success = adapter_manager.save_adapter(
                                     peft_model,
                                     save_path,
-                                    adapter_name=adapter_name
+                                    adapter_name=adapter_name,
                                 )
 
                                 if success:
                                     self.status_text.append(
                                         f"✓ Created new LoRA adapter '{adapter_name}' "
-                                        f"with rank={self.lora_rank.value()}"
+                                        f"with rank={self.lora_rank.value()}",
                                     )
                                     QMessageBox.information(
                                         self,
                                         "Success",
-                                        f"LoRA adapter created and saved to:\n{save_path}"
+                                        f"LoRA adapter created and saved to:\n{save_path}",
                                     )
                                 else:
                                     QMessageBox.critical(self, "Error", "Failed to save LoRA adapter")
@@ -1790,7 +1789,7 @@ class LLMConfigDialog(QDialog):
                         QMessageBox.warning(
                             self,
                             "Model Not Loaded",
-                            "The base model is not loaded. Please ensure it's properly initialized."
+                            "The base model is not loaded. Please ensure it's properly initialized.",
                         )
                 else:
                     QMessageBox.warning(self, "Model Not Found", f"Base model '{base_model_id}' not found")
@@ -1799,7 +1798,7 @@ class LLMConfigDialog(QDialog):
 
         except Exception as e:
             logger.error(f"Failed to create LoRA adapter: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to create LoRA adapter: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to create LoRA adapter: {e!s}")
 
     def closeEvent(self, event):
         """Handle dialog close event."""
@@ -1807,7 +1806,7 @@ class LLMConfigDialog(QDialog):
             reply = QMessageBox.question(
                 self, "Test In Progress",
                 "A model test is in progress. Do you want to cancel it and close?",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
 
             if reply == QMessageBox.No:

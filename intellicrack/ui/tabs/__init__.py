@@ -1,5 +1,4 @@
-"""
-Tab components for Intellicrack UI
+"""Tab components for Intellicrack UI
 """
 
 from .ai_assistant_tab import AIAssistantTab
@@ -10,10 +9,10 @@ from .settings_tab import SettingsTab
 from .tools_tab import ToolsTab
 
 __all__ = [
-    "DashboardTab",
-    "AnalysisTab",
-    "ExploitationTab",
     "AIAssistantTab",
+    "AnalysisTab",
+    "DashboardTab",
+    "ExploitationTab",
+    "SettingsTab",
     "ToolsTab",
-    "SettingsTab"
 ]

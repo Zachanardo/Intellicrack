@@ -1,5 +1,4 @@
-"""
-SimConcolic - A simple binary analysis framework
+"""SimConcolic - A simple binary analysis framework
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,8 +21,8 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import time
+from collections.abc import Callable
 from datetime import datetime
-from typing import Callable, Dict, List, Optional
 
 __version__ = "1.0.0"
 
@@ -43,7 +42,7 @@ class Plugin:
             "start_time": self.analysis_start_time,
             "initial_memory_usage": self._get_memory_usage(),
             "callback_args": args,
-            "callback_kwargs": kwargs
+            "callback_kwargs": kwargs,
         }
         logger.info(f"Starting analysis at {datetime.fromtimestamp(self.analysis_start_time)}")
 
@@ -52,11 +51,11 @@ class Plugin:
         # Calculate analysis statistics
         end_time = time.time()
         duration = end_time - getattr(self, "analysis_start_time", end_time)
-        
+
         # Log completion statistics
         logger.info(f"Analysis completed in {duration:.2f} seconds")
         logger.info(f"Total states analyzed: {getattr(self, 'total_states_analyzed', 0)}")
-        
+
         # Store final metrics
         if hasattr(self, "analysis_metadata"):
             self.analysis_metadata["end_time"] = end_time
@@ -71,10 +70,10 @@ class Plugin:
         if not hasattr(self, "fork_count"):
             self.fork_count = 0
         self.fork_count += 1
-        
+
         # Log fork event
         logger.debug(f"Forking state at address 0x{state.address:x} (fork #{self.fork_count})")
-        
+
         # Store fork metadata
         if not hasattr(self, "fork_history"):
             self.fork_history = []
@@ -82,7 +81,7 @@ class Plugin:
             "timestamp": time.time(),
             "state_address": state.address,
             "fork_number": self.fork_count,
-            "parent_constraints": len(state.constraints) if hasattr(state, "constraints") else 0
+            "parent_constraints": len(state.constraints) if hasattr(state, "constraints") else 0,
         })
 
     def will_terminate_state_callback(self, state, *args, **kwargs):
@@ -90,16 +89,16 @@ class Plugin:
         # Track termination reasons
         if not hasattr(self, "termination_pending"):
             self.termination_pending = {}
-        
+
         # Store pending termination info
         state_id = getattr(state, "state_id", id(state))
         self.termination_pending[state_id] = {
             "timestamp": time.time(),
             "address": state.address,
             "reason": kwargs.get("reason", "unknown"),
-            "constraints_count": len(state.constraints) if hasattr(state, "constraints") else 0
+            "constraints_count": len(state.constraints) if hasattr(state, "constraints") else 0,
         }
-        
+
         logger.debug(f"State at 0x{state.address:x} pending termination")
 
     def did_terminate_state_callback(self, state, *args, **kwargs):
@@ -107,28 +106,28 @@ class Plugin:
         # Update termination statistics
         if not hasattr(self, "terminated_states"):
             self.terminated_states = []
-        
+
         state_id = getattr(state, "state_id", id(state))
         termination_info = getattr(self, "termination_pending", {}).get(state_id, {})
-        
+
         # Record terminated state
         self.terminated_states.append({
             "timestamp": time.time(),
             "address": state.address,
             "state_id": state_id,
             "reason": termination_info.get("reason", "unknown"),
-            "duration": time.time() - termination_info.get("timestamp", time.time())
+            "duration": time.time() - termination_info.get("timestamp", time.time()),
         })
-        
+
         # Clean up pending termination
         if hasattr(self, "termination_pending") and state_id in self.termination_pending:
             del self.termination_pending[state_id]
-        
+
         # Update total states analyzed
         self.total_states_analyzed = getattr(self, "total_states_analyzed", 0) + 1
-        
+
         logger.debug(f"State at 0x{state.address:x} terminated (total: {self.total_states_analyzed})")
-    
+
     def _get_memory_usage(self):
         """Get current memory usage in MB"""
         try:
@@ -143,20 +142,20 @@ class State:
     """Represents an execution state in the binary"""
 
     def __init__(self, address: int, analyzer: "BinaryAnalyzer", state_id: str = None):
-        """
-        Initialize a state
+        """Initialize a state
 
         Args:
             address: The current instruction pointer address
             analyzer: The parent analyzer
             state_id: Optional state ID
+
         """
         self.analyzer = analyzer
         self.terminated = False
         self.termination_reason = "running"  # Initial state is "running"
         self.input_symbols = {
             "stdin": b"",
-            "argv": []
+            "argv": [],
         }
         self.id = state_id or f"state_{address:x}"
 
@@ -165,7 +164,7 @@ class State:
             "instruction_pointer": address,
             "PC": address,  # Alias for instruction_pointer
             "memory": {},
-            "registers": {}
+            "registers": {},
         })
 
     def abandon(self):
@@ -186,30 +185,30 @@ class State:
 class BinaryAnalyzer:
     """Base class for binary analysis"""
 
-    def __init__(self, binary_path: str, workspace_url: Optional[str] = None):
-        """
-        Initialize a binary analyzer
+    def __init__(self, binary_path: str, workspace_url: str | None = None):
+        """Initialize a binary analyzer
 
         Args:
             binary_path: Path to the binary file to analyze
             workspace_url: Optional workspace URL for storing results
+
         """
         self.binary_path = binary_path
         self.workspace_url = workspace_url
         self.logger = logging.getLogger("SimConcolic")
-        self.hooks: Dict[int, List[Callable]] = {}
-        self.plugins: List[Plugin] = []
-        self._states: Dict[str, State] = {}  # Dictionary of states keyed by ID
+        self.hooks: dict[int, list[Callable]] = {}
+        self.plugins: list[Plugin] = []
+        self._states: dict[str, State] = {}  # Dictionary of states keyed by ID
         self._exec_timeout = None
         self._procs = 1
 
     def add_hook(self, address: int, callback: Callable):
-        """
-        Add a hook at the specified address
+        """Add a hook at the specified address
 
         Args:
             address: The address to hook
             callback: The callback function to call when the address is reached
+
         """
         # Convert address to int if it's in hex string format
         if isinstance(address, str) and address.startswith("0x"):
@@ -222,32 +221,32 @@ class BinaryAnalyzer:
         self.logger.debug(f"Added hook at address 0x{address:x}")
 
     def set_exec_timeout(self, timeout: int):
-        """
-        Set the execution timeout
+        """Set the execution timeout
 
         Args:
             timeout: Timeout in seconds
+
         """
         self._exec_timeout = timeout
 
     def register_plugin(self, plugin: Plugin):
-        """
-        Register a plugin
+        """Register a plugin
 
         Args:
             plugin: The plugin instance to register
+
         """
         self.plugins.append(plugin)
         plugin.analyzer = self
 
     # pylint: disable=too-many-branches,too-many-statements
-    def run(self, timeout: Optional[int] = None, procs: int = 1):
-        """
-        Run the analysis
+    def run(self, timeout: int | None = None, procs: int = 1):
+        """Run the analysis
 
         Args:
             timeout: Optional timeout in seconds
             procs: Number of parallel processes to use
+
         """
         # Use the timeout parameter if provided, otherwise use the instance timeout
         if timeout is not None:
@@ -366,12 +365,12 @@ class BinaryAnalyzer:
                 plugin.did_terminate_state_callback(state)
 
     @property
-    def all_states(self) -> Dict[str, State]:
-        """
-        Get all states created during analysis as a dictionary
+    def all_states(self) -> dict[str, State]:
+        """Get all states created during analysis as a dictionary
 
         Returns:
             Dictionary of states keyed by state ID
+
         """
         return self._states
 

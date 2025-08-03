@@ -28,7 +28,7 @@ import logging
 import struct
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any
 
 
 class BinaryAnalyzer:
@@ -57,18 +57,18 @@ class BinaryAnalyzer:
             b"\x89PNG": "PNG Image",
             b"\xff\xd8\xff": "JPEG Image",
             b"GIF8": "GIF Image",
-            b"%PDF": "PDF Document"
+            b"%PDF": "PDF Document",
         }
 
-    def analyze(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
-        """
-        Perform comprehensive binary analysis.
+    def analyze(self, binary_path: str | Path) -> dict[str, Any]:
+        """Perform comprehensive binary analysis.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             Analysis results dictionary
+
         """
         try:
             binary_path = Path(binary_path)
@@ -120,14 +120,14 @@ class BinaryAnalyzer:
                 "entropy": entropy_info,
                 "security": security_info,
                 "analysis_status": "completed",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             self.logger.error("Binary analysis failed: %s", e)
             return {"error": str(e), "analysis_status": "failed"}
 
-    def _get_file_info(self, file_path: Path) -> Dict[str, Any]:
+    def _get_file_info(self, file_path: Path) -> dict[str, Any]:
         """Extract basic file metadata."""
         try:
             stat = file_path.stat()
@@ -136,7 +136,7 @@ class BinaryAnalyzer:
                 "created": datetime.fromtimestamp(stat.st_ctime).isoformat(),
                 "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
                 "accessed": datetime.fromtimestamp(stat.st_atime).isoformat(),
-                "permissions": oct(stat.st_mode)[-3:] if hasattr(stat, "st_mode") else None
+                "permissions": oct(stat.st_mode)[-3:] if hasattr(stat, "st_mode") else None,
             }
         except Exception as e:
             return {"error": str(e)}
@@ -153,13 +153,13 @@ class BinaryAnalyzer:
 
             # Additional checks for text-based formats
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     text = f.read(1000)
                     if text.startswith("#!/"):
                         return "Script"
-                    elif text.startswith("<?xml"):
+                    if text.startswith("<?xml"):
                         return "XML"
-                    elif text.startswith(("{", "[")):
+                    if text.startswith(("{", "[")):
                         return "JSON"
             except (UnicodeDecodeError, AttributeError):
                 pass
@@ -168,7 +168,7 @@ class BinaryAnalyzer:
         except Exception as e:
             return f"Error: {e}"
 
-    def _calculate_hashes(self, file_path: Path) -> Dict[str, str]:
+    def _calculate_hashes(self, file_path: Path) -> dict[str, str]:
         """Calculate various hashes of the file."""
         try:
             with open(file_path, "rb") as f:
@@ -178,12 +178,12 @@ class BinaryAnalyzer:
                 "md5": hashlib.md5(data).hexdigest(),
                 "sha1": hashlib.sha1(data).hexdigest(),
                 "sha256": hashlib.sha256(data).hexdigest(),
-                "sha512": hashlib.sha512(data).hexdigest()
+                "sha512": hashlib.sha512(data).hexdigest(),
             }
         except Exception as e:
             return {"error": str(e)}
 
-    def _analyze_pe(self, file_path: Path) -> Dict[str, Any]:
+    def _analyze_pe(self, file_path: Path) -> dict[str, Any]:
         """Analyze PE (Windows executable) file."""
         try:
             with open(file_path, "rb") as f:
@@ -211,7 +211,7 @@ class BinaryAnalyzer:
                 "num_sections": num_sections,
                 "timestamp": datetime.fromtimestamp(timestamp).isoformat() if timestamp > 0 else "N/A",
                 "characteristics": f"0x{characteristics:04x}",
-                "sections": []
+                "sections": [],
             })
 
             # Parse sections
@@ -230,7 +230,7 @@ class BinaryAnalyzer:
                     "virtual_address": f"0x{virtual_address:08x}",
                     "virtual_size": virtual_size,
                     "raw_size": raw_size,
-                    "raw_address": f"0x{raw_address:08x}"
+                    "raw_address": f"0x{raw_address:08x}",
                 })
 
             return pe_info
@@ -238,7 +238,7 @@ class BinaryAnalyzer:
         except Exception as e:
             return {"error": str(e)}
 
-    def _analyze_elf(self, file_path: Path) -> Dict[str, Any]:
+    def _analyze_elf(self, file_path: Path) -> dict[str, Any]:
         """Analyze ELF (Linux executable) file."""
         try:
             with open(file_path, "rb") as f:
@@ -259,7 +259,7 @@ class BinaryAnalyzer:
                 "data": "little-endian" if ei_data == 1 else "big-endian",
                 "version": ei_version,
                 "segments": [],
-                "sections": []
+                "sections": [],
             })
 
             # Parse program headers (segments)
@@ -273,7 +273,7 @@ class BinaryAnalyzer:
             elf_info.update({
                 "type": {1: "REL", 2: "EXEC", 3: "DYN", 4: "CORE"}.get(e_type, f"Unknown({e_type})"),
                 "machine": f"0x{e_machine:04x}",
-                "entry_point": f"0x{e_entry:08x}"
+                "entry_point": f"0x{e_entry:08x}",
             })
 
             # Parse program headers
@@ -298,7 +298,7 @@ class BinaryAnalyzer:
                     "vaddr": f"0x{p_vaddr:08x}",
                     "filesz": p_filesz,
                     "memsz": p_memsz,
-                    "flags": self._get_segment_flags(p_flags)
+                    "flags": self._get_segment_flags(p_flags),
                 })
 
             return elf_info
@@ -317,7 +317,7 @@ class BinaryAnalyzer:
             flag_str += "R"
         return flag_str or "None"
 
-    def _analyze_macho(self, file_path: Path) -> Dict[str, Any]:
+    def _analyze_macho(self, file_path: Path) -> dict[str, Any]:
         """Analyze Mach-O (macOS executable) file."""
         try:
             with open(file_path, "rb") as f:
@@ -363,7 +363,7 @@ class BinaryAnalyzer:
                 "num_commands": ncmds,
                 "commands_size": sizeofcmds,
                 "flags": f"0x{flags:08x}",
-                "load_commands": []
+                "load_commands": [],
             })
 
             # Parse load commands (limit to prevent excessive parsing)
@@ -375,7 +375,7 @@ class BinaryAnalyzer:
 
                 macho_info["load_commands"].append({
                     "cmd": f"0x{cmd:08x}",
-                    "cmdsize": cmdsize
+                    "cmdsize": cmdsize,
                 })
 
                 offset += cmdsize
@@ -385,7 +385,7 @@ class BinaryAnalyzer:
         except Exception as e:
             return {"error": str(e)}
 
-    def _analyze_dex(self, file_path: Path) -> Dict[str, Any]:
+    def _analyze_dex(self, file_path: Path) -> dict[str, Any]:
         """Analyze Android DEX file."""
         try:
             with open(file_path, "rb") as f:
@@ -397,7 +397,7 @@ class BinaryAnalyzer:
             dex_info = {
                 "version": data[4:7].decode("utf-8", errors="ignore"),
                 "file_size": len(data),
-                "strings": []
+                "strings": [],
             }
 
             # Parse DEX header
@@ -411,7 +411,7 @@ class BinaryAnalyzer:
                     "checksum": f"0x{checksum:08x}",
                     "signature": signature,
                     "declared_size": file_size,
-                    "header_size": header_size
+                    "header_size": header_size,
                 })
 
                 # String IDs
@@ -450,7 +450,7 @@ class BinaryAnalyzer:
         except Exception as e:
             return {"error": str(e)}
 
-    def _analyze_archive(self, file_path: Path) -> Dict[str, Any]:
+    def _analyze_archive(self, file_path: Path) -> dict[str, Any]:
         """Analyze archive files (ZIP, JAR, APK)."""
         try:
             import zipfile
@@ -460,7 +460,7 @@ class BinaryAnalyzer:
                 "files": [],
                 "total_files": 0,
                 "compressed_size": 0,
-                "uncompressed_size": 0
+                "uncompressed_size": 0,
             }
 
             with zipfile.ZipFile(file_path, "r") as zf:
@@ -479,7 +479,7 @@ class BinaryAnalyzer:
                         "filename": file_info.filename,
                         "compressed_size": file_info.compress_size,
                         "uncompressed_size": file_info.file_size,
-                        "crc32": f"0x{file_info.CRC:08x}"
+                        "crc32": f"0x{file_info.CRC:08x}",
                     })
 
                     archive_info["compressed_size"] += file_info.compress_size
@@ -495,7 +495,7 @@ class BinaryAnalyzer:
         except Exception as e:
             return {"error": str(e)}
 
-    def _extract_strings(self, file_path: Path) -> List[str]:
+    def _extract_strings(self, file_path: Path) -> list[str]:
         """Extract printable strings from binary data."""
         try:
             with open(file_path, "rb") as f:
@@ -524,7 +524,7 @@ class BinaryAnalyzer:
         except Exception as e:
             return [f"Error extracting strings: {e}"]
 
-    def _analyze_entropy(self, file_path: Path) -> Dict[str, Any]:
+    def _analyze_entropy(self, file_path: Path) -> dict[str, Any]:
         """Analyze entropy distribution in the file."""
         try:
             import math
@@ -549,7 +549,7 @@ class BinaryAnalyzer:
                 "overall_entropy": round(entropy, 4),
                 "file_size": data_len,
                 "unique_bytes": len(byte_counts),
-                "analysis": "Normal" if entropy < 7.0 else "High (possibly packed/encrypted)"
+                "analysis": "Normal" if entropy < 7.0 else "High (possibly packed/encrypted)",
             }
 
             return entropy_info
@@ -557,13 +557,13 @@ class BinaryAnalyzer:
         except Exception as e:
             return {"error": str(e)}
 
-    def _security_analysis(self, file_path: Path, file_format: str) -> Dict[str, Any]:
+    def _security_analysis(self, file_path: Path, file_format: str) -> dict[str, Any]:
         """Perform security-focused analysis."""
         try:
             security_info = {
                 "risk_level": "Unknown",
                 "suspicious_indicators": [],
-                "recommendations": []
+                "recommendations": [],
             }
 
             # Basic file size check

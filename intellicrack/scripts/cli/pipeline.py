@@ -1,5 +1,4 @@
-"""
-Pipeline Support for Intellicrack CLI Enables Unix-style command chaining and data flow between operations
+"""Pipeline Support for Intellicrack CLI Enables Unix-style command chaining and data flow between operations
 
 Copyright (C) 2025 Zachary Flint
 
@@ -32,7 +31,7 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from rich import box
 from rich.console import Console
@@ -47,8 +46,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 @dataclass
 class PipelineData:
     """Data passed between pipeline stages"""
+
     content: Any
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
     format: str = "json"  # json, binary, text, csv
 
     def to_json(self) -> str:
@@ -56,7 +56,7 @@ class PipelineData:
         return json.dumps({
             "content": self.content,
             "metadata": self.metadata,
-            "format": self.format
+            "format": self.format,
         }, default=str)
 
     @classmethod
@@ -66,7 +66,7 @@ class PipelineData:
         return cls(
             content=data.get("content"),
             metadata=data.get("metadata", {}),
-            format=data.get("format", "json")
+            format=data.get("format", "json"),
         )
 
 
@@ -81,7 +81,6 @@ class PipelineStage(ABC):
     @abstractmethod
     def process(self, input_data: PipelineData) -> PipelineData:
         """Process input data and return output data"""
-        pass
 
     # pylint: disable=too-many-branches
     def validate_input(self, input_data: PipelineData) -> bool:
@@ -167,9 +166,9 @@ class AnalysisStage(PipelineStage):
                 metadata={
                     "stage": self.name,
                     "binary_path": binary_path,
-                    "success": True
+                    "success": True,
                 },
-                format="json"
+                format="json",
             )
         except Exception as e:
             return PipelineData(
@@ -177,9 +176,9 @@ class AnalysisStage(PipelineStage):
                 metadata={
                     "stage": self.name,
                     "binary_path": binary_path,
-                    "success": False
+                    "success": False,
                 },
-                format="json"
+                format="json",
             )
 
 
@@ -222,7 +221,7 @@ class FilterStage(PipelineStage):
         return PipelineData(
             content=content,
             metadata={**input_data.metadata, "filtered": True},
-            format=input_data.format
+            format=input_data.format,
         )
 
     def _matches_filter(self, item: Any) -> bool:
@@ -259,25 +258,25 @@ class TransformStage(PipelineStage):
             return PipelineData(
                 content=csv_content,
                 metadata=input_data.metadata,
-                format="csv"
+                format="csv",
             )
 
-        elif self.output_format == "table":
+        if self.output_format == "table":
             # Convert to table format
             table_content = self._to_table(content)
             return PipelineData(
                 content=table_content,
                 metadata=input_data.metadata,
-                format="text"
+                format="text",
             )
 
-        elif self.output_format == "summary":
+        if self.output_format == "summary":
             # Create summary
             summary = self._create_summary(content)
             return PipelineData(
                 content=summary,
                 metadata=input_data.metadata,
-                format="text"
+                format="text",
             )
 
         return input_data
@@ -365,7 +364,7 @@ class TransformStage(PipelineStage):
 class OutputStage(PipelineStage):
     """Output data to file or stdout"""
 
-    def __init__(self, output_path: Optional[str] = None):
+    def __init__(self, output_path: str | None = None):
         """Initialize output stage with optional output path for data export."""
         super().__init__("output")
         self.output_path = output_path
@@ -381,17 +380,16 @@ class OutputStage(PipelineStage):
                     f.write(str(input_data.content))
 
             self.console.print(f"[green]Output written to {self.output_path}[/green]")
+        # Print to stdout
+        elif input_data.format == "json":
+            syntax = Syntax(
+                json.dumps(input_data.content, indent=2, default=str),
+                "json",
+                theme="monokai",
+            )
+            self.console.print(syntax)
         else:
-            # Print to stdout
-            if input_data.format == "json":
-                syntax = Syntax(
-                    json.dumps(input_data.content, indent=2, default=str),
-                    "json",
-                    theme="monokai"
-                )
-                self.console.print(syntax)
-            else:
-                self.console.print(input_data.content)
+            self.console.print(input_data.content)
 
         return input_data
 
@@ -401,7 +399,7 @@ class Pipeline:
 
     def __init__(self):
         """Initialize pipeline with empty stages list and console."""
-        self.stages: List[PipelineStage] = []
+        self.stages: list[PipelineStage] = []
         self.console = Console()
 
     def add_stage(self, stage: PipelineStage) -> "Pipeline":
@@ -409,7 +407,7 @@ class Pipeline:
         self.stages.append(stage)
         return self
 
-    def execute(self, initial_input: Union[str, Dict, PipelineData]) -> PipelineData:
+    def execute(self, initial_input: str | dict | PipelineData) -> PipelineData:
         """Execute the pipeline"""
         # Convert initial input to PipelineData
         if isinstance(initial_input, PipelineData):
@@ -545,7 +543,7 @@ Examples:
 
   # Filter high severity issues
   intellicrack-pipeline "analyze | filter high_severity | transform table"
-        """
+        """,
     )
 
     parser.add_argument("pipeline", help="Pipeline command string")

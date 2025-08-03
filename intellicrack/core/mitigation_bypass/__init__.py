@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -59,20 +58,20 @@ class BypassEngine:
 
         return {
             "bypasses_available": bypasses,
-            "target_info": target_info
+            "target_info": target_info,
         }
 
 
 # Mock bypass classes for compatibility
 class ASLRBypass:
     """ASLR bypass implementation."""
-    pass
+
 
 class DEPBypass:
     """DEP bypass implementation."""
-    pass
+
 
 # Export available classes
-__all__ = ["BypassEngine", "ASLRBypass", "DEPBypass"]
+__all__ = ["ASLRBypass", "BypassEngine", "DEPBypass"]
 if HAS_CFI_BYPASS:
     __all__.append("CFIBypass")

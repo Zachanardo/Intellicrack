@@ -1,5 +1,4 @@
-"""
-Resource Path Helper
+"""Resource Path Helper
 
 Copyright (C) 2025 Zachary Flint
 
@@ -24,8 +23,7 @@ import sys
 
 
 def get_resource_path(resource_path: str) -> str:
-    """
-    Get the absolute path to a resource file in the intellicrack package.
+    """Get the absolute path to a resource file in the intellicrack package.
 
     This function replaces pkg_resources.resource_filename() to avoid
     deprecation warnings and improve compatibility.
@@ -35,6 +33,7 @@ def get_resource_path(resource_path: str) -> str:
 
     Returns:
         Absolute path to the resource file
+
     """
     # Handle different installation scenarios
     if hasattr(sys, "_MEIPASS"):

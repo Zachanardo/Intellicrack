@@ -1,5 +1,4 @@
-"""
-Base utilities for common dialog patterns.
+"""Base utilities for common dialog patterns.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -21,8 +20,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QProgressBar, QPushButton
 
 
 def create_standard_control_layout(buttons_config, include_progress=True):
-    """
-    Create a standard control layout with buttons and optional progress bar.
+    """Create a standard control layout with buttons and optional progress bar.
 
     Args:
         buttons_config: List of tuples (text, enabled, callback) for buttons
@@ -30,6 +28,7 @@ def create_standard_control_layout(buttons_config, include_progress=True):
 
     Returns:
         tuple: (layout, buttons_dict, progress_bar)
+
     """
     control_layout = QHBoxLayout()
     buttons = {}

@@ -1,6 +1,5 @@
 
-"""
-Comprehensive Radare2 UI Integration for Intellicrack
+"""Comprehensive Radare2 UI Integration for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,7 +22,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import logging
 import os
-from typing import Any, Dict
+from typing import Any
 
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtGui import QFont
@@ -75,7 +74,7 @@ class R2AnalysisWorker(QThread):
     analysis_completed = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, binary_path: str, analysis_type: str, options: Dict[str, Any]):
+    def __init__(self, binary_path: str, analysis_type: str, options: dict[str, Any]):
         """Initialize the radare2 analysis worker with binary path and analysis options."""
         super().__init__()
         self.binary_path = binary_path
@@ -116,12 +115,12 @@ class R2AnalysisWorker(QThread):
             self.logger.error(f"Analysis failed: {e}")
             self.error_occurred.emit(str(e))
 
-    def _run_comprehensive_analysis(self) -> Dict[str, Any]:
+    def _run_comprehensive_analysis(self) -> dict[str, Any]:
         """Run comprehensive radare2 analysis"""
         results = {
             "binary_path": self.binary_path,
             "analysis_type": "comprehensive",
-            "components": {}
+            "components": {},
         }
 
         # Initialize all engines
@@ -132,7 +131,7 @@ class R2AnalysisWorker(QThread):
             "imports": R2ImportExportAnalyzer(self.binary_path),
             "ai": R2AIEngine(self.binary_path),
             "cfg": CFGExplorer(self.binary_path),
-            "scripting": R2ScriptingEngine(self.binary_path)
+            "scripting": R2ScriptingEngine(self.binary_path),
         }
 
         total_components = len(engines)
@@ -172,43 +171,43 @@ class R2AnalysisWorker(QThread):
 
         return results
 
-    def _run_decompilation_analysis(self) -> Dict[str, Any]:
+    def _run_decompilation_analysis(self) -> dict[str, Any]:
         """Run decompilation analysis"""
         engine = R2DecompilationEngine(self.binary_path)
         self.progress_updated.emit(50)
         return engine.analyze_license_functions()
 
-    def _run_vulnerability_analysis(self) -> Dict[str, Any]:
+    def _run_vulnerability_analysis(self) -> dict[str, Any]:
         """Run vulnerability analysis"""
         engine = R2VulnerabilityEngine(self.binary_path)
         self.progress_updated.emit(50)
         return engine.analyze_vulnerabilities()
 
-    def _run_string_analysis(self) -> Dict[str, Any]:
+    def _run_string_analysis(self) -> dict[str, Any]:
         """Run string analysis"""
         engine = R2StringAnalyzer(self.binary_path)
         self.progress_updated.emit(50)
         return engine.analyze_all_strings()
 
-    def _run_import_analysis(self) -> Dict[str, Any]:
+    def _run_import_analysis(self) -> dict[str, Any]:
         """Run import/export analysis"""
         engine = R2ImportExportAnalyzer(self.binary_path)
         self.progress_updated.emit(50)
         return engine.analyze_imports_exports()
 
-    def _run_cfg_analysis(self) -> Dict[str, Any]:
+    def _run_cfg_analysis(self) -> dict[str, Any]:
         """Run CFG analysis"""
         engine = CFGExplorer(self.binary_path)
         self.progress_updated.emit(50)
         return engine.analyze_cfg()
 
-    def _run_ai_analysis(self) -> Dict[str, Any]:
+    def _run_ai_analysis(self) -> dict[str, Any]:
         """Run AI analysis"""
         engine = R2AIEngine(self.binary_path)
         self.progress_updated.emit(50)
         return engine.analyze_with_ai()
 
-    def _run_bypass_analysis(self) -> Dict[str, Any]:
+    def _run_bypass_analysis(self) -> dict[str, Any]:
         """Run bypass generation analysis"""
         engine = R2BypassGenerator(self.binary_path)
         self.progress_updated.emit(50)
@@ -306,7 +305,7 @@ class R2ConfigurationDialog(QDialog):
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
-    def get_configuration(self) -> Dict[str, Any]:
+    def get_configuration(self) -> dict[str, Any]:
         """Get configuration from dialog"""
         return {
             "analysis_depth": self.analysis_depth.currentText(),
@@ -320,7 +319,7 @@ class R2ConfigurationDialog(QDialog):
             "enable_ai": self.enable_ai.isChecked(),
             "enable_bypass": self.enable_bypass.isChecked(),
             "radare2_path": self.radare2_path.text().strip() or None,
-            "custom_flags": self.custom_flags.text().strip() or None
+            "custom_flags": self.custom_flags.text().strip() or None,
         }
 
 
@@ -357,7 +356,7 @@ class R2ResultsViewer(QWidget):
         self.results_tabs = QTabWidget()
         layout.addWidget(self.results_tabs)
 
-    def display_results(self, results: Dict[str, Any]):
+    def display_results(self, results: dict[str, Any]):
         """Display analysis results"""
         self.results_data = results
 
@@ -374,7 +373,7 @@ class R2ResultsViewer(QWidget):
             # Single component results
             self._create_component_tab("Analysis", results)
 
-    def _create_component_tab(self, component: str, data: Dict[str, Any]):
+    def _create_component_tab(self, component: str, data: dict[str, Any]):
         """Create tab for component results"""
         tab_widget = QWidget()
         layout = QVBoxLayout(tab_widget)
@@ -412,7 +411,7 @@ class R2ResultsViewer(QWidget):
 
         self.results_tabs.addTab(tab_widget, component.title())
 
-    def _generate_summary(self, data: Dict[str, Any]) -> str:
+    def _generate_summary(self, data: dict[str, Any]) -> str:
         """Generate summary text for component"""
         if "error" in data:
             return f"Analysis failed: {data['error']}"
@@ -446,7 +445,7 @@ class R2ResultsViewer(QWidget):
 
         return " | ".join(summary_parts) if summary_parts else "Analysis completed"
 
-    def _create_vulnerability_view(self, layout: QVBoxLayout, data: Dict[str, Any]):
+    def _create_vulnerability_view(self, layout: QVBoxLayout, data: dict[str, Any]):
         """Create vulnerability-specific view"""
         table = QTableWidget()
         table.setColumnCount(4)
@@ -463,7 +462,7 @@ class R2ResultsViewer(QWidget):
                         "type": category.replace("_", " ").title(),
                         "function": vuln.get("function", "Unknown"),
                         "address": vuln.get("address", "Unknown"),
-                        "severity": vuln.get("severity", "Medium")
+                        "severity": vuln.get("severity", "Medium"),
                     })
 
         table.setRowCount(len(vulnerabilities))
@@ -477,7 +476,7 @@ class R2ResultsViewer(QWidget):
         table.resizeColumnsToContents()
         layout.addWidget(table)
 
-    def _create_strings_view(self, layout: QVBoxLayout, data: Dict[str, Any]):
+    def _create_strings_view(self, layout: QVBoxLayout, data: dict[str, Any]):
         """Create strings-specific view"""
         # String categories tabs
         strings_tabs = QTabWidget()
@@ -499,7 +498,7 @@ class R2ResultsViewer(QWidget):
 
         layout.addWidget(strings_tabs)
 
-    def _create_imports_view(self, layout: QVBoxLayout, data: Dict[str, Any]):
+    def _create_imports_view(self, layout: QVBoxLayout, data: dict[str, Any]):
         """Create imports-specific view"""
         splitter = QSplitter()
 
@@ -512,7 +511,7 @@ class R2ResultsViewer(QWidget):
                 item = QTreeWidgetItem([
                     imp.get("name", "Unknown"),
                     imp.get("library", "Unknown"),
-                    imp.get("category", "Unknown")
+                    imp.get("category", "Unknown"),
                 ])
                 imports_widget.addTopLevelItem(item)
 
@@ -529,7 +528,7 @@ class R2ResultsViewer(QWidget):
         splitter.addWidget(categories_widget)
         layout.addWidget(splitter)
 
-    def _create_cfg_view(self, layout: QVBoxLayout, data: Dict[str, Any]):
+    def _create_cfg_view(self, layout: QVBoxLayout, data: dict[str, Any]):
         """Create CFG-specific view"""
         # CFG metrics
         metrics_text = QTextEdit()
@@ -564,7 +563,7 @@ class R2ResultsViewer(QWidget):
 
             layout.addWidget(patterns_widget)
 
-    def _create_ai_view(self, layout: QVBoxLayout, data: Dict[str, Any]):
+    def _create_ai_view(self, layout: QVBoxLayout, data: dict[str, Any]):
         """Create AI analysis-specific view"""
         ai_tabs = QTabWidget()
 
@@ -594,7 +593,7 @@ Validation Methods: {', '.join(license_data.get('validation_methods', []))}
                     item = QTreeWidgetItem([
                         vuln_type.replace("_", " ").title(),
                         f"{prediction.get('probability', 0):.3f}",
-                        str(prediction.get("predicted", False))
+                        str(prediction.get("predicted", False)),
                     ])
                     vuln_widget.addTopLevelItem(item)
 
@@ -602,7 +601,7 @@ Validation Methods: {', '.join(license_data.get('validation_methods', []))}
 
         layout.addWidget(ai_tabs)
 
-    def _create_generic_view(self, layout: QVBoxLayout, data: Dict[str, Any]):
+    def _create_generic_view(self, layout: QVBoxLayout, data: dict[str, Any]):
         """Create generic JSON view"""
         text_widget = QTextEdit()
         text_widget.setReadOnly(True)
@@ -613,7 +612,7 @@ Validation Methods: {', '.join(license_data.get('validation_methods', []))}
             text_widget.setPlainText(formatted_json)
         except Exception as e:
             self.logger.error("Exception in radare2_integration_ui: %s", e)
-            text_widget.setPlainText(f"Error formatting results: {e}\n\n{str(data)}")
+            text_widget.setPlainText(f"Error formatting results: {e}\n\n{data!s}")
 
         layout.addWidget(text_widget)
 
@@ -632,7 +631,7 @@ Validation Methods: {', '.join(license_data.get('validation_methods', []))}
             return
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Export Results", "radare2_analysis_results.json", "JSON Files (*.json)"
+            self, "Export Results", "radare2_analysis_results.json", "JSON Files (*.json)",
         )
 
         if file_path:
@@ -706,7 +705,7 @@ class R2IntegrationWidget(QWidget):
             ("Imports", "imports", "Analyze imports and exports"),
             ("CFG Analysis", "cfg", "Control flow graph analysis"),
             ("AI Analysis", "ai", "AI-enhanced pattern recognition"),
-            ("Bypass Generation", "bypass", "Generate license bypasses")
+            ("Bypass Generation", "bypass", "Generate license bypasses"),
         ]
 
         for i, (name, analysis_type, tooltip) in enumerate(button_configs):
@@ -752,7 +751,7 @@ class R2IntegrationWidget(QWidget):
     def _browse_file(self):
         """Browse for binary file"""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Binary File", "", "All Files (*)"
+            self, "Select Binary File", "", "All Files (*)",
         )
 
         if file_path:
@@ -794,7 +793,7 @@ class R2IntegrationWidget(QWidget):
 
         self.current_worker.start()
 
-    def _on_analysis_completed(self, results: Dict[str, Any]):
+    def _on_analysis_completed(self, results: dict[str, Any]):
         """Handle completed analysis"""
         self.results_viewer.display_results(results)
         self.status_label.setText("Analysis completed successfully")
@@ -843,10 +842,10 @@ def integrate_with_main_app(main_app):
 
 
 __all__ = [
-    "R2IntegrationWidget",
-    "R2ConfigurationDialog",
-    "R2ResultsViewer",
     "R2AnalysisWorker",
+    "R2ConfigurationDialog",
+    "R2IntegrationWidget",
+    "R2ResultsViewer",
     "create_radare2_tab",
-    "integrate_with_main_app"
+    "integrate_with_main_app",
 ]

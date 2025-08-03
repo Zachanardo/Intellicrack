@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -23,19 +22,17 @@ Common utilities for generating statistics and recommendations in analysis modul
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 
 class AnalysisStatsGenerator:
-    """
-    Common utilities for generating analysis statistics and recommendations.
+    """Common utilities for generating analysis statistics and recommendations.
     Eliminates duplicate statistics generation code.
     """
 
     @staticmethod
-    def safe_stats_generation(stats_func, *args, **kwargs) -> Dict[str, Any]:
-        """
-        Safely execute statistics generation with error handling.
+    def safe_stats_generation(stats_func, *args, **kwargs) -> dict[str, Any]:
+        """Safely execute statistics generation with error handling.
 
         Args:
             stats_func: Function to execute for statistics generation
@@ -44,6 +41,7 @@ class AnalysisStatsGenerator:
 
         Returns:
             Statistics dictionary or empty dict on error
+
         """
         try:
             return stats_func(*args, **kwargs)
@@ -53,10 +51,9 @@ class AnalysisStatsGenerator:
             return {}
 
     @staticmethod
-    def count_by_attribute(items: List[Dict[str, Any]], attribute: str,
-                          default_value: str = "unknown") -> Dict[str, int]:
-        """
-        Count items by a specific attribute.
+    def count_by_attribute(items: list[dict[str, Any]], attribute: str,
+                          default_value: str = "unknown") -> dict[str, int]:
+        """Count items by a specific attribute.
 
         Args:
             items: List of items to count
@@ -65,6 +62,7 @@ class AnalysisStatsGenerator:
 
         Returns:
             Dictionary with counts by attribute value
+
         """
         counts = {}
         for item in items:
@@ -73,9 +71,8 @@ class AnalysisStatsGenerator:
         return counts
 
     @staticmethod
-    def safe_recommendation_generation(rec_func, *args, **kwargs) -> List[str]:
-        """
-        Safely execute recommendation generation with error handling.
+    def safe_recommendation_generation(rec_func, *args, **kwargs) -> list[str]:
+        """Safely execute recommendation generation with error handling.
 
         Args:
             rec_func: Function to execute for recommendation generation
@@ -84,6 +81,7 @@ class AnalysisStatsGenerator:
 
         Returns:
             List of recommendations or empty list on error
+
         """
         try:
             return rec_func(*args, **kwargs)

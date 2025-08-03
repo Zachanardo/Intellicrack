@@ -1,5 +1,4 @@
-"""
-Configuration Manager for Intellicrack
+"""Configuration Manager for Intellicrack
 
 Auto configures itself with platform aware directories and tool discovery.
 Creates configuration files dynamically without requiring manual setup.
@@ -73,11 +72,10 @@ class IntellicrackConfig:
         if sys.platform == "win32":
             base = os.environ.get("APPDATA", os.path.expanduser("~"))
             return Path(base) / "Intellicrack"
-        elif sys.platform == "darwin":
+        if sys.platform == "darwin":
             return Path.home() / "Library" / "Application Support" / "Intellicrack"
-        else:
-            xdg_config = os.environ.get("XDG_CONFIG_HOME", "~/.config")
-            return Path(xdg_config).expanduser() / "intellicrack"
+        xdg_config = os.environ.get("XDG_CONFIG_HOME", "~/.config")
+        return Path(xdg_config).expanduser() / "intellicrack"
 
     def _ensure_directories_exist(self):
         """Create necessary directories if they don't exist."""
@@ -103,7 +101,7 @@ class IntellicrackConfig:
     def _load_config(self):
         """Load configuration from file."""
         try:
-            with open(self.config_file, "r", encoding="utf-8") as f:
+            with open(self.config_file, encoding="utf-8") as f:
                 with self._config_lock:
                     self._config = json.load(f)
             logger.info(f"Configuration loaded from {self.config_file}")
@@ -150,12 +148,12 @@ class IntellicrackConfig:
                     "config": str(self.config_dir),
                     "output": str(Path.home()),
                     "logs": str(Path.home()),
-                    "cache": str(Path.home())
+                    "cache": str(Path.home()),
                 },
                 "tools": {},
                 "preferences": {
-                    "log_level": "WARNING"
-                }
+                    "log_level": "WARNING",
+                },
             }
 
     def _save_config(self):

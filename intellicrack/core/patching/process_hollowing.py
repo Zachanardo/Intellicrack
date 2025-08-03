@@ -1,5 +1,4 @@
-"""
-Process Hollowing implementation for advanced code injection
+"""Process Hollowing implementation for advanced code injection
 
 Copyright (C) 2025 Zachary Flint
 
@@ -21,7 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import ctypes
 import struct
-from typing import Any, Optional
+from typing import Any
 
 from ...utils.logger import get_logger
 from ...utils.system.windows_common import is_windows_available
@@ -65,8 +64,7 @@ class ProcessHollowing(BaseWindowsPatcher):
         return ["kernel32", "ntdll"]
 
     def hollow_process(self, target_exe: str, payload_path: str) -> bool:
-        """
-        Perform process hollowing
+        """Perform process hollowing
 
         Args:
             target_exe: Path to legitimate executable to hollow
@@ -74,6 +72,7 @@ class ProcessHollowing(BaseWindowsPatcher):
 
         Returns:
             True if successful, False otherwise
+
         """
         try:
             # Read payload
@@ -94,7 +93,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                 peb_addr = self._get_peb_address_from_context(context)
                 image_base = self._read_image_base_from_peb(
                     process_info["process_handle"],
-                    peb_addr
+                    peb_addr,
                 )
 
                 if not image_base:
@@ -117,7 +116,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                 allocated_base = self._allocate_memory(
                     process_info["process_handle"],
                     payload_base,
-                    payload_size
+                    payload_size,
                 )
 
                 if not allocated_base:
@@ -125,7 +124,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                     allocated_base = self._allocate_memory(
                         process_info["process_handle"],
                         image_base,
-                        payload_size
+                        payload_size,
                     )
 
                 if not allocated_base:
@@ -139,7 +138,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                     process_info["process_handle"],
                     allocated_base,
                     payload_data,
-                    payload_pe
+                    payload_pe,
                 ):
                     logger.error("Failed to write headers")
                     return False
@@ -149,7 +148,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                     process_info["process_handle"],
                     allocated_base,
                     payload_data,
-                    payload_pe
+                    payload_pe,
                 ):
                     logger.error("Failed to write sections")
                     return False
@@ -159,7 +158,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                     if not self._process_relocations(
                         process_info["process_handle"],
                         allocated_base,
-                        payload_pe
+                        payload_pe,
                     ):
                         logger.error("Failed to process relocations")
                         return False
@@ -180,7 +179,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                 self._write_image_base_to_peb(
                     process_info["process_handle"],
                     peb_addr,
-                    allocated_base
+                    allocated_base,
                 )
 
                 # Set thread context
@@ -203,13 +202,13 @@ class ProcessHollowing(BaseWindowsPatcher):
             logger.error(f"Process hollowing failed: {e}")
             return False
 
-    def _create_suspended_process(self, exe_path: str) -> Optional[dict]:
+    def _create_suspended_process(self, exe_path: str) -> dict | None:
         """Create a process in suspended state"""
         from ...utils.system.windows_structures import WindowsProcessStructures
         structures = WindowsProcessStructures()
         return structures.create_suspended_process(exe_path)
 
-    def _get_thread_context(self, thread_handle: int) -> Optional[Any]:
+    def _get_thread_context(self, thread_handle: int) -> Any | None:
         """Get thread context"""
         from ...utils.system.windows_structures import WindowsContext
         context_helper = WindowsContext()
@@ -227,9 +226,9 @@ class ProcessHollowing(BaseWindowsPatcher):
             if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
                 # PEB is at GS:[0x60]
                 return context.Rdx  # RDX contains PEB on process start
-            else:  # 32-bit
-                # PEB is at FS:[0x30]
-                return context.Ebx  # EBX contains PEB on process start
+            # 32-bit
+            # PEB is at FS:[0x30]
+            return context.Ebx  # EBX contains PEB on process start
         except (AttributeError, OSError, Exception) as e:
             self.logger.error("Error in process_hollowing: %s", e)
             return 0
@@ -250,7 +249,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                 peb_addr + image_base_offset,
                 ctypes.byref(image_base),
                 ctypes.sizeof(image_base),
-                ctypes.byref(bytes_read)
+                ctypes.byref(bytes_read),
             )
 
             if success:
@@ -278,7 +277,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                 peb_addr + image_base_offset,
                 ctypes.byref(new_base_ptr),
                 ctypes.sizeof(new_base_ptr),
-                ctypes.byref(bytes_written)
+                ctypes.byref(bytes_written),
             )
 
             return success
@@ -295,9 +294,8 @@ class ProcessHollowing(BaseWindowsPatcher):
             if status == 0:
                 logger.info(f"Unmapped section at {hex(base_addr)}")
                 return True
-            else:
-                logger.warning(f"NtUnmapViewOfSection failed: 0x{status:X}")
-                return False
+            logger.warning(f"NtUnmapViewOfSection failed: 0x{status:X}")
+            return False
         except Exception as e:
             logger.error(f"Failed to unmap section: {e}")
             return False
@@ -311,7 +309,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                 preferred_addr,
                 size,
                 self.MEM_COMMIT | self.MEM_RESERVE,
-                self.PAGE_EXECUTE_READWRITE
+                self.PAGE_EXECUTE_READWRITE,
             )
 
             if not allocated:
@@ -321,7 +319,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                     None,
                     size,
                     self.MEM_COMMIT | self.MEM_RESERVE,
-                    self.PAGE_EXECUTE_READWRITE
+                    self.PAGE_EXECUTE_READWRITE,
                 )
 
             return allocated
@@ -342,7 +340,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                 base_addr,
                 payload_data[:headers_size],
                 headers_size,
-                ctypes.byref(bytes_written)
+                ctypes.byref(bytes_written),
             )
 
             return success and bytes_written.value == headers_size
@@ -369,7 +367,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                         section_addr,
                         section_data,
                         len(section_data),
-                        ctypes.byref(bytes_written)
+                        ctypes.byref(bytes_written),
                     )
 
                     if not success:
@@ -414,7 +412,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                         reloc_addr,
                         ctypes.byref(current),
                         size,
-                        ctypes.byref(bytes_read)
+                        ctypes.byref(bytes_read),
                     )
 
                     # Apply relocation
@@ -427,7 +425,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                         reloc_addr,
                         new_bytes[:size],
                         size,
-                        ctypes.byref(bytes_written)
+                        ctypes.byref(bytes_written),
                     )
 
             return True
@@ -438,8 +436,7 @@ class ProcessHollowing(BaseWindowsPatcher):
 
 
 def perform_process_hollowing(target_exe: str, payload_exe: str) -> bool:
-    """
-    Convenience function to perform process hollowing
+    """Convenience function to perform process hollowing
 
     Args:
         target_exe: Path to legitimate executable
@@ -447,6 +444,7 @@ def perform_process_hollowing(target_exe: str, payload_exe: str) -> bool:
 
     Returns:
         True if successful, False otherwise
+
     """
     if not AVAILABLE:
         logger.error("Process hollowing not available on this platform")

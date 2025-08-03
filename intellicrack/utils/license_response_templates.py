@@ -1,5 +1,4 @@
-"""
-Copyright (C) 2025 Zachary Flint
+"""Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
 
@@ -28,7 +27,12 @@ from .templates.license_response_templates import (
     get_microsoft_response_templates,
 )
 
-__all__ = ["get_common_license_response", "get_adobe_response_templates",
-           "get_autodesk_response_templates", "get_jetbrains_response_templates",
-           "get_microsoft_response_templates", "get_generic_response_templates",
-           "get_all_response_templates"]
+__all__ = [
+    "get_adobe_response_templates",
+    "get_all_response_templates",
+    "get_autodesk_response_templates",
+    "get_common_license_response",
+    "get_generic_response_templates",
+    "get_jetbrains_response_templates",
+    "get_microsoft_response_templates",
+]

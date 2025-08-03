@@ -1,5 +1,4 @@
 """Emulator UI enhancements for improved user experience."""
-from typing import Dict
 
 from intellicrack.logger import logger
 
@@ -52,7 +51,7 @@ class EmulatorStatusWidget(QWidget):
         # Status tracking
         self.emulator_status = {
             "QEMU": {"running": False, "message": "Not started"},
-            "Qiling": {"running": False, "message": "Not initialized"}
+            "Qiling": {"running": False, "message": "Not initialized"},
         }
 
     def setup_ui(self):
@@ -81,7 +80,7 @@ class EmulatorStatusWidget(QWidget):
         """Update the status display for an emulator."""
         self.emulator_status[emulator_type] = {
             "running": is_running,
-            "message": message
+            "message": message,
         }
 
         if emulator_type == "QEMU":
@@ -103,12 +102,12 @@ class EmulatorStatusWidget(QWidget):
             self.qiling_status.setToolTip(message)
 
 
-def add_emulator_tooltips(widget_dict: Dict[str, QWidget]):
-    """
-    Add informative tooltips to emulator-dependent widgets.
+def add_emulator_tooltips(widget_dict: dict[str, QWidget]):
+    """Add informative tooltips to emulator-dependent widgets.
 
     Args:
         widget_dict: Dictionary mapping feature names to their widgets
+
     """
     tooltips = {
         "start_qemu": "Start or stop the QEMU virtual machine emulator.\nRequired for: Full system analysis, DNS monitoring, snapshot comparisons.",
@@ -118,7 +117,7 @@ def add_emulator_tooltips(widget_dict: Dict[str, QWidget]):
         "compare_snapshots": "Compare VM snapshots for behavioral analysis.\nQEMU will start automatically if not already running.",
         "qiling_emulation": "Enable Qiling framework for lightweight emulation.\nQiling will initialize automatically when analysis begins.",
         "dynamic_analysis": "Run dynamic analysis on the binary.\nWill automatically start required emulators based on configuration.",
-        "behavioral_analysis": "Analyze runtime behavior of the binary.\nRequires either QEMU or Qiling (will auto-select based on binary type)."
+        "behavioral_analysis": "Analyze runtime behavior of the binary.\nRequires either QEMU or Qiling (will auto-select based on binary type).",
     }
 
     for feature, widget in widget_dict.items():
@@ -127,8 +126,7 @@ def add_emulator_tooltips(widget_dict: Dict[str, QWidget]):
 
 
 def show_emulator_warning(parent: QWidget, emulator_type: str, feature_name: str) -> bool:
-    """
-    Show a warning dialog when an emulator is required but not running.
+    """Show a warning dialog when an emulator is required but not running.
 
     Args:
         parent: Parent widget for the dialog
@@ -137,6 +135,7 @@ def show_emulator_warning(parent: QWidget, emulator_type: str, feature_name: str
 
     Returns:
         True if user wants to proceed with auto-start, False otherwise
+
     """
     msg = QMessageBox(parent)
     msg.setIcon(QMessageBox.Icon.Warning)
@@ -150,7 +149,7 @@ def show_emulator_warning(parent: QWidget, emulator_type: str, feature_name: str
             "Starting QEMU may take a few moments and requires:\n"
             "- QEMU installed on your system\n"
             "- Available system resources (RAM/CPU)\n"
-            "- A compatible rootfs image"
+            "- A compatible rootfs image",
         )
     else:  # Qiling
         msg.setText(f"The '{feature_name}' feature requires Qiling framework.")
@@ -160,7 +159,7 @@ def show_emulator_warning(parent: QWidget, emulator_type: str, feature_name: str
             "Requirements:\n"
             "- Qiling framework installed (pip install qiling)\n"
             "- Compatible binary format\n"
-            "- Python 3.7 or higher"
+            "- Python 3.7 or higher",
         )
 
     msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
@@ -170,8 +169,7 @@ def show_emulator_warning(parent: QWidget, emulator_type: str, feature_name: str
 
 
 class EmulatorRequiredDecorator:
-    """
-    Decorator to ensure emulators are running before executing functions.
+    """Decorator to ensure emulators are running before executing functions.
 
     Usage:
         @EmulatorRequiredDecorator.requires_qemu
@@ -187,7 +185,7 @@ class EmulatorRequiredDecorator:
 
             if not hasattr(self, "binary_path") or not self.binary_path:
                 QMessageBox.warning(self, "No Binary", "Please select a binary file first.")
-                return
+                return None
 
             manager = get_emulator_manager()
             if not manager.qemu_running:
@@ -196,9 +194,9 @@ class EmulatorRequiredDecorator:
                     if not manager.ensure_qemu_running(self.binary_path):
                         QMessageBox.critical(self, "QEMU Error",
                                            "Failed to start QEMU. Check the logs for details.")
-                        return
+                        return None
                 else:
-                    return
+                    return None
 
             return func(self, *args, **kwargs)
         return wrapper
@@ -211,13 +209,13 @@ class EmulatorRequiredDecorator:
 
             if not hasattr(self, "binary_path") or not self.binary_path:
                 QMessageBox.warning(self, "No Binary", "Please select a binary file first.")
-                return
+                return None
 
             manager = get_emulator_manager()
             if not manager.ensure_qiling_ready(self.binary_path):
                 QMessageBox.critical(self, "Qiling Error",
                                    "Failed to initialize Qiling. Ensure it's installed: pip install qiling")
-                return
+                return None
 
             return func(self, *args, **kwargs)
         return wrapper

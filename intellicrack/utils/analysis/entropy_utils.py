@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -23,18 +22,17 @@ Shared entropy calculation functions to eliminate code duplication.
 """
 
 import math
-from typing import Dict, Union
 
 
-def calculate_entropy(data: Union[bytes, str]) -> float:
-    """
-    Calculate Shannon entropy of data.
+def calculate_entropy(data: bytes | str) -> float:
+    """Calculate Shannon entropy of data.
 
     Args:
         data: Input data (bytes or string)
 
     Returns:
         Shannon entropy value
+
     """
     if not data:
         return 0.0
@@ -57,34 +55,33 @@ def calculate_entropy(data: Union[bytes, str]) -> float:
 
 
 def calculate_byte_entropy(data: bytes) -> float:
-    """
-    Calculate Shannon entropy specifically for byte data.
+    """Calculate Shannon entropy specifically for byte data.
 
     Args:
         data: Input byte data
 
     Returns:
         Shannon entropy value
+
     """
     return calculate_entropy(data)
 
 
 def calculate_string_entropy(data: str) -> float:
-    """
-    Calculate Shannon entropy specifically for string data.
+    """Calculate Shannon entropy specifically for string data.
 
     Args:
         data: Input string data
 
     Returns:
         Shannon entropy value
+
     """
     return calculate_entropy(data)
 
 
 def safe_entropy_calculation(data: bytes, max_entropy: float = None) -> float:
-    """
-    Safe entropy calculation with optional maximum cap.
+    """Safe entropy calculation with optional maximum cap.
 
     Args:
         data: Input byte data
@@ -92,6 +89,7 @@ def safe_entropy_calculation(data: bytes, max_entropy: float = None) -> float:
 
     Returns:
         Shannon entropy value (optionally capped)
+
     """
     if not data:
         return 0.0
@@ -104,15 +102,15 @@ def safe_entropy_calculation(data: bytes, max_entropy: float = None) -> float:
     return entropy
 
 
-def calculate_frequency_distribution(data: Union[bytes, str]) -> Dict:
-    """
-    Calculate frequency distribution of data.
+def calculate_frequency_distribution(data: bytes | str) -> dict:
+    """Calculate frequency distribution of data.
 
     Args:
         data: Input data (bytes or string)
 
     Returns:
         Dictionary with frequency distribution
+
     """
     if not data:
         return {}
@@ -128,15 +126,14 @@ def calculate_frequency_distribution(data: Union[bytes, str]) -> Dict:
     for item, count in freq.items():
         distribution[item] = {
             "count": count,
-            "probability": count / data_len
+            "probability": count / data_len,
         }
 
     return distribution
 
 
-def is_high_entropy(data: Union[bytes, str], threshold: float = 7.0) -> bool:
-    """
-    Check if data has high entropy (likely encrypted/compressed).
+def is_high_entropy(data: bytes | str, threshold: float = 7.0) -> bool:
+    """Check if data has high entropy (likely encrypted/compressed).
 
     Args:
         data: Input data to analyze
@@ -144,14 +141,14 @@ def is_high_entropy(data: Union[bytes, str], threshold: float = 7.0) -> bool:
 
     Returns:
         True if entropy is above threshold
+
     """
     entropy = calculate_entropy(data)
     return entropy >= threshold
 
 
-def analyze_entropy_sections(data: bytes, block_size: int = 256) -> Dict:
-    """
-    Analyze entropy across different sections of data.
+def analyze_entropy_sections(data: bytes, block_size: int = 256) -> dict:
+    """Analyze entropy across different sections of data.
 
     Args:
         data: Input byte data
@@ -159,6 +156,7 @@ def analyze_entropy_sections(data: bytes, block_size: int = 256) -> Dict:
 
     Returns:
         Dictionary with entropy analysis
+
     """
     if not data:
         return {}
@@ -175,7 +173,7 @@ def analyze_entropy_sections(data: bytes, block_size: int = 256) -> Dict:
                 "offset": i,
                 "size": len(block),
                 "entropy": block_entropy,
-                "is_high_entropy": is_high_entropy(block)
+                "is_high_entropy": is_high_entropy(block),
             })
 
     # Calculate statistics
@@ -196,6 +194,6 @@ def analyze_entropy_sections(data: bytes, block_size: int = 256) -> Dict:
             "min_entropy": min_entropy,
             "max_entropy": max_entropy,
             "variance": variance,
-            "section_count": len(sections)
-        }
+            "section_count": len(sections),
+        },
     }

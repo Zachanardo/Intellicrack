@@ -1,5 +1,4 @@
-"""
-Windows Activation Module
+"""Windows Activation Module
 
 Copyright (C) 2025 Zachary Flint
 
@@ -25,7 +24,6 @@ import subprocess
 import tempfile
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 from ...utils.logger import get_logger
 from ...utils.system.system_utils import is_admin
@@ -34,6 +32,7 @@ logger = get_logger(__name__)
 
 class ActivationMethod(Enum):
     """Windows activation methods"""
+
     HWID = "hwid"
     KMS38 = "kms38"
     ONLINE_KMS = "ohook"
@@ -41,6 +40,7 @@ class ActivationMethod(Enum):
 
 class ActivationStatus(Enum):
     """Activation status values"""
+
     ACTIVATED = "activated"
     NOT_ACTIVATED = "not_activated"
     GRACE_PERIOD = "grace_period"
@@ -48,8 +48,7 @@ class ActivationStatus(Enum):
     ERROR = "error"
 
 class WindowsActivator:
-    """
-    Windows Activation Manager
+    """Windows Activation Manager
 
     Provides a Python interface to Windows activation functionality
     using the MAS (Microsoft Activation Scripts) approach.
@@ -64,12 +63,12 @@ class WindowsActivator:
         self.last_validation_result = None
         self.validation_cache_duration = 300  # 5 minutes
 
-    def check_prerequisites(self) -> Tuple[bool, List[str]]:
-        """
-        Check if prerequisites for Windows activation are met
+    def check_prerequisites(self) -> tuple[bool, list[str]]:
+        """Check if prerequisites for Windows activation are met
 
         Returns:
             Tuple of (success, list of issues)
+
         """
         issues = []
 
@@ -87,12 +86,12 @@ class WindowsActivator:
 
         return len(issues) == 0, issues
 
-    def get_activation_status(self) -> Dict[str, str]:
-        """
-        Get current Windows activation status
+    def get_activation_status(self) -> dict[str, str]:
+        """Get current Windows activation status
 
         Returns:
             Dictionary with activation information
+
         """
         try:
             # Use slmgr to check activation status
@@ -106,7 +105,7 @@ class WindowsActivator:
             status_info = {
                 "status": ActivationStatus.UNKNOWN.value,
                 "raw_output": result.stdout.strip(),
-                "error": result.stderr.strip() if result.stderr else None
+                "error": result.stderr.strip() if result.stderr else None,
             }
 
             if result.returncode == 0:
@@ -126,25 +125,25 @@ class WindowsActivator:
             logger.error("Error checking activation status: %s", e)
             return {
                 "status": ActivationStatus.ERROR.value,
-                "error": str(e)
+                "error": str(e),
             }
 
-    def activate_windows(self, method: ActivationMethod = ActivationMethod.HWID) -> Dict[str, any]:
-        """
-        Activate Windows using specified method
+    def activate_windows(self, method: ActivationMethod = ActivationMethod.HWID) -> dict[str, any]:
+        """Activate Windows using specified method
 
         Args:
             method: Activation method to use
 
         Returns:
             Dictionary with activation result
+
         """
         prereq_ok, issues = self.check_prerequisites()
         if not prereq_ok:
             return {
                 "success": False,
                 "error": "Prerequisites not met",
-                "issues": issues
+                "issues": issues,
             }
 
         try:
@@ -158,7 +157,7 @@ class WindowsActivator:
             else:
                 return {
                     "success": False,
-                    "error": f"Unsupported activation method: {method.value}"
+                    "error": f"Unsupported activation method: {method.value}",
                 }
 
             logger.info("Starting Windows activation with method: %s", method.value)
@@ -179,7 +178,7 @@ class WindowsActivator:
                 "method": method.value,
                 "return_code": result.returncode,
                 "stdout": result.stdout,
-                "stderr": result.stderr
+                "stderr": result.stderr,
             }
 
             if success:
@@ -195,21 +194,21 @@ class WindowsActivator:
             logger.error("Windows activation timed out")
             return {
                 "success": False,
-                "error": "Activation process timed out"
+                "error": "Activation process timed out",
             }
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error during Windows activation: %s", e)
             return {
                 "success": False,
-                "error": str(e)
+                "error": str(e),
             }
 
-    def reset_activation(self) -> Dict[str, any]:
-        """
-        Reset Windows activation state
+    def reset_activation(self) -> dict[str, any]:
+        """Reset Windows activation state
 
         Returns:
             Dictionary with reset result
+
         """
         try:
             # Reset activation using slmgr
@@ -224,22 +223,22 @@ class WindowsActivator:
                 "success": result.returncode == 0,
                 "return_code": result.returncode,
                 "stdout": result.stdout,
-                "stderr": result.stderr
+                "stderr": result.stderr,
             }
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error resetting activation: %s", e)
             return {
                 "success": False,
-                "error": str(e)
+                "error": str(e),
             }
 
-    def get_product_key_info(self) -> Dict[str, str]:
-        """
-        Get information about installed product keys
+    def get_product_key_info(self) -> dict[str, str]:
+        """Get information about installed product keys
 
         Returns:
             Dictionary with product key information
+
         """
         try:
             result = subprocess.run(
@@ -252,40 +251,40 @@ class WindowsActivator:
             return {
                 "success": result.returncode == 0,
                 "product_info": result.stdout.strip(),
-                "error": result.stderr.strip() if result.stderr else None
+                "error": result.stderr.strip() if result.stderr else None,
             }
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error getting product key info: %s", e)
             return {
                 "success": False,
-                "error": str(e)
+                "error": str(e),
             }
 
-    def activate_windows_kms(self) -> Dict[str, any]:
+    def activate_windows_kms(self) -> dict[str, any]:
         """Activate Windows using KMS method."""
         return self.activate_windows(ActivationMethod.KMS38)
 
-    def activate_windows_digital(self) -> Dict[str, any]:
+    def activate_windows_digital(self) -> dict[str, any]:
         """Activate Windows using HWID digital method."""
         return self.activate_windows(ActivationMethod.HWID)
 
-    def activate_office(self, office_version: str = "auto") -> Dict[str, any]:
-        """
-        Activate Microsoft Office using Office-specific activation methods.
+    def activate_office(self, office_version: str = "auto") -> dict[str, any]:
+        """Activate Microsoft Office using Office-specific activation methods.
 
         Args:
             office_version: Office version ("2016", "2019", "2021", "365", "auto")
 
         Returns:
             Dictionary with activation result
+
         """
         prereq_ok, issues = self.check_prerequisites()
         if not prereq_ok:
             return {
                 "success": False,
                 "error": "Prerequisites not met for Office activation",
-                "issues": issues
+                "issues": issues,
             }
 
         try:
@@ -295,7 +294,7 @@ class WindowsActivator:
                 if not office_version:
                     return {
                         "success": False,
-                        "error": "No Microsoft Office installation detected"
+                        "error": "No Microsoft Office installation detected",
                     }
 
             logger.info("Starting Office activation for version: %s", office_version)
@@ -326,15 +325,15 @@ class WindowsActivator:
             logger.error("Error during Office activation: %s", e)
             return {
                 "success": False,
-                "error": f"Office activation error: {str(e)}"
+                "error": f"Office activation error: {e!s}",
             }
 
     def _detect_office_version(self) -> str:
-        """
-        Detect installed Office version.
+        """Detect installed Office version.
 
         Returns:
             Detected Office version string or empty string if not found
+
         """
         try:
             # Check common Office installation paths
@@ -342,7 +341,7 @@ class WindowsActivator:
                 r"C:\Program Files\Microsoft Office",
                 r"C:\Program Files (x86)\Microsoft Office",
                 r"C:\Program Files\Microsoft Office\root\Office16",
-                r"C:\Program Files (x86)\Microsoft Office\root\Office16"
+                r"C:\Program Files (x86)\Microsoft Office\root\Office16",
             ]
 
             detected_versions = []
@@ -372,7 +371,7 @@ class WindowsActivator:
                 import winreg
                 registry_paths = [
                     r"SOFTWARE\Microsoft\Office\ClickToRun\Configuration",
-                    r"SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun\Configuration"
+                    r"SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun\Configuration",
                 ]
 
                 for reg_path in registry_paths:
@@ -386,7 +385,6 @@ class WindowsActivator:
                                     detected_versions.append("2013")
                             except FileNotFoundError as e:
                                 logger.error("File not found in windows_activator: %s", e)
-                                pass
                     except FileNotFoundError as e:
                         logger.error("File not found in windows_activator: %s", e)
                         continue
@@ -394,20 +392,18 @@ class WindowsActivator:
             except ImportError as e:
                 logger.error("Import error in windows_activator: %s", e)
                 # winreg not available (non-Windows)
-                pass
 
             # Return most recent version detected
             if detected_versions:
                 if "2021" in detected_versions:
                     return "2021"
-                elif "2019" in detected_versions:
+                if "2019" in detected_versions:
                     return "2019"
-                elif "2016" in detected_versions:
+                if "2016" in detected_versions:
                     return "2016"
-                elif "2013" in detected_versions:
+                if "2013" in detected_versions:
                     return "2013"
-                else:
-                    return detected_versions[0]
+                return detected_versions[0]
 
             return ""
 
@@ -415,15 +411,15 @@ class WindowsActivator:
             logger.error("Error detecting Office version: %s", e)
             return ""
 
-    def _activate_office_c2r(self, office_version: str) -> Dict[str, any]:
-        """
-        Activate Office using Click-to-Run (C2R) method.
+    def _activate_office_c2r(self, office_version: str) -> dict[str, any]:
+        """Activate Office using Click-to-Run (C2R) method.
 
         Args:
             office_version: Office version to activate
 
         Returns:
             Dictionary with activation result
+
         """
         try:
             # Use office_script_path from script directory if available
@@ -454,7 +450,7 @@ class WindowsActivator:
                 "office_version": office_version,
                 "return_code": result.returncode,
                 "stdout": result.stdout,
-                "stderr": result.stderr
+                "stderr": result.stderr,
             }
 
         except subprocess.TimeoutExpired as e:
@@ -462,25 +458,25 @@ class WindowsActivator:
             return {
                 "success": False,
                 "method": "C2R",
-                "error": "Office C2R activation timed out"
+                "error": "Office C2R activation timed out",
             }
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in windows_activator: %s", e)
             return {
                 "success": False,
                 "method": "C2R",
-                "error": f"Office C2R activation error: {str(e)}"
+                "error": f"Office C2R activation error: {e!s}",
             }
 
-    def _activate_office_msi(self, office_version: str) -> Dict[str, any]:
-        """
-        Activate Office using MSI (Windows Installer) method.
+    def _activate_office_msi(self, office_version: str) -> dict[str, any]:
+        """Activate Office using MSI (Windows Installer) method.
 
         Args:
             office_version: Office version to activate
 
         Returns:
             Dictionary with activation result
+
         """
         try:
             # Use OSPP.VBS script for Office activation
@@ -488,7 +484,7 @@ class WindowsActivator:
                 r"C:\Program Files\Microsoft Office\Office16\OSPP.VBS",
                 r"C:\Program Files (x86)\Microsoft Office\Office16\OSPP.VBS",
                 r"C:\Program Files\Microsoft Office\Office15\OSPP.VBS",
-                r"C:\Program Files (x86)\Microsoft Office\Office15\OSPP.VBS"
+                r"C:\Program Files (x86)\Microsoft Office\Office15\OSPP.VBS",
             ]
 
             ospp_script = None
@@ -501,7 +497,7 @@ class WindowsActivator:
                 return {
                     "success": False,
                     "method": "MSI",
-                    "error": "OSPP.VBS script not found - Office may not be installed"
+                    "error": "OSPP.VBS script not found - Office may not be installed",
                 }
 
             # Try to activate using OSPP with generic volume license key
@@ -509,14 +505,14 @@ class WindowsActivator:
                 "2019": "NMMKJ-6RK4F-KMJVX-8D9MJ-6MWKP",  # Office Pro Plus 2019
                 "2016": "XQNVK-8JYDB-WJ9W3-YJ8YR-WFG99",  # Office Pro Plus 2016
                 "2013": "YC7DK-G2NP3-2QQC3-J6H88-GVGXT",  # Office Pro Plus 2013
-                "2021": "FXYTK-NJJ8C-GB6DW-3DYQT-6F7TH"   # Office Pro Plus 2021
+                "2021": "FXYTK-NJJ8C-GB6DW-3DYQT-6F7TH",   # Office Pro Plus 2021
             }
 
             key = volume_keys.get(office_version, volume_keys.get("2016"))  # Default to 2016 key
 
             # Install the product key
             install_cmd = [
-                "cscript", "//nologo", ospp_script, f"/inpkey:{key}"
+                "cscript", "//nologo", ospp_script, f"/inpkey:{key}",
             ]
 
             logger.info("Installing Office product key for version %s", office_version)
@@ -528,12 +524,12 @@ class WindowsActivator:
                 return {
                     "success": False,
                     "method": "MSI",
-                    "error": f"Failed to install product key: {result.stderr}"
+                    "error": f"Failed to install product key: {result.stderr}",
                 }
 
             # Activate the installed key
             activate_cmd = [
-                "cscript", "//nologo", ospp_script, "/act"
+                "cscript", "//nologo", ospp_script, "/act",
             ]
 
             logger.info("Activating Office using MSI method")
@@ -554,7 +550,7 @@ class WindowsActivator:
                 "product_key": key,
                 "return_code": result.returncode,
                 "stdout": result.stdout,
-                "stderr": result.stderr
+                "stderr": result.stderr,
             }
 
         except subprocess.TimeoutExpired as e:
@@ -562,22 +558,22 @@ class WindowsActivator:
             return {
                 "success": False,
                 "method": "MSI",
-                "error": "Office MSI activation timed out"
+                "error": "Office MSI activation timed out",
             }
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in windows_activator: %s", e)
             return {
                 "success": False,
                 "method": "MSI",
-                "error": f"Office MSI activation error: {str(e)}"
+                "error": f"Office MSI activation error: {e!s}",
             }
 
-    def _get_office_status(self) -> Dict[str, str]:
-        """
-        Get Office activation status.
+    def _get_office_status(self) -> dict[str, str]:
+        """Get Office activation status.
 
         Returns:
             Dictionary with Office activation status
+
         """
         try:
             # Find OSPP.VBS script
@@ -585,7 +581,7 @@ class WindowsActivator:
                 r"C:\Program Files\Microsoft Office\Office16\OSPP.VBS",
                 r"C:\Program Files (x86)\Microsoft Office\Office16\OSPP.VBS",
                 r"C:\Program Files\Microsoft Office\Office15\OSPP.VBS",
-                r"C:\Program Files (x86)\Microsoft Office\Office15\OSPP.VBS"
+                r"C:\Program Files (x86)\Microsoft Office\Office15\OSPP.VBS",
             ]
 
             ospp_script = None
@@ -597,7 +593,7 @@ class WindowsActivator:
             if not ospp_script:
                 return {
                     "status": "unknown",
-                    "error": "OSPP.VBS not found"
+                    "error": "OSPP.VBS not found",
                 }
 
             # Check activation status
@@ -610,7 +606,7 @@ class WindowsActivator:
 
             status_info = {
                 "raw_output": result.stdout.strip(),
-                "error": result.stderr.strip() if result.stderr else None
+                "error": result.stderr.strip() if result.stderr else None,
             }
 
             if result.returncode == 0:
@@ -632,49 +628,49 @@ class WindowsActivator:
             logger.error("Error getting Office status: %s", e)
             return {
                 "status": "error",
-                "error": str(e)
+                "error": str(e),
             }
 
 
 def create_windows_activator() -> WindowsActivator:
-    """
-    Factory function to create Windows activator instance
+    """Factory function to create Windows activator instance
 
     Returns:
         Configured WindowsActivator instance
+
     """
     return WindowsActivator()
 
 
 # Convenience functions
-def check_windows_activation() -> Dict[str, str]:
-    """
-    Quick check of Windows activation status
+def check_windows_activation() -> dict[str, str]:
+    """Quick check of Windows activation status
 
     Returns:
         Dictionary with activation status
+
     """
     activator = create_windows_activator()
     return activator.get_activation_status()
 
 
-def activate_windows_hwid() -> Dict[str, any]:
-    """
-    Activate Windows using HWID method
+def activate_windows_hwid() -> dict[str, any]:
+    """Activate Windows using HWID method
 
     Returns:
         Dictionary with activation result
+
     """
     activator = create_windows_activator()
     return activator.activate_windows(ActivationMethod.HWID)
 
 
-def activate_windows_kms() -> Dict[str, any]:
-    """
-    Activate Windows using KMS38 method
+def activate_windows_kms() -> dict[str, any]:
+    """Activate Windows using KMS38 method
 
     Returns:
         Dictionary with activation result
+
     """
     activator = create_windows_activator()
     return activator.activate_windows(ActivationMethod.KMS38)

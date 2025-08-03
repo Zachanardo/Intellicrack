@@ -1,5 +1,4 @@
-"""
-Advanced Tool Discovery System for Intellicrack
+"""Advanced Tool Discovery System for Intellicrack
 
 Automatically discovers and validates security tools across platforms.
 Handles version detection, capability checking, and intelligent fallbacks.
@@ -30,7 +29,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -39,13 +38,13 @@ class ToolValidator:
     """Validates tool installations and capabilities."""
 
     @staticmethod
-    def validate_ghidra(tool_path: str) -> Dict[str, Any]:
+    def validate_ghidra(tool_path: str) -> dict[str, Any]:
         """Validate Ghidra installation."""
         validation = {
             "valid": False,
             "version": None,
             "capabilities": [],
-            "issues": []
+            "issues": [],
         }
 
         try:
@@ -56,7 +55,7 @@ class ToolValidator:
             ghidra_files = [
                 "support/analyzeHeadless",
                 "support/analyzeHeadless.bat",
-                "Ghidra/application.properties"
+                "Ghidra/application.properties",
             ]
 
             found_files = []
@@ -73,9 +72,9 @@ class ToolValidator:
             try:
                 result = subprocess.run(
                     [tool_path, "--version"],
-                    capture_output=True,
+                    check=False, capture_output=True,
                     text=True,
-                    timeout=15
+                    timeout=15,
                 )
 
                 if result.returncode == 0:
@@ -92,7 +91,7 @@ class ToolValidator:
             validation["capabilities"].extend([
                 "decompilation",
                 "static_analysis",
-                "script_execution"
+                "script_execution",
             ])
 
             validation["valid"] = True
@@ -104,22 +103,22 @@ class ToolValidator:
         return validation
 
     @staticmethod
-    def validate_radare2(tool_path: str) -> Dict[str, Any]:
+    def validate_radare2(tool_path: str) -> dict[str, Any]:
         """Validate radare2 installation."""
         validation = {
             "valid": False,
             "version": None,
             "capabilities": [],
-            "issues": []
+            "issues": [],
         }
 
         try:
             # Test basic functionality
             result = subprocess.run(
                 [tool_path, "-v"],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
 
             if result.returncode == 0:
@@ -135,7 +134,7 @@ class ToolValidator:
                 validation["capabilities"].extend([
                     "disassembly",
                     "debugging",
-                    "binary_analysis"
+                    "binary_analysis",
                 ])
 
                 validation["valid"] = True
@@ -152,21 +151,21 @@ class ToolValidator:
         return validation
 
     @staticmethod
-    def validate_python(tool_path: str) -> Dict[str, Any]:
+    def validate_python(tool_path: str) -> dict[str, Any]:
         """Validate Python installation."""
         validation = {
             "valid": False,
             "version": None,
             "capabilities": [],
-            "issues": []
+            "issues": [],
         }
 
         try:
             result = subprocess.run(
                 [tool_path, "--version"],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             if result.returncode == 0:
@@ -194,21 +193,21 @@ class ToolValidator:
         return validation
 
     @staticmethod
-    def validate_frida(tool_path: str) -> Dict[str, Any]:
+    def validate_frida(tool_path: str) -> dict[str, Any]:
         """Validate Frida installation."""
         validation = {
             "valid": False,
             "version": None,
             "capabilities": [],
-            "issues": []
+            "issues": [],
         }
 
         try:
             result = subprocess.run(
                 [tool_path, "--version"],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
 
             if result.returncode == 0:
@@ -220,7 +219,7 @@ class ToolValidator:
                 validation["capabilities"].extend([
                     "dynamic_instrumentation",
                     "javascript_injection",
-                    "process_hooking"
+                    "process_hooking",
                 ])
 
                 validation["valid"] = True
@@ -234,21 +233,21 @@ class ToolValidator:
         return validation
 
     @staticmethod
-    def validate_qemu(tool_path: str) -> Dict[str, Any]:
+    def validate_qemu(tool_path: str) -> dict[str, Any]:
         """Validate QEMU installation."""
         validation = {
             "valid": False,
             "version": None,
             "capabilities": [],
-            "issues": []
+            "issues": [],
         }
 
         try:
             result = subprocess.run(
                 [tool_path, "--version"],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
 
             if result.returncode == 0:
@@ -265,7 +264,7 @@ class ToolValidator:
 
                 validation["capabilities"].extend([
                     "emulation",
-                    "sandboxing"
+                    "sandboxing",
                 ])
 
                 validation["valid"] = True
@@ -291,13 +290,13 @@ class AdvancedToolDiscovery:
             "python": ToolValidator.validate_python,
             "frida": ToolValidator.validate_frida,
             "qemu-system-x86_64": ToolValidator.validate_qemu,
-            "qemu-system-i386": ToolValidator.validate_qemu
+            "qemu-system-i386": ToolValidator.validate_qemu,
         }
 
         self.discovered_tools = {}
         self.search_cache = {}
 
-    def discover_all_tools(self) -> Dict[str, Any]:
+    def discover_all_tools(self) -> dict[str, Any]:
         """Discover all supported tools."""
         logger.info("Starting comprehensive tool discovery")
 
@@ -306,32 +305,32 @@ class AdvancedToolDiscovery:
                 "executables": ["ghidra", "ghidraRun", "ghidraRun.bat"],
                 "search_strategy": "installation_based",
                 "required": False,
-                "priority": "high"
+                "priority": "high",
             },
             "radare2": {
                 "executables": ["r2", "radare2"],
                 "search_strategy": "path_based",
                 "required": False,
-                "priority": "high"
+                "priority": "high",
             },
             "python3": {
                 "executables": ["python3", "python"],
                 "search_strategy": "path_based",
                 "required": True,
-                "priority": "critical"
+                "priority": "critical",
             },
             "frida": {
                 "executables": ["frida"],
                 "search_strategy": "path_based",
                 "required": False,
-                "priority": "medium"
+                "priority": "medium",
             },
             "qemu": {
                 "executables": ["qemu-system-x86_64", "qemu-system-i386"],
                 "search_strategy": "installation_based",
                 "required": False,
-                "priority": "low"
-            }
+                "priority": "low",
+            },
         }
 
         results = {}
@@ -353,12 +352,12 @@ class AdvancedToolDiscovery:
                 results[tool_name] = {
                     "available": False,
                     "error": str(e),
-                    "discovery_time": time.time()
+                    "discovery_time": time.time(),
                 }
 
         return results
 
-    def discover_tool(self, tool_name: str, config: Dict[str, Any]) -> Dict[str, Any]:
+    def discover_tool(self, tool_name: str, config: dict[str, Any]) -> dict[str, Any]:
         """Discover a specific tool with comprehensive search."""
         discovery_start = time.time()
 
@@ -377,7 +376,7 @@ class AdvancedToolDiscovery:
             "discovery_method": None,
             "discovery_time": discovery_start,
             "search_locations": [],
-            "capabilities": []
+            "capabilities": [],
         }
 
         # Strategy 1: PATH search
@@ -414,7 +413,7 @@ class AdvancedToolDiscovery:
 
         return tool_info
 
-    def _search_in_path(self, executables: List[str]) -> Optional[str]:
+    def _search_in_path(self, executables: list[str]) -> str | None:
         """Search for tool in PATH."""
         for executable in executables:
             path = shutil.which(executable)
@@ -422,7 +421,7 @@ class AdvancedToolDiscovery:
                 return path
         return None
 
-    def _search_installations(self, tool_name: str, executables: List[str]) -> Optional[str]:
+    def _search_installations(self, tool_name: str, executables: list[str]) -> str | None:
         """Search in typical installation directories."""
         search_paths = self._get_installation_paths(tool_name)
 
@@ -443,7 +442,7 @@ class AdvancedToolDiscovery:
 
         return None
 
-    def _search_common_locations(self, tool_name: str, executables: List[str]) -> Optional[str]:
+    def _search_common_locations(self, tool_name: str, executables: list[str]) -> str | None:
         """Search in common installation locations."""
         logger.debug(f"Searching common locations for tool: {tool_name} with executables: {executables}")
         common_paths = []
@@ -456,7 +455,7 @@ class AdvancedToolDiscovery:
                 "C:\\Tools",
                 "C:\\",
                 os.path.expanduser("~\\AppData\\Local"),
-                os.path.expanduser("~\\Documents")
+                os.path.expanduser("~\\Documents"),
             ])
         else:
             common_paths.extend([
@@ -466,7 +465,7 @@ class AdvancedToolDiscovery:
                 "/usr/share",
                 os.path.expanduser("~/bin"),
                 os.path.expanduser("~/.local/bin"),
-                os.path.expanduser("~/Tools")
+                os.path.expanduser("~/Tools"),
             ])
 
         for base_path in common_paths:
@@ -480,7 +479,7 @@ class AdvancedToolDiscovery:
 
         return None
 
-    def _search_windows_registry(self, tool_name: str) -> Optional[str]:
+    def _search_windows_registry(self, tool_name: str) -> str | None:
         """Search Windows registry for tool installations."""
         if sys.platform != "win32":
             return None
@@ -490,7 +489,7 @@ class AdvancedToolDiscovery:
 
             registry_paths = [
                 r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
-                r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+                r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
             ]
 
             for registry_path in registry_paths:
@@ -518,13 +517,13 @@ class AdvancedToolDiscovery:
 
         except ImportError as e:
             logger.error("Import error in tool_discovery: %s", e)
-            pass  # winreg not available
+            # winreg not available
         except Exception as e:
             logger.debug(f"Registry search failed: {e}")
 
         return None
 
-    def _get_installation_paths(self, tool_name: str) -> List[str]:
+    def _get_installation_paths(self, tool_name: str) -> list[str]:
         """Get tool-specific installation search paths."""
         paths = []
 
@@ -534,7 +533,7 @@ class AdvancedToolDiscovery:
                     "C:\\Program Files\\Ghidra",
                     "C:\\ghidra",
                     "C:\\Tools\\ghidra",
-                    os.path.expanduser("~\\ghidra")
+                    os.path.expanduser("~\\ghidra"),
                 ])
             else:
                 paths.extend([
@@ -542,30 +541,30 @@ class AdvancedToolDiscovery:
                     "/usr/local/ghidra",
                     "/usr/share/ghidra",
                     os.path.expanduser("~/ghidra"),
-                    "/Applications/ghidra"
+                    "/Applications/ghidra",
                 ])
 
         elif tool_name == "qemu":
             if sys.platform == "win32":
                 paths.extend([
                     "C:\\Program Files\\qemu",
-                    "C:\\qemu"
+                    "C:\\qemu",
                 ])
             else:
                 paths.extend([
                     "/usr/bin",
                     "/usr/local/bin",
-                    "/opt/qemu"
+                    "/opt/qemu",
                 ])
 
         return paths
 
-    def _validate_and_populate(self, tool_path: str, tool_name: str) -> Dict[str, Any]:
+    def _validate_and_populate(self, tool_path: str, tool_name: str) -> dict[str, Any]:
         """Validate tool and populate information."""
         result = {
             "available": False,
             "path": tool_path,
-            "validation": {}
+            "validation": {},
         }
 
         # Find appropriate validator
@@ -581,26 +580,25 @@ class AdvancedToolDiscovery:
             result["available"] = validation_result["valid"]
             result["version"] = validation_result.get("version")
             result["capabilities"] = validation_result.get("capabilities", [])
-        else:
-            # Basic validation - just check if executable exists and is executable
-            if os.path.exists(tool_path) and os.access(tool_path, os.X_OK):
-                result["available"] = True
+        # Basic validation - just check if executable exists and is executable
+        elif os.path.exists(tool_path) and os.access(tool_path, os.X_OK):
+            result["available"] = True
 
         return result
 
-    def refresh_discovery(self) -> Dict[str, Any]:
+    def refresh_discovery(self) -> dict[str, Any]:
         """Refresh tool discovery by clearing cache and re-scanning."""
         logger.info("Refreshing tool discovery")
         self.search_cache.clear()
         return self.discover_all_tools()
 
-    def get_tool_capabilities(self, tool_name: str) -> List[str]:
+    def get_tool_capabilities(self, tool_name: str) -> list[str]:
         """Get capabilities of a discovered tool."""
         if tool_name in self.discovered_tools:
             return self.discovered_tools[tool_name].get("capabilities", [])
         return []
 
-    def is_tool_compatible(self, tool_name: str, required_capabilities: List[str]) -> bool:
+    def is_tool_compatible(self, tool_name: str, required_capabilities: list[str]) -> bool:
         """Check if tool has required capabilities."""
         tool_capabilities = self.get_tool_capabilities(tool_name)
         return all(cap in tool_capabilities for cap in required_capabilities)

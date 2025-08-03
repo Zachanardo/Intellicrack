@@ -1,5 +1,4 @@
-"""
-Intellicrack Protection Engine Analysis Widget
+"""Intellicrack Protection Engine Analysis Widget
 
 PyQt6 widget for displaying ICP engine analysis results.
 
@@ -8,7 +7,6 @@ Licensed under GNU General Public License v3.0
 """
 
 import asyncio
-from typing import Optional
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QBrush, QColor, QFont
@@ -59,7 +57,7 @@ class ICPAnalysisThread(QThread):
 
             # Run analysis
             result = loop.run_until_complete(
-                self._backend.analyze_file(self.file_path, self.scan_mode)
+                self._backend.analyze_file(self.file_path, self.scan_mode),
             )
 
             loop.close()
@@ -86,10 +84,11 @@ class ICPAnalysisWidget(QWidget):
 
         Args:
             parent: Parent widget or None for top-level widget
+
         """
         super().__init__(parent)
-        self._current_result: Optional[ICPScanResult] = None
-        self._analysis_thread: Optional[ICPAnalysisThread] = None
+        self._current_result: ICPScanResult | None = None
+        self._analysis_thread: ICPAnalysisThread | None = None
         self.init_ui()
 
     def init_ui(self):
@@ -110,7 +109,7 @@ class ICPAnalysisWidget(QWidget):
         header_layout.addWidget(QLabel("Scan Mode:"))
         self.scan_mode_combo = QComboBox()
         self.scan_mode_combo.addItems([
-            "Normal", "Deep", "Heuristic", "Aggressive", "All"
+            "Normal", "Deep", "Heuristic", "Aggressive", "All",
         ])
         self.scan_mode_combo.setCurrentText("Deep")
         header_layout.addWidget(self.scan_mode_combo)
@@ -226,7 +225,7 @@ class ICPAnalysisWidget(QWidget):
                 file_item = QTreeWidgetItem([
                     file_info.filetype,
                     f"Size: {file_info.size}",
-                    ""
+                    "",
                 ])
                 self.detections_tree.addTopLevelItem(file_item)
 
@@ -235,7 +234,7 @@ class ICPAnalysisWidget(QWidget):
                     detection_item = QTreeWidgetItem([
                         detection.name,
                         detection.type,
-                        f"{detection.confidence * 100:.0f}%"
+                        f"{detection.confidence * 100:.0f}%",
                     ])
 
                     # Color code by type
@@ -254,7 +253,7 @@ class ICPAnalysisWidget(QWidget):
         if result.raw_json:
             import json
             self.raw_json_text.setText(
-                json.dumps(result.raw_json, indent=2)
+                json.dumps(result.raw_json, indent=2),
             )
 
         # Update status
@@ -355,6 +354,6 @@ class ICPAnalysisWidget(QWidget):
         self.raw_json_text.clear()
         self.status_label.setText("Ready")
 
-    def get_current_result(self) -> Optional[ICPScanResult]:
+    def get_current_result(self) -> ICPScanResult | None:
         """Get the current analysis result"""
         return self._current_result

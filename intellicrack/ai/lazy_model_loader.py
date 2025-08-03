@@ -1,5 +1,4 @@
-"""
-Lazy Model Loading System for Intellicrack
+"""Lazy Model Loading System for Intellicrack
 
 This module provides lazy loading capabilities for large AI models,
 improving startup time and memory usage by loading models only when needed.
@@ -27,7 +26,8 @@ import os
 import threading
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from collections.abc import Callable
+from typing import Any
 
 from .llm_backends import LLMBackend, LLMConfig
 
@@ -40,12 +40,10 @@ class ModelLoadingStrategy(ABC):
     @abstractmethod
     def should_preload(self, config: LLMConfig) -> bool:
         """Determine if a model should be preloaded."""
-        pass
 
     @abstractmethod
     def get_load_priority(self, config: LLMConfig) -> int:
         """Get the loading priority (higher number = higher priority)."""
-        pass
 
 
 class DefaultLoadingStrategy(ModelLoadingStrategy):
@@ -64,7 +62,7 @@ class DefaultLoadingStrategy(ModelLoadingStrategy):
         if hasattr(config, "provider"):
             if config.provider.value in ["openai", "anthropic"]:
                 return 10
-            elif config.provider.value in ["ollama", "local_api"]:
+            if config.provider.value in ["ollama", "local_api"]:
                 return 5
         return 0
 
@@ -82,6 +80,7 @@ class SmartLoadingStrategy(ModelLoadingStrategy):
             preload_small_models: Whether to preload models below the size threshold.
             small_model_threshold_mb: Size threshold in MB for considering a model "small".
             preload_api_models: Whether to preload API-based models.
+
         """
         self.logger = logging.getLogger(__name__ + ".SmartLoadingStrategy")
         self.preload_small_models = preload_small_models
@@ -102,7 +101,6 @@ class SmartLoadingStrategy(ModelLoadingStrategy):
                     return self.preload_small_models
             except OSError as e:
                 self.logger.error("OS error in lazy_model_loader: %s", e)
-                pass
 
         return False
 
@@ -110,32 +108,30 @@ class SmartLoadingStrategy(ModelLoadingStrategy):
         """Higher priority for API models and smaller local models."""
         if config.provider.value in ["openai", "anthropic"]:
             return 100
-        elif config.provider.value in ["ollama", "local_api"]:
+        if config.provider.value in ["ollama", "local_api"]:
             return 90
-        elif config.model_path and os.path.exists(config.model_path):
+        if config.model_path and os.path.exists(config.model_path):
             try:
                 size_mb = os.path.getsize(config.model_path) / (1024 * 1024)
                 # Smaller models get higher priority
                 return max(0, 80 - int(size_mb / 100))
             except OSError as e:
                 self.logger.error("OS error in lazy_model_loader: %s", e)
-                pass
 
         return 50
 
 
 class LazyModelWrapper:
-    """
-    Wrapper that provides lazy loading for LLM backends.
+    """Wrapper that provides lazy loading for LLM backends.
 
     The actual backend is only initialized when first accessed.
     """
 
     def __init__(self,
-                 backend_class: Type[LLMBackend],
+                 backend_class: type[LLMBackend],
                  config: LLMConfig,
                  preload: bool = False,
-                 load_callback: Optional[Callable[[str, bool], None]] = None):
+                 load_callback: Callable[[str, bool], None] | None = None):
         """Initialize a lazy-loading wrapper for an LLM backend.
 
         Args:
@@ -143,16 +139,17 @@ class LazyModelWrapper:
             config: Configuration for the LLM backend.
             preload: Whether to start loading the model in the background immediately.
             load_callback: Optional callback function called with (model_name, success) after loading.
+
         """
         self.logger = logging.getLogger(__name__ + ".LazyModelWrapper")
         self.backend_class = backend_class
         self.config = config
         self.load_callback = load_callback
-        self._backend: Optional[LLMBackend] = None
+        self._backend: LLMBackend | None = None
         self._initialized = False
         self._initialization_lock = threading.Lock()
         self._loading = False
-        self._load_error: Optional[Exception] = None
+        self._load_error: Exception | None = None
 
         # Metadata for tracking
         self.creation_time = time.time()
@@ -180,7 +177,7 @@ class LazyModelWrapper:
         return self._load_error is not None
 
     @property
-    def load_error(self) -> Optional[Exception]:
+    def load_error(self) -> Exception | None:
         """Get the loading error if any."""
         return self._load_error
 
@@ -231,7 +228,7 @@ class LazyModelWrapper:
 
                 if self.load_callback:
                     self.load_callback(
-                        f"Failed to load {self.config.model_name}: {str(e)}", True)
+                        f"Failed to load {self.config.model_name}: {e!s}", True)
 
                 return False
 
@@ -239,7 +236,7 @@ class LazyModelWrapper:
                 self._initialized = True
                 self._loading = False
 
-    def get_backend(self) -> Optional[LLMBackend]:
+    def get_backend(self) -> LLMBackend | None:
         """Get the backend, initializing if necessary."""
         self.last_access_time = time.time()
         self.access_count += 1
@@ -266,7 +263,7 @@ class LazyModelWrapper:
                 self._initialized = False
                 logger.info(f"Unloaded backend: {self.config.model_name}")
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         """Get information about this lazy wrapper."""
         return {
             "model_name": self.config.model_name,
@@ -277,7 +274,7 @@ class LazyModelWrapper:
             "access_count": self.access_count,
             "last_access": self.last_access_time,
             "creation_time": self.creation_time,
-            "memory_usage": self._estimate_memory_usage()
+            "memory_usage": self._estimate_memory_usage(),
         }
 
     def _estimate_memory_usage(self) -> str:
@@ -300,29 +297,28 @@ class LazyModelWrapper:
                 return f"~{size_mb:.1f} MB"
             except OSError as e:
                 self.logger.error("OS error in lazy_model_loader: %s", e)
-                pass
 
         return "Unknown"
 
 
 class LazyModelManager:
-    """
-    Manager for lazy-loaded models.
+    """Manager for lazy-loaded models.
 
     Handles loading strategies, memory management, and model lifecycle.
     """
 
-    def __init__(self, loading_strategy: Optional[ModelLoadingStrategy] = None):
+    def __init__(self, loading_strategy: ModelLoadingStrategy | None = None):
         """Initialize the lazy model manager with optional loading strategy.
 
         Args:
             loading_strategy: Strategy for determining model loading behavior.
                             Defaults to DefaultLoadingStrategy if not provided.
+
         """
         self.loading_strategy = loading_strategy or DefaultLoadingStrategy()
-        self.models: Dict[str, LazyModelWrapper] = {}
+        self.models: dict[str, LazyModelWrapper] = {}
         self._access_lock = threading.Lock()
-        self.load_callbacks: List[Callable[[str, bool], None]] = []
+        self.load_callbacks: list[Callable[[str, bool], None]] = []
 
         # Memory management settings
         self.max_loaded_models = 3  # Maximum models to keep loaded
@@ -348,7 +344,7 @@ class LazyModelManager:
 
     def register_model(self,
                        model_id: str,
-                       backend_class: Type[LLMBackend],
+                       backend_class: type[LLMBackend],
                        config: LLMConfig) -> LazyModelWrapper:
         """Register a model for lazy loading."""
         with self._access_lock:
@@ -358,7 +354,7 @@ class LazyModelManager:
                 backend_class=backend_class,
                 config=config,
                 preload=preload,
-                load_callback=self._notify_load_callback
+                load_callback=self._notify_load_callback,
             )
 
             self.models[model_id] = wrapper
@@ -367,7 +363,7 @@ class LazyModelManager:
 
             return wrapper
 
-    def get_model(self, model_id: str) -> Optional[LLMBackend]:
+    def get_model(self, model_id: str) -> LLMBackend | None:
         """Get a model backend, loading if necessary."""
         with self._access_lock:
             if model_id not in self.models:
@@ -399,18 +395,16 @@ class LazyModelManager:
                 wrapper.unload()
             logger.info("Unloaded all models")
 
-    def get_model_info(self, model_id: Optional[str] = None) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+    def get_model_info(self, model_id: str | None = None) -> dict[str, Any] | list[dict[str, Any]]:
         """Get information about models."""
         with self._access_lock:
             if model_id:
                 if model_id in self.models:
                     return self.models[model_id].get_info()
-                else:
-                    return {}
-            else:
-                return [wrapper.get_info() for wrapper in self.models.values()]
+                return {}
+            return [wrapper.get_info() for wrapper in self.models.values()]
 
-    def get_loaded_models(self) -> List[str]:
+    def get_loaded_models(self) -> list[str]:
         """Get list of currently loaded model IDs."""
         with self._access_lock:
             return [model_id for model_id, wrapper in self.models.items()
@@ -466,7 +460,7 @@ class LazyModelManager:
 
 
 # Global lazy model manager instance
-_lazy_manager: Optional[LazyModelManager] = None
+_lazy_manager: LazyModelManager | None = None
 
 
 def get_lazy_manager() -> LazyModelManager:
@@ -481,7 +475,7 @@ def get_lazy_manager() -> LazyModelManager:
 
 def configure_lazy_loading(max_loaded_models: int = 3,
                            idle_unload_time: int = 1800,
-                           loading_strategy: Optional[ModelLoadingStrategy] = None):
+                           loading_strategy: ModelLoadingStrategy | None = None):
     """Configure global lazy loading settings."""
     manager = get_lazy_manager()
     manager.max_loaded_models = max_loaded_models
@@ -492,13 +486,13 @@ def configure_lazy_loading(max_loaded_models: int = 3,
 
 
 def register_lazy_model(model_id: str,
-                        backend_class: Type[LLMBackend],
+                        backend_class: type[LLMBackend],
                         config: LLMConfig) -> LazyModelWrapper:
     """Register a model for lazy loading."""
     return get_lazy_manager().register_model(model_id, backend_class, config)
 
 
-def get_lazy_model(model_id: str) -> Optional[LLMBackend]:
+def get_lazy_model(model_id: str) -> LLMBackend | None:
     """Get a lazy-loaded model."""
     return get_lazy_manager().get_model(model_id)
 
@@ -515,7 +509,7 @@ if __name__ == "__main__":
     config = LLMConfig(
         provider=LLMProvider.OPENAI,
         model_name="gpt-3.5-turbo",
-        api_key="test-key"
+        api_key="test-key",
     )
 
     wrapper = register_lazy_model("test-model", OpenAIBackend, config)

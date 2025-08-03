@@ -1,5 +1,4 @@
-"""
-AI System Optimization Configuration
+"""AI System Optimization Configuration
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,10 +22,11 @@ import gc
 import json
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from ..utils.logger import get_logger
 from .performance_monitor import performance_monitor
@@ -45,6 +45,7 @@ except ImportError as e:
 @dataclass
 class OptimizationRule:
     """Configuration for optimization rules."""
+
     name: str
     metric_name: str
     threshold_type: str  # "warning", "critical"
@@ -52,13 +53,14 @@ class OptimizationRule:
     action: str  # "log", "gc", "cache_clear", "custom"
     enabled: bool = True
     cooldown_seconds: int = 60
-    custom_handler: Optional[Callable] = None
-    last_triggered: Optional[datetime] = None
+    custom_handler: Callable | None = None
+    last_triggered: datetime | None = None
 
 
 @dataclass
 class CacheConfig:
     """Cache configuration."""
+
     max_size: int = 1000
     ttl_seconds: int = 300
     cleanup_interval: int = 60
@@ -69,6 +71,7 @@ class CacheConfig:
 @dataclass
 class PerformanceConfig:
     """Performance optimization configuration."""
+
     enable_monitoring: bool = True
     monitoring_interval: float = 1.0
     max_history_size: int = 1000
@@ -76,22 +79,23 @@ class PerformanceConfig:
     gc_threshold_mb: float = 100.0
     enable_cache_optimization: bool = True
     cache_config: CacheConfig = field(default_factory=CacheConfig)
-    optimization_rules: List[OptimizationRule] = field(default_factory=list)
+    optimization_rules: list[OptimizationRule] = field(default_factory=list)
 
 
 class OptimizationManager:
     """Manages AI system optimization."""
 
-    def __init__(self, config: Optional[PerformanceConfig] = None):
+    def __init__(self, config: PerformanceConfig | None = None):
         """Initialize the optimization manager.
 
         Args:
             config: Performance configuration settings.
                    Uses default configuration if not provided.
+
         """
         self.config = config or self._create_default_config()
-        self.active_optimizations: Dict[str, bool] = {}
-        self.optimization_stats: Dict[str, Dict[str, Any]] = {}
+        self.active_optimizations: dict[str, bool] = {}
+        self.optimization_stats: dict[str, dict[str, Any]] = {}
         self.lock = threading.Lock()
 
         # Cache management
@@ -99,14 +103,14 @@ class OptimizationManager:
             "hits": 0,
             "misses": 0,
             "evictions": 0,
-            "size": 0
+            "size": 0,
         }
 
         # GC optimization
         self.gc_stats = {
             "collections": 0,
             "objects_collected": 0,
-            "memory_freed_mb": 0.0
+            "memory_freed_mb": 0.0,
         }
 
         # Initialize optimization rules
@@ -123,7 +127,7 @@ class OptimizationManager:
                 threshold_type="warning",
                 threshold_value=500 * 1024 * 1024,  # 500MB
                 action="gc",
-                cooldown_seconds=30
+                cooldown_seconds=30,
             ),
             OptimizationRule(
                 name="critical_memory_usage",
@@ -131,7 +135,7 @@ class OptimizationManager:
                 threshold_type="critical",
                 threshold_value=1024 * 1024 * 1024,  # 1GB
                 action="gc",
-                cooldown_seconds=10
+                cooldown_seconds=10,
             ),
             OptimizationRule(
                 name="high_cpu_usage",
@@ -139,7 +143,7 @@ class OptimizationManager:
                 threshold_type="warning",
                 threshold_value=80.0,
                 action="log",
-                cooldown_seconds=60
+                cooldown_seconds=60,
             ),
             OptimizationRule(
                 name="slow_operations",
@@ -147,7 +151,7 @@ class OptimizationManager:
                 threshold_type="warning",
                 threshold_value=10.0,
                 action="log",
-                cooldown_seconds=120
+                cooldown_seconds=120,
             ),
             OptimizationRule(
                 name="cache_overflow",
@@ -155,8 +159,8 @@ class OptimizationManager:
                 threshold_type="warning",
                 threshold_value=800,  # 80% of default max_size
                 action="cache_clear",
-                cooldown_seconds=30
-            )
+                cooldown_seconds=30,
+            ),
         ]
 
         return PerformanceConfig(optimization_rules=rules)
@@ -166,7 +170,7 @@ class OptimizationManager:
         for rule in self.config.optimization_rules:
             if rule.enabled:
                 performance_monitor.add_optimization_rule(
-                    self._create_rule_handler(rule)
+                    self._create_rule_handler(rule),
                 )
 
     def _create_rule_handler(self, rule: OptimizationRule) -> Callable:
@@ -296,7 +300,7 @@ class OptimizationManager:
             self.optimization_stats[rule_name] = {
                 "executed": 0,
                 "error": 0,
-                "last_execution": None
+                "last_execution": None,
             }
 
         self.optimization_stats[rule_name][action] += 1
@@ -310,7 +314,7 @@ class OptimizationManager:
 
         if rule.enabled:
             performance_monitor.add_optimization_rule(
-                self._create_rule_handler(rule)
+                self._create_rule_handler(rule),
             )
 
         logger.info(f"Added custom optimization rule: {rule.name}")
@@ -335,19 +339,19 @@ class OptimizationManager:
 
         logger.warning(f"Optimization rule not found: {rule_name}")
 
-    def get_optimization_summary(self) -> Dict[str, Any]:
+    def get_optimization_summary(self) -> dict[str, Any]:
         """Get optimization summary."""
         return {
             "config": {
                 "monitoring_enabled": self.config.enable_monitoring,
                 "gc_optimization": self.config.enable_gc_optimization,
                 "cache_optimization": self.config.enable_cache_optimization,
-                "active_rules": len([r for r in self.config.optimization_rules if r.enabled])
+                "active_rules": len([r for r in self.config.optimization_rules if r.enabled]),
             },
             "gc_stats": self.gc_stats.copy(),
             "cache_stats": self.cache_stats.copy(),
             "rule_stats": self.optimization_stats.copy(),
-            "performance_summary": performance_monitor.get_metrics_summary(timedelta(hours=1))
+            "performance_summary": performance_monitor.get_metrics_summary(timedelta(hours=1)),
         }
 
     def optimize_memory_usage(self):
@@ -381,7 +385,7 @@ class OptimizationManager:
 
         logger.info("Cache performance optimization completed")
 
-    def benchmark_optimizations(self) -> Dict[str, float]:
+    def benchmark_optimizations(self) -> dict[str, float]:
         """Benchmark optimization effectiveness."""
         if not PSUTIL_AVAILABLE:
             logger.warning(
@@ -432,7 +436,7 @@ class OptimizationManager:
                 "objects_cleaned": objects_cleaned,
                 "memory_efficiency_mb_per_second": memory_efficiency,
                 "baseline_memory_mb": baseline_memory / 1024 / 1024,
-                "final_memory_mb": after_memory / 1024 / 1024
+                "final_memory_mb": after_memory / 1024 / 1024,
             }
         except Exception as e:
             logger.warning(f"Error during performance benchmark: {e}")
@@ -442,7 +446,7 @@ class OptimizationManager:
                 "objects_cleaned": 0,
                 "memory_efficiency_mb_per_second": 0.0,
                 "baseline_memory_mb": 0.0,
-                "final_memory_mb": 0.0
+                "final_memory_mb": 0.0,
             }
 
     def export_config(self, file_path: Path):
@@ -459,7 +463,7 @@ class OptimizationManager:
                 "ttl_seconds": self.config.cache_config.ttl_seconds,
                 "cleanup_interval": self.config.cache_config.cleanup_interval,
                 "enable_lru": self.config.cache_config.enable_lru,
-                "enable_stats": self.config.cache_config.enable_stats
+                "enable_stats": self.config.cache_config.enable_stats,
             },
             "optimization_rules": [
                 {
@@ -469,10 +473,10 @@ class OptimizationManager:
                     "threshold_value": rule.threshold_value,
                     "action": rule.action,
                     "enabled": rule.enabled,
-                    "cooldown_seconds": rule.cooldown_seconds
+                    "cooldown_seconds": rule.cooldown_seconds,
                 }
                 for rule in self.config.optimization_rules
-            ]
+            ],
         }
 
         with open(file_path, "w") as f:
@@ -483,7 +487,7 @@ class OptimizationManager:
     def import_config(self, file_path: Path):
         """Import optimization configuration."""
         try:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 config_data = json.load(f)
 
             # Update configuration
@@ -523,7 +527,7 @@ class OptimizationManager:
                     threshold_value=rule_data["threshold_value"],
                     action=rule_data["action"],
                     enabled=rule_data.get("enabled", True),
-                    cooldown_seconds=rule_data.get("cooldown_seconds", 60)
+                    cooldown_seconds=rule_data.get("cooldown_seconds", 60),
                 )
                 self.config.optimization_rules.append(rule)
 
@@ -535,7 +539,7 @@ class OptimizationManager:
         except Exception as e:
             logger.error(f"Failed to import optimization config: {e}")
 
-    def get_recommendations(self) -> List[str]:
+    def get_recommendations(self) -> list[str]:
         """Get optimization recommendations."""
         recommendations = []
         summary = self.get_optimization_summary()
@@ -581,11 +585,11 @@ def optimize_ai_performance():
     optimization_manager.optimize_cache_performance()
 
 
-def get_performance_recommendations() -> List[str]:
+def get_performance_recommendations() -> list[str]:
     """Get performance optimization recommendations."""
     return optimization_manager.get_recommendations()
 
 
-def benchmark_ai_optimizations() -> Dict[str, float]:
+def benchmark_ai_optimizations() -> dict[str, float]:
     """Benchmark AI optimization effectiveness."""
     return optimization_manager.benchmark_optimizations()

@@ -1,5 +1,4 @@
-"""
-UI setup functions for Intellicrack.
+"""UI setup functions for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -20,7 +19,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-from typing import Any, Optional
+from typing import Any
 
 # Optional imports with graceful fallbacks
 from ..core.common_imports import HAS_PYQT
@@ -47,6 +46,7 @@ else:
     # Define fallback classes when PyQt6 is not available
     class MockQtClass:
         """Mock Qt class for when PyQt6 is not available."""
+
         def __init__(self, *args, **kwargs):
             pass
         def __getattr__(self, name):
@@ -73,7 +73,7 @@ except ImportError as e:
     HAS_MATPLOTLIB = False
 
 
-def setup_dataset_tab(parent: Any) -> Optional[Any]:
+def setup_dataset_tab(parent: Any) -> Any | None:
     """Set up the dataset management tab."""
     if not HAS_PYQT:
         logger.warning("PyQt6 not available, cannot create dataset tab")
@@ -122,7 +122,7 @@ def setup_dataset_tab(parent: Any) -> Optional[Any]:
         ("Training:", "0"),
         ("Validation:", "0"),
         ("Test:", "0"),
-        ("Features:", "0")
+        ("Features:", "0"),
     ]
 
     for label_text, default_value in stats_labels:
@@ -181,7 +181,7 @@ def setup_dataset_tab(parent: Any) -> Optional[Any]:
     return tab
 
 
-def setup_memory_monitor(parent: Any) -> Optional[Any]:
+def setup_memory_monitor(parent: Any) -> Any | None:
     """Set up memory monitoring widget."""
     if not HAS_PYQT:
         logger.warning("PyQt6 not available, cannot create memory monitor")
@@ -278,7 +278,7 @@ def setup_memory_monitor(parent: Any) -> Optional[Any]:
     return widget
 
 
-def setup_training_tab(parent: Any) -> Optional[Any]:
+def setup_training_tab(parent: Any) -> Any | None:
     """Set up the model training tab."""
     if not HAS_PYQT:
         logger.warning("PyQt6 not available, cannot create training tab")
@@ -298,7 +298,7 @@ def setup_training_tab(parent: Any) -> Optional[Any]:
     model_type_combo.setObjectName("model_type_combo")
     model_type_combo.addItems([
         "Random Forest", "XGBoost", "Neural Network",
-        "SVM", "Logistic Regression", "Ensemble"
+        "SVM", "Logistic Regression", "Ensemble",
     ])
 
     model_type_layout.addWidget(model_type_label)
@@ -404,7 +404,7 @@ def setup_training_tab(parent: Any) -> Optional[Any]:
         ("Val Loss:", "0.0"),
         ("Val Accuracy:", "0.0%"),
         ("Epoch:", "0/0"),
-        ("Time:", "00:00:00")
+        ("Time:", "00:00:00"),
     ]
 
     for label_text, default_value in metrics_labels:
@@ -461,5 +461,5 @@ def setup_training_tab(parent: Any) -> Optional[Any]:
 __all__ = [
     "setup_dataset_tab",
     "setup_memory_monitor",
-    "setup_training_tab"
+    "setup_training_tab",
 ]

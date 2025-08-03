@@ -1,5 +1,4 @@
-"""
-LLM Configuration Manager for Intellicrack
+"""LLM Configuration Manager for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,7 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ..utils.logger import get_logger
 from .llm_backends import LLMConfig, LLMProvider, get_llm_manager
@@ -33,12 +32,13 @@ logger = get_logger(__name__)
 class LLMConfigManager:
     """Manages saving, loading, and organizing LLM configurations."""
 
-    def __init__(self, config_dir: Optional[str] = None):
+    def __init__(self, config_dir: str | None = None):
         """Initialize the LLM configuration manager.
 
         Args:
             config_dir: Directory to store configuration files.
                        Defaults to ~/.intellicrack/llm_configs
+
         """
         if config_dir is None:
             config_dir = Path.home() / ".intellicrack" / "llm_configs"
@@ -69,7 +69,7 @@ class LLMConfigManager:
             return default
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load {file_path}: {e}")
@@ -84,7 +84,7 @@ class LLMConfigManager:
         except Exception as e:
             logger.error(f"Failed to save {file_path}: {e}")
 
-    def _get_default_profiles(self) -> Dict[str, Dict[str, Any]]:
+    def _get_default_profiles(self) -> dict[str, dict[str, Any]]:
         """Get default model profiles for different use cases."""
         return {
             "code_generation": {
@@ -95,12 +95,12 @@ class LLMConfigManager:
                     "max_tokens": 4096,
                     "top_p": 0.95,
                     "frequency_penalty": 0.0,
-                    "presence_penalty": 0.0
+                    "presence_penalty": 0.0,
                 },
                 "recommended_models": [
                     "gpt-4", "claude-3-5-sonnet-20241022", "codellama",
-                    "deepseek-coder", "starcoder"
-                ]
+                    "deepseek-coder", "starcoder",
+                ],
             },
             "analysis": {
                 "name": "Binary Analysis",
@@ -110,11 +110,11 @@ class LLMConfigManager:
                     "max_tokens": 2048,
                     "top_p": 0.9,
                     "frequency_penalty": 0.0,
-                    "presence_penalty": 0.0
+                    "presence_penalty": 0.0,
                 },
                 "recommended_models": [
-                    "gpt-4", "claude-3-opus-20240229", "llama2-70b"
-                ]
+                    "gpt-4", "claude-3-opus-20240229", "llama2-70b",
+                ],
             },
             "creative": {
                 "name": "Creative Tasks",
@@ -124,11 +124,11 @@ class LLMConfigManager:
                     "max_tokens": 2048,
                     "top_p": 0.95,
                     "frequency_penalty": 0.3,
-                    "presence_penalty": 0.3
+                    "presence_penalty": 0.3,
                 },
                 "recommended_models": [
-                    "gpt-4", "claude-3-5-sonnet-20241022", "mixtral-8x7b"
-                ]
+                    "gpt-4", "claude-3-5-sonnet-20241022", "mixtral-8x7b",
+                ],
             },
             "fast_inference": {
                 "name": "Fast Inference",
@@ -138,21 +138,22 @@ class LLMConfigManager:
                     "max_tokens": 1024,
                     "top_p": 0.9,
                     "frequency_penalty": 0.0,
-                    "presence_penalty": 0.0
+                    "presence_penalty": 0.0,
                 },
                 "recommended_models": [
-                    "gpt-3.5-turbo", "claude-3-haiku-20240307", "mistral-7b"
-                ]
-            }
+                    "gpt-3.5-turbo", "claude-3-haiku-20240307", "mistral-7b",
+                ],
+            },
         }
 
-    def save_model_config(self, model_id: str, config: LLMConfig, metadata: Optional[Dict] = None):
+    def save_model_config(self, model_id: str, config: LLMConfig, metadata: dict | None = None):
         """Save a model configuration.
 
         Args:
             model_id: Unique identifier for the model
             config: LLMConfig object
             metadata: Optional metadata (description, tags, etc.)
+
         """
         config_data = {
             "provider": config.provider.value,
@@ -166,13 +167,13 @@ class LLMConfigManager:
             "tools_enabled": config.tools_enabled,
             "custom_params": config.custom_params or {},
             "created_at": datetime.now().isoformat(),
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
 
         self.configs[model_id] = config_data
         self._save_json_file(self.config_file, self.configs)
 
-    def load_model_config(self, model_id: str) -> Optional[LLMConfig]:
+    def load_model_config(self, model_id: str) -> LLMConfig | None:
         """Load a model configuration by ID.
 
         Args:
@@ -180,6 +181,7 @@ class LLMConfigManager:
 
         Returns:
             LLMConfig object or None if not found
+
         """
         if model_id not in self.configs:
             return None
@@ -199,7 +201,7 @@ class LLMConfigManager:
                 temperature=config_data.get("temperature", 0.7),
                 max_tokens=config_data.get("max_tokens", 2048),
                 tools_enabled=config_data.get("tools_enabled", True),
-                custom_params=config_data.get("custom_params", {})
+                custom_params=config_data.get("custom_params", {}),
             )
 
             return config
@@ -216,6 +218,7 @@ class LLMConfigManager:
 
         Returns:
             True if deleted, False otherwise
+
         """
         if model_id in self.configs:
             del self.configs[model_id]
@@ -229,11 +232,12 @@ class LLMConfigManager:
             return True
         return False
 
-    def list_model_configs(self) -> Dict[str, Dict[str, Any]]:
+    def list_model_configs(self) -> dict[str, dict[str, Any]]:
         """List all saved model configurations.
 
         Returns:
             Dictionary of model_id -> config data
+
         """
         return self.configs.copy()
 
@@ -242,6 +246,7 @@ class LLMConfigManager:
 
         Args:
             llm_manager: LLMManager instance (uses global if not provided)
+
         """
         if llm_manager is None:
             llm_manager = get_llm_manager()
@@ -270,17 +275,18 @@ class LLMConfigManager:
         logger.info(f"Auto-load complete: {loaded} loaded, {failed} failed")
         return loaded, failed
 
-    def save_profile(self, profile_id: str, profile_data: Dict[str, Any]):
+    def save_profile(self, profile_id: str, profile_data: dict[str, Any]):
         """Save a model profile.
 
         Args:
             profile_id: Unique profile identifier
             profile_data: Profile configuration
+
         """
         self.profiles[profile_id] = profile_data
         self._save_json_file(self.profiles_file, self.profiles)
 
-    def get_profile(self, profile_id: str) -> Optional[Dict[str, Any]]:
+    def get_profile(self, profile_id: str) -> dict[str, Any] | None:
         """Get a model profile by ID.
 
         Args:
@@ -288,14 +294,16 @@ class LLMConfigManager:
 
         Returns:
             Profile data or None
+
         """
         return self.profiles.get(profile_id)
 
-    def list_profiles(self) -> Dict[str, Dict[str, Any]]:
+    def list_profiles(self) -> dict[str, dict[str, Any]]:
         """List all available profiles.
 
         Returns:
             Dictionary of profile_id -> profile data
+
         """
         return self.profiles.copy()
 
@@ -308,6 +316,7 @@ class LLMConfigManager:
 
         Returns:
             Modified LLMConfig
+
         """
         profile = self.get_profile(profile_id)
         if not profile:
@@ -332,17 +341,18 @@ class LLMConfigManager:
 
         return config
 
-    def save_metrics(self, model_id: str, metrics: Dict[str, Any]):
+    def save_metrics(self, model_id: str, metrics: dict[str, Any]):
         """Save performance metrics for a model.
 
         Args:
             model_id: Model identifier
             metrics: Performance metrics (speed, memory, etc.)
+
         """
         if model_id not in self.metrics:
             self.metrics[model_id] = {
                 "history": [],
-                "aggregate": {}
+                "aggregate": {},
             }
 
         # Add timestamp
@@ -382,10 +392,10 @@ class LLMConfigManager:
             "avg_generation_time": total_time / count if count > 0 else 0,
             "avg_memory_mb": total_memory / memory_count if memory_count > 0 else 0,
             "tokens_per_second": total_tokens / total_time if total_time > 0 else 0,
-            "last_used": history[-1]["timestamp"]
+            "last_used": history[-1]["timestamp"],
         }
 
-    def get_metrics(self, model_id: str) -> Optional[Dict[str, Any]]:
+    def get_metrics(self, model_id: str) -> dict[str, Any] | None:
         """Get metrics for a model.
 
         Args:
@@ -393,6 +403,7 @@ class LLMConfigManager:
 
         Returns:
             Metrics data or None
+
         """
         return self.metrics.get(model_id)
 
@@ -402,13 +413,14 @@ class LLMConfigManager:
         Args:
             export_path: Path to export file
             include_api_keys: Whether to include API keys
+
         """
         export_data = {
             "version": "1.0",
             "exported_at": datetime.now().isoformat(),
             "configs": {},
             "profiles": self.profiles,
-            "metrics": self.metrics
+            "metrics": self.metrics,
         }
 
         # Copy configs, optionally removing API keys
@@ -431,9 +443,10 @@ class LLMConfigManager:
         Args:
             import_path: Path to import file
             merge: Whether to merge with existing configs
+
         """
         try:
-            with open(import_path, "r", encoding="utf-8") as f:
+            with open(import_path, encoding="utf-8") as f:
                 import_data = json.load(f)
 
             if not merge:

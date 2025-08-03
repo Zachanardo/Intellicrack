@@ -1,5 +1,4 @@
-"""
-Text Editor Dialog for Intellicrack.
+"""Text Editor Dialog for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -62,7 +61,6 @@ try:
     )
 except ImportError as e:
     logger.error("Import error in text_editor_dialog: %s", e)
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +88,7 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
             "del", "elif", "else", "except", "exec", "finally", "for",
             "from", "global", "if", "import", "in", "is", "lambda",
             "not", "or", "pass", "print", "raise", "return", "try",
-            "while", "with", "yield", "True", "False", "None"
+            "while", "with", "yield", "True", "False", "None",
         ]
 
         for _keyword in keywords:
@@ -329,7 +327,6 @@ class TextEditorDialog(QDialog):
 
         # Connect action signals (already connected in setup_actions)
         # File watcher is already connected in __init__
-        pass
 
     def setup_actions(self):
         """Set up keyboard shortcuts and actions."""
@@ -511,7 +508,7 @@ class TextEditorDialog(QDialog):
             self,
             "Open File",
             "",
-            "Text Files (*.txt *.py *.js *.json *.xml *.html *.css);;All Files (*.*)"
+            "Text Files (*.txt *.py *.js *.json *.xml *.html *.css);;All Files (*.*)",
         )
 
         if file_path:
@@ -520,7 +517,7 @@ class TextEditorDialog(QDialog):
     def load_file(self, file_path: str):
         """Load a file into the editor."""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             self.text_edit.setPlainText(content)
@@ -544,7 +541,7 @@ class TextEditorDialog(QDialog):
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in text_editor_dialog: %s", e)
-            QMessageBox.critical(self, "Error", f"Failed to load file: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to load file: {e!s}")
 
     def save_file(self):
         """Save the current file."""
@@ -569,7 +566,7 @@ class TextEditorDialog(QDialog):
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in text_editor_dialog: %s", e)
-            QMessageBox.critical(self, "Error", f"Failed to save file: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to save file: {e!s}")
 
     def save_file_as(self):
         """Save the file with a new name."""
@@ -577,7 +574,7 @@ class TextEditorDialog(QDialog):
             self,
             "Save File",
             self.file_path or "untitled.txt",
-            "Text Files (*.txt *.py *.js *.json *.xml *.html *.css);;All Files (*.*)"
+            "Text Files (*.txt *.py *.js *.json *.xml *.html *.css);;All Files (*.*)",
         )
 
         if file_path:
@@ -605,7 +602,7 @@ class TextEditorDialog(QDialog):
             "Markdown (.md)",
             "Plain Text (.txt)",
             "CSV (.csv)",
-            "JSON (.json)"
+            "JSON (.json)",
         ])
         layout.addWidget(format_combo)
 
@@ -639,7 +636,7 @@ class TextEditorDialog(QDialog):
             format_combo.currentText(),
             include_highlighting.isChecked(),
             include_line_numbers.isChecked(),
-            export_dialog
+            export_dialog,
         ))
         cancel_btn.clicked.connect(export_dialog.reject)
 
@@ -655,7 +652,7 @@ class TextEditorDialog(QDialog):
             "Markdown (.md)": ("md", "Markdown Files (*.md)"),
             "Plain Text (.txt)": ("txt", "Text Files (*.txt)"),
             "CSV (.csv)": ("csv", "CSV Files (*.csv)"),
-            "JSON (.json)": ("json", "JSON Files (*.json)")
+            "JSON (.json)": ("json", "JSON Files (*.json)"),
         }
 
         ext, file_filter = format_map.get(format_type, ("txt", "Text Files (*.txt)"))
@@ -666,7 +663,7 @@ class TextEditorDialog(QDialog):
             self,
             f"Export as {format_type}",
             default_name,
-            file_filter
+            file_filter,
         )
 
         if not file_path:
@@ -703,7 +700,7 @@ class TextEditorDialog(QDialog):
 
         except Exception as e:
             logger.error(f"Export failed: {e}")
-            QMessageBox.critical(self, "Export Failed", f"Failed to export file:\n{str(e)}")
+            QMessageBox.critical(self, "Export Failed", f"Failed to export file:\n{e!s}")
 
     def _export_to_html(self, file_path, content, include_highlighting, include_line_numbers):
         """Export content to HTML format."""
@@ -734,15 +731,14 @@ class TextEditorDialog(QDialog):
         if include_highlighting and self.file_path and self.file_path.endswith(".py"):
             # Simple Python syntax highlighting
             formatted_content = self._apply_python_highlighting(content, include_line_numbers)
+        elif include_line_numbers:
+            lines = content.split("\n")
+            formatted_content = "\n".join(
+                f'<span class="line-number">{i+1:4d}:</span> {self._escape_html(line)}'
+                for i, line in enumerate(lines)
+            )
         else:
-            if include_line_numbers:
-                lines = content.split("\n")
-                formatted_content = "\n".join(
-                    f'<span class="line-number">{i+1:4d}:</span> {self._escape_html(line)}'
-                    for i, line in enumerate(lines)
-                )
-            else:
-                formatted_content = self._escape_html(content)
+            formatted_content = self._escape_html(content)
 
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(html_content.format(title=title, content=formatted_content))
@@ -810,7 +806,7 @@ class TextEditorDialog(QDialog):
             lang_map = {
                 ".py": "python", ".js": "javascript", ".java": "java",
                 ".cpp": "cpp", ".c": "c", ".cs": "csharp",
-                ".html": "html", ".css": "css", ".json": "json"
+                ".html": "html", ".css": "css", ".json": "json",
             }
             lang = lang_map.get(ext, "")
 
@@ -841,7 +837,7 @@ class TextEditorDialog(QDialog):
             "lines": content.split("\n"),
             "line_count": len(content.split("\n")),
             "character_count": len(content),
-            "export_date": QDateTime.currentDateTime().toString(Qt.DateFormat.ISODate)
+            "export_date": QDateTime.currentDateTime().toString(Qt.DateFormat.ISODate),
         }
 
         with open(file_path, "w", encoding="utf-8") as f:
@@ -906,7 +902,7 @@ class TextEditorDialog(QDialog):
                 self,
                 "Reload File",
                 "The file has been modified. Reload and lose changes?",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
             if reply != QMessageBox.Yes:
                 return
@@ -920,7 +916,7 @@ class TextEditorDialog(QDialog):
                 self,
                 "File Changed",
                 "The file has been changed externally. Reload?",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
             if reply == QMessageBox.Yes:
                 self.load_file(file_path)
@@ -982,16 +978,16 @@ class TextEditorDialog(QDialog):
             self,
             "Unsaved Changes",
             "The document has been modified. Save changes?",
-            QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
+            QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
         )
 
         if reply == QMessageBox.Save:
             self.save_file()
             return not self.is_modified  # Return False if save failed
-        elif reply == QMessageBox.Discard:
+        if reply == QMessageBox.Discard:
             return True
-        else:  # Cancel
-            return False
+        # Cancel
+        return False
 
     def close_with_confirmation(self):
         """Close the dialog with save confirmation."""
@@ -1007,4 +1003,4 @@ class TextEditorDialog(QDialog):
 
 
 # Export for external use
-__all__ = ["TextEditorDialog", "PythonSyntaxHighlighter", "FindReplaceDialog"]
+__all__ = ["FindReplaceDialog", "PythonSyntaxHighlighter", "TextEditorDialog"]

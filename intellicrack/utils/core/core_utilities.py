@@ -1,5 +1,4 @@
-"""
-Core utility functions for Intellicrack.
+"""Core utility functions for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -24,7 +23,8 @@ import json
 import logging
 import sys
 import traceback
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -32,15 +32,15 @@ logger = logging.getLogger(__name__)
 TOOL_REGISTRY = {}
 
 
-def main(args: Optional[List[str]] = None):
-    """
-    Main entry point for Intellicrack.
+def main(args: list[str] | None = None):
+    """Main entry point for Intellicrack.
 
     Args:
         args: Command line arguments
 
     Returns:
         Exit code
+
     """
     if args is None:
         args = sys.argv[1:]
@@ -48,44 +48,44 @@ def main(args: Optional[List[str]] = None):
     # Parse command line arguments
     import argparse
     parser = argparse.ArgumentParser(
-        description="Intellicrack - Advanced Binary Analysis and Security Research Tool"
+        description="Intellicrack - Advanced Binary Analysis and Security Research Tool",
     )
 
     parser.add_argument(
         "binary",
         nargs="?",
-        help="Binary file to analyze"
+        help="Binary file to analyze",
     )
 
     parser.add_argument(
         "--gui",
         action="store_true",
         default=True,
-        help="Launch GUI mode (default)"
+        help="Launch GUI mode (default)",
     )
 
     parser.add_argument(
         "--cli",
         action="store_true",
-        help="Launch CLI mode"
+        help="Launch CLI mode",
     )
 
     parser.add_argument(
         "--analyze",
         action="store_true",
-        help="Run analysis on binary"
+        help="Run analysis on binary",
     )
 
     parser.add_argument(
         "--crack",
         action="store_true",
-        help="Run autonomous cracking mode"
+        help="Run autonomous cracking mode",
     )
 
     parser.add_argument(
         "--output",
         "-o",
-        help="Output directory for results"
+        help="Output directory for results",
     )
 
     parser.add_argument(
@@ -93,7 +93,7 @@ def main(args: Optional[List[str]] = None):
         "-v",
         action="count",
         default=0,
-        help="Increase verbosity"
+        help="Increase verbosity",
     )
 
     parsed_args = parser.parse_args(args)
@@ -110,9 +110,8 @@ def main(args: Optional[List[str]] = None):
         if parsed_args.cli or (parsed_args.binary and not parsed_args.gui):
             # CLI mode
             return run_cli_mode(parsed_args)
-        else:
-            # GUI mode (default)
-            return run_gui_mode(parsed_args)
+        # GUI mode (default)
+        return run_gui_mode(parsed_args)
 
     except KeyboardInterrupt:
         logger.info("Interrupted by user")
@@ -124,14 +123,14 @@ def main(args: Optional[List[str]] = None):
 
 
 def run_gui_mode(args) -> int:
-    """
-    Run Intellicrack in GUI mode.
+    """Run Intellicrack in GUI mode.
 
     Args:
         args: Parsed command line arguments
 
     Returns:
         Exit code
+
     """
     _ = args
     try:
@@ -158,14 +157,14 @@ def run_gui_mode(args) -> int:
 
 
 def run_cli_mode(args) -> int:
-    """
-    Run Intellicrack in CLI mode.
+    """Run Intellicrack in CLI mode.
 
     Args:
         args: Parsed command line arguments
 
     Returns:
         Exit code
+
     """
     if not args.binary:
         logger.error("No binary specified for CLI mode")
@@ -181,7 +180,7 @@ def run_cli_mode(args) -> int:
             logger.info("Analyzing %s...", args.binary)
             results["analysis"] = run_comprehensive_analysis(
                 args.binary,
-                output_dir=args.output
+                output_dir=args.output,
             )
 
             # Print summary
@@ -215,9 +214,8 @@ def run_cli_mode(args) -> int:
         return 1
 
 
-def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Dispatch an AI-requested tool to the corresponding function.
+def dispatch_tool(app_instance, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
+    """Dispatch an AI-requested tool to the corresponding function.
 
     Args:
         app_instance: Application instance (for UI updates)
@@ -226,13 +224,14 @@ def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> D
 
     Returns:
         Dict containing tool execution results
+
     """
     logger.info("Dispatching tool: %s", tool_name)
 
     # Update UI if available
     if app_instance and hasattr(app_instance, "update_output"):
         app_instance.update_output.emit(
-            f"[Tool Dispatch] Attempting to dispatch tool: {tool_name}"
+            f"[Tool Dispatch] Attempting to dispatch tool: {tool_name}",
         )
 
     # Check if tool is registered
@@ -248,12 +247,12 @@ def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> D
             "status": "error",
             "error": error_msg,
             "available_tools": available_tools[:10],  # First 10 tools
-            "suggestions": suggestions
+            "suggestions": suggestions,
         }
 
         if app_instance and hasattr(app_instance, "update_output"):
             app_instance.update_output.emit(
-                f"[Tool Dispatch] ERROR: {error_msg}"
+                f"[Tool Dispatch] ERROR: {error_msg}",
             )
 
         return result
@@ -269,14 +268,14 @@ def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> D
         if app_instance and hasattr(app_instance, "update_output"):
             status = result.get("status", "unknown")
             app_instance.update_output.emit(
-                f"[Tool Dispatch] Tool '{tool_name}' executed. Status: {status}"
+                f"[Tool Dispatch] Tool '{tool_name}' executed. Status: {status}",
             )
 
         return result
 
     except (OSError, ValueError, RuntimeError) as e:
         error_trace = traceback.format_exc()
-        error_msg = f"Error executing tool '{tool_name}': {str(e)}"
+        error_msg = f"Error executing tool '{tool_name}': {e!s}"
 
         logger.error(error_msg)
         logger.error(error_trace)
@@ -292,13 +291,12 @@ def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> D
             "error": error_msg,
             "traceback": error_trace,
             "tool": tool_name,
-            "parameters": parameters
+            "parameters": parameters,
         }
 
 
 def register_tool(name: str, func: Callable, category: str = "general") -> bool:
-    """
-    Register a tool in the tool registry.
+    """Register a tool in the tool registry.
 
     Args:
         name: Name of the tool
@@ -307,6 +305,7 @@ def register_tool(name: str, func: Callable, category: str = "general") -> bool:
 
     Returns:
         True if registered successfully
+
     """
     try:
         TOOL_REGISTRY[name] = func
@@ -363,7 +362,7 @@ def register_default_tools():
             "tool_get_proposed_patches": wrapper_get_proposed_patches,
             "tool_apply_confirmed_patch": wrapper_apply_confirmed_patch,
             "tool_generate_launcher_script": wrapper_generate_launcher_script,
-            "tool_deep_runtime_monitoring": wrapper_deep_runtime_monitoring
+            "tool_deep_runtime_monitoring": wrapper_deep_runtime_monitoring,
         }
 
         for name, func in tools.items():
@@ -377,15 +376,15 @@ def register_default_tools():
         return False
 
 
-def on_message(message: Dict[str, Any], data: Any = None) -> None:
-    """
-    Handle messages from Frida scripts.
+def on_message(message: dict[str, Any], data: Any = None) -> None:
+    """Handle messages from Frida scripts.
 
     This is a callback function for Frida message handling.
 
     Args:
         message: Message from Frida script
         data: Additional data (usually binary)
+
     """
     if message["type"] == "send":
         payload = message.get("payload", {})
@@ -414,15 +413,15 @@ def on_message(message: Dict[str, Any], data: Any = None) -> None:
         logger.error(f"Stack: {message.get('stack', 'No stack trace')}")
 
 
-def register(plugin_info: Dict[str, Any]) -> bool:
-    """
-    Register a plugin with the system.
+def register(plugin_info: dict[str, Any]) -> bool:
+    """Register a plugin with the system.
 
     Args:
         plugin_info: Plugin information dictionary
 
     Returns:
         True if registered successfully
+
     """
     required_fields = ["name", "version", "entry_point"]
 
@@ -451,9 +450,8 @@ def register(plugin_info: Dict[str, Any]) -> bool:
         return False
 
 
-def retrieve_few_shot_examples(task_type: str, count: int = 5) -> List[Dict[str, Any]]:
-    """
-    Retrieve few-shot examples for AI model training/prompting.
+def retrieve_few_shot_examples(task_type: str, count: int = 5) -> list[dict[str, Any]]:
+    """Retrieve few-shot examples for AI model training/prompting.
 
     Args:
         task_type: Type of task (license_analysis, vulnerability_detection, etc.)
@@ -461,44 +459,45 @@ def retrieve_few_shot_examples(task_type: str, count: int = 5) -> List[Dict[str,
 
     Returns:
         List of example dictionaries
+
     """
     examples = {
         "license_analysis": [
             {
                 "input": "Binary contains strings: 'CheckLicense', 'ValidateLicense', 'IsLicensed'",
                 "analysis": "License validation functions detected. Look for conditional jumps after these calls.",
-                "suggestion": "Patch conditional jumps to always take the 'licensed' branch"
+                "suggestion": "Patch conditional jumps to always take the 'licensed' branch",
             },
             {
                 "input": "Found pattern: 'call CheckLicense; test eax, eax; jz invalid_license'",
                 "analysis": "Classic license check pattern with zero flag test",
-                "suggestion": "Change 'jz' (74) to 'jmp' (EB) to bypass check"
-            }
+                "suggestion": "Change 'jz' (74) to 'jmp' (EB) to bypass check",
+            },
         ],
         "vulnerability_detection": [
             {
                 "input": "Function imports: strcpy, strcat, sprintf",
                 "analysis": "Unsafe string functions detected - potential buffer overflow",
-                "suggestion": "Look for bounds checking before these calls"
+                "suggestion": "Look for bounds checking before these calls",
             },
             {
                 "input": "No DEP/NX bit set in PE header",
                 "analysis": "Stack is executable - easier exploitation",
-                "suggestion": "Check for stack-based buffer overflows"
-            }
+                "suggestion": "Check for stack-based buffer overflows",
+            },
         ],
         "protection_identification": [
             {
                 "input": "High entropy section .text (7.8/8.0)",
                 "analysis": "Likely packed or encrypted code section",
-                "suggestion": "Look for unpacking stub, check entry point"
+                "suggestion": "Look for unpacking stub, check entry point",
             },
             {
                 "input": "Imports: IsDebuggerPresent, CheckRemoteDebuggerPresent",
                 "analysis": "Anti-debugging protection detected",
-                "suggestion": "Patch these API calls to always return false"
-            }
-        ]
+                "suggestion": "Patch these API calls to always return false",
+            },
+        ],
     }
 
     # Get examples for the task type
@@ -508,9 +507,8 @@ def retrieve_few_shot_examples(task_type: str, count: int = 5) -> List[Dict[str,
     return task_examples[:count]
 
 
-def deep_runtime_monitoring(target_process: str, monitoring_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """
-    Perform deep runtime monitoring of a target process.
+def deep_runtime_monitoring(target_process: str, monitoring_config: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Perform deep runtime monitoring of a target process.
 
     This function wraps the implementation in dynamic_analyzer.py
 
@@ -520,6 +518,7 @@ def deep_runtime_monitoring(target_process: str, monitoring_config: Optional[Dic
 
     Returns:
         Dict containing monitoring results
+
     """
     try:
         # Use the standalone deep_runtime_monitoring function from dynamic_analyzer
@@ -538,7 +537,7 @@ def deep_runtime_monitoring(target_process: str, monitoring_config: Optional[Dic
             "target_process": target_process,
             "timeout": timeout,
             "logs": results,
-            "config": monitoring_config
+            "config": monitoring_config,
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -546,7 +545,7 @@ def deep_runtime_monitoring(target_process: str, monitoring_config: Optional[Dic
         return {
             "status": "error",
             "error": str(e),
-            "traceback": traceback.format_exc()
+            "traceback": traceback.format_exc(),
         }
 
 
@@ -559,15 +558,15 @@ except (OSError, ValueError, RuntimeError) as e:
 
 # Export all functions
 __all__ = [
-    "main",
+    "TOOL_REGISTRY",
+    "deep_runtime_monitoring",
     "dispatch_tool",
-    "register_tool",
-    "register_default_tools",
+    "main",
     "on_message",
     "register",
+    "register_default_tools",
+    "register_tool",
     "retrieve_few_shot_examples",
-    "deep_runtime_monitoring",
-    "run_gui_mode",
     "run_cli_mode",
-    "TOOL_REGISTRY"
+    "run_gui_mode",
 ]

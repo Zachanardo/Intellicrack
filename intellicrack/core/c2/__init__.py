@@ -1,5 +1,4 @@
-"""
-Command and Control (C2) Infrastructure for Intellicrack
+"""Command and Control (C2) Infrastructure for Intellicrack
 
 This module provides advanced C2 capabilities including:
 - Multi-protocol communication (HTTP/S, DNS, TCP, custom)
@@ -21,13 +20,13 @@ from .encryption_manager import EncryptionManager
 from .session_manager import SessionManager
 
 __all__ = [
+    "BeaconManager",
+    "C2Client",
     "C2Manager",
     "C2Server",
-    "C2Client",
-    "BeaconManager",
-    "HttpsProtocol",
     "DnsProtocol",
-    "TcpProtocol",
     "EncryptionManager",
-    "SessionManager"
+    "HttpsProtocol",
+    "SessionManager",
+    "TcpProtocol",
 ]

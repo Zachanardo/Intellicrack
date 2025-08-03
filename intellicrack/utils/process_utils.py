@@ -1,5 +1,4 @@
-"""
-Legacy process utilities - consolidated functions moved to utils.system.process_utils
+"""Legacy process utilities - consolidated functions moved to utils.system.process_utils
 
 Copyright (C) 2025 Zachary Flint
 
@@ -28,7 +27,7 @@ import signal
 import subprocess
 import sys
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from .system.process_utils import (
     get_target_process_pid,
@@ -48,14 +47,14 @@ except ImportError as e:
 # get_target_process_pid is imported from utils.system.process_utils above
 
 
-def _get_process_pid_windows(process_name: str) -> Optional[int]:
+def _get_process_pid_windows(process_name: str) -> int | None:
     """Get process PID on Windows using tasklist."""
     try:
         result = subprocess.run(
             ["tasklist", "/fi", f"imagename eq {process_name}", "/fo", "csv"],
-            capture_output=True,
+            check=False, capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
         )
 
         if result.returncode == 0:
@@ -76,14 +75,14 @@ def _get_process_pid_windows(process_name: str) -> Optional[int]:
     return None
 
 
-def _get_process_pid_unix(process_name: str) -> Optional[int]:
+def _get_process_pid_unix(process_name: str) -> int | None:
     """Get process PID on Unix systems using ps."""
     try:
         result = subprocess.run(
             ["ps", "aux"],
-            capture_output=True,
+            check=False, capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
         )
 
         if result.returncode == 0:
@@ -99,12 +98,12 @@ def _get_process_pid_unix(process_name: str) -> Optional[int]:
     return None
 
 
-def get_process_list() -> List[Dict[str, Any]]:
-    """
-    Get list of running processes.
+def get_process_list() -> list[dict[str, Any]]:
+    """Get list of running processes.
 
     Returns:
         List of process dictionaries with pid, name, and other info
+
     """
     processes = []
 
@@ -116,12 +115,11 @@ def get_process_list() -> List[Dict[str, Any]]:
                 except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                     logger.error("Error in process_utils: %s", e)
                     continue
+        # Fallback implementation
+        elif platform.system() == "Windows":
+            processes = _get_process_list_windows()
         else:
-            # Fallback implementation
-            if platform.system() == "Windows":
-                processes = _get_process_list_windows()
-            else:
-                processes = _get_process_list_unix()
+            processes = _get_process_list_unix()
 
     except Exception as e:
         logger.debug(f"Failed to get process list: {e}")
@@ -129,16 +127,16 @@ def get_process_list() -> List[Dict[str, Any]]:
     return processes
 
 
-def _get_process_list_windows() -> List[Dict[str, Any]]:
+def _get_process_list_windows() -> list[dict[str, Any]]:
     """Get process list on Windows."""
     processes = []
 
     try:
         result = subprocess.run(
             ["tasklist", "/fo", "csv"],
-            capture_output=True,
+            check=False, capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         if result.returncode == 0:
@@ -151,7 +149,7 @@ def _get_process_list_windows() -> List[Dict[str, Any]]:
                             "name": parts[0],
                             "pid": int(parts[1]),
                             "cpu_percent": 0.0,  # Not available in tasklist
-                            "memory_percent": 0.0  # Not available in tasklist
+                            "memory_percent": 0.0,  # Not available in tasklist
                         })
 
     except Exception as e:
@@ -160,16 +158,16 @@ def _get_process_list_windows() -> List[Dict[str, Any]]:
     return processes
 
 
-def _get_process_list_unix() -> List[Dict[str, Any]]:
+def _get_process_list_unix() -> list[dict[str, Any]]:
     """Get process list on Unix systems."""
     processes = []
 
     try:
         result = subprocess.run(
             ["ps", "aux", "--no-headers"],
-            capture_output=True,
+            check=False, capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         if result.returncode == 0:
@@ -182,7 +180,7 @@ def _get_process_list_unix() -> List[Dict[str, Any]]:
                                 "name": parts[10],  # Command name
                                 "pid": int(parts[1]),
                                 "cpu_percent": float(parts[2]),
-                                "memory_percent": float(parts[3])
+                                "memory_percent": float(parts[3]),
                             })
                         except (ValueError, IndexError) as e:
                             logger.error("Error in process_utils: %s", e)
@@ -195,8 +193,7 @@ def _get_process_list_unix() -> List[Dict[str, Any]]:
 
 
 def kill_process(pid: int, force: bool = False) -> bool:
-    """
-    Kill a process by PID.
+    """Kill a process by PID.
 
     Args:
         pid: Process ID to kill
@@ -204,6 +201,7 @@ def kill_process(pid: int, force: bool = False) -> bool:
 
     Returns:
         True if process was killed successfully
+
     """
     try:
         if PSUTIL_AVAILABLE:
@@ -216,23 +214,21 @@ def kill_process(pid: int, force: bool = False) -> bool:
             # Wait for process to terminate
             proc.wait(timeout=10)
             return True
+        # Fallback to os.kill
+        if platform.system() == "Windows":
+            # Use taskkill on Windows
+            result = subprocess.run(
+                ["taskkill", "/PID", str(pid), "/F" if force else "/T"],
+                check=False, capture_output=True,
+            )
+            return result.returncode == 0
+        # Use kill signal on Unix
+        if force:
+            sig = getattr(signal, "SIGKILL", 9)  # Fallback to 9 if SIGKILL not available
         else:
-            # Fallback to os.kill
-            if platform.system() == "Windows":
-                # Use taskkill on Windows
-                result = subprocess.run(
-                    ["taskkill", "/PID", str(pid), "/F" if force else "/T"],
-                    capture_output=True
-                )
-                return result.returncode == 0
-            else:
-                # Use kill signal on Unix
-                if force:
-                    sig = getattr(signal, "SIGKILL", 9)  # Fallback to 9 if SIGKILL not available
-                else:
-                    sig = getattr(signal, "SIGTERM", 15)  # Fallback to 15 if SIGTERM not available
-                os.kill(pid, sig)
-                return True
+            sig = getattr(signal, "SIGTERM", 15)  # Fallback to 15 if SIGTERM not available
+        os.kill(pid, sig)
+        return True
 
     except Exception as e:
         logger.debug(f"Failed to kill process {pid}: {e}")
@@ -240,31 +236,29 @@ def kill_process(pid: int, force: bool = False) -> bool:
 
 
 def is_process_running(pid: int) -> bool:
-    """
-    Check if a process is running.
+    """Check if a process is running.
 
     Args:
         pid: Process ID to check
 
     Returns:
         True if process is running
+
     """
     try:
         if PSUTIL_AVAILABLE:
             return psutil.pid_exists(pid)
-        else:
-            # Fallback method
-            if platform.system() == "Windows":
-                result = subprocess.run(
-                    ["tasklist", "/fi", f"PID eq {pid}"],
-                    capture_output=True,
-                    text=True
-                )
-                return str(pid) in result.stdout
-            else:
-                # Send signal 0 to check if process exists
-                os.kill(pid, 0)
-                return True
+        # Fallback method
+        if platform.system() == "Windows":
+            result = subprocess.run(
+                ["tasklist", "/fi", f"PID eq {pid}"],
+                check=False, capture_output=True,
+                text=True,
+            )
+            return str(pid) in result.stdout
+        # Send signal 0 to check if process exists
+        os.kill(pid, 0)
+        return True
 
     except (OSError, subprocess.SubprocessError) as e:
         logger.error("Error in process_utils: %s", e)
@@ -274,15 +268,15 @@ def is_process_running(pid: int) -> bool:
         return False
 
 
-def get_process_info(pid: int) -> Optional[Dict[str, Any]]:
-    """
-    Get detailed information about a process.
+def get_process_info(pid: int) -> dict[str, Any] | None:
+    """Get detailed information about a process.
 
     Args:
         pid: Process ID
 
     Returns:
         Dictionary with process information or None if not found
+
     """
     try:
         if PSUTIL_AVAILABLE:
@@ -296,18 +290,17 @@ def get_process_info(pid: int) -> Optional[Dict[str, Any]]:
                 "memory_info": proc.memory_info()._asdict(),
                 "create_time": proc.create_time(),
                 "exe": proc.exe(),
-                "cmdline": proc.cmdline()
+                "cmdline": proc.cmdline(),
             }
-        else:
-            # Basic fallback information
-            if is_process_running(pid):
-                return {
-                    "pid": pid,
-                    "name": "unknown",
-                    "status": "running",
-                    "cpu_percent": 0.0,
-                    "memory_percent": 0.0
-                }
+        # Basic fallback information
+        if is_process_running(pid):
+            return {
+                "pid": pid,
+                "name": "unknown",
+                "status": "running",
+                "cpu_percent": 0.0,
+                "memory_percent": 0.0,
+            }
 
     except Exception as e:
         logger.debug(f"Failed to get process info for PID {pid}: {e}")
@@ -315,9 +308,8 @@ def get_process_info(pid: int) -> Optional[Dict[str, Any]]:
     return None
 
 
-def wait_for_process(process_name: str, timeout: int = 30) -> Optional[int]:
-    """
-    Wait for a process to start and return its PID.
+def wait_for_process(process_name: str, timeout: int = 30) -> int | None:
+    """Wait for a process to start and return its PID.
 
     Args:
         process_name: Name of the process to wait for
@@ -325,6 +317,7 @@ def wait_for_process(process_name: str, timeout: int = 30) -> Optional[int]:
 
     Returns:
         PID of the process if found within timeout
+
     """
     start_time = time.time()
 
@@ -338,38 +331,37 @@ def wait_for_process(process_name: str, timeout: int = 30) -> Optional[int]:
     return None
 
 
-def run_as_admin(command: List[str]) -> Tuple[bool, str]:
-    """
-    Run a command with administrator privileges.
+def run_as_admin(command: list[str]) -> tuple[bool, str]:
+    """Run a command with administrator privileges.
 
     Args:
         command: Command and arguments to run
 
     Returns:
         Tuple of (success, output_or_error)
+
     """
     try:
         if platform.system() == "Windows":
             # Use runas on Windows
             result = subprocess.run(
                 ["runas", "/user:Administrator"] + command,
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=60
+                timeout=60,
             )
         else:
             # Use sudo on Unix systems
             result = subprocess.run(
                 ["sudo"] + command,
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=60
+                timeout=60,
             )
 
         if result.returncode == 0:
             return True, result.stdout
-        else:
-            return False, result.stderr
+        return False, result.stderr
 
     except subprocess.TimeoutExpired as e:
         logger.error("Subprocess timeout in process_utils: %s", e)
@@ -379,12 +371,12 @@ def run_as_admin(command: List[str]) -> Tuple[bool, str]:
         return False, str(e)
 
 
-def get_current_process_info() -> Dict[str, Any]:
-    """
-    Get information about the current process.
+def get_current_process_info() -> dict[str, Any]:
+    """Get information about the current process.
 
     Returns:
         Dictionary with current process information
+
     """
     try:
         if PSUTIL_AVAILABLE:
@@ -397,16 +389,15 @@ def get_current_process_info() -> Dict[str, Any]:
                 "cmdline": proc.cmdline(),
                 "cpu_percent": proc.cpu_percent(),
                 "memory_percent": proc.memory_percent(),
-                "create_time": proc.create_time()
+                "create_time": proc.create_time(),
             }
-        else:
-            return {
-                "pid": os.getpid(),
-                "name": os.path.basename(sys.executable),
-                "exe": sys.executable,
-                "cwd": os.getcwd(),
-                "cmdline": sys.argv
-            }
+        return {
+            "pid": os.getpid(),
+            "name": os.path.basename(sys.executable),
+            "exe": sys.executable,
+            "cwd": os.getcwd(),
+            "cmdline": sys.argv,
+        }
 
     except Exception as e:
         logger.debug(f"Failed to get current process info: {e}")
@@ -415,13 +406,12 @@ def get_current_process_info() -> Dict[str, Any]:
             "name": "unknown",
             "exe": "unknown",
             "cwd": os.getcwd(),
-            "cmdline": sys.argv
+            "cmdline": sys.argv,
         }
 
 
-def monitor_process_cpu(pid: int, duration: int = 10) -> Dict[str, float]:
-    """
-    Monitor CPU usage of a process for a given duration.
+def monitor_process_cpu(pid: int, duration: int = 10) -> dict[str, float]:
+    """Monitor CPU usage of a process for a given duration.
 
     Args:
         pid: Process ID to monitor
@@ -429,6 +419,7 @@ def monitor_process_cpu(pid: int, duration: int = 10) -> Dict[str, float]:
 
     Returns:
         Dictionary with CPU statistics
+
     """
     cpu_samples = []
     start_time = time.time()
@@ -446,7 +437,7 @@ def monitor_process_cpu(pid: int, duration: int = 10) -> Dict[str, float]:
                 "avg_cpu": sum(cpu_samples) / len(cpu_samples),
                 "max_cpu": max(cpu_samples),
                 "min_cpu": min(cpu_samples),
-                "samples": len(cpu_samples)
+                "samples": len(cpu_samples),
             }
 
     except Exception as e:
@@ -456,19 +447,19 @@ def monitor_process_cpu(pid: int, duration: int = 10) -> Dict[str, float]:
         "avg_cpu": 0.0,
         "max_cpu": 0.0,
         "min_cpu": 0.0,
-        "samples": 0
+        "samples": 0,
     }
 
 
-def find_processes_by_pattern(pattern: str) -> List[Dict[str, Any]]:
-    """
-    Find processes whose names match a pattern.
+def find_processes_by_pattern(pattern: str) -> list[dict[str, Any]]:
+    """Find processes whose names match a pattern.
 
     Args:
         pattern: Pattern to match (case-insensitive)
 
     Returns:
         List of matching process dictionaries
+
     """
     matching_processes = []
 
@@ -486,12 +477,12 @@ def find_processes_by_pattern(pattern: str) -> List[Dict[str, Any]]:
     return matching_processes
 
 
-def detect_hardware_dongles() -> List[Dict[str, Any]]:
-    """
-    Detect hardware dongles connected to the system.
+def detect_hardware_dongles() -> list[dict[str, Any]]:
+    """Detect hardware dongles connected to the system.
 
     Returns:
         List of detected hardware dongles with their information
+
     """
     dongles = []
 
@@ -501,7 +492,7 @@ def detect_hardware_dongles() -> List[Dict[str, Any]]:
             try:
                 # Use WMI to query USB devices
                 result = subprocess.run(["wmic", "path", "win32_usbhub", "get", "deviceid,description"],
-                                      capture_output=True, text=True, timeout=10)
+                                      check=False, capture_output=True, text=True, timeout=10)
 
                 if result.returncode == 0:
                     lines = result.stdout.strip().split("\n")[1:]  # Skip header
@@ -520,7 +511,7 @@ def detect_hardware_dongles() -> List[Dict[str, Any]]:
                                             "vendor": vendor,
                                             "device_id": device_id,
                                             "description": description,
-                                            "type": "USB"
+                                            "type": "USB",
                                         })
 
             except Exception as e:
@@ -529,7 +520,7 @@ def detect_hardware_dongles() -> List[Dict[str, Any]]:
         elif platform.system() == "Linux":
             try:
                 # Use lsusb to list USB devices
-                result = subprocess.run(["lsusb"], capture_output=True, text=True, timeout=10)
+                result = subprocess.run(["lsusb"], check=False, capture_output=True, text=True, timeout=10)
 
                 if result.returncode == 0:
                     lines = result.stdout.strip().split("\n")
@@ -541,7 +532,7 @@ def detect_hardware_dongles() -> List[Dict[str, Any]]:
                                 dongles.append({
                                     "vendor": vendor,
                                     "device_info": line.strip(),
-                                    "type": "USB"
+                                    "type": "USB",
                                 })
 
             except Exception as e:
@@ -553,19 +544,19 @@ def detect_hardware_dongles() -> List[Dict[str, Any]]:
     return dongles
 
 
-def detect_tpm_protection() -> Dict[str, Any]:
-    """
-    Detect TPM (Trusted Platform Module) protection on the system.
+def detect_tpm_protection() -> dict[str, Any]:
+    """Detect TPM (Trusted Platform Module) protection on the system.
 
     Returns:
         Dictionary with TPM detection results
+
     """
     tpm_info = {
         "present": False,
         "version": None,
         "manufacturer": None,
         "enabled": False,
-        "details": []
+        "details": [],
     }
 
     try:
@@ -574,7 +565,7 @@ def detect_tpm_protection() -> Dict[str, Any]:
                 # Check TPM using WMI
                 result = subprocess.run(["wmic", "/namespace:\\\\root\\cimv2\\security\\microsofttpm",
                                        "path", "win32_tpm", "get", "IsEnabled_InitialValue,IsActivated_InitialValue,ManufacturerVersion"],
-                                      capture_output=True, text=True, timeout=10)
+                                      check=False, capture_output=True, text=True, timeout=10)
 
                 if result.returncode == 0 and result.stdout.strip():
                     tpm_info["present"] = True
@@ -598,7 +589,7 @@ def detect_tpm_protection() -> Dict[str, Any]:
             # Alternative method - check registry
             try:
                 result = subprocess.run(["reg", "query", "HKLM\\SYSTEM\\CurrentControlSet\\Services\\TPM"],
-                                      capture_output=True, text=True, timeout=5)
+                                      check=False, capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
                     tpm_info["present"] = True
                     tpm_info["details"].append("TPM service found in registry")
@@ -616,7 +607,7 @@ def detect_tpm_protection() -> Dict[str, Any]:
                         tpm_info["details"].append(f"TPM device found: {device}")
 
                 # Check dmesg for TPM messages
-                result = subprocess.run(["dmesg"], capture_output=True, text=True, timeout=5)
+                result = subprocess.run(["dmesg"], check=False, capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
                     tpm_lines = [line for line in result.stdout.split("\n") if "tpm" in line.lower()]
                     if tpm_lines:
@@ -635,17 +626,17 @@ def detect_tpm_protection() -> Dict[str, Any]:
 
 # Export commonly used functions
 __all__ = [
-    "get_target_process_pid",
-    "get_process_list",
-    "kill_process",
-    "is_process_running",
-    "get_process_info",
-    "wait_for_process",
-    "run_as_admin",
-    "get_current_process_info",
-    "monitor_process_cpu",
-    "find_processes_by_pattern",
+    "PSUTIL_AVAILABLE",
     "detect_hardware_dongles",
     "detect_tpm_protection",
-    "PSUTIL_AVAILABLE"
+    "find_processes_by_pattern",
+    "get_current_process_info",
+    "get_process_info",
+    "get_process_list",
+    "get_target_process_pid",
+    "is_process_running",
+    "kill_process",
+    "monitor_process_cpu",
+    "run_as_admin",
+    "wait_for_process",
 ]

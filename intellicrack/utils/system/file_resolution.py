@@ -1,5 +1,4 @@
-"""
-Enhanced file resolution utilities for Intellicrack.
+"""Enhanced file resolution utilities for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,7 +22,6 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +59,7 @@ class FileTypeInfo:
             category: Category of file (e.g., 'executable', 'library')
             supported: Whether this file type is supported for analysis
             analyzer_hint: Hint for which analyzer to use
+
         """
         self.extension = extension.lower()
         self.description = description
@@ -134,15 +133,15 @@ class FileResolver:
         """Initialize the file resolver."""
         self.logger = logger
 
-    def resolve_file_path(self, file_path: Union[str, Path]) -> Tuple[str, Dict[str, any]]:
-        """
-        Resolve a file path, handling shortcuts and returning target information.
+    def resolve_file_path(self, file_path: str | Path) -> tuple[str, dict[str, any]]:
+        """Resolve a file path, handling shortcuts and returning target information.
 
         Args:
             file_path: Path to resolve (may be shortcut or direct file)
 
         Returns:
             Tuple of (resolved_path, metadata_dict)
+
         """
         file_path = Path(file_path)
 
@@ -154,7 +153,7 @@ class FileResolver:
             "file_type": self.get_file_type_info(file_path),
             "size": file_path.stat().st_size,
             "is_shortcut": False,
-            "resolution_method": "direct"
+            "resolution_method": "direct",
         }
 
         # Handle shortcuts
@@ -191,7 +190,7 @@ class FileResolver:
 
         return str(file_path), metadata
 
-    def get_file_type_info(self, file_path: Union[str, Path]) -> FileTypeInfo:
+    def get_file_type_info(self, file_path: str | Path) -> FileTypeInfo:
         """Get file type information for a given path."""
         file_path = Path(file_path)
         extension = file_path.suffix.lower()
@@ -200,10 +199,9 @@ class FileResolver:
         if file_path.is_dir():
             if extension == ".app":
                 return self.FILE_TYPES.get(".app", FileTypeInfo(extension, "Unknown Directory", "directory"))
-            elif extension == ".framework":
+            if extension == ".framework":
                 return self.FILE_TYPES.get(".framework", FileTypeInfo(extension, "Framework Directory", "directory"))
-            else:
-                return FileTypeInfo(extension, "Directory", "directory", False)
+            return FileTypeInfo(extension, "Directory", "directory", False)
 
         return self.FILE_TYPES.get(extension, FileTypeInfo(extension, "Unknown File Type", "unknown", False))
 
@@ -238,7 +236,7 @@ class FileResolver:
             "firmware": "Firmware Files",
             "binary": "Binary Files",
             "data": "Data Files",
-            "image": "Disk Images"
+            "image": "Disk Images",
         }
 
         for category, exts in sorted(categories.items()):
@@ -250,7 +248,7 @@ class FileResolver:
 
         return ";;".join(filters)
 
-    def _resolve_windows_shortcut(self, lnk_path: Path) -> Tuple[Optional[str], Dict[str, any]]:
+    def _resolve_windows_shortcut(self, lnk_path: Path) -> tuple[str | None, dict[str, any]]:
         """Resolve Windows .lnk shortcut file."""
         if not IS_WINDOWS or not HAS_WIN32:
             return None, {"error": "Windows COM not available for shortcut resolution"}
@@ -280,20 +278,19 @@ class FileResolver:
                     "arguments": arguments,
                     "description": description,
                     "icon_location": icon_location,
-                    "shortcut_type": "windows_lnk"
+                    "shortcut_type": "windows_lnk",
                 }
-            else:
-                return None, {"error": f"Shortcut target not found: {target_path}"}
+            return None, {"error": f"Shortcut target not found: {target_path}"}
 
         except Exception as e:
             self.logger.error(f"Error resolving Windows shortcut {lnk_path}: {e}")
-            return None, {"error": f"Failed to resolve shortcut: {str(e)}"}
+            return None, {"error": f"Failed to resolve shortcut: {e!s}"}
 
-    def _resolve_url_shortcut(self, url_path: Path) -> Tuple[Optional[str], Dict[str, any]]:
+    def _resolve_url_shortcut(self, url_path: Path) -> tuple[str | None, dict[str, any]]:
         """Resolve Windows .url internet shortcut file."""
         try:
             # .url files are INI-style text files
-            with open(url_path, "r", encoding="utf-8") as f:
+            with open(url_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Look for URL= line
@@ -302,14 +299,14 @@ class FileResolver:
                     url = line[4:].strip()
                     return url, {
                         "target_url": url,
-                        "shortcut_type": "internet_url"
+                        "shortcut_type": "internet_url",
                     }
 
             return None, {"error": "No URL found in internet shortcut"}
 
         except Exception as e:
             self.logger.error(f"Error resolving URL shortcut {url_path}: {e}")
-            return None, {"error": f"Failed to resolve URL shortcut: {str(e)}"}
+            return None, {"error": f"Failed to resolve URL shortcut: {e!s}"}
 
     def _is_macos_alias(self, file_path: Path) -> bool:
         """Check if file is a macOS alias."""
@@ -322,16 +319,16 @@ class FileResolver:
             import subprocess
             result = subprocess.run(
                 ["file", str(file_path)],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
             return "alias" in result.stdout.lower()
         except Exception as e:
             self.logger.debug(f"Error checking macOS alias for {file_path}: {e}")
             return False
 
-    def _resolve_macos_alias(self, alias_path: Path) -> Optional[str]:
+    def _resolve_macos_alias(self, alias_path: Path) -> str | None:
         """Resolve macOS alias to target path."""
         if not IS_MACOS:
             return None
@@ -340,19 +337,19 @@ class FileResolver:
             import subprocess
 
             # Use osascript to resolve alias
-            script = f'''
+            script = f"""
             tell application "Finder"
                 set aliasFile to POSIX file "{alias_path}" as alias
                 set originalFile to original item of aliasFile
                 return POSIX path of originalFile
             end tell
-            '''
+            """
 
             result = subprocess.run(
                 ["osascript", "-e", script],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
 
             if result.returncode == 0:
@@ -363,7 +360,7 @@ class FileResolver:
 
         return None
 
-    def get_file_metadata(self, file_path: Union[str, Path]) -> Dict[str, any]:
+    def get_file_metadata(self, file_path: str | Path) -> dict[str, any]:
         """Get comprehensive metadata for a file."""
         file_path = Path(file_path)
 
@@ -392,8 +389,8 @@ class FileResolver:
                     "description": file_type.description,
                     "category": file_type.category,
                     "supported": file_type.supported,
-                    "analyzer_hint": file_type.analyzer_hint
-                }
+                    "analyzer_hint": file_type.analyzer_hint,
+                },
             }
 
             # Add platform-specific metadata
@@ -408,7 +405,7 @@ class FileResolver:
 
         except Exception as e:
             self.logger.error(f"Error getting metadata for {file_path}: {e}")
-            return {"error": f"Failed to get metadata: {str(e)}"}
+            return {"error": f"Failed to get metadata: {e!s}"}
 
     def _format_bytes(self, bytes_size: int) -> str:
         """Format bytes into human readable string."""
@@ -418,7 +415,7 @@ class FileResolver:
             bytes_size /= 1024.0
         return f"{bytes_size:.1f} PB"
 
-    def _get_windows_metadata(self, file_path: Path) -> Dict[str, any]:
+    def _get_windows_metadata(self, file_path: Path) -> dict[str, any]:
         """Get Windows-specific file metadata."""
         metadata = {}
 
@@ -446,7 +443,7 @@ class FileResolver:
 
         return metadata
 
-    def _get_linux_metadata(self, file_path: Path) -> Dict[str, any]:
+    def _get_linux_metadata(self, file_path: Path) -> dict[str, any]:
         """Get Linux-specific file metadata."""
         metadata = {}
 
@@ -462,9 +459,9 @@ class FileResolver:
             import subprocess
             result = subprocess.run(
                 ["file", str(file_path)],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             if result.returncode == 0:
@@ -475,7 +472,7 @@ class FileResolver:
 
         return metadata
 
-    def _get_macos_metadata(self, file_path: Path) -> Dict[str, any]:
+    def _get_macos_metadata(self, file_path: Path) -> dict[str, any]:
         """Get macOS-specific file metadata."""
         metadata = {}
 

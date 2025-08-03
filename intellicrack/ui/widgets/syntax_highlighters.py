@@ -1,5 +1,4 @@
-"""
-Shared syntax highlighters for code editors.
+"""Shared syntax highlighters for code editors.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -41,7 +40,7 @@ class PythonHighlighter(QSyntaxHighlighter):
             "del", "elif", "else", "except", "exec", "finally", "for",
             "from", "global", "if", "import", "in", "is", "lambda",
             "not", "or", "pass", "print", "raise", "return", "try",
-            "while", "with", "yield", "None", "True", "False"
+            "while", "with", "yield", "None", "True", "False",
         ]
 
         for keyword in keywords:
@@ -102,7 +101,7 @@ class PythonHighlighter(QSyntaxHighlighter):
             "map", "max", "memoryview", "min", "next", "object", "oct", "open",
             "ord", "pow", "print", "property", "range", "repr", "reversed",
             "round", "set", "setattr", "slice", "sorted", "staticmethod",
-            "str", "sum", "super", "tuple", "type", "vars", "zip"
+            "str", "sum", "super", "tuple", "type", "vars", "zip",
         ]
 
         for builtin in builtins:
@@ -174,7 +173,7 @@ class JavaScriptHighlighter(QSyntaxHighlighter):
             "default", "delete", "do", "else", "export", "extends", "finally",
             "for", "function", "if", "import", "in", "instanceof", "let", "new",
             "return", "super", "switch", "this", "throw", "try", "typeof", "var",
-            "void", "while", "with", "yield", "async", "await", "static"
+            "void", "while", "with", "yield", "async", "await", "static",
         ]
 
         for keyword in keywords:
@@ -228,7 +227,7 @@ class JavaScriptHighlighter(QSyntaxHighlighter):
             "Array", "Boolean", "Date", "Error", "Function", "JSON", "Math",
             "Number", "Object", "RegExp", "String", "Symbol", "Promise",
             "Set", "Map", "WeakSet", "WeakMap", "Proxy", "Reflect",
-            "console", "window", "document", "alert", "confirm", "prompt"
+            "console", "window", "document", "alert", "confirm", "prompt",
         ]
 
         for builtin in builtins:
@@ -241,7 +240,7 @@ class JavaScriptHighlighter(QSyntaxHighlighter):
         operators = [
             "\\+", "-", "\\*", "/", "%", "\\+\\+", "--", "=", "\\+=", "-=",
             "\\*=", "/=", "%=", "==", "!=", "===", "!==", "<", ">", "<=", ">=",
-            "&&", "\\|\\|", "!", "&", "\\|", "\\^", "~", "<<", ">>", ">>>"
+            "&&", "\\|\\|", "!", "&", "\\|", "\\^", "~", "<<", ">>", ">>>",
         ]
 
         for operator in operators:

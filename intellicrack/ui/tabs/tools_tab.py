@@ -432,7 +432,7 @@ class ToolsTab(BaseTab):
         self.packets_table = QTableWidget()
         self.packets_table.setColumnCount(6)
         self.packets_table.setHorizontalHeaderLabels([
-            "Time", "Source", "Destination", "Protocol", "Length", "Info"
+            "Time", "Source", "Destination", "Protocol", "Length", "Info",
         ])
         self.packets_table.horizontalHeader().setStretchLastSection(True)
 
@@ -470,7 +470,7 @@ class ToolsTab(BaseTab):
             self.log_message("System information retrieved")
 
         except Exception as e:
-            self.output_console.append(f"Error getting system info: {str(e)}")
+            self.output_console.append(f"Error getting system info: {e!s}")
 
     def list_processes(self):
         """List running processes"""
@@ -496,7 +496,7 @@ class ToolsTab(BaseTab):
             self.log_message(f"Listed {len(processes)} running processes")
 
         except Exception as e:
-            self.output_console.append(f"Error listing processes: {str(e)}")
+            self.output_console.append(f"Error listing processes: {e!s}")
 
     def get_memory_info(self):
         """Get memory information"""
@@ -520,7 +520,7 @@ class ToolsTab(BaseTab):
             self.log_message("Memory information retrieved")
 
         except Exception as e:
-            self.output_console.append(f"Error getting memory info: {str(e)}")
+            self.output_console.append(f"Error getting memory info: {e!s}")
 
     def browse_file(self):
         """Browse for file"""
@@ -528,7 +528,7 @@ class ToolsTab(BaseTab):
             self,
             "Select File for Analysis",
             "",
-            "All Files (*)"
+            "All Files (*)",
         )
 
         if file_path:
@@ -562,7 +562,7 @@ class ToolsTab(BaseTab):
             self.log_message("File information retrieved")
 
         except Exception as e:
-            self.output_console.append(f"Error getting file info: {str(e)}")
+            self.output_console.append(f"Error getting file info: {e!s}")
 
     def create_hex_dump(self):
         """Create hex dump of file"""
@@ -587,7 +587,7 @@ class ToolsTab(BaseTab):
             self.log_message("Hex dump created")
 
         except Exception as e:
-            self.output_console.append(f"Error creating hex dump: {str(e)}")
+            self.output_console.append(f"Error creating hex dump: {e!s}")
 
     def extract_strings(self):
         """Extract strings from file"""
@@ -628,7 +628,7 @@ class ToolsTab(BaseTab):
             self.log_message(f"Extracted {len(ascii_strings)} ASCII and {len(unicode_strings)} Unicode strings")
 
         except Exception as e:
-            self.output_console.append(f"Error extracting strings: {str(e)}")
+            self.output_console.append(f"Error extracting strings: {e!s}")
 
     def query_registry(self):
         """Query Windows registry"""
@@ -659,7 +659,7 @@ class ToolsTab(BaseTab):
                         name, value, reg_type = winreg.EnumValue(key, i)
                         values.append(f"{name}: {value} (Type: {reg_type})")
                         i += 1
-                except WindowsError:
+                except OSError:
                     pass
 
                 self.tool_output.append(f"Registry Key: {reg_key}")
@@ -670,7 +670,7 @@ class ToolsTab(BaseTab):
                 self.log_message(f"Queried registry key: {reg_key}")
 
         except Exception as e:
-            self.output_console.append(f"Error querying registry: {str(e)}")
+            self.output_console.append(f"Error querying registry: {e!s}")
 
     def browse_analysis_binary(self):
         """Browse for binary to analyze"""
@@ -678,7 +678,7 @@ class ToolsTab(BaseTab):
             self,
             "Select Binary for Analysis",
             "",
-            "Executable Files (*.exe *.dll *.so);;All Files (*)"
+            "Executable Files (*.exe *.dll *.so);;All Files (*)",
         )
 
         if file_path:
@@ -696,9 +696,9 @@ class ToolsTab(BaseTab):
             # Try using objdump first
             result = subprocess.run(
                 ["objdump", "-d", binary_path],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             if result.returncode == 0:
@@ -715,7 +715,7 @@ class ToolsTab(BaseTab):
         except subprocess.TimeoutExpired:
             self.output_console.append("Error: Disassembly timed out")
         except Exception as e:
-            self.output_console.append(f"Error disassembling binary: {str(e)}")
+            self.output_console.append(f"Error disassembling binary: {e!s}")
 
     def analyze_entropy(self):
         """Analyze binary entropy"""
@@ -772,7 +772,7 @@ class ToolsTab(BaseTab):
             self.log_message("Entropy analysis completed")
 
         except Exception as e:
-            self.output_console.append(f"Error analyzing entropy: {str(e)}")
+            self.output_console.append(f"Error analyzing entropy: {e!s}")
 
     def analyze_imports(self):
         """Analyze binary imports"""
@@ -808,7 +808,7 @@ class ToolsTab(BaseTab):
         except ImportError:
             self.output_console.append("Error: pefile module not available")
         except Exception as e:
-            self.output_console.append(f"Error analyzing imports: {str(e)}")
+            self.output_console.append(f"Error analyzing imports: {e!s}")
 
     def analyze_exports(self):
         """Analyze binary exports"""
@@ -846,7 +846,7 @@ class ToolsTab(BaseTab):
         except ImportError:
             self.output_console.append("Error: pefile module not available")
         except Exception as e:
-            self.output_console.append(f"Error analyzing exports: {str(e)}")
+            self.output_console.append(f"Error analyzing exports: {e!s}")
 
     def analyze_sections(self):
         """Analyze binary sections"""
@@ -880,7 +880,7 @@ class ToolsTab(BaseTab):
         except ImportError:
             self.output_console.append("Error: pefile module not available")
         except Exception as e:
-            self.output_console.append(f"Error analyzing sections: {str(e)}")
+            self.output_console.append(f"Error analyzing sections: {e!s}")
 
     def analyze_symbols(self):
         """Analyze binary symbols"""
@@ -893,9 +893,9 @@ class ToolsTab(BaseTab):
             # Try using nm tool
             result = subprocess.run(
                 ["nm", binary_path],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             if result.returncode == 0:
@@ -914,7 +914,7 @@ class ToolsTab(BaseTab):
         except subprocess.TimeoutExpired:
             self.output_console.append("Error: Symbol analysis timed out")
         except Exception as e:
-            self.output_console.append(f"Error analyzing symbols: {str(e)}")
+            self.output_console.append(f"Error analyzing symbols: {e!s}")
 
     def calculate_hash(self, algorithm):
         """Calculate hash of input data"""
@@ -941,7 +941,7 @@ class ToolsTab(BaseTab):
             self.log_message(f"{algorithm.upper()} hash calculated")
 
         except Exception as e:
-            self.output_console.append(f"Error calculating hash: {str(e)}")
+            self.output_console.append(f"Error calculating hash: {e!s}")
 
     def base64_encode(self):
         """Base64 encode input data"""
@@ -960,7 +960,7 @@ class ToolsTab(BaseTab):
             self.log_message("Base64 encoding completed")
 
         except Exception as e:
-            self.output_console.append(f"Error encoding data: {str(e)}")
+            self.output_console.append(f"Error encoding data: {e!s}")
 
     def base64_decode(self):
         """Base64 decode input data"""
@@ -979,7 +979,7 @@ class ToolsTab(BaseTab):
             self.log_message("Base64 decoding completed")
 
         except Exception as e:
-            self.output_console.append(f"Error decoding data: {str(e)}")
+            self.output_console.append(f"Error decoding data: {e!s}")
 
     def populate_plugin_list(self):
         """Populate the plugin list"""
@@ -1019,7 +1019,7 @@ class ToolsTab(BaseTab):
             self.loaded_plugins[plugin_name] = {
                 "name": plugin_name,
                 "status": "loaded",
-                "description": f"Plugin: {plugin_name}"
+                "description": f"Plugin: {plugin_name}",
             }
 
             # Update plugin info
@@ -1033,7 +1033,7 @@ class ToolsTab(BaseTab):
             self.log_message(f"Plugin '{plugin_name}' loaded")
 
         except Exception as e:
-            self.output_console.append(f"Error loading plugin '{plugin_name}': {str(e)}")
+            self.output_console.append(f"Error loading plugin '{plugin_name}': {e!s}")
             self.plugin_loaded.emit(plugin_name, False)
 
     def unload_selected_plugin(self):
@@ -1129,7 +1129,7 @@ def get_plugin():
                 self.log_message(f"New plugin '{plugin_name}' created")
 
             except Exception as e:
-                self.output_console.append(f"Error creating plugin: {str(e)}")
+                self.output_console.append(f"Error creating plugin: {e!s}")
 
     def edit_selected_plugin(self):
         """Edit the selected plugin"""
@@ -1150,14 +1150,14 @@ def get_plugin():
                 import subprocess
 
                 if platform.system() == "Windows":
-                    subprocess.run(["notepad", plugin_file])
+                    subprocess.run(["notepad", plugin_file], check=False)
                 else:
-                    subprocess.run(["xdg-open", plugin_file])
+                    subprocess.run(["xdg-open", plugin_file], check=False)
 
                 self.log_message(f"Opened plugin '{plugin_name}' for editing")
 
             except Exception as e:
-                self.output_console.append(f"Error opening plugin for editing: {str(e)}")
+                self.output_console.append(f"Error opening plugin for editing: {e!s}")
         else:
             self.output_console.append(f"Plugin file not found: {plugin_file}")
 
@@ -1175,7 +1175,7 @@ def get_plugin():
             self.log_message(f"Found {len(interfaces)} network interfaces")
 
         except Exception as e:
-            self.output_console.append(f"Error getting network interfaces: {str(e)}")
+            self.output_console.append(f"Error getting network interfaces: {e!s}")
 
     def start_packet_capture(self):
         """Start packet capture"""
@@ -1210,7 +1210,7 @@ def get_plugin():
             self.log_message(f"Packet capture started on {interface}")
 
         except Exception as e:
-            self.output_console.append(f"Error starting packet capture: {str(e)}")
+            self.output_console.append(f"Error starting packet capture: {e!s}")
 
     def stop_packet_capture(self):
         """Stop packet capture"""
@@ -1223,7 +1223,7 @@ def get_plugin():
             self,
             "Save Packet Capture",
             "",
-            "PCAP Files (*.pcap);;All Files (*)"
+            "PCAP Files (*.pcap);;All Files (*)",
         )
 
         if file_path:
@@ -1249,7 +1249,7 @@ def get_plugin():
             self.log_message(f"Ping scan completed for {target}")
 
         except Exception as e:
-            self.output_console.append(f"Error performing ping scan: {str(e)}")
+            self.output_console.append(f"Error performing ping scan: {e!s}")
 
     def port_scan(self):
         """Perform port scan"""
@@ -1273,7 +1273,7 @@ def get_plugin():
             self.log_message(f"Port scan completed for {target}")
 
         except Exception as e:
-            self.output_console.append(f"Error performing port scan: {str(e)}")
+            self.output_console.append(f"Error performing port scan: {e!s}")
 
     def service_scan(self):
         """Perform service scan"""
@@ -1297,7 +1297,7 @@ def get_plugin():
             self.log_message(f"Service scan completed for {target}")
 
         except Exception as e:
-            self.output_console.append(f"Error performing service scan: {str(e)}")
+            self.output_console.append(f"Error performing service scan: {e!s}")
 
     def log_message(self, message, level="info"):
         """Log message to console or status"""

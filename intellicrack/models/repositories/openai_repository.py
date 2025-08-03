@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -25,7 +24,7 @@ accessing models via OpenAI's API.
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelInfo
@@ -42,11 +41,10 @@ class OpenAIRepository(APIRepositoryBase):
                  api_key: str = "",
                  timeout: int = 60,
                  proxy: str = "",
-                 rate_limit_config: Optional[RateLimitConfig] = None,
-                 cache_config: Optional[Dict[str, Any]] = None,
+                 rate_limit_config: RateLimitConfig | None = None,
+                 cache_config: dict[str, Any] | None = None,
                  download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads")):
-        """
-        Initialize the OpenAI repository.
+        """Initialize the OpenAI repository.
 
         Args:
             repository_name: Name of the repository
@@ -57,6 +55,7 @@ class OpenAIRepository(APIRepositoryBase):
             rate_limit_config: Rate limiting configuration
             cache_config: Cache configuration
             download_dir: Directory for downloaded models (unused for API-only repos)
+
         """
         super().__init__(
             repository_name=repository_name,
@@ -66,15 +65,15 @@ class OpenAIRepository(APIRepositoryBase):
             proxy=proxy,
             rate_limit_config=rate_limit_config,
             cache_config=cache_config,
-            download_dir=download_dir
+            download_dir=download_dir,
         )
 
-    def authenticate(self) -> Tuple[bool, str]:
-        """
-        Authenticate with the OpenAI API.
+    def authenticate(self) -> tuple[bool, str]:
+        """Authenticate with the OpenAI API.
 
         Returns:
             Tuple of (success, message)
+
         """
         if not self.api_key:
             return False, "API key is required for OpenAI authentication"
@@ -83,24 +82,23 @@ class OpenAIRepository(APIRepositoryBase):
         success, _, error_message = self._make_request(
             endpoint="models",
             method="GET",
-            use_cache=False
+            use_cache=False,
         )
 
         if success:
             return True, "Authentication successful"
-        else:
-            return False, f"Authentication failed: {error_message}"
+        return False, f"Authentication failed: {error_message}"
 
-    def get_available_models(self) -> List[ModelInfo]:
-        """
-        Get a list of available models from OpenAI API.
+    def get_available_models(self) -> list[ModelInfo]:
+        """Get a list of available models from OpenAI API.
 
         Returns:
             A list of ModelInfo objects representing the available models.
+
         """
         success, data, error_message = self._make_request(
             endpoint="models",
-            method="GET"
+            method="GET",
         )
 
         if not success:
@@ -129,31 +127,31 @@ class OpenAIRepository(APIRepositoryBase):
             logger.error(f"Error parsing OpenAI models response: {e}")
             return []
 
-    def get_model_details(self, model_id: str) -> Optional[ModelInfo]:
-        """
-        Get detailed information about a specific model.
+    def get_model_details(self, model_id: str) -> ModelInfo | None:
+        """Get detailed information about a specific model.
 
         Args:
             model_id: The ID of the model to get details for
 
         Returns:
             A ModelInfo object containing the model details, or None if the model is not found.
+
         """
         return self._get_model_details(model_id)
 
-    def _get_model_details(self, model_id: str) -> Optional[ModelInfo]:
-        """
-        Get detailed information about a model from the API.
+    def _get_model_details(self, model_id: str) -> ModelInfo | None:
+        """Get detailed information about a model from the API.
 
         Args:
             model_id: The ID of the model
 
         Returns:
             ModelInfo object, or None if failed
+
         """
         success, data, error_message = self._make_request(
             endpoint=f"models/{model_id}",
-            method="GET"
+            method="GET",
         )
 
         if not success:
@@ -186,7 +184,7 @@ class OpenAIRepository(APIRepositoryBase):
                 version=data.get("version", "1.0"),
                 checksum=None,
                 download_url=None,
-                local_path=None
+                local_path=None,
             )
 
             return model_info
@@ -195,12 +193,12 @@ class OpenAIRepository(APIRepositoryBase):
             logger.error(f"Error creating ModelInfo for {model_id}: {e}")
             return None
 
-    def download_model(self, model_id: str, destination_path: str) -> Tuple[bool, str]:
-        """
-        OpenAI doesn't support model downloads for most models, this is primarily an API-only service.
+    def download_model(self, model_id: str, destination_path: str) -> tuple[bool, str]:
+        """OpenAI doesn't support model downloads for most models, this is primarily an API-only service.
 
         Returns:
             Always returns (False, "OpenAI doesn't support model downloads")
+
         """
         logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
         return False, "OpenAI doesn't support model downloads for this model"

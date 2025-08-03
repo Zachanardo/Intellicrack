@@ -1,7 +1,8 @@
 """Emulator manager for coordinating different emulation engines."""
 import logging
 import os
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -50,8 +51,7 @@ except ImportError as e:
 
 
 class EmulatorManager(QObject):
-    """
-    Manages automatic launching and lifecycle of emulators.
+    """Manages automatic launching and lifecycle of emulators.
 
     This class ensures that required emulators are started automatically
     when features need them, and provides status tracking.
@@ -73,12 +73,11 @@ class EmulatorManager(QObject):
             "failed_executions": 0,
             "qiling_executions": 0,
             "qemu_executions": 0,
-            "unicorn_executions": 0
+            "unicorn_executions": 0,
         }
 
-    def ensure_qemu_running(self, binary_path: str, config: Optional[Dict[str, Any]] = None) -> bool:
-        """
-        Ensure QEMU is running for the given binary.
+    def ensure_qemu_running(self, binary_path: str, config: dict[str, Any] | None = None) -> bool:
+        """Ensure QEMU is running for the given binary.
 
         Args:
             binary_path: Path to binary that needs QEMU
@@ -86,6 +85,7 @@ class EmulatorManager(QObject):
 
         Returns:
             True if QEMU is running or successfully started
+
         """
         if not QEMU_AVAILABLE:
             self.emulator_error.emit("QEMU", "QEMU is not installed. Please install QEMU first.")
@@ -109,10 +109,9 @@ class EmulatorManager(QObject):
                 if hasattr(self.qemu_instance, "binary_path") and self.qemu_instance.binary_path == binary_path:
                     self.logger.debug(f"QEMU already running for binary: {binary_path}")
                     return True
-                else:
-                    # Different binary, need to restart
-                    self.logger.info(f"QEMU running for different binary, restarting for: {binary_path}")
-                    self.stop_qemu()
+                # Different binary, need to restart
+                self.logger.info(f"QEMU running for different binary, restarting for: {binary_path}")
+                self.stop_qemu()
 
             # Check if already starting
             if self.qemu_starting:
@@ -153,21 +152,21 @@ class EmulatorManager(QObject):
                 self.qemu_running = False
                 self.qemu_starting = False
 
-            error_msg = f"Failed to start QEMU for {binary_path}: {str(e)}"
+            error_msg = f"Failed to start QEMU for {binary_path}: {e!s}"
             self.logger.error(error_msg)
             self.emulator_error.emit("QEMU", error_msg)
             self.emulator_status_changed.emit("QEMU", False, "QEMU failed to start")
             return False
 
-    def ensure_qiling_ready(self, binary_path: str) -> Optional[QilingEmulator]:
-        """
-        Ensure Qiling is ready for the given binary.
+    def ensure_qiling_ready(self, binary_path: str) -> QilingEmulator | None:
+        """Ensure Qiling is ready for the given binary.
 
         Args:
             binary_path: Path to binary to emulate
 
         Returns:
             QilingEmulator instance if successful, None otherwise
+
         """
         if not QILING_AVAILABLE:
             self.emulator_error.emit("Qiling", "Qiling framework not installed. Run: pip install qiling")
@@ -184,7 +183,7 @@ class EmulatorManager(QObject):
             return self.qiling_instances[binary_path]
 
         except Exception as e:
-            error_msg = f"Failed to initialize Qiling: {str(e)}"
+            error_msg = f"Failed to initialize Qiling: {e!s}"
             self.logger.error(error_msg)
             self.emulator_error.emit("Qiling", error_msg)
             self.emulator_status_changed.emit("Qiling", False, "Qiling initialization failed")
@@ -208,7 +207,7 @@ class EmulatorManager(QObject):
 
 
 # Global emulator manager instance
-_emulator_manager: Optional[EmulatorManager] = None
+_emulator_manager: EmulatorManager | None = None
 
 
 def get_emulator_manager() -> EmulatorManager:
@@ -220,9 +219,8 @@ def get_emulator_manager() -> EmulatorManager:
 
 
 def run_with_qemu(binary_path: str, analysis_func: Callable,
-                  config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """
-    Run an analysis function with QEMU automatically started.
+                  config: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Run an analysis function with QEMU automatically started.
 
     Args:
         binary_path: Binary to analyze
@@ -231,6 +229,7 @@ def run_with_qemu(binary_path: str, analysis_func: Callable,
 
     Returns:
         Analysis results or error dictionary
+
     """
     manager = get_emulator_manager()
 
@@ -238,7 +237,7 @@ def run_with_qemu(binary_path: str, analysis_func: Callable,
         return {
             "status": "error",
             "error": "Failed to start QEMU emulator",
-            "suggestion": "Check QEMU installation and system requirements"
+            "suggestion": "Check QEMU installation and system requirements",
         }
 
     try:
@@ -247,13 +246,12 @@ def run_with_qemu(binary_path: str, analysis_func: Callable,
         logger.error("Exception in emulator_manager: %s", e)
         return {
             "status": "error",
-            "error": f"Analysis failed: {str(e)}"
+            "error": f"Analysis failed: {e!s}",
         }
 
 
-def run_with_qiling(binary_path: str, analysis_func: Callable) -> Dict[str, Any]:
-    """
-    Run an analysis function with Qiling automatically initialized.
+def run_with_qiling(binary_path: str, analysis_func: Callable) -> dict[str, Any]:
+    """Run an analysis function with Qiling automatically initialized.
 
     Args:
         binary_path: Binary to analyze
@@ -261,6 +259,7 @@ def run_with_qiling(binary_path: str, analysis_func: Callable) -> Dict[str, Any]
 
     Returns:
         Analysis results or error dictionary
+
     """
     manager = get_emulator_manager()
 
@@ -269,7 +268,7 @@ def run_with_qiling(binary_path: str, analysis_func: Callable) -> Dict[str, Any]
         return {
             "status": "error",
             "error": "Failed to initialize Qiling emulator",
-            "suggestion": "Install Qiling with: pip install qiling"
+            "suggestion": "Install Qiling with: pip install qiling",
         }
 
     try:
@@ -278,5 +277,5 @@ def run_with_qiling(binary_path: str, analysis_func: Callable) -> Dict[str, Any]
         logger.error("Exception in emulator_manager: %s", e)
         return {
             "status": "error",
-            "error": f"Analysis failed: {str(e)}"
+            "error": f"Analysis failed: {e!s}",
         }

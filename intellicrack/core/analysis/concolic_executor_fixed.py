@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -17,7 +16,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 """
 Concolic Execution Engine for Precise Path Exploration
@@ -90,6 +89,7 @@ class ConcolicExecutionEngine:
             binary_path: Path to the binary to analyze
             max_iterations: Maximum number of exploration iterations
             timeout: Execution timeout in seconds
+
         """
         self.binary_path = binary_path
         self.max_iterations = max_iterations
@@ -109,18 +109,17 @@ class ConcolicExecutionEngine:
         """Legacy property for backward compatibility."""
         return self.symbolic_engine is not None
 
-    def explore_paths(self, target_address: Optional[int] = None,
-                     avoid_addresses: Optional[List[int]] = None) -> Dict[str, Any]:
+    def explore_paths(self, target_address: int | None = None,
+                     avoid_addresses: list[int] | None = None) -> dict[str, Any]:
         """Explore paths using the available symbolic execution engine."""
-
         if not self.symbolic_engine:
             return {"error": "No symbolic execution engine available. Install angr (recommended) or manticore (Linux)."}
 
         if self.symbolic_engine == "angr":
             return self._explore_paths_angr(target_address, avoid_addresses)
-        elif self.symbolic_engine == "manticore":
+        if self.symbolic_engine == "manticore":
             return self._explore_paths_manticore(target_address, avoid_addresses)
-        elif self.symbolic_engine == "simconcolic":
+        if self.symbolic_engine == "simconcolic":
             return self._explore_paths_simconcolic(target_address, avoid_addresses)
 
     def _explore_paths_angr(self, target_address, avoid_addresses):
@@ -158,7 +157,7 @@ class ConcolicExecutionEngine:
                 "paths_explored": len(simgr.deadended) + len(simgr.active),
                 "target_reached": len(simgr.found) > 0,
                 "avoided_addresses": len(simgr.avoided),
-                "inputs": []
+                "inputs": [],
             }
 
             # Extract inputs that reach target
@@ -167,7 +166,7 @@ class ConcolicExecutionEngine:
                     stdin_data = found_state.posix.dumps(0)
                     results["inputs"].append({
                         "stdin": stdin_data.hex() if stdin_data else None,
-                        "constraints": len(found_state.solver.constraints)
+                        "constraints": len(found_state.solver.constraints),
                     })
 
             return results
@@ -203,7 +202,7 @@ class ConcolicExecutionEngine:
                 "engine": "manticore",
                 "paths_explored": len(m.terminated_states),
                 "target_reached": False,  # Would need custom tracking
-                "inputs": []
+                "inputs": [],
             }
 
             return results
@@ -218,7 +217,7 @@ class ConcolicExecutionEngine:
             return {
                 "success": False,
                 "engine": "simconcolic",
-                "error": "SimConcolic not available"
+                "error": "SimConcolic not available",
             }
 
         try:
@@ -229,7 +228,7 @@ class ConcolicExecutionEngine:
             results = analyzer.analyze(
                 target_address=target_address,
                 avoid_addresses=avoid_addresses,
-                max_iterations=self.max_iterations
+                max_iterations=self.max_iterations,
             )
 
             return {
@@ -237,24 +236,22 @@ class ConcolicExecutionEngine:
                 "engine": "simconcolic",
                 "paths_explored": results.get("paths_explored", 0),
                 "target_reached": results.get("target_reached", False),
-                "inputs": results.get("inputs", [])
+                "inputs": results.get("inputs", []),
             }
         except Exception as e:
             return {
                 "success": False,
                 "engine": "simconcolic",
-                "error": f"SimConcolic analysis failed: {str(e)}"
+                "error": f"SimConcolic analysis failed: {e!s}",
             }
 
-    def find_license_bypass(self) -> Dict[str, Any]:
+    def find_license_bypass(self) -> dict[str, Any]:
         """Find license bypass using available engine."""
-
         if self.symbolic_engine == "angr":
             return self._find_license_bypass_angr()
-        elif self.symbolic_engine == "manticore":
+        if self.symbolic_engine == "manticore":
             return self._find_license_bypass_manticore()
-        else:
-            return {"error": "No suitable symbolic execution engine for license bypass"}
+        return {"error": "No suitable symbolic execution engine for license bypass"}
 
     def _find_license_bypass_angr(self):
         """Find license bypass using angr."""
@@ -266,7 +263,7 @@ class ConcolicExecutionEngine:
                 b"Invalid license",
                 b"License expired",
                 b"Unregistered",
-                b"Trial version"
+                b"Trial version",
             ]
 
             # Search for license check functions
@@ -285,7 +282,7 @@ class ConcolicExecutionEngine:
                             string_refs.append({
                                 "pattern": pattern.decode("utf-8", errors="ignore"),
                                 "string_addr": addr,
-                                "ref_addr": xref.addr
+                                "ref_addr": xref.addr,
                             })
                             license_addrs.append(xref.addr)
                 except Exception as e:
@@ -324,14 +321,14 @@ class ConcolicExecutionEngine:
                     "license_check_addresses": [hex(addr) for addr in license_addrs],
                     "license_string_references": string_refs,
                     "bypass_method": "Path avoidance",
-                    "patterns_found": len(string_refs)
+                    "patterns_found": len(string_refs),
                 }
 
             return {
                 "success": True,
                 "bypass_found": False,
                 "license_string_references": string_refs,
-                "patterns_found": len(string_refs)
+                "patterns_found": len(string_refs),
             }
 
         except Exception as e:

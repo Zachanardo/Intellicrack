@@ -1,5 +1,4 @@
-"""
-Model Loading Progress Widget
+"""Model Loading Progress Widget
 
 This widget provides a visual interface for monitoring model loading progress
 using the BackgroundModelLoader and QueuedProgressCallback.
@@ -9,7 +8,6 @@ Licensed under GNU General Public License v3.0
 """
 
 import logging
-from typing import Dict, Optional
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont
@@ -116,7 +114,7 @@ class ModelLoadingItemWidget(QWidget):
                 }
             """)
 
-    def set_completed(self, success: bool, error: Optional[str] = None):
+    def set_completed(self, success: bool, error: str | None = None):
         """Set completion state."""
         if success:
             self.progress_bar.setValue(100)
@@ -146,7 +144,7 @@ class ModelLoadingProgressWidget(QWidget):
         super().__init__(parent)
         self.llm_manager = get_llm_manager()
         self.progress_callback = QueuedProgressCallback()
-        self.loading_items: Dict[str, ModelLoadingItemWidget] = {}
+        self.loading_items: dict[str, ModelLoadingItemWidget] = {}
         self.update_timer = None
 
         self.init_ui()
@@ -248,7 +246,7 @@ class ModelLoadingProgressWidget(QWidget):
         # Update progress
         self.loading_items[model_id].update_progress(progress)
 
-    def handle_completion_update(self, model_id: str, success: bool, error: Optional[str]):
+    def handle_completion_update(self, model_id: str, success: bool, error: str | None):
         """Handle a completion update."""
         if model_id in self.loading_items:
             self.loading_items[model_id].set_completed(success, error)
@@ -290,7 +288,7 @@ Active Workers: {stats.get('active_workers', 0)}
             model_name="llama2",
             api_url="http://localhost:11434",
             max_tokens=2048,
-            temperature=0.7
+            temperature=0.7,
         )
 
         # Submit loading task
@@ -298,7 +296,7 @@ Active Workers: {stats.get('active_workers', 0)}
         task = self.llm_manager.load_model_in_background(
             llm_id=model_id,
             config=test_config,
-            priority=5
+            priority=5,
         )
 
         if task:
@@ -322,7 +320,7 @@ Active Workers: {stats.get('active_workers', 0)}
                     progress=task.progress,
                     message=task.message,
                     details={},
-                    timestamp=task.start_time or 0
+                    timestamp=task.start_time or 0,
                 )
                 self.handle_progress_update(progress)
 

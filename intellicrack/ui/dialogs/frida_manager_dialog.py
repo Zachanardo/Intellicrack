@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -22,7 +21,6 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List
 
 try:
     import frida
@@ -75,8 +73,6 @@ This dialog provides comprehensive controls for all Frida features including:
 """
 
 
-if TYPE_CHECKING:
-    pass
 
 
 
@@ -90,6 +86,7 @@ except ImportError as e:
 
 class ProcessWorker(QThread):
     """Worker thread for process operations"""
+
     processFound = pyqtSignal(list)
     error = pyqtSignal(str)
 
@@ -109,7 +106,7 @@ class ProcessWorker(QThread):
                         processes.append({
                             "pid": info["pid"],
                             "name": info["name"],
-                            "path": info["exe"]
+                            "path": info["exe"],
                         })
                 except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                     self.logger.error("Error in frida_manager_dialog: %s", e)
@@ -122,6 +119,7 @@ class ProcessWorker(QThread):
 
 class FridaWorker(QThread):
     """Worker thread for Frida operations"""
+
     statusUpdate = pyqtSignal(str)
     protectionDetected = pyqtSignal(str, dict)
     performanceUpdate = pyqtSignal(dict)
@@ -151,7 +149,7 @@ class FridaWorker(QThread):
                 script_name = self.params.get("script_name")
                 options = self.params.get("options", {})
                 success = self.frida_manager.load_script(
-                    session_id, script_name, options
+                    session_id, script_name, options,
                 )
                 self.operationComplete.emit("load_script", success)
 
@@ -452,7 +450,7 @@ class FridaManagerDialog(QDialog):
         self.loaded_scripts_list = QListWidget()
         self.loaded_scripts_list.setContextMenuPolicy(Qt.CustomContextMenu)
         self.loaded_scripts_list.customContextMenuRequested.connect(
-            self.show_loaded_script_menu
+            self.show_loaded_script_menu,
         )
         loaded_layout.addWidget(self.loaded_scripts_list)
 
@@ -704,7 +702,7 @@ class FridaManagerDialog(QDialog):
         self.protection_grid = QTableWidget()
         self.protection_grid.setColumnCount(4)
         self.protection_grid.setHorizontalHeaderLabels(
-            ["Protection Type", "Status", "Evidence", "Action"]
+            ["Protection Type", "Status", "Evidence", "Action"],
         )
         self.protection_grid.horizontalHeader().setStretchLastSection(True)
 
@@ -832,7 +830,7 @@ class FridaManagerDialog(QDialog):
         self.perf_table = QTableWidget()
         self.perf_table.setColumnCount(4)
         self.perf_table.setHorizontalHeaderLabels(
-            ["Timestamp", "Operation", "Duration (ms)", "Memory Delta"]
+            ["Timestamp", "Operation", "Duration (ms)", "Memory Delta"],
         )
         perf_layout.addWidget(self.perf_table)
 
@@ -885,7 +883,7 @@ class FridaManagerDialog(QDialog):
         wizard_layout = QVBoxLayout()
 
         wizard_layout.addWidget(QLabel(
-            "The bypass wizard automatically detects and bypasses protections."
+            "The bypass wizard automatically detects and bypasses protections.",
         ))
 
         # Wizard options
@@ -939,7 +937,7 @@ class FridaManagerDialog(QDialog):
 
         self.custom_config_text = QTextEdit()
         self.custom_config_text.setPlaceholderText(
-            "Enter custom configuration JSON here..."
+            "Enter custom configuration JSON here...",
         )
         custom_layout.addWidget(self.custom_config_text)
 
@@ -976,7 +974,7 @@ class FridaManagerDialog(QDialog):
 
         self.log_filter_combo = QComboBox()
         self.log_filter_combo.addItems([
-            "All", "Operations", "Hooks", "Performance", "Bypasses", "Errors"
+            "All", "Operations", "Hooks", "Performance", "Bypasses", "Errors",
         ])
         self.log_filter_combo.currentTextChanged.connect(self.filter_logs)
         filter_layout.addWidget(self.log_filter_combo)
@@ -1035,7 +1033,6 @@ class FridaManagerDialog(QDialog):
     def load_presets(self):
         """Load preset configurations"""
         # This will be loaded from frida_presets.py
-        pass
 
     def start_monitoring(self):
         """Start performance monitoring"""
@@ -1058,7 +1055,7 @@ class FridaManagerDialog(QDialog):
 
         self.status_label.setText("Refreshing process list...")
 
-    def update_process_table(self, processes: List[Dict]):
+    def update_process_table(self, processes: list[dict]):
         """Update the process table with found processes"""
         self.process_table.setRowCount(len(processes))
 
@@ -1119,7 +1116,7 @@ class FridaManagerDialog(QDialog):
             # Log to console
             self.log_console.append_output(
                 f"[SUCCESS] Attached to {self.selected_process['name']} "
-                f"(PID: {self.selected_process['pid']})"
+                f"(PID: {self.selected_process['pid']})",
             )
         else:
             self.status_label.setText("Failed to attach to process")
@@ -1144,7 +1141,7 @@ class FridaManagerDialog(QDialog):
             self,
             "Select Executable to Spawn",
             "",
-            "Executable Files (*.exe *.elf *.app *.bin);;All Files (*.*)"
+            "Executable Files (*.exe *.elf *.app *.bin);;All Files (*.*)",
         )
 
         if not file_path:
@@ -1156,7 +1153,7 @@ class FridaManagerDialog(QDialog):
             "Command Line Arguments",
             "Enter command line arguments (optional):",
             QLineEdit.Normal,
-            ""
+            "",
         )
 
         if not ok:
@@ -1186,7 +1183,7 @@ class FridaManagerDialog(QDialog):
             spawn_options["env"] = {
                 "LD_PRELOAD": "",  # Clear preload to avoid detection
                 "DYLD_INSERT_LIBRARIES": "",  # Clear for macOS
-                "FRIDA_ENABLED": "1"  # Custom env var
+                "FRIDA_ENABLED": "1",  # Custom env var
             }
 
             # Spawn with suspend flag to attach before execution
@@ -1223,7 +1220,7 @@ class FridaManagerDialog(QDialog):
                     break
 
         except Exception as e:
-            error_msg = f"Failed to spawn process: {str(e)}"
+            error_msg = f"Failed to spawn process: {e!s}"
             self.console_text.append(f"Error: {error_msg}")
             QMessageBox.critical(self, "Spawn Error", error_msg)
 
@@ -1262,7 +1259,7 @@ class FridaManagerDialog(QDialog):
             self,
             "Select Frida Script",
             "",
-            "JavaScript Files (*.js);;All Files (*)"
+            "JavaScript Files (*.js);;All Files (*)",
         )
 
         if not file_path:
@@ -1285,7 +1282,7 @@ class FridaManagerDialog(QDialog):
                     "Script Exists",
                     f"Script '{source_path.name}' already exists. Overwrite?",
                     QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No
+                    QMessageBox.No,
                 )
                 if reply == QMessageBox.No:
                     return
@@ -1295,7 +1292,7 @@ class FridaManagerDialog(QDialog):
 
             # Log success
             self.log_console.append_output(
-                f"[SUCCESS] Added custom script: {source_path.name}"
+                f"[SUCCESS] Added custom script: {source_path.name}",
             )
             self.status_label.setText(f"Added script: {source_path.name}")
 
@@ -1310,10 +1307,10 @@ class FridaManagerDialog(QDialog):
             QMessageBox.critical(
                 self,
                 "Error",
-                f"Failed to add script: {str(e)}"
+                f"Failed to add script: {e!s}",
             )
             self.log_console.append_output(
-                f"[ERROR] Failed to add script: {str(e)}"
+                f"[ERROR] Failed to add script: {e!s}",
             )
 
     def preview_script(self, script_path: Path):
@@ -1330,7 +1327,7 @@ class FridaManagerDialog(QDialog):
         content_edit.setFont(QFont("Consolas", 10))
 
         try:
-            with open(script_path, "r") as f:
+            with open(script_path) as f:
                 content = f.read()
             content_edit.setPlainText(content)
 
@@ -1339,7 +1336,7 @@ class FridaManagerDialog(QDialog):
 
         except Exception as e:
             logger.error("Exception in frida_manager_dialog: %s", e)
-            content_edit.setPlainText(f"Error reading script: {str(e)}")
+            content_edit.setPlainText(f"Error reading script: {e!s}")
 
         layout.addWidget(QLabel(f"Location: {script_path}"))
         layout.addWidget(content_edit)
@@ -1373,7 +1370,7 @@ class FridaManagerDialog(QDialog):
             QMessageBox.warning(
                 self,
                 "Error",
-                f"Failed to open script editor: {str(e)}"
+                f"Failed to open script editor: {e!s}",
             )
 
     def load_selected_script(self):
@@ -1395,7 +1392,7 @@ class FridaManagerDialog(QDialog):
             "batch_size": self.batch_size_spin.value(),
             "batch_timeout": self.batch_timeout_spin.value(),
             "selective": self.selective_cb.isChecked(),
-            "priority": self.hook_priority_combo.currentText()
+            "priority": self.hook_priority_combo.currentText(),
         }
 
         self.frida_worker = FridaWorker(self.frida_manager)
@@ -1403,7 +1400,7 @@ class FridaManagerDialog(QDialog):
         self.frida_worker.params = {
             "session_id": self.current_session,
             "script_name": script_name,
-            "options": options
+            "options": options,
         }
         self.frida_worker.operationComplete.connect(self.on_script_loaded)
         self.frida_worker.error.connect(self.show_error)
@@ -1420,7 +1417,7 @@ class FridaManagerDialog(QDialog):
 
             # Log to console
             self.log_console.append_output(
-                f"[SCRIPT] Loaded {script_name} successfully"
+                f"[SCRIPT] Loaded {script_name} successfully",
             )
 
     def show_script_context_menu(self, position):
@@ -1441,14 +1438,14 @@ class FridaManagerDialog(QDialog):
         # Preview script
         preview_action = QAction("Preview Script", self)
         preview_action.triggered.connect(lambda: self.preview_script(
-            Path(item.data(Qt.UserRole))
+            Path(item.data(Qt.UserRole)),
         ))
         menu.addAction(preview_action)
 
         # Edit script
         edit_action = QAction("Edit Script", self)
         edit_action.triggered.connect(lambda: self.edit_script(
-            Path(item.data(Qt.UserRole))
+            Path(item.data(Qt.UserRole)),
         ))
         menu.addAction(edit_action)
 
@@ -1475,7 +1472,7 @@ class FridaManagerDialog(QDialog):
             "Delete Script",
             f"Are you sure you want to delete '{script_path.name}'?",
             QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
+            QMessageBox.No,
         )
 
         if reply == QMessageBox.Yes:
@@ -1483,14 +1480,14 @@ class FridaManagerDialog(QDialog):
                 script_path.unlink()
                 self.reload_script_list()
                 self.log_console.append_output(
-                    f"[SUCCESS] Deleted script: {script_path.name}"
+                    f"[SUCCESS] Deleted script: {script_path.name}",
                 )
             except Exception as e:
                 self.logger.error("Exception in frida_manager_dialog: %s", e)
                 QMessageBox.critical(
                     self,
                     "Error",
-                    f"Failed to delete script: {str(e)}"
+                    f"Failed to delete script: {e!s}",
                 )
 
     def duplicate_script(self, item):
@@ -1512,7 +1509,7 @@ class FridaManagerDialog(QDialog):
             shutil.copy2(script_path, new_path)
             self.reload_script_list()
             self.log_console.append_output(
-                f"[SUCCESS] Duplicated script: {script_path.name} → {new_name}"
+                f"[SUCCESS] Duplicated script: {script_path.name} → {new_name}",
             )
 
             # Open for editing
@@ -1523,7 +1520,7 @@ class FridaManagerDialog(QDialog):
             QMessageBox.critical(
                 self,
                 "Error",
-                f"Failed to duplicate script: {str(e)}"
+                f"Failed to duplicate script: {e!s}",
             )
 
     def show_loaded_script_menu(self, position):
@@ -1604,13 +1601,12 @@ class FridaManagerDialog(QDialog):
                 hook_stats = stats["batcher"]
                 self.hook_stats_label.setText(
                     f"Total Hooks: {hook_stats.get('pending_hooks', 0)} | "
-                    f"Active: {self.hooks_tree.topLevelItemCount()}"
+                    f"Active: {self.hooks_tree.topLevelItemCount()}",
                 )
 
         except Exception as e:
             logger.error("Exception in frida_manager_dialog: %s", e)
             # Silently handle stats update errors
-            pass
 
     def bypass_protection(self, protection_type: ProtectionType):
         """Bypass specific protection"""
@@ -1622,18 +1618,18 @@ class FridaManagerDialog(QDialog):
         # The adaptation will be handled by the FridaManager
         self.adaptation_log.append(
             f"{datetime.now().strftime('%H:%M:%S')} - "
-            f"Attempting to bypass {protection_type.value}..."
+            f"Attempting to bypass {protection_type.value}...",
         )
 
         # Trigger adaptation
         self.frida_manager._on_protection_detected(
             protection_type,
-            {"session": self.current_session}
+            {"session": self.current_session},
         )
 
         self.adaptation_log.append(
             f"{datetime.now().strftime('%H:%M:%S')} - "
-            f"Bypass script loaded for {protection_type.value}"
+            f"Bypass script loaded for {protection_type.value}",
         )
 
     def on_preset_selected(self, preset_name: str):
@@ -1672,13 +1668,13 @@ class FridaManagerDialog(QDialog):
             self.frida_manager.load_script(
                 self.current_session,
                 script,
-                preset.get("options", {})
+                preset.get("options", {}),
             )
             self.loaded_scripts_list.addItem(script)
 
         self.status_label.setText(f"Applied preset: {preset_name}")
         self.log_console.append_output(
-            f"[PRESET] Applied configuration: {preset_name}"
+            f"[PRESET] Applied configuration: {preset_name}",
         )
 
     def start_bypass_wizard(self):
@@ -1733,7 +1729,7 @@ class FridaManagerDialog(QDialog):
 
             # Save to file
             file_path, _ = QFileDialog.getSaveFileName(
-                self, "Save Configuration", "", "JSON Files (*.json)"
+                self, "Save Configuration", "", "JSON Files (*.json)",
             )
 
             if file_path:
@@ -1750,12 +1746,12 @@ class FridaManagerDialog(QDialog):
     def load_custom_config(self):
         """Load custom configuration"""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Load Configuration", "", "JSON Files (*.json)"
+            self, "Load Configuration", "", "JSON Files (*.json)",
         )
 
         if file_path:
             try:
-                with open(file_path, "r") as f:
+                with open(file_path) as f:
                     config = json.load(f)
 
                 self.custom_config_text.setText(json.dumps(config, indent=2))
@@ -1849,7 +1845,7 @@ class FridaManagerDialog(QDialog):
         self.ai_protection_focus = QComboBox()
         self.ai_protection_focus.addItems([
             "Auto-detect", "License Bypass", "Trial Extension",
-            "Network Validation", "Anti-Debug", "VM Detection"
+            "Network Validation", "Anti-Debug", "VM Detection",
         ])
         protection_layout.addWidget(self.ai_protection_focus)
 
@@ -1912,7 +1908,7 @@ class FridaManagerDialog(QDialog):
         """Browse for target binary file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Select Target Binary", "",
-            "Executable Files (*.exe *.dll *.so *.dylib *.bin);;All Files (*)"
+            "Executable Files (*.exe *.dll *.so *.dylib *.bin);;All Files (*)",
         )
         if file_path:
             self.ai_binary_path.setText(file_path)
@@ -1988,7 +1984,7 @@ class FridaManagerDialog(QDialog):
                 script_count = len(self.ai_generated_scripts)
                 iterations = result.get("iterations", 0)
                 self.log_console.append_output(
-                    f"[AI] Successfully generated {script_count} scripts in {iterations} iterations"
+                    f"[AI] Successfully generated {script_count} scripts in {iterations} iterations",
                 )
 
                 # Auto-preview if single script
@@ -2003,9 +1999,9 @@ class FridaManagerDialog(QDialog):
 
         except Exception as e:
             logger.error("Exception in frida_manager_dialog: %s", e)
-            self.ai_status.setText(f"❌ Error: {str(e)}")
-            self.log_console.append_output(f"[AI ERROR] {str(e)}")
-            QMessageBox.critical(self, "Error", f"AI script generation failed: {str(e)}")
+            self.ai_status.setText(f"❌ Error: {e!s}")
+            self.log_console.append_output(f"[AI ERROR] {e!s}")
+            QMessageBox.critical(self, "Error", f"AI script generation failed: {e!s}")
 
         finally:
             # Reset UI
@@ -2033,7 +2029,7 @@ class FridaManagerDialog(QDialog):
                 task_type=AITaskType.BINARY_ANALYSIS,
                 complexity=AnalysisComplexity.COMPLEX,
                 input_data={"binary_path": binary_path},
-                priority=8
+                priority=8,
             )
 
             # Submit and wait for result
@@ -2046,8 +2042,8 @@ class FridaManagerDialog(QDialog):
 
         except Exception as e:
             logger.error("Exception in frida_manager_dialog: %s", e)
-            self.ai_status.setText(f"❌ Analysis failed: {str(e)}")
-            self.log_console.append_output(f"[AI ERROR] Analysis failed: {str(e)}")
+            self.ai_status.setText(f"❌ Analysis failed: {e!s}")
+            self.log_console.append_output(f"[AI ERROR] Analysis failed: {e!s}")
 
     def preview_ai_script(self):
         """Preview generated AI scripts."""
@@ -2167,8 +2163,8 @@ class FridaManagerDialog(QDialog):
                         target_binary=target_binary,
                         options={
                             "session_id": self.current_session,
-                            "ai_generated": True
-                        }
+                            "ai_generated": True,
+                        },
                     )
 
                     if result.get("success"):
@@ -2193,8 +2189,8 @@ class FridaManagerDialog(QDialog):
 
         except Exception as e:
             logger.error("Exception in frida_manager_dialog: %s", e)
-            self.ai_status.setText(f"❌ Deployment failed: {str(e)}")
-            QMessageBox.critical(self, "Error", f"Failed to deploy scripts: {str(e)}")
+            self.ai_status.setText(f"❌ Deployment failed: {e!s}")
+            QMessageBox.critical(self, "Error", f"Failed to deploy scripts: {e!s}")
 
     def save_ai_script(self):
         """Save generated AI scripts to files."""
@@ -2208,7 +2204,7 @@ class FridaManagerDialog(QDialog):
             # Get save directory
             save_dir = QFileDialog.getExistingDirectory(
                 self, "Select Directory to Save AI Scripts",
-                "scripts/ai_generated"
+                "scripts/ai_generated",
             )
 
             if not save_dir:
@@ -2238,8 +2234,8 @@ class FridaManagerDialog(QDialog):
 
         except Exception as e:
             logger.error("Exception in frida_manager_dialog: %s", e)
-            self.ai_status.setText(f"❌ Save failed: {str(e)}")
-            QMessageBox.critical(self, "Error", f"Failed to save scripts: {str(e)}")
+            self.ai_status.setText(f"❌ Save failed: {e!s}")
+            QMessageBox.critical(self, "Error", f"Failed to save scripts: {e!s}")
 
     def closeEvent(self, event):
         """Handle dialog close"""

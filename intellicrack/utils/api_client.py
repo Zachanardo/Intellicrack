@@ -1,5 +1,4 @@
-"""
-API Client Utilities
+"""API Client Utilities
 
 Provides async/await based API client functionality with proper error handling
 and environment-based configuration.
@@ -9,7 +8,7 @@ Copyright (C) 2025 Zachary Flint
 
 import asyncio
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .secrets_manager import get_secret
 
@@ -29,7 +28,7 @@ except ImportError as e:
 class APIClient:
     """Production-ready API client with retry logic and error handling."""
 
-    def __init__(self, base_url: Optional[str] = None):
+    def __init__(self, base_url: str | None = None):
         """Initialize the API client with configuration from environment or defaults."""
         if not HAS_AIOHTTP:
             logger.warning("aiohttp not available - API client will use fallback implementation")
@@ -53,10 +52,9 @@ class APIClient:
             await self.session.close()
 
     async def fetch(self, endpoint: str, method: str = "GET",
-                   data: Optional[Dict[str, Any]] = None,
-                   headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
-        """
-        Fetch data from API endpoint with retry logic and error handling.
+                   data: dict[str, Any] | None = None,
+                   headers: dict[str, str] | None = None) -> dict[str, Any]:
+        """Fetch data from API endpoint with retry logic and error handling.
 
         Args:
             endpoint: API endpoint path
@@ -70,6 +68,7 @@ class APIClient:
         Raises:
             aiohttp.ClientError: On network errors
             ValueError: On invalid responses
+
         """
         if not HAS_AIOHTTP:
             # Fallback implementation using requests or urllib
@@ -78,7 +77,7 @@ class APIClient:
                 "error": "aiohttp not available",
                 "fallback": True,
                 "endpoint": endpoint,
-                "method": method
+                "method": method,
             }
 
         url = f"{self.base_url}{endpoint}"
@@ -86,7 +85,7 @@ class APIClient:
         # Default headers
         default_headers = {
             "Content-Type": "application/json",
-            "Accept": "application/json"
+            "Accept": "application/json",
         }
 
         # Add API key if available
@@ -104,7 +103,7 @@ class APIClient:
                     method=method,
                     url=url,
                     json=data,
-                    headers=default_headers
+                    headers=default_headers,
                 ) as response:
                     # Check response status
                     if not response.ok:
@@ -141,9 +140,8 @@ class APIClient:
 
 
 async def make_api_call(endpoint: str, method: str = "GET",
-                       data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """
-    Convenience function for making API calls.
+                       data: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Convenience function for making API calls.
 
     Args:
         endpoint: API endpoint
@@ -152,6 +150,7 @@ async def make_api_call(endpoint: str, method: str = "GET",
 
     Returns:
         Response data
+
     """
     async with APIClient() as client:
         return await client.fetch(endpoint, method, data)
@@ -159,9 +158,8 @@ async def make_api_call(endpoint: str, method: str = "GET",
 
 # Synchronous wrapper for compatibility
 def sync_api_call(endpoint: str, method: str = "GET",
-                  data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """
-    Synchronous wrapper for API calls.
+                  data: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Synchronous wrapper for API calls.
 
     Args:
         endpoint: API endpoint
@@ -170,6 +168,7 @@ def sync_api_call(endpoint: str, method: str = "GET",
 
     Returns:
         Response data
+
     """
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)

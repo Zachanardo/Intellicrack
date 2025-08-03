@@ -27,18 +27,16 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from ..resource_helper import get_resource_path
 
 
 def _resolve_path_with_fallback(
     new_relative_path: str,
-    old_absolute_path: Optional[str] = None,
-    create_if_missing: bool = True
+    old_absolute_path: str | None = None,
+    create_if_missing: bool = True,
 ) -> Path:
-    """
-    Resolve path with graceful fallback from new to old location.
+    """Resolve path with graceful fallback from new to old location.
 
     Args:
         new_relative_path: New path relative to project root
@@ -47,6 +45,7 @@ def _resolve_path_with_fallback(
 
     Returns:
         Path: Resolved path (new preferred, old as fallback)
+
     """
     project_root = get_project_root()
     new_path = (project_root / new_relative_path).resolve()
@@ -61,7 +60,7 @@ def _resolve_path_with_fallback(
         if old_path.exists():
             logger.warning(
                 f"Using fallback path for '{new_relative_path}': {old_path}. "
-                f"Consider migrating to new location: {new_path}"
+                f"Consider migrating to new location: {new_path}",
             )
             return old_path
 
@@ -74,11 +73,11 @@ def _resolve_path_with_fallback(
 
 
 def get_project_root() -> Path:
-    """
-    Get the project root directory.
+    """Get the project root directory.
 
     Returns:
         Path: Absolute path to the Intellicrack project root
+
     """
     try:
         # Use resource helper to find the package root
@@ -93,51 +92,51 @@ def get_project_root() -> Path:
 
 
 def get_scripts_dir() -> Path:
-    """
-    Get the scripts directory.
+    """Get the scripts directory.
 
     Returns:
         Path: Absolute path to the scripts directory
+
     """
     return Path(get_resource_path("scripts"))
 
 
 def get_frida_scripts_dir() -> Path:
-    """
-    Get the Frida scripts directory.
+    """Get the Frida scripts directory.
 
     Returns:
         Path: Absolute path to the Frida scripts directory
+
     """
     return Path(get_resource_path("plugins/frida_scripts"))
 
 
 def get_ghidra_scripts_dir() -> Path:
-    """
-    Get the Ghidra scripts directory.
+    """Get the Ghidra scripts directory.
 
     Returns:
         Path: Absolute path to the Ghidra scripts directory
+
     """
     return Path(get_resource_path("plugins/ghidra_scripts"))
 
 
 def get_plugin_modules_dir() -> Path:
-    """
-    Get the Python plugin modules directory.
+    """Get the Python plugin modules directory.
 
     Returns:
         Path: Absolute path to the custom plugin modules directory
+
     """
     return get_project_root() / "intellicrack" / "plugins" / "custom_modules"
 
 
 def get_config_dir() -> Path:
-    """
-    Get the configuration directory using modern config system with fallback.
+    """Get the configuration directory using modern config system with fallback.
 
     Returns:
         Path: Absolute path to the configuration directory
+
     """
     try:
         from intellicrack.core.config_manager import get_config
@@ -152,11 +151,11 @@ def get_config_dir() -> Path:
 
 
 def get_main_config_file() -> Path:
-    """
-    Get the main configuration file path using modern config system.
+    """Get the main configuration file path using modern config system.
 
     Returns:
         Path: Absolute path to main config file
+
     """
     try:
         from intellicrack.core.config_manager import get_config
@@ -169,32 +168,32 @@ def get_main_config_file() -> Path:
 
 
 def get_tests_dir() -> Path:
-    """
-    Get the tests directory.
+    """Get the tests directory.
 
     Returns:
         Path: Absolute path to the tests directory
+
     """
     return get_project_root() / "tests"
 
 
 # New path getters for reorganized structure with graceful fallback
 def get_data_dir() -> Path:
-    """
-    Get the main data directory.
+    """Get the main data directory.
 
     Returns:
         Path: Absolute path to the data directory
+
     """
     return _resolve_path_with_fallback("data")
 
 
 def get_logs_dir() -> Path:
-    """
-    Get the logs directory with fallback support.
+    """Get the logs directory with fallback support.
 
     Returns:
         Path: Absolute path to the logs directory
+
     """
     project_root = get_project_root()
     old_path = str(project_root / "logs")
@@ -202,11 +201,11 @@ def get_logs_dir() -> Path:
 
 
 def get_plugin_cache_dir() -> Path:
-    """
-    Get the plugin cache directory with fallback support.
+    """Get the plugin cache directory with fallback support.
 
     Returns:
         Path: Absolute path to the plugin cache directory
+
     """
     project_root = get_project_root()
     old_path = str(project_root / "plugin_cache")
@@ -214,11 +213,11 @@ def get_plugin_cache_dir() -> Path:
 
 
 def get_visualizations_dir() -> Path:
-    """
-    Get the visualizations directory with fallback support.
+    """Get the visualizations directory with fallback support.
 
     Returns:
         Path: Absolute path to the visualizations directory
+
     """
     project_root = get_project_root()
     old_path = str(project_root / "visualizations")
@@ -226,11 +225,11 @@ def get_visualizations_dir() -> Path:
 
 
 def get_reports_dir() -> Path:
-    """
-    Get the reports directory with fallback support.
+    """Get the reports directory with fallback support.
 
     Returns:
         Path: Absolute path to the reports directory
+
     """
     project_root = get_project_root()
     old_path = str(project_root / "reports")
@@ -238,21 +237,21 @@ def get_reports_dir() -> Path:
 
 
 def get_dev_dir() -> Path:
-    """
-    Get the development directory.
+    """Get the development directory.
 
     Returns:
         Path: Absolute path to the dev directory
+
     """
     return _resolve_path_with_fallback("dev")
 
 
 def get_project_docs_dir() -> Path:
-    """
-    Get the project documentation directory with fallback support.
+    """Get the project documentation directory with fallback support.
 
     Returns:
         Path: Absolute path to the project docs directory
+
     """
     project_root = get_project_root()
     old_path = str(project_root / "project-docs")
@@ -260,31 +259,31 @@ def get_project_docs_dir() -> Path:
 
 
 def get_dev_scripts_dir() -> Path:
-    """
-    Get the development scripts directory.
+    """Get the development scripts directory.
 
     Returns:
         Path: Absolute path to the dev scripts directory
+
     """
     return _resolve_path_with_fallback("dev/scripts")
 
 
 def get_frida_logs_dir() -> Path:
-    """
-    Get the Frida operations logs directory.
+    """Get the Frida operations logs directory.
 
     Returns:
         Path: Absolute path to the Frida logs directory
+
     """
     return get_logs_dir() / "frida_operations"
 
 
-def list_frida_scripts() -> List[Path]:
-    """
-    List all available Frida scripts.
+def list_frida_scripts() -> list[Path]:
+    """List all available Frida scripts.
 
     Returns:
         List[Path]: List of paths to Frida .js files
+
     """
     frida_dir = get_frida_scripts_dir()
     if frida_dir.exists():
@@ -292,12 +291,12 @@ def list_frida_scripts() -> List[Path]:
     return []
 
 
-def list_ghidra_scripts() -> List[Path]:
-    """
-    List all available Ghidra scripts.
+def list_ghidra_scripts() -> list[Path]:
+    """List all available Ghidra scripts.
 
     Returns:
         List[Path]: List of paths to Ghidra .java and .py files
+
     """
     ghidra_dir = get_ghidra_scripts_dir()
     scripts = []
@@ -307,12 +306,12 @@ def list_ghidra_scripts() -> List[Path]:
     return scripts
 
 
-def list_plugin_modules() -> List[Path]:
-    """
-    List all available Python plugin modules.
+def list_plugin_modules() -> list[Path]:
+    """List all available Python plugin modules.
 
     Returns:
         List[Path]: List of paths to Python plugin files
+
     """
     plugins_dir = get_plugin_modules_dir()
     if plugins_dir.exists():
@@ -320,9 +319,8 @@ def list_plugin_modules() -> List[Path]:
     return []
 
 
-def find_script_by_name(script_name: str, script_type: str = "auto") -> Optional[Path]:
-    """
-    Find a script by name across all script directories.
+def find_script_by_name(script_name: str, script_type: str = "auto") -> Path | None:
+    """Find a script by name across all script directories.
 
     Args:
         script_name: Name of the script (with or without extension)
@@ -330,6 +328,7 @@ def find_script_by_name(script_name: str, script_type: str = "auto") -> Optional
 
     Returns:
         Path: Path to the script if found, None otherwise
+
     """
     # Remove extension if present
     base_name = Path(script_name).stem
@@ -349,12 +348,12 @@ def find_script_by_name(script_name: str, script_type: str = "auto") -> Optional
     return None
 
 
-def get_path_info() -> Dict[str, str]:
-    """
-    Get information about all configured paths.
+def get_path_info() -> dict[str, str]:
+    """Get information about all configured paths.
 
     Returns:
         Dict[str, str]: Dictionary mapping path names to their absolute paths
+
     """
     return {
         "project_root": str(get_project_root()),
@@ -374,13 +373,12 @@ def get_path_info() -> Dict[str, str]:
         "dev_dir": str(get_dev_dir()),
         "project_docs": str(get_project_docs_dir()),
         "dev_scripts": str(get_dev_scripts_dir()),
-        "frida_logs": str(get_frida_logs_dir())
+        "frida_logs": str(get_frida_logs_dir()),
     }
 
 
 def ensure_directories_exist() -> None:
-    """
-    Ensure all required directories exist, creating them if necessary.
+    """Ensure all required directories exist, creating them if necessary.
     """
     directories = [
         get_scripts_dir(),
@@ -398,7 +396,7 @@ def ensure_directories_exist() -> None:
         get_dev_dir(),
         get_project_docs_dir(),
         get_dev_scripts_dir(),
-        get_frida_logs_dir()
+        get_frida_logs_dir(),
     ]
 
     for directory in directories:
@@ -406,29 +404,29 @@ def ensure_directories_exist() -> None:
 
 
 # Legacy compatibility functions for gradual migration
-def get_frida_script_path(script_name: str) -> Optional[str]:
-    """
-    Legacy function for getting Frida script paths.
+def get_frida_script_path(script_name: str) -> str | None:
+    """Legacy function for getting Frida script paths.
 
     Args:
         script_name: Name of the Frida script
 
     Returns:
         str: Path to the script if found, None otherwise
+
     """
     script_path = find_script_by_name(script_name, "frida")
     return str(script_path) if script_path else None
 
 
-def get_ghidra_script_path(script_name: str) -> Optional[str]:
-    """
-    Legacy function for getting Ghidra script paths.
+def get_ghidra_script_path(script_name: str) -> str | None:
+    """Legacy function for getting Ghidra script paths.
 
     Args:
         script_name: Name of the Ghidra script
 
     Returns:
         str: Path to the script if found, None otherwise
+
     """
     script_path = find_script_by_name(script_name, "ghidra")
     return str(script_path) if script_path else None

@@ -1,5 +1,4 @@
-"""
-Comprehensive Radare2 UI Manager for Intellicrack
+"""Comprehensive Radare2 UI Manager for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -20,7 +19,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
-from typing import Any, Dict, List
+from typing import Any
 
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QMessageBox, QTabWidget
@@ -41,8 +40,7 @@ logger = get_logger(__name__)
 
 
 class R2UIManager(QObject):
-    """
-    Comprehensive manager for all radare2 UI integrations.
+    """Comprehensive manager for all radare2 UI integrations.
 
     This class handles the integration of all radare2 features into the main
     Intellicrack application, providing a unified interface for:
@@ -121,14 +119,14 @@ class R2UIManager(QObject):
             self.logger.error(f"Failed to setup signal connections: {e}")
 
     def integrate_with_application(self, main_app) -> bool:
-        """
-        Integrate all radare2 UI components with the main application.
+        """Integrate all radare2 UI components with the main application.
 
         Args:
             main_app: The main Intellicrack application instance
 
         Returns:
             bool: True if integration successful, False otherwise
+
         """
         try:
             self.main_app = main_app
@@ -141,13 +139,13 @@ class R2UIManager(QObject):
                 # Add radare2 analysis tab
                 main_app.tab_widget.addTab(
                     self.ui_components["r2_widget"],
-                    "Radare2 Analysis"
+                    "Radare2 Analysis",
                 )
 
                 # Add enhanced dashboard tab
                 main_app.tab_widget.addTab(
                     self.ui_components["enhanced_dashboard"],
-                    "Enhanced Analysis"
+                    "Enhanced Analysis",
                 )
 
                 # Store references in main app
@@ -169,11 +167,11 @@ class R2UIManager(QObject):
                 # Add our components
                 main_app.tab_widget.addTab(
                     self.ui_components["r2_widget"],
-                    "Radare2 Analysis"
+                    "Radare2 Analysis",
                 )
                 main_app.tab_widget.addTab(
                     self.ui_components["enhanced_dashboard"],
-                    "Enhanced Analysis"
+                    "Enhanced Analysis",
                 )
 
                 # Store references
@@ -210,9 +208,8 @@ class R2UIManager(QObject):
             if integration_success:
                 self.logger.info("R2UIManager integration completed successfully")
                 return True
-            else:
-                self.logger.error("R2UIManager integration failed")
-                return False
+            self.logger.error("R2UIManager integration failed")
+            return False
 
         except Exception as e:
             self.logger.error(f"Failed to integrate with application: {e}")
@@ -236,7 +233,7 @@ class R2UIManager(QObject):
                     ("License Analysis", lambda: self.start_analysis("decompilation")),
                     ("String Analysis", lambda: self.start_analysis("strings")),
                     ("AI Analysis", lambda: self.start_analysis("ai")),
-                    ("CFG Analysis", lambda: self.start_analysis("cfg"))
+                    ("CFG Analysis", lambda: self.start_analysis("cfg")),
                 ]
 
                 for action_name, callback in analysis_actions:
@@ -276,7 +273,7 @@ class R2UIManager(QObject):
             if hasattr(main_app, "statusBar") and main_app.statusBar():
                 # Connect our status updates to main app status bar
                 self.status_updated.connect(
-                    lambda msg: main_app.statusBar().showMessage(f"R2: {msg}")
+                    lambda msg: main_app.statusBar().showMessage(f"R2: {msg}"),
                 )
 
                 self.logger.info("Status bar integration completed")
@@ -305,14 +302,14 @@ class R2UIManager(QObject):
         except Exception as e:
             self.logger.error(f"Failed to set binary path: {e}")
 
-    def start_analysis(self, analysis_type: str, options: Dict[str, Any] = None):
+    def start_analysis(self, analysis_type: str, options: dict[str, Any] = None):
         """Start radare2 analysis of specified type"""
         try:
             if not self.binary_path:
                 QMessageBox.warning(
                     self.main_app,
                     "No Binary",
-                    "Please select a binary file first"
+                    "Please select a binary file first",
                 )
                 return False
 
@@ -325,7 +322,7 @@ class R2UIManager(QObject):
                     "type": analysis_type,
                     "binary": self.binary_path,
                     "timestamp": self._get_timestamp(),
-                    "options": options or {}
+                    "options": options or {},
                 })
 
                 # Emit signal
@@ -333,9 +330,8 @@ class R2UIManager(QObject):
 
                 self.logger.info(f"Started {analysis_type} analysis")
                 return True
-            else:
-                self.logger.error("R2 widget not available")
-                return False
+            self.logger.error("R2 widget not available")
+            return False
 
         except Exception as e:
             self.logger.error(f"Failed to start analysis: {e}")
@@ -355,7 +351,7 @@ class R2UIManager(QObject):
         except Exception as e:
             self.logger.error(f"Failed to show configuration: {e}")
 
-    def _apply_configuration(self, config: Dict[str, Any]):
+    def _apply_configuration(self, config: dict[str, Any]):
         """Apply configuration to all components"""
         try:
             # Store configuration
@@ -377,7 +373,7 @@ class R2UIManager(QObject):
                 QMessageBox.information(
                     self.main_app,
                     "No Results",
-                    "No analysis results available to export"
+                    "No analysis results available to export",
                 )
                 return False
 
@@ -418,29 +414,28 @@ class R2UIManager(QObject):
                     "action": "export",
                     "file_path": export_path,
                     "binary": self.binary_path,
-                    "results_count": len(self.current_results)
+                    "results_count": len(self.current_results),
                 })
 
                 return True
-            else:
-                # Direct export if no viewer available
-                import json
-                with open(export_path, "w") as f:
-                    json.dump(self.current_results, f, indent=2)
+            # Direct export if no viewer available
+            import json
+            with open(export_path, "w") as f:
+                json.dump(self.current_results, f, indent=2)
 
-                self.logger.info(f"Results exported directly to: {export_path}")
-                return True
+            self.logger.info(f"Results exported directly to: {export_path}")
+            return True
 
         except Exception as e:
             self.logger.error(f"Failed to export results to {file_path}: {e}")
-            self.status_updated.emit(f"Export failed: {str(e)}")
+            self.status_updated.emit(f"Export failed: {e!s}")
             return False
 
-    def get_analysis_history(self) -> List[Dict[str, Any]]:
+    def get_analysis_history(self) -> list[dict[str, Any]]:
         """Get analysis history"""
         return self.analysis_history.copy()
 
-    def get_current_results(self) -> Dict[str, Any]:
+    def get_current_results(self) -> dict[str, Any]:
         """Get current analysis results"""
         return self.current_results.copy()
 
@@ -466,7 +461,7 @@ class R2UIManager(QObject):
         """Handle analysis started signal"""
         self.status_updated.emit(f"Starting {analysis_type} analysis...")
 
-    def _on_analysis_completed(self, results: Dict[str, Any]):
+    def _on_analysis_completed(self, results: dict[str, Any]):
         """Handle analysis completed signal"""
         self.current_results = results
         self.status_updated.emit("Analysis completed successfully")
@@ -481,7 +476,7 @@ class R2UIManager(QObject):
         QMessageBox.critical(
             self.main_app,
             "Analysis Error",
-            f"Analysis failed:\n{error}"
+            f"Analysis failed:\n{error}",
         )
 
     def cleanup(self):
@@ -512,8 +507,7 @@ def create_r2_ui_manager(main_app=None) -> R2UIManager:
 
 
 def integrate_radare2_ui_comprehensive(main_app) -> R2UIManager:
-    """
-    Comprehensive integration of all radare2 UI features with main application.
+    """Comprehensive integration of all radare2 UI features with main application.
 
     This is the main entry point for integrating all radare2 functionality
     into an existing Intellicrack application.
@@ -523,6 +517,7 @@ def integrate_radare2_ui_comprehensive(main_app) -> R2UIManager:
 
     Returns:
         R2UIManager: Configured UI manager instance
+
     """
     try:
         # Create UI manager
@@ -532,9 +527,8 @@ def integrate_radare2_ui_comprehensive(main_app) -> R2UIManager:
         if ui_manager.integrate_with_application(main_app):
             logger.info("Comprehensive radare2 UI integration completed successfully")
             return ui_manager
-        else:
-            logger.error("Comprehensive radare2 UI integration failed")
-            return None
+        logger.error("Comprehensive radare2 UI integration failed")
+        return None
 
     except Exception as e:
         logger.error(f"Failed to integrate radare2 UI comprehensively: {e}")
@@ -544,5 +538,5 @@ def integrate_radare2_ui_comprehensive(main_app) -> R2UIManager:
 __all__ = [
     "R2UIManager",
     "create_r2_ui_manager",
-    "integrate_radare2_ui_comprehensive"
+    "integrate_radare2_ui_comprehensive",
 ]

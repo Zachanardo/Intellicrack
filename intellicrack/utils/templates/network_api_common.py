@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -21,14 +20,13 @@ Common network API analysis utilities to avoid code duplication.
 """
 
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from intellicrack.logger import logger
 
 
 def analyze_network_apis(pe_binary, network_apis, logger_func=None):
-    """
-    Common function to analyze network APIs in a PE binary.
+    """Common function to analyze network APIs in a PE binary.
 
     Args:
         pe_binary: Parsed PE binary object
@@ -37,6 +35,7 @@ def analyze_network_apis(pe_binary, network_apis, logger_func=None):
 
     Returns:
         dict: Dictionary of category -> list of detected APIs
+
     """
     detected_apis = defaultdict(list)
 
@@ -59,15 +58,15 @@ def analyze_network_apis(pe_binary, network_apis, logger_func=None):
     return dict(detected_apis)
 
 
-def process_network_api_results(detected_apis: Dict[str, List[str]]) -> Dict[str, Any]:
-    """
-    Process detected network API results into analysis format.
+def process_network_api_results(detected_apis: dict[str, list[str]]) -> dict[str, Any]:
+    """Process detected network API results into analysis format.
 
     Args:
         detected_apis: Dictionary mapping categories to detected API lists
 
     Returns:
         Dictionary with processed results including counts and security checks
+
     """
     results = {}
 
@@ -84,15 +83,14 @@ def process_network_api_results(detected_apis: Dict[str, List[str]]) -> Dict[str
         "has_ssl": has_ssl,
         "has_network": has_network,
         "ssl_without_network": has_ssl and not has_network,
-        "network_without_ssl": has_network and not has_ssl
+        "network_without_ssl": has_network and not has_ssl,
     }
 
     return results
 
 
-def get_scapy_layers(scapy_module) -> Optional[Tuple]:
-    """
-    Get IP and TCP layers from scapy module with proper error handling.
+def get_scapy_layers(scapy_module) -> tuple | None:
+    """Get IP and TCP layers from scapy module with proper error handling.
 
     This handles different scapy import scenarios across versions.
 
@@ -101,6 +99,7 @@ def get_scapy_layers(scapy_module) -> Optional[Tuple]:
 
     Returns:
         Tuple of (IP, TCP) classes or None if import failed
+
     """
     try:
         # Try direct access first
@@ -121,8 +120,7 @@ def get_scapy_layers(scapy_module) -> Optional[Tuple]:
 
 
 def detect_network_apis(pe_binary, network_apis, logger_func=None):
-    """
-    Alias for analyze_network_apis for backward compatibility.
+    """Alias for analyze_network_apis for backward compatibility.
 
     Args:
         pe_binary: Parsed PE binary object
@@ -131,34 +129,35 @@ def detect_network_apis(pe_binary, network_apis, logger_func=None):
 
     Returns:
         dict: Dictionary of category -> list of detected APIs
+
     """
     return analyze_network_apis(pe_binary, network_apis, logger_func)
 
 
 def get_network_api_categories():
-    """
-    Get standard network API categories.
+    """Get standard network API categories.
 
     Returns:
         dict: Dictionary of category -> list of API names
+
     """
     return {
         "basic": ["socket", "WSASocket", "bind", "listen", "accept", "connect", "send", "recv"],
         "http": ["HttpOpenRequest", "HttpSendRequest", "InternetConnect", "WinHttpOpen"],
         "ssl": ["SSL_connect", "SSL_write", "SSL_read", "CryptAcquireContext"],
-        "dns": ["gethostbyname", "getaddrinfo", "DnsQuery"]
+        "dns": ["gethostbyname", "getaddrinfo", "DnsQuery"],
     }
 
 
 def summarize_network_capabilities(detected_apis):
-    """
-    Summarize network capabilities based on detected APIs.
+    """Summarize network capabilities based on detected APIs.
 
     Args:
         detected_apis: Dictionary of category -> list of APIs
 
     Returns:
         dict: Summary statistics
+
     """
     summary = {
         cat: len(apis) for cat, apis in detected_apis.items() if apis

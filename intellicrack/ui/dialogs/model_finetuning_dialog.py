@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -85,7 +85,7 @@ except ImportError as e:
 # Optional ML dependencies
 try:
     import torch
-    import torch.nn as nn
+    from torch import nn
     TORCH_AVAILABLE = True
 
     # Import unified GPU system
@@ -138,6 +138,7 @@ except ImportError as e:
 
 class TrainingStatus(Enum):
     """Training status enumeration."""
+
     IDLE = "idle"
     PREPARING = "preparing"
     TRAINING = "training"
@@ -150,6 +151,7 @@ class TrainingStatus(Enum):
 @dataclass
 class TrainingConfig:
     """Configuration for model training parameters."""
+
     model_path: str = ""
     model_format: str = "PyTorch"
     dataset_path: str = ""
@@ -185,17 +187,17 @@ class TrainingConfig:
                 epochs=self.epochs,
                 optimizer=self.optimizer,
                 loss_function=self.loss_function,
-                patience=self.patience
+                patience=self.patience,
             )
-        else:
-            logger.warning("Enhanced training configuration not available")
-            return None
+        logger.warning("Enhanced training configuration not available")
+        return None
 
 
 @dataclass
 class AugmentationConfig:
     """Configuration for dataset augmentation."""
-    techniques: List[str] = None
+
+    techniques: list[str] = None
     augmentations_per_sample: int = 2
     augmentation_probability: float = 0.8
     preserve_labels: bool = True
@@ -209,8 +211,7 @@ class AugmentationConfig:
 
 
 class TrainingThread(QThread):
-    """
-    Thread for running model training without blocking the UI.
+    """Thread for running model training without blocking the UI.
 
     Signals:
         progress_signal: Emitted with training progress updates
@@ -220,11 +221,11 @@ class TrainingThread(QThread):
     progress_signal = pyqtSignal(dict) if PYQT6_AVAILABLE else None
 
     def __init__(self, config: TrainingConfig):
-        """
-        Initialize training thread.
+        """Initialize training thread.
 
         Args:
             config: Training configuration parameters
+
         """
         if PYQT6_AVAILABLE:
             super().__init__()
@@ -246,7 +247,7 @@ class TrainingThread(QThread):
                 self.progress_signal.emit({
                     "status": self.status.value,
                     "message": "Preparing training",
-                    "step": 0
+                    "step": 0,
                 })
 
             # Load model and tokenizer
@@ -264,7 +265,7 @@ class TrainingThread(QThread):
                 self.progress_signal.emit({
                     "status": self.status.value,
                     "message": "Training in progress",
-                    "step": 1
+                    "step": 1,
                 })
             self._train_model()
 
@@ -273,7 +274,7 @@ class TrainingThread(QThread):
                 self.progress_signal.emit({
                     "status": self.status.value,
                     "message": "Training completed successfully",
-                    "step": 100
+                    "step": 100,
                 })
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -283,7 +284,7 @@ class TrainingThread(QThread):
                 self.progress_signal.emit({
                     "status": self.status.value,
                     "error": str(e),
-                    "step": -1
+                    "step": -1,
                 })
 
     def _load_model(self):
@@ -297,7 +298,7 @@ class TrainingThread(QThread):
                 self.model = AutoModelForCausalLM.from_pretrained(
                     model_path,
                     torch_dtype=torch.float16 if TORCH_AVAILABLE else None,
-                    device_map="auto" if TORCH_AVAILABLE else None
+                    device_map="auto" if TORCH_AVAILABLE else None,
                 )
 
                 # Add padding token if needed
@@ -322,7 +323,7 @@ class TrainingThread(QThread):
                 self.progress_signal.emit({
                     "status": self.status.value,
                     "message": "Model loaded successfully",
-                    "step": 0
+                    "step": 0,
                 })
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -330,8 +331,7 @@ class TrainingThread(QThread):
             raise
 
     def _create_dummy_model(self):
-        """
-        Create a comprehensive model architecture for testing and demonstration.
+        """Create a comprehensive model architecture for testing and demonstration.
 
         This function creates a realistic transformer model with proper initialization,
         multiple architecture options, and comprehensive configuration that can be used
@@ -387,12 +387,12 @@ class TrainingThread(QThread):
     def _create_gpt_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int):
         """Create a GPT-style autoregressive transformer model."""
         class GPTModel(nn.Module):
-            """
-            GPT-style autoregressive transformer for language modeling.
+            """GPT-style autoregressive transformer for language modeling.
 
             This implementation includes causal attention masking, proper positional
             encoding, and layer normalization placement following GPT architecture.
             """
+
             def __init__(self, vocab_size, hidden_size, num_layers, num_heads):
                 """Initialize GPT model architecture with specified parameters."""
                 super().__init__()
@@ -420,17 +420,18 @@ class TrainingThread(QThread):
                 """Create a single GPT transformer block."""
                 class GPTBlock(nn.Module):
                     """A single GPT transformer block with attention and feed-forward layers."""
+
                     def __init__(self, hidden_size, num_heads):
                         """Initialize GPT block with attention and feed-forward layers."""
                         super().__init__()
                         self.attention = nn.MultiheadAttention(
-                            hidden_size, num_heads, dropout=0.1, batch_first=True
+                            hidden_size, num_heads, dropout=0.1, batch_first=True,
                         )
                         self.feed_forward = nn.Sequential(
                             nn.Linear(hidden_size, hidden_size * 4),
                             nn.GELU(),
                             nn.Linear(hidden_size * 4, hidden_size),
-                            nn.Dropout(0.1)
+                            nn.Dropout(0.1),
                         )
                         self.ln1 = nn.LayerNorm(hidden_size)
                         self.ln2 = nn.LayerNorm(hidden_size)
@@ -482,12 +483,12 @@ class TrainingThread(QThread):
     def _create_bert_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int):
         """Create a BERT-style bidirectional transformer model."""
         class BERTModel(nn.Module):
-            """
-            BERT-style bidirectional transformer for masked language modeling.
+            """BERT-style bidirectional transformer for masked language modeling.
 
             Includes proper token type embeddings, bidirectional attention,
             and masked language modeling head.
             """
+
             def __init__(self, vocab_size, hidden_size, num_layers, num_heads):
                 """Initialize BERT model architecture with specified parameters."""
                 super().__init__()
@@ -506,7 +507,7 @@ class TrainingThread(QThread):
                     dim_feedforward=hidden_size * 4,
                     dropout=0.1,
                     activation="gelu",
-                    batch_first=True
+                    batch_first=True,
                 )
                 self.transformer = nn.TransformerEncoder(encoder_layer, num_layers)
 
@@ -515,7 +516,7 @@ class TrainingThread(QThread):
                     nn.Linear(hidden_size, hidden_size),
                     nn.GELU(),
                     nn.LayerNorm(hidden_size),
-                    nn.Linear(hidden_size, vocab_size)
+                    nn.Linear(hidden_size, vocab_size),
                 )
 
                 # Pooler for classification tasks
@@ -552,7 +553,7 @@ class TrainingThread(QThread):
                 return {
                     "logits": mlm_logits,
                     "pooled_output": pooled_output,
-                    "hidden_states": hidden_states
+                    "hidden_states": hidden_states,
                 }
 
         return BERTModel(vocab_size, hidden_size, num_layers, num_heads)
@@ -568,12 +569,12 @@ class TrainingThread(QThread):
     def _create_llama_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int):
         """Create a LLaMA-style model with RMSNorm and SwiGLU."""
         class LlamaModel(nn.Module):
-            """
-            LLaMA-style transformer with RMSNorm and SwiGLU activation.
+            """LLaMA-style transformer with RMSNorm and SwiGLU activation.
 
             Implements the architectural improvements from the LLaMA paper including
             RMSNorm, SwiGLU activation, and rotary positional embeddings.
             """
+
             def __init__(self, vocab_size, hidden_size, num_layers, num_heads):
                 """Initialize LLaMA model architecture with specified parameters."""
                 super().__init__()
@@ -596,6 +597,7 @@ class TrainingThread(QThread):
                 """Create RMSNorm layer."""
                 class RMSNorm(nn.Module):
                     """RMS normalization layer for transformer models."""
+
                     def __init__(self, hidden_size, eps=1e-6):
                         """Initialize RMS normalization with hidden size and epsilon."""
                         super().__init__()
@@ -614,12 +616,13 @@ class TrainingThread(QThread):
                 """Create a single LLaMA transformer layer."""
                 class LlamaLayer(nn.Module):
                     """Single layer of a LLaMA transformer model."""
+
                     def __init__(self, hidden_size, num_heads):
                         """Initialize LLaMA layer with attention and feed-forward networks."""
                         super().__init__()
                         self.attention_norm = parent._create_rms_norm(hidden_size)
                         self.attention = nn.MultiheadAttention(
-                            hidden_size, num_heads, dropout=0.0, batch_first=True
+                            hidden_size, num_heads, dropout=0.0, batch_first=True,
                         )
 
                         self.ffn_norm = parent._create_rms_norm(hidden_size)
@@ -673,12 +676,12 @@ class TrainingThread(QThread):
     def _create_enhanced_transformer_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int):
         """Create an enhanced transformer model with modern improvements."""
         class EnhancedTransformerModel(nn.Module):
-            """
-            Enhanced transformer model with modern architectural improvements.
+            """Enhanced transformer model with modern architectural improvements.
 
             Includes features like pre-norm, improved attention, better initialization,
             and optional techniques like gradient checkpointing support.
             """
+
             def __init__(self, vocab_size, hidden_size, num_layers, num_heads):
                 """Initialize enhanced transformer with modern architectural improvements."""
                 super().__init__()
@@ -706,13 +709,14 @@ class TrainingThread(QThread):
                 """Create enhanced transformer layer with modern improvements."""
                 class EnhancedTransformerLayer(nn.Module):
                     """Enhanced transformer layer with modern improvements and optimizations."""
+
                     def __init__(self, hidden_size, num_heads):
                         """Initialize enhanced transformer layer with pre-norm and improved attention."""
                         super().__init__()
                         # Pre-norm attention
                         self.attention_norm = nn.LayerNorm(hidden_size)
                         self.attention = nn.MultiheadAttention(
-                            hidden_size, num_heads, dropout=0.1, batch_first=True
+                            hidden_size, num_heads, dropout=0.1, batch_first=True,
                         )
                         self.attention_dropout = nn.Dropout(0.1)
 
@@ -723,7 +727,7 @@ class TrainingThread(QThread):
                             nn.GELU(),
                             nn.Dropout(0.1),
                             nn.Linear(hidden_size * 4, hidden_size),
-                            nn.Dropout(0.1)
+                            nn.Dropout(0.1),
                         )
 
                     def forward(self, x, attention_mask=None):
@@ -732,7 +736,7 @@ class TrainingThread(QThread):
                         normed_x = self.attention_norm(x)
                         attn_out, _ = self.attention(
                             normed_x, normed_x, normed_x,
-                            attn_mask=attention_mask, is_causal=True
+                            attn_mask=attention_mask, is_causal=True,
                         )
                         attn_out = self.attention_dropout(attn_out)
                         x = x + attn_out
@@ -779,12 +783,12 @@ class TrainingThread(QThread):
     def _create_tokenizer(self, vocab_size: int):
         """Create a functional tokenizer for the model."""
         class DummyTokenizer:
-            """
-            Functional tokenizer implementation for testing and demonstration.
+            """Functional tokenizer implementation for testing and demonstration.
 
             Provides basic tokenization capabilities including encoding, decoding,
             special tokens, and padding functionality.
             """
+
             def __init__(self, vocab_size):
                 self.vocab_size = vocab_size
                 # Create basic vocabulary
@@ -809,7 +813,7 @@ class TrainingThread(QThread):
                 """Create a basic vocabulary with common tokens."""
                 vocab = [
                     "[PAD]", "[UNK]", "[BOS]", "[EOS]", "[MASK]",
-                    "[CLS]", "[SEP]", "[NEWLINE]", "[TAB]", "[SPACE]"
+                    "[CLS]", "[SEP]", "[NEWLINE]", "[TAB]", "[SPACE]",
                 ]
 
                 # Add common English words
@@ -817,7 +821,7 @@ class TrainingThread(QThread):
                     "the", "and", "of", "to", "a", "in", "is", "it", "you", "that",
                     "he", "was", "for", "on", "are", "as", "with", "his", "they", "i",
                     "at", "be", "this", "have", "from", "or", "one", "had", "by", "word",
-                    "but", "not", "what", "all", "were", "we", "when", "your", "can", "said"
+                    "but", "not", "what", "all", "were", "we", "when", "your", "can", "said",
                 ]
                 vocab.extend(common_words)
 
@@ -944,7 +948,7 @@ class TrainingThread(QThread):
             "trainable_parameters": sum(p.numel() for p in self.model.parameters() if p.requires_grad),
             "created_timestamp": time.time(),
             "framework": "pytorch",
-            "version": "1.0.0"
+            "version": "1.0.0",
         })
 
         # Add training configuration
@@ -953,7 +957,7 @@ class TrainingThread(QThread):
             "batch_size": getattr(self.config, "batch_size", 32),
             "max_epochs": getattr(self.config, "max_epochs", 10),
             "warmup_steps": getattr(self.config, "warmup_steps", 1000),
-            "weight_decay": getattr(self.config, "weight_decay", 0.01)
+            "weight_decay": getattr(self.config, "weight_decay", 0.01),
         }
 
     def _estimate_parameter_count(self, hidden_size: int, num_layers: int, vocab_size: int) -> int:
@@ -973,6 +977,7 @@ class TrainingThread(QThread):
         """Create a minimal fallback model when PyTorch is not available."""
         class FallbackModel:
             """Minimal model placeholder when PyTorch is not available."""
+
             def __init__(self):
                 """Initialize fallback model with basic configuration parameters."""
                 self.config = {
@@ -980,7 +985,7 @@ class TrainingThread(QThread):
                     "vocab_size": 32000,
                     "hidden_size": 512,
                     "num_layers": 6,
-                    "status": "fallback_mode"
+                    "status": "fallback_mode",
                 }
 
             def forward(self, *args, **kwargs):
@@ -1020,7 +1025,7 @@ class TrainingThread(QThread):
             data = []
 
             if dataset_format == "json":
-                with open(dataset_path, "r", encoding="utf-8") as f:
+                with open(dataset_path, encoding="utf-8") as f:
                     raw_data = json.load(f)
                     if isinstance(raw_data, list):
                         data = raw_data
@@ -1028,7 +1033,7 @@ class TrainingThread(QThread):
                         data = raw_data["data"]
 
             elif dataset_format == "jsonl":
-                with open(dataset_path, "r", encoding="utf-8") as f:
+                with open(dataset_path, encoding="utf-8") as f:
                     for _line in f:
                         try:
                             item = json.loads(_line.strip())
@@ -1038,12 +1043,12 @@ class TrainingThread(QThread):
                             continue
 
             elif dataset_format == "csv":
-                with open(dataset_path, "r", encoding="utf-8") as f:
+                with open(dataset_path, encoding="utf-8") as f:
                     reader = csv.DictReader(f)
                     data = list(reader)
 
             elif dataset_format == "txt":
-                with open(dataset_path, "r", encoding="utf-8") as f:
+                with open(dataset_path, encoding="utf-8") as f:
                     lines = f.readlines()
                     # Convert to input/output format
                     data = [{"input": _line.strip(), "output": ""} for _line in lines if _line.strip()]
@@ -1051,7 +1056,7 @@ class TrainingThread(QThread):
             if PYQT6_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
                     "status": f"Dataset loaded: {len(data)} samples",
-                    "step": 1
+                    "step": 1,
                 })
 
             return data
@@ -1072,7 +1077,7 @@ class TrainingThread(QThread):
                         r=self.config.lora_rank,
                         lora_alpha=self.config.lora_alpha,
                         target_modules=["q_proj", "v_proj"],
-                        lora_dropout=0.1
+                        lora_dropout=0.1,
                     )
                     self.model = get_peft_model(self.model, lora_config)
 
@@ -1088,13 +1093,13 @@ class TrainingThread(QThread):
                     logging_steps=self.config.logging_steps,
                     save_strategy=self.config.save_strategy,
                     eval_strategy=self.config.evaluation_strategy,
-                    report_to=None  # Disable wandb/tensorboard
+                    report_to=None,  # Disable wandb/tensorboard
                 )
 
             if PYQT6_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
                     "status": "Training setup complete",
-                    "step": 2
+                    "step": 2,
                 })
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -1136,7 +1141,7 @@ class TrainingThread(QThread):
                         "epoch": _epoch,
                         "loss": loss,
                         "lr": lr,
-                        "progress": progress_ratio * 100
+                        "progress": progress_ratio * 100,
                     }
                     self.training_history.append(metrics)
 
@@ -1145,7 +1150,7 @@ class TrainingThread(QThread):
                         self.progress_signal.emit({
                             **metrics,
                             "status": f"Training epoch {_epoch+1}/{self.config.epochs}",
-                            "history": self.training_history[-10:]  # Last 10 steps
+                            "history": self.training_history[-10:],  # Last 10 steps
                         })
 
                     # Simulate time delay
@@ -1158,7 +1163,7 @@ class TrainingThread(QThread):
                         self.progress_signal.emit({
                             "status": self.status.value,
                             "message": f"Validating epoch {_epoch+1}",
-                            "step": current_step
+                            "step": current_step,
                         })
 
                     # Simulate validation time
@@ -1171,7 +1176,7 @@ class TrainingThread(QThread):
                 self.progress_signal.emit({
                     "status": "Training completed",
                     "step": total_steps,
-                    "final_loss": self.training_history[-1]["loss"] if self.training_history else 0
+                    "final_loss": self.training_history[-1]["loss"] if self.training_history else 0,
                 })
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -1192,7 +1197,7 @@ class TrainingThread(QThread):
             self.progress_signal.emit({
                 "status": self.status.value,
                 "message": "Training paused",
-                "step": -1
+                "step": -1,
             })
 
     def resume(self):
@@ -1203,13 +1208,12 @@ class TrainingThread(QThread):
             self.progress_signal.emit({
                 "status": self.status.value,
                 "message": "Training resumed",
-                "step": -1
+                "step": -1,
             })
 
 
 class ModelFinetuningDialog(QDialog):
-    """
-    Comprehensive AI Model Fine-Tuning Dialog.
+    """Comprehensive AI Model Fine-Tuning Dialog.
 
     Features:
     - Multiple model format support (PyTorch, GGUF, ONNX, Transformers)
@@ -1222,16 +1226,15 @@ class ModelFinetuningDialog(QDialog):
     """
 
     def __init__(self, parent=None):
-        """
-        Initialize the AI Model Fine-Tuning dialog.
+        """Initialize the AI Model Fine-Tuning dialog.
 
         Args:
             parent: Parent widget (optional)
 
         Raises:
             ImportError: If PyQt6 is not available
-        """
 
+        """
         # Initialize UI attributes
         self.apply_aug_button = None
         self.aug_per_sample_spin = None
@@ -1306,18 +1309,18 @@ class ModelFinetuningDialog(QDialog):
                 "binary_analysis": [
                     "How do I analyze PE file headers?",
                     "What are the common sections in an ELF file?",
-                    "How to detect packed executables?"
+                    "How to detect packed executables?",
                 ],
                 "license_bypass": [
                     "How to identify license validation functions?",
                     "What are common license check patterns?",
-                    "How to bypass hardware fingerprinting?"
+                    "How to bypass hardware fingerprinting?",
                 ],
                 "reverse_engineering": [
                     "How to use dynamic analysis tools?",
                     "What is static analysis?",
-                    "How to identify encryption algorithms?"
-                ]
+                    "How to identify encryption algorithms?",
+                ],
             }
             self.logger.debug("Knowledge base initialized")
         except (OSError, ValueError, RuntimeError) as e:
@@ -1362,8 +1365,7 @@ class ModelFinetuningDialog(QDialog):
                 else:
                     device_info += "GPU: Not available\n"
                 return device_info
-            else:
-                return "Training Device: CPU (GPU autoloader not available)\n"
+            return "Training Device: CPU (GPU autoloader not available)\n"
         except Exception as e:
             self.logger.warning(f"Failed to get device info: {e}")
             return "Training Device: CPU (Error getting device info)\n"
@@ -1441,7 +1443,7 @@ class ModelFinetuningDialog(QDialog):
         # Model format
         self.model_format_combo = QComboBox()
         self.model_format_combo.addItems([
-            "PyTorch", "GGUF", "GGML", "ONNX", "Transformers", "TensorFlow"
+            "PyTorch", "GGUF", "GGML", "ONNX", "Transformers", "TensorFlow",
         ])
         model_layout.addRow("Model Format:", self.model_format_combo)
 
@@ -1653,7 +1655,7 @@ class ModelFinetuningDialog(QDialog):
         self.aug_prob_slider.setValue(80)
         self.aug_prob_label = QLabel("80%")
         self.aug_prob_slider.valueChanged.connect(
-            lambda v: self.aug_prob_label.setText(f"{v}%")
+            lambda v: self.aug_prob_label.setText(f"{v}%"),
         )
 
         prob_layout = QHBoxLayout()
@@ -1723,7 +1725,7 @@ class ModelFinetuningDialog(QDialog):
         self.visualization_label.setStyleSheet(
             "background-color: #f8f9fa; "
             "border: 1px solid #dee2e6; "
-            "border-radius: 4px;"
+            "border-radius: 4px;",
         )
         viz_layout.addWidget(self.visualization_label)
 
@@ -1746,15 +1748,15 @@ class ModelFinetuningDialog(QDialog):
     def _browse_model(self):
         """Browse for model file."""
         file_filter = (
-            "Model Files (*.bin *.pt *.pth *.gguf *.ggml *.onnx);;"+
-            "PyTorch Files (*.bin *.pt *.pth);;"+
-            "GGUF Files (*.gguf);;"+
-            "ONNX Files (*.onnx);;"+
+            "Model Files (*.bin *.pt *.pth *.gguf *.ggml *.onnx);;"
+            "PyTorch Files (*.bin *.pt *.pth);;"
+            "GGUF Files (*.gguf);;"
+            "ONNX Files (*.onnx);;"
             "All Files (*)"
         )
 
         path, _ = QFileDialog.getOpenFileName(
-            self, "Select Model File", "", file_filter
+            self, "Select Model File", "", file_filter,
         )
 
         if path:
@@ -1769,7 +1771,7 @@ class ModelFinetuningDialog(QDialog):
                 ".pth": "PyTorch",
                 ".gguf": "GGUF",
                 ".ggml": "GGML",
-                ".onnx": "ONNX"
+                ".onnx": "ONNX",
             }
 
             if ext in format_map:
@@ -1781,15 +1783,15 @@ class ModelFinetuningDialog(QDialog):
     def _browse_dataset(self):
         """Browse for dataset file."""
         file_filter = (
-            "Dataset Files (*.json *.jsonl *.csv *.txt);;"+
-            "JSON Files (*.json *.jsonl);;"+
-            "CSV Files (*.csv);;"+
-            "Text Files (*.txt);;"+
+            "Dataset Files (*.json *.jsonl *.csv *.txt);;"
+            "JSON Files (*.json *.jsonl);;"
+            "CSV Files (*.csv);;"
+            "Text Files (*.txt);;"
             "All Files (*)"
         )
 
         path, _ = QFileDialog.getOpenFileName(
-            self, "Select Dataset File", "", file_filter
+            self, "Select Dataset File", "", file_filter,
         )
 
         if path:
@@ -1802,7 +1804,7 @@ class ModelFinetuningDialog(QDialog):
                 ".json": "JSON",
                 ".jsonl": "JSONL",
                 ".csv": "CSV",
-                ".txt": "TXT"
+                ".txt": "TXT",
             }
 
             if ext in format_map:
@@ -1857,7 +1859,7 @@ class ModelFinetuningDialog(QDialog):
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to start training: %s", e)
-            QMessageBox.critical(self, "Training Error", f"Failed to start training: {str(e)}")
+            QMessageBox.critical(self, "Training Error", f"Failed to start training: {e!s}")
             self._on_training_finished()
 
     def _stop_training(self):
@@ -1875,7 +1877,7 @@ class ModelFinetuningDialog(QDialog):
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error stopping training: %s", e)
 
-    def _update_training_progress(self, progress: Dict[str, Any]):
+    def _update_training_progress(self, progress: dict[str, Any]):
         """Update training progress display."""
         try:
             if "error" in progress:
@@ -1914,7 +1916,7 @@ class ModelFinetuningDialog(QDialog):
 
             # Scroll to bottom of log
             self.training_log.verticalScrollBar().setValue(
-                self.training_log.verticalScrollBar().maximum()
+                self.training_log.verticalScrollBar().maximum(),
             )
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -1933,7 +1935,7 @@ class ModelFinetuningDialog(QDialog):
                     self,
                     "Training Complete",
                     "Training completed successfully. Would you like to save the fine-tuned model?",
-                    QMessageBox.Yes | QMessageBox.No
+                    QMessageBox.Yes | QMessageBox.No,
                 )
 
                 if reply == QMessageBox.Yes:
@@ -1951,7 +1953,7 @@ class ModelFinetuningDialog(QDialog):
                 self,
                 "Save Fine-tuned Model",
                 "",
-                "PyTorch Files (*.bin *.pt);;GGUF Files (*.gguf);;All Files (*)"
+                "PyTorch Files (*.bin *.pt);;GGUF Files (*.gguf);;All Files (*)",
             )
 
             if not save_path:
@@ -1974,7 +1976,7 @@ class ModelFinetuningDialog(QDialog):
                 "config": self.training_config.__dict__,
                 "training_history": getattr(self.training_thread, "training_history", []),
                 "timestamp": time.time(),
-                "version": "1.0"
+                "version": "1.0",
             }
 
             with open(save_path, "wb") as f:
@@ -1985,14 +1987,14 @@ class ModelFinetuningDialog(QDialog):
             QMessageBox.information(
                 self,
                 "Model Saved",
-                f"Fine-tuned model saved successfully to:\n{save_path}"
+                f"Fine-tuned model saved successfully to:\n{save_path}",
             )
 
             self.logger.info("Model saved to: %s", save_path)
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to save model: %s", e)
-            QMessageBox.critical(self, "Save Error", f"Failed to save model: {str(e)}")
+            QMessageBox.critical(self, "Save Error", f"Failed to save model: {e!s}")
 
     def _load_dataset_preview(self):
         """Load and display dataset preview."""
@@ -2012,7 +2014,7 @@ class ModelFinetuningDialog(QDialog):
             samples = []
 
             if dataset_format == "json":
-                with open(dataset_path, "r", encoding="utf-8") as f:
+                with open(dataset_path, encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, list):
                         samples = data[:sample_count]
@@ -2020,7 +2022,7 @@ class ModelFinetuningDialog(QDialog):
                         samples = data["data"][:sample_count]
 
             elif dataset_format == "jsonl":
-                with open(dataset_path, "r", encoding="utf-8") as f:
+                with open(dataset_path, encoding="utf-8") as f:
                     for i, line in enumerate(f):
                         if i >= sample_count:
                             break
@@ -2032,7 +2034,7 @@ class ModelFinetuningDialog(QDialog):
                             continue
 
             elif dataset_format == "csv":
-                with open(dataset_path, "r", encoding="utf-8") as f:
+                with open(dataset_path, encoding="utf-8") as f:
                     reader = csv.DictReader(f)
                     for i, row in enumerate(reader):
                         if i >= sample_count:
@@ -2048,9 +2050,9 @@ class ModelFinetuningDialog(QDialog):
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to load dataset preview: %s", e)
-            QMessageBox.warning(self, "Preview Error", f"Error loading dataset preview: {str(e)}")
+            QMessageBox.warning(self, "Preview Error", f"Error loading dataset preview: {e!s}")
 
-    def _add_dataset_row(self, sample: Dict[str, Any]):
+    def _add_dataset_row(self, sample: dict[str, Any]):
         """Add a sample to the dataset preview table."""
         row = self.dataset_preview.rowCount()
         self.dataset_preview.insertRow(row)
@@ -2091,7 +2093,7 @@ class ModelFinetuningDialog(QDialog):
                 "Binary Analysis Q&A",
                 "License Bypass Instructions",
                 "Reverse Engineering Guide",
-                "Custom Format"
+                "Custom Format",
             ]
             template_combo.addItems(templates)
             template_layout.addWidget(template_combo)
@@ -2106,7 +2108,7 @@ class ModelFinetuningDialog(QDialog):
             sample_text = QTextEdit()
             sample_text.setPlainText(self._get_sample_data(templates[0]))
             template_combo.currentTextChanged.connect(
-                lambda t: sample_text.setPlainText(self._get_sample_data(t))
+                lambda t: sample_text.setPlainText(self._get_sample_data(t)),
             )
             preview_layout.addWidget(sample_text)
 
@@ -2124,7 +2126,7 @@ class ModelFinetuningDialog(QDialog):
 
             cancel_button.clicked.connect(dialog.reject)
             create_button.clicked.connect(lambda: self._generate_dataset(
-                template_combo.currentText(), dialog
+                template_combo.currentText(), dialog,
             ))
 
             dialog.exec()
@@ -2139,29 +2141,29 @@ class ModelFinetuningDialog(QDialog):
             "Binary Analysis Q&A": json.dumps([
                 {
                     "input": "How do I analyze PE file headers?",
-                    "output": "Use tools like PE-bear or objdump to examine DOS header, NT headers, and section table."
+                    "output": "Use tools like PE-bear or objdump to examine DOS header, NT headers, and section table.",
                 },
                 {
                     "input": "What are common packing techniques?",
-                    "output": "UPX, ASPack, Themida are popular packers that compress and obfuscate executables."
-                }
+                    "output": "UPX, ASPack, Themida are popular packers that compress and obfuscate executables.",
+                },
             ], indent=2),
 
             "License Bypass Instructions": json.dumps([
                 {
                     "input": "How to identify license validation functions?",
-                    "output": "Look for string references to license keys, serial numbers, or activation codes in the binary."
-                }
+                    "output": "Look for string references to license keys, serial numbers, or activation codes in the binary.",
+                },
             ], indent=2),
 
             "Reverse Engineering Guide": json.dumps([
                 {
                     "input": "What is static analysis?",
-                    "output": "Static analysis examines code without executing it, using disassemblers and decompilers."
-                }
+                    "output": "Static analysis examines code without executing it, using disassemblers and decompilers.",
+                },
             ], indent=2),
 
-            "Custom Format": "{\n  \"input\": \"Your question here\",\n  \"output\": \"Your answer here\"\n}"
+            "Custom Format": '{\n  "input": "Your question here",\n  "output": "Your answer here"\n}',
         }
         return samples.get(template, "")
 
@@ -2172,7 +2174,7 @@ class ModelFinetuningDialog(QDialog):
                 dialog,
                 "Save Dataset",
                 f"{template.lower().replace(' ', '_')}_dataset.json",
-                "JSON Files (*.json);;All Files (*)"
+                "JSON Files (*.json);;All Files (*)",
             )
 
             if save_path:
@@ -2186,7 +2188,7 @@ class ModelFinetuningDialog(QDialog):
                 QMessageBox.information(
                     self,
                     "Dataset Created",
-                    f"Dataset template created successfully:\n{save_path}"
+                    f"Dataset template created successfully:\n{save_path}",
                 )
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -2208,7 +2210,7 @@ class ModelFinetuningDialog(QDialog):
             dataset_format = self.dataset_format_combo.currentText().lower()
 
             if dataset_format == "json":
-                with open(dataset_path, "r", encoding="utf-8") as f:
+                with open(dataset_path, encoding="utf-8") as f:
                     try:
                         data = json.load(f)
                         if isinstance(data, list):
@@ -2234,7 +2236,7 @@ class ModelFinetuningDialog(QDialog):
                 QMessageBox.information(
                     self,
                     "Validation Successful",
-                    f"Dataset validation passed!\n\nSamples: {sample_count}\nFormat: {dataset_format.upper()}"
+                    f"Dataset validation passed!\n\nSamples: {sample_count}\nFormat: {dataset_format.upper()}",
                 )
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -2253,12 +2255,12 @@ class ModelFinetuningDialog(QDialog):
                 self,
                 "Export Dataset",
                 "",
-                "JSON Files (*.json);;JSONL Files (*.jsonl);;CSV Files (*.csv);;All Files (*)"
+                "JSON Files (*.json);;JSONL Files (*.jsonl);;CSV Files (*.csv);;All Files (*)",
             )
 
             if save_path:
                 # Load source data
-                with open(source_path, "r", encoding="utf-8") as f:
+                with open(source_path, encoding="utf-8") as f:
                     data = json.load(f)
 
                 # Export in target format
@@ -2266,8 +2268,7 @@ class ModelFinetuningDialog(QDialog):
 
                 if target_ext == ".jsonl":
                     with open(save_path, "w", encoding="utf-8") as f:
-                        for _item in data:
-                            f.write(json.dumps(_item) + "\n")
+                        f.writelines(json.dumps(_item) + "\n" for _item in data)
 
                 elif target_ext == ".csv":
                     with open(save_path, "w", newline="", encoding="utf-8") as f:
@@ -2283,7 +2284,7 @@ class ModelFinetuningDialog(QDialog):
                 QMessageBox.information(
                     self,
                     "Export Complete",
-                    f"Dataset exported successfully to:\n{save_path}"
+                    f"Dataset exported successfully to:\n{save_path}",
                 )
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -2315,7 +2316,7 @@ class ModelFinetuningDialog(QDialog):
                 return
 
             # Load sample data
-            with open(dataset_path, "r", encoding="utf-8") as f:
+            with open(dataset_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             if not data:
@@ -2391,7 +2392,6 @@ class ModelFinetuningDialog(QDialog):
                 return " ".join(result_words)
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in model_finetuning_dialog: %s", e)
-                pass
 
         elif technique == "random_insertion":
             # Insert random words
@@ -2440,7 +2440,7 @@ class ModelFinetuningDialog(QDialog):
             aug_prob = self.aug_prob_slider.value() / 100.0
 
             # Load dataset
-            with open(dataset_path, "r", encoding="utf-8") as f:
+            with open(dataset_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             # Apply augmentation
@@ -2464,7 +2464,7 @@ class ModelFinetuningDialog(QDialog):
                             # Apply to input field
                             if "input" in sample:
                                 augmented_sample["input"] = self._apply_augmentation_technique(
-                                    sample["input"], _technique
+                                    sample["input"], _technique,
                                 )
 
                             augmented_data.append(augmented_sample)
@@ -2486,7 +2486,7 @@ class ModelFinetuningDialog(QDialog):
                 f"Dataset augmented successfully!\n\n"
                 f"Original samples: {len(data)}\n"
                 f"Augmented samples: {len(augmented_data)}\n"
-                f"Output: {output_path}"
+                f"Output: {output_path}",
             )
 
             # Update dataset path to augmented version
@@ -2496,7 +2496,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.error("Augmentation failed: %s", e)
             QMessageBox.critical(self, "Augmentation Error", str(e))
 
-    def _update_visualization(self, history: List[Dict[str, Any]]):
+    def _update_visualization(self, history: list[dict[str, Any]]):
         """Update training visualization with loss curve."""
         try:
             if not history or not MATPLOTLIB_AVAILABLE:
@@ -2526,7 +2526,7 @@ class ModelFinetuningDialog(QDialog):
             scaled_pixmap = pixmap.scaled(
                 self.visualization_label.size(),
                 Qt.KeepAspectRatio,
-                Qt.SmoothTransformation
+                Qt.SmoothTransformation,
             )
             self.visualization_label.setPixmap(scaled_pixmap)
 
@@ -2535,7 +2535,6 @@ class ModelFinetuningDialog(QDialog):
                 os.remove(temp_path)
             except Exception as e:
                 logger.error("Exception in model_finetuning_dialog: %s", e)
-                pass
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to update visualization: %s", e)
@@ -2551,14 +2550,14 @@ class ModelFinetuningDialog(QDialog):
                 self,
                 "Export Training Metrics",
                 "training_metrics.json",
-                "JSON Files (*.json);;CSV Files (*.csv);;All Files (*)"
+                "JSON Files (*.json);;CSV Files (*.csv);;All Files (*)",
             )
 
             if save_path:
                 metrics_data = {
                     "config": self.training_config.__dict__,
                     "history": self.training_thread.training_history,
-                    "export_time": time.time()
+                    "export_time": time.time(),
                 }
 
                 if save_path.endswith(".csv"):
@@ -2576,7 +2575,7 @@ class ModelFinetuningDialog(QDialog):
                 QMessageBox.information(
                     self,
                     "Export Complete",
-                    f"Training metrics exported to:\n{save_path}"
+                    f"Training metrics exported to:\n{save_path}",
                 )
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -2594,7 +2593,7 @@ class ModelFinetuningDialog(QDialog):
                 self,
                 "Save Training Plot",
                 "training_plot.png",
-                "PNG Files (*.png);;PDF Files (*.pdf);;All Files (*)"
+                "PNG Files (*.png);;PDF Files (*.pdf);;All Files (*)",
             )
 
             if save_path and MATPLOTLIB_AVAILABLE:
@@ -2629,7 +2628,7 @@ class ModelFinetuningDialog(QDialog):
                 QMessageBox.information(
                     self,
                     "Plot Saved",
-                    f"Training plot saved to:\n{save_path}"
+                    f"Training plot saved to:\n{save_path}",
                 )
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -2753,7 +2752,7 @@ class ModelFinetuningDialog(QDialog):
                     self,
                     "Training in Progress",
                     "Training is currently running. Do you want to stop it and close?",
-                    QMessageBox.Yes | QMessageBox.No
+                    QMessageBox.Yes | QMessageBox.No,
                 )
 
                 if reply == QMessageBox.Yes:
@@ -2771,15 +2770,15 @@ class ModelFinetuningDialog(QDialog):
 
 
 # Convenience functions
-def create_model_finetuning_dialog(parent=None) -> Optional[ModelFinetuningDialog]:
-    """
-    Create a model fine-tuning dialog.
+def create_model_finetuning_dialog(parent=None) -> ModelFinetuningDialog | None:
+    """Create a model fine-tuning dialog.
 
     Args:
         parent: Parent widget
 
     Returns:
         ModelFinetuningDialog instance or None if PyQt6 not available
+
     """
     if not PYQT6_AVAILABLE:
         logging.getLogger(__name__).warning("PyQt6 not available, cannot create dialog")
@@ -2794,9 +2793,9 @@ def create_model_finetuning_dialog(parent=None) -> Optional[ModelFinetuningDialo
 
 # Export public interface
 __all__ = [
+    "AugmentationConfig",
     "ModelFinetuningDialog",
     "TrainingConfig",
-    "AugmentationConfig",
     "TrainingThread",
     "create_model_finetuning_dialog",
 ]

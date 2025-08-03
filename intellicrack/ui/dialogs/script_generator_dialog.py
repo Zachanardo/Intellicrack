@@ -59,7 +59,6 @@ try:
     from PyQt6.QtWidgets import QPlainTextEdit
 except ImportError as e:
     logger.error("Import error in script_generator_dialog: %s", e)
-    pass
 
 
 class PythonHighlighter(QSyntaxHighlighter):
@@ -76,7 +75,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         keyword_format.setFontWeight(QFont.Bold)
         keywords = [
             "def", "class", "if", "else", "elif", "while", "for",
-            "try", "except", "import", "from", "return", "with"
+            "try", "except", "import", "from", "return", "with",
         ]
         for _keyword in keywords:
             pattern = f"\\b{_keyword}\\b"
@@ -85,7 +84,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         # Strings
         string_format = QTextCharFormat()
         string_format.setColor(QColor(0, 128, 0))
-        self.highlighting_rules.append(('\".*\"', string_format))
+        self.highlighting_rules.append(('".*"', string_format))
         self.highlighting_rules.append("'.*'", string_format)
 
         # Comments
@@ -143,20 +142,20 @@ class ScriptGeneratorWorker(QThread):
             protection_info = {
                 "type": self.kwargs.get("protection_type", "license"),
                 "methods": self.kwargs.get("methods", ["patch"]),
-                "target_platform": "frida" if self.kwargs.get("language") == "javascript" else "python"
+                "target_platform": "frida" if self.kwargs.get("language") == "javascript" else "python",
             }
 
             # Generate script using AI
             if self.kwargs.get("language") == "javascript":
                 result = self.ai_generator.generate_frida_script(
                     self.binary_path,
-                    protection_info
+                    protection_info,
                 )
             else:
                 # For Python/other languages, generate Ghidra script
                 result = self.ai_generator.generate_ghidra_script(
                     self.binary_path,
-                    protection_info
+                    protection_info,
                 )
 
             self.script_generated.emit(result)
@@ -169,7 +168,7 @@ class ScriptGeneratorWorker(QThread):
             result = generate_bypass_script(
                 self.binary_path,
                 protection_type=self.kwargs.get("protection_type", "license"),
-                language=self.kwargs.get("language", "python")
+                language=self.kwargs.get("language", "python"),
             )
             self.script_generated.emit(result)
 
@@ -180,7 +179,7 @@ class ScriptGeneratorWorker(QThread):
         result = generate_exploit(
             vulnerability=self.kwargs.get("exploit_type", "buffer_overflow"),
             target_arch=self.kwargs.get("target_arch", "x86"),
-            payload_type=self.kwargs.get("payload_type", "shellcode")
+            payload_type=self.kwargs.get("payload_type", "shellcode"),
         )
         self.script_generated.emit(result)
 
@@ -190,7 +189,7 @@ class ScriptGeneratorWorker(QThread):
 
         result = generate_exploit_strategy(
             self.binary_path,
-            vulnerability_type=self.kwargs.get("vulnerability_type", "buffer_overflow")
+            vulnerability_type=self.kwargs.get("vulnerability_type", "buffer_overflow"),
         )
         self.script_generated.emit(result)
 
@@ -200,7 +199,6 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
 
     def __init__(self, parent=None, binary_path: str = ""):
         """Initialize the ScriptGeneratorDialog with default values."""
-
         # Initialize UI attributes
         self.analysis_depth = None
         self.analyze_btn = None
@@ -293,7 +291,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             "Bypass Script",
             "Exploit Script",
             "Exploit Strategy",
-            "Custom Script"
+            "Custom Script",
         ])
         self.script_type_combo.currentTextChanged.connect(self.on_script_type_changed)
 
@@ -371,7 +369,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             "Trial Extension",
             "Feature Unlock",
             "Authentication Bypass",
-            "Custom Exploit"
+            "Custom Exploit",
         ])
         layout.addWidget(self.exploit_type, 0, 1)
 
@@ -407,7 +405,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             "Quick Bypass",
             "Stealth Approach",
             "Brute Force",
-            "Custom Strategy"
+            "Custom Strategy",
         ])
         layout.addWidget(self.strategy_type, 0, 1)
 
@@ -583,7 +581,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
         return {
             "language": self.bypass_language.currentText().lower(),
             "methods": methods,
-            "output_format": self.bypass_output.currentText().lower()
+            "output_format": self.bypass_output.currentText().lower(),
         }
 
     def get_exploit_config(self):
@@ -592,7 +590,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             "exploit_type": self.exploit_type.currentText().lower().replace(" ", "_"),
             "target_function": self.target_function.text(),
             "payload_type": self.payload_type.currentText().lower(),
-            "include_anti_detection": self.exploit_advanced.isChecked()
+            "include_anti_detection": self.exploit_advanced.isChecked(),
         }
 
     def get_strategy_config(self):
@@ -603,7 +601,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             "include_recon": self.include_recon.isChecked(),
             "include_analysis": self.include_analysis.isChecked(),
             "include_exploitation": self.include_exploitation.isChecked(),
-            "include_persistence": self.include_persistence.isChecked()
+            "include_persistence": self.include_persistence.isChecked(),
         }
 
     def on_script_generated(self, result):
@@ -662,7 +660,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
         default_name = f"{script_type.lower().replace(' ', '_')}_{int(time.time())}.{ext}"
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Script", default_name, filter_str
+            self, "Save Script", default_name, filter_str,
         )
 
         if file_path:
@@ -672,7 +670,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
                 self.status_label.setText(f"Script saved to {os.path.basename(file_path)}")
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in script_generator_dialog: %s", e)
-                QMessageBox.critical(self, "Save Error", f"Failed to save script: {str(e)}")
+                QMessageBox.critical(self, "Save Error", f"Failed to save script: {e!s}")
 
     def test_script(self):
         """Test the generated script (placeholder)."""
@@ -683,7 +681,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             "• Syntax validation\n"
             "• Safe execution in sandbox\n"
             "• Effectiveness testing\n"
-            "• Performance analysis"
+            "• Performance analysis",
         )
 
     def analyze_script(self):
@@ -702,14 +700,13 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             # Check if bypass_language exists and use it, otherwise detect from content
             if hasattr(self, "bypass_language") and self.bypass_language.isVisible():
                 language = "javascript" if "javascript" in self.bypass_language.currentText().lower() else "python"
+            # Auto-detect language from script type and content
+            elif "frida" in script_type.lower() or "javascript" in script_type.lower():
+                language = "javascript"
+            elif "python" in script_type.lower() or "ghidra" in script_type.lower():
+                language = "python"
             else:
-                # Auto-detect language from script type and content
-                if "frida" in script_type.lower() or "javascript" in script_type.lower():
-                    language = "javascript"
-                elif "python" in script_type.lower() or "ghidra" in script_type.lower():
-                    language = "python"
-                else:
-                    language = "auto"
+                language = "auto"
 
             # Update status
             self.status_label.setText("Analyzing script...")
@@ -738,7 +735,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
                     QMessageBox.warning(
                         self, "Security Issues",
                         f"Found {len(analysis_result['security_issues'])} security issue(s) in the script.\n"
-                        "Please review the analysis results."
+                        "Please review the analysis results.",
                     )
             else:
                 error_msg = analysis_result.get("error", "Unknown error occurred")
@@ -747,7 +744,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
 
         except Exception as e:
             logger.error(f"Script analysis error: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to analyze script: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to analyze script: {e!s}")
             self.status_label.setText("Error occurred")
 
     def _format_analysis_results(self, analysis_result):

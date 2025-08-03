@@ -1,5 +1,4 @@
-"""
-Unified Protection Analysis Engine
+"""Unified Protection Analysis Engine
 
 Seamlessly integrates protection detection and custom analysis into a single unified interface.
 
@@ -12,7 +11,7 @@ import concurrent.futures
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from ..utils.logger import get_logger
 from .analysis_cache import AnalysisCache, get_analysis_cache
@@ -29,6 +28,7 @@ logger = get_logger(__name__)
 
 class AnalysisSource(Enum):
     """Source of protection analysis"""
+
     PROTECTION_ENGINE = "protection_engine"
     HEURISTIC = "heuristic"
     SIGNATURE = "signature"
@@ -41,17 +41,18 @@ class AnalysisSource(Enum):
 @dataclass
 class UnifiedProtectionResult:
     """Unified protection analysis result combining all sources"""
+
     file_path: str
     file_type: str
     architecture: str
 
     # Combined detections from all sources
-    protections: List[Dict[str, Any]] = field(default_factory=list)
+    protections: list[dict[str, Any]] = field(default_factory=list)
     confidence_score: float = 0.0
 
     # Detailed results from each engine
-    protection_analysis: Optional[AdvancedProtectionAnalysis] = None
-    icp_analysis: Optional[ICPScanResult] = None
+    protection_analysis: AdvancedProtectionAnalysis | None = None
+    icp_analysis: ICPScanResult | None = None
 
     # Unified features
     is_packed: bool = False
@@ -62,27 +63,26 @@ class UnifiedProtectionResult:
     has_licensing: bool = False
 
     # Bypass recommendations (aggregated and prioritized)
-    bypass_strategies: List[Dict[str, Any]] = field(default_factory=list)
+    bypass_strategies: list[dict[str, Any]] = field(default_factory=list)
 
     # Performance metrics
     analysis_time: float = 0.0
-    engines_used: List[str] = field(default_factory=list)
+    engines_used: list[str] = field(default_factory=list)
 
 
 class UnifiedProtectionEngine:
-    """
-    Unified engine that seamlessly combines multiple protection analysis methods
+    """Unified engine that seamlessly combines multiple protection analysis methods
     """
 
     def __init__(self, enable_protection: bool = True, enable_heuristics: bool = True,
-                 cache_config: Optional[Dict[str, Any]] = None):
-        """
-        Initialize unified protection engine
+                 cache_config: dict[str, Any] | None = None):
+        """Initialize unified protection engine
 
         Args:
             enable_protection: Enable protection analysis
             enable_heuristics: Enable heuristic analysis
             cache_config: Cache configuration options
+
         """
         self.enable_protection = enable_protection
         self.enable_heuristics = enable_heuristics
@@ -99,8 +99,7 @@ class UnifiedProtectionEngine:
     def analyze(self, file_path: str,
                 deep_scan: bool = True,
                 timeout: int = 60) -> UnifiedProtectionResult:
-        """
-        Perform unified protection analysis
+        """Perform unified protection analysis
 
         Args:
             file_path: Path to file to analyze
@@ -109,6 +108,7 @@ class UnifiedProtectionEngine:
 
         Returns:
             Unified protection analysis result
+
         """
         import time
         start_time = time.time()
@@ -124,7 +124,7 @@ class UnifiedProtectionEngine:
         result = UnifiedProtectionResult(
             file_path=file_path,
             file_type="Unknown",
-            architecture="Unknown"
+            architecture="Unknown",
         )
 
         # Run analyses in parallel
@@ -136,21 +136,21 @@ class UnifiedProtectionEngine:
                 futures["protection"] = executor.submit(
                     self._run_protection_analysis,
                     file_path,
-                    deep_scan
+                    deep_scan,
                 )
 
             # Submit ICP analysis
             futures["icp"] = executor.submit(
                 self._run_icp_analysis,
                 file_path,
-                deep_scan
+                deep_scan,
             )
 
             # Submit heuristic analysis
             if self.enable_heuristics:
                 futures["heuristic"] = executor.submit(
                     self._run_heuristic_analysis,
-                    file_path
+                    file_path,
                 )
 
             # Collect results with timeout
@@ -198,7 +198,7 @@ class UnifiedProtectionEngine:
 
         return result
 
-    def _run_protection_analysis(self, file_path: str, deep_scan: bool) -> Optional[AdvancedProtectionAnalysis]:
+    def _run_protection_analysis(self, file_path: str, deep_scan: bool) -> AdvancedProtectionAnalysis | None:
         """Run protection analysis"""
         try:
             scan_mode = ScanMode.DEEP if deep_scan else ScanMode.NORMAL
@@ -206,14 +206,14 @@ class UnifiedProtectionEngine:
                 file_path,
                 scan_mode=scan_mode,
                 enable_heuristic=True,
-                extract_strings=True
+                extract_strings=True,
             )
         except Exception as e:
             logger.error(f"Protection analysis error: {e}")
             return None
 
 
-    def _run_heuristic_analysis(self, file_path: str) -> Optional[Dict[str, Any]]:
+    def _run_heuristic_analysis(self, file_path: str) -> dict[str, Any] | None:
         """Run heuristic analysis"""
         try:
             heuristics = {}
@@ -252,7 +252,7 @@ class UnifiedProtectionEngine:
                 b"IsDebuggerPresent",
                 b"GetTickCount",
                 b"LoadLibrary",
-                b"GetProcAddress"
+                b"GetProcAddress",
             ]
 
             found_patterns = []
@@ -303,7 +303,7 @@ class UnifiedProtectionEngine:
                 "confidence": detection.confidence,
                 "version": detection.version,
                 "details": detection.details,
-                "bypass_recommendations": detection.bypass_recommendations
+                "bypass_recommendations": detection.bypass_recommendations,
             }
             result.protections.append(protection)
 
@@ -317,7 +317,7 @@ class UnifiedProtectionEngine:
                 result.has_licensing = True
 
 
-    def _merge_heuristic_results(self, result: UnifiedProtectionResult, heuristics: Dict[str, Any]):
+    def _merge_heuristic_results(self, result: UnifiedProtectionResult, heuristics: dict[str, Any]):
         """Merge heuristic results into unified result"""
         if heuristics.get("likely_packed"):
             result.is_packed = True
@@ -326,7 +326,7 @@ class UnifiedProtectionEngine:
                 "type": "packer",
                 "source": AnalysisSource.HEURISTIC,
                 "confidence": 70.0,
-                "details": heuristics
+                "details": heuristics,
             }
             result.protections.append(protection)
 
@@ -337,11 +337,11 @@ class UnifiedProtectionEngine:
                 "type": "anti-analysis",
                 "source": AnalysisSource.HEURISTIC,
                 "confidence": 60.0,
-                "details": {"apis": heuristics["suspicious_imports"]}
+                "details": {"apis": heuristics["suspicious_imports"]},
             }
             result.protections.append(protection)
 
-    def _run_icp_analysis(self, file_path: str, deep_scan: bool) -> Optional[ICPScanResult]:
+    def _run_icp_analysis(self, file_path: str, deep_scan: bool) -> ICPScanResult | None:
         """Run ICP engine analysis"""
         try:
             # Convert scan mode
@@ -353,7 +353,7 @@ class UnifiedProtectionEngine:
             asyncio.set_event_loop(loop)
             try:
                 result = loop.run_until_complete(
-                    icp_backend.analyze_file(file_path, icp_mode)
+                    icp_backend.analyze_file(file_path, icp_mode),
                 )
                 return result
             finally:
@@ -388,8 +388,8 @@ class UnifiedProtectionEngine:
                 "details": {
                     "icp_type": detection.type,
                     "info": detection.info,
-                    "string": detection.string
-                }
+                    "string": detection.string,
+                },
             }
             result.protections.append(protection)
 
@@ -414,7 +414,7 @@ class UnifiedProtectionEngine:
             "Anti-Dump": "anti-dump",
             "Anti-VM": "anti-vm",
             "Dongle": "dongle",
-            "Unknown": "unknown"
+            "Unknown": "unknown",
         }
         return type_mapping.get(icp_type, "unknown")
 
@@ -441,7 +441,7 @@ class UnifiedProtectionEngine:
                     "source": AnalysisSource.HYBRID,
                     "confidence": max(p["confidence"] for p in group),
                     "sources": [p["source"] for p in group],
-                    "details": {}
+                    "details": {},
                 }
 
                 # Merge bypass recommendations
@@ -475,8 +475,8 @@ class UnifiedProtectionEngine:
                     "Run in debugger with anti-anti-debug plugins",
                     "Set breakpoint at OEP (Original Entry Point)",
                     "Dump process memory after unpacking",
-                    "Fix imports with Scylla"
-                ]
+                    "Fix imports with Scylla",
+                ],
             })
 
         # Anti-debug bypass strategies
@@ -490,8 +490,8 @@ class UnifiedProtectionEngine:
                     "Enable ScyllaHide with all options",
                     "Use kernel-mode hiding if necessary",
                     "Patch IsDebuggerPresent checks",
-                    "Handle timing-based detection"
-                ]
+                    "Handle timing-based detection",
+                ],
             })
 
         # License/DRM bypass strategies
@@ -505,8 +505,8 @@ class UnifiedProtectionEngine:
                     "Trace license validation calls",
                     "Identify key decision points",
                     "Patch conditional jumps",
-                    "Emulate valid license responses"
-                ]
+                    "Emulate valid license responses",
+                ],
             })
 
         # Obfuscation strategies
@@ -520,8 +520,8 @@ class UnifiedProtectionEngine:
                     "Identify obfuscation type",
                     "Use automated deobfuscators",
                     "Manual pattern analysis",
-                    "Reconstruct control flow"
-                ]
+                    "Reconstruct control flow",
+                ],
             })
 
         result.bypass_strategies = strategies
@@ -537,7 +537,7 @@ class UnifiedProtectionEngine:
             AnalysisSource.PROTECTION_ENGINE: 0.9,
             AnalysisSource.HEURISTIC: 0.5,
             AnalysisSource.SIGNATURE: 0.8,
-            AnalysisSource.HYBRID: 1.0
+            AnalysisSource.HYBRID: 1.0,
         }
 
         total_weighted_confidence = 0.0
@@ -557,7 +557,7 @@ class UnifiedProtectionEngine:
             result.confidence_score = 0.0
 
 
-    def get_quick_summary(self, file_path: str) -> Dict[str, Any]:
+    def get_quick_summary(self, file_path: str) -> dict[str, Any]:
         """Get quick protection summary without deep analysis"""
         # Try to get cached result first
         cached_result = self.cache.get(file_path, "deep_scan:False,timeout:60")
@@ -569,7 +569,7 @@ class UnifiedProtectionEngine:
                 "protected": bool(cached_result.protections),
                 "protection_count": len(cached_result.protections),
                 "main_protection": cached_result.protections[0]["name"] if cached_result.protections else None,
-                "confidence": cached_result.confidence_score
+                "confidence": cached_result.confidence_score,
             }
 
         # Quick protection scan
@@ -578,14 +578,14 @@ class UnifiedProtectionEngine:
                 analysis = self.protection_detector.detect_protections_advanced(
                     file_path,
                     scan_mode=ScanMode.NORMAL,
-                    enable_heuristic=False
+                    enable_heuristic=False,
                 )
 
                 return {
                     "protected": bool(analysis.detections),
                     "protection_count": len(analysis.detections),
                     "main_protection": analysis.detections[0].name if analysis.detections else None,
-                    "confidence": 80.0
+                    "confidence": 80.0,
                 }
             except Exception as e:
                 logger.debug(f"Quick protection scan failed: {e}")
@@ -594,12 +594,11 @@ class UnifiedProtectionEngine:
             "protected": False,
             "protection_count": 0,
             "main_protection": None,
-            "confidence": 0.0
+            "confidence": 0.0,
         }
 
     def analyze_file(self, file_path: str, deep_scan: bool = True, timeout: int = 60) -> UnifiedProtectionResult:
-        """
-        Backward-compatible alias for analyze method
+        """Backward-compatible alias for analyze method
 
         Args:
             file_path: Path to file to analyze
@@ -608,10 +607,11 @@ class UnifiedProtectionEngine:
 
         Returns:
             Unified protection analysis result
+
         """
         return self.analyze(file_path, deep_scan, timeout)
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics"""
         return self.cache.get_cache_info()
 
@@ -621,11 +621,11 @@ class UnifiedProtectionEngine:
         logger.info("Analysis cache cleared")
 
     def cleanup_cache(self) -> int:
-        """
-        Clean up invalid cache entries
+        """Clean up invalid cache entries
 
         Returns:
             Number of entries removed
+
         """
         removed = self.cache.cleanup_invalid()
         logger.info(f"Cleaned up {removed} invalid cache entries")
@@ -636,14 +636,14 @@ class UnifiedProtectionEngine:
         self.cache.save_cache()
 
     def remove_from_cache(self, file_path: str) -> bool:
-        """
-        Remove specific file from cache
+        """Remove specific file from cache
 
         Args:
             file_path: Path to file to remove from cache
 
         Returns:
             True if removed, False if not found
+
         """
         removed = False
         # Try to remove both deep and shallow scan results
@@ -656,18 +656,17 @@ class UnifiedProtectionEngine:
         return removed
 
     def invalidate_cache_for_file(self, file_path: str) -> None:
-        """
-        Invalidate cache entries for a specific file
+        """Invalidate cache entries for a specific file
         This is useful when a file has been modified
         """
         self.remove_from_cache(file_path)
 
-    def get_cache_size(self) -> Tuple[int, float]:
-        """
-        Get cache size information
+    def get_cache_size(self) -> tuple[int, float]:
+        """Get cache size information
 
         Returns:
             Tuple of (entry_count, size_in_mb)
+
         """
         stats = self.cache.get_stats()
         return stats.total_entries, stats.total_size_bytes / (1024 * 1024)

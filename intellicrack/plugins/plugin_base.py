@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -19,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """Base plugin interface for Intellicrack plugin system."""
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -44,12 +43,11 @@ class PluginMetadata:
         version: str,
         author: str,
         description: str,
-        categories: List[str],
-        supported_formats: Optional[List[str]] = None,
-        capabilities: Optional[List[str]] = None,
+        categories: list[str],
+        supported_formats: list[str] | None = None,
+        capabilities: list[str] | None = None,
     ):
-        """
-        Initialize plugin metadata.
+        """Initialize plugin metadata.
 
         Args:
             name: Plugin name
@@ -59,6 +57,7 @@ class PluginMetadata:
             categories: List of plugin categories
             supported_formats: Optional list of supported file formats
             capabilities: Optional list of plugin capabilities
+
         """
         self.name = name
         self.version = version
@@ -68,7 +67,7 @@ class PluginMetadata:
         self.supported_formats = supported_formats or []
         self.capabilities = capabilities or []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert metadata to dictionary format."""
         return {
             "name": self.name,
@@ -84,12 +83,12 @@ class PluginMetadata:
 class PluginConfigManager:
     """Manages plugin configuration with defaults."""
 
-    def __init__(self, default_config: Dict[str, Any]):
-        """
-        Initialize configuration manager.
+    def __init__(self, default_config: dict[str, Any]):
+        """Initialize configuration manager.
 
         Args:
             default_config: Default configuration dictionary
+
         """
         self.config = default_config.copy()
 
@@ -101,29 +100,28 @@ class PluginConfigManager:
         """Set configuration value."""
         self.config[key] = value
 
-    def update(self, updates: Dict[str, Any]) -> None:
+    def update(self, updates: dict[str, Any]) -> None:
         """Update multiple configuration values."""
         self.config.update(updates)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return configuration as dictionary."""
         return self.config.copy()
 
 
 class BasePlugin(ABC):
-    """
-    Base class for all Intellicrack plugins.
+    """Base class for all Intellicrack plugins.
 
     Provides standard initialization, validation, and utility methods.
     """
 
-    def __init__(self, metadata: PluginMetadata, default_config: Optional[Dict[str, Any]] = None):
-        """
-        Initialize base plugin.
+    def __init__(self, metadata: PluginMetadata, default_config: dict[str, Any] | None = None):
+        """Initialize base plugin.
 
         Args:
             metadata: Plugin metadata
             default_config: Optional default configuration
+
         """
         self.metadata = metadata
         self.config_manager = PluginConfigManager(default_config or {})
@@ -135,26 +133,26 @@ class BasePlugin(ABC):
         self.description = metadata.description
         self.categories = metadata.categories
 
-    def get_metadata(self) -> Dict[str, Any]:
-        """
-        Get plugin metadata.
+    def get_metadata(self) -> dict[str, Any]:
+        """Get plugin metadata.
 
         Returns:
             Dictionary containing plugin metadata
+
         """
         base_metadata = self.metadata.to_dict()
         base_metadata.update({"config": self.config_manager.to_dict(), "status": self.get_status()})
         return base_metadata
 
-    def validate_binary(self, binary_path: str) -> Tuple[bool, str]:
-        """
-        Standard binary validation.
+    def validate_binary(self, binary_path: str) -> tuple[bool, str]:
+        """Standard binary validation.
 
         Args:
             binary_path: Path to binary file
 
         Returns:
             Tuple of (is_valid, error_message)
+
         """
         if not binary_path:
             return False, "No binary path provided"
@@ -176,55 +174,51 @@ class BasePlugin(ABC):
                 return False, f"File too large: {file_size} bytes (max: {max_size})"
         except OSError as e:
             logger.error("OS error in plugin_base: %s", e)
-            return False, f"Could not get file size: {str(e)}"
+            return False, f"Could not get file size: {e!s}"
 
         return True, "Valid"
 
     def get_status(self) -> str:
-        """
-        Get plugin status.
+        """Get plugin status.
 
         Returns:
             Plugin status string
+
         """
         return "active"
 
     def calculate_entropy(self, data: bytes) -> float:
-        """
-        Calculate Shannon entropy of data.
+        """Calculate Shannon entropy of data.
 
         Args:
             data: Binary data
 
         Returns:
             Entropy value
+
         """
         return calculate_byte_entropy(data)
 
     @abstractmethod
-    def run(self, *args, **kwargs) -> Dict[str, Any]:
-        """
-        Main plugin execution method.
+    def run(self, *args, **kwargs) -> dict[str, Any]:
+        """Main plugin execution method.
 
         Must be implemented by subclasses.
 
         Returns:
             Dictionary containing execution results
+
         """
-        pass
 
     def cleanup(self) -> None:
-        """
-        Cleanup method called when plugin is unloaded.
+        """Cleanup method called when plugin is unloaded.
 
         Override in subclasses if cleanup is needed.
         """
-        pass
 
 
-def create_plugin_info(metadata: PluginMetadata, entry_point: str = "register") -> Dict[str, Any]:
-    """
-    Create standardized PLUGIN_INFO dictionary.
+def create_plugin_info(metadata: PluginMetadata, entry_point: str = "register") -> dict[str, Any]:
+    """Create standardized PLUGIN_INFO dictionary.
 
     Args:
         metadata: Plugin metadata
@@ -232,6 +226,7 @@ def create_plugin_info(metadata: PluginMetadata, entry_point: str = "register") 
 
     Returns:
         PLUGIN_INFO dictionary
+
     """
     info = metadata.to_dict()
     info["entry_point"] = entry_point
@@ -239,14 +234,14 @@ def create_plugin_info(metadata: PluginMetadata, entry_point: str = "register") 
 
 
 def create_register_function(plugin_class):
-    """
-    Create a standard register function for a plugin class.
+    """Create a standard register function for a plugin class.
 
     Args:
         plugin_class: Plugin class to register
 
     Returns:
         Register function
+
     """
 
     def register():
@@ -283,12 +278,12 @@ DEFAULT_NETWORK_CONFIG = {
 
 
 __all__ = [
-    "PluginMetadata",
-    "PluginConfigManager",
-    "BasePlugin",
-    "create_plugin_info",
-    "create_register_function",
     "DEFAULT_ANALYSIS_CONFIG",
     "DEFAULT_BINARY_CONFIG",
     "DEFAULT_NETWORK_CONFIG",
+    "BasePlugin",
+    "PluginConfigManager",
+    "PluginMetadata",
+    "create_plugin_info",
+    "create_register_function",
 ]

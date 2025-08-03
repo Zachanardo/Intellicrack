@@ -1,5 +1,4 @@
-"""
-Splash screen dialog for Intellicrack application.
+"""Splash screen dialog for Intellicrack application.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,7 +21,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import os
-from typing import Optional
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QPainter, QPixmap
@@ -32,20 +30,19 @@ logger = logging.getLogger(__name__)
 
 
 class SplashScreen(QSplashScreen):
-    """
-    Custom splash screen with progress bar for Intellicrack.
+    """Custom splash screen with progress bar for Intellicrack.
 
     Shows loading progress during application initialization.
     """
 
     progress_updated = pyqtSignal(int, str)
 
-    def __init__(self, pixmap_path: Optional[str] = None):
-        """
-        Initialize the splash screen.
+    def __init__(self, pixmap_path: str | None = None):
+        """Initialize the splash screen.
 
         Args:
             pixmap_path: Path to splash image (optional)
+
         """
         # Create default pixmap if none provided
         if pixmap_path and os.path.exists(pixmap_path):
@@ -100,15 +97,15 @@ class SplashScreen(QSplashScreen):
         self.progress_updated.emit(value, message)
 
 
-def create_progress_splash_screen(image_path: Optional[str] = None) -> SplashScreen:
-    """
-    Create and return a progress splash screen.
+def create_progress_splash_screen(image_path: str | None = None) -> SplashScreen:
+    """Create and return a progress splash screen.
 
     Args:
         image_path: Optional path to splash image
 
     Returns:
         SplashScreen instance
+
     """
     return SplashScreen(image_path)
 
@@ -117,4 +114,4 @@ def create_progress_splash_screen(image_path: Optional[str] = None) -> SplashScr
 IntellicrackApp = SplashScreen
 
 
-__all__ = ["SplashScreen", "create_progress_splash_screen", "IntellicrackApp"]
+__all__ = ["IntellicrackApp", "SplashScreen", "create_progress_splash_screen"]

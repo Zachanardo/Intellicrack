@@ -1,5 +1,4 @@
-"""
-Pattern Library for Protection Detection and Bypass Strategies
+"""Pattern Library for Protection Detection and Bypass Strategies
 
 Copyright (C) 2025 Zachary Flint
 
@@ -21,7 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -30,6 +29,7 @@ logger = get_logger(__name__)
 
 class ProtectionComplexity(Enum):
     """Protection complexity levels."""
+
     TRIVIAL = "trivial"      # Simple string comparison
     SIMPLE = "simple"        # Basic obfuscation
     MODERATE = "moderate"    # Multiple checks, some obfuscation
@@ -40,8 +40,9 @@ class ProtectionComplexity(Enum):
 @dataclass
 class ProtectionPattern:
     """Represents a protection pattern with bypass strategies."""
+
     name: str
-    indicators: List[str]
+    indicators: list[str]
     bypass_strategy: str
     confidence: float
     complexity: ProtectionComplexity
@@ -49,12 +50,11 @@ class ProtectionPattern:
     ghidra_template: str
     success_rate: float = 0.85
     description: str = ""
-    variants: Optional[List[str]] = field(default_factory=list)
+    variants: list[str] | None = field(default_factory=list)
 
 
 class AdvancedPatternLibrary:
-    """
-    Comprehensive library of protection patterns and bypass strategies.
+    """Comprehensive library of protection patterns and bypass strategies.
     All patterns lead to functional bypass code generation.
     """
 
@@ -71,7 +71,6 @@ class AdvancedPatternLibrary:
 
     def _initialize_patterns(self):
         """Initialize all protection patterns."""
-
         # License Check Patterns
         self.patterns["string_comparison_license"] = ProtectionPattern(
             name="String Comparison License Check",
@@ -81,7 +80,7 @@ class AdvancedPatternLibrary:
             confidence=0.92,
             complexity=ProtectionComplexity.SIMPLE,
             description="License validation using string comparison functions",
-            frida_template='''
+            frida_template="""
 // String comparison license bypass
 const stringFuncs = ["{indicators}"];
 stringFuncs.forEach(funcName => {{
@@ -105,8 +104,8 @@ stringFuncs.forEach(funcName => {{
         }});
     }}
 }});
-''',
-            ghidra_template='''
+""",
+            ghidra_template="""
 # Find and patch string comparison license checks
 comparison_funcs = ["{indicators}"]
 for func_name in comparison_funcs:
@@ -118,8 +117,8 @@ for func_name in comparison_funcs:
             # Analyze context for license strings
             if self.is_license_context(caller):
                 self.patch_comparison_result(caller, func_name)
-''',
-            success_rate=0.95
+""",
+            success_rate=0.95,
         )
 
         self.patterns["hardcoded_license_check"] = ProtectionPattern(
@@ -129,7 +128,7 @@ for func_name in comparison_funcs:
             confidence=0.88,
             complexity=ProtectionComplexity.TRIVIAL,
             description="Direct comparison against hardcoded license strings",
-            frida_template='''
+            frida_template="""
 // Hardcoded license string bypass
 const licenseStrings = ["{indicators}"];
 const modules = Process.enumerateModules();
@@ -145,8 +144,8 @@ modules.forEach(module => {{
         }}
     }});
 }});
-''',
-            ghidra_template='''
+""",
+            ghidra_template="""
 # Find and patch hardcoded license checks
 license_keywords = ["{indicators}"]
 functions = getFunctionManager().getFunctions(True)
@@ -154,8 +153,8 @@ for func in functions:
     func_name = func.getName().lower()
     if any(keyword in func_name for keyword in license_keywords):
         self.patch_function_return_success(func)
-''',
-            success_rate=0.92
+""",
+            success_rate=0.92,
         )
 
         # Time-based Protection Patterns
@@ -167,7 +166,7 @@ for func in functions:
             confidence=0.87,
             complexity=ProtectionComplexity.MODERATE,
             description="Time-based trial or expiration checking",
-            frida_template='''
+            frida_template="""
 // Time bomb bypass
 const timeFuncs = [
     {{name: "GetSystemTime", module: "kernel32.dll"}},
@@ -200,8 +199,8 @@ timeFuncs.forEach(tf => {{
         }}
     }}
 }});
-''',
-            ghidra_template='''
+""",
+            ghidra_template="""
 # Find and patch time-based checks
 time_functions = ["GetSystemTime", "GetLocalTime", "time", "clock"]
 for time_func in time_functions:
@@ -212,8 +211,8 @@ for time_func in time_functions:
             self.analyze_time_usage(caller, time_func)
             if self.is_expiration_check(caller):
                 self.patch_time_check(caller)
-''',
-            success_rate=0.83
+""",
+            success_rate=0.83,
         )
 
         # Network Validation Patterns
@@ -225,7 +224,7 @@ for time_func in time_functions:
             confidence=0.85,
             complexity=ProtectionComplexity.COMPLEX,
             description="Network-based license validation",
-            frida_template='''
+            frida_template="""
 // Network license validation bypass
 const netFuncs = [
     "InternetOpenA", "InternetOpenW", "HttpSendRequestA", "HttpSendRequestW",
@@ -263,8 +262,8 @@ netFuncs.forEach(funcName => {{
         }});
     }}
 }});
-''',
-            ghidra_template='''
+""",
+            ghidra_template="""
 # Find and analyze network validation functions
 network_functions = ["InternetOpen", "HttpSendRequest", "connect", "send"]
 for net_func in network_functions:
@@ -274,8 +273,8 @@ for net_func in network_functions:
         for caller in callers:
             if self.is_license_network_call(caller):
                 self.patch_network_call(caller, net_func)
-''',
-            success_rate=0.78
+""",
+            success_rate=0.78,
         )
 
         # Registry-based Protection Patterns
@@ -287,7 +286,7 @@ for net_func in network_functions:
             confidence=0.89,
             complexity=ProtectionComplexity.SIMPLE,
             description="License information stored in Windows registry",
-            frida_template='''
+            frida_template="""
 // Registry license bypass
 const regFuncs = ["RegOpenKeyExA", "RegOpenKeyExW", "RegQueryValueExA", "RegQueryValueExW"];
 const fakeValues = {{
@@ -320,8 +319,8 @@ regFuncs.forEach(funcName => {{
         }});
     }}
 }});
-''',
-            ghidra_template='''
+""",
+            ghidra_template="""
 # Find and patch registry license checks
 registry_functions = ["RegOpenKeyEx", "RegQueryValueEx", "RegSetValueEx"]
 for reg_func in registry_functions:
@@ -331,8 +330,8 @@ for reg_func in registry_functions:
         for caller in callers:
             if self.is_license_registry_access(caller):
                 self.patch_registry_access(caller, reg_func)
-''',
-            success_rate=0.91
+""",
+            success_rate=0.91,
         )
 
         # Anti-debugging Patterns
@@ -344,7 +343,7 @@ for reg_func in registry_functions:
             confidence=0.94,
             complexity=ProtectionComplexity.MODERATE,
             description="Anti-debugging protection mechanisms",
-            frida_template='''
+            frida_template="""
 // Anti-debugging bypass
 const debugFuncs = [
     "IsDebuggerPresent", "CheckRemoteDebuggerPresent",
@@ -380,8 +379,8 @@ Interceptor.attach(peb, {{
         this.context.rax.add(2).writeU8(0);
     }}
 }});
-''',
-            ghidra_template='''
+""",
+            ghidra_template="""
 # Find and patch anti-debugging checks
 debug_functions = ["IsDebuggerPresent", "CheckRemoteDebuggerPresent", "NtQueryInformationProcess"]
 for debug_func in debug_functions:
@@ -393,8 +392,8 @@ for debug_func in debug_functions:
 
 # Patch PEB access patterns
 self.find_and_patch_peb_access()
-''',
-            success_rate=0.87
+""",
+            success_rate=0.87,
         )
 
         # VM Detection Patterns
@@ -405,7 +404,7 @@ self.find_and_patch_peb_access()
             confidence=0.82,
             complexity=ProtectionComplexity.COMPLEX,
             description="Virtual machine environment detection",
-            frida_template='''
+            frida_template="""
 // VM detection bypass
 const vmStrings = ["VMware", "VirtualBox", "QEMU", "Virtual", "vbox"];
 
@@ -438,8 +437,8 @@ if (regAddr) {{
         }}
     }});
 }}
-''',
-            ghidra_template='''
+""",
+            ghidra_template="""
 # Find and patch VM detection routines
 vm_indicators = ["VMware", "VirtualBox", "QEMU", "cpuid"]
 for indicator in vm_indicators:
@@ -448,8 +447,8 @@ for indicator in vm_indicators:
         function = getFunctionContaining(addr)
         if function:
             self.patch_vm_detection_function(function)
-''',
-            success_rate=0.75
+""",
+            success_rate=0.75,
         )
 
         # Cryptographic Protection Patterns
@@ -461,7 +460,7 @@ for indicator in vm_indicators:
             confidence=0.79,
             complexity=ProtectionComplexity.EXTREME,
             description="Cryptographically signed license validation",
-            frida_template='''
+            frida_template="""
 // Cryptographic bypass
 const cryptoFuncs = [
     "CryptVerifySignatureA", "CryptVerifySignatureW", "CryptHashData",
@@ -500,8 +499,8 @@ opensslFuncs.forEach(funcName => {{
         }});
     }}
 }});
-''',
-            ghidra_template='''
+""",
+            ghidra_template="""
 # Find and analyze cryptographic validation
 crypto_functions = ["CryptVerifySignature", "RSA_verify", "EVP_Verify"]
 for crypto_func in crypto_functions:
@@ -512,11 +511,11 @@ for crypto_func in crypto_functions:
             self.analyze_crypto_usage(caller)
             if self.is_license_crypto_check(caller):
                 self.patch_crypto_verification(caller, crypto_func)
-''',
-            success_rate=0.68
+""",
+            success_rate=0.68,
         )
 
-    def get_pattern_by_indicators(self, indicators: List[str]) -> List[ProtectionPattern]:
+    def get_pattern_by_indicators(self, indicators: list[str]) -> list[ProtectionPattern]:
         """Find patterns matching the given indicators."""
         matching_patterns = []
 
@@ -540,7 +539,7 @@ for crypto_func in crypto_functions:
                     frida_template=pattern.frida_template,
                     ghidra_template=pattern.ghidra_template,
                     success_rate=pattern.success_rate,
-                    description=pattern.description
+                    description=pattern.description,
                 )
                 matching_patterns.append(pattern_copy)
 
@@ -548,7 +547,7 @@ for crypto_func in crypto_functions:
         matching_patterns.sort(key=lambda p: p.confidence, reverse=True)
         return matching_patterns
 
-    def get_bypass_strategy(self, protection_type: str) -> Dict[str, Any]:
+    def get_bypass_strategy(self, protection_type: str) -> dict[str, Any]:
         """Get comprehensive bypass strategy for protection type."""
         protection_type_lower = protection_type.lower()
 
@@ -561,7 +560,7 @@ for crypto_func in crypto_functions:
             "registry_check": ["registry_license_storage"],
             "anti_debug": ["debugger_detection"],
             "vm_detection": ["vm_detection"],
-            "crypto_verification": ["crypto_license_validation"]
+            "crypto_verification": ["crypto_license_validation"],
         }
 
         matching_patterns = []
@@ -578,7 +577,7 @@ for crypto_func in crypto_functions:
                 "patterns": [],
                 "priority": "medium",
                 "confidence": 0.5,
-                "complexity": ProtectionComplexity.MODERATE
+                "complexity": ProtectionComplexity.MODERATE,
             }
 
         # Return best matching pattern
@@ -590,10 +589,10 @@ for crypto_func in crypto_functions:
             "confidence": best_pattern.confidence,
             "complexity": best_pattern.complexity,
             "frida_template": best_pattern.frida_template,
-            "ghidra_template": best_pattern.ghidra_template
+            "ghidra_template": best_pattern.ghidra_template,
         }
 
-    def analyze_binary_patterns(self, analysis_results: Dict[str, Any]) -> List[ProtectionPattern]:
+    def analyze_binary_patterns(self, analysis_results: dict[str, Any]) -> list[ProtectionPattern]:
         """Analyze binary and identify protection patterns."""
         detected_patterns = []
 
@@ -650,14 +649,14 @@ for crypto_func in crypto_functions:
             logger.info(
                 f"Updated {pattern_name} success rate: {self.patterns[pattern_name].success_rate:.2f}")
 
-    def get_pattern_statistics(self) -> Dict[str, Any]:
+    def get_pattern_statistics(self) -> dict[str, Any]:
         """Get statistics about pattern usage and success rates."""
         stats = {
             "total_patterns": len(self.patterns),
             "pattern_usage": {},
             "average_success_rate": 0.0,
             "most_successful": None,
-            "least_successful": None
+            "least_successful": None,
         }
 
         if self.success_history:
@@ -669,7 +668,7 @@ for crypto_func in crypto_functions:
                     stats["pattern_usage"][pattern_name] = {
                         "attempts": history["attempts"],
                         "successes": history["successes"],
-                        "success_rate": rate
+                        "success_rate": rate,
                     }
 
             if success_rates:
@@ -687,7 +686,7 @@ for crypto_func in crypto_functions:
 
         return stats
 
-    def export_patterns(self) -> Dict[str, Any]:
+    def export_patterns(self) -> dict[str, Any]:
         """Export all patterns for analysis or backup."""
         return {
             "patterns": {name: {
@@ -697,8 +696,8 @@ for crypto_func in crypto_functions:
                 "confidence": p.confidence,
                 "complexity": p.complexity.value,
                 "success_rate": p.success_rate,
-                "description": p.description
+                "description": p.description,
             } for name, p in self.patterns.items()},
             "success_history": self.success_history,
-            "statistics": self.get_pattern_statistics()
+            "statistics": self.get_pattern_statistics(),
         }

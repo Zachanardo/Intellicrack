@@ -1,5 +1,4 @@
-"""
-Copyright (C) 2025 Zachary Flint
+"""Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
 
@@ -82,7 +81,7 @@ class BinarySelectionDialog(QDialog):
             self,
             "Select Binary File",
             "",
-            "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)"
+            "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)",
         )
 
         if file_path:
@@ -116,4 +115,4 @@ class BaseTemplateDialog(QDialog):
         super().__init__(parent)
 
 
-__all__ = ["BinarySelectionDialog", "BaseTemplateDialog"]
+__all__ = ["BaseTemplateDialog", "BinarySelectionDialog"]

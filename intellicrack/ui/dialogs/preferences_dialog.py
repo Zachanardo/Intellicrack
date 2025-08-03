@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -134,7 +133,7 @@ class PreferencesDialog(QDialog):
         self.qemu_preference_combo.addItems([
             "Always ask",
             "Always test in QEMU first",
-            "Never test in QEMU"
+            "Never test in QEMU",
         ])
         qemu_layout.addRow("QEMU testing preference:", self.qemu_preference_combo)
 
@@ -229,7 +228,7 @@ class PreferencesDialog(QDialog):
 
         self.default_model_combo = QComboBox()
         self.default_model_combo.addItems([
-            "GPT-4", "GPT-3.5-turbo", "Claude", "Local Model"
+            "GPT-4", "GPT-3.5-turbo", "Claude", "Local Model",
         ])
         model_layout.addRow("Default AI model:", self.default_model_combo)
 
@@ -267,13 +266,13 @@ class PreferencesDialog(QDialog):
         """Load preferences from settings."""
         # General
         self.theme_combo.setCurrentText(
-            self.settings.value("general/theme", "Dark")
+            self.settings.value("general/theme", "Dark"),
         )
         self.auto_save_checkbox.setChecked(
-            self.settings.value("general/auto_save", True, type=bool)
+            self.settings.value("general/auto_save", True, type=bool),
         )
         self.backup_checkbox.setChecked(
-            self.settings.value("general/create_backups", True, type=bool)
+            self.settings.value("general/create_backups", True, type=bool),
         )
 
         # Execution
@@ -286,53 +285,53 @@ class PreferencesDialog(QDialog):
             self.qemu_preference_combo.setCurrentIndex(2)
 
         self.qemu_timeout_spin.setValue(
-            self.settings.value("execution/qemu_timeout", 60, type=int)
+            self.settings.value("execution/qemu_timeout", 60, type=int),
         )
         self.qemu_memory_spin.setValue(
-            self.settings.value("execution/qemu_memory", 2048, type=int)
+            self.settings.value("execution/qemu_memory", 2048, type=int),
         )
         self.script_timeout_spin.setValue(
-            self.settings.value("execution/script_timeout", 120, type=int)
+            self.settings.value("execution/script_timeout", 120, type=int),
         )
         self.capture_output_checkbox.setChecked(
-            self.settings.value("execution/capture_output", True, type=bool)
+            self.settings.value("execution/capture_output", True, type=bool),
         )
         self.verbose_output_checkbox.setChecked(
-            self.settings.value("execution/verbose_output", False, type=bool)
+            self.settings.value("execution/verbose_output", False, type=bool),
         )
 
         # Security
         self.warn_dangerous_checkbox.setChecked(
-            self.settings.value("security/warn_dangerous", True, type=bool)
+            self.settings.value("security/warn_dangerous", True, type=bool),
         )
         self.confirm_patches_checkbox.setChecked(
-            self.settings.value("security/confirm_patches", True, type=bool)
+            self.settings.value("security/confirm_patches", True, type=bool),
         )
         self.sandbox_default_checkbox.setChecked(
-            self.settings.value("security/sandbox_default", False, type=bool)
+            self.settings.value("security/sandbox_default", False, type=bool),
         )
         self.auto_detect_checkbox.setChecked(
-            self.settings.value("security/auto_detect_protections", True, type=bool)
+            self.settings.value("security/auto_detect_protections", True, type=bool),
         )
         self.ml_analysis_checkbox.setChecked(
-            self.settings.value("security/use_ml_analysis", True, type=bool)
+            self.settings.value("security/use_ml_analysis", True, type=bool),
         )
 
         # AI
         self.default_model_combo.setCurrentText(
-            self.settings.value("ai/default_model", "GPT-4")
+            self.settings.value("ai/default_model", "GPT-4"),
         )
         self.api_key_edit.setText(
-            self.settings.value("ai/api_key", "")
+            self.settings.value("ai/api_key", ""),
         )
         self.max_tokens_spin.setValue(
-            self.settings.value("ai/max_tokens", 2000, type=int)
+            self.settings.value("ai/max_tokens", 2000, type=int),
         )
         self.auto_refine_checkbox.setChecked(
-            self.settings.value("ai/auto_refine", False, type=bool)
+            self.settings.value("ai/auto_refine", False, type=bool),
         )
         self.explain_scripts_checkbox.setChecked(
-            self.settings.value("ai/explain_scripts", True, type=bool)
+            self.settings.value("ai/explain_scripts", True, type=bool),
         )
 
     def save_preferences(self):

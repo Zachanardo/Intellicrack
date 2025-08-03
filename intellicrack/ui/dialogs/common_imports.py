@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -62,9 +61,7 @@ try:
     # Utility functions for unused imports
     def create_icon(path_or_pixmap):
         """Create a QIcon from a path or pixmap"""
-        if isinstance(path_or_pixmap, str):
-            return QIcon(path_or_pixmap)
-        elif isinstance(path_or_pixmap, QPixmap):
+        if isinstance(path_or_pixmap, str) or isinstance(path_or_pixmap, QPixmap):
             return QIcon(path_or_pixmap)
         return QIcon()
 
@@ -102,11 +99,11 @@ except ImportError as e:
     # Stub classes for when PyQt is not available
     class QDialog:
         """Stub QDialog class for non-PyQt environments."""
-        pass
+
 
     class QThread:
         """Stub QThread class for non-PyQt environments."""
-        pass
+
 
     def pyqtSignal(*args, **kwargs):
         """Stub pyqtSignal function for non-PyQt environments."""
@@ -126,12 +123,12 @@ except ImportError as e:
             def pixmap(self, size=None):
                 if self.is_pixmap:
                     return self.source
-                elif self.is_path:
+                if self.is_path:
                     # Create pixmap from path
                     pixmap = type("Pixmap", (), {
                         "width": self._size[0],
                         "height": self._size[1],
-                        "path": self.source
+                        "path": self.source,
                     })()
                     return pixmap
                 return None
@@ -145,7 +142,7 @@ except ImportError as e:
             def actualSize(self, size=None):
                 return type("Size", (), {
                     "width": lambda: self._size[0],
-                    "height": lambda: self._size[1]
+                    "height": lambda: self._size[1],
                 })()
 
         return Icon(path_or_pixmap)
@@ -178,7 +175,7 @@ except ImportError as e:
             def size(self):
                 return type("Size", (), {
                     "width": lambda: self.width,
-                    "height": lambda: self.height
+                    "height": lambda: self.height,
                 })()
 
             def isNull(self):
@@ -306,5 +303,5 @@ __all__ = [
     "QTreeWidget", "QTreeWidgetItem", "QVBoxLayout", "QWidget",
     # Utility functions
     "create_icon", "create_pixmap_from_file", "get_user_input",
-    "create_horizontal_slider"
+    "create_horizontal_slider",
 ]

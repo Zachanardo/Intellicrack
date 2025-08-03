@@ -1,5 +1,4 @@
-"""
-Comprehensive Command-Line Interface for Intellicrack.
+"""Comprehensive Command-Line Interface for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -170,7 +169,7 @@ except ImportError as e:
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -222,7 +221,7 @@ class IntellicrackCLI:
     def load_custom_config(self, config_path):
         """Load custom configuration from file."""
         try:
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 custom_config = json.load(f)
             CONFIG.update(custom_config)
             logger.info(f"Loaded custom configuration from {config_path}")
@@ -236,7 +235,7 @@ class IntellicrackCLI:
         logging.basicConfig(
             level=logging.DEBUG,
             format="%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
-            force=True
+            force=True,
         )
         logger.debug("Debug mode enabled")
 
@@ -277,7 +276,7 @@ class IntellicrackCLI:
             self.dist_manager = DistributedAnalysisManager()
             self.dist_manager.initialize(
                 max_workers=self.args.threads,
-                backend="ray" if self.args.distributed_backend == "ray" else "dask"
+                backend="ray" if self.args.distributed_backend == "ray" else "dask",
             )
             logger.info(f"Distributed processing enabled with {self.args.threads} workers")
 
@@ -350,7 +349,7 @@ class IntellicrackCLI:
             if self.args.symbolic_address:
                 # Start from specific address
                 sym_results = sym_engine.explore_from(
-                    int(self.args.symbolic_address, 16)
+                    int(self.args.symbolic_address, 16),
                 )
             else:
                 sym_results = run_symbolic_execution(self.binary_path)
@@ -362,7 +361,7 @@ class IntellicrackCLI:
             concolic_engine = ConcolicExecutionEngine()
             concolic_results = concolic_engine.analyze(
                 self.binary_path,
-                target_coverage=self.args.concolic_coverage
+                target_coverage=self.args.concolic_coverage,
             )
             self.results["concolic"] = concolic_results
 
@@ -396,7 +395,7 @@ class IntellicrackCLI:
             sim_search = SimilaritySearcher()
             similar = sim_search.find_similar(
                 self.binary_path,
-                self.args.similarity_threshold
+                self.args.similarity_threshold,
             )
             self.results["similar_binaries"] = similar
 
@@ -446,13 +445,13 @@ class IntellicrackCLI:
         if self.args.commercial_protections:
             logger.info("Detecting commercial protection systems...")
             self.results["commercial_protections"] = protection_detection.detect_commercial_protections(
-                self.binary_path
+                self.binary_path,
             )
 
         if self.args.anti_debug:
             logger.info("Detecting anti-debugging techniques...")
             self.results["anti_debug"] = protection_detection.detect_anti_debugging(
-                self.binary_path
+                self.binary_path,
             )
 
         if self.args.license_analysis:
@@ -468,7 +467,7 @@ class IntellicrackCLI:
             if self.args.capture_duration:
                 # Capture for specified duration
                 analyzer.start_capture(
-                    interface=self.args.network_interface
+                    interface=self.args.network_interface,
                 )
                 time.sleep(self.args.capture_duration)
                 analyzer.stop_capture()
@@ -498,13 +497,13 @@ class IntellicrackCLI:
         if self.args.suggest_patches:
             logger.info("Generating patch suggestions...")
             self.results["patch_suggestions"] = run_generate_patch_suggestions(
-                self.binary_path
+                self.binary_path,
             )
 
         if self.args.apply_patch:
             logger.info(f"Applying patch: {self.args.patch_file}...")
             # Load patch definition
-            with open(self.args.patch_file, "r") as f:
+            with open(self.args.patch_file) as f:
                 patch_def = json.load(f)
 
             # Use memory patching utility functions
@@ -512,7 +511,7 @@ class IntellicrackCLI:
             results = apply_memory_patches(
                 self.binary_path,
                 patch_def,
-                memory_mode=self.args.memory_patch
+                memory_mode=self.args.memory_patch,
             )
             self.results["patching"] = results
 
@@ -522,7 +521,7 @@ class IntellicrackCLI:
             payload = gen.generate(
                 self.args.payload_type,
                 target=self.binary_path,
-                options=self.args.payload_options
+                options=self.args.payload_options,
             )
 
             if self.args.payload_output:
@@ -533,7 +532,7 @@ class IntellicrackCLI:
             self.results["payload"] = {
                 "type": self.args.payload_type,
                 "size": len(payload),
-                "hash": hashlib.sha256(payload).hexdigest()
+                "hash": hashlib.sha256(payload).hexdigest(),
             }
 
     def run_bypass_operations(self):
@@ -542,40 +541,40 @@ class IntellicrackCLI:
             logger.info("Generating TPM bypass...")
             analyzer = TPMAnalyzer()
             self.results["tpm_bypass"] = analyzer.generate_bypass(
-                self.binary_path
+                self.binary_path,
             )
 
         if self.args.bypass_vm_detection:
             logger.info("Generating VM detection bypass...")
             detector = VMDetector()
             self.results["vm_bypass"] = detector.generate_bypass(
-                self.binary_path
+                self.binary_path,
             )
 
         if self.args.emulate_dongle:
             logger.info(f"Setting up {self.args.dongle_type} dongle emulation...")
             # Use protection_utils for dongle emulation
             config = protection_utils.emulate_hardware_dongle(
-                self.args.dongle_type
+                self.args.dongle_type,
             )
             self.results["dongle_emulation"] = config
 
         if self.args.hwid_spoof:
             logger.info("Generating HWID spoofing configuration...")
             self.results["hwid_spoof"] = protection_utils.generate_hwid_spoof_config(
-                self.args.target_hwid
+                self.args.target_hwid,
             )
 
         if self.args.time_bomb_defuser:
             logger.info("Generating time bomb defusion scripts...")
             self.results["time_bomb_defuser"] = protection_utils.generate_time_bomb_defuser(
-                self.binary_path
+                self.binary_path,
             )
 
         if self.args.telemetry_blocker:
             logger.info("Generating telemetry blocking configuration...")
             self.results["telemetry_blocker"] = protection_utils.generate_telemetry_blocker(
-                self.binary_path
+                self.binary_path,
             )
 
     def run_ml_analysis(self):
@@ -585,7 +584,7 @@ class IntellicrackCLI:
             # Extract features and find similar samples
             self.results["ml_similarity"] = run_ml_similarity_search(
                 self.binary_path,
-                database=self.args.ml_database
+                database=self.args.ml_database,
             )
 
         if self.args.train_model:
@@ -593,7 +592,7 @@ class IntellicrackCLI:
             manager = ModelManager()
             model = manager.train_model(
                 self.args.training_data,
-                model_type=self.args.model_type
+                model_type=self.args.model_type,
             )
 
             if self.args.save_model:
@@ -606,14 +605,14 @@ class IntellicrackCLI:
             logger.info("Running Ghidra analysis...")
             self.results["ghidra"] = run_ghidra_analysis(
                 self.binary_path,
-                script=self.args.ghidra_script
+                script=self.args.ghidra_script,
             )
 
         if self.args.radare2_analysis:
             logger.info("Running Radare2 analysis...")
             self.results["radare2"] = run_radare2_analysis(
                 self.binary_path,
-                commands=self.args.r2_commands
+                commands=self.args.r2_commands,
             )
 
         if self.args.qemu_emulate:
@@ -624,7 +623,7 @@ class IntellicrackCLI:
                 "status": "initialized",
                 "emulator_id": id(emulator),
                 "target_binary": emulator.target_binary if hasattr(emulator, "target_binary") else self.binary_path,
-                "emulation_ready": True
+                "emulation_ready": True,
             }
             logger.info(f"QEMU emulator ready for {os.path.basename(self.binary_path)}")
 
@@ -633,7 +632,7 @@ class IntellicrackCLI:
             self.results["frida"] = run_frida_script(
                 self.binary_path,
                 self.args.frida_script,
-                spawn=self.args.frida_spawn
+                spawn=self.args.frida_spawn,
             )
 
     # pylint: disable=too-many-branches,too-many-statements
@@ -643,7 +642,7 @@ class IntellicrackCLI:
             logger.info("Extracting executable icon...")
             icon_path = system_utils.extract_executable_icon(
                 self.binary_path,
-                output_path=self.args.icon_output
+                output_path=self.args.icon_output,
             )
             self.results["icon"] = {"path": icon_path}
 
@@ -653,11 +652,11 @@ class IntellicrackCLI:
             algorithm = self.args.license_algorithm or "auto-detect"
             license_key = generate_license_key(
                 self.binary_path,
-                algorithm=algorithm
+                algorithm=algorithm,
             )
             self.results["license_key"] = {
                 "key": license_key,
-                "algorithm": algorithm
+                "algorithm": algorithm,
             }
 
         if self.args.ai_assistant:
@@ -672,11 +671,11 @@ class IntellicrackCLI:
             contextual_question = f"{question}\n\nContext: {context}" if context else question
 
             response = assistant.ask_question(
-                question=contextual_question
+                question=contextual_question,
             )
             self.results["ai_assistant"] = {
                 "question": question,
-                "response": response
+                "response": response,
             }
 
         # AI Reasoning using enhanced AI assistant
@@ -689,7 +688,7 @@ class IntellicrackCLI:
             task_data = {
                 "type": "cli_analysis",
                 "file_path": self.binary_path,
-                "binary_info": {}
+                "binary_info": {},
             }
 
             # Add protection detection results if available
@@ -701,7 +700,7 @@ class IntellicrackCLI:
                         task_data["patterns"].append({
                             "name": protection.get("name", "Unknown"),
                             "type": protection.get("type", "Unknown"),
-                            "confidence": protection.get("confidence", 0)
+                            "confidence": protection.get("confidence", 0),
                         })
 
             # Add ML results if available
@@ -750,21 +749,21 @@ class IntellicrackCLI:
                     self.binary_path,
                     server=self.args.plugin_server,
                     port=self.args.plugin_port,
-                    params=self.args.plugin_params
+                    params=self.args.plugin_params,
                 )
             elif self.args.plugin_sandbox:
                 # Sandboxed execution
                 result = plugin_sys.execute_sandboxed_plugin(
                     self.args.plugin_run,
                     self.binary_path,
-                    params=self.args.plugin_params
+                    params=self.args.plugin_params,
                 )
             else:
                 # Standard execution
                 result = plugin_sys.execute_plugin(
                     self.args.plugin_run,
                     self.binary_path,
-                    params=self.args.plugin_params
+                    params=self.args.plugin_params,
                 )
 
             self.results["plugin"] = result
@@ -802,7 +801,7 @@ class IntellicrackCLI:
             output = generate_report(
                 self.results,
                 self.binary_path,
-                format=self.args.format
+                format=self.args.format,
             )
         else:
             output = str(self.results)
@@ -818,9 +817,8 @@ class IntellicrackCLI:
                 f.write(output if isinstance(output, bytes) else output)
 
             logger.info(f"Output written to {self.args.output}")
-        else:
-            if not isinstance(output, bytes):
-                print(output)
+        elif not isinstance(output, bytes):
+            print(output)
 
     def format_text_output(self):
         """Format results as human-readable text."""
@@ -880,8 +878,8 @@ class IntellicrackCLI:
             "metadata": {
                 "cli_version": "1.0",
                 "features_used": self._get_features_used(),
-                "command_line": " ".join(sys.argv)
-            }
+                "command_line": " ".join(sys.argv),
+            },
         }
 
         with open(output_path, "w") as f:
@@ -950,7 +948,7 @@ class IntellicrackCLI:
                         boxstyle="round,pad=0.02",
                         facecolor="yellow",
                         edgecolor="red",
-                        alpha=0.3
+                        alpha=0.3,
                     )
                     ax.add_patch(fancy_box)
 
@@ -1027,7 +1025,7 @@ class IntellicrackCLI:
             # Add to results
             self.results["performance_profile"] = {
                 "top_functions": perf_report,
-                "total_time": ps.total_tt
+                "total_time": ps.total_tt,
             }
 
         # Generate memory trace report
@@ -1052,7 +1050,7 @@ class IntellicrackCLI:
                 "baseline_mb": self.memory_baseline,
                 "final_mb": current_mem,
                 "increase_mb": mem_increase,
-                "top_allocations": [str(stat) for stat in top_stats[:10]]
+                "top_allocations": [str(stat) for stat in top_stats[:10]],
             }
 
             tracemalloc.stop()
@@ -1074,7 +1072,7 @@ class IntellicrackCLI:
             self.results["incremental_analysis"] = {
                 "manager": manager,
                 "chunk_size": manager.get_chunk_size(),
-                "cache_enabled": True
+                "cache_enabled": True,
             }
             logger.info("Incremental analysis manager initialized")
         except Exception as e:
@@ -1086,14 +1084,14 @@ class IntellicrackCLI:
             hooker = CloudLicenseHooker()
             hooker.configure_endpoints([
                 os.environ.get("LICENSE_VALIDATION_URL", "https://license.internal/api/v1/validate"),
-                os.environ.get("AUTH_CHECK_URL", "https://auth.internal/license/check")
+                os.environ.get("AUTH_CHECK_URL", "https://auth.internal/license/check"),
             ])
             hooker.set_bypass_mode(True)
 
             self.results["cloud_license_hook"] = {
                 "hooker": hooker,
                 "endpoints": hooker.get_configured_endpoints(),
-                "bypass_enabled": True
+                "bypass_enabled": True,
             }
             logger.info("Cloud license hooker configured")
         except Exception as e:
@@ -1107,13 +1105,13 @@ class IntellicrackCLI:
             emulator.configure_responses({
                 "license_valid": True,
                 "expiry_date": "2099-12-31",
-                "features": ["premium", "enterprise"]
+                "features": ["premium", "enterprise"],
             })
 
             self.results["license_emulator"] = {
                 "emulator": emulator,
                 "port": 8080,
-                "responses_configured": True
+                "responses_configured": True,
             }
             logger.info("License server emulator configured")
         except Exception as e:
@@ -1130,7 +1128,7 @@ class IntellicrackCLI:
             self.results["adobe_injection"] = {
                 "injector": injector,
                 "target": "adobe_reader.exe",
-                "stealth_enabled": True
+                "stealth_enabled": True,
             }
             logger.info("Adobe injector configured")
         except Exception as e:
@@ -1147,7 +1145,7 @@ class IntellicrackCLI:
             self.results["windows_activation"] = {
                 "activator": activator,
                 "version_detected": activator.get_windows_version(),
-                "method": "kms_emulation"
+                "method": "kms_emulation",
             }
             logger.info("Windows activator configured")
         except Exception as e:
@@ -1165,7 +1163,7 @@ class IntellicrackCLI:
                 "loader": loader,
                 "chunk_size": 4096,
                 "lazy_loading": True,
-                "cache_policy": "lru"
+                "cache_policy": "lru",
             }
             logger.info("Memory-optimized loader configured")
         except Exception as e:
@@ -1181,7 +1179,7 @@ class IntellicrackCLI:
             self.results["exploitation"] = {
                 "vulnerabilities": exploits,
                 "exploit_chains": exploit_chains,
-                "exploitability_score": exploitation.calculate_exploitability_score(exploits)
+                "exploitability_score": exploitation.calculate_exploitability_score(exploits),
             }
             logger.info(f"Found {len(exploits)} exploitable vulnerabilities")
         except Exception as e:
@@ -1196,7 +1194,7 @@ class IntellicrackCLI:
                 "nodes": cfg_results.get("nodes", []),
                 "edges": cfg_results.get("edges", []),
                 "complexity_metrics": cfg_results.get("complexity", {}),
-                "analysis_time": cfg_results.get("analysis_time", 0)
+                "analysis_time": cfg_results.get("analysis_time", 0),
             }
             logger.info("Detailed CFG analysis completed")
         except Exception as e:
@@ -1210,7 +1208,7 @@ class IntellicrackCLI:
             self.results["multi_format"] = {
                 "detected_formats": format_results.get("formats", []),
                 "format_specific_analysis": format_results.get("analysis", {}),
-                "compatibility_check": format_results.get("compatibility", {})
+                "compatibility_check": format_results.get("compatibility", {}),
             }
             logger.info("Multi-format analysis completed")
         except Exception as e:
@@ -1224,7 +1222,7 @@ class IntellicrackCLI:
             self.results["rop_gadgets"] = {
                 "gadgets": rop_results.get("gadgets", []),
                 "gadget_chains": rop_results.get("chains", []),
-                "statistics": rop_results.get("stats", {})
+                "statistics": rop_results.get("stats", {}),
             }
             logger.info(f"Found {len(rop_results.get('gadgets', []))} ROP gadgets")
         except Exception as e:
@@ -1238,7 +1236,7 @@ class IntellicrackCLI:
             self.results["detailed_vulnerabilities"] = {
                 "vulnerabilities": vuln_results.get("vulnerabilities", []),
                 "severity_breakdown": vuln_results.get("severity", {}),
-                "remediation_suggestions": vuln_results.get("remediation", [])
+                "remediation_suggestions": vuln_results.get("remediation", []),
             }
             logger.info("Detailed vulnerability scan completed")
         except Exception as e:
@@ -1258,27 +1256,27 @@ def show_feature_categories():
             "--similarity-search                # Binary similarity",
             "--multi-format                     # Multi-format analysis",
             "--section-analysis                 # Section analysis",
-            "--import-export                    # Import/export analysis"
+            "--import-export                    # Import/export analysis",
         ],
         "Vulnerability Detection": [
             "--vulnerability-scan               # Static vulnerability scan",
             "--weak-crypto                      # Weak cryptography detection",
             "--ml-vulnerability                 # ML-based prediction",
-            "--vuln-scan-depth {quick,normal,deep}  # Scan depth"
+            "--vuln-scan-depth {quick,normal,deep}  # Scan depth",
         ],
         "Protection Analysis": [
             "--detect-packing                   # Packing/obfuscation detection",
             "--detect-protections               # All known protections",
             "--commercial-protections           # Commercial systems",
             "--anti-debug                       # Anti-debugging techniques",
-            "--license-analysis                 # License mechanisms"
+            "--license-analysis                 # License mechanisms",
         ],
         "Network Analysis": [
             "--network-capture                  # Traffic capture",
             "--protocol-fingerprint             # Protocol fingerprinting",
             "--ssl-intercept                    # SSL/TLS interception",
             "--capture-duration SECS            # Capture duration",
-            "--pcap-file FILE                   # Analyze PCAP file"
+            "--pcap-file FILE                   # Analyze PCAP file",
         ],
         "Protection Bypass": [
             "--bypass-tpm                       # TPM bypass",
@@ -1286,49 +1284,49 @@ def show_feature_categories():
             "--emulate-dongle                   # Hardware dongle emulation",
             "--hwid-spoof                       # HWID spoofing",
             "--time-bomb-defuser                # Time bomb defusion",
-            "--telemetry-blocker                # Telemetry blocking"
+            "--telemetry-blocker                # Telemetry blocking",
         ],
         "Patching & Exploitation": [
             "--suggest-patches                  # Generate patch suggestions",
             "--apply-patch                      # Apply patches",
             "--generate-payload                 # Generate exploit payload",
-            "--memory-patch                     # Memory-only patching"
+            "--memory-patch                     # Memory-only patching",
         ],
         "Machine Learning": [
             "--ml-similarity                    # ML-based similarity",
             "--train-model                      # Train custom model",
-            "--ml-model PATH                    # Use custom model"
+            "--ml-model PATH                    # Use custom model",
         ],
         "External Tools": [
             "--ghidra-analysis                  # Ghidra integration",
             "--qemu-emulate                     # QEMU emulation",
-            "--frida-script SCRIPT              # Frida scripting"
+            "--frida-script SCRIPT              # Frida scripting",
         ],
         "Plugin System": [
             "--plugin-list                      # List plugins",
             "--plugin-run PLUGIN                # Run plugin",
             "--plugin-remote                    # Remote execution",
-            "--plugin-sandbox                   # Sandboxed execution"
+            "--plugin-sandbox                   # Sandboxed execution",
         ],
         "Processing Options": [
             "--gpu-accelerate                   # GPU acceleration",
             "--distributed                      # Distributed processing",
             "--threads NUM                      # Number of threads",
-            "--memory-optimized                 # Memory optimization"
+            "--memory-optimized                 # Memory optimization",
         ],
         "Utilities": [
             "--extract-icon                     # Extract executable icon",
             "--generate-license-key             # Generate license key",
             "--ai-assistant                     # AI assistant Q&A",
             "--ai-reasoning                     # AI reasoning on results",
-            "--generate-report                  # Generate report"
+            "--generate-report                  # Generate report",
         ],
         "Output & Batch": [
             "--format {text,json,pdf,html}      # Output format",
             "--batch FILE                       # Batch processing",
             "--server                           # REST API server",
-            "--watch                            # Watch file changes"
-        ]
+            "--watch                            # Watch file changes",
+        ],
     }
 
     print("🚀 INTELLICRACK CLI - COMPLETE FEATURE REFERENCE")
@@ -1367,7 +1365,7 @@ def show_feature_categories():
         "# Interactive help",
         "intellicrack-cli --help                    # Full help",
         "intellicrack-cli --help-category analysis  # Category help",
-        "intellicrack-cli --list-commands           # All commands"
+        "intellicrack-cli --list-commands           # All commands",
     ]
 
     for example in examples:
@@ -1404,14 +1402,14 @@ def parse_arguments():
   %(prog)s --help-category analysis      # Help for specific category
 
 🔥 FEATURE COVERAGE: ALL 78 Intellicrack features available via CLI!
-        """
+        """,
     )
 
     # Positional arguments
     parser.add_argument(
         "binary",
         nargs="?",
-        help="Path to the binary file to analyze"
+        help="Path to the binary file to analyze",
     )
 
     # Core Analysis Options
@@ -1733,7 +1731,7 @@ def handle_batch_processing(args):
     logger.info(f"Processing batch file: {args.batch}")
 
     # Read file list
-    with open(args.batch, "r") as f:
+    with open(args.batch) as f:
         files = [line.strip() for line in f if line.strip()]
 
     logger.info(f"Found {len(files)} files to process")
@@ -1760,7 +1758,7 @@ def handle_batch_processing(args):
                     base_name = os.path.basename(file_path)
                     file_args.output = os.path.join(
                         args.batch_output_dir,
-                        f"{base_name}.{args.format}"
+                        f"{base_name}.{args.format}",
                     )
 
                 future = executor.submit(process_single_file, file_args)
@@ -1790,7 +1788,7 @@ def handle_batch_processing(args):
                     base_name = os.path.basename(file_path)
                     file_args.output = os.path.join(
                         args.batch_output_dir,
-                        f"{base_name}.{args.format}"
+                        f"{base_name}.{args.format}",
                     )
 
                 result = process_single_file(file_args)
@@ -1808,7 +1806,7 @@ def handle_batch_processing(args):
             "total_files": len(files),
             "successful": len(results),
             "failed": len(files) - len(results),
-            "results": results
+            "results": results,
         }
 
         with open(args.output, "w") as f:
@@ -1834,7 +1832,7 @@ def run_server_mode(args):
         from flask import Flask, jsonify, request
     except ImportError:
         logger.error("Flask not installed. Install with: pip install flask")
-        return
+        return None
 
     app = Flask(__name__)
 
@@ -1874,12 +1872,12 @@ def run_server_mode(args):
 
         except Exception as e:
             # Log the full exception details server-side for debugging
-            logger.error(f"Analysis endpoint error: {str(e)}", exc_info=True)
+            logger.error(f"Analysis endpoint error: {e!s}", exc_info=True)
 
             # Return generic error message to user (don't expose stack trace)
             return jsonify({
                 "error": "An internal error occurred during analysis",
-                "status": "failed"
+                "status": "failed",
             }), 500
 
     @app.route("/health", methods=["GET"])
@@ -1952,8 +1950,8 @@ def show_category_help(category):
                 ("--similarity-search", "Binary similarity search"),
                 ("--multi-format", "Multi-format binary analysis"),
                 ("--section-analysis", "Binary section analysis"),
-                ("--import-export", "Import/export table analysis")
-            ]
+                ("--import-export", "Import/export table analysis"),
+            ],
         },
         "vulnerability": {
             "title": "VULNERABILITY DETECTION",
@@ -1961,8 +1959,8 @@ def show_category_help(category):
                 ("--vulnerability-scan", "Static vulnerability scanning"),
                 ("--weak-crypto", "Weak cryptography detection"),
                 ("--ml-vulnerability", "ML-based vulnerability prediction"),
-                ("--vuln-scan-depth", "Vulnerability scan depth")
-            ]
+                ("--vuln-scan-depth", "Vulnerability scan depth"),
+            ],
         },
         "protection": {
             "title": "PROTECTION ANALYSIS",
@@ -1971,8 +1969,8 @@ def show_category_help(category):
                 ("--detect-protections", "Scan for all protections"),
                 ("--commercial-protections", "Commercial protection systems"),
                 ("--anti-debug", "Anti-debugging techniques"),
-                ("--license-analysis", "License mechanism analysis")
-            ]
+                ("--license-analysis", "License mechanism analysis"),
+            ],
         },
         "network": {
             "title": "NETWORK ANALYSIS",
@@ -1981,8 +1979,8 @@ def show_category_help(category):
                 ("--protocol-fingerprint", "Protocol fingerprinting"),
                 ("--ssl-intercept", "SSL/TLS interception"),
                 ("--capture-duration", "Capture duration in seconds"),
-                ("--pcap-file", "Analyze existing PCAP file")
-            ]
+                ("--pcap-file", "Analyze existing PCAP file"),
+            ],
         },
         "bypass": {
             "title": "PROTECTION BYPASS",
@@ -1992,8 +1990,8 @@ def show_category_help(category):
                 ("--emulate-dongle", "Hardware dongle emulation"),
                 ("--hwid-spoof", "HWID spoofing"),
                 ("--time-bomb-defuser", "Time bomb defusion"),
-                ("--telemetry-blocker", "Telemetry blocking")
-            ]
+                ("--telemetry-blocker", "Telemetry blocking"),
+            ],
         },
         "patching": {
             "title": "PATCHING & EXPLOITATION",
@@ -2001,8 +1999,8 @@ def show_category_help(category):
                 ("--suggest-patches", "Generate patch suggestions"),
                 ("--apply-patch", "Apply patches from file"),
                 ("--generate-payload", "Generate exploit payload"),
-                ("--memory-patch", "Memory-only patching")
-            ]
+                ("--memory-patch", "Memory-only patching"),
+            ],
         },
         "ml": {
             "title": "MACHINE LEARNING",
@@ -2010,16 +2008,16 @@ def show_category_help(category):
                 ("--ml-similarity", "ML-based similarity analysis"),
                 ("--train-model", "Train custom ML model"),
                 ("--ml-model", "Use custom ML model"),
-                ("--ml-database", "ML feature database")
-            ]
+                ("--ml-database", "ML feature database"),
+            ],
         },
         "tools": {
             "title": "EXTERNAL TOOLS",
             "commands": [
                 ("--ghidra-analysis", "Ghidra integration"),
                 ("--qemu-emulate", "QEMU system emulation"),
-                ("--frida-script", "Frida dynamic instrumentation")
-            ]
+                ("--frida-script", "Frida dynamic instrumentation"),
+            ],
         },
         "plugins": {
             "title": "PLUGIN SYSTEM",
@@ -2027,8 +2025,8 @@ def show_category_help(category):
                 ("--plugin-list", "List available plugins"),
                 ("--plugin-run", "Run specific plugin"),
                 ("--plugin-remote", "Remote plugin execution"),
-                ("--plugin-sandbox", "Sandboxed plugin execution")
-            ]
+                ("--plugin-sandbox", "Sandboxed plugin execution"),
+            ],
         },
         "processing": {
             "title": "PROCESSING OPTIONS",
@@ -2036,9 +2034,9 @@ def show_category_help(category):
                 ("--gpu-accelerate", "GPU acceleration"),
                 ("--distributed", "Distributed processing"),
                 ("--threads", "Number of processing threads"),
-                ("--memory-optimized", "Memory optimization")
-            ]
-        }
+                ("--memory-optimized", "Memory optimization"),
+            ],
+        },
     }
 
     if category in category_help:
@@ -2100,7 +2098,7 @@ def list_all_commands():
         "  --gpu-accelerate, --distributed, --threads, --memory-optimized",
         "",
         "Output & Utilities:",
-        "  --format, --output, --batch, --server, --watch, --extract-icon"
+        "  --format, --output, --batch, --server, --watch, --extract-icon",
     ]
 
     for line in commands:
@@ -2151,15 +2149,15 @@ def main():
     # Handle help options first
     if args.help_categories:
         show_feature_categories()
-        return
+        return None
 
     if args.list_commands:
         list_all_commands()
-        return
+        return None
 
     if args.help_category:
         show_category_help(args.help_category)
-        return
+        return None
 
     # Handle special modes
     if args.ai_mode:
@@ -2194,7 +2192,7 @@ def main():
                     print(f"  {name:<20} {desc}")
         print()
         print("💡 Use --plugin-run <plugin> to execute a plugin")
-        return
+        return None
 
     if args.plugin_install:
         plugin_sys = PluginSystem()
@@ -2203,7 +2201,7 @@ def main():
             print(f"✅ Plugin installed from {args.plugin_install}")
         else:
             print(f"❌ Failed to install plugin from {args.plugin_install}")
-        return
+        return None
 
     # Require binary for analysis
     if not args.binary:

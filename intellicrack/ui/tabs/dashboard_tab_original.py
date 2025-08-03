@@ -2,6 +2,7 @@
 
 import os
 from datetime import datetime
+
 """UI module for Dashboard Tab Original.
 
 This module provides UI components and dialogs for dashboard tab original functionality.
@@ -344,7 +345,7 @@ class DashboardTab(BaseTab):
                 self.system_monitor.start_monitoring()
                 self.log_activity("System monitoring started")
         except Exception as e:
-            self.log_activity(f"Warning: Failed to start system monitoring: {str(e)}")
+            self.log_activity(f"Warning: Failed to start system monitoring: {e!s}")
 
         try:
             if hasattr(self, "gpu_status") and self.gpu_status:
@@ -354,7 +355,7 @@ class DashboardTab(BaseTab):
                 self.gpu_status.start_monitoring()
                 self.log_activity("GPU monitoring started")
         except Exception as e:
-            self.log_activity(f"Warning: Failed to start GPU monitoring: {str(e)}")
+            self.log_activity(f"Warning: Failed to start GPU monitoring: {e!s}")
 
         try:
             if hasattr(self, "cpu_status") and self.cpu_status:
@@ -364,7 +365,7 @@ class DashboardTab(BaseTab):
                 self.cpu_status.start_monitoring()
                 self.log_activity("CPU monitoring started")
         except Exception as e:
-            self.log_activity(f"Warning: Failed to start CPU monitoring: {str(e)}")
+            self.log_activity(f"Warning: Failed to start CPU monitoring: {e!s}")
 
     def create_new_project(self):
         """Create a new project"""
@@ -383,7 +384,7 @@ class DashboardTab(BaseTab):
             self,
             "Open Project",
             "",
-            "Intellicrack Projects (*.icp);;All Files (*)"
+            "Intellicrack Projects (*.icp);;All Files (*)",
         )
 
         if project_file:
@@ -407,7 +408,7 @@ class DashboardTab(BaseTab):
                     "name": project_name,
                     "files": {},
                     "created": datetime.now().isoformat(),
-                    "modified": datetime.now().isoformat()
+                    "modified": datetime.now().isoformat(),
                 }
                 self.current_project_label.setText(f"Project: {project_name}")
                 self.current_project_label.setStyleSheet("color: #0078d4; padding: 5px; font-weight: bold;")
@@ -426,7 +427,7 @@ class DashboardTab(BaseTab):
                 "name": self.current_project,
                 "files": {},
                 "created": datetime.now().isoformat(),
-                "modified": datetime.now().isoformat()
+                "modified": datetime.now().isoformat(),
             }
 
         # Save the project data
@@ -437,7 +438,7 @@ class DashboardTab(BaseTab):
             self,
             "Export Project As",
             f"{self.current_project}.icp",
-            "Intellicrack Projects (*.icp);;All Files (*)"
+            "Intellicrack Projects (*.icp);;All Files (*)",
         )
 
         if project_file:
@@ -449,7 +450,7 @@ class DashboardTab(BaseTab):
                 QMessageBox.information(self, "Success", f"Project exported to:\n{project_file}")
             except Exception as e:
                 self.logger.error(f"Failed to export project: {e}")
-                QMessageBox.critical(self, "Error", f"Failed to export project: {str(e)}")
+                QMessageBox.critical(self, "Error", f"Failed to export project: {e!s}")
         else:
             self.log_activity(f"Saved project: {self.current_project}")
 
@@ -459,7 +460,7 @@ class DashboardTab(BaseTab):
             self,
             "Select Binary File",
             "",
-            "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)"
+            "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)",
         )
 
         if binary_file:
@@ -516,7 +517,7 @@ class DashboardTab(BaseTab):
             self.binary_info_text.setText(info_text)
 
         except Exception as e:
-            self.binary_info_text.setText(f"Error reading file: {str(e)}")
+            self.binary_info_text.setText(f"Error reading file: {e!s}")
 
     def get_file_type(self, file_path):
         """Get basic file type information"""
@@ -529,7 +530,7 @@ class DashboardTab(BaseTab):
             ".dylib": "macOS Dynamic Library",
             ".app": "macOS Application Bundle",
             ".bin": "Binary File",
-            ".elf": "ELF Executable"
+            ".elf": "ELF Executable",
         }
 
         return type_map.get(ext, "Unknown Binary")
@@ -558,7 +559,7 @@ class DashboardTab(BaseTab):
                     ("Analyzing architecture", 40),
                     ("Detecting compiler", 60),
                     ("Checking for packers", 80),
-                    ("Calculating entropy", 100)
+                    ("Calculating entropy", 100),
                 ]
 
                 for step, progress in steps:
@@ -578,7 +579,7 @@ class DashboardTab(BaseTab):
                     "compiler": "Microsoft Visual C++",
                     "packer": "None detected",
                     "entropy": 6.2,
-                    "entropy_status": "Normal"
+                    "entropy_status": "Normal",
                 }
 
                 # Store results in AppContext
@@ -590,7 +591,7 @@ class DashboardTab(BaseTab):
             # Submit the task
             task_id = self.task_manager.submit_callable(
                 analyze_binary,
-                description=f"Quick analysis of {os.path.basename(self.current_binary)}"
+                description=f"Quick analysis of {os.path.basename(self.current_binary)}",
             )
 
             self.log_activity(f"Analysis task submitted: {task_id[:8]}...")
@@ -633,7 +634,7 @@ class DashboardTab(BaseTab):
             "C:\\samples\\malware1.exe",
             "C:\\samples\\target_app.exe",
             "/home/user/binaries/test.so",
-            "C:\\analysis\\crackme.exe"
+            "C:\\analysis\\crackme.exe",
         ]
 
         self.recent_files_list.clear()
@@ -699,7 +700,7 @@ class DashboardTab(BaseTab):
             self,
             "Save Activity Log",
             "activity_log.txt",
-            "Text Files (*.txt);;All Files (*)"
+            "Text Files (*.txt);;All Files (*)",
         )
 
         if log_file:
@@ -708,7 +709,7 @@ class DashboardTab(BaseTab):
                     f.write(self.activity_log.toPlainText())
                 self.log_activity(f"Activity log saved to: {log_file}")
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to save log: {str(e)}")
+                QMessageBox.critical(self, "Error", f"Failed to save log: {e!s}")
 
     def populate_file_tree(self):
         """Populate the file tree with project files"""
@@ -739,7 +740,7 @@ class DashboardTab(BaseTab):
                     file_info["name"],
                     file_info.get("type", "Unknown"),
                     size_str,
-                    modified_date
+                    modified_date,
                 ])
 
                 # Store full path as user data for later access
@@ -773,7 +774,7 @@ class DashboardTab(BaseTab):
                             subprocess.call(["xdg-open", file_path])
                 except Exception as e:
                     self.logger.error(f"Failed to open file: {e}")
-                    QMessageBox.critical(self, "Error", f"Failed to open file: {str(e)}")
+                    QMessageBox.critical(self, "Error", f"Failed to open file: {e!s}")
             else:
                 QMessageBox.warning(self, "Warning", "Selected file no longer exists!")
 
@@ -789,7 +790,7 @@ class DashboardTab(BaseTab):
                 "Remove File from Project",
                 f"Are you sure you want to remove '{file_name}' from the project?\n\nNote: This will only remove it from the project, not delete the actual file.",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.No
+                QMessageBox.StandardButton.No,
             )
 
             if reply == QMessageBox.StandardButton.Yes:
@@ -868,7 +869,7 @@ class DashboardTab(BaseTab):
         supported_extensions = [
             ".exe", ".dll", ".so", ".dylib", ".elf", ".bin",
             ".sys", ".drv", ".ocx", ".app", ".apk", ".ipa",
-            ".dex", ".jar", ".class", ".pyc", ".pyd"
+            ".dex", ".jar", ".class", ".pyc", ".pyd",
         ]
 
         ext = os.path.splitext(file_path)[1].lower()
@@ -917,7 +918,7 @@ class DashboardTab(BaseTab):
                 "name": self.current_project,
                 "files": {},
                 "created": datetime.now().isoformat(),
-                "modified": datetime.now().isoformat()
+                "modified": datetime.now().isoformat(),
             }
 
         added_count = 0
@@ -931,7 +932,7 @@ class DashboardTab(BaseTab):
                     "size": stat_info.st_size,
                     "modified": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
                     "type": self._get_file_type_from_path(file_path),
-                    "added": datetime.now().isoformat()
+                    "added": datetime.now().isoformat(),
                 }
 
                 # Add to project data using file path as key
@@ -950,7 +951,7 @@ class DashboardTab(BaseTab):
         QMessageBox.information(
             self,
             "Files Added",
-            f"Added {len(file_paths)} files to the current project."
+            f"Added {len(file_paths)} files to the current project.",
         )
 
     def _get_file_type_from_path(self, file_path):
@@ -984,7 +985,7 @@ class DashboardTab(BaseTab):
         if os.path.exists(project_file):
             try:
                 import json
-                with open(project_file, "r") as f:
+                with open(project_file) as f:
                     self.project_data = json.load(f)
                 self.logger.debug(f"Loaded project data from {project_file}")
                 return True

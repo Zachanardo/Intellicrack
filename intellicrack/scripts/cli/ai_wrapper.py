@@ -1,5 +1,4 @@
-"""
-AI-Controllable CLI Wrapper for Intellicrack.
+"""AI-Controllable CLI Wrapper for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -36,7 +35,7 @@ import sys
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Add parent directories to path
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -46,13 +45,14 @@ sys.path.insert(0, project_root)
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 
 class ActionType(Enum):
     """Types of actions that require confirmation."""
+
     ANALYSIS = "analysis"
     PATCHING = "patching"
     FILE_MODIFICATION = "file_modification"
@@ -66,14 +66,15 @@ class ActionType(Enum):
 @dataclass
 class PendingAction:
     """Represents an action pending user confirmation."""
+
     action_id: str
     action_type: ActionType
-    command: List[str]
+    command: list[str]
     description: str
     risk_level: str  # low, medium, high
-    potential_impacts: List[str]
+    potential_impacts: list[str]
     timestamp: float
-    ai_reasoning: Optional[str] = None
+    ai_reasoning: str | None = None
 
 
 class ConfirmationManager:
@@ -81,8 +82,8 @@ class ConfirmationManager:
 
     def __init__(self, auto_approve_low_risk: bool = False):
         """Initialize confirmation manager with action tracking and approval settings."""
-        self.pending_actions: Dict[str, PendingAction] = {}
-        self.action_history: List[Dict[str, Any]] = []
+        self.pending_actions: dict[str, PendingAction] = {}
+        self.action_history: list[dict[str, Any]] = []
         self.auto_approve_low_risk = auto_approve_low_risk
         self.confirmation_queue = queue.Queue()
 
@@ -135,21 +136,21 @@ class ConfirmationManager:
                     print(f"  [{i}] {arg}")
                 continue
 
-            elif response == "y":
+            if response == "y":
                 self.action_history.append({
                     "action": action,
                     "approved": True,
-                    "timestamp": time.time()
+                    "timestamp": time.time(),
                 })
                 return True
 
-            else:  # Default to No
-                self.action_history.append({
-                    "action": action,
-                    "approved": False,
-                    "timestamp": time.time()
-                })
-                return False
+            # Default to No
+            self.action_history.append({
+                "action": action,
+                "approved": False,
+                "timestamp": time.time(),
+            })
+            return False
 
 
 class IntellicrackAIInterface:
@@ -184,7 +185,7 @@ class IntellicrackAIInterface:
         "--train-model": "high",
     }
 
-    def __init__(self, confirmation_manager: Optional[ConfirmationManager] = None):
+    def __init__(self, confirmation_manager: ConfirmationManager | None = None):
         """Initialize Intellicrack AI interface with confirmation management and session handling."""
         self.confirmation_manager = confirmation_manager or ConfirmationManager()
         self.cli_path = os.path.join(script_dir, "main.py")
@@ -196,24 +197,23 @@ class IntellicrackAIInterface:
         import uuid
         return str(uuid.uuid4())[:8]
 
-    def _determine_action_type(self, args: List[str]) -> ActionType:
+    def _determine_action_type(self, args: list[str]) -> ActionType:
         """Determine the type of action based on arguments."""
         if any(arg in args for arg in ["--apply-patch", "--memory-patch"]):
             return ActionType.PATCHING
-        elif any(arg in args for arg in ["--bypass-tpm", "--bypass-vm-detection", "--hwid-spoof"]):
+        if any(arg in args for arg in ["--bypass-tpm", "--bypass-vm-detection", "--hwid-spoof"]):
             return ActionType.BYPASS_OPERATION
-        elif any(arg in args for arg in ["--network-capture", "--ssl-intercept"]):
+        if any(arg in args for arg in ["--network-capture", "--ssl-intercept"]):
             return ActionType.NETWORK_OPERATION
-        elif any(arg in args for arg in ["--plugin-run", "--plugin-remote"]):
+        if any(arg in args for arg in ["--plugin-run", "--plugin-remote"]):
             return ActionType.PLUGIN_EXECUTION
-        elif any(arg in args for arg in ["--train-model"]):
+        if any(arg in args for arg in ["--train-model"]):
             return ActionType.MODEL_TRAINING
-        elif "--output" in args or "--apply-patch" in args:
+        if "--output" in args or "--apply-patch" in args:
             return ActionType.FILE_MODIFICATION
-        else:
-            return ActionType.ANALYSIS
+        return ActionType.ANALYSIS
 
-    def _determine_risk_level(self, args: List[str]) -> str:
+    def _determine_risk_level(self, args: list[str]) -> str:
         """Determine risk level of the operation."""
         max_risk = "low"
 
@@ -222,12 +222,12 @@ class IntellicrackAIInterface:
                 risk = self.RISK_LEVELS[arg]
                 if risk == "high":
                     return "high"
-                elif risk == "medium" and max_risk == "low":
+                if risk == "medium" and max_risk == "low":
                     max_risk = "medium"
 
         return max_risk
 
-    def _get_potential_impacts(self, args: List[str]) -> List[str]:
+    def _get_potential_impacts(self, args: list[str]) -> list[str]:
         """Determine potential impacts of the operation."""
         impacts = []
 
@@ -248,8 +248,8 @@ class IntellicrackAIInterface:
 
         return impacts
 
-    def _create_action(self, args: List[str], description: str,
-                      ai_reasoning: Optional[str] = None) -> PendingAction:
+    def _create_action(self, args: list[str], description: str,
+                      ai_reasoning: str | None = None) -> PendingAction:
         """Create a pending action for confirmation."""
         import uuid
 
@@ -261,13 +261,12 @@ class IntellicrackAIInterface:
             risk_level=self._determine_risk_level(args),
             potential_impacts=self._get_potential_impacts(args),
             timestamp=time.time(),
-            ai_reasoning=ai_reasoning
+            ai_reasoning=ai_reasoning,
         )
 
-    def execute_command(self, args: List[str], description: str,
-                       ai_reasoning: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Execute an Intellicrack CLI command with confirmation.
+    def execute_command(self, args: list[str], description: str,
+                       ai_reasoning: str | None = None) -> dict[str, Any]:
+        """Execute an Intellicrack CLI command with confirmation.
 
         Args:
             args: CLI arguments
@@ -276,6 +275,7 @@ class IntellicrackAIInterface:
 
         Returns:
             Dict containing execution results
+
         """
         # Create pending action
         action = self._create_action(args, description, ai_reasoning)
@@ -285,7 +285,7 @@ class IntellicrackAIInterface:
             return {
                 "status": "cancelled",
                 "message": "User declined the action",
-                "action": action
+                "action": action,
             }
 
         # Execute the command
@@ -294,9 +294,9 @@ class IntellicrackAIInterface:
 
             result = subprocess.run(
                 action.command,
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=300  # 5 minute timeout
+                timeout=300,  # 5 minute timeout
             )
 
             # Parse output if JSON
@@ -312,25 +312,24 @@ class IntellicrackAIInterface:
                 "exit_code": result.returncode,
                 "stdout": output,
                 "stderr": result.stderr,
-                "action": action
+                "action": action,
             }
 
         except subprocess.TimeoutExpired:
             return {
                 "status": "error",
                 "message": "Command timed out",
-                "action": action
+                "action": action,
             }
         except Exception as e:
             return {
                 "status": "error",
                 "message": str(e),
-                "action": action
+                "action": action,
             }
 
-    def analyze_binary(self, binary_path: str, analyses: List[str] = None) -> Dict[str, Any]:
-        """
-        Perform comprehensive analysis on a binary.
+    def analyze_binary(self, binary_path: str, analyses: list[str] = None) -> dict[str, Any]:
+        """Perform comprehensive analysis on a binary.
 
         Args:
             binary_path: Path to the binary
@@ -338,6 +337,7 @@ class IntellicrackAIInterface:
 
         Returns:
             Analysis results
+
         """
         if analyses is None:
             analyses = ["comprehensive"]
@@ -362,7 +362,7 @@ class IntellicrackAIInterface:
 
         return self.execute_command(args, description, reasoning)
 
-    def suggest_patches(self, binary_path: str) -> Dict[str, Any]:
+    def suggest_patches(self, binary_path: str) -> dict[str, Any]:
         """Suggest patches for a binary."""
         args = [binary_path, "--suggest-patches", "--format", "json"]
         description = f"Generate patch suggestions for: {os.path.basename(binary_path)}"
@@ -370,7 +370,7 @@ class IntellicrackAIInterface:
 
         return self.execute_command(args, description, reasoning)
 
-    def apply_patch(self, binary_path: str, patch_file: str) -> Dict[str, Any]:
+    def apply_patch(self, binary_path: str, patch_file: str) -> dict[str, Any]:
         """Apply a patch to a binary."""
         args = [binary_path, "--apply-patch", "--patch-file", patch_file]
         description = f"Apply patch to: {os.path.basename(binary_path)}"
@@ -378,14 +378,14 @@ class IntellicrackAIInterface:
 
         return self.execute_command(args, description, reasoning)
 
-    def get_session_summary(self) -> Dict[str, Any]:
+    def get_session_summary(self) -> dict[str, Any]:
         """Get summary of the current session."""
         return {
             "session_id": self.session_id,
             "total_actions": len(self.confirmation_manager.action_history),
             "approved_actions": sum(1 for h in self.confirmation_manager.action_history if h["approved"]),
             "declined_actions": sum(1 for h in self.confirmation_manager.action_history if not h["approved"]),
-            "action_history": self.confirmation_manager.action_history
+            "action_history": self.confirmation_manager.action_history,
         }
 
 
@@ -395,30 +395,30 @@ AI_TOOLS = {
         "description": "Analyze a binary file to understand its structure, protections, and vulnerabilities",
         "parameters": {
             "binary_path": "Path to the binary file",
-            "analyses": "List of analyses to perform (comprehensive, vulnerabilities, protections, license, network)"
-        }
+            "analyses": "List of analyses to perform (comprehensive, vulnerabilities, protections, license, network)",
+        },
     },
     "suggest_patches": {
         "description": "Generate patch suggestions for bypassing protections in a binary",
         "parameters": {
-            "binary_path": "Path to the binary file"
-        }
+            "binary_path": "Path to the binary file",
+        },
     },
     "apply_patch": {
         "description": "Apply a patch to modify a binary (requires user confirmation)",
         "parameters": {
             "binary_path": "Path to the binary file",
-            "patch_file": "Path to the patch definition file"
-        }
+            "patch_file": "Path to the patch definition file",
+        },
     },
     "execute_command": {
         "description": "Execute any Intellicrack CLI command with full control",
         "parameters": {
             "args": "List of CLI arguments",
             "description": "Human-readable description of the action",
-            "ai_reasoning": "Explanation of why this action is needed"
-        }
-    }
+            "ai_reasoning": "Explanation of why this action is needed",
+        },
+    },
 }
 
 
@@ -466,7 +466,7 @@ def main():
     # Example: Analyze a binary
     result = ai_interface.analyze_binary(
         "example.exe",
-        analyses=["comprehensive", "protections"]
+        analyses=["comprehensive", "protections"],
     )
     print(f"Analysis result: {result['status']}")
 

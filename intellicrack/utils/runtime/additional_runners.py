@@ -1,5 +1,4 @@
-"""
-Additional runner functions for Intellicrack.
+"""Additional runner functions for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -27,7 +26,7 @@ import os
 import subprocess
 import sys
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -48,10 +47,9 @@ except ImportError as e:
     PSUTIL_AVAILABLE = False
 
 
-def run_comprehensive_analysis(binary_path: str, output_dir: Optional[str] = None,
-                             analyses: Optional[List[str]] = None) -> Dict[str, Any]:
-    """
-    Run comprehensive analysis pipeline on a binary.
+def run_comprehensive_analysis(binary_path: str, output_dir: str | None = None,
+                             analyses: list[str] | None = None) -> dict[str, Any]:
+    """Run comprehensive analysis pipeline on a binary.
 
     Args:
         binary_path: Path to the binary file
@@ -60,6 +58,7 @@ def run_comprehensive_analysis(binary_path: str, output_dir: Optional[str] = Non
 
     Returns:
         Dict containing comprehensive analysis results
+
     """
     if not os.path.exists(binary_path):
         return {"error": f"Binary not found: {binary_path}"}
@@ -73,7 +72,7 @@ def run_comprehensive_analysis(binary_path: str, output_dir: Optional[str] = Non
         analyses = [
             "binary_info", "format_analysis", "protection_scan",
             "string_extraction", "entropy_analysis", "pattern_search",
-            "vulnerability_scan", "license_analysis"
+            "vulnerability_scan", "license_analysis",
         ]
 
     results = {
@@ -81,7 +80,7 @@ def run_comprehensive_analysis(binary_path: str, output_dir: Optional[str] = Non
         "output_dir": output_dir,
         "timestamp": time.time(),
         "analyses": {},
-        "summary": {}
+        "summary": {},
     }
 
     # Import required modules
@@ -116,7 +115,7 @@ def run_comprehensive_analysis(binary_path: str, output_dir: Optional[str] = Non
                 # Use distributed processing for strings
                 from .distributed_processing import _distributed_string_extraction
                 results["analyses"]["strings"] = _distributed_string_extraction(
-                    binary_path, {"min_length": 4}
+                    binary_path, {"min_length": 4},
                 )
 
             elif analysis == "entropy_analysis":
@@ -132,7 +131,7 @@ def run_comprehensive_analysis(binary_path: str, output_dir: Optional[str] = Non
                 # Specialized license analysis
                 license_patterns = [
                     b"license", b"LICENSE", b"activation", b"serial",
-                    b"trial", b"expire", b"register", b"key"
+                    b"trial", b"expire", b"register", b"key",
                 ]
                 results["analyses"]["license"] = analyze_patterns(binary_path, license_patterns)
 
@@ -155,22 +154,22 @@ def run_comprehensive_analysis(binary_path: str, output_dir: Optional[str] = Non
     return results
 
 
-def run_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
-    """
-    Run deep analysis specifically for license mechanisms.
+def run_deep_license_analysis(binary_path: str) -> dict[str, Any]:
+    """Run deep analysis specifically for license mechanisms.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         Dict containing license analysis results
+
     """
     results = {
         "binary": binary_path,
         "license_mechanisms": [],
         "validation_routines": [],
         "protection_methods": [],
-        "bypass_suggestions": []
+        "bypass_suggestions": [],
     }
 
     try:
@@ -188,7 +187,7 @@ def run_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
             "trial": [b"TrialExpired", b"DaysRemaining", b"TrialPeriod"],
             "hardware": [b"MachineID", b"HardwareID", b"GetVolumeSerial"],
             "network": [b"LicenseServer", b"ActivationServer", b"OnlineValidation"],
-            "crypto": [b"RSA", b"AES", b"SHA256", b"ECDSA"]
+            "crypto": [b"RSA", b"AES", b"SHA256", b"ECDSA"],
         }
 
         pattern_results = {}
@@ -210,15 +209,15 @@ def run_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
     return results
 
 
-def run_detect_packing(binary_path: str) -> Dict[str, Any]:
-    """
-    Run packing detection on a binary.
+def run_detect_packing(binary_path: str) -> dict[str, Any]:
+    """Run packing detection on a binary.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         Dict containing packing detection results
+
     """
     try:
         from ...core.analysis.core_analysis import detect_packing
@@ -228,7 +227,7 @@ def run_detect_packing(binary_path: str) -> Dict[str, Any]:
             "binary": binary_path,
             "packing_detected": False,
             "packers_found": [],
-            "indicators": []
+            "indicators": [],
         }
 
         # Use existing detect_packing function
@@ -248,9 +247,8 @@ def run_detect_packing(binary_path: str) -> Dict[str, Any]:
         return {"error": str(e)}
 
 
-def run_analysis(binary_path: str, analysis_type: str = "basic") -> Dict[str, Any]:
-    """
-    Generic analysis runner.
+def run_analysis(binary_path: str, analysis_type: str = "basic") -> dict[str, Any]:
+    """Generic analysis runner.
 
     Args:
         binary_path: Path to the binary file
@@ -258,20 +256,20 @@ def run_analysis(binary_path: str, analysis_type: str = "basic") -> Dict[str, An
 
     Returns:
         Dict containing analysis results
+
     """
     analysis_levels = {
         "basic": ["binary_info", "format_analysis"],
         "advanced": ["binary_info", "format_analysis", "protection_scan", "entropy_analysis"],
-        "full": None  # All available analyses
+        "full": None,  # All available analyses
     }
 
     analyses = analysis_levels.get(analysis_type)
     return run_comprehensive_analysis(binary_path, analyses=analyses)
 
 
-def run_autonomous_crack(binary_path: str, target_type: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Run autonomous cracking mode.
+def run_autonomous_crack(binary_path: str, target_type: str | None = None) -> dict[str, Any]:
+    """Run autonomous cracking mode.
 
     Args:
         binary_path: Path to the binary file
@@ -279,13 +277,14 @@ def run_autonomous_crack(binary_path: str, target_type: Optional[str] = None) ->
 
     Returns:
         Dict containing cracking results
+
     """
     results = {
         "binary": binary_path,
         "target_type": target_type or "auto",
         "analysis_phase": {},
         "patching_phase": {},
-        "success": False
+        "success": False,
     }
 
     try:
@@ -333,9 +332,8 @@ def run_autonomous_crack(binary_path: str, target_type: Optional[str] = None) ->
     return results
 
 
-def run_full_autonomous_mode(binary_path: str, config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """
-    Run full autonomous operation mode.
+def run_full_autonomous_mode(binary_path: str, config: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Run full autonomous operation mode.
 
     Args:
         binary_path: Path to the binary file
@@ -343,27 +341,28 @@ def run_full_autonomous_mode(binary_path: str, config: Optional[Dict[str, Any]] 
 
     Returns:
         Dict containing full autonomous operation results
+
     """
     if config is None:
         config = {
             "analysis_depth": "full",
             "patch_strategy": "conservative",
             "backup": True,
-            "verify": True
+            "verify": True,
         }
 
     results = {
         "binary": binary_path,
         "config": config,
         "phases": {},
-        "overall_success": False
+        "overall_success": False,
     }
 
     try:
         # Phase 1: Comprehensive analysis
         results["phases"]["analysis"] = run_comprehensive_analysis(
             binary_path,
-            analyses=None if config["analysis_depth"] == "full" else ["binary_info", "protection_scan"]
+            analyses=None if config["analysis_depth"] == "full" else ["binary_info", "protection_scan"],
         )
 
         # Phase 2: Protection removal
@@ -372,7 +371,7 @@ def run_full_autonomous_mode(binary_path: str, config: Optional[Dict[str, Any]] 
 
             results["phases"]["protection_removal"] = {
                 "vm_bypass": run_vm_bypass(binary_path),
-                "tpm_bypass": run_tpm_bypass(binary_path)
+                "tpm_bypass": run_tpm_bypass(binary_path),
             }
 
         # Phase 3: License/trial removal
@@ -392,9 +391,8 @@ def run_full_autonomous_mode(binary_path: str, config: Optional[Dict[str, Any]] 
     return results
 
 
-def run_ghidra_analysis_gui(binary_path: str, ghidra_path: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Run Ghidra analysis with GUI integration.
+def run_ghidra_analysis_gui(binary_path: str, ghidra_path: str | None = None) -> dict[str, Any]:
+    """Run Ghidra analysis with GUI integration.
 
     Args:
         binary_path: Path to the binary file
@@ -402,11 +400,12 @@ def run_ghidra_analysis_gui(binary_path: str, ghidra_path: Optional[str] = None)
 
     Returns:
         Dict containing Ghidra analysis status
+
     """
     results = {
         "binary": binary_path,
         "ghidra_path": ghidra_path,
-        "launched": False
+        "launched": False,
     }
 
     try:
@@ -445,9 +444,8 @@ def run_ghidra_analysis_gui(binary_path: str, ghidra_path: Optional[str] = None)
     return results
 
 
-def run_incremental_analysis_ui(binary_path: str, cache_dir: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Run incremental analysis with UI updates.
+def run_incremental_analysis_ui(binary_path: str, cache_dir: str | None = None) -> dict[str, Any]:
+    """Run incremental analysis with UI updates.
 
     Args:
         binary_path: Path to the binary file
@@ -455,6 +453,7 @@ def run_incremental_analysis_ui(binary_path: str, cache_dir: Optional[str] = Non
 
     Returns:
         Dict containing incremental analysis results
+
     """
     try:
         from .distributed_processing import run_incremental_analysis
@@ -468,7 +467,7 @@ def run_incremental_analysis_ui(binary_path: str, cache_dir: Optional[str] = Non
                                (results["cache_hits"] + results["cache_misses"]) * 100
                                if results["cache_hits"] + results["cache_misses"] > 0 else 0),
             "new_analyses": list(results.get("new_results", {}).keys()),
-            "cached_analyses": list(results.get("cached_results", {}).keys())
+            "cached_analyses": list(results.get("cached_results", {}).keys()),
         }
 
         return results
@@ -478,9 +477,8 @@ def run_incremental_analysis_ui(binary_path: str, cache_dir: Optional[str] = Non
         return {"error": str(e)}
 
 
-def run_deep_cfg_analysis(binary_path: str, output_format: str = "json") -> Dict[str, Any]:
-    """
-    Run deep control flow graph analysis.
+def run_deep_cfg_analysis(binary_path: str, output_format: str = "json") -> dict[str, Any]:
+    """Run deep control flow graph analysis.
 
     Args:
         binary_path: Path to the binary file
@@ -488,6 +486,7 @@ def run_deep_cfg_analysis(binary_path: str, output_format: str = "json") -> Dict
 
     Returns:
         Dict containing CFG analysis results
+
     """
     try:
         from ...core.analysis.cfg_explorer import CFGExplorer
@@ -496,7 +495,7 @@ def run_deep_cfg_analysis(binary_path: str, output_format: str = "json") -> Dict
             "binary": binary_path,
             "functions_analyzed": 0,
             "license_checks_found": [],
-            "control_flow_patterns": []
+            "control_flow_patterns": [],
         }
 
         # Create CFG explorer
@@ -520,7 +519,7 @@ def run_deep_cfg_analysis(binary_path: str, output_format: str = "json") -> Dict
                         results["license_checks_found"].append({
                             "function": func["name"],
                             "address": func["address"],
-                            "complexity": cfg.get("complexity", 0)
+                            "complexity": cfg.get("complexity", 0),
                         })
 
             except (OSError, ValueError, RuntimeError) as e:
@@ -540,9 +539,8 @@ def run_deep_cfg_analysis(binary_path: str, output_format: str = "json") -> Dict
 
 
 def run_external_tool(tool_name: str, binary_path: str,
-                     args: Optional[List[str]] = None) -> Dict[str, Any]:
-    """
-    Run external analysis tool.
+                     args: list[str] | None = None) -> dict[str, Any]:
+    """Run external analysis tool.
 
     Args:
         tool_name: Name of the tool
@@ -551,11 +549,12 @@ def run_external_tool(tool_name: str, binary_path: str,
 
     Returns:
         Dict containing tool execution results
+
     """
     results = {
         "tool": tool_name,
         "binary": binary_path,
-        "executed": False
+        "executed": False,
     }
 
     # Tool command mapping
@@ -568,7 +567,7 @@ def run_external_tool(tool_name: str, binary_path: str,
         "nm": ["nm", "-D"],
         "upx": ["upx", "-t"],
         "pescan": ["pescan"],
-        "rabin2": ["rabin2", "-I"]
+        "rabin2": ["rabin2", "-I"],
     }
 
     if tool_name not in tools:
@@ -611,9 +610,8 @@ def run_external_tool(tool_name: str, binary_path: str,
 
 # Platform-specific functions
 
-def run_windows_activator(product: str = "windows", method: str = "kms") -> Dict[str, Any]:
-    """
-    Run Windows activation.
+def run_windows_activator(product: str = "windows", method: str = "kms") -> dict[str, Any]:
+    """Run Windows activation.
 
     Args:
         product: Product to activate (windows, office)
@@ -621,6 +619,7 @@ def run_windows_activator(product: str = "windows", method: str = "kms") -> Dict
 
     Returns:
         Dict containing activation results
+
     """
     try:
         from ...core.patching.windows_activator import WindowsActivator
@@ -630,7 +629,7 @@ def run_windows_activator(product: str = "windows", method: str = "kms") -> Dict
         if product == "windows":
             if method == "kms":
                 return activator.activate_windows_kms()
-            elif method == "digital":
+            if method == "digital":
                 return activator.activate_windows_digital()
         elif product == "office":
             return activator.activate_office()
@@ -642,17 +641,17 @@ def run_windows_activator(product: str = "windows", method: str = "kms") -> Dict
         return {"error": str(e)}
 
 
-def check_adobe_licensex_status() -> Dict[str, Any]:
-    """
-    Check Adobe license status.
+def check_adobe_licensex_status() -> dict[str, Any]:
+    """Check Adobe license status.
 
     Returns:
         Dict containing Adobe license status
+
     """
     results = {
         "adobe_installed": False,
         "license_status": "unknown",
-        "products": []
+        "products": [],
     }
 
     try:
@@ -660,7 +659,7 @@ def check_adobe_licensex_status() -> Dict[str, Any]:
         adobe_paths = [
             r"C:\Program Files\Adobe",
             r"C:\Program Files (x86)\Adobe",
-            r"C:\Program Files\Common Files\Adobe"
+            r"C:\Program Files\Common Files\Adobe",
         ]
 
         for path in adobe_paths:
@@ -673,7 +672,7 @@ def check_adobe_licensex_status() -> Dict[str, Any]:
         # Check license files
         license_paths = [
             os.path.expanduser(r"~\AppData\Roaming\Adobe"),
-            r"C:\ProgramData\Adobe"
+            r"C:\ProgramData\Adobe",
         ]
 
         for path in license_paths:
@@ -692,15 +691,15 @@ def check_adobe_licensex_status() -> Dict[str, Any]:
     return results
 
 
-def run_adobe_licensex_manually(action: str = "bypass") -> Dict[str, Any]:
-    """
-    Run manual Adobe license operations.
+def run_adobe_licensex_manually(action: str = "bypass") -> dict[str, Any]:
+    """Run manual Adobe license operations.
 
     Args:
         action: Action to perform (bypass, reset, check)
 
     Returns:
         Dict containing operation results
+
     """
     try:
         from ...core.patching.adobe_injector import AdobeLicenseInjector
@@ -709,9 +708,9 @@ def run_adobe_licensex_manually(action: str = "bypass") -> Dict[str, Any]:
 
         if action == "bypass":
             return injector.inject_license_bypass()
-        elif action == "reset":
+        if action == "reset":
             return injector.reset_trial()
-        elif action == "check":
+        if action == "check":
             return check_adobe_licensex_status()
 
         return {"error": f"Unknown action: {action}"}
@@ -723,9 +722,8 @@ def run_adobe_licensex_manually(action: str = "bypass") -> Dict[str, Any]:
 
 # Utility functions
 
-def validate_dataset(dataset_path: str, dataset_type: str = "binary") -> Dict[str, Any]:
-    """
-    Validate a dataset for ML training.
+def validate_dataset(dataset_path: str, dataset_type: str = "binary") -> dict[str, Any]:
+    """Validate a dataset for ML training.
 
     Args:
         dataset_path: Path to dataset
@@ -733,12 +731,13 @@ def validate_dataset(dataset_path: str, dataset_type: str = "binary") -> Dict[st
 
     Returns:
         Dict containing validation results
+
     """
     results = {
         "path": dataset_path,
         "type": dataset_type,
         "valid": False,
-        "issues": []
+        "issues": [],
     }
 
     try:
@@ -757,7 +756,7 @@ def validate_dataset(dataset_path: str, dataset_type: str = "binary") -> Dict[st
         elif dataset_type == "json":
             # Validate JSON dataset
             if os.path.isfile(dataset_path):
-                with open(dataset_path, "r", encoding="utf-8") as f:
+                with open(dataset_path, encoding="utf-8") as f:
                     data = json.load(f)
 
                 results["record_count"] = len(data) if isinstance(data, list) else 1
@@ -773,9 +772,8 @@ def validate_dataset(dataset_path: str, dataset_type: str = "binary") -> Dict[st
 
 
 def verify_hash(file_path: str, expected_hash: str,
-               algorithm: str = "sha256") -> Dict[str, Any]:
-    """
-    Verify file hash.
+               algorithm: str = "sha256") -> dict[str, Any]:
+    """Verify file hash.
 
     Args:
         file_path: Path to file
@@ -784,12 +782,13 @@ def verify_hash(file_path: str, expected_hash: str,
 
     Returns:
         Dict containing verification results
+
     """
     results = {
         "file": file_path,
         "algorithm": algorithm,
         "expected": expected_hash,
-        "verified": False
+        "verified": False,
     }
 
     try:
@@ -810,10 +809,9 @@ def verify_hash(file_path: str, expected_hash: str,
     return results
 
 
-def run_external_command(command: Union[str, List[str]],
-                        timeout: int = 60) -> Dict[str, Any]:
-    """
-    Run external command.
+def run_external_command(command: str | list[str],
+                        timeout: int = 60) -> dict[str, Any]:
+    """Run external command.
 
     Args:
         command: Command to run
@@ -821,10 +819,11 @@ def run_external_command(command: Union[str, List[str]],
 
     Returns:
         Dict containing command results
+
     """
     results = {
         "command": command,
-        "executed": False
+        "executed": False,
     }
 
     try:
@@ -850,8 +849,7 @@ def run_external_command(command: Union[str, List[str]],
 
 
 def compute_file_hash(file_path: str, algorithm: str = "sha256") -> str:
-    """
-    Compute file hash.
+    """Compute file hash.
 
     Args:
         file_path: Path to file
@@ -859,6 +857,7 @@ def compute_file_hash(file_path: str, algorithm: str = "sha256") -> str:
 
     Returns:
         Hash string
+
     """
     h = hashlib.new(algorithm)
 
@@ -869,19 +868,19 @@ def compute_file_hash(file_path: str, algorithm: str = "sha256") -> str:
     return h.hexdigest()
 
 
-def create_sample_plugins() -> Dict[str, Any]:
-    """
-    Create sample plugin templates.
+def create_sample_plugins() -> dict[str, Any]:
+    """Create sample plugin templates.
 
     Returns:
         Dict containing created plugin information
+
     """
     plugin_dir = os.path.join(os.getcwd(), "intellicrack", "plugins", "samples")
     os.makedirs(plugin_dir, exist_ok=True)
 
     results = {
         "plugin_dir": plugin_dir,
-        "plugins_created": []
+        "plugins_created": [],
     }
 
     # Python plugin template
@@ -913,7 +912,7 @@ def get_info():
 '''
 
     # Frida script template
-    frida_script = '''// Sample Frida Script for Intellicrack
+    frida_script = """// Sample Frida Script for Intellicrack
 
 // Hook common functions
 Interceptor.attach(Module.findExportByName(null, "strcmp"), {
@@ -928,7 +927,7 @@ Interceptor.attach(Module.findExportByName(null, "strcmp"), {
 });
 
 console.log("Sample Frida script loaded");
-'''
+"""
 
     try:
         # Create Python plugin
@@ -952,9 +951,8 @@ console.log("Sample Frida script loaded");
     return results
 
 
-def load_ai_model(model_path: str, model_type: str = "auto") -> Dict[str, Any]:
-    """
-    Load AI model for analysis.
+def load_ai_model(model_path: str, model_type: str = "auto") -> dict[str, Any]:
+    """Load AI model for analysis.
 
     Args:
         model_path: Path to model file
@@ -962,11 +960,12 @@ def load_ai_model(model_path: str, model_type: str = "auto") -> Dict[str, Any]:
 
     Returns:
         Dict containing model loading results
+
     """
     results = {
         "model_path": model_path,
         "model_type": model_type,
-        "loaded": False
+        "loaded": False,
     }
 
     try:
@@ -992,7 +991,7 @@ def load_ai_model(model_path: str, model_type: str = "auto") -> Dict[str, Any]:
             results["loaded"] = True
             results["model_info"] = {
                 "type": type(model).__name__,
-                "features": getattr(model, "n_features_in_", "unknown")
+                "features": getattr(model, "n_features_in_", "unknown"),
             }
 
         else:
@@ -1005,15 +1004,15 @@ def load_ai_model(model_path: str, model_type: str = "auto") -> Dict[str, Any]:
     return results
 
 
-def get_target_process_pid(process_name: str) -> Optional[int]:
-    """
-    Get process ID by name.
+def get_target_process_pid(process_name: str) -> int | None:
+    """Get process ID by name.
 
     Args:
         process_name: Name of the process
 
     Returns:
         Process ID or None
+
     """
     if not PSUTIL_AVAILABLE:
         logger.warning("psutil not available for process detection")
@@ -1030,11 +1029,12 @@ def get_target_process_pid(process_name: str) -> Optional[int]:
     return None
 
 
-def _detect_usb_dongles() -> List[Dict[str, Any]]:
+def _detect_usb_dongles() -> list[dict[str, Any]]:
     """Detect USB dongles by enumerating USB devices.
 
     Returns:
         List of dictionaries containing detected USB dongle information
+
     """
     """Detect USB dongles by enumerating USB devices."""
     dongles = []
@@ -1060,7 +1060,7 @@ def _detect_usb_dongles() -> List[Dict[str, Any]]:
                             "product_id": device.idProduct,
                             "manufacturer": manufacturer,
                             "product": product,
-                            "confidence": 0.9
+                            "confidence": 0.9,
                         })
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.debug("Failed to get USB device info: %s", e)
@@ -1083,11 +1083,12 @@ def _detect_usb_dongles() -> List[Dict[str, Any]]:
     return dongles
 
 
-def _detect_windows_usb_dongles() -> List[Dict[str, Any]]:
+def _detect_windows_usb_dongles() -> list[dict[str, Any]]:
     """Detect USB dongles on Windows using WMI.
 
     Returns:
         List of dictionaries containing Windows USB dongle information
+
     """
     """Detect USB dongles on Windows using WMI."""
     dongles = []
@@ -1098,7 +1099,7 @@ def _detect_windows_usb_dongles() -> List[Dict[str, Any]]:
         cmd = ["powershell", "-Command",
                "Get-WmiObject -Class Win32_USBDevice | Select-Object DeviceID, Description, Manufacturer | ConvertTo-Json"]
 
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=10)
         if result.returncode == 0:
             devices = json.loads(result.stdout)
             if not isinstance(devices, list):
@@ -1116,7 +1117,7 @@ def _detect_windows_usb_dongles() -> List[Dict[str, Any]]:
                         "device_id": device.get("DeviceID"),
                         "description": device.get("Description"),
                         "manufacturer": device.get("Manufacturer"),
-                        "confidence": 0.85
+                        "confidence": 0.85,
                     })
 
     except (OSError, ValueError, RuntimeError, json.JSONDecodeError, subprocess.TimeoutExpired) as e:
@@ -1125,11 +1126,12 @@ def _detect_windows_usb_dongles() -> List[Dict[str, Any]]:
     return dongles
 
 
-def _detect_linux_usb_dongles() -> List[Dict[str, Any]]:
+def _detect_linux_usb_dongles() -> list[dict[str, Any]]:
     """Detect USB dongles on Linux using lsusb.
 
     Returns:
         List of dictionaries containing Linux USB dongle information
+
     """
     """Detect USB dongles on Linux using lsusb."""
     dongles = []
@@ -1137,7 +1139,7 @@ def _detect_linux_usb_dongles() -> List[Dict[str, Any]]:
     try:
 
         # Use lsusb to list USB devices
-        result = subprocess.run(["lsusb"], capture_output=True, text=True, timeout=5)
+        result = subprocess.run(["lsusb"], check=False, capture_output=True, text=True, timeout=5)
         if result.returncode == 0:
             for line in result.stdout.split("\n"):
                 if line.strip():
@@ -1147,7 +1149,7 @@ def _detect_linux_usb_dongles() -> List[Dict[str, Any]]:
                         dongles.append({
                             "type": "linux_usb_dongle",
                             "description": line.strip(),
-                            "confidence": 0.8
+                            "confidence": 0.8,
                         })
 
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
@@ -1156,11 +1158,12 @@ def _detect_linux_usb_dongles() -> List[Dict[str, Any]]:
     return dongles
 
 
-def _detect_dongle_processes() -> List[Dict[str, Any]]:
+def _detect_dongle_processes() -> list[dict[str, Any]]:
     """Detect dongle-related processes.
 
     Returns:
         List of dictionaries containing detected dongle process information
+
     """
     """Detect dongle-related processes."""
     processes = []
@@ -1173,7 +1176,7 @@ def _detect_dongle_processes() -> List[Dict[str, Any]]:
         # Known dongle process names
         dongle_processes = [
             "aksusbd", "hasplms", "wkssvc", "nhsrvice", "aksusbd",
-            "sentinel", "wibukey", "cryptkey", "securikey", "rockey"
+            "sentinel", "wibukey", "cryptkey", "securikey", "rockey",
         ]
 
         for proc in psutil.process_iter(["pid", "name", "exe"]):
@@ -1188,7 +1191,7 @@ def _detect_dongle_processes() -> List[Dict[str, Any]]:
                         "pid": proc.info["pid"],
                         "name": proc.info["name"],
                         "exe": proc.info["exe"],
-                        "confidence": 0.9
+                        "confidence": 0.9,
                     })
 
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
@@ -1200,11 +1203,12 @@ def _detect_dongle_processes() -> List[Dict[str, Any]]:
     return processes
 
 
-def _detect_dongle_drivers() -> List[Dict[str, Any]]:
+def _detect_dongle_drivers() -> list[dict[str, Any]]:
     """Detect dongle-related drivers.
 
     Returns:
         List of dictionaries containing detected dongle driver information
+
     """
     """Detect dongle-related drivers."""
     drivers = []
@@ -1224,11 +1228,12 @@ def _detect_dongle_drivers() -> List[Dict[str, Any]]:
     return drivers
 
 
-def _detect_windows_dongle_drivers() -> List[Dict[str, Any]]:
+def _detect_windows_dongle_drivers() -> list[dict[str, Any]]:
     """Detect dongle drivers on Windows.
 
     Returns:
         List of dictionaries containing Windows dongle driver information
+
     """
     """Detect dongle drivers on Windows."""
     drivers = []
@@ -1239,7 +1244,7 @@ def _detect_windows_dongle_drivers() -> List[Dict[str, Any]]:
         driver_patterns = ["hasp", "sentinel", "wibu", "aksusb", "securikey"]
 
         cmd = ["driverquery", "/v", "/fo", "csv"]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=10)
 
         if result.returncode == 0:
             import csv
@@ -1253,7 +1258,7 @@ def _detect_windows_dongle_drivers() -> List[Dict[str, Any]]:
                         "type": "windows_dongle_driver",
                         "name": row.get("Display Name"),
                         "path": row.get("Path"),
-                        "confidence": 0.85
+                        "confidence": 0.85,
                     })
 
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
@@ -1262,11 +1267,12 @@ def _detect_windows_dongle_drivers() -> List[Dict[str, Any]]:
     return drivers
 
 
-def _detect_linux_dongle_drivers() -> List[Dict[str, Any]]:
+def _detect_linux_dongle_drivers() -> list[dict[str, Any]]:
     """Detect dongle drivers on Linux.
 
     Returns:
         List of dictionaries containing Linux dongle driver information
+
     """
     """Detect dongle drivers on Linux."""
     drivers = []
@@ -1274,7 +1280,7 @@ def _detect_linux_dongle_drivers() -> List[Dict[str, Any]]:
     try:
 
         # Check loaded kernel modules
-        result = subprocess.run(["lsmod"], capture_output=True, text=True, timeout=5)
+        result = subprocess.run(["lsmod"], check=False, capture_output=True, text=True, timeout=5)
         if result.returncode == 0:
             for line in result.stdout.split("\n")[1:]:  # Skip header
                 if line.strip():
@@ -1284,7 +1290,7 @@ def _detect_linux_dongle_drivers() -> List[Dict[str, Any]]:
                         drivers.append({
                             "type": "linux_dongle_driver",
                             "module": module_name,
-                            "confidence": 0.8
+                            "confidence": 0.8,
                         })
 
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
@@ -1293,11 +1299,12 @@ def _detect_linux_dongle_drivers() -> List[Dict[str, Any]]:
     return drivers
 
 
-def _detect_license_dongles() -> List[Dict[str, Any]]:
+def _detect_license_dongles() -> list[dict[str, Any]]:
     """Detect software-based license dongles.
 
     Returns:
         List of dictionaries containing detected license file information
+
     """
     """Detect software-based license dongles."""
     license_files = []
@@ -1313,7 +1320,7 @@ def _detect_license_dongles() -> List[Dict[str, Any]]:
             "C:/Program Files*/*/license*",
             "*.lic",
             "*.key",
-            "*.dongle"
+            "*.dongle",
         ]
 
         for pattern in search_patterns:
@@ -1324,7 +1331,7 @@ def _detect_license_dongles() -> List[Dict[str, Any]]:
                             "type": "license_file",
                             "path": file_path,
                             "size": os.path.getsize(file_path),
-                            "confidence": 0.7
+                            "confidence": 0.7,
                         })
             except (OSError, ValueError, RuntimeError) as e:
                 logger.debug("Failed to search pattern '%s': %s", pattern, e)
@@ -1336,11 +1343,12 @@ def _detect_license_dongles() -> List[Dict[str, Any]]:
     return license_files[:10]  # Limit to 10 results
 
 
-def _detect_network_dongles() -> List[Dict[str, Any]]:
+def _detect_network_dongles() -> list[dict[str, Any]]:
     """Detect network-based dongles.
 
     Returns:
         List of dictionaries containing detected network dongle information
+
     """
     """Detect network-based dongles."""
     network_dongles = []
@@ -1361,10 +1369,10 @@ def _detect_network_dongles() -> List[Dict[str, Any]]:
                         "type": "network_dongle",
                         "host": "localhost",
                         "port": port,
-                        "confidence": 0.8
+                        "confidence": 0.8,
                     })
                 sock.close()
-            except (OSError, ValueError, RuntimeError, socket.error) as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.debug("Port %d connection failed: %s", port, e)
                 continue
 
@@ -1374,16 +1382,16 @@ def _detect_network_dongles() -> List[Dict[str, Any]]:
     return network_dongles
 
 
-def detect_hardware_dongles() -> Dict[str, Any]:
-    """
-    Detect hardware dongles.
+def detect_hardware_dongles() -> dict[str, Any]:
+    """Detect hardware dongles.
 
     Returns:
         Dict containing dongle detection results
+
     """
     results = {
         "dongles_found": [],
-        "usb_devices": []
+        "usb_devices": [],
     }
 
     try:
@@ -1428,15 +1436,15 @@ def detect_hardware_dongles() -> Dict[str, Any]:
     return results
 
 
-def detect_local_tpm_protection(binary_path: str) -> Dict[str, Any]:
-    """
-    Detect TPM protection in binary.
+def detect_local_tpm_protection(binary_path: str) -> dict[str, Any]:
+    """Detect TPM protection in binary.
 
     Args:
         binary_path: Path to binary
 
     Returns:
         Dict containing TPM detection results
+
     """
     try:
         from ..protection.protection_detection import detect_tpm_protection as tpm_detect
@@ -1446,15 +1454,15 @@ def detect_local_tpm_protection(binary_path: str) -> Dict[str, Any]:
         return {"error": str(e)}
 
 
-def run_local_protection_scan(binary_path: str) -> Dict[str, Any]:
-    """
-    Run comprehensive protection scan.
+def run_local_protection_scan(binary_path: str) -> dict[str, Any]:
+    """Run comprehensive protection scan.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         Dict containing all protection mechanisms found
+
     """
     try:
         from ...core.analysis.core_analysis import detect_packing
@@ -1467,7 +1475,7 @@ def run_local_protection_scan(binary_path: str) -> Dict[str, Any]:
 
         results = {
             "status": "success",
-            "protections": {}
+            "protections": {},
         }
 
         # Detect packing
@@ -1500,7 +1508,7 @@ def run_local_protection_scan(binary_path: str) -> Dict[str, Any]:
             "total_protections": len(results["protections"]),
             "protection_types": list(results["protections"].keys()),
             "protection_level": "high" if len(results["protections"]) > 3 else
-                              ("medium" if len(results["protections"]) > 1 else "low")
+                              ("medium" if len(results["protections"]) > 1 else "low"),
         }
 
         return results
@@ -1512,7 +1520,7 @@ def run_local_protection_scan(binary_path: str) -> Dict[str, Any]:
 
 # Helper functions
 
-def _generate_analysis_summary(analyses: Dict[str, Any]) -> Dict[str, Any]:
+def _generate_analysis_summary(analyses: dict[str, Any]) -> dict[str, Any]:
     """Generate summary from analysis results.
 
     Args:
@@ -1520,12 +1528,13 @@ def _generate_analysis_summary(analyses: Dict[str, Any]) -> Dict[str, Any]:
 
     Returns:
         Dictionary containing analysis summary
+
     """
     """Generate summary from analysis results."""
     summary = {
         "total_analyses": len(analyses),
         "successful": sum(1 for a in analyses.values() if "error" not in a),
-        "issues_found": []
+        "issues_found": [],
     }
 
     # Check for specific issues
@@ -1541,7 +1550,7 @@ def _generate_analysis_summary(analyses: Dict[str, Any]) -> Dict[str, Any]:
     return summary
 
 
-def _generate_bypass_suggestions(pattern_results: Dict[str, Any]) -> List[str]:
+def _generate_bypass_suggestions(pattern_results: dict[str, Any]) -> list[str]:
     """Generate bypass suggestions based on patterns found.
 
     Args:
@@ -1549,6 +1558,7 @@ def _generate_bypass_suggestions(pattern_results: Dict[str, Any]) -> List[str]:
 
     Returns:
         List of bypass suggestion strings
+
     """
     """Generate bypass suggestions based on patterns found."""
     suggestions = []
@@ -1571,7 +1581,7 @@ def _generate_bypass_suggestions(pattern_results: Dict[str, Any]) -> List[str]:
     return suggestions
 
 
-def _determine_target_type(analysis: Dict[str, Any]) -> str:
+def _determine_target_type(analysis: dict[str, Any]) -> str:
     """Determine target type from analysis.
 
     Args:
@@ -1579,27 +1589,27 @@ def _determine_target_type(analysis: Dict[str, Any]) -> str:
 
     Returns:
         Target type string (license, trial, or protection)
+
     """
     """Determine target type from analysis."""
     patterns = analysis.get("analyses", {}).get("patterns", {})
 
     if patterns.get("pattern_summary", {}).get("license", {}).get("count", 0) > 0:
         return "license"
-    elif patterns.get("pattern_summary", {}).get("trial", {}).get("count", 0) > 0:
+    if patterns.get("pattern_summary", {}).get("trial", {}).get("count", 0) > 0:
         return "trial"
-    else:
-        return "protection"
+    return "protection"
 
 
-def _verify_crack(binary_path: str) -> Dict[str, Any]:
-    """
-    Verify if crack was successful using multiple verification methods.
+def _verify_crack(binary_path: str) -> dict[str, Any]:
+    """Verify if crack was successful using multiple verification methods.
 
     Args:
         binary_path: Path to the patched binary to verify
 
     Returns:
         Dict containing verification results
+
     """
     verification_result = {
         "verified": False,
@@ -1609,7 +1619,7 @@ def _verify_crack(binary_path: str) -> Dict[str, Any]:
         "warnings": [],
         "execution_tests": [],
         "static_checks": [],
-        "behavior_analysis": {}
+        "behavior_analysis": {},
     }
 
     try:
@@ -1681,7 +1691,7 @@ def _verify_crack(binary_path: str) -> Dict[str, Any]:
     return verification_result
 
 
-def _verify_static_analysis(binary_path: str) -> Dict[str, Any]:
+def _verify_static_analysis(binary_path: str) -> dict[str, Any]:
     """Verify crack through static analysis.
 
     Args:
@@ -1689,6 +1699,7 @@ def _verify_static_analysis(binary_path: str) -> Dict[str, Any]:
 
     Returns:
         Dictionary containing static analysis verification results
+
     """
     """Verify crack through static analysis."""
     result = {"success": False, "confidence": 0.0, "checks": []}
@@ -1714,7 +1725,7 @@ def _verify_static_analysis(binary_path: str) -> Dict[str, Any]:
                 b"\xEB",          # JMP instructions
                 b"\xB0\x01",      # MOV AL, 1
                 b"\x31\xC0",      # XOR EAX, EAX
-                b"\xC3"           # RET
+                b"\xC3",           # RET
             ]
 
             patterns_found = 0
@@ -1741,7 +1752,7 @@ def _verify_static_analysis(binary_path: str) -> Dict[str, Any]:
     return result
 
 
-def _verify_execution_testing(binary_path: str) -> Dict[str, Any]:
+def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
     """Verify crack through controlled execution testing.
 
     Args:
@@ -1749,6 +1760,7 @@ def _verify_execution_testing(binary_path: str) -> Dict[str, Any]:
 
     Returns:
         Dictionary containing execution testing verification results
+
     """
     """Verify crack through controlled execution testing."""
     result = {"success": False, "confidence": 0.0, "tests": []}
@@ -1772,9 +1784,9 @@ def _verify_execution_testing(binary_path: str) -> Dict[str, Any]:
             # Run with timeout to prevent hanging
             proc = subprocess.run(
                 [binary_path, "--version"],  # Try common version flag
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
 
             if proc.returncode == 0:
@@ -1795,9 +1807,9 @@ def _verify_execution_testing(binary_path: str) -> Dict[str, Any]:
         try:
             proc = subprocess.run(
                 [binary_path],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             output = (proc.stdout + proc.stderr).lower()
@@ -1805,7 +1817,7 @@ def _verify_execution_testing(binary_path: str) -> Dict[str, Any]:
             # Look for license failure messages
             license_errors = [
                 "license", "trial", "expired", "invalid", "demo",
-                "activation", "serial", "key", "registration"
+                "activation", "serial", "key", "registration",
             ]
 
             has_license_errors = any(error in output for error in license_errors)
@@ -1838,11 +1850,11 @@ def _verify_execution_testing(binary_path: str) -> Dict[str, Any]:
 
                 proc = subprocess.run(
                     [binary_path, "--help"],
-                    capture_output=True,
+                    check=False, capture_output=True,
                     text=True,
                     timeout=5,
                     env=env,
-                    cwd=temp_dir
+                    cwd=temp_dir,
                 )
 
                 result["tests"].append("Filesystem access test completed")
@@ -1862,7 +1874,7 @@ def _verify_execution_testing(binary_path: str) -> Dict[str, Any]:
     return result
 
 
-def _verify_protection_bypass(binary_path: str) -> Dict[str, Any]:
+def _verify_protection_bypass(binary_path: str) -> dict[str, Any]:
     """Verify that protection mechanisms have been bypassed.
 
     Args:
@@ -1870,6 +1882,7 @@ def _verify_protection_bypass(binary_path: str) -> Dict[str, Any]:
 
     Returns:
         Dictionary containing protection bypass verification results
+
     """
     """Verify that protection mechanisms have been bypassed."""
     result = {"bypassed": False, "confidence": 0.0, "protections": []}
@@ -1886,7 +1899,7 @@ def _verify_protection_bypass(binary_path: str) -> Dict[str, Any]:
             anti_debug_patterns = [
                 b"IsDebuggerPresent",
                 b"CheckRemoteDebuggerPresent",
-                b"NtQueryInformationProcess"
+                b"NtQueryInformationProcess",
             ]
 
             debug_protection_found = sum(1 for pattern in anti_debug_patterns if pattern in binary_data)
@@ -1944,7 +1957,7 @@ def _verify_protection_bypass(binary_path: str) -> Dict[str, Any]:
     return result
 
 
-def _verify_license_bypass(binary_path: str) -> Dict[str, Any]:
+def _verify_license_bypass(binary_path: str) -> dict[str, Any]:
     """Verify that license checks have been bypassed.
 
     Args:
@@ -1952,6 +1965,7 @@ def _verify_license_bypass(binary_path: str) -> Dict[str, Any]:
 
     Returns:
         Dictionary containing license bypass verification results
+
     """
     """Verify that license checks have been bypassed."""
     result = {"bypassed": False, "confidence": 0.0, "license_checks": []}
@@ -1968,7 +1982,7 @@ def _verify_license_bypass(binary_path: str) -> Dict[str, Any]:
             bypass_patterns = [
                 b"\xB0\x01\xC3",    # MOV AL, 1; RET (return true)
                 b"\x31\xC0\x40\xC3", # XOR EAX, EAX; INC EAX; RET (return 1)
-                b"\xB8\x01\x00\x00\x00\xC3"  # MOV EAX, 1; RET
+                b"\xB8\x01\x00\x00\x00\xC3",  # MOV EAX, 1; RET
             ]
 
             bypass_patterns_found = sum(1 for pattern in bypass_patterns if pattern in binary_data)
@@ -2028,7 +2042,7 @@ def _verify_license_bypass(binary_path: str) -> Dict[str, Any]:
     return result
 
 
-def _verify_patch_integrity(binary_path: str) -> Dict[str, Any]:
+def _verify_patch_integrity(binary_path: str) -> dict[str, Any]:
     """Verify the integrity and validity of applied patches.
 
     Args:
@@ -2036,6 +2050,7 @@ def _verify_patch_integrity(binary_path: str) -> Dict[str, Any]:
 
     Returns:
         Dictionary containing patch integrity verification results
+
     """
     """Verify the integrity and validity of applied patches."""
     result = {"valid": False, "confidence": 0.0, "integrity_checks": []}
@@ -2120,11 +2135,12 @@ def _verify_patch_integrity(binary_path: str) -> Dict[str, Any]:
     return result
 
 
-def _find_ghidra_installation() -> Optional[str]:
+def _find_ghidra_installation() -> str | None:
     """Find Ghidra installation path.
 
     Returns:
         Ghidra installation path or None if not found
+
     """
     """Find Ghidra installation path."""
     # Try dynamic path discovery first
@@ -2135,7 +2151,6 @@ def _find_ghidra_installation() -> Optional[str]:
             return ghidra_path
     except ImportError as e:
         logger.error("Import error in additional_runners: %s", e)
-        pass
 
     # Fallback to legacy search
     common_paths = [
@@ -2154,9 +2169,8 @@ def _find_ghidra_installation() -> Optional[str]:
     return None
 
 
-def _is_license_check_pattern(cfg: Dict[str, Any]) -> bool:
-    """
-    Check if CFG contains license check patterns.
+def _is_license_check_pattern(cfg: dict[str, Any]) -> bool:
+    """Check if CFG contains license check patterns.
 
     Analyzes control flow graph structures to identify patterns commonly
     associated with license verification routines.
@@ -2166,6 +2180,7 @@ def _is_license_check_pattern(cfg: Dict[str, Any]) -> bool:
 
     Returns:
         bool: True if license check patterns are detected
+
     """
     try:
         # Initialize pattern scoring
@@ -2271,7 +2286,7 @@ def _is_license_check_pattern(cfg: Dict[str, Any]) -> bool:
         return cfg.get("complexity", 0) > 10 and cfg.get("branches", 0) > 5
 
 
-def _identify_license_related_calls(function_calls: List[str]) -> int:
+def _identify_license_related_calls(function_calls: list[str]) -> int:
     """Identify license-related function calls.
 
     Args:
@@ -2279,13 +2294,14 @@ def _identify_license_related_calls(function_calls: List[str]) -> int:
 
     Returns:
         Number of license-related function calls identified
+
     """
     """Identify license-related function calls."""
     license_keywords = [
         "license", "serial", "key", "activation", "trial", "demo",
         "validate", "verify", "check", "auth", "register", "unlock",
         "decrypt", "encode", "hash", "crypt", "sign", "cert",
-        "dongle", "hasp", "sentinel", "wibu", "flexlm"
+        "dongle", "hasp", "sentinel", "wibu", "flexlm",
     ]
 
     count = 0
@@ -2298,7 +2314,7 @@ def _identify_license_related_calls(function_calls: List[str]) -> int:
     return count
 
 
-def _count_license_strings(string_refs: List[str]) -> int:
+def _count_license_strings(string_refs: list[str]) -> int:
     """Count license-related string references.
 
     Args:
@@ -2306,13 +2322,14 @@ def _count_license_strings(string_refs: List[str]) -> int:
 
     Returns:
         Number of license-related strings found
+
     """
     """Count license-related string references."""
     license_patterns = [
         "license", "trial", "demo", "expired", "invalid", "activation",
         "serial", "key", "unlock", "register", "auth", "verify",
         "pirate", "crack", "illegal", "copy", "protection",
-        "dongles", "hasp", "sentinel", "wibu", "error", "fail"
+        "dongles", "hasp", "sentinel", "wibu", "error", "fail",
     ]
 
     count = 0
@@ -2325,7 +2342,7 @@ def _count_license_strings(string_refs: List[str]) -> int:
     return count
 
 
-def _parse_tool_output(tool_name: str, output: str) -> Dict[str, Any]:
+def _parse_tool_output(tool_name: str, output: str) -> dict[str, Any]:
     """Parse tool-specific output.
 
     Args:
@@ -2334,6 +2351,7 @@ def _parse_tool_output(tool_name: str, output: str) -> Dict[str, Any]:
 
     Returns:
         Dictionary containing parsed tool output
+
     """
     """Parse tool-specific output."""
     parsed = {}
@@ -2351,15 +2369,15 @@ def _parse_tool_output(tool_name: str, output: str) -> Dict[str, Any]:
     return parsed
 
 
-def run_vulnerability_scan(binary_path: str) -> Dict[str, Any]:
-    """
-    Run comprehensive vulnerability scan.
+def run_vulnerability_scan(binary_path: str) -> dict[str, Any]:
+    """Run comprehensive vulnerability scan.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         Dict containing vulnerability scan results
+
     """
     try:
         from ...core.analysis.vulnerability_engine import VulnerabilityEngine
@@ -2374,8 +2392,8 @@ def run_vulnerability_scan(binary_path: str) -> Dict[str, Any]:
                 "total": len(vulnerabilities),
                 "high": sum(1 for v in vulnerabilities if v.get("severity") == "high"),
                 "medium": sum(1 for v in vulnerabilities if v.get("severity") == "medium"),
-                "low": sum(1 for v in vulnerabilities if v.get("severity") == "low")
-            }
+                "low": sum(1 for v in vulnerabilities if v.get("severity") == "low"),
+            },
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -2383,15 +2401,15 @@ def run_vulnerability_scan(binary_path: str) -> Dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
-def run_cfg_analysis(binary_path: str) -> Dict[str, Any]:
-    """
-    Run control flow graph analysis.
+def run_cfg_analysis(binary_path: str) -> dict[str, Any]:
+    """Run control flow graph analysis.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         Dict containing CFG analysis results
+
     """
     try:
         from ...core.analysis.cfg_explorer import CFGExplorer
@@ -2403,7 +2421,7 @@ def run_cfg_analysis(binary_path: str) -> Dict[str, Any]:
             "status": "success",
             "cfg": cfg,
             "functions": explorer.get_functions(),
-            "complexity": explorer.get_complexity_metrics()
+            "complexity": explorer.get_complexity_metrics(),
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -2411,15 +2429,15 @@ def run_cfg_analysis(binary_path: str) -> Dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
-def run_rop_gadget_finder(binary_path: str) -> Dict[str, Any]:
-    """
-    Find ROP gadgets in binary.
+def run_rop_gadget_finder(binary_path: str) -> dict[str, Any]:
+    """Find ROP gadgets in binary.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         Dict containing ROP gadgets
+
     """
     try:
         from ...core.analysis.rop_generator import ROPChainGenerator
@@ -2449,7 +2467,7 @@ def run_rop_gadget_finder(binary_path: str) -> Dict[str, Any]:
             "status": "success",
             "gadgets": gadgets,
             "total": len(gadgets),
-            "categories": categories
+            "categories": categories,
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -2457,15 +2475,15 @@ def run_rop_gadget_finder(binary_path: str) -> Dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
-def run_section_analysis(binary_path: str) -> Dict[str, Any]:
-    """
-    Analyze binary sections.
+def run_section_analysis(binary_path: str) -> dict[str, Any]:
+    """Analyze binary sections.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         Dict containing section analysis results
+
     """
     try:
         from ..analysis.binary_analysis import analyze_binary
@@ -2484,7 +2502,7 @@ def run_section_analysis(binary_path: str) -> Dict[str, Any]:
                 "virtual_address": section.get("virtual_address", 0),
                 "characteristics": section.get("characteristics", []),
                 "entropy": section.get("entropy", 0),
-                "suspicious": False
+                "suspicious": False,
             }
 
             # Check for suspicious characteristics
@@ -2501,7 +2519,7 @@ def run_section_analysis(binary_path: str) -> Dict[str, Any]:
             "status": "success",
             "sections": section_analysis,
             "total": len(sections),
-            "suspicious": sum(1 for s in section_analysis if s["suspicious"])
+            "suspicious": sum(1 for s in section_analysis if s["suspicious"]),
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -2509,15 +2527,15 @@ def run_section_analysis(binary_path: str) -> Dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
-def run_import_export_analysis(binary_path: str) -> Dict[str, Any]:
-    """
-    Analyze imports and exports.
+def run_import_export_analysis(binary_path: str) -> dict[str, Any]:
+    """Analyze imports and exports.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         Dict containing import/export analysis
+
     """
     try:
         from ..analysis.binary_analysis import analyze_binary
@@ -2533,7 +2551,7 @@ def run_import_export_analysis(binary_path: str) -> Dict[str, Any]:
             "LoadLibrary", "GetProcAddress", "VirtualAlloc", "VirtualProtect",
             "WriteProcessMemory", "CreateRemoteThread", "SetWindowsHookEx",
             "RegOpenKey", "RegSetValue", "CreateFile", "DeleteFile",
-            "WinExec", "ShellExecute", "system", "exec"
+            "WinExec", "ShellExecute", "system", "exec",
         ]
 
         dangerous_imports = []
@@ -2549,7 +2567,7 @@ def run_import_export_analysis(binary_path: str) -> Dict[str, Any]:
             "import_count": sum(len(funcs) for funcs in imports.values()),
             "export_count": len(exports),
             "dangerous_imports": dangerous_imports,
-            "dlls_imported": list(imports.keys())
+            "dlls_imported": list(imports.keys()),
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -2557,15 +2575,15 @@ def run_import_export_analysis(binary_path: str) -> Dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
-def run_weak_crypto_detection(binary_path: str) -> Dict[str, Any]:
-    """
-    Detect weak cryptography usage.
+def run_weak_crypto_detection(binary_path: str) -> dict[str, Any]:
+    """Detect weak cryptography usage.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         Dict containing weak crypto detection results
+
     """
     try:
         from ..analysis.binary_analysis import analyze_patterns
@@ -2575,7 +2593,7 @@ def run_weak_crypto_detection(binary_path: str) -> Dict[str, Any]:
             b"MD5", b"SHA1", b"DES", b"RC4", b"ECB",
             b"md5_", b"sha1_", b"des_", b"rc4_",
             b"MD5Init", b"SHA1Init", b"DESCrypt",
-            b"hardcoded_key", b"static_iv", b"weak_seed"
+            b"hardcoded_key", b"static_iv", b"weak_seed",
         ]
 
         # Search for patterns
@@ -2594,7 +2612,7 @@ def run_weak_crypto_detection(binary_path: str) -> Dict[str, Any]:
             if matches:
                 weak_algorithms.append({
                     "algorithm": pattern.decode("utf-8", errors="ignore"),
-                    "occurrences": len(matches)
+                    "occurrences": len(matches),
                 })
 
         return {
@@ -2602,7 +2620,7 @@ def run_weak_crypto_detection(binary_path: str) -> Dict[str, Any]:
             "weak_algorithms": weak_algorithms,
             "hardcoded_keys": hardcoded_keys[:10],  # Limit to first 10
             "issues_found": len(weak_algorithms) + len(hardcoded_keys),
-            "severity": "high" if hardcoded_keys else ("medium" if weak_algorithms else "low")
+            "severity": "high" if hardcoded_keys else ("medium" if weak_algorithms else "low"),
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -2610,26 +2628,26 @@ def run_weak_crypto_detection(binary_path: str) -> Dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
-def run_ml_vulnerability_prediction(binary_path: str) -> Dict[str, Any]:
+def run_ml_vulnerability_prediction(binary_path: str) -> dict[str, Any]:
     """ML vulnerability prediction removed - using LLM-only approach."""
     return {
         "status": "removed",
         "message": "ML vulnerability prediction has been removed. Use LLM-based analysis instead.",
         "predictions": [],
         "confidence": 0.0,
-        "top_vulnerabilities": []
+        "top_vulnerabilities": [],
     }
 
 
-def run_generate_patch_suggestions(binary_path: str) -> Dict[str, Any]:
-    """
-    Generate patch suggestions for binary.
+def run_generate_patch_suggestions(binary_path: str) -> dict[str, Any]:
+    """Generate patch suggestions for binary.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         Dict containing patch suggestions
+
     """
     try:
         from ...core.patching.payload_generator import PayloadGenerator
@@ -2649,7 +2667,7 @@ def run_generate_patch_suggestions(binary_path: str) -> Dict[str, Any]:
                     "address": check["address"],
                     "description": f"Bypass license check at {check['address']}",
                     "patch": generator.generate_nop_sled(check.get("size", 4)),
-                    "confidence": 0.8
+                    "confidence": 0.8,
                 })
 
         if analysis.get("trial_checks"):
@@ -2659,14 +2677,14 @@ def run_generate_patch_suggestions(binary_path: str) -> Dict[str, Any]:
                     "address": check["address"],
                     "description": f"Bypass trial check at {check['address']}",
                     "patch": generator.generate_simple_payload("license_bypass"),
-                    "confidence": 0.7
+                    "confidence": 0.7,
                 })
 
         return {
             "status": "success",
             "suggestions": suggestions,
             "total": len(suggestions),
-            "analysis": analysis
+            "analysis": analysis,
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -2674,15 +2692,15 @@ def run_generate_patch_suggestions(binary_path: str) -> Dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
-def run_multi_format_analysis(binary_path: str) -> Dict[str, Any]:
-    """
-    Run multi-format binary analysis.
+def run_multi_format_analysis(binary_path: str) -> dict[str, Any]:
+    """Run multi-format binary analysis.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         Dict containing multi-format analysis results
+
     """
     try:
         from ...core.analysis.multi_format_analyzer import MultiFormatBinaryAnalyzer
@@ -2694,7 +2712,7 @@ def run_multi_format_analysis(binary_path: str) -> Dict[str, Any]:
             "status": "success",
             "format": results.get("format", "unknown"),
             "analysis": results,
-            "supported": True
+            "supported": True,
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -2702,9 +2720,8 @@ def run_multi_format_analysis(binary_path: str) -> Dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
-def run_ml_similarity_search(binary_path: str, database: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Run ML-based similarity search.
+def run_ml_similarity_search(binary_path: str, database: str | None = None) -> dict[str, Any]:
+    """Run ML-based similarity search.
 
     Args:
         binary_path: Path to the binary file
@@ -2712,6 +2729,7 @@ def run_ml_similarity_search(binary_path: str, database: Optional[str] = None) -
 
     Returns:
         Dict containing similar binaries
+
     """
     try:
         from ...core.analysis import SimilaritySearcher
@@ -2726,7 +2744,7 @@ def run_ml_similarity_search(binary_path: str, database: Optional[str] = None) -
             "status": "success",
             "similar_binaries": similar,
             "total_found": len(similar),
-            "best_match": similar[0] if similar else None
+            "best_match": similar[0] if similar else None,
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -2736,35 +2754,35 @@ def run_ml_similarity_search(binary_path: str, database: Optional[str] = None) -
 
 # Export all functions
 __all__ = [
-    "run_comprehensive_analysis",
-    "run_deep_license_analysis",
-    "run_detect_packing",
-    "run_analysis",
-    "run_autonomous_crack",
-    "run_full_autonomous_mode",
-    "run_ghidra_analysis_gui",
-    "run_incremental_analysis_ui",
-    "run_deep_cfg_analysis",
-    "run_external_tool",
-    "run_windows_activator",
     "check_adobe_licensex_status",
-    "run_adobe_licensex_manually",
-    "validate_dataset",
-    "verify_hash",
-    "run_external_command",
     "compute_file_hash",
     "create_sample_plugins",
-    "load_ai_model",
-    "get_target_process_pid",
     "detect_hardware_dongles",
-    "run_vulnerability_scan",
+    "get_target_process_pid",
+    "load_ai_model",
+    "run_adobe_licensex_manually",
+    "run_analysis",
+    "run_autonomous_crack",
     "run_cfg_analysis",
+    "run_comprehensive_analysis",
+    "run_deep_cfg_analysis",
+    "run_deep_license_analysis",
+    "run_detect_packing",
+    "run_external_command",
+    "run_external_tool",
+    "run_full_autonomous_mode",
+    "run_generate_patch_suggestions",
+    "run_ghidra_analysis_gui",
+    "run_import_export_analysis",
+    "run_incremental_analysis_ui",
+    "run_ml_similarity_search",
+    "run_ml_vulnerability_prediction",
+    "run_multi_format_analysis",
     "run_rop_gadget_finder",
     "run_section_analysis",
-    "run_import_export_analysis",
+    "run_vulnerability_scan",
     "run_weak_crypto_detection",
-    "run_ml_vulnerability_prediction",
-    "run_generate_patch_suggestions",
-    "run_multi_format_analysis",
-    "run_ml_similarity_search"
+    "run_windows_activator",
+    "validate_dataset",
+    "verify_hash",
 ]

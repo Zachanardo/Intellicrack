@@ -2,7 +2,7 @@
 import json
 import os
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QFont
@@ -309,7 +309,7 @@ class CICDDialog(PluginDialogBase):
         # Info
         info_label = QLabel(
             "Generate GitHub Actions workflow for continuous integration. "
-            "This will create a .github/workflows file for your plugin."
+            "This will create a .github/workflows file for your plugin.",
         )
         info_label.setWordWrap(True)
         layout.addWidget(info_label)
@@ -387,11 +387,11 @@ class CICDDialog(PluginDialogBase):
 
         config_path = os.path.join(
             os.path.dirname(self.plugin_path),
-            ".intellicrack-ci.yml"
+            ".intellicrack-ci.yml",
         )
 
         if os.path.exists(config_path):
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 config = yaml.safe_load(f)
         else:
             # Default config
@@ -403,14 +403,14 @@ class CICDDialog(PluginDialogBase):
                 "quality": {"enabled": True},
                 "security": {"enabled": True},
                 "build": {"enabled": True},
-                "deploy": {"enabled": True}
+                "deploy": {"enabled": True},
             }
 
         # Populate tree
         self.config_tree.clear()
         self.populate_config_tree(config, self.config_tree.invisibleRootItem())
 
-    def populate_config_tree(self, config: Dict[str, Any], parent: QTreeWidgetItem):
+    def populate_config_tree(self, config: dict[str, Any], parent: QTreeWidgetItem):
         """Populate configuration tree"""
         for key, value in config.items():
             if isinstance(value, dict):
@@ -442,7 +442,7 @@ class CICDDialog(PluginDialogBase):
         # Save to file
         config_path = os.path.join(
             os.path.dirname(self.plugin_path),
-            ".intellicrack-ci.yml"
+            ".intellicrack-ci.yml",
         )
 
         with open(config_path, "w") as f:
@@ -451,7 +451,7 @@ class CICDDialog(PluginDialogBase):
         QMessageBox.information(self, "Saved", "Configuration saved successfully!")
         self.setWindowTitle("CI/CD Pipeline")
 
-    def build_config_from_tree(self) -> Dict[str, Any]:
+    def build_config_from_tree(self) -> dict[str, Any]:
         """Build configuration from tree widget"""
         config = {}
 
@@ -463,21 +463,20 @@ class CICDDialog(PluginDialogBase):
                     child = item.child(i)
                     result[child.text(0)] = process_item(child)
                 return result
-            else:
-                # Leaf node
-                value = item.text(1)
-                # Try to parse value
-                if value.lower() in ["true", "false"]:
-                    return value.lower() == "true"
+            # Leaf node
+            value = item.text(1)
+            # Try to parse value
+            if value.lower() in ["true", "false"]:
+                return value.lower() == "true"
+            try:
+                return int(value)
+            except ValueError as e:
+                self.logger.error("Value error in ci_cd_dialog: %s", e)
                 try:
-                    return int(value)
+                    return float(value)
                 except ValueError as e:
-                    self.logger.error("Value error in ci_cd_dialog: %s", e)
-                    try:
-                        return float(value)
-                    except ValueError as e:
-                        logger.error("Value error in ci_cd_dialog: %s", e)
-                        return value
+                    logger.error("Value error in ci_cd_dialog: %s", e)
+                    return value
 
         # Process root items
         root = self.config_tree.invisibleRootItem()
@@ -492,7 +491,7 @@ class CICDDialog(PluginDialogBase):
         reply = QMessageBox.question(
             self, "Reset Configuration",
             "Are you sure you want to reset to default configuration?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         )
 
         if reply == QMessageBox.Yes:
@@ -500,7 +499,7 @@ class CICDDialog(PluginDialogBase):
             if self.plugin_path:
                 config_path = os.path.join(
                     os.path.dirname(self.plugin_path),
-                    ".intellicrack-ci.yml"
+                    ".intellicrack-ci.yml",
                 )
                 if os.path.exists(config_path):
                     os.remove(config_path)
@@ -522,7 +521,7 @@ class CICDDialog(PluginDialogBase):
                 timestamp = file.replace("pipeline_report_", "").replace(".json", "")
 
                 # Load report to get status
-                with open(os.path.join(report_dir, file), "r") as f:
+                with open(os.path.join(report_dir, file)) as f:
                     report = json.load(f)
 
                 status = report.get("overall_status", "unknown")
@@ -540,10 +539,10 @@ class CICDDialog(PluginDialogBase):
         text_path = report_path.replace(".json", ".txt")
 
         if os.path.exists(text_path):
-            with open(text_path, "r") as f:
+            with open(text_path) as f:
                 self.report_viewer.setPlainText(f.read())
         else:
-            with open(report_path, "r") as f:
+            with open(report_path) as f:
                 report = json.load(f)
                 self.report_viewer.setPlainText(json.dumps(report, indent=2))
 
@@ -557,7 +556,7 @@ class CICDDialog(PluginDialogBase):
         file_path, _ = QFileDialog.getSaveFileName(
             self, "Export Report",
             f"pipeline_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-            "Text Files (*.txt);;JSON Files (*.json);;All Files (*.*)"
+            "Text Files (*.txt);;JSON Files (*.json);;All Files (*.*)",
         )
 
         if file_path:
@@ -603,7 +602,7 @@ class CICDDialog(PluginDialogBase):
         QMessageBox.information(
             self, "Generated",
             f"GitHub Actions workflow saved to:\n{workflow_path}\n\n"
-            "Commit this file to your repository to enable CI/CD."
+            "Commit this file to your repository to enable CI/CD.",
         )
 
     def run_pipeline(self):
@@ -669,7 +668,7 @@ class CICDDialog(PluginDialogBase):
                 }
             """)
 
-    def on_stage_completed(self, stage: str, result: Dict[str, Any]):
+    def on_stage_completed(self, stage: str, result: dict[str, Any]):
         """Handle stage completed"""
         success = result.get("success", False)
 
@@ -721,7 +720,7 @@ class CICDDialog(PluginDialogBase):
         """Handle log message"""
         self.console_output.append(message)
 
-    def on_pipeline_finished(self, results: Dict[str, Any]):
+    def on_pipeline_finished(self, results: dict[str, Any]):
         """Handle pipeline finished"""
         # Update UI
         self.run_btn.setEnabled(True)

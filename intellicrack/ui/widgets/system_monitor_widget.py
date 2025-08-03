@@ -1,5 +1,4 @@
-"""
-System Monitor Widget
+"""System Monitor Widget
 
 Provides real-time system monitoring including CPU, GPU, Memory usage,
 network activity, and process information for the Dashboard tab.
@@ -11,7 +10,7 @@ Licensed under GNU General Public License v3.0
 import time
 from collections import deque
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import psutil
 from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal
@@ -47,15 +46,16 @@ except ImportError:
 @dataclass
 class SystemMetrics:
     """Container for system metrics"""
+
     timestamp: float
     cpu_percent: float
-    cpu_per_core: List[float]
+    cpu_per_core: list[float]
     memory_percent: float
     memory_used_gb: float
     memory_total_gb: float
-    gpu_percent: Optional[float] = None
-    gpu_memory_percent: Optional[float] = None
-    gpu_temp: Optional[float] = None
+    gpu_percent: float | None = None
+    gpu_memory_percent: float | None = None
+    gpu_temp: float | None = None
     network_sent_mb: float = 0.0
     network_recv_mb: float = 0.0
     disk_read_mb: float = 0.0
@@ -156,7 +156,7 @@ class SystemMonitorWorker(QObject):
             network_sent_mb=network_sent_mb,
             network_recv_mb=network_recv_mb,
             disk_read_mb=disk_read_mb,
-            disk_write_mb=disk_write_mb
+            disk_write_mb=disk_write_mb,
         )
 class SystemMonitorWidget(QWidget):
     """System monitoring widget for the Dashboard"""
@@ -296,7 +296,7 @@ class SystemMonitorWidget(QWidget):
         self.process_table = QTableWidget()
         self.process_table.setColumnCount(5)
         self.process_table.setHorizontalHeaderLabels([
-            "PID", "Name", "CPU %", "Memory %", "Status"
+            "PID", "Name", "CPU %", "Memory %", "Status",
         ])
         self.process_table.horizontalHeader().setStretchLastSection(True)
         process_layout.addWidget(self.process_table)
@@ -422,9 +422,8 @@ class SystemMonitorWidget(QWidget):
                 self.alert_triggered.emit("gpu", f"High GPU usage: {metrics.gpu_percent:.1f}%")
                 if hasattr(self, "gpu_bar"):
                     self.gpu_bar.setStyleSheet("QProgressBar::chunk { background-color: #ff6666; }")
-            else:
-                if hasattr(self, "gpu_bar"):
-                    self.gpu_bar.setStyleSheet("")
+            elif hasattr(self, "gpu_bar"):
+                self.gpu_bar.setStyleSheet("")
 
     def _on_interval_changed(self, value: int):
         """Handle update interval change"""
@@ -442,15 +441,14 @@ class SystemMonitorWidget(QWidget):
     def _on_error(self, error_msg: str):
         """Handle monitoring errors"""
         # Log error but don't show to user to avoid spam
-        pass
 
-    def get_current_metrics(self) -> Optional[SystemMetrics]:
+    def get_current_metrics(self) -> SystemMetrics | None:
         """Get the most recent metrics"""
         if self.metrics_history:
             return self.metrics_history[-1]
         return None
 
-    def get_metrics_summary(self) -> Dict[str, Any]:
+    def get_metrics_summary(self) -> dict[str, Any]:
         """Get a summary of recent metrics"""
         if not self.metrics_history:
             return {}

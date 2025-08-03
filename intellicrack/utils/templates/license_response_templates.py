@@ -33,6 +33,7 @@ def get_common_license_response(user_id=None, days_valid=365, features=None):
 
     Returns:
         dict: License response with dynamic values
+
     """
     import datetime
     import getpass
@@ -58,7 +59,7 @@ def get_common_license_response(user_id=None, days_valid=365, features=None):
         "features": features,
         "user_id": user_id,
         "generated_at": current_time.isoformat(),
-        "days_remaining": days_valid
+        "days_remaining": days_valid,
     }
 
 
@@ -87,7 +88,7 @@ def get_adobe_response_templates():
         (r"C:\Program Files\Adobe\Adobe Illustrator", "ILST", "Illustrator"),
         (r"C:\Program Files\Adobe\Adobe After Effects", "AEFT", "After Effects"),
         (r"C:\Program Files\Adobe\Adobe Premiere Pro", "PPRO", "Premiere Pro"),
-        (r"C:\Program Files\Adobe\Adobe InDesign", "IDSN", "InDesign")
+        (r"C:\Program Files\Adobe\Adobe InDesign", "IDSN", "InDesign"),
     ]
 
     for path, product_id, name in adobe_paths:
@@ -98,7 +99,7 @@ def get_adobe_response_templates():
     if not detected_products:
         detected_products = [
             {"id": "PHSP", "name": "Photoshop", "status": "TRIAL"},
-            {"id": "ILST", "name": "Illustrator", "status": "TRIAL"}
+            {"id": "ILST", "name": "Illustrator", "status": "TRIAL"},
         ]
 
     return {
@@ -112,7 +113,7 @@ def get_adobe_response_templates():
             "expired": False,
             "products": detected_products,
             "validation_method": "real_adobe_check",
-            "timestamp": current_time.isoformat()
+            "timestamp": current_time.isoformat(),
         },
         "xml": f"""
             <response>
@@ -125,7 +126,7 @@ def get_adobe_response_templates():
                     <validation_method>real_adobe_check</validation_method>
                 </license>
             </response>
-        """
+        """,
     }
 
 def get_autodesk_response_templates():
@@ -149,7 +150,7 @@ def get_autodesk_response_templates():
         (r"C:\Program Files\Autodesk\3ds Max", "3DSMAX", "3ds Max"),
         (r"C:\Program Files\Autodesk\Revit", "REVIT", "Revit"),
         (r"C:\Program Files\Autodesk\Maya", "MAYA", "Maya"),
-        (r"C:\Program Files\Autodesk\Inventor", "INVENTOR", "Inventor")
+        (r"C:\Program Files\Autodesk\Inventor", "INVENTOR", "Inventor"),
     ]
 
     license_type = "TRIAL"
@@ -158,7 +159,7 @@ def get_autodesk_response_templates():
             # Check for license files indicating full version
             license_files = [
                 os.path.join(path, "adlmint.dll"),
-                os.path.join(path, "AdLicMgr.exe")
+                os.path.join(path, "AdLicMgr.exe"),
             ]
             if any(os.path.exists(lf) for lf in license_files):
                 license_type = "NETWORK"
@@ -169,7 +170,7 @@ def get_autodesk_response_templates():
     # Default products if none detected
     if not detected_products:
         detected_products = [
-            {"id": "AUTOCAD", "name": "AutoCAD", "status": "TRIAL"}
+            {"id": "AUTOCAD", "name": "AutoCAD", "status": "TRIAL"},
         ]
 
     # Calculate expiry based on license type
@@ -187,17 +188,17 @@ def get_autodesk_response_templates():
                 "status": "ACTIVATED" if license_type == "NETWORK" else "TRIAL",
                 "type": license_type,
                 "expiry": expiry_date.strftime("%Y-%m-%d"),
-                "validation_method": "real_autodesk_check"
+                "validation_method": "real_autodesk_check",
             },
             "user": {
                 "name": username,
                 "email": f"{username}@{machine_hash}.local",
                 "type": user_type,
-                "machine_id": machine_hash
+                "machine_id": machine_hash,
             },
             "products": detected_products,
-            "timestamp": current_time.isoformat()
-        }
+            "timestamp": current_time.isoformat(),
+        },
     }
 
 def get_jetbrains_response_templates():
@@ -220,7 +221,7 @@ def get_jetbrains_response_templates():
         (r"C:\Program Files\JetBrains\WebStorm", "WS", "WebStorm"),
         (r"C:\Program Files\JetBrains\PyCharm", "PC", "PyCharm"),
         (r"C:\Program Files\JetBrains\CLion", "CL", "CLion"),
-        (r"C:\Users\%USERNAME%\AppData\Local\JetBrains", None, None)  # Check user install
+        (r"C:\Users\%USERNAME%\AppData\Local\JetBrains", None, None),  # Check user install
     ]
 
     license_type = "evaluation"
@@ -231,7 +232,7 @@ def get_jetbrains_response_templates():
         if path and os.path.exists(path.replace("%USERNAME%", os.environ.get("USERNAME", "user"))):
             # Check for license files
             license_indicators = [
-                "idea.key", "license.key", ".license", "jb-license.txt"
+                "idea.key", "license.key", ".license", "jb-license.txt",
             ]
             install_path = path.replace("%USERNAME%", os.environ.get("USERNAME", "user"))
 
@@ -240,9 +241,8 @@ def get_jetbrains_response_templates():
                 evaluation_license = False
                 if code and name:
                     detected_products.append({"code": code, "name": name, "status": "ACTIVATED"})
-            else:
-                if code and name:
-                    detected_products.append({"code": code, "name": name, "status": "TRIAL"})
+            elif code and name:
+                detected_products.append({"code": code, "name": name, "status": "TRIAL"})
 
     # Check user AppData for JetBrains Toolbox installations
     user_jetbrains_path = os.path.expandvars(r"%APPDATA%\JetBrains")
@@ -253,12 +253,11 @@ def get_jetbrains_response_templates():
                     detected_products.append({"code": "II", "name": "IntelliJ IDEA", "status": "TRIAL"})
         except (OSError, PermissionError) as e:
             logger.error("Error in license_response_templates: %s", e)
-            pass
 
     # Default if no products detected
     if not detected_products:
         detected_products = [
-            {"code": "II", "name": "IntelliJ IDEA", "status": "TRIAL"}
+            {"code": "II", "name": "IntelliJ IDEA", "status": "TRIAL"},
         ]
 
     # Calculate expiry based on license type
@@ -282,8 +281,8 @@ def get_jetbrains_response_templates():
             "licenseExpirationDateMs": int(expiry_date.timestamp() * 1000),
             "products": detected_products,
             "validation_method": "real_jetbrains_check",
-            "timestamp": current_time.isoformat()
-        }
+            "timestamp": current_time.isoformat(),
+        },
     }
 
 def get_microsoft_response_templates():
@@ -309,7 +308,7 @@ def get_microsoft_response_templates():
                 # Use slmgr to check Windows activation
                 result = subprocess.run(
                     ["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/xpr"],
-                    capture_output=True, text=True, timeout=30, check=False
+                    capture_output=True, text=True, timeout=30, check=False,
                 )
 
                 if result.returncode == 0:
@@ -344,7 +343,7 @@ def get_microsoft_response_templates():
             (r"C:\Program Files\Microsoft Office", "O365", "Office 365"),
             (r"C:\Program Files (x86)\Microsoft Office", "O365", "Office 365"),
             (r"C:\Program Files\Microsoft Office\root\Office16", "O2016", "Office 2016"),
-            (r"C:\Program Files (x86)\Microsoft Office\root\Office16", "O2016", "Office 2016")
+            (r"C:\Program Files (x86)\Microsoft Office\root\Office16", "O2016", "Office 2016"),
         ]
 
         for path, product_id, name in office_paths:
@@ -355,7 +354,7 @@ def get_microsoft_response_templates():
                     ospp_paths = [
                         os.path.join(path, "Office16", "OSPP.VBS"),
                         os.path.join(path, "Office15", "OSPP.VBS"),
-                        os.path.join(path.replace("root\\Office16", ""), "Office16", "OSPP.VBS")
+                        os.path.join(path.replace("root\\Office16", ""), "Office16", "OSPP.VBS"),
                     ]
 
                     office_licensed = False
@@ -364,7 +363,7 @@ def get_microsoft_response_templates():
                             try:
                                 result = subprocess.run(
                                     ["cscript", "//nologo", ospp_path, "/dstatus"],
-                                    capture_output=True, text=True, timeout=30, check=False
+                                    capture_output=True, text=True, timeout=30, check=False,
                                 )
                                 if result.returncode == 0 and "license status: ---licensed---" in result.stdout.lower():
                                     office_licensed = True
@@ -388,7 +387,7 @@ def get_microsoft_response_templates():
         # Check for Visio
         visio_paths = [
             r"C:\Program Files\Microsoft Office\root\Office16\VISIO.EXE",
-            r"C:\Program Files (x86)\Microsoft Office\root\Office16\VISIO.EXE"
+            r"C:\Program Files (x86)\Microsoft Office\root\Office16\VISIO.EXE",
         ]
 
         for visio_path in visio_paths:
@@ -399,12 +398,12 @@ def get_microsoft_response_templates():
     except Exception as e:
         logger.error("Exception in license_response_templates: %s", e)
         error_code = 2
-        error_message = f"Microsoft license validation error: {str(e)}"
+        error_message = f"Microsoft license validation error: {e!s}"
 
     # Default if no products detected
     if not detected_products:
         detected_products = [
-            {"id": "WINPRO", "name": f"Windows {platform.release()}", "status": "UNKNOWN"}
+            {"id": "WINPRO", "name": f"Windows {platform.release()}", "status": "UNKNOWN"},
         ]
 
     return {
@@ -418,8 +417,8 @@ def get_microsoft_response_templates():
             "validation_method": "real_microsoft_check",
             "timestamp": current_time.isoformat(),
             "platform": platform.system(),
-            "version": platform.version()
-        }
+            "version": platform.version(),
+        },
     }
 
 def get_generic_response_templates():
@@ -440,7 +439,7 @@ def get_generic_response_templates():
     system_checks = {
         "os_supported": platform.system() in ["Windows", "Linux", "Darwin"],
         "arch_supported": platform.machine() in ["AMD64", "x86_64", "i386", "i686"],
-        "environment_valid": len(os.environ) > 10  # Basic environment check
+        "environment_valid": len(os.environ) > 10,  # Basic environment check
     }
 
     # Determine license status based on system checks
@@ -479,7 +478,7 @@ def get_generic_response_templates():
             "system_checks": system_checks,
             "timestamp": current_time.isoformat(),
             "platform": platform.system(),
-            "architecture": platform.machine()
+            "architecture": platform.machine(),
         },
         "xml": f"""
             <response>
@@ -491,7 +490,7 @@ def get_generic_response_templates():
                 <machine_id>{machine_hash}</machine_id>
                 <timestamp>{current_time.isoformat()}</timestamp>
             </response>
-        """
+        """,
     }
 
 def get_all_response_templates():
@@ -501,5 +500,5 @@ def get_all_response_templates():
         "autodesk": get_autodesk_response_templates(),
         "jetbrains": get_jetbrains_response_templates(),
         "microsoft": get_microsoft_response_templates(),
-        "generic": get_generic_response_templates()
+        "generic": get_generic_response_templates(),
     }

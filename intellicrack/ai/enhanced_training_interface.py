@@ -1,5 +1,4 @@
-"""
-Enhanced AI Model Training Interface
+"""Enhanced AI Model Training Interface
 
 Copyright (C) 2025 Zachary Flint
 
@@ -26,7 +25,7 @@ import os
 import time
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -181,6 +180,7 @@ except ImportError as e:
     # Create a stub PlotWidget class for when pyqtgraph is not available
     class PlotWidget:
         """Stub PlotWidget class for when pyqtgraph is not available."""
+
         def __init__(self, *args, **kwargs):
             """Initialize stub PlotWidget that provides minimal functionality."""
             self.parent = kwargs.get("parent")
@@ -245,12 +245,17 @@ except ImportError as e:
             # Return self to allow method chaining
             return self
 
-__all__ = ["EnhancedTrainingInterface",
-           "TrainingConfiguration", "ModelMetrics", "TrainingStatus"]
+__all__ = [
+    "EnhancedTrainingInterface",
+    "ModelMetrics",
+    "TrainingConfiguration",
+    "TrainingStatus",
+]
 
 
 class TrainingStatus(Enum):
     """Training status enumeration."""
+
     IDLE = "idle"
     PREPARING = "preparing"
     TRAINING = "training"
@@ -263,6 +268,7 @@ class TrainingStatus(Enum):
 @dataclass
 class TrainingConfiguration:
     """Training configuration dataclass."""
+
     model_name: str = "intellicrack_model"
     model_type: str = "vulnerability_classifier"
     dataset_path: str = ""
@@ -301,6 +307,7 @@ class TrainingConfiguration:
 @dataclass
 class ModelMetrics:
     """Model performance metrics."""
+
     accuracy: float = 0.0
     precision: float = 0.0
     recall: float = 0.0
@@ -361,7 +368,7 @@ class TrainingThread(QThread):
                     "loss": max(0.01, 2.0 - (_epoch / self.config.epochs) * 1.8),
                     "val_accuracy": accuracy * 0.95,
                     "val_loss": max(0.01, 2.2 - (_epoch / self.config.epochs) * 1.8),
-                    "learning_rate": self.config.learning_rate
+                    "learning_rate": self.config.learning_rate,
                 }
 
                 self.progress_updated.emit(progress)
@@ -459,7 +466,7 @@ class TrainingVisualizationWidget(QWidget):
                 writer.writerow([
                     self.training_data["epochs"][i],
                     self.training_data["loss"][i],
-                    self.training_data["accuracy"][i]
+                    self.training_data["accuracy"][i],
                 ])
 
 
@@ -541,7 +548,7 @@ class DatasetAnalysisWidget(QWidget):
         self.train_split_label = QLabel("Train Split: 80%")
 
         self.train_split_slider.valueChanged.connect(
-            lambda v: self.train_split_label.setText(f"Train Split: {v}%")
+            lambda v: self.train_split_label.setText(f"Train Split: {v}%"),
         )
 
         preprocess_layout.addWidget(self.normalize_cb, 0, 0)
@@ -561,7 +568,7 @@ class DatasetAnalysisWidget(QWidget):
         """Open file dialog to browse for dataset file."""
         filename, _ = QFileDialog.getOpenFileName(
             self, "Select Dataset", "",
-            "Data Files (*.csv *.json *.pkl);;All Files (*)"
+            "Data Files (*.csv *.json *.pkl);;All Files (*)",
         )
         if filename:
             self.dataset_path_edit.setText(filename)
@@ -580,7 +587,7 @@ class DatasetAnalysisWidget(QWidget):
                 self.current_dataset = pd.read_csv(dataset_path)
             elif dataset_path.endswith(".json"):
                 import json
-                with open(dataset_path, "r") as f:
+                with open(dataset_path) as f:
                     self.current_dataset = json.load(f)
             elif dataset_path.endswith(".pkl"):
                 # Security warning for pickle files
@@ -591,7 +598,7 @@ class DatasetAnalysisWidget(QWidget):
                     "Only load pickle files from trusted sources.\n\n"
                     "Do you trust this file and want to continue?",
                     QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No
+                    QMessageBox.No,
                 )
 
                 if reply == QMessageBox.Yes:
@@ -615,7 +622,7 @@ class DatasetAnalysisWidget(QWidget):
             QMessageBox.information(self, "Success", "Dataset loaded successfully!")
 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to load dataset: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to load dataset: {e!s}")
 
     def analyze_dataset(self):
         """Analyze the loaded dataset and display statistics."""
@@ -641,7 +648,7 @@ class DatasetAnalysisWidget(QWidget):
                     self.distribution_plot.plot(
                         list(distribution.index),
                         list(distribution.values),
-                        pen=None, symbol="o"
+                        pen=None, symbol="o",
                     )
 
                     # Also create matplotlib plot if available
@@ -661,7 +668,7 @@ class DatasetAnalysisWidget(QWidget):
             self.stats_text.setText("\n".join(stats))
 
         except Exception as e:
-            self.stats_text.setText(f"Analysis failed: {str(e)}")
+            self.stats_text.setText(f"Analysis failed: {e!s}")
 
     def get_preprocessing_config(self):
         """Get current preprocessing configuration."""
@@ -669,7 +676,7 @@ class DatasetAnalysisWidget(QWidget):
             "normalize": self.normalize_cb.isChecked(),
             "shuffle": self.shuffle_cb.isChecked(),
             "augment": self.augment_cb.isChecked(),
-            "train_split": self.train_split_slider.value() / 100.0
+            "train_split": self.train_split_slider.value() / 100.0,
         }
 
 
@@ -745,7 +752,7 @@ class HyperparameterOptimizationWidget(QWidget):
             "Random Search",
             "Grid Search",
             "Bayesian Optimization",
-            "Genetic Algorithm"
+            "Genetic Algorithm",
         ])
 
         self.num_trials_spin = QSpinBox()
@@ -780,7 +787,7 @@ class HyperparameterOptimizationWidget(QWidget):
         self.results_table = QTableWidget()
         self.results_table.setColumnCount(6)
         self.results_table.setHorizontalHeaderLabels([
-            "Trial", "Learning Rate", "Batch Size", "Hidden Layers", "Accuracy", "Loss"
+            "Trial", "Learning Rate", "Batch Size", "Hidden Layers", "Accuracy", "Loss",
         ])
 
         self.best_params_text = QTextEdit()
@@ -820,7 +827,7 @@ class HyperparameterOptimizationWidget(QWidget):
         param_ranges = {
             "learning_rate": (self.lr_min_spin.value(), self.lr_max_spin.value()),
             "batch_size": (self.batch_min_spin.value(), self.batch_max_spin.value()),
-            "hidden_layers": (self.layers_min_spin.value(), self.layers_max_spin.value())
+            "hidden_layers": (self.layers_min_spin.value(), self.layers_max_spin.value()),
         }
 
         strategy = self.strategy_combo.currentText()
@@ -847,14 +854,14 @@ class HyperparameterOptimizationWidget(QWidget):
                 params = {
                     "learning_rate": random.uniform(*param_ranges["learning_rate"]),  # noqa: S311
                     "batch_size": random.choice(range(*param_ranges["batch_size"])),  # noqa: S311
-                    "hidden_layers": random.choice(range(*param_ranges["hidden_layers"]))  # noqa: S311
+                    "hidden_layers": random.choice(range(*param_ranges["hidden_layers"])),  # noqa: S311
                 }
             else:
                 # Simplified - would implement other strategies
                 params = {
                     "learning_rate": random.uniform(*param_ranges["learning_rate"]),  # noqa: S311
                     "batch_size": random.choice(range(*param_ranges["batch_size"])),  # noqa: S311
-                    "hidden_layers": random.choice(range(*param_ranges["hidden_layers"]))  # noqa: S311
+                    "hidden_layers": random.choice(range(*param_ranges["hidden_layers"])),  # noqa: S311
                 }
 
             # Simulate training (would actually train model)
@@ -871,7 +878,7 @@ class HyperparameterOptimizationWidget(QWidget):
                 "trial": trial + 1,
                 "params": params,
                 "accuracy": accuracy,
-                "loss": loss
+                "loss": loss,
             }
             self.optimization_history.append(result)
 
@@ -939,6 +946,7 @@ class EnhancedTrainingInterface(QDialog):
 
         Args:
             parent: Parent widget for the dialog
+
         """
         super().__init__(parent)
         self.setWindowTitle("Enhanced AI Model Training Interface")
@@ -1063,8 +1071,7 @@ class EnhancedTrainingInterface(QDialog):
         """Apply icons to buttons using colored pixmaps."""
         # Create simple colored pixmaps as placeholders for icons
         def create_colored_pixmap(color, size=16):
-            """
-            Create a solid-colored pixmap for use as a button icon.
+            """Create a solid-colored pixmap for use as a button icon.
 
             Args:
                 color: Qt color to fill the pixmap with
@@ -1072,6 +1079,7 @@ class EnhancedTrainingInterface(QDialog):
 
             Returns:
                 QPixmap: A square pixmap filled with the specified color
+
             """
             pixmap = QPixmap(size, size)
             pixmap.fill(color)
@@ -1108,7 +1116,7 @@ class EnhancedTrainingInterface(QDialog):
         self.model_type_combo = QComboBox()
         self.model_type_combo.addItems([
             "vulnerability_classifier", "exploit_detector", "malware_classifier",
-            "license_detector", "packer_identifier"
+            "license_detector", "packer_identifier",
         ])
 
         model_layout.addRow("Model Name:", self.model_name_edit)
@@ -1153,10 +1161,10 @@ class EnhancedTrainingInterface(QDialog):
 
         # Connect slider and spinbox
         self.validation_split_slider.valueChanged.connect(
-            lambda v: self.validation_split_spin.setValue(v / 100.0)
+            lambda v: self.validation_split_spin.setValue(v / 100.0),
         )
         self.validation_split_spin.valueChanged.connect(
-            lambda v: self.validation_split_slider.setValue(int(v * 100))
+            lambda v: self.validation_split_slider.setValue(int(v * 100)),
         )
 
         validation_layout.addWidget(self.validation_split_slider, 1)
@@ -1266,7 +1274,7 @@ class EnhancedTrainingInterface(QDialog):
         self.reset_ui_state()
         self.status_label.setText("Training stopped")
 
-    def training_completed(self, results: Dict[str, Any]):
+    def training_completed(self, results: dict[str, Any]):
         """Handle training completion."""
         self.reset_ui_state()
         accuracy = results.get("final_accuracy", 0)
@@ -1275,7 +1283,7 @@ class EnhancedTrainingInterface(QDialog):
 
         QMessageBox.information(
             self, "Training Complete",
-            f"Model training completed successfully!\n\nFinal accuracy: {accuracy:.4f}"
+            f"Model training completed successfully!\n\nFinal accuracy: {accuracy:.4f}",
         )
 
     def training_error(self, error_message: str):
@@ -1297,7 +1305,6 @@ class EnhancedTrainingInterface(QDialog):
             self.pause_btn.clicked.disconnect()
         except (AttributeError, TypeError) as e:
             logger.error("Error in enhanced_training_interface: %s", e)
-            pass
         self.pause_btn.clicked.connect(self.pause_training)
 
     def update_config_from_ui(self):
@@ -1335,7 +1342,7 @@ class EnhancedTrainingInterface(QDialog):
         """Save current configuration to file."""
         file_path, _ = QFileDialog.getSaveFileName(
             self, "Save Configuration", "training_config.json",
-            "JSON Files (*.json);;All Files (*)"
+            "JSON Files (*.json);;All Files (*)",
         )
 
         if file_path:
@@ -1355,12 +1362,12 @@ class EnhancedTrainingInterface(QDialog):
         """Load configuration from file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Load Configuration", "",
-            "JSON Files (*.json);;All Files (*)"
+            "JSON Files (*.json);;All Files (*)",
         )
 
         if file_path:
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     config_dict = json.load(f)
 
                 # Update configuration

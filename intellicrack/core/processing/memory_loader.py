@@ -3,7 +3,8 @@ import logging
 import math
 import mmap
 import os
-from typing import Any, Dict, Iterator, Optional, Tuple, Union
+from collections.abc import Iterator
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -41,40 +42,39 @@ __all__ = ["MemoryOptimizedBinaryLoader"]
 
 
 class MemoryOptimizedBinaryLoader:
-    """
-    Memory-efficient binary file loader for analyzing large executables.
+    """Memory-efficient binary file loader for analyzing large executables.
 
     Uses memory mapping, partial loading, and caching strategies to minimize
     memory usage while providing efficient access to binary data.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """
-        Initialize the memory optimized binary loader.
+    def __init__(self, config: dict[str, Any] | None = None):
+        """Initialize the memory optimized binary loader.
 
         Args:
             config: Configuration dictionary with optional settings:
                 - chunk_size: Size of data chunks in bytes (default: 1MB)
                 - max_memory: Maximum memory usage in bytes (default: 1GB)
+
         """
         self.config = config or {}
         self.logger = logging.getLogger(__name__)
         self.chunk_size = self.config.get("chunk_size", 1024 * 1024)  # 1MB chunks
         self.max_memory = self.config.get("max_memory", 1024 * 1024 * 1024)  # 1GB max
-        self.current_file: Optional[object] = None
+        self.current_file: object | None = None
         self.file_size = 0
-        self.mapped_file: Optional[mmap.mmap] = None
-        self.section_cache: Dict[str, bytes] = {}
+        self.mapped_file: mmap.mmap | None = None
+        self.section_cache: dict[str, bytes] = {}
 
     def load_file(self, file_path: str) -> bool:
-        """
-        Load a binary file with memory optimization.
+        """Load a binary file with memory optimization.
 
         Args:
             file_path: Path to the binary file to load
 
         Returns:
             True if file loaded successfully, False otherwise
+
         """
         if not os.path.exists(file_path):
             self.logger.error("File not found: %s", file_path)
@@ -92,7 +92,7 @@ class MemoryOptimizedBinaryLoader:
             self.mapped_file = mmap.mmap(
                 self.current_file.fileno(),
                 0,  # Map entire file
-                access=mmap.ACCESS_READ  # Read-only
+                access=mmap.ACCESS_READ,  # Read-only
             )
 
             self.logger.info(f"Loaded file: {file_path} ({self._format_size(self.file_size)})")
@@ -114,7 +114,6 @@ class MemoryOptimizedBinaryLoader:
                 self.mapped_file.close()
             except (OSError, ValueError, RuntimeError) as e:
                 self.logger.error("Error in memory_loader: %s", e)
-                pass
             self.mapped_file = None
 
         # Close file
@@ -123,14 +122,12 @@ class MemoryOptimizedBinaryLoader:
                 self.current_file.close()
             except (OSError, ValueError, RuntimeError) as e:
                 self.logger.error("Error in memory_loader: %s", e)
-                pass
             self.current_file = None
 
         self.file_size = 0
 
-    def read_chunk(self, offset: int, size: int) -> Optional[bytes]:
-        """
-        Read a chunk of data from the file.
+    def read_chunk(self, offset: int, size: int) -> bytes | None:
+        """Read a chunk of data from the file.
 
         Args:
             offset: Byte offset in the file
@@ -138,6 +135,7 @@ class MemoryOptimizedBinaryLoader:
 
         Returns:
             Bytes data if successful, None otherwise
+
         """
         if not self.mapped_file:
             self.logger.error("No file loaded")
@@ -158,9 +156,8 @@ class MemoryOptimizedBinaryLoader:
             self.logger.error("Error reading chunk: %s", e)
             return None
 
-    def read_section(self, section_name: str, section_offset: int, section_size: int) -> Optional[bytes]:
-        """
-        Read a section from the file with caching.
+    def read_section(self, section_name: str, section_offset: int, section_size: int) -> bytes | None:
+        """Read a section from the file with caching.
 
         Args:
             section_name: Name of the section for caching
@@ -169,6 +166,7 @@ class MemoryOptimizedBinaryLoader:
 
         Returns:
             Section data if successful, None otherwise
+
         """
         # Check if section is in cache
         if section_name in self.section_cache:
@@ -186,15 +184,15 @@ class MemoryOptimizedBinaryLoader:
 
         return None
 
-    def iterate_file(self, chunk_size: Optional[int] = None) -> Iterator[Tuple[int, bytes]]:
-        """
-        Iterate through the file in chunks.
+    def iterate_file(self, chunk_size: int | None = None) -> Iterator[tuple[int, bytes]]:
+        """Iterate through the file in chunks.
 
         Args:
             chunk_size: Size of chunks to iterate (default: configured chunk_size)
 
         Yields:
             Tuples of (offset, chunk_data)
+
         """
         if not self.mapped_file:
             self.logger.error("No file loaded")
@@ -213,11 +211,11 @@ class MemoryOptimizedBinaryLoader:
                 break
 
     def get_memory_usage(self) -> int:
-        """
-        Get current memory usage of the process.
+        """Get current memory usage of the process.
 
         Returns:
             Memory usage in bytes, or 0 if psutil not available
+
         """
         if not HAS_PSUTIL:
             self.logger.warning("psutil not available for memory monitoring")
@@ -230,12 +228,12 @@ class MemoryOptimizedBinaryLoader:
             self.logger.error("Error getting memory usage: %s", e)
             return 0
 
-    def get_file_info(self) -> Dict[str, Any]:
-        """
-        Get information about the currently loaded file.
+    def get_file_info(self) -> dict[str, Any]:
+        """Get information about the currently loaded file.
 
         Returns:
             Dictionary with file information
+
         """
         if not self.mapped_file:
             return {}
@@ -246,18 +244,18 @@ class MemoryOptimizedBinaryLoader:
             "chunk_size": self.chunk_size,
             "cached_sections": len(self.section_cache),
             "memory_usage": self.get_memory_usage(),
-            "formatted_memory": self._format_size(self.get_memory_usage())
+            "formatted_memory": self._format_size(self.get_memory_usage()),
         }
 
-    def calculate_entropy(self, data: Union[bytes, None] = None) -> float:
-        """
-        Calculate the entropy of data or the entire file.
+    def calculate_entropy(self, data: bytes | None = None) -> float:
+        """Calculate the entropy of data or the entire file.
 
         Args:
             data: Optional data to analyze (if None, analyzes entire file)
 
         Returns:
             Entropy value in bits per byte
+
         """
         if data is None:
             if not self.mapped_file:
@@ -289,14 +287,14 @@ class MemoryOptimizedBinaryLoader:
         return entropy
 
     def _format_size(self, size_bytes: int) -> str:
-        """
-        Format size in bytes to human-readable format.
+        """Format size in bytes to human-readable format.
 
         Args:
             size_bytes: Size in bytes
 
         Returns:
             Human-readable size string
+
         """
         from ...utils.core.string_utils import format_bytes
         return format_bytes(size_bytes)
@@ -319,8 +317,7 @@ class MemoryOptimizedBinaryLoader:
 
 
 def create_memory_loader(chunk_size: int = 1024 * 1024, max_memory: int = 1024 * 1024 * 1024) -> MemoryOptimizedBinaryLoader:
-    """
-    Factory function to create a MemoryOptimizedBinaryLoader.
+    """Factory function to create a MemoryOptimizedBinaryLoader.
 
     Args:
         chunk_size: Size of data chunks in bytes (default: 1MB)
@@ -328,9 +325,10 @@ def create_memory_loader(chunk_size: int = 1024 * 1024, max_memory: int = 1024 *
 
     Returns:
         Configured MemoryOptimizedBinaryLoader instance
+
     """
     config = {
         "chunk_size": chunk_size,
-        "max_memory": max_memory
+        "max_memory": max_memory,
     }
     return MemoryOptimizedBinaryLoader(config)

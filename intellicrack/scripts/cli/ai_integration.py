@@ -1,5 +1,4 @@
-"""
-AI Integration Module for Intellicrack.
+"""AI Integration Module for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -32,7 +31,7 @@ import logging
 import os
 import sys
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .ai_wrapper import ConfirmationManager, IntellicrackAIInterface
 
@@ -54,20 +53,18 @@ class AIModelAdapter(ABC):
         self.tools = self._create_tool_definitions()
 
     @abstractmethod
-    def _create_tool_definitions(self) -> List[Dict[str, Any]]:
+    def _create_tool_definitions(self) -> list[dict[str, Any]]:
         """Create tool definitions in the model's expected format."""
-        pass
 
     @abstractmethod
-    def handle_tool_call(self, tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    def handle_tool_call(self, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """Handle a tool call from the AI model."""
-        pass
 
 
 class ClaudeAdapter(AIModelAdapter):
     """Adapter for Anthropic Claude models."""
 
-    def _create_tool_definitions(self) -> List[Dict[str, Any]]:
+    def _create_tool_definitions(self) -> list[dict[str, Any]]:
         """Create tool definitions in Claude's format."""
         tools = []
 
@@ -80,17 +77,17 @@ class ClaudeAdapter(AIModelAdapter):
                 "properties": {
                     "binary_path": {
                         "type": "string",
-                        "description": "Path to the binary file to analyze"
+                        "description": "Path to the binary file to analyze",
                     },
                     "analyses": {
                         "type": "array",
                         "items": {"type": "string"},
                         "description": "Types of analysis to perform",
-                        "default": ["comprehensive"]
-                    }
+                        "default": ["comprehensive"],
+                    },
                 },
-                "required": ["binary_path"]
-            }
+                "required": ["binary_path"],
+            },
         })
 
         # Suggest patches tool
@@ -102,11 +99,11 @@ class ClaudeAdapter(AIModelAdapter):
                 "properties": {
                     "binary_path": {
                         "type": "string",
-                        "description": "Path to the binary file"
-                    }
+                        "description": "Path to the binary file",
+                    },
                 },
-                "required": ["binary_path"]
-            }
+                "required": ["binary_path"],
+            },
         })
 
         # Apply patch tool
@@ -118,15 +115,15 @@ class ClaudeAdapter(AIModelAdapter):
                 "properties": {
                     "binary_path": {
                         "type": "string",
-                        "description": "Path to the binary file"
+                        "description": "Path to the binary file",
                     },
                     "patch_file": {
                         "type": "string",
-                        "description": "Path to the patch definition file"
-                    }
+                        "description": "Path to the patch definition file",
+                    },
                 },
-                "required": ["binary_path", "patch_file"]
-            }
+                "required": ["binary_path", "patch_file"],
+            },
         })
 
         # Generic CLI command tool
@@ -139,66 +136,65 @@ class ClaudeAdapter(AIModelAdapter):
                     "args": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "CLI arguments to pass"
+                        "description": "CLI arguments to pass",
                     },
                     "description": {
                         "type": "string",
-                        "description": "Human-readable description of the action"
+                        "description": "Human-readable description of the action",
                     },
                     "reasoning": {
                         "type": "string",
-                        "description": "Explanation of why this action is needed"
-                    }
+                        "description": "Explanation of why this action is needed",
+                    },
                 },
-                "required": ["args", "description"]
-            }
+                "required": ["args", "description"],
+            },
         })
 
         return tools
 
-    def handle_tool_call(self, tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    def handle_tool_call(self, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """Handle a tool call from Claude."""
         try:
             if tool_name == "analyze_binary":
                 return self.interface.analyze_binary(
                     parameters["binary_path"],
-                    parameters.get("analyses", ["comprehensive"])
+                    parameters.get("analyses", ["comprehensive"]),
                 )
 
-            elif tool_name == "suggest_patches":
+            if tool_name == "suggest_patches":
                 return self.interface.suggest_patches(parameters["binary_path"])
 
-            elif tool_name == "apply_patch":
+            if tool_name == "apply_patch":
                 return self.interface.apply_patch(
                     parameters["binary_path"],
-                    parameters["patch_file"]
+                    parameters["patch_file"],
                 )
 
-            elif tool_name == "execute_cli_command":
+            if tool_name == "execute_cli_command":
                 return self.interface.execute_command(
                     parameters["args"],
                     parameters["description"],
-                    parameters.get("reasoning")
+                    parameters.get("reasoning"),
                 )
 
-            else:
-                return {
-                    "status": "error",
-                    "message": f"Unknown tool: {tool_name}"
-                }
+            return {
+                "status": "error",
+                "message": f"Unknown tool: {tool_name}",
+            }
 
         except Exception as e:
             logger.error(f"Error handling tool call: {e}")
             return {
                 "status": "error",
-                "message": str(e)
+                "message": str(e),
             }
 
 
 class OpenAIAdapter(AIModelAdapter):
     """Adapter for OpenAI models."""
 
-    def _create_tool_definitions(self) -> List[Dict[str, Any]]:
+    def _create_tool_definitions(self) -> list[dict[str, Any]]:
         """Create tool definitions in OpenAI's format."""
         tools = []
 
@@ -213,18 +209,18 @@ class OpenAIAdapter(AIModelAdapter):
                     "properties": {
                         "binary_path": {
                             "type": "string",
-                            "description": "Path to the binary file"
+                            "description": "Path to the binary file",
                         },
                         "analyses": {
                             "type": "array",
                             "items": {"type": "string"},
                             "enum": ["comprehensive", "vulnerabilities", "protections", "license", "network"],
-                            "description": "Types of analysis to perform"
-                        }
+                            "description": "Types of analysis to perform",
+                        },
                     },
-                    "required": ["binary_path"]
-                }
-            }
+                    "required": ["binary_path"],
+                },
+            },
         })
 
         # Suggest patches function
@@ -238,12 +234,12 @@ class OpenAIAdapter(AIModelAdapter):
                     "properties": {
                         "binary_path": {
                             "type": "string",
-                            "description": "Path to the binary file"
-                        }
+                            "description": "Path to the binary file",
+                        },
                     },
-                    "required": ["binary_path"]
-                }
-            }
+                    "required": ["binary_path"],
+                },
+            },
         })
 
         # Apply patch function
@@ -257,21 +253,21 @@ class OpenAIAdapter(AIModelAdapter):
                     "properties": {
                         "binary_path": {
                             "type": "string",
-                            "description": "Path to the binary file"
+                            "description": "Path to the binary file",
                         },
                         "patch_file": {
                             "type": "string",
-                            "description": "Path to patch definition"
-                        }
+                            "description": "Path to patch definition",
+                        },
                     },
-                    "required": ["binary_path", "patch_file"]
-                }
-            }
+                    "required": ["binary_path", "patch_file"],
+                },
+            },
         })
 
         return tools
 
-    def handle_tool_call(self, tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    def handle_tool_call(self, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """Handle a tool call from OpenAI."""
         # Similar implementation to Claude adapter
         return self.handle_tool_call(tool_name, parameters)
@@ -295,21 +291,21 @@ class LangChainIntegration:
             tools.append(Tool(
                 name="analyze_binary",
                 func=lambda input_str: self._handle_analyze(input_str),
-                description="Analyze a binary file. Input: 'path/to/binary [analysis_types]'"
+                description="Analyze a binary file. Input: 'path/to/binary [analysis_types]'",
             ))
 
             # Suggest patches tool
             tools.append(Tool(
                 name="suggest_patches",
                 func=lambda input_str: self._handle_suggest_patches(input_str),
-                description="Suggest patches for a binary. Input: 'path/to/binary'"
+                description="Suggest patches for a binary. Input: 'path/to/binary'",
             ))
 
             # CLI command tool
             tools.append(Tool(
                 name="intellicrack_cli",
                 func=lambda input_str: self._handle_cli_command(input_str),
-                description="Run Intellicrack CLI command. Input: 'description | command args'"
+                description="Run Intellicrack CLI command. Input: 'description | command args'",
             ))
 
             return tools
@@ -357,14 +353,14 @@ class IntellicrackAIServer:
         self.adapters = {
             "claude": ClaudeAdapter(self.interface),
             "openai": OpenAIAdapter(self.interface),
-            "langchain": LangChainIntegration(self.interface)
+            "langchain": LangChainIntegration(self.interface),
         }
 
-    def get_adapter(self, model_type: str) -> Optional[AIModelAdapter]:
+    def get_adapter(self, model_type: str) -> AIModelAdapter | None:
         """Get adapter for specific model type."""
         return self.adapters.get(model_type)
 
-    def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
+    def handle_request(self, request: dict[str, Any]) -> dict[str, Any]:
         """Handle an AI model request."""
         model_type = request.get("model_type", "claude")
         tool_name = request.get("tool")
@@ -374,7 +370,7 @@ class IntellicrackAIServer:
         if not adapter:
             return {
                 "status": "error",
-                "message": f"Unknown model type: {model_type}"
+                "message": f"Unknown model type: {model_type}",
             }
 
         return adapter.handle_tool_call(tool_name, parameters)
@@ -447,8 +443,8 @@ def main():
         "tool": "analyze_binary",
         "parameters": {
             "binary_path": "example.exe",
-            "analyses": ["comprehensive", "protections"]
-        }
+            "analyses": ["comprehensive", "protections"],
+        },
     }
 
     response = server.handle_request(request)

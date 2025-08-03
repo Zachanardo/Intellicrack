@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -19,7 +18,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import os
 import subprocess
-from typing import Any, Callable, Dict
+from collections.abc import Callable
+from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -38,7 +38,6 @@ class EnhancedQEMUTestManager:
     def test_frida_script_with_callback(self, snapshot_id: str, script_content: str,
                                        binary_path: str, output_callback: Callable[[str], None]):
         """Execute Frida script with real-time output streaming."""
-
         # Extract binary information for targeted analysis
         binary_name = os.path.basename(binary_path)
         binary_dir = os.path.dirname(binary_path)
@@ -179,7 +178,7 @@ Process.enumerateModules().forEach(module => {{{{
                 "-monitor", "stdio",
                 "-serial", "tcp::4444,server,nowait",
                 "-device", "e1000,netdev=net0",
-                "-netdev", "user,id=net0,hostfwd=tcp::2222-:22"
+                "-netdev", "user,id=net0,hostfwd=tcp::2222-:22",
             ]
 
             process = subprocess.Popen(
@@ -187,7 +186,7 @@ Process.enumerateModules().forEach(module => {{{{
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                bufsize=1  # Line buffered
+                bufsize=1,  # Line buffered
             )
 
             # Also run the Frida script inside QEMU
@@ -196,7 +195,7 @@ Process.enumerateModules().forEach(module => {{{{
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                bufsize=1
+                bufsize=1,
             )
 
             # Stream output from both processes in real-time
@@ -224,7 +223,7 @@ Process.enumerateModules().forEach(module => {{{{
 
             # Read the detailed data file
             try:
-                with open("/tmp/qemu_test_data.json", "r") as f:
+                with open("/tmp/qemu_test_data.json") as f:
                     detailed_data = json.load(f)
                     logger.info(f"Loaded execution data: {len(detailed_data.get('api_calls', []))} API calls captured")
             except Exception as e:
@@ -239,8 +238,8 @@ Process.enumerateModules().forEach(module => {{{{
                 "execution_summary": {
                     "memory_changes": len(detailed_data.get("memory_changes", [])),
                     "api_calls": len(detailed_data.get("api_calls", [])),
-                    "call_counts": detailed_data.get("call_counts", {})
-                }
+                    "call_counts": detailed_data.get("call_counts", {}),
+                },
             }
         finally:
             # Clean up temporary script file
@@ -249,7 +248,7 @@ Process.enumerateModules().forEach(module => {{{{
             except (OSError, FileNotFoundError):
                 pass
 
-    def analyze_binary_for_vm(self, binary_path: str) -> Dict[str, Any]:
+    def analyze_binary_for_vm(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary to determine VM requirements."""
         import magic
         import pefile
@@ -259,7 +258,7 @@ Process.enumerateModules().forEach(module => {{{{
             "architecture": "unknown",
             "dependencies": [],
             "entry_point": None,
-            "sections": []
+            "sections": [],
         }
 
         # Use file magic to detect type
@@ -283,7 +282,7 @@ Process.enumerateModules().forEach(module => {{{{
                 result["sections"].append({
                     "name": section.Name.decode("utf-8").strip("\x00"),
                     "virtual_address": hex(section.VirtualAddress),
-                    "size": section.SizeOfRawData
+                    "size": section.SizeOfRawData,
                 })
 
         elif "ELF" in file_type:
@@ -293,11 +292,10 @@ Process.enumerateModules().forEach(module => {{{{
 
         return result
 
-    def monitor_process_in_vm(self, process_id: int) -> Dict[str, Any]:
+    def monitor_process_in_vm(self, process_id: int) -> dict[str, Any]:
         """Monitor real process behavior in VM."""
-
         # Use guest agent or SSH to monitor
-        monitor_script = f'''
+        monitor_script = f"""
 #!/bin/bash
 # Real process monitoring
 PID={process_id}
@@ -324,13 +322,13 @@ echo "  \\"open_files\\": $FILES,"
 echo "  \\"connections\\": $CONNS,"
 echo "  \\"threads\\": $THREADS"
 echo "}}"
-'''
+"""
 
         # Execute and return real metrics
         result = subprocess.run(
             ["ssh", f"qemu@{self.vm_ip}", monitor_script],
-            capture_output=True,
-            text=True
+            check=False, capture_output=True,
+            text=True,
         )
 
         if result.returncode == 0:

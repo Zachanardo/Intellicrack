@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -23,20 +22,19 @@ This module provides common functions for PE file import parsing.
 """
 
 import logging
-from typing import List
 
 logger = logging.getLogger(__name__)
 
 
-def extract_pe_imports(pe_obj) -> List[str]:
-    """
-    Extract import function names from a PE object.
+def extract_pe_imports(pe_obj) -> list[str]:
+    """Extract import function names from a PE object.
 
     Args:
         pe_obj: A pefile PE object
 
     Returns:
         List of import function names
+
     """
     imports = []
 
@@ -54,8 +52,7 @@ def extract_pe_imports(pe_obj) -> List[str]:
 
 
 def iterate_pe_imports_with_dll(pe_obj, callback, include_import_obj=False):
-    """
-    Iterate through PE imports with DLL names, calling callback for each.
+    """Iterate through PE imports with DLL names, calling callback for each.
 
     Args:
         pe_obj: A pefile PE object
@@ -65,6 +62,7 @@ def iterate_pe_imports_with_dll(pe_obj, callback, include_import_obj=False):
 
     Yields:
         Results from callback function
+
     """
     try:
         if hasattr(pe_obj, "DIRECTORY_ENTRY_IMPORT"):
@@ -84,21 +82,21 @@ def iterate_pe_imports_with_dll(pe_obj, callback, include_import_obj=False):
 
 
 def analyze_pe_import_security(pe_obj) -> dict:
-    """
-    Analyze PE imports for security-related functions.
+    """Analyze PE imports for security-related functions.
 
     Args:
         pe_obj: A pefile PE object
 
     Returns:
         Dictionary with security analysis results
+
     """
     security_apis = {
         "crypto": ["CryptAcquireContext", "CryptCreateHash", "CryptDecrypt", "CryptEncrypt"],
         "network": ["socket", "connect", "send", "recv", "WSAStartup", "InternetOpen"],
         "process": ["CreateProcess", "OpenProcess", "TerminateProcess", "ReadProcessMemory"],
         "registry": ["RegOpenKey", "RegQueryValue", "RegSetValue", "RegCreateKey"],
-        "file": ["CreateFile", "ReadFile", "WriteFile", "DeleteFile"]
+        "file": ["CreateFile", "ReadFile", "WriteFile", "DeleteFile"],
     }
 
     results = {category: [] for category in security_apis}

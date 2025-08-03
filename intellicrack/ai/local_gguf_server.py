@@ -1,5 +1,4 @@
-"""
-Local GGUF Model Server for Intellicrack AI
+"""Local GGUF Model Server for Intellicrack AI
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,7 +22,7 @@ import json
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -90,6 +89,7 @@ class LocalGGUFServer:
         Args:
             host: The host address to bind the server to.
             port: The port number to run the server on.
+
         """
         self.logger = get_logger(__name__ + ".LocalGGUFServer")
         self.host = host
@@ -226,7 +226,6 @@ class LocalGGUFServer:
                 optimal = int(os.environ["OMP_NUM_THREADS"])
             except ValueError as e:
                 self.logger.error("Value error in local_gguf_server: %s", e)
-                pass
 
         logger.debug(
             f"Using {optimal} threads (CPU count: {cpu_count}, GPU: {bool(self.gpu_backend)})")
@@ -270,15 +269,15 @@ class LocalGGUFServer:
                 "f16_kv": kwargs.get("f16_kv", True),  # Use FP16 for KV cache
                 "logits_all": kwargs.get("logits_all", False),
                 "vocab_only": kwargs.get("vocab_only", False),
-                "embedding": kwargs.get("embedding", False)
+                "embedding": kwargs.get("embedding", False),
             }
 
             # Add Intel GPU specific parameters if available
             if self.gpu_backend == "llama_cpp_gpu":
                 default_params.update({
                     "main_gpu": kwargs.get("main_gpu", 0),
-                    "tensor_split": kwargs.get("tensor_split", None),
-                    "mul_mat_q": kwargs.get("mul_mat_q", True)
+                    "tensor_split": kwargs.get("tensor_split"),
+                    "mul_mat_q": kwargs.get("mul_mat_q", True),
                 })
             elif self.gpu_backend == "ipex" and HAS_INTEL_GPU:
                 # Apply IPEX optimizations if using Intel GPU
@@ -288,7 +287,7 @@ class LocalGGUFServer:
                 default_params.update({
                     "gpu_backend": "intel",
                     "use_fp16": True,
-                    "optimize_for_intel": True
+                    "optimize_for_intel": True,
                 })
 
             # Filter out None values
@@ -305,7 +304,7 @@ class LocalGGUFServer:
                 "model_path": str(model_path),
                 "model_name": model_path.name,
                 **model_params,
-                **kwargs
+                **kwargs,
             }
 
             logger.info(f"Successfully loaded GGUF model: {model_path.name}")
@@ -350,7 +349,7 @@ class LocalGGUFServer:
             # Start server in a separate thread
             self.server_thread = threading.Thread(
                 target=self._run_server,
-                daemon=True
+                daemon=True,
             )
             self.server_thread.start()
 
@@ -363,9 +362,8 @@ class LocalGGUFServer:
                 logger.info(
                     f"Local GGUF server started at http://{self.host}:{self.port}")
                 return True
-            else:
-                logger.error("Server failed to start properly")
-                return False
+            logger.error("Server failed to start properly")
+            return False
 
         except Exception as e:
             logger.error(f"Failed to start GGUF server: {e}")
@@ -393,7 +391,7 @@ class LocalGGUFServer:
                 "gpu_backend": self.gpu_backend,
                 "gpu_devices": self.gpu_devices,
                 "gpu_enabled": bool(self.gpu_backend),
-                "gpu_layers": self.model_config.get("n_gpu_layers", 0) if self.model else 0
+                "gpu_layers": self.model_config.get("n_gpu_layers", 0) if self.model else 0,
             })
 
         @self.app.route("/models", methods=["GET"])
@@ -401,7 +399,7 @@ class LocalGGUFServer:
             """List available models."""
             return jsonify({
                 "models": [self.model_config] if self.model else [],
-                "current_model": self.model_config.get("model_name", None)
+                "current_model": self.model_config.get("model_name", None),
             })
 
         @self.app.route("/gpu_info", methods=["GET"])
@@ -415,8 +413,8 @@ class LocalGGUFServer:
                     "intel_gpu": HAS_INTEL_GPU,
                     "openvino": HAS_OPENVINO,
                     "dpctl": HAS_DPCTL,
-                    "llama_cpp_gpu": self.gpu_backend == "llama_cpp_gpu"
-                }
+                    "llama_cpp_gpu": self.gpu_backend == "llama_cpp_gpu",
+                },
             }
 
             # Add current model GPU usage if model is loaded
@@ -424,7 +422,7 @@ class LocalGGUFServer:
                 gpu_details["model_info"] = {
                     "gpu_layers": self.model_config.get("n_gpu_layers", 0),
                     "context_length": self.model_config.get("n_ctx", 0),
-                    "batch_size": self.model_config.get("n_batch", 0)
+                    "batch_size": self.model_config.get("n_batch", 0),
                 }
 
             return jsonify(gpu_details)
@@ -453,8 +451,7 @@ class LocalGGUFServer:
                 # Generate response
                 if stream:
                     return self._stream_response(prompt, max_tokens, temperature, top_p, stop)
-                else:
-                    return self._complete_response(prompt, max_tokens, temperature, top_p, stop)
+                return self._complete_response(prompt, max_tokens, temperature, top_p, stop)
 
             except Exception as e:
                 logger.error(f"Chat completion error: {e}")
@@ -481,8 +478,7 @@ class LocalGGUFServer:
                 # Generate response
                 if stream:
                     return self._stream_response(prompt, max_tokens, temperature, top_p, stop)
-                else:
-                    return self._complete_response(prompt, max_tokens, temperature, top_p, stop)
+                return self._complete_response(prompt, max_tokens, temperature, top_p, stop)
 
             except Exception as e:
                 logger.error(f"Completion error: {e}")
@@ -508,10 +504,9 @@ class LocalGGUFServer:
                 if success:
                     return jsonify({
                         "status": "success",
-                        "model": self.model_config
+                        "model": self.model_config,
                     })
-                else:
-                    return jsonify({"error": "Failed to load model"}), 500
+                return jsonify({"error": "Failed to load model"}), 500
 
             except Exception as e:
                 logger.error(f"Model loading error: {e}")
@@ -527,7 +522,7 @@ class LocalGGUFServer:
                 logger.error(f"Model unloading error: {e}")
                 return jsonify({"error": str(e)}), 500
 
-    def _messages_to_prompt(self, messages: List[Dict]) -> str:
+    def _messages_to_prompt(self, messages: list[dict]) -> str:
         """Convert OpenAI-style messages to a prompt."""
         prompt_parts = []
 
@@ -546,7 +541,7 @@ class LocalGGUFServer:
         return "\n\n".join(prompt_parts)
 
     def _complete_response(self, prompt: str, max_tokens: int, temperature: float,
-                           top_p: float, stop: List[str]) -> Dict[str, Any]:
+                           top_p: float, stop: list[str]) -> dict[str, Any]:
         """Generate a complete response."""
         try:
             # Generate completion
@@ -556,7 +551,7 @@ class LocalGGUFServer:
                 temperature=temperature,
                 top_p=top_p,
                 stop=stop,
-                echo=False
+                echo=False,
             )
 
             content = response["choices"][0]["text"]
@@ -571,15 +566,15 @@ class LocalGGUFServer:
                     "index": 0,
                     "message": {
                         "role": "assistant",
-                        "content": content
+                        "content": content,
                     },
-                    "finish_reason": response["choices"][0]["finish_reason"]
+                    "finish_reason": response["choices"][0]["finish_reason"],
                 }],
                 "usage": {
                     "prompt_tokens": response.get("usage", {}).get("prompt_tokens", 0),
                     "completion_tokens": response.get("usage", {}).get("completion_tokens", 0),
-                    "total_tokens": response.get("usage", {}).get("total_tokens", 0)
-                }
+                    "total_tokens": response.get("usage", {}).get("total_tokens", 0),
+                },
             })
 
         except Exception as e:
@@ -587,7 +582,7 @@ class LocalGGUFServer:
             raise
 
     def _stream_response(self, prompt: str, max_tokens: int, temperature: float,
-                         top_p: float, stop: List[str]):
+                         top_p: float, stop: list[str]):
         """Generate a streaming response."""
         try:
             def generate():
@@ -598,7 +593,7 @@ class LocalGGUFServer:
                     top_p=top_p,
                     stop=stop,
                     stream=True,
-                    echo=False
+                    echo=False,
                 )
 
                 for chunk in response_iter:
@@ -612,8 +607,8 @@ class LocalGGUFServer:
                         "choices": [{
                             "index": 0,
                             "delta": delta,
-                            "finish_reason": chunk["choices"][0].get("finish_reason")
-                        }]
+                            "finish_reason": chunk["choices"][0].get("finish_reason"),
+                        }],
                     }
 
                     yield f"data: {json.dumps(response_chunk)}\n\n"
@@ -627,8 +622,8 @@ class LocalGGUFServer:
                 headers={
                     "Cache-Control": "no-cache",
                     "Connection": "keep-alive",
-                    "Content-Type": "text/event-stream"
-                }
+                    "Content-Type": "text/event-stream",
+                },
             )
 
         except Exception as e:
@@ -643,7 +638,7 @@ class LocalGGUFServer:
                 port=self.port,
                 debug=False,
                 use_reloader=False,
-                threaded=True
+                threaded=True,
             )
         except Exception as e:
             logger.error(f"Server runtime error: {e}")
@@ -656,7 +651,7 @@ class LocalGGUFServer:
         try:
             response = requests.get(
                 f"http://{self.host}:{self.port}/health",
-                timeout=5
+                timeout=5,
             )
             return response.status_code == 200
         except Exception as e:
@@ -677,7 +672,7 @@ class LocalGGUFServer:
         try:
             response = requests.get(
                 f"{self.get_server_url()}/health",
-                timeout=2
+                timeout=2,
             )
             return response.status_code == 200
         except Exception as e:
@@ -688,12 +683,13 @@ class LocalGGUFServer:
 class GGUFModelManager:
     """Manager for GGUF models and local server."""
 
-    def __init__(self, models_directory: Optional[str] = None):
+    def __init__(self, models_directory: str | None = None):
         """Initialize the GGUF model manager.
 
         Args:
             models_directory: Directory path for storing GGUF models.
                             Defaults to ~/.intellicrack/models if not provided.
+
         """
         self.models_directory = Path(
             models_directory) if models_directory else Path.home() / ".intellicrack" / "models"
@@ -722,7 +718,7 @@ class GGUFModelManager:
                     "name": model_file.name,
                     "size_mb": round(file_size / (1024 * 1024), 2),
                     "directory": str(model_file.parent),
-                    "modified": model_file.stat().st_mtime
+                    "modified": model_file.stat().st_mtime,
                 }
 
                 self.available_models[model_file.name] = model_info
@@ -732,11 +728,11 @@ class GGUFModelManager:
 
         logger.info(f"Found {len(self.available_models)} GGUF models")
 
-    def list_models(self) -> Dict[str, Dict[str, Any]]:
+    def list_models(self) -> dict[str, dict[str, Any]]:
         """List available models."""
         return self.available_models.copy()
 
-    def download_model(self, model_url: str, model_name: Optional[str] = None) -> bool:
+    def download_model(self, model_url: str, model_name: str | None = None) -> bool:
         """Download a model from URL."""
         try:
             if not model_name:
@@ -810,7 +806,7 @@ class GGUFModelManager:
         """Check if server is running."""
         return self.server.is_running and self.server.is_healthy()
 
-    def get_recommended_models(self) -> List[Dict[str, str]]:
+    def get_recommended_models(self) -> list[dict[str, str]]:
         """Get list of recommended models for download."""
         return [
             {
@@ -818,22 +814,22 @@ class GGUFModelManager:
                 "description": "Code generation and analysis model (4-bit quantized)",
                 "size": "4.2GB",
                 "url": "https://huggingface.co/TheBloke/CodeLlama-7B-Instruct-GGUF/resolve/main/codellama-7b-instruct.q4_k_m.gguf",
-                "use_case": "Code generation and debugging"
+                "use_case": "Code generation and debugging",
             },
             {
                 "name": "Mistral-7B-Instruct-v0.2.Q4_K_M.gguf",
                 "description": "General purpose instruction-following model",
                 "size": "4.4GB",
                 "url": "https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/resolve/main/mistral-7b-instruct-v0.2.q4_k_m.gguf",
-                "use_case": "General assistance and analysis"
+                "use_case": "General assistance and analysis",
             },
             {
                 "name": "deepseek-coder-6.7b-instruct.Q4_K_M.gguf",
                 "description": "Specialized coding model with strong programming capabilities",
                 "size": "3.8GB",
                 "url": "https://huggingface.co/TheBloke/deepseek-coder-6.7b-instruct-GGUF/resolve/main/deepseek-coder-6.7b-instruct.q4_k_m.gguf",
-                "use_case": "Advanced code analysis and generation"
-            }
+                "use_case": "Advanced code analysis and generation",
+            },
         ]
 
 
@@ -842,12 +838,11 @@ gguf_manager = GGUFModelManager()
 
 
 # Convenience function to create and start server with Intel GPU auto-detection
-def create_gguf_server_with_intel_gpu(model_path: Optional[str] = None,
+def create_gguf_server_with_intel_gpu(model_path: str | None = None,
                                       host: str = "127.0.0.1",
                                       port: int = 8000,
-                                      auto_start: bool = True) -> Optional[LocalGGUFServer]:
-    """
-    Create a GGUF server with automatic Intel GPU detection and configuration.
+                                      auto_start: bool = True) -> LocalGGUFServer | None:
+    """Create a GGUF server with automatic Intel GPU detection and configuration.
 
     Args:
         model_path: Path to GGUF model file (optional, can load later)
@@ -857,6 +852,7 @@ def create_gguf_server_with_intel_gpu(model_path: Optional[str] = None,
 
     Returns:
         LocalGGUFServer instance or None if dependencies missing
+
     """
     if not HAS_FLASK or not HAS_LLAMA_CPP:
         logger.error(

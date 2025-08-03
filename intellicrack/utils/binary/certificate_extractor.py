@@ -1,5 +1,4 @@
-"""
-Certificate Extraction and Analysis Utilities
+"""Certificate Extraction and Analysis Utilities
 
 Extracts and analyzes digital certificates from PE files for protection analysis.
 Provides certificate validation, issuer information, and security insights.
@@ -13,7 +12,7 @@ import os
 import struct
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..logger import get_logger
 
@@ -40,6 +39,7 @@ except ImportError as e:
 @dataclass
 class CertificateInfo:
     """Information about a digital certificate"""
+
     subject: str
     issuer: str
     serial_number: str
@@ -53,9 +53,9 @@ class CertificateInfo:
     is_self_signed: bool
     is_expired: bool
     is_code_signing: bool
-    key_usage: List[str] = field(default_factory=list)
-    extended_key_usage: List[str] = field(default_factory=list)
-    subject_alt_names: List[str] = field(default_factory=list)
+    key_usage: list[str] = field(default_factory=list)
+    extended_key_usage: list[str] = field(default_factory=list)
+    subject_alt_names: list[str] = field(default_factory=list)
 
     @property
     def is_valid(self) -> bool:
@@ -67,17 +67,18 @@ class CertificateInfo:
 @dataclass
 class CodeSigningInfo:
     """Information about code signing"""
+
     is_signed: bool
-    certificates: List[CertificateInfo] = field(default_factory=list)
-    signer_info: Optional[Dict[str, Any]] = None
-    timestamp_info: Optional[Dict[str, Any]] = None
+    certificates: list[CertificateInfo] = field(default_factory=list)
+    signer_info: dict[str, Any] | None = None
+    timestamp_info: dict[str, Any] | None = None
     certificate_chain_valid: bool = False
     signature_valid: bool = False
     trust_status: str = "Unknown"
-    security_catalog: Optional[str] = None
+    security_catalog: str | None = None
 
     @property
-    def signing_certificate(self) -> Optional[CertificateInfo]:
+    def signing_certificate(self) -> CertificateInfo | None:
         """Get the primary signing certificate"""
         if self.certificates:
             return self.certificates[0]
@@ -128,7 +129,7 @@ class CertificateExtractor:
                 timestamp_info=signing_info.get("timestamp"),
                 certificate_chain_valid=signing_info.get("chain_valid", False),
                 signature_valid=signing_info.get("signature_valid", False),
-                trust_status=signing_info.get("trust_status", "Unknown")
+                trust_status=signing_info.get("trust_status", "Unknown"),
             )
 
         except Exception as e:
@@ -147,7 +148,7 @@ class CertificateExtractor:
         cert_entry = self.pe.OPTIONAL_HEADER.DATA_DIRECTORY[4]
         return cert_entry.VirtualAddress != 0 and cert_entry.Size != 0
 
-    def _extract_certificate_data(self) -> Optional[bytes]:
+    def _extract_certificate_data(self) -> bytes | None:
         """Extract raw certificate data from PE file"""
         try:
             cert_entry = self.pe.OPTIONAL_HEADER.DATA_DIRECTORY[4]
@@ -164,7 +165,7 @@ class CertificateExtractor:
             logger.error(f"Failed to extract certificate data: {e}")
             return None
 
-    def _parse_certificates(self, cert_data: bytes) -> List[CertificateInfo]:
+    def _parse_certificates(self, cert_data: bytes) -> list[CertificateInfo]:
         """Parse certificates from raw data"""
         certificates = []
         offset = 0
@@ -197,7 +198,7 @@ class CertificateExtractor:
 
         return certificates
 
-    def _parse_pkcs7_certificates(self, pkcs7_data: bytes) -> List[CertificateInfo]:
+    def _parse_pkcs7_certificates(self, pkcs7_data: bytes) -> list[CertificateInfo]:
         """Parse certificates from PKCS#7 data"""
         certificates = []
 
@@ -237,7 +238,7 @@ class CertificateExtractor:
 
         return certificates
 
-    def _parse_x509_certificate(self, cert_der: bytes) -> Optional[CertificateInfo]:
+    def _parse_x509_certificate(self, cert_der: bytes) -> CertificateInfo | None:
         """Parse X.509 certificate from DER data"""
         try:
             cert = x509.load_der_x509_certificate(cert_der)
@@ -328,7 +329,6 @@ class CertificateExtractor:
 
             except x509.ExtensionNotFound as e:
                 logger.error("x509.ExtensionNotFound in certificate_extractor: %s", e)
-                pass
 
             try:
                 # Extended key usage
@@ -343,7 +343,6 @@ class CertificateExtractor:
 
             except x509.ExtensionNotFound as e:
                 logger.error("x509.ExtensionNotFound in certificate_extractor: %s", e)
-                pass
 
             try:
                 # Subject Alternative Names
@@ -353,7 +352,6 @@ class CertificateExtractor:
 
             except x509.ExtensionNotFound as e:
                 logger.error("x509.ExtensionNotFound in certificate_extractor: %s", e)
-                pass
 
             return CertificateInfo(
                 subject=subject,
@@ -371,7 +369,7 @@ class CertificateExtractor:
                 is_code_signing=is_code_signing,
                 key_usage=key_usage,
                 extended_key_usage=extended_key_usage,
-                subject_alt_names=subject_alt_names
+                subject_alt_names=subject_alt_names,
             )
 
         except Exception as e:
@@ -388,7 +386,6 @@ class CertificateExtractor:
             parts.append(f"CN={cn}")
         except (IndexError, AttributeError) as e:
             logger.error("Error in certificate_extractor: %s", e)
-            pass
 
         # Organization
         try:
@@ -396,7 +393,6 @@ class CertificateExtractor:
             parts.append(f"O={o}")
         except (IndexError, AttributeError) as e:
             logger.error("Error in certificate_extractor: %s", e)
-            pass
 
         # Country
         try:
@@ -404,16 +400,15 @@ class CertificateExtractor:
             parts.append(f"C={c}")
         except (IndexError, AttributeError) as e:
             logger.error("Error in certificate_extractor: %s", e)
-            pass
 
         return ", ".join(parts) if parts else str(name)
 
-    def _analyze_signing_info(self, cert_data: bytes, certificates: List[CertificateInfo]) -> Dict[str, Any]:
+    def _analyze_signing_info(self, cert_data: bytes, certificates: list[CertificateInfo]) -> dict[str, Any]:
         """Analyze signing information and trust status"""
         info = {
             "chain_valid": False,
             "signature_valid": False,
-            "trust_status": "Unknown"
+            "trust_status": "Unknown",
         }
 
         if not certificates:
@@ -428,7 +423,7 @@ class CertificateExtractor:
         if signing_cert.is_self_signed:
             info["trust_status"] = "Self-Signed"
         elif any(issuer in signing_cert.issuer for issuer in [
-            "Microsoft", "VeriSign", "DigiCert", "Symantec", "Thawte", "GeoTrust"
+            "Microsoft", "VeriSign", "DigiCert", "Symantec", "Thawte", "GeoTrust",
         ]):
             info["trust_status"] = "Trusted CA"
         else:
@@ -439,7 +434,7 @@ class CertificateExtractor:
 
         return info
 
-    def _validate_certificate_chain(self, certificates: List[CertificateInfo]) -> bool:
+    def _validate_certificate_chain(self, certificates: list[CertificateInfo]) -> bool:
         """Validate certificate chain (simplified check)"""
         if len(certificates) < 2:
             return False
@@ -455,7 +450,7 @@ class CertificateExtractor:
 
         return True
 
-    def export_certificates(self, file_path: str, output_dir: str = None) -> Dict[str, str]:
+    def export_certificates(self, file_path: str, output_dir: str = None) -> dict[str, str]:
         """Export extracted certificates to PEM files using serialization module."""
         if not CRYPTOGRAPHY_AVAILABLE:
             return {}
@@ -548,13 +543,13 @@ def extract_pe_certificates(file_path: str) -> CodeSigningInfo:
     return extractor.extract_certificates(file_path)
 
 
-def get_certificate_security_assessment(signing_info: CodeSigningInfo) -> Dict[str, Any]:
+def get_certificate_security_assessment(signing_info: CodeSigningInfo) -> dict[str, Any]:
     """Assess security implications of certificate information"""
     assessment = {
         "security_level": "Unknown",
         "concerns": [],
         "recommendations": [],
-        "risk_factors": []
+        "risk_factors": [],
     }
 
     if not signing_info.is_signed:

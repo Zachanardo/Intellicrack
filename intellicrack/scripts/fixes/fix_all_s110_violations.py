@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -25,11 +24,10 @@ import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
-def has_logger_import(lines: List[str]) -> Tuple[bool, str]:
+def has_logger_import(lines: list[str]) -> tuple[bool, str]:
     """Check if file has logger import and return the logger name."""
     for line in lines[:50]:  # Check first 50 lines
         if "from intellicrack.logger import logger" in line:
@@ -40,7 +38,7 @@ def has_logger_import(lines: List[str]) -> Tuple[bool, str]:
             return True, "logger"
     return False, ""
 
-def get_logger_for_context(lines: List[str], line_num: int) -> str:
+def get_logger_for_context(lines: list[str], line_num: int) -> str:
     """Determine the appropriate logger based on context."""
     # Check if we're in a class method
     for i in range(max(0, line_num - 20), line_num):
@@ -92,10 +90,10 @@ def get_appropriate_message(exception_type: str, file_name: str) -> str:
 
     return messages.get(base_exception, f"{base_exception} in {base_name}")
 
-def fix_exception_blocks(file_path: Path) -> Tuple[bool, int]:
+def fix_exception_blocks(file_path: Path) -> tuple[bool, int]:
     """Fix exception blocks without logger calls."""
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             lines = f.readlines()
     except:
         return False, 0
@@ -154,7 +152,7 @@ def fix_exception_blocks(file_path: Path) -> Tuple[bool, int]:
                 message = get_appropriate_message(exception_type, str(file_path))
 
                 # Insert logger line
-                logger_line = f"{indent}    {logger_name}.error(\"{message}: %s\", {exception_var})\n"
+                logger_line = f'{indent}    {logger_name}.error("{message}: %s", {exception_var})\n'
 
                 # Find where to insert the logger line
                 insert_pos = i + 1
@@ -193,7 +191,7 @@ def fix_exception_blocks(file_path: Path) -> Tuple[bool, int]:
 
     return False, 0
 
-def process_file(file_path: Path) -> Dict[str, any]:
+def process_file(file_path: Path) -> dict[str, any]:
     """Process a single file and return results."""
     try:
         fixed, count = fix_exception_blocks(file_path)
@@ -201,17 +199,17 @@ def process_file(file_path: Path) -> Dict[str, any]:
             "path": str(file_path),
             "fixed": fixed,
             "count": count,
-            "error": None
+            "error": None,
         }
     except Exception as e:
         return {
             "path": str(file_path),
             "fixed": False,
             "count": 0,
-            "error": str(e)
+            "error": str(e),
         }
 
-def find_files_with_exceptions(root_dir: Path) -> List[Path]:
+def find_files_with_exceptions(root_dir: Path) -> list[Path]:
     """Find all Python files that contain exception handling."""
     files = []
     for root, _dirs, filenames in os.walk(root_dir):
@@ -219,7 +217,7 @@ def find_files_with_exceptions(root_dir: Path) -> List[Path]:
             if filename.endswith(".py"):
                 file_path = Path(root) / filename
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
                         if "except" in content:
                             files.append(file_path)

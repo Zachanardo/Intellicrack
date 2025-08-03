@@ -1,5 +1,4 @@
-"""
-Concolic Execution Engine for Precise Path Exploration
+"""Concolic Execution Engine for Precise Path Exploration
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,7 +22,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import re
 import traceback
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -63,8 +62,7 @@ except ImportError:
         MANTICORE_AVAILABLE = False
         # Define functional fallback classes to prevent import errors
         class NativeConcolicState:
-            """
-            Native concolic execution state implementation.
+            """Native concolic execution state implementation.
 
             Represents a single execution state in the concolic execution engine,
             maintaining both concrete and symbolic values for program variables.
@@ -77,7 +75,7 @@ except ImportError:
                 self.registers = registers or {
                     "eax": 0, "ebx": 0, "ecx": 0, "edx": 0,
                     "esp": 0x7fff0000, "ebp": 0x7fff0000,
-                    "esi": 0, "edi": 0, "eflags": 0
+                    "esi": 0, "edi": 0, "eflags": 0,
                 }
                 self.symbolic_memory = {}  # Symbolic memory locations
                 self.symbolic_registers = {}  # Symbolic register values
@@ -138,8 +136,7 @@ except ImportError:
                 return value
 
         class Manticore:
-            """
-            Native concolic execution engine implementation.
+            """Native concolic execution engine implementation.
 
             This is a comprehensive implementation that provides concolic execution
             capabilities without requiring external dependencies like the Manticore framework.
@@ -203,7 +200,7 @@ except ImportError:
                             opt_header_offset = pe_offset + 24
                             if opt_header_offset + 16 < len(self.binary_data):
                                 entry_point = int.from_bytes(
-                                    self.binary_data[opt_header_offset + 16:opt_header_offset + 20], "little"
+                                    self.binary_data[opt_header_offset + 16:opt_header_offset + 20], "little",
                                 )
                                 return entry_point + 0x400000  # Add image base
                 except Exception as e:
@@ -337,7 +334,7 @@ except ImportError:
                     state.execution_trace.append({
                         "pc": state.pc,
                         "instruction": instruction_bytes[:4].hex(),
-                        "registers": state.registers.copy()
+                        "registers": state.registers.copy(),
                     })
 
                     # Simple instruction emulation
@@ -424,8 +421,7 @@ except ImportError:
                 return self.ready_states
 
         class Plugin:
-            """
-            Native plugin implementation for concolic execution.
+            """Native plugin implementation for concolic execution.
 
             Provides hooks and callbacks for monitoring and modifying
             the concolic execution process.
@@ -466,8 +462,7 @@ except ImportError as e:
 
 
 class ConcolicExecutionEngine:
-    """
-    Advanced concolic execution engine for precise path exploration.
+    """Advanced concolic execution engine for precise path exploration.
 
     This engine combines concrete execution with symbolic analysis to systematically
     explore program paths and generate inputs that trigger specific behaviors,
@@ -501,9 +496,8 @@ class ConcolicExecutionEngine:
 
         self.logger.info(f"Concolic execution engine initialized for {binary_path}")
 
-    def explore_paths(self, target_address: Optional[int] = None, avoid_addresses: Optional[List[int]] = None) -> Dict[str, Any]:
-        """
-        Perform concolic execution to explore program paths.
+    def explore_paths(self, target_address: int | None = None, avoid_addresses: list[int] | None = None) -> dict[str, Any]:
+        """Perform concolic execution to explore program paths.
 
         Args:
             target_address: Optional address to reach (e.g., license validation success)
@@ -511,13 +505,13 @@ class ConcolicExecutionEngine:
 
         Returns:
             dict: Exploration results including discovered paths and inputs
+
         """
         if not self.manticore_available:
             import platform
             if platform.system() == "Windows":
                 return {"error": "Concolic execution via manticore is not available on Windows. Please use Symbolic Execution (angr) instead."}
-            else:
-                return {"error": "Required dependencies not available. Please install manticore."}
+            return {"error": "Required dependencies not available. Please install manticore."}
 
         try:
             self.logger.info("Starting concolic execution on %s", self.binary_path)
@@ -535,11 +529,11 @@ class ConcolicExecutionEngine:
 
             # Add path exploration plugin
             class PathExplorationPlugin(Plugin):
-                """
-                Plugin for path exploration during symbolic execution.
+                """Plugin for path exploration during symbolic execution.
 
                 Adds hooks for target and avoid addresses to guide execution paths.
                 """
+
                 def __init__(self):
                     """Initialize the path exploration plugin."""
                     super().__init__()
@@ -566,6 +560,7 @@ class ConcolicExecutionEngine:
 
                     Args:
                         state: The state that will be forked
+
                     """
                     self.logger.debug(f"Forking state at PC: {state.cpu.PC} with {len(args)} args and {len(kwargs)} kwargs")
                     if args:
@@ -586,7 +581,7 @@ class ConcolicExecutionEngine:
             results = {
                 "success": True,
                 "paths_explored": len(m.all_states),
-                "inputs": []
+                "inputs": [],
             }
 
             # Process discovered states
@@ -600,7 +595,7 @@ class ConcolicExecutionEngine:
                         "id": state_id,
                         "stdin": stdin_data.hex() if isinstance(stdin_data, bytes) else str(stdin_data),
                         "argv": [_arg.hex() if isinstance(_arg, bytes) else str(_arg) for _arg in argv_data],
-                        "termination_reason": state.termination_reason
+                        "termination_reason": state.termination_reason,
                     })
 
             self.logger.info("Concolic execution completed. Explored %d paths.", results["paths_explored"])
@@ -609,44 +604,43 @@ class ConcolicExecutionEngine:
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error during concolic execution: %s", e)
             self.logger.error(traceback.format_exc())
-            return {"error": f"Concolic execution failed: {str(e)}"}
+            return {"error": f"Concolic execution failed: {e!s}"}
 
     def _target_hook(self, state):
-        """
-        Hook for target address.
+        """Hook for target address.
 
         Args:
             state: Current execution state
+
         """
         state.abandon()  # Stop exploring this state
         self.logger.info("Reached target address at PC: %s", state.cpu.PC)
 
     def _avoid_hook(self, state):
-        """
-        Hook for addresses to avoid.
+        """Hook for addresses to avoid.
 
         Args:
             state: Current execution state
+
         """
         state.abandon()  # Stop exploring this state
         self.logger.info("Avoided address at PC: %s", state.cpu.PC)
 
-    def find_license_bypass(self, license_check_address: Optional[int] = None) -> Dict[str, Any]:
-        """
-        Find inputs that bypass license checks.
+    def find_license_bypass(self, license_check_address: int | None = None) -> dict[str, Any]:
+        """Find inputs that bypass license checks.
 
         Args:
             license_check_address: Optional address of license check function
 
         Returns:
             dict: Bypass results including inputs that bypass license checks
+
         """
         if not self.manticore_available:
             import platform
             if platform.system() == "Windows":
                 return {"error": "License bypass via manticore is not available on Windows. Please use Symbolic Execution (angr) instead."}
-            else:
-                return {"error": "Required dependencies not available"}
+            return {"error": "Required dependencies not available"}
 
         try:
             self.logger.info("Finding license bypass for %s", self.binary_path)
@@ -668,8 +662,7 @@ class ConcolicExecutionEngine:
             bypass_input = [None]
 
             class LicenseCheckPlugin(Plugin):
-                """
-                Plugin for Manticore symbolic execution engine to identify and manipulate license verification paths.
+                """Plugin for Manticore symbolic execution engine to identify and manipulate license verification paths.
 
                 This plugin extends Manticore's Plugin class to hook into the symbolic execution process,
                 monitoring instructions at runtime to identify license validation routines. It specifically
@@ -687,7 +680,9 @@ class ConcolicExecutionEngine:
                 Note:
                     This plugin requires the parent analysis to properly identify license check
                     address locations for effective targeting.
+
                 """
+
                 def __init__(self):
                     """Initialize the license check plugin."""
                     super().__init__()
@@ -703,6 +698,7 @@ class ConcolicExecutionEngine:
                         state: Current emulation state
                         pc: Program counter (current instruction address)
                         insn: Current instruction being executed
+
                     """
                     # Check if we're at the license check function
                     if pc == license_check_address:
@@ -745,26 +741,25 @@ class ConcolicExecutionEngine:
                     "license_check_address": hex(license_check_address) if isinstance(license_check_address, int) else license_check_address,
                     "stdin": stdin_data.hex() if isinstance(stdin_data, bytes) else str(stdin_data),
                     "argv": [_arg.hex() if isinstance(_arg, bytes) else str(_arg) for _arg in argv_data],
-                    "description": "Found input that bypasses license check"
+                    "description": "Found input that bypasses license check",
                 }
-            else:
-                return {
-                    "success": True,
-                    "bypass_found": False,
-                    "description": "Could not find input that bypasses license check"
-                }
+            return {
+                "success": True,
+                "bypass_found": False,
+                "description": "Could not find input that bypasses license check",
+            }
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error finding license bypass: %s", e)
             self.logger.error(traceback.format_exc())
-            return {"error": f"License bypass search failed: {str(e)}"}
+            return {"error": f"License bypass search failed: {e!s}"}
 
-    def _find_license_check_address(self) -> Optional[int]:
-        """
-        Attempt to automatically find license check address.
+    def _find_license_check_address(self) -> int | None:
+        """Attempt to automatically find license check address.
 
         Returns:
             int: Address of license check function, or None if not found
+
         """
         try:
             if not LIEF_AVAILABLE:
@@ -805,7 +800,7 @@ class ConcolicExecutionEngine:
                 # No license patterns found
                 self.logger.info("No license-related patterns found in binary")
                 return None
-            except (IOError, OSError) as e:
+            except OSError as e:
                 self.logger.error("Error reading binary file for pattern analysis: %s", e)
                 return None
 
@@ -813,7 +808,7 @@ class ConcolicExecutionEngine:
             self.logger.error("Error finding license check address: %s", e)
             return None
 
-    def analyze(self, binary_path: str, **kwargs) -> Dict[str, Any]:
+    def analyze(self, binary_path: str, **kwargs) -> dict[str, Any]:
         """Perform comprehensive concolic execution analysis on a binary.
 
         This method conducts a thorough concolic execution analysis combining
@@ -844,6 +839,7 @@ class ConcolicExecutionEngine:
                 - execution_time: Total analysis time
                 - constraints: Path constraints for each explored path
                 - interesting_addresses: Addresses that trigger special behavior
+
         """
         import time
         start_time = time.time()
@@ -863,7 +859,7 @@ class ConcolicExecutionEngine:
         find_license_checks = kwargs.get("find_license_checks", True)
         generate_test_cases = kwargs.get("generate_test_cases", True)
         symbolic_stdin_size = kwargs.get("symbolic_stdin_size", 256)
-        concrete_seed = kwargs.get("concrete_seed", None)
+        concrete_seed = kwargs.get("concrete_seed")
 
         results = {
             "binary": self.binary_path,
@@ -876,7 +872,7 @@ class ConcolicExecutionEngine:
             "constraints": [],
             "interesting_addresses": [],
             "max_depth": max_depth,
-            "error": None
+            "error": None,
         }
 
         if not self.manticore_available:
@@ -898,7 +894,7 @@ class ConcolicExecutionEngine:
                 "test_cases": [],
                 "vulnerabilities": [],
                 "constraints": {},
-                "interesting_addresses": set()
+                "interesting_addresses": set(),
             }
 
             # Add comprehensive analysis plugin
@@ -925,11 +921,7 @@ class ConcolicExecutionEngine:
                     # Check for interesting patterns
                     if hasattr(insn, "mnemonic"):
                         # System calls
-                        if insn.mnemonic in ["syscall", "int"]:
-                            self.analysis_data["interesting_addresses"].add(pc)
-
-                        # Function calls
-                        elif insn.mnemonic == "call":
+                        if insn.mnemonic in ["syscall", "int"] or insn.mnemonic == "call":
                             self.analysis_data["interesting_addresses"].add(pc)
 
                 def _check_for_vulnerability(self, state, pc, insn):
@@ -955,7 +947,7 @@ class ConcolicExecutionEngine:
                                 "address": hex(pc),
                                 "call_target": hex(call_target) if call_target else "indirect",
                                 "stack_ptr": hex(stack_ptr) if stack_ptr else "unknown",
-                                "description": f'Function call at {hex(pc)} with stack at {hex(stack_ptr) if stack_ptr else "unknown"}'
+                                "description": f'Function call at {hex(pc)} with stack at {hex(stack_ptr) if stack_ptr else "unknown"}',
                             }
 
                         # Check for potential buffer overflows using state
@@ -967,7 +959,7 @@ class ConcolicExecutionEngine:
                                     "address": hex(pc),
                                     "stack_ptr": hex(stack_ptr),
                                     "instruction": str(insn),
-                                    "description": f"Potential buffer operation at {hex(pc)}"
+                                    "description": f"Potential buffer operation at {hex(pc)}",
                                 }
 
                         # Check for control flow changes
@@ -977,7 +969,7 @@ class ConcolicExecutionEngine:
                                 "type": "control_flow",
                                 "address": hex(pc),
                                 "state_id": getattr(state, "id", "unknown"),
-                                "description": f"Control flow change at {hex(pc)}"
+                                "description": f"Control flow change at {hex(pc)}",
                             }
 
                     except Exception as e:
@@ -995,7 +987,7 @@ class ConcolicExecutionEngine:
                         # Extract additional context from args and kwargs
                         fork_context = {
                             "additional_args": len(args) if args else 0,
-                            "context_info": {}
+                            "context_info": {},
                         }
 
                         # Process any additional context from kwargs
@@ -1008,7 +1000,7 @@ class ConcolicExecutionEngine:
                             "pc": hex(state.cpu.PC),
                             "constraint": constraint_str,
                             "solutions": len(solutions) if solutions else 0,
-                            "fork_context": fork_context
+                            "fork_context": fork_context,
                         }
                     except Exception as e:
                         self.logger.debug(f"Failed to record constraint: {e}")
@@ -1064,7 +1056,7 @@ class ConcolicExecutionEngine:
                                 "id": i,
                                 "input": stdin_bytes.hex() if stdin_bytes else "",
                                 "triggers": [],
-                                "path_length": len(state.trace) if hasattr(state, "trace") else 0
+                                "path_length": len(state.trace) if hasattr(state, "trace") else 0,
                             }
 
                             # Check what this test case triggers
@@ -1111,7 +1103,7 @@ class ConcolicExecutionEngine:
             results["execution_time"] = time.time() - start_time
             return results
 
-    def _native_analyze(self, binary_path: str, **kwargs) -> Dict[str, Any]:
+    def _native_analyze(self, binary_path: str, **kwargs) -> dict[str, Any]:
         """Native implementation of analyze without Manticore."""
         import time
         start_time = time.time()
@@ -1128,7 +1120,7 @@ class ConcolicExecutionEngine:
             "execution_time": 0,
             "constraints": [],
             "interesting_addresses": [],
-            "error": None
+            "error": None,
         }
 
         try:
@@ -1152,7 +1144,7 @@ class ConcolicExecutionEngine:
                     "input": state.input_symbols.get("stdin", b"").hex() if hasattr(state, "input_symbols") else "",
                     "triggers": [],
                     "path_length": len(state.execution_trace) if hasattr(state, "execution_trace") else 0,
-                    "termination_reason": state.termination_reason if hasattr(state, "termination_reason") else "unknown"
+                    "termination_reason": state.termination_reason if hasattr(state, "termination_reason") else "unknown",
                 }
                 results["test_cases"].append(test_case)
 
@@ -1162,7 +1154,7 @@ class ConcolicExecutionEngine:
                     results["constraints"].append({
                         "state_id": id(state),
                         "pc": hex(state.pc),
-                        "constraints": state.constraints[:5]  # Limit constraints per state
+                        "constraints": state.constraints[:5],  # Limit constraints per state
                     })
 
             # Basic vulnerability detection
@@ -1171,7 +1163,7 @@ class ConcolicExecutionEngine:
                     results["vulnerabilities"].append({
                         "type": "crash",
                         "address": hex(state.pc),
-                        "description": "Program crashed (potential vulnerability)"
+                        "description": "Program crashed (potential vulnerability)",
                     })
 
             # Calculate coverage (simplified)

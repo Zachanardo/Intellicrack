@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -31,7 +30,7 @@ import os
 import time
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import requests
 
@@ -44,13 +43,13 @@ class CacheManager:
     """Manages caching of API responses and model metadata."""
 
     def __init__(self, cache_dir: str = os.path.join(os.path.dirname(__file__), "..", "cache"), ttl_seconds: int = 3600, max_size_mb: int = 100):
-        """
-        Initialize the cache manager.
+        """Initialize the cache manager.
 
         Args:
             cache_dir: Directory to store cache files
             ttl_seconds: Time-to-live for cached items in seconds
             max_size_mb: Maximum cache size in megabytes
+
         """
         self.cache_dir = cache_dir
         self.ttl_seconds = ttl_seconds
@@ -66,13 +65,13 @@ class CacheManager:
         # Clean up expired entries on initialization
         self._cleanup_expired()
 
-    def _load_index(self) -> Dict[str, Dict[str, Any]]:
+    def _load_index(self) -> dict[str, dict[str, Any]]:
         """Load the cache index from disk."""
         if os.path.exists(self.index_file):
             try:
-                with open(self.index_file, "r") as f:
+                with open(self.index_file) as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError) as e:
+            except (OSError, json.JSONDecodeError) as e:
                 logger.warning(f"Failed to load cache index: {e}")
 
         return {}
@@ -82,7 +81,7 @@ class CacheManager:
         try:
             with open(self.index_file, "w") as f:
                 json.dump(self.cache_index, f, indent=2)
-        except IOError as e:
+        except OSError as e:
             logger.warning(f"Failed to save cache index: {e}")
 
     def _get_cache_file_path(self, key: str) -> str:
@@ -91,15 +90,15 @@ class CacheManager:
         key_hash = hashlib.md5(key.encode()).hexdigest()
         return os.path.join(self.cache_dir, f"{key_hash}.cache")
 
-    def get_cached_item(self, key: str) -> Optional[Any]:
-        """
-        Get an item from the cache.
+    def get_cached_item(self, key: str) -> Any | None:
+        """Get an item from the cache.
 
         Args:
             key: Cache key
 
         Returns:
             The cached item, or None if not found or expired
+
         """
         if key not in self.cache_index:
             return None
@@ -118,17 +117,16 @@ class CacheManager:
             return None
 
         try:
-            with open(cache_file, "r") as f:
+            with open(cache_file) as f:
                 data = json.load(f)
                 return data
-        except (json.JSONDecodeError, IOError) as e:
+        except (OSError, json.JSONDecodeError) as e:
             logger.warning(f"Failed to read cache file for {key}: {e}")
             self._remove_entry(key)
             return None
 
-    def cache_item(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
-        """
-        Store an item in the cache.
+    def cache_item(self, key: str, value: Any, ttl: int | None = None) -> bool:
+        """Store an item in the cache.
 
         Args:
             key: Cache key
@@ -137,6 +135,7 @@ class CacheManager:
 
         Returns:
             True if caching was successful, False otherwise
+
         """
         # Check if we have room in the cache
         if self._check_cache_size() >= self.max_size_mb:
@@ -155,12 +154,12 @@ class CacheManager:
                 "file": cache_file,
                 "expiry_time": expiry_time,
                 "created_time": time.time(),
-                "size": os.path.getsize(cache_file)
+                "size": os.path.getsize(cache_file),
             }
 
             self._save_index()
             return True
-        except (IOError, TypeError) as e:
+        except (OSError, TypeError) as e:
             logger.warning(f"Failed to cache item {key}: {e}")
             return False
 
@@ -178,7 +177,7 @@ class CacheManager:
             if os.path.exists(cache_file):
                 try:
                     os.remove(cache_file)
-                except IOError as e:
+                except OSError as e:
                     logger.warning(f"Failed to remove cache file for {key}: {e}")
 
             del self.cache_index[key]
@@ -198,11 +197,11 @@ class CacheManager:
             self._save_index()
 
     def _check_cache_size(self) -> float:
-        """
-        Check the current cache size in MB.
+        """Check the current cache size in MB.
 
         Returns:
             Current size in megabytes
+
         """
         total_size = sum(
             entry.get("size", 0) for entry in self.cache_index.values()
@@ -217,7 +216,7 @@ class CacheManager:
         # Sort entries by creation time (oldest first)
         sorted_entries = sorted(
             self.cache_index.items(),
-            key=lambda x: x[1].get("created_time", 0)
+            key=lambda x: x[1].get("created_time", 0),
         )
 
         # Remove entries until we're under the limit
@@ -232,6 +231,7 @@ class CacheManager:
 @dataclass
 class RateLimitConfig:
     """Configuration for rate limiting."""
+
     requests_per_minute: int = 60
     requests_per_day: int = 1000
 
@@ -239,26 +239,26 @@ class RateLimitConfig:
 class RateLimiter:
     """Manages API rate limiting."""
 
-    def __init__(self, config: Optional[RateLimitConfig] = None):
-        """
-        Initialize the rate limiter.
+    def __init__(self, config: RateLimitConfig | None = None):
+        """Initialize the rate limiter.
 
         Args:
             config: Rate limit configuration
+
         """
         self.config = config or RateLimitConfig()
         self.minute_counters = {}  # Resource -> (count, timestamp)
         self.day_counters = {}     # Resource -> (count, timestamp)
 
-    def check_limit(self, resource: str) -> Tuple[bool, str]:
-        """
-        Check if a request is allowed for the given resource.
+    def check_limit(self, resource: str) -> tuple[bool, str]:
+        """Check if a request is allowed for the given resource.
 
         Args:
             resource: The resource identifier (e.g., API endpoint)
 
         Returns:
             Tuple of (allowed, message)
+
         """
         current_time = time.time()
 
@@ -297,11 +297,11 @@ class RateLimiter:
         return True, ""
 
     def record_request(self, resource: str):
-        """
-        Record a request to the given resource.
+        """Record a request to the given resource.
 
         Args:
             resource: The resource identifier
+
         """
         current_time = time.time()
 
@@ -344,11 +344,10 @@ class APIRepositoryBase(ModelRepositoryInterface):
                  api_key: str = "",
                  timeout: int = 60,
                  proxy: str = "",
-                 rate_limit_config: Optional[RateLimitConfig] = None,
-                 cache_config: Optional[Dict[str, Any]] = None,
+                 rate_limit_config: RateLimitConfig | None = None,
+                 cache_config: dict[str, Any] | None = None,
                  download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads")):
-        """
-        Initialize the API repository.
+        """Initialize the API repository.
 
         Args:
             repository_name: Name of the repository
@@ -359,6 +358,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
             rate_limit_config: Rate limiting configuration
             cache_config: Cache configuration
             download_dir: Directory for downloaded models
+
         """
         self.repository_name = repository_name
         self.api_endpoint = api_endpoint.rstrip("/")
@@ -387,20 +387,19 @@ class APIRepositoryBase(ModelRepositoryInterface):
         if proxy:
             self.session.proxies = {
                 "http": proxy,
-                "https": proxy
+                "https": proxy,
             }
 
     # pylint: disable=too-many-locals
     def _make_request(self,
                      endpoint: str,
                      method: str = "GET",
-                     params: Optional[Dict[str, Any]] = None,
-                     data: Optional[Dict[str, Any]] = None,
-                     headers: Optional[Dict[str, str]] = None,
+                     params: dict[str, Any] | None = None,
+                     data: dict[str, Any] | None = None,
+                     headers: dict[str, str] | None = None,
                      use_cache: bool = True,
-                     cache_ttl: Optional[int] = None) -> Tuple[bool, Any, str]:
-        """
-        Make an API request with rate limiting, caching, and error handling.
+                     cache_ttl: int | None = None) -> tuple[bool, Any, str]:
+        """Make an API request with rate limiting, caching, and error handling.
 
         Args:
             endpoint: API endpoint path (will be appended to base URL)
@@ -413,6 +412,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
         Returns:
             Tuple of (success, data, error_message)
+
         """
         url = f"{self.api_endpoint}/{endpoint.lstrip('/')}"
         cache_key = None
@@ -423,7 +423,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
             cache_key_parts = [
                 url,
                 str(params) if params else "",
-                str(headers) if headers else ""
+                str(headers) if headers else "",
             ]
             cache_key = hashlib.md5(":".join(cache_key_parts).encode()).hexdigest()
 
@@ -442,7 +442,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
         # Set default headers
         request_headers = {
             "User-Agent": "Intellicrack-ModelRepository/1.0",
-            "Accept": "application/json"
+            "Accept": "application/json",
         }
 
         # Add API key header if applicable (override in subclass if needed)
@@ -461,7 +461,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
                 params=params,
                 json=data,
                 headers=request_headers,
-                timeout=self.timeout
+                timeout=self.timeout,
             )
 
             # Record the request for rate limiting
@@ -487,14 +487,13 @@ class APIRepositoryBase(ModelRepositoryInterface):
             return True, response_data, ""
 
         except requests.RequestException as e:
-            logger.error(f"Request error: {str(e)}")
-            return False, None, f"Request error: {str(e)}"
+            logger.error(f"Request error: {e!s}")
+            return False, None, f"Request error: {e!s}"
 
     # pylint: disable=too-many-locals
     def download_model(self, model_id: str, destination_path: str,
-                      progress_callback: Optional[DownloadProgressCallback] = None) -> Tuple[bool, str]:
-        """
-        Download a model from the repository.
+                      progress_callback: DownloadProgressCallback | None = None) -> tuple[bool, str]:
+        """Download a model from the repository.
 
         Args:
             model_id: ID of the model to download
@@ -503,6 +502,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
         Returns:
             Tuple of (success, message)
+
         """
         # Get model details to get the download URL
         model_details = self.get_model_details(model_id)
@@ -522,7 +522,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
                 model_details.download_url,
                 stream=True,
                 timeout=self.timeout,
-                headers={"Authorization": f"Bearer {self.api_key}"}
+                headers={"Authorization": f"Bearer {self.api_key}"},
             ) as response:
                 response.raise_for_status()
 
@@ -568,17 +568,16 @@ class APIRepositoryBase(ModelRepositoryInterface):
         except requests.RequestException as e:
             logger.error("requests.RequestException in base: %s", e)
             if progress_callback:
-                progress_callback.on_complete(False, f"Download failed: {str(e)}")
-            return False, f"Download failed: {str(e)}"
-        except IOError as e:
+                progress_callback.on_complete(False, f"Download failed: {e!s}")
+            return False, f"Download failed: {e!s}"
+        except OSError as e:
             logger.error("IO error in base: %s", e)
             if progress_callback:
-                progress_callback.on_complete(False, f"File I/O error: {str(e)}")
-            return False, f"File I/O error: {str(e)}"
+                progress_callback.on_complete(False, f"File I/O error: {e!s}")
+            return False, f"File I/O error: {e!s}"
 
     def _verify_checksum(self, file_path: str, expected_checksum: str) -> bool:
-        """
-        Verify the checksum of a downloaded file.
+        """Verify the checksum of a downloaded file.
 
         Args:
             file_path: Path to the file
@@ -586,6 +585,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
         Returns:
             True if the checksum matches, False otherwise
+
         """
         try:
             sha256_hash = hashlib.sha256()
@@ -596,40 +596,37 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
             actual_checksum = sha256_hash.hexdigest()
             return actual_checksum == expected_checksum
-        except IOError as e:
-            logger.error(f"Failed to compute checksum: {str(e)}")
+        except OSError as e:
+            logger.error(f"Failed to compute checksum: {e!s}")
             return False
 
     @abstractmethod
-    def get_available_models(self) -> List[ModelInfo]:
-        """
-        Get a list of available models from the repository.
+    def get_available_models(self) -> list[ModelInfo]:
+        """Get a list of available models from the repository.
 
         Returns:
             A list of ModelInfo objects representing the available models.
+
         """
-        pass
 
     @abstractmethod
-    def get_model_details(self, model_id: str) -> Optional[ModelInfo]:
-        """
-        Get detailed information about a specific model.
+    def get_model_details(self, model_id: str) -> ModelInfo | None:
+        """Get detailed information about a specific model.
 
         Args:
             model_id: The ID of the model to get details for
 
         Returns:
             A ModelInfo object containing the model details, or None if the model is not found.
+
         """
-        pass
 
     @abstractmethod
-    def authenticate(self) -> Tuple[bool, str]:
-        """
-        Authenticate with the repository.
+    def authenticate(self) -> tuple[bool, str]:
+        """Authenticate with the repository.
 
         Returns:
             A tuple of (success, message) where success is a boolean indicating if the
             authentication was successful, and message is a string with details.
+
         """
-        pass

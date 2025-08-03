@@ -1,5 +1,4 @@
-"""
-Protection detection utilities - wrapper to redirect to protection/protection_detection.py
+"""Protection detection utilities - wrapper to redirect to protection/protection_detection.py
 
 Copyright (C) 2025 Zachary Flint
 
@@ -41,21 +40,21 @@ from .protection.protection_detection import (
 )
 
 __all__ = [
-    "detect_protection_mechanisms",
-    "detect_checksum_verification",
-    "detect_commercial_protections",
-    "detect_virtualization_protection",
-    "run_comprehensive_protection_scan",
-    "detect_self_healing_code",
-    "detect_obfuscation",
-    "detect_anti_debugging_techniques",
-    "scan_for_bytecode_protectors",
-    "detect_packing_methods",
     "detect_all_protections",
     "detect_anti_debug",
-    "detect_commercial_protectors",
-    "detect_tpm_protection",
     "detect_anti_debugging",
-    "detect_vm_detection",
+    "detect_anti_debugging_techniques",
+    "detect_checksum_verification",
+    "detect_commercial_protections",
+    "detect_commercial_protectors",
+    "detect_obfuscation",
+    "detect_packing_methods",
+    "detect_protection_mechanisms",
     "detect_self_healing",
+    "detect_self_healing_code",
+    "detect_tpm_protection",
+    "detect_virtualization_protection",
+    "detect_vm_detection",
+    "run_comprehensive_protection_scan",
+    "scan_for_bytecode_protectors",
 ]

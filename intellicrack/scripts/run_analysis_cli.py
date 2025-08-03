@@ -1,5 +1,4 @@
-"""
-Command-line interface for Intellicrack binary analysis.
+"""Command-line interface for Intellicrack binary analysis.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -55,7 +54,7 @@ except ImportError as e:
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -73,13 +72,13 @@ Examples:
   %(prog)s binary.exe --format json           # JSON output
   %(prog)s binary.exe --detect-packing        # Check for packers
   %(prog)s binary.exe --license-analysis      # License mechanism analysis
-        """
+        """,
     )
 
     # Positional arguments
     parser.add_argument(
         "binary",
-        help="Path to the binary file to analyze"
+        help="Path to the binary file to analyze",
     )
 
     # Analysis options
@@ -87,69 +86,69 @@ Examples:
     analysis_group.add_argument(
         "--comprehensive", "-c",
         action="store_true",
-        help="Run comprehensive analysis (all modules)"
+        help="Run comprehensive analysis (all modules)",
     )
     analysis_group.add_argument(
         "--detect-packing", "-p",
         action="store_true",
-        help="Detect packing and obfuscation"
+        help="Detect packing and obfuscation",
     )
     analysis_group.add_argument(
         "--vulnerability-scan", "-v",
         action="store_true",
-        help="Scan for security vulnerabilities"
+        help="Scan for security vulnerabilities",
     )
     analysis_group.add_argument(
         "--license-analysis", "-l",
         action="store_true",
-        help="Analyze license protection mechanisms"
+        help="Analyze license protection mechanisms",
     )
     analysis_group.add_argument(
         "--quick", "-q",
         action="store_true",
-        help="Quick analysis (basic info only)"
+        help="Quick analysis (basic info only)",
     )
 
     # Output options
     output_group = parser.add_argument_group("Output Options")
     output_group.add_argument(
         "--output", "-o",
-        help="Output file path (default: stdout)"
+        help="Output file path (default: stdout)",
     )
     output_group.add_argument(
         "--format", "-f",
         choices=["text", "json", "pdf", "html"],
         default="text",
-        help="Output format (default: text)"
+        help="Output format (default: text)",
     )
     output_group.add_argument(
         "--verbose", "-V",
         action="store_true",
-        help="Enable verbose output"
+        help="Enable verbose output",
     )
     output_group.add_argument(
         "--quiet",
         action="store_true",
-        help="Suppress non-essential output"
+        help="Suppress non-essential output",
     )
 
     # Advanced options
     advanced_group = parser.add_argument_group("Advanced Options")
     advanced_group.add_argument(
         "--config",
-        help="Path to custom configuration file"
+        help="Path to custom configuration file",
     )
     advanced_group.add_argument(
         "--timeout",
         type=int,
         default=300,
-        help="Analysis timeout in seconds (default: 300)"
+        help="Analysis timeout in seconds (default: 300)",
     )
     advanced_group.add_argument(
         "--threads",
         type=int,
         default=4,
-        help="Number of analysis threads (default: 4)"
+        help="Number of analysis threads (default: 4)",
     )
 
     return parser.parse_args()
@@ -158,7 +157,7 @@ Examples:
 def load_custom_config(config_path):
     """Load custom configuration from file."""
     try:
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             custom_config = json.load(f)
 
         # Merge with default config
@@ -174,7 +173,7 @@ def perform_analysis(binary_path, args):
     results = {
         "binary": binary_path,
         "timestamp": str(Path(binary_path).stat().st_mtime),
-        "analyses": {}
+        "analyses": {},
     }
 
     try:
@@ -182,7 +181,7 @@ def perform_analysis(binary_path, args):
             logger.info("Running comprehensive analysis...")
             results["analyses"]["comprehensive"] = run_comprehensive_analysis(
                 binary_path,
-                timeout=args.timeout
+                timeout=args.timeout,
             )
 
         elif args.quick:
@@ -223,7 +222,7 @@ def format_output(results, format_type):
     if format_type == "json":
         return json.dumps(results, indent=2)
 
-    elif format_type == "text":
+    if format_type == "text":
         output = []
         output.append("=== Intellicrack Analysis Report ===")
         output.append(f"Binary: {results['binary']}")
@@ -241,12 +240,12 @@ def format_output(results, format_type):
 
         return "\n".join(output)
 
-    elif format_type in ["pdf", "html"]:
+    if format_type in ["pdf", "html"]:
         # Use the report generator for PDF/HTML
         return generate_report(
             results,
             report_format=format_type,
-            title=f"Intellicrack Analysis: {Path(results['binary']).name}"
+            title=f"Intellicrack Analysis: {Path(results['binary']).name}",
         )
 
     return str(results)

@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -17,7 +16,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import re
-from typing import Callable, Dict, List, Optional
+from collections.abc import Callable
 
 """
 AI Response Parsing Utilities
@@ -27,17 +26,15 @@ Shared utilities for parsing AI responses to eliminate code duplication.
 
 
 class ResponseLineParser:
-    """
-    Utility class for parsing AI responses line by line.
+    """Utility class for parsing AI responses line by line.
     Eliminates duplication across AI parsing modules.
     """
 
     @staticmethod
     def parse_lines_by_sections(response: str,
-                                section_keywords: Dict[str, List[str]],
-                                line_processor: Optional[Callable[[str, str], Optional[str]]] = None) -> Dict[str, List[str]]:
-        """
-        Parse response lines into sections based on keywords.
+                                section_keywords: dict[str, list[str]],
+                                line_processor: Callable[[str, str], str | None] | None = None) -> dict[str, list[str]]:
+        """Parse response lines into sections based on keywords.
 
         Args:
             response: Raw response text to parse
@@ -46,8 +43,9 @@ class ResponseLineParser:
 
         Returns:
             Dictionary mapping section names to lists of content
+
         """
-        sections = {section: [] for section in section_keywords.keys()}
+        sections = {section: [] for section in section_keywords}
         current_section = None
 
         lines = response.split("\n")
@@ -80,10 +78,9 @@ class ResponseLineParser:
 
     @staticmethod
     def parse_lines_with_categorization(response: str,
-                                        category_keywords: Dict[str, List[str]],
-                                        default_category: str = "other") -> Dict[str, List[str]]:
-        """
-        Parse response lines and categorize them based on content.
+                                        category_keywords: dict[str, list[str]],
+                                        default_category: str = "other") -> dict[str, list[str]]:
+        """Parse response lines and categorize them based on content.
 
         Args:
             response: Raw response text to parse
@@ -92,8 +89,9 @@ class ResponseLineParser:
 
         Returns:
             Dictionary mapping categories to lists of lines
+
         """
-        categories = {cat: [] for cat in category_keywords.keys()}
+        categories = {cat: [] for cat in category_keywords}
         if default_category not in categories:
             categories[default_category] = []
 
@@ -117,10 +115,9 @@ class ResponseLineParser:
 
     @staticmethod
     def extract_structured_content(response: str,
-                                   patterns: List[str],
-                                   section_separators: Optional[List[str]] = None) -> List[Dict[str, str]]:
-        """
-        Extract structured content using regex patterns.
+                                   patterns: list[str],
+                                   section_separators: list[str] | None = None) -> list[dict[str, str]]:
+        """Extract structured content using regex patterns.
 
         Args:
             response: Raw response text to parse
@@ -129,6 +126,7 @@ class ResponseLineParser:
 
         Returns:
             List of dictionaries containing matched content
+
         """
         extracted = []
         lines = response.split("\n")
@@ -155,16 +153,15 @@ class ResponseLineParser:
                         "section": current_section,
                         "line": line,
                         "match": match.group(),
-                        "groups": match.groups() if match.groups() else []
+                        "groups": match.groups() if match.groups() else [],
                     }
                     extracted.append(content)
 
         return extracted
 
     @staticmethod
-    def _detect_section(line: str, section_keywords: Dict[str, List[str]]) -> Optional[str]:
-        """
-        Detect which section a line belongs to based on keywords.
+    def _detect_section(line: str, section_keywords: dict[str, list[str]]) -> str | None:
+        """Detect which section a line belongs to based on keywords.
 
         Args:
             line: Line to analyze
@@ -172,6 +169,7 @@ class ResponseLineParser:
 
         Returns:
             Section name if detected, None otherwise
+
         """
         line_lower = line.lower()
 
@@ -182,11 +180,10 @@ class ResponseLineParser:
         return None
 
     @staticmethod
-    def clean_and_filter_lines(lines: List[str],
+    def clean_and_filter_lines(lines: list[str],
                                min_length: int = 3,
-                               filter_patterns: Optional[List[str]] = None) -> List[str]:
-        """
-        Clean and filter lines based on criteria.
+                               filter_patterns: list[str] | None = None) -> list[str]:
+        """Clean and filter lines based on criteria.
 
         Args:
             lines: List of lines to clean
@@ -195,6 +192,7 @@ class ResponseLineParser:
 
         Returns:
             List of cleaned and filtered lines
+
         """
         cleaned = []
 

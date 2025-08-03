@@ -1,5 +1,4 @@
-"""
-Radare2 Advanced Decompilation Engine
+"""Radare2 Advanced Decompilation Engine
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,7 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
 
@@ -30,29 +29,27 @@ logger = logging.getLogger(__name__)
 
 
 class R2DecompilationEngine:
-    """
-    Advanced decompilation engine using radare2's pdc and pdg commands.
+    """Advanced decompilation engine using radare2's pdc and pdg commands.
 
     Provides sophisticated pseudocode generation and analysis capabilities
     specifically tailored for license analysis and vulnerability detection.
     """
 
-    def __init__(self, binary_path: str, radare2_path: Optional[str] = None):
-        """
-        Initialize decompilation engine.
+    def __init__(self, binary_path: str, radare2_path: str | None = None):
+        """Initialize decompilation engine.
 
         Args:
             binary_path: Path to binary file
             radare2_path: Optional path to radare2 executable
+
         """
         self.binary_path = binary_path
         self.radare2_path = radare2_path
         self.logger = logging.getLogger(__name__)
         self.decompilation_cache = {}
 
-    def decompile_function(self, address: int, optimize: bool = True) -> Dict[str, Any]:
-        """
-        Decompile a single function with advanced analysis.
+    def decompile_function(self, address: int, optimize: bool = True) -> dict[str, Any]:
+        """Decompile a single function with advanced analysis.
 
         Args:
             address: Function address
@@ -60,6 +57,7 @@ class R2DecompilationEngine:
 
         Returns:
             Comprehensive decompilation results
+
         """
         cache_key = f"{address}_{optimize}"
         if cache_key in self.decompilation_cache:
@@ -76,7 +74,7 @@ class R2DecompilationEngine:
             "api_calls": [],
             "string_references": [],
             "control_flow": {},
-            "error": None
+            "error": None,
         }
 
         try:
@@ -130,15 +128,15 @@ class R2DecompilationEngine:
 
         return result
 
-    def decompile_all_functions(self, limit: Optional[int] = None) -> Dict[str, Any]:
-        """
-        Decompile all functions in the binary.
+    def decompile_all_functions(self, limit: int | None = None) -> dict[str, Any]:
+        """Decompile all functions in the binary.
 
         Args:
             limit: Optional limit on number of functions to decompile
 
         Returns:
             Dictionary of function addresses to decompilation results
+
         """
         results = {}
         function_count = 0
@@ -162,7 +160,7 @@ class R2DecompilationEngine:
 
         return results
 
-    def _extract_variables(self, r2: R2Session, address: int) -> List[Dict[str, Any]]:
+    def _extract_variables(self, r2: R2Session, address: int) -> list[dict[str, Any]]:
         """Extract function variables and their types."""
         variables = []
 
@@ -177,15 +175,14 @@ class R2DecompilationEngine:
                         "type": var.get("type", ""),
                         "offset": var.get("delta", 0),
                         "kind": var.get("kind", ""),
-                        "size": var.get("size", 0)
+                        "size": var.get("size", 0),
                     })
         except R2Exception as e:
             self.logger.error("R2Exception in radare2_decompiler: %s", e)
-            pass
 
         return variables
 
-    def _detect_license_patterns(self, pseudocode: str) -> List[Dict[str, Any]]:
+    def _detect_license_patterns(self, pseudocode: str) -> list[dict[str, Any]]:
         """Detect license-related patterns in decompiled code."""
         patterns = []
 
@@ -200,7 +197,7 @@ class R2DecompilationEngine:
             r"\b(?:expire|expiration)\b",
             r"\b(?:authentic|auth)\b",
             r"\b(?:dongle|hwid)\b",
-            r"\b(?:crack|pirate|illegal)\b"
+            r"\b(?:crack|pirate|illegal)\b",
         ]
 
         # License validation patterns
@@ -225,7 +222,7 @@ class R2DecompilationEngine:
                         "pattern": pattern,
                         "line": line.strip(),
                         "line_number": i + 1,
-                        "confidence": 0.7
+                        "confidence": 0.7,
                     })
 
             # Check for validation patterns
@@ -236,12 +233,12 @@ class R2DecompilationEngine:
                         "pattern": pattern,
                         "line": line.strip(),
                         "line_number": i + 1,
-                        "confidence": 0.9
+                        "confidence": 0.9,
                     })
 
         return patterns
 
-    def _detect_vulnerability_patterns(self, pseudocode: str) -> List[Dict[str, Any]]:
+    def _detect_vulnerability_patterns(self, pseudocode: str) -> list[dict[str, Any]]:
         """Detect vulnerability patterns in decompiled code."""
         patterns = []
 
@@ -252,14 +249,14 @@ class R2DecompilationEngine:
             r"sprintf\s*\(",
             r"gets\s*\(",
             r"scanf\s*\(",
-            r"memcpy\s*\("
+            r"memcpy\s*\(",
         ]
 
         # Format string patterns
         format_patterns = [
             r'printf\s*\(\s*[^"]*[^,\s]+\s*\)',
             r'fprintf\s*\(\s*[^,]*,\s*[^"]*[^,\s]+\s*\)',
-            r'sprintf\s*\(\s*[^,]*,\s*[^"]*[^,\s]+\s*\)'
+            r'sprintf\s*\(\s*[^,]*,\s*[^"]*[^,\s]+\s*\)',
         ]
 
         # Memory management patterns
@@ -279,7 +276,7 @@ class R2DecompilationEngine:
                         "pattern": pattern,
                         "line": line.strip(),
                         "line_number": i + 1,
-                        "severity": "high"
+                        "severity": "high",
                     })
 
             # Check format string patterns
@@ -290,7 +287,7 @@ class R2DecompilationEngine:
                         "pattern": pattern,
                         "line": line.strip(),
                         "line_number": i + 1,
-                        "severity": "medium"
+                        "severity": "medium",
                     })
 
             # Check memory management patterns
@@ -301,12 +298,12 @@ class R2DecompilationEngine:
                         "pattern": pattern,
                         "line": line.strip(),
                         "line_number": i + 1,
-                        "severity": "high"
+                        "severity": "high",
                     })
 
         return patterns
 
-    def _calculate_complexity(self, pseudocode: str, graph_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _calculate_complexity(self, pseudocode: str, graph_data: dict[str, Any]) -> dict[str, Any]:
         """Calculate complexity metrics for decompiled function."""
         metrics = {
             "lines_of_code": 0,
@@ -314,7 +311,7 @@ class R2DecompilationEngine:
             "nesting_depth": 0,
             "number_of_branches": 0,
             "number_of_loops": 0,
-            "cognitive_complexity": 0
+            "cognitive_complexity": 0,
         }
 
         if not pseudocode:
@@ -376,7 +373,7 @@ class R2DecompilationEngine:
 
         return metrics
 
-    def _extract_api_calls(self, pseudocode: str) -> List[Dict[str, Any]]:
+    def _extract_api_calls(self, pseudocode: str) -> list[dict[str, Any]]:
         """Extract API function calls from pseudocode."""
         api_calls = []
 
@@ -399,12 +396,12 @@ class R2DecompilationEngine:
                         "function": match,
                         "line": line.strip(),
                         "line_number": i + 1,
-                        "context": "decompiled_code"
+                        "context": "decompiled_code",
                     })
 
         return api_calls
 
-    def _get_string_references(self, r2: R2Session, address: int) -> List[Dict[str, Any]]:
+    def _get_string_references(self, r2: R2Session, address: int) -> list[dict[str, Any]]:
         """Get string references used by the function."""
         strings = []
 
@@ -424,18 +421,17 @@ class R2DecompilationEngine:
                                     strings.append({
                                         "address": hex(addr),
                                         "content": string_data.strip(),
-                                        "reference_type": "direct"
+                                        "reference_type": "direct",
                                     })
                             except R2Exception as e:
                                 logger.error("R2Exception in radare2_decompiler: %s", e)
                                 continue
         except R2Exception as e:
             logger.error("R2Exception in radare2_decompiler: %s", e)
-            pass
 
         return strings
 
-    def _analyze_control_flow(self, graph_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_control_flow(self, graph_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze control flow from graph data."""
         flow_analysis = {
             "basic_blocks": 0,
@@ -443,7 +439,7 @@ class R2DecompilationEngine:
             "entry_points": 0,
             "exit_points": 0,
             "loops_detected": 0,
-            "conditional_branches": 0
+            "conditional_branches": 0,
         }
 
         if not graph_data:
@@ -479,15 +475,15 @@ class R2DecompilationEngine:
 
         return flow_analysis
 
-    def generate_license_bypass_suggestions(self, function_results: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Generate bypass suggestions based on decompilation analysis.
+    def generate_license_bypass_suggestions(self, function_results: dict[str, Any]) -> list[dict[str, Any]]:
+        """Generate bypass suggestions based on decompilation analysis.
 
         Args:
             function_results: Results from decompile_function
 
         Returns:
             List of bypass suggestions
+
         """
         suggestions = []
 
@@ -498,7 +494,7 @@ class R2DecompilationEngine:
         if pseudocode:
             # Look for conditional structures in pseudocode that may indicate license checks
             conditional_patterns = [
-                "if (", "switch (", "while (", "for ("
+                "if (", "switch (", "while (", "for (",
             ]
             for i, line in enumerate(pseudocode.split("\n")):
                 line_lower = line.lower()
@@ -511,7 +507,7 @@ class R2DecompilationEngine:
                             "line": line.strip(),
                             "line_number": i + 1,
                             "confidence": 0.7,
-                            "context": "pseudocode_analysis"
+                            "context": "pseudocode_analysis",
                         })
 
         for pattern in license_patterns:
@@ -526,7 +522,7 @@ class R2DecompilationEngine:
                         "line": pattern["line"],
                         "line_number": pattern["line_number"],
                         "confidence": 0.8,
-                        "risk": "low"
+                        "risk": "low",
                     })
 
                 # Suggest return value modification
@@ -537,7 +533,7 @@ class R2DecompilationEngine:
                         "line": pattern["line"],
                         "line_number": pattern["line_number"],
                         "confidence": 0.9,
-                        "risk": "medium"
+                        "risk": "medium",
                     })
 
                 # Suggest jump modification
@@ -548,17 +544,17 @@ class R2DecompilationEngine:
                         "line": pattern["line"],
                         "line_number": pattern["line_number"],
                         "confidence": 0.7,
-                        "risk": "medium"
+                        "risk": "medium",
                     })
 
         return suggestions
 
-    def analyze_license_functions(self) -> Dict[str, Any]:
-        """
-        Analyze all functions in the binary to identify license-related functions.
+    def analyze_license_functions(self) -> dict[str, Any]:
+        """Analyze all functions in the binary to identify license-related functions.
 
         Returns:
             Dictionary containing license functions and their analysis results
+
         """
         result = {
             "license_functions": [],
@@ -566,7 +562,7 @@ class R2DecompilationEngine:
             "total_functions_analyzed": 0,
             "license_patterns_summary": {},
             "high_confidence_targets": [],
-            "error": None
+            "error": None,
         }
 
         try:
@@ -579,7 +575,7 @@ class R2DecompilationEngine:
                     "license", "licens", "registration", "register", "activation",
                     "activate", "serial", "key", "trial", "demo", "valid",
                     "validate", "verification", "verify", "expire", "expiration",
-                    "authentic", "auth", "dongle", "hwid", "crack", "pirate"
+                    "authentic", "auth", "dongle", "hwid", "crack", "pirate",
                 ]
 
                 pattern_counts = {}
@@ -615,7 +611,7 @@ class R2DecompilationEngine:
                                 "api_calls": decompilation_result.get("api_calls", []),
                                 "string_references": decompilation_result.get("string_references", []),
                                 "complexity_metrics": decompilation_result.get("complexity_metrics", {}),
-                                "pseudocode_preview": decompilation_result.get("pseudocode", "")[:500] + "..." if len(decompilation_result.get("pseudocode", "")) > 500 else decompilation_result.get("pseudocode", "")
+                                "pseudocode_preview": decompilation_result.get("pseudocode", "")[:500] + "..." if len(decompilation_result.get("pseudocode", "")) > 500 else decompilation_result.get("pseudocode", ""),
                             }
 
                             result["license_functions"].append(license_func_info)
@@ -632,7 +628,7 @@ class R2DecompilationEngine:
                                     "name": func_name,
                                     "address": hex(func_addr),
                                     "confidence": license_func_info["confidence_score"],
-                                    "reason": self._get_confidence_reason(func_name, license_patterns)
+                                    "reason": self._get_confidence_reason(func_name, license_patterns),
                                 })
 
                 result["license_patterns_summary"] = pattern_counts
@@ -662,12 +658,12 @@ class R2DecompilationEngine:
             r"^decrypt_",
             r"_check$",
             r"_valid$",
-            r"_auth$"
+            r"_auth$",
         ]
 
         return any(re.search(pattern, func_name.lower()) for pattern in suspicious_patterns)
 
-    def _calculate_license_confidence(self, func_name: str, license_patterns: List[Dict[str, Any]]) -> float:
+    def _calculate_license_confidence(self, func_name: str, license_patterns: list[dict[str, Any]]) -> float:
         """Calculate confidence score for license-related function."""
         score = 0.0
 
@@ -687,7 +683,7 @@ class R2DecompilationEngine:
         # Cap at 1.0
         return min(score, 1.0)
 
-    def _get_confidence_reason(self, func_name: str, license_patterns: List[Dict[str, Any]]) -> str:
+    def _get_confidence_reason(self, func_name: str, license_patterns: list[dict[str, Any]]) -> str:
         """Get human-readable reason for high confidence."""
         reasons = []
 
@@ -704,9 +700,8 @@ class R2DecompilationEngine:
 
         return "; ".join(reasons) if reasons else "Multiple license indicators detected"
 
-    def export_analysis_report(self, output_path: str, analysis_results: Dict[str, Any]) -> bool:
-        """
-        Export comprehensive analysis report.
+    def export_analysis_report(self, output_path: str, analysis_results: dict[str, Any]) -> bool:
+        """Export comprehensive analysis report.
 
         Args:
             output_path: Path to save report
@@ -714,6 +709,7 @@ class R2DecompilationEngine:
 
         Returns:
             Success status
+
         """
         try:
             report = {
@@ -723,9 +719,9 @@ class R2DecompilationEngine:
                     "functions_analyzed": len(analysis_results),
                     "license_patterns_found": sum(len(r.get("license_patterns", [])) for r in analysis_results.values() if isinstance(r, dict)),
                     "vulnerabilities_found": sum(len(r.get("vulnerability_patterns", [])) for r in analysis_results.values() if isinstance(r, dict)),
-                    "total_lines_decompiled": sum(r.get("complexity_metrics", {}).get("lines_of_code", 0) for r in analysis_results.values() if isinstance(r, dict))
+                    "total_lines_decompiled": sum(r.get("complexity_metrics", {}).get("lines_of_code", 0) for r in analysis_results.values() if isinstance(r, dict)),
                 },
-                "detailed_results": analysis_results
+                "detailed_results": analysis_results,
             }
 
             with open(output_path, "w", encoding="utf-8") as f:
@@ -739,10 +735,9 @@ class R2DecompilationEngine:
             return False
 
 
-def analyze_binary_decompilation(binary_path: str, radare2_path: Optional[str] = None,
-                                function_limit: Optional[int] = 20) -> Dict[str, Any]:
-    """
-    Perform comprehensive decompilation analysis of a binary.
+def analyze_binary_decompilation(binary_path: str, radare2_path: str | None = None,
+                                function_limit: int | None = 20) -> dict[str, Any]:
+    """Perform comprehensive decompilation analysis of a binary.
 
     Args:
         binary_path: Path to binary file
@@ -751,6 +746,7 @@ def analyze_binary_decompilation(binary_path: str, radare2_path: Optional[str] =
 
     Returns:
         Complete decompilation analysis results
+
     """
     engine = R2DecompilationEngine(binary_path, radare2_path)
     return engine.decompile_all_functions(limit=function_limit)

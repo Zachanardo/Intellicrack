@@ -1,5 +1,4 @@
-"""
-Adobe Licensing Protocol Parser and Response Generator
+"""Adobe Licensing Protocol Parser and Response Generator
 
 Copyright (C) 2025 Zachary Flint
 
@@ -24,7 +23,7 @@ import json
 import time
 import uuid
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ...utils.logger import get_logger
 
@@ -33,25 +32,27 @@ logger = get_logger(__name__)
 @dataclass
 class AdobeRequest:
     """Adobe licensing request structure"""
+
     request_type: str
     client_id: str
     machine_id: str
     product_id: str
     serial_number: str
     activation_id: str
-    request_data: Dict[str, Any]
-    headers: Dict[str, str]
+    request_data: dict[str, Any]
+    headers: dict[str, str]
     auth_token: str
 
 @dataclass
 class AdobeResponse:
     """Adobe licensing response structure"""
+
     status: str
     response_code: int
-    activation_data: Dict[str, Any]
-    license_data: Dict[str, Any]
+    activation_data: dict[str, Any]
+    license_data: dict[str, Any]
     digital_signature: str
-    response_headers: Dict[str, str]
+    response_headers: dict[str, str]
 
 class AdobeLicensingParser:
     """Real Adobe licensing protocol parser and response generator"""
@@ -67,7 +68,7 @@ class AdobeLicensingParser:
         "license_recovery": "License recovery request",
         "machine_binding": "Machine binding request",
         "subscription_check": "Subscription status check",
-        "usage_report": "Usage reporting request"
+        "usage_report": "Usage reporting request",
     }
 
     # Adobe product IDs (common applications)
@@ -76,62 +77,62 @@ class AdobeLicensingParser:
             "name": "Adobe Photoshop",
             "versions": ["2024", "2023", "2022", "CC"],
             "features": ["core", "neural_filters", "cloud_sync", "libraries"],
-            "subscription_required": True
+            "subscription_required": True,
         },
         "ILST": {  # Illustrator
             "name": "Adobe Illustrator",
             "versions": ["2024", "2023", "2022", "CC"],
             "features": ["core", "vector_tools", "cloud_sync", "libraries"],
-            "subscription_required": True
+            "subscription_required": True,
         },
         "AEFT": {  # After Effects
             "name": "Adobe After Effects",
             "versions": ["2024", "2023", "2022", "CC"],
             "features": ["core", "3d_tools", "motion_graphics", "cloud_sync"],
-            "subscription_required": True
+            "subscription_required": True,
         },
         "PPRO": {  # Premiere Pro
             "name": "Adobe Premiere Pro",
             "versions": ["2024", "2023", "2022", "CC"],
             "features": ["core", "multicam", "lumetri", "cloud_sync"],
-            "subscription_required": True
+            "subscription_required": True,
         },
         "IDSN": {  # InDesign
             "name": "Adobe InDesign",
             "versions": ["2024", "2023", "2022", "CC"],
             "features": ["core", "publishing", "epub", "cloud_sync"],
-            "subscription_required": True
+            "subscription_required": True,
         },
         "LTRM": {  # Lightroom
             "name": "Adobe Lightroom",
             "versions": ["Classic", "CC", "Mobile"],
             "features": ["core", "cloud_storage", "mobile_sync", "ai_tools"],
-            "subscription_required": True
+            "subscription_required": True,
         },
         "DRWV": {  # Dreamweaver
             "name": "Adobe Dreamweaver",
             "versions": ["2024", "2023", "2022", "CC"],
             "features": ["core", "code_hints", "live_preview", "cloud_sync"],
-            "subscription_required": True
+            "subscription_required": True,
         },
         "AUDT": {  # Audition
             "name": "Adobe Audition",
             "versions": ["2024", "2023", "2022", "CC"],
             "features": ["core", "spectral_display", "multitrack", "cloud_sync"],
-            "subscription_required": True
+            "subscription_required": True,
         },
         "FLPR": {  # Animate (Flash Professional)
             "name": "Adobe Animate",
             "versions": ["2024", "2023", "2022", "CC"],
             "features": ["core", "character_animator", "html5", "cloud_sync"],
-            "subscription_required": True
+            "subscription_required": True,
         },
         "KBRG": {  # Bridge
             "name": "Adobe Bridge",
             "versions": ["2024", "2023", "2022", "CC"],
             "features": ["core", "metadata", "batch_processing", "cloud_sync"],
-            "subscription_required": False
-        }
+            "subscription_required": False,
+        },
     }
 
     def __init__(self):
@@ -148,15 +149,15 @@ class AdobeLicensingParser:
         self.server_public_key = hashlib.sha256(b"adobe_server_public_key_2024").hexdigest()
         self.activation_seed = hashlib.md5(str(time.time()).encode()).hexdigest()
 
-    def parse_request(self, http_data: str) -> Optional[AdobeRequest]:
-        """
-        Parse incoming Adobe licensing HTTP request
+    def parse_request(self, http_data: str) -> AdobeRequest | None:
+        """Parse incoming Adobe licensing HTTP request
 
         Args:
             http_data: Raw HTTP request data
 
         Returns:
             Parsed AdobeRequest object or None if invalid
+
         """
         try:
             # Parse HTTP headers and body
@@ -216,7 +217,7 @@ class AdobeLicensingParser:
                 activation_id=activation_id or "",
                 request_data=request_data,
                 headers=headers,
-                auth_token=auth_token or ""
+                auth_token=auth_token or "",
             )
 
             self.logger.info(f"Parsed Adobe {request_type} request for product {product_id}")
@@ -226,8 +227,8 @@ class AdobeLicensingParser:
             self.logger.error(f"Failed to parse Adobe request: {e}")
             return None
 
-    def _determine_request_type(self, request_line: str, headers: Dict[str, str],
-                               data: Dict[str, Any]) -> str:
+    def _determine_request_type(self, request_line: str, headers: dict[str, str],
+                               data: dict[str, Any]) -> str:
         """Determine Adobe request type from URL and data"""
         request_line_lower = request_line.lower()
 
@@ -247,23 +248,23 @@ class AdobeLicensingParser:
             if is_legacy_activation:
                 return "legacy_activation"
             return "subscription_activation" if is_subscription_check else "activation"
-        elif "/verify" in request_line_lower or "verification" in request_line_lower:
+        if "/verify" in request_line_lower or "verification" in request_line_lower:
             return "subscription_verification" if is_creative_cloud else "verification"
-        elif "/deactivate" in request_line_lower or "deactivation" in request_line_lower:
+        if "/deactivate" in request_line_lower or "deactivation" in request_line_lower:
             return "deactivation"
-        elif "/heartbeat" in request_line_lower or "/ping" in request_line_lower:
+        if "/heartbeat" in request_line_lower or "/ping" in request_line_lower:
             return "heartbeat"
-        elif "/feature" in request_line_lower:
+        if "/feature" in request_line_lower:
             return "feature_check"
-        elif "/trial" in request_line_lower:
+        if "/trial" in request_line_lower:
             return "trial_conversion"
-        elif "/recovery" in request_line_lower:
+        if "/recovery" in request_line_lower:
             return "license_recovery"
-        elif "/bind" in request_line_lower or "/machine" in request_line_lower:
+        if "/bind" in request_line_lower or "/machine" in request_line_lower:
             return "machine_binding"
-        elif "/subscription" in request_line_lower:
+        if "/subscription" in request_line_lower:
             return "subscription_check"
-        elif "/usage" in request_line_lower or "/report" in request_line_lower:
+        if "/usage" in request_line_lower or "/report" in request_line_lower:
             return "usage_report"
 
         # Check data content
@@ -274,8 +275,8 @@ class AdobeLicensingParser:
         # Default to verification
         return "verification"
 
-    def _extract_field(self, data: Dict[str, Any], headers: Dict[str, str],
-                      field_names: List[str]) -> Optional[str]:
+    def _extract_field(self, data: dict[str, Any], headers: dict[str, str],
+                      field_names: list[str]) -> str | None:
         """Extract field from request data or headers"""
         # Check data first
         for field_name in field_names:
@@ -289,7 +290,7 @@ class AdobeLicensingParser:
 
         return None
 
-    def _parse_form_data(self, body: str) -> Dict[str, Any]:
+    def _parse_form_data(self, body: str) -> dict[str, Any]:
         """Parse form-encoded data"""
         data = {}
         try:
@@ -300,43 +301,41 @@ class AdobeLicensingParser:
                     data[key] = value
         except (ValueError, AttributeError, Exception) as e:
             self.logger.error("Error in adobe_parser: %s", e)
-            pass
         return data
 
     def generate_response(self, request: AdobeRequest) -> AdobeResponse:
-        """
-        Generate appropriate Adobe response based on request
+        """Generate appropriate Adobe response based on request
 
         Args:
             request: Parsed Adobe request
 
         Returns:
             Adobe response object
+
         """
         self.logger.info(f"Generating response for Adobe {request.request_type} request")
 
         if request.request_type == "activation":
             return self._handle_activation(request)
-        elif request.request_type == "verification":
+        if request.request_type == "verification":
             return self._handle_verification(request)
-        elif request.request_type == "deactivation":
+        if request.request_type == "deactivation":
             return self._handle_deactivation(request)
-        elif request.request_type == "heartbeat":
+        if request.request_type == "heartbeat":
             return self._handle_heartbeat(request)
-        elif request.request_type == "feature_check":
+        if request.request_type == "feature_check":
             return self._handle_feature_check(request)
-        elif request.request_type == "trial_conversion":
+        if request.request_type == "trial_conversion":
             return self._handle_trial_conversion(request)
-        elif request.request_type == "license_recovery":
+        if request.request_type == "license_recovery":
             return self._handle_license_recovery(request)
-        elif request.request_type == "machine_binding":
+        if request.request_type == "machine_binding":
             return self._handle_machine_binding(request)
-        elif request.request_type == "subscription_check":
+        if request.request_type == "subscription_check":
             return self._handle_subscription_check(request)
-        elif request.request_type == "usage_report":
+        if request.request_type == "usage_report":
             return self._handle_usage_report(request)
-        else:
-            return self._handle_unknown_request(request)
+        return self._handle_unknown_request(request)
 
     def _handle_activation(self, request: AdobeRequest) -> AdobeResponse:
         """Handle Adobe product activation"""
@@ -350,7 +349,7 @@ class AdobeLicensingParser:
                 activation_data={},
                 license_data={"error": f"Unknown product: {product_id}"},
                 digital_signature="",
-                response_headers={"Content-Type": "application/json"}
+                response_headers={"Content-Type": "application/json"},
             )
 
         product = self.ADOBE_PRODUCTS[product_id]
@@ -372,7 +371,7 @@ class AdobeLicensingParser:
             "serial_number": request.serial_number,
             "activation_time": time.time(),
             "machine_signature": machine_signature,
-            "features_enabled": product["features"]
+            "features_enabled": product["features"],
         }
 
         # Generate license data
@@ -385,13 +384,13 @@ class AdobeLicensingParser:
             "max_activations": 2,
             "current_activations": 1,
             "license_server": "intellicrack-adobe",
-            "activation_count": 1
+            "activation_count": 1,
         }
 
         # Generate digital signature
         signature_data = f"{activation_id}:{product_id}:{request.machine_id}:{time.time()}"
         digital_signature = hashlib.sha256(
-            (signature_data + self.server_private_key).encode()
+            (signature_data + self.server_private_key).encode(),
         ).hexdigest()
 
         return AdobeResponse(
@@ -401,14 +400,14 @@ class AdobeLicensingParser:
                 "activation_id": activation_id,
                 "activation_status": "activated",
                 "activation_time": int(time.time()),
-                "machine_signature": machine_signature
+                "machine_signature": machine_signature,
             },
             license_data=license_data,
             digital_signature=digital_signature,
             response_headers={
                 "Content-Type": "application/json",
-                "X-Adobe-License-Server": "intellicrack-adobe-emulator"
-            }
+                "X-Adobe-License-Server": "intellicrack-adobe-emulator",
+            },
         )
 
     def _handle_verification(self, request: AdobeRequest) -> AdobeResponse:
@@ -429,7 +428,7 @@ class AdobeLicensingParser:
                     activation_data={},
                     license_data={"error": "Machine signature mismatch"},
                     digital_signature="",
-                    response_headers={"Content-Type": "application/json"}
+                    response_headers={"Content-Type": "application/json"},
                 )
 
             # Update last verification time
@@ -440,33 +439,32 @@ class AdobeLicensingParser:
                 response_code=200,
                 activation_data={
                     "verification_status": "valid",
-                    "verification_time": int(time.time())
+                    "verification_time": int(time.time()),
                 },
                 license_data={
                     "license_valid": True,
                     "days_remaining": 365,
-                    "features_enabled": activation["features_enabled"]
+                    "features_enabled": activation["features_enabled"],
                 },
                 digital_signature=self._generate_verification_signature(request),
-                response_headers={"Content-Type": "application/json"}
+                response_headers={"Content-Type": "application/json"},
             )
-        else:
-            # Allow verification to succeed for unknown activations
-            return AdobeResponse(
-                status="success",
-                response_code=200,
-                activation_data={
-                    "verification_status": "valid",
-                    "verification_time": int(time.time())
-                },
-                license_data={
-                    "license_valid": True,
-                    "days_remaining": 365,
-                    "features_enabled": ["core", "premium", "cloud_sync"]
-                },
-                digital_signature=self._generate_verification_signature(request),
-                response_headers={"Content-Type": "application/json"}
-            )
+        # Allow verification to succeed for unknown activations
+        return AdobeResponse(
+            status="success",
+            response_code=200,
+            activation_data={
+                "verification_status": "valid",
+                "verification_time": int(time.time()),
+            },
+            license_data={
+                "license_valid": True,
+                "days_remaining": 365,
+                "features_enabled": ["core", "premium", "cloud_sync"],
+            },
+            digital_signature=self._generate_verification_signature(request),
+            response_headers={"Content-Type": "application/json"},
+        )
 
     def _handle_deactivation(self, request: AdobeRequest) -> AdobeResponse:
         """Handle product deactivation"""
@@ -480,11 +478,11 @@ class AdobeLicensingParser:
             response_code=200,
             activation_data={
                 "deactivation_status": "deactivated",
-                "deactivation_time": int(time.time())
+                "deactivation_time": int(time.time()),
             },
             license_data={},
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_heartbeat(self, request: AdobeRequest) -> AdobeResponse:
@@ -508,7 +506,7 @@ class AdobeLicensingParser:
                 "heartbeat_status": "alive",
                 "server_time": int(time.time()),
                 "client_id": client_id,
-                "session_valid": True
+                "session_valid": True,
             },
             license_data={
                 "license_server_status": "online",
@@ -516,10 +514,10 @@ class AdobeLicensingParser:
                 "sync_interval": heartbeat_interval,
                 "app_version": app_version,
                 "last_contact": int(time.time()),
-                "last_sync": last_sync
+                "last_sync": last_sync,
             },
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_feature_check(self, request: AdobeRequest) -> AdobeResponse:
@@ -538,10 +536,10 @@ class AdobeLicensingParser:
             license_data={
                 "features_available": features,
                 "features_enabled": features,  # Enable all features
-                "feature_restrictions": {}
+                "feature_restrictions": {},
             },
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_trial_conversion(self, request: AdobeRequest) -> AdobeResponse:
@@ -551,16 +549,16 @@ class AdobeLicensingParser:
             response_code=200,
             activation_data={
                 "conversion_status": "converted",
-                "conversion_time": int(time.time())
+                "conversion_time": int(time.time()),
             },
             license_data={
                 "license_type": "subscription",
                 "trial_status": "converted",
                 "subscription_active": True,
-                "days_remaining": 365
+                "days_remaining": 365,
             },
             digital_signature=self._generate_verification_signature(request),
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_license_recovery(self, request: AdobeRequest) -> AdobeResponse:
@@ -573,15 +571,15 @@ class AdobeLicensingParser:
             response_code=200,
             activation_data={
                 "recovery_status": "recovered",
-                "new_activation_id": activation_id
+                "new_activation_id": activation_id,
             },
             license_data={
                 "license_recovered": True,
                 "activation_id": activation_id,
-                "recovery_time": int(time.time())
+                "recovery_time": int(time.time()),
             },
             digital_signature=self._generate_verification_signature(request),
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_machine_binding(self, request: AdobeRequest) -> AdobeResponse:
@@ -593,14 +591,14 @@ class AdobeLicensingParser:
             response_code=200,
             activation_data={
                 "binding_status": "bound",
-                "machine_signature": machine_signature
+                "machine_signature": machine_signature,
             },
             license_data={
                 "machine_bound": True,
-                "binding_time": int(time.time())
+                "binding_time": int(time.time()),
             },
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_subscription_check(self, request: AdobeRequest) -> AdobeResponse:
@@ -626,7 +624,7 @@ class AdobeLicensingParser:
             response_code=200,
             activation_data={
                 "user_id": user_id,
-                "subscription_verified": True
+                "subscription_verified": True,
             },
             license_data={
                 "subscription_active": True,
@@ -638,10 +636,10 @@ class AdobeLicensingParser:
                 "app_entitlements": [app_id] if app_id else ["ALL_APPS"],
                 "subscription_tier": subscription_tier,
                 "trial_days_remaining": 0,
-                "grace_period_days": 7
+                "grace_period_days": 7,
             },
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_usage_report(self, request: AdobeRequest) -> AdobeResponse:
@@ -658,7 +656,7 @@ class AdobeLicensingParser:
             "features_accessed": len(set(feature_usage)) if feature_usage else 0,
             "last_feature_used": feature_usage[-1] if feature_usage else "unknown",
             "compliance_status": "compliant",
-            "app_usage_data": app_usage
+            "app_usage_data": app_usage,
         }
 
         return AdobeResponse(
@@ -667,16 +665,16 @@ class AdobeLicensingParser:
             activation_data={
                 "report_received": True,
                 "report_time": int(time.time()),
-                "report_id": str(uuid.uuid4())
+                "report_id": str(uuid.uuid4()),
             },
             license_data={
                 "usage_acknowledged": True,
                 "usage_stats": usage_stats,
                 "next_report_due": int(time.time() + 86400),  # 24 hours
-                "usage_within_limits": True
+                "usage_within_limits": True,
             },
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_unknown_request(self, request: AdobeRequest) -> AdobeResponse:
@@ -688,7 +686,7 @@ class AdobeLicensingParser:
             activation_data={},
             license_data={"error": f"Unknown request type: {request.request_type}"},
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _generate_machine_signature(self, request: AdobeRequest) -> str:
@@ -700,35 +698,34 @@ class AdobeLicensingParser:
         """Generate verification signature"""
         verification_data = f"{request.activation_id}:{request.machine_id}:{time.time()}"
         return hashlib.sha256(
-            (verification_data + self.server_private_key).encode()
+            (verification_data + self.server_private_key).encode(),
         ).hexdigest()
 
-    def _calculate_expiry_date(self, product: Dict[str, Any]) -> str:
+    def _calculate_expiry_date(self, product: dict[str, Any]) -> str:
         """Calculate license expiry date"""
         if product["subscription_required"]:
             # Subscription licenses expire in 1 year
             expiry_time = time.time() + (365 * 24 * 3600)
             return time.strftime("%Y-%m-%d", time.localtime(expiry_time))
-        else:
-            # Perpetual licenses don't expire
-            return "permanent"
+        # Perpetual licenses don't expire
+        return "permanent"
 
     def serialize_response(self, response: AdobeResponse) -> str:
-        """
-        Serialize Adobe response to HTTP response
+        """Serialize Adobe response to HTTP response
 
         Args:
             response: Adobe response object
 
         Returns:
             HTTP response string
+
         """
         try:
             # Prepare response body
             response_body = {
                 "status": response.status,
                 "activation_data": response.activation_data,
-                "license_data": response.license_data
+                "license_data": response.license_data,
             }
 
             if response.digital_signature:

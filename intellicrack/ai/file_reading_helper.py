@@ -1,5 +1,4 @@
-"""
-File Reading Helper for AI Components
+"""File Reading Helper for AI Components
 
 This module provides a unified interface for file reading operations in AI components,
 integrating the AIFileTools.read_file() method with fallback to direct file reading.
@@ -23,7 +22,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
-from typing import Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -34,10 +32,9 @@ def read_file_with_ai_tools(
     app_instance=None,
     mode: str = "text",
     encoding: str = "utf-8",
-    max_bytes: Optional[int] = None
-) -> Tuple[Optional[Union[str, bytes]], bool]:
-    """
-    Read a file using AIFileTools with fallback to direct file reading.
+    max_bytes: int | None = None,
+) -> tuple[str | bytes | None, bool]:
+    """Read a file using AIFileTools with fallback to direct file reading.
 
     Args:
         file_path: Path to the file to read
@@ -51,6 +48,7 @@ def read_file_with_ai_tools(
         Tuple of (content, used_ai_tools) where:
         - content: File content as string (text mode) or bytes (binary mode), or None if failed
         - used_ai_tools: True if AIFileTools was used, False if direct read was used
+
     """
     content = None
     used_ai_tools = False
@@ -74,12 +72,11 @@ def read_file_with_ai_tools(
                 # Apply max_bytes limit if specified
                 if max_bytes and len(content) > max_bytes:
                     content = content[:max_bytes]
+            # Text mode - ensure string
+            elif isinstance(raw_content, bytes):
+                content = raw_content.decode(encoding, errors="ignore")
             else:
-                # Text mode - ensure string
-                if isinstance(raw_content, bytes):
-                    content = raw_content.decode(encoding, errors="ignore")
-                else:
-                    content = raw_content
+                content = raw_content
 
             used_ai_tools = True
             logger.debug(f"Successfully read file using AIFileTools: {file_path}")
@@ -99,7 +96,7 @@ def read_file_with_ai_tools(
                     else:
                         content = f.read()
             else:
-                with open(file_path, "r", encoding=encoding) as f:
+                with open(file_path, encoding=encoding) as f:
                     content = f.read()
 
             logger.debug(f"Read file using direct file access: {file_path}")
@@ -115,10 +112,9 @@ def read_binary_header(
     file_path: str,
     header_size: int = 512,
     purpose: str = "Binary header analysis",
-    app_instance=None
-) -> Optional[bytes]:
-    """
-    Read the header of a binary file.
+    app_instance=None,
+) -> bytes | None:
+    """Read the header of a binary file.
 
     Args:
         file_path: Path to the binary file
@@ -128,13 +124,14 @@ def read_binary_header(
 
     Returns:
         Binary header as bytes, or None if failed
+
     """
     content, _ = read_file_with_ai_tools(
         file_path=file_path,
         purpose=purpose,
         app_instance=app_instance,
         mode="binary",
-        max_bytes=header_size
+        max_bytes=header_size,
     )
     return content
 
@@ -143,10 +140,9 @@ def read_text_file(
     file_path: str,
     purpose: str = "Text file analysis",
     app_instance=None,
-    encoding: str = "utf-8"
-) -> Optional[str]:
-    """
-    Read a text file with encoding support.
+    encoding: str = "utf-8",
+) -> str | None:
+    """Read a text file with encoding support.
 
     Args:
         file_path: Path to the text file
@@ -156,20 +152,20 @@ def read_text_file(
 
     Returns:
         File content as string, or None if failed
+
     """
     content, _ = read_file_with_ai_tools(
         file_path=file_path,
         purpose=purpose,
         app_instance=app_instance,
         mode="text",
-        encoding=encoding
+        encoding=encoding,
     )
     return content
 
 
 class FileReadingMixin:
-    """
-    Mixin class to add AIFileTools integration to AI components.
+    """Mixin class to add AIFileTools integration to AI components.
 
     Classes using this mixin should have an 'app_instance' attribute.
     """
@@ -180,10 +176,9 @@ class FileReadingMixin:
         purpose: str = "File analysis",
         mode: str = "text",
         encoding: str = "utf-8",
-        max_bytes: Optional[int] = None
-    ) -> Optional[Union[str, bytes]]:
-        """
-        Read a file using AIFileTools with fallback.
+        max_bytes: int | None = None,
+    ) -> str | bytes | None:
+        """Read a file using AIFileTools with fallback.
 
         Args:
             file_path: Path to the file
@@ -194,6 +189,7 @@ class FileReadingMixin:
 
         Returns:
             File content or None
+
         """
         app_instance = getattr(self, "app_instance", None)
         content, _ = read_file_with_ai_tools(
@@ -202,6 +198,6 @@ class FileReadingMixin:
             app_instance=app_instance,
             mode=mode,
             encoding=encoding,
-            max_bytes=max_bytes
+            max_bytes=max_bytes,
         )
         return content

@@ -1,5 +1,4 @@
-"""
-Model Format Converter for Intellicrack
+"""Model Format Converter for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -20,7 +19,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import numpy as np
 
@@ -129,17 +128,18 @@ class ModelFormatConverter:
         logger.info(
             f"Model converter initialized with conversions: {self.supported_conversions}")
 
-    def _get_supported_conversions(self) -> Dict[str, List[str]]:
+    def _get_supported_conversions(self) -> dict[str, list[str]]:
         """Get list of supported format conversions.
 
         Returns:
             Dictionary of source_format -> [target_formats]
+
         """
         conversions = {
             "pytorch": [],
             "tensorflow": [],
             "onnx": [],
-            "safetensors": []
+            "safetensors": [],
         }
 
         # PyTorch conversions
@@ -161,11 +161,11 @@ class ModelFormatConverter:
 
     def convert_model(
         self,
-        source_path: Union[str, Path],
+        source_path: str | Path,
         target_format: str,
-        output_path: Optional[Union[str, Path]] = None,
-        **kwargs
-    ) -> Optional[Path]:
+        output_path: str | Path | None = None,
+        **kwargs,
+    ) -> Path | None:
         """Convert a model to a different format.
 
         Args:
@@ -176,6 +176,7 @@ class ModelFormatConverter:
 
         Returns:
             Path to converted model or None
+
         """
         source_path = Path(source_path)
 
@@ -239,7 +240,7 @@ class ModelFormatConverter:
                 f"Converter method {converter_method} not implemented")
             return None
 
-    def _detect_format(self, model_path: Path) -> Optional[str]:
+    def _detect_format(self, model_path: Path) -> str | None:
         """Detect the format of a model.
 
         Args:
@@ -247,27 +248,28 @@ class ModelFormatConverter:
 
         Returns:
             Format string or None
+
         """
         if model_path.is_file():
             # Check file extensions
             if model_path.suffix in [".pt", ".pth", ".bin"]:
                 return "pytorch"
-            elif model_path.suffix == ".onnx":
+            if model_path.suffix == ".onnx":
                 return "onnx"
-            elif model_path.suffix in [".pb", ".h5"]:
+            if model_path.suffix in [".pb", ".h5"]:
                 return "tensorflow"
-            elif model_path.suffix == ".safetensors":
+            if model_path.suffix == ".safetensors":
                 return "safetensors"
 
         elif model_path.is_dir():
             # Check for framework-specific files
             if (model_path / "pytorch_model.bin").exists():
                 return "pytorch"
-            elif (model_path / "model.safetensors").exists():
+            if (model_path / "model.safetensors").exists():
                 return "safetensors"
-            elif (model_path / "saved_model.pb").exists():
+            if (model_path / "saved_model.pb").exists():
                 return "tensorflow"
-            elif any(model_path.glob("*.onnx")):
+            if any(model_path.glob("*.onnx")):
                 return "onnx"
 
         return None
@@ -276,8 +278,8 @@ class ModelFormatConverter:
         self,
         source_path: Path,
         output_path: Path,
-        **kwargs
-    ) -> Optional[Path]:
+        **kwargs,
+    ) -> Path | None:
         """Convert PyTorch model to ONNX.
 
         Args:
@@ -287,6 +289,7 @@ class ModelFormatConverter:
 
         Returns:
             Path to ONNX model or None
+
         """
         if not HAS_ONNX:
             logger.error("ONNX not available for conversion")
@@ -311,7 +314,7 @@ class ModelFormatConverter:
                     model = AutoModelForCausalLM.from_pretrained(
                         str(source_path),
                         torch_dtype=torch.float32,
-                        device_map=device if device != "cpu" else None
+                        device_map=device if device != "cpu" else None,
                     )
                     config = AutoConfig.from_pretrained(str(source_path))
 
@@ -323,7 +326,7 @@ class ModelFormatConverter:
                     dummy_input = torch.randint(
                         0, config.vocab_size,
                         (batch_size, sequence_length),
-                        dtype=torch.long
+                        dtype=torch.long,
                     )
                 else:
                     logger.error("transformers required for loading HF models")
@@ -366,7 +369,7 @@ class ModelFormatConverter:
             # Dynamic axes for variable sequence length
             dynamic_axes = kwargs.get("dynamic_axes", {
                 "input_ids": {0: "batch_size", 1: "sequence"},
-                "output": {0: "batch_size", 1: "sequence"}
+                "output": {0: "batch_size", 1: "sequence"},
             })
 
             torch.onnx.export(
@@ -379,7 +382,7 @@ class ModelFormatConverter:
                 input_names=kwargs.get("input_names", ["input_ids"]),
                 output_names=kwargs.get("output_names", ["output"]),
                 dynamic_axes=dynamic_axes,
-                verbose=kwargs.get("verbose", False)
+                verbose=kwargs.get("verbose", False),
             )
 
             # Verify ONNX model
@@ -398,8 +401,8 @@ class ModelFormatConverter:
         self,
         source_path: Path,
         output_path: Path,
-        **kwargs
-    ) -> Optional[Path]:
+        **kwargs,
+    ) -> Path | None:
         """Convert PyTorch model to SafeTensors.
 
         Args:
@@ -409,6 +412,7 @@ class ModelFormatConverter:
 
         Returns:
             Path to SafeTensors file or None
+
         """
         if not HAS_SAFETENSORS:
             logger.error("safetensors not available for conversion")
@@ -489,8 +493,8 @@ class ModelFormatConverter:
         self,
         source_path: Path,
         output_path: Path,
-        **kwargs
-    ) -> Optional[Path]:
+        **kwargs,
+    ) -> Path | None:
         """Convert SafeTensors to PyTorch format.
 
         Args:
@@ -500,6 +504,7 @@ class ModelFormatConverter:
 
         Returns:
             Path to PyTorch model or None
+
         """
         if not HAS_SAFETENSORS:
             logger.error("safetensors not available for conversion")
@@ -508,7 +513,7 @@ class ModelFormatConverter:
         try:
             # Extract conversion options from kwargs
             device = kwargs.get("device", "cpu")
-            dtype = kwargs.get("dtype", None)
+            dtype = kwargs.get("dtype")
             preserve_layout = kwargs.get("preserve_layout", True)
 
             # Load SafeTensors
@@ -546,8 +551,8 @@ class ModelFormatConverter:
         self,
         source_path: Path,
         output_path: Path,
-        **kwargs
-    ) -> Optional[Path]:
+        **kwargs,
+    ) -> Path | None:
         """Convert TensorFlow model to ONNX.
 
         Args:
@@ -557,6 +562,7 @@ class ModelFormatConverter:
 
         Returns:
             Path to ONNX model or None
+
         """
         if not HAS_TF or not HAS_ONNX:
             logger.error("TensorFlow and ONNX required for conversion")
@@ -570,12 +576,11 @@ class ModelFormatConverter:
                 # Load TensorFlow model
                 if source_path.is_dir():
                     model = tf.saved_model.load(str(source_path))
+                elif hasattr(tf, "keras"):
+                    model = tf.keras.models.load_model(str(source_path))
                 else:
-                    if hasattr(tf, "keras"):
-                        model = tf.keras.models.load_model(str(source_path))
-                    else:
-                        raise ImportError(
-                            "TensorFlow keras module not available")
+                    raise ImportError(
+                        "TensorFlow keras module not available")
 
                 # Get concrete function
                 if hasattr(model, "signatures"):
@@ -602,7 +607,7 @@ class ModelFormatConverter:
                 model_proto, _ = tf2onnx.convert.from_function(
                     concrete_func,
                     opset=kwargs.get("opset_version", 14),
-                    output_path=str(output_path)
+                    output_path=str(output_path),
                 )
 
                 # Log model info
@@ -630,8 +635,8 @@ class ModelFormatConverter:
         self,
         original_path: Path,
         converted_path: Path,
-        test_inputs: Optional[Dict[str, np.ndarray]] = None,
-        tolerance: float = 1e-5
+        test_inputs: dict[str, np.ndarray] | None = None,
+        tolerance: float = 1e-5,
     ) -> bool:
         """Validate that conversion preserved model behavior.
 
@@ -643,6 +648,7 @@ class ModelFormatConverter:
 
         Returns:
             True if validation passed
+
         """
         try:
             # Detect formats
@@ -657,15 +663,15 @@ class ModelFormatConverter:
             if test_inputs is None:
                 # Simple default test input
                 test_inputs = {
-                    "input": np.random.randn(1, 224, 224, 3).astype(np.float32)
+                    "input": np.random.randn(1, 224, 224, 3).astype(np.float32),
                 }
 
             # Get outputs from both models
             original_output = self._run_inference(
-                original_path, original_format, test_inputs
+                original_path, original_format, test_inputs,
             )
             converted_output = self._run_inference(
-                converted_path, converted_format, test_inputs
+                converted_path, converted_format, test_inputs,
             )
 
             if original_output is None or converted_output is None:
@@ -684,7 +690,7 @@ class ModelFormatConverter:
 
                 if max_diff > tolerance:
                     logger.error(
-                        f"Output mismatch for '{key}': max difference {max_diff} > {tolerance}"
+                        f"Output mismatch for '{key}': max difference {max_diff} > {tolerance}",
                     )
                     return False
 
@@ -699,8 +705,8 @@ class ModelFormatConverter:
         self,
         model_path: Path,
         format: str,
-        inputs: Dict[str, np.ndarray]
-    ) -> Optional[Dict[str, np.ndarray]]:
+        inputs: dict[str, np.ndarray],
+    ) -> dict[str, np.ndarray] | None:
         """Run inference on a model.
 
         Args:
@@ -710,6 +716,7 @@ class ModelFormatConverter:
 
         Returns:
             Output dictionary or None
+
         """
         try:
             if format == "onnx" and HAS_ONNX:
@@ -721,7 +728,7 @@ class ModelFormatConverter:
                 output_names = [o.name for o in session.get_outputs()]
                 return dict(zip(output_names, outputs, strict=False))
 
-            elif format == "pytorch":
+            if format == "pytorch":
                 # PyTorch inference
                 # Use unified GPU system for device selection
                 device = "cpu"
@@ -754,8 +761,7 @@ class ModelFormatConverter:
                     # Convert output to numpy
                     if isinstance(output, dict):
                         return {k: v.numpy() for k, v in output.items()}
-                    else:
-                        return {"output": output.numpy()}
+                    return {"output": output.numpy()}
 
             elif format == "tensorflow" and HAS_TF:
                 # TensorFlow inference
@@ -778,7 +784,7 @@ class ModelFormatConverter:
             logger.error(f"Inference failed: {e}")
             return None
 
-    def get_model_info(self, model_path: Path) -> Dict[str, Any]:
+    def get_model_info(self, model_path: Path) -> dict[str, Any]:
         """Get information about a model.
 
         Args:
@@ -786,13 +792,14 @@ class ModelFormatConverter:
 
         Returns:
             Dictionary with model information
+
         """
         info = {
             "path": str(model_path),
             "format": self._detect_format(model_path),
             "size_mb": 0,
             "parameters": {},
-            "metadata": {}
+            "metadata": {},
         }
 
         # Get file size
@@ -811,14 +818,14 @@ class ModelFormatConverter:
                 info["parameters"]["inputs"] = [
                     {
                         "name": i.name,
-                        "shape": [d.dim_value for d in i.type.tensor_type.shape.dim]
+                        "shape": [d.dim_value for d in i.type.tensor_type.shape.dim],
                     }
                     for i in model.graph.input
                 ]
                 info["parameters"]["outputs"] = [
                     {
                         "name": o.name,
-                        "shape": [d.dim_value for d in o.type.tensor_type.shape.dim]
+                        "shape": [d.dim_value for d in o.type.tensor_type.shape.dim],
                     }
                     for o in model.graph.output
                 ]
@@ -828,7 +835,7 @@ class ModelFormatConverter:
 
         return info
 
-    def load_model_for_conversion(self, model_path: Union[str, Path], model_type: str = "auto") -> Optional[Any]:
+    def load_model_for_conversion(self, model_path: str | Path, model_type: str = "auto") -> Any | None:
         """Load a model using appropriate AutoModel class based on type.
 
         Args:
@@ -837,6 +844,7 @@ class ModelFormatConverter:
 
         Returns:
             Loaded model or None
+
         """
         if not HAS_TRANSFORMERS or not AutoModel:
             logger.error("transformers with AutoModel required")
@@ -875,7 +883,7 @@ class ModelFormatConverter:
             logger.error(f"Failed to load model: {e}")
             return None
 
-    def analyze_model_architecture(self, model_path: Union[str, Path]) -> Optional[Dict[str, Any]]:
+    def analyze_model_architecture(self, model_path: str | Path) -> dict[str, Any] | None:
         """Analyze model architecture using AutoModel to determine conversion requirements.
 
         Args:
@@ -883,6 +891,7 @@ class ModelFormatConverter:
 
         Returns:
             Dictionary with architecture details or None
+
         """
         if not HAS_TRANSFORMERS or not AutoModel:
             logger.error("transformers with AutoModel required")
@@ -895,7 +904,7 @@ class ModelFormatConverter:
             # Try to load with AutoModel to get architecture info
             model = AutoModel.from_pretrained(
                 str(model_path),
-                output_loading_info=True
+                output_loading_info=True,
             )
 
             # Get model info
@@ -928,7 +937,7 @@ class ModelFormatConverter:
             logger.error(f"Failed to analyze model architecture: {e}")
             return None
 
-    def convert_model_with_automodel(self, source_path: Union[str, Path], target_format: str, model_type: str = "auto", **kwargs) -> Optional[Path]:
+    def convert_model_with_automodel(self, source_path: str | Path, target_format: str, model_type: str = "auto", **kwargs) -> Path | None:
         """Convert a model using AutoModel for flexible model loading.
 
         Args:
@@ -939,6 +948,7 @@ class ModelFormatConverter:
 
         Returns:
             Path to converted model or None
+
         """
         # Load model with AutoModel
         model = self.load_model_for_conversion(source_path, model_type)
@@ -974,15 +984,14 @@ class ModelFormatConverter:
                     opset_version=kwargs.get("opset_version", 14),
                     input_names=kwargs.get("input_names", ["input"]),
                     output_names=kwargs.get("output_names", ["output"]),
-                    dynamic_axes=kwargs.get("dynamic_axes", {"input": {0: "batch_size"}, "output": {0: "batch_size"}})
+                    dynamic_axes=kwargs.get("dynamic_axes", {"input": {0: "batch_size"}, "output": {0: "batch_size"}}),
                 )
 
                 logger.info(f"Successfully converted model to {target_format} using AutoModel")
                 return output_path
 
-            else:
-                logger.error(f"Conversion to {target_format} not supported with AutoModel method")
-                return None
+            logger.error(f"Conversion to {target_format} not supported with AutoModel method")
+            return None
 
         except Exception as e:
             logger.error(f"Failed to convert model with AutoModel: {e}")

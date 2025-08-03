@@ -672,7 +672,7 @@ class SettingsTab(BaseTab):
 
         try:
             if os.path.exists(settings_file):
-                with open(settings_file, "r") as f:
+                with open(settings_file) as f:
                     self.settings = json.load(f)
             else:
                 self.settings = self.get_default_settings()
@@ -736,7 +736,7 @@ class SettingsTab(BaseTab):
             "network_timeout": 30,
             "debug_mode": False,
             "show_debug_console": False,
-            "experimental_features": False
+            "experimental_features": False,
         }
 
     def save_settings(self):
@@ -756,7 +756,7 @@ class SettingsTab(BaseTab):
             self.update_preview()
 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save settings: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to save settings: {e!s}")
 
     def collect_settings_from_ui(self):
         """Collect settings from UI elements"""
@@ -811,7 +811,7 @@ class SettingsTab(BaseTab):
             "Reset Settings",
             "Are you sure you want to reset all settings to defaults?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -835,7 +835,7 @@ class SettingsTab(BaseTab):
             self,
             "Export Settings",
             "intellicrack_settings.json",
-            "JSON Files (*.json);;All Files (*)"
+            "JSON Files (*.json);;All Files (*)",
         )
 
         if file_path:
@@ -845,7 +845,7 @@ class SettingsTab(BaseTab):
                     json.dump(self.settings, f, indent=4)
                 QMessageBox.information(self, "Export", f"Settings exported to: {file_path}")
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to export settings: {str(e)}")
+                QMessageBox.critical(self, "Error", f"Failed to export settings: {e!s}")
 
     def import_settings(self):
         """Import settings from file"""
@@ -853,12 +853,12 @@ class SettingsTab(BaseTab):
             self,
             "Import Settings",
             "",
-            "JSON Files (*.json);;All Files (*)"
+            "JSON Files (*.json);;All Files (*)",
         )
 
         if file_path:
             try:
-                with open(file_path, "r") as f:
+                with open(file_path) as f:
                     imported_settings = json.load(f)
 
                 self.settings.update(imported_settings)
@@ -867,7 +867,7 @@ class SettingsTab(BaseTab):
                 QMessageBox.information(self, "Import", "Settings imported successfully!")
 
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to import settings: {str(e)}")
+                QMessageBox.critical(self, "Error", f"Failed to import settings: {e!s}")
 
     def browse_path(self, line_edit, title):
         """Browse for file path"""

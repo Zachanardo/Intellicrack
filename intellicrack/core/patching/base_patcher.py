@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -24,14 +23,13 @@ Provides common functionality for Windows patching operations.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Tuple
+from typing import Any
 
 from ...utils.system.windows_common import WindowsConstants, get_windows_kernel32, get_windows_ntdll
 
 
 class BaseWindowsPatcher(ABC):
-    """
-    Base class for Windows patching operations.
+    """Base class for Windows patching operations.
     Provides common Windows constants and library initialization.
     """
 
@@ -69,8 +67,7 @@ class BaseWindowsPatcher(ABC):
         self.THREAD_SUSPEND_RESUME = 0x0002
 
     def handle_suspended_process_result(self, result, logger_instance=None):
-        """
-        Common pattern for handling suspended process creation result.
+        """Common pattern for handling suspended process creation result.
 
         Args:
             result: Result from create_suspended_process_with_context
@@ -78,6 +75,7 @@ class BaseWindowsPatcher(ABC):
 
         Returns:
             Tuple of (success, process_info, context) or (False, None, None)
+
         """
         if logger_instance is None:
             logger_instance = self.logger
@@ -91,9 +89,8 @@ class BaseWindowsPatcher(ABC):
 
         return True, process_info, context
 
-    def create_and_handle_suspended_process(self, target_exe: str, logger_instance=None) -> Tuple[bool, Any, Any]:
-        """
-        Create a suspended process and handle the result in one operation.
+    def create_and_handle_suspended_process(self, target_exe: str, logger_instance=None) -> tuple[bool, Any, Any]:
+        """Create a suspended process and handle the result in one operation.
         Common pattern to eliminate duplication between early bird injection and process hollowing.
 
         Args:
@@ -102,6 +99,7 @@ class BaseWindowsPatcher(ABC):
 
         Returns:
             Tuple of (success, process_info, context) or (False, None, None)
+
         """
         from ...utils.system.process_common import create_suspended_process_with_context
 
@@ -113,7 +111,7 @@ class BaseWindowsPatcher(ABC):
             self._create_suspended_process,
             self._get_thread_context,
             target_exe,
-            logger_instance
+            logger_instance,
         )
 
         return self.handle_suspended_process_result(result, logger_instance)
@@ -121,14 +119,11 @@ class BaseWindowsPatcher(ABC):
     @abstractmethod
     def get_required_libraries(self) -> list:
         """Get list of required Windows libraries for this patcher."""
-        pass
 
     @abstractmethod
     def _create_suspended_process(self, target_exe: str):
         """Create a suspended process."""
-        pass
 
     @abstractmethod
     def _get_thread_context(self, thread_handle):
         """Get thread context."""
-        pass

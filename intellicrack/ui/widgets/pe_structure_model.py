@@ -1,5 +1,4 @@
-"""
-PE Structure Tree Model for Hex Viewer Integration
+"""PE Structure Tree Model for Hex Viewer Integration
 
 Provides a QAbstractItemModel adapter for PEFileModel to display PE structures
 in a tree view with navigation capabilities.
@@ -8,7 +7,7 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from typing import Any, Optional, Union
+from typing import Any
 
 from PyQt6.QtCore import QAbstractItemModel, QModelIndex, Qt, pyqtSignal
 
@@ -18,7 +17,7 @@ from .pe_file_model import FileStructure, PEFileModel, SectionInfo
 class PEStructureItem:
     """Tree item representing a PE structure element"""
 
-    def __init__(self, data: Union[FileStructure, SectionInfo, str], parent=None):
+    def __init__(self, data: FileStructure | SectionInfo | str, parent=None):
         """Initialize PE structure item with hierarchical data representation."""
         self.parent_item = parent
         self.item_data = data
@@ -48,20 +47,20 @@ class PEStructureItem:
             # Root node or category
             return self.item_data if column == 0 else ""
 
-        elif isinstance(self.item_data, FileStructure):
+        if isinstance(self.item_data, FileStructure):
             if column == 0:
                 return self.item_data.name
-            elif column == 1:
+            if column == 1:
                 return f"0x{self.item_data.offset:X}"
-            elif column == 2:
+            if column == 2:
                 return f"0x{self.item_data.size:X}"
 
         elif isinstance(self.item_data, SectionInfo):
             if column == 0:
                 return self.item_data.name
-            elif column == 1:
+            if column == 1:
                 return f"0x{self.item_data.raw_offset:X}"
-            elif column == 2:
+            if column == 2:
                 return f"0x{self.item_data.raw_size:X}"
 
         return ""
@@ -84,7 +83,7 @@ class PEStructureModel(QAbstractItemModel):
     structure_selected = pyqtSignal(int, int)  # offset, size
     rva_selected = pyqtSignal(int)  # RVA address
 
-    def __init__(self, pe_model: Optional[PEFileModel] = None, parent=None):
+    def __init__(self, pe_model: PEFileModel | None = None, parent=None):
         """Initialize PE structure model with optional PE file data for tree representation."""
         super().__init__(parent)
         self.pe_model = pe_model
@@ -147,7 +146,7 @@ class PEStructureModel(QAbstractItemModel):
                 f"Characteristics: 0x{section.characteristics:X}",
                 f"Executable: {section.is_executable}",
                 f"Writable: {section.is_writable}",
-                f"Readable: {section.is_readable}"
+                f"Readable: {section.is_readable}",
             ]
 
             if section.entropy is not None:
@@ -248,7 +247,7 @@ class PEStructureModel(QAbstractItemModel):
                     f"SHA1: {signing_cert.fingerprint_sha1}",
                     f"Valid: {'Yes' if signing_cert.is_valid else 'No'}",
                     f"Code Signing: {'Yes' if signing_cert.is_code_signing else 'No'}",
-                    f"Self-Signed: {'Yes' if signing_cert.is_self_signed else 'No'}"
+                    f"Self-Signed: {'Yes' if signing_cert.is_self_signed else 'No'}",
                 ]
 
                 for detail in details:
@@ -289,10 +288,10 @@ class PEStructureModel(QAbstractItemModel):
 
         if role == Qt.ItemDataRole.DisplayRole:
             return item.data(index.column())
-        elif role == Qt.ItemDataRole.ToolTipRole:
+        if role == Qt.ItemDataRole.ToolTipRole:
             if isinstance(item.item_data, FileStructure):
                 return f"{item.item_data.description}\nOffset: 0x{item.item_data.offset:X}\nSize: 0x{item.item_data.size:X}"
-            elif isinstance(item.item_data, SectionInfo):
+            if isinstance(item.item_data, SectionInfo):
                 tooltip = f"Section: {item.item_data.name}\n"
                 tooltip += f"Virtual Address: 0x{item.item_data.virtual_address:X}\n"
                 tooltip += f"Raw Offset: 0x{item.item_data.raw_offset:X}\n"
@@ -322,9 +321,9 @@ class PEStructureModel(QAbstractItemModel):
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             if section == 0:
                 return "Name"
-            elif section == 1:
+            if section == 1:
                 return "Offset"
-            elif section == 2:
+            if section == 2:
                 return "Size"
 
         return None
@@ -342,8 +341,7 @@ class PEStructureModel(QAbstractItemModel):
         child_item = parent_item.child(row)
         if child_item:
             return self.createIndex(row, column, child_item)
-        else:
-            return QModelIndex()
+        return QModelIndex()
 
     def parent(self, index: QModelIndex) -> QModelIndex:
         """Return parent of index"""
@@ -370,7 +368,7 @@ class PEStructureModel(QAbstractItemModel):
 
         return parent_item.child_count()
 
-    def get_item_offset_and_size(self, index: QModelIndex) -> tuple[Optional[int], Optional[int]]:
+    def get_item_offset_and_size(self, index: QModelIndex) -> tuple[int | None, int | None]:
         """Get file offset and size for item at index"""
         if not index.isValid():
             return None, None
@@ -379,12 +377,12 @@ class PEStructureModel(QAbstractItemModel):
 
         if isinstance(item.item_data, FileStructure):
             return item.item_data.offset, item.item_data.size
-        elif isinstance(item.item_data, SectionInfo):
+        if isinstance(item.item_data, SectionInfo):
             return item.item_data.raw_offset, item.item_data.raw_size
 
         return None, None
 
-    def get_item_rva(self, index: QModelIndex) -> Optional[int]:
+    def get_item_rva(self, index: QModelIndex) -> int | None:
         """Get RVA for item at index"""
         if not index.isValid():
             return None
@@ -393,7 +391,7 @@ class PEStructureModel(QAbstractItemModel):
 
         if isinstance(item.item_data, SectionInfo):
             return item.item_data.virtual_address
-        elif isinstance(item.item_data, FileStructure):
+        if isinstance(item.item_data, FileStructure):
             # Convert file offset to RVA if possible
             if self.pe_model:
                 return self.pe_model.offset_to_rva(item.item_data.offset)

@@ -6,7 +6,7 @@ configuration, state management, and shared resources across the application.
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
@@ -16,8 +16,7 @@ logger = get_logger(__name__)
 
 
 class AppContext(QObject):
-    """
-    Centralized application state manager.
+    """Centralized application state manager.
 
     Manages global application state and provides signals for state changes,
     enabling decoupled communication between UI components.
@@ -61,13 +60,13 @@ class AppContext(QObject):
             "active_tasks": {},
             "session_history": [],
             "recent_files": [],
-            "recent_projects": []
+            "recent_projects": [],
         }
         self._observers = {}
         logger.info("AppContext initialized")
 
     # Binary Management
-    def load_binary(self, file_path: str, metadata: Optional[Dict] = None) -> bool:
+    def load_binary(self, file_path: str, metadata: dict | None = None) -> bool:
         """Load a binary file and emit appropriate signals."""
         try:
             path = Path(file_path)
@@ -80,7 +79,7 @@ class AppContext(QObject):
                 "name": path.name,
                 "size": path.stat().st_size,
                 "loaded_at": datetime.now().isoformat(),
-                "metadata": metadata or {}
+                "metadata": metadata or {},
             }
 
             self._state["current_binary"] = binary_info
@@ -102,27 +101,27 @@ class AppContext(QObject):
             self._state["analysis_results"].clear()
             self.binary_unloaded.emit()
 
-    def get_current_binary(self) -> Optional[Dict]:
+    def get_current_binary(self) -> dict | None:
         """Get information about the currently loaded binary."""
         return self._state["current_binary"]
 
     # Analysis Results Management
-    def set_analysis_results(self, analysis_type: str, results: Dict):
+    def set_analysis_results(self, analysis_type: str, results: dict):
         """Store analysis results and emit completion signal."""
         self._state["analysis_results"][analysis_type] = {
             "results": results,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         logger.info(f"Analysis completed: {analysis_type}")
         self.analysis_completed.emit(analysis_type, results)
 
-    def get_analysis_results(self, analysis_type: Optional[str] = None) -> Dict:
+    def get_analysis_results(self, analysis_type: str | None = None) -> dict:
         """Get analysis results for a specific type or all results."""
         if analysis_type:
             return self._state["analysis_results"].get(analysis_type, {})
         return self._state["analysis_results"]
 
-    def start_analysis(self, analysis_type: str, options: Optional[Dict] = None):
+    def start_analysis(self, analysis_type: str, options: dict | None = None):
         """Signal that an analysis has started."""
         logger.info(f"Analysis started: {analysis_type}")
         self.analysis_started.emit(analysis_type, options or {})
@@ -141,14 +140,14 @@ class AppContext(QObject):
                 logger.error(f"Project file not found: {project_path}")
                 return False
 
-            with open(path, "r") as f:
+            with open(path) as f:
                 project_data = json.load(f)
 
             project_info = {
                 "path": str(path.absolute()),
                 "name": project_data.get("name", path.stem),
                 "data": project_data,
-                "loaded_at": datetime.now().isoformat()
+                "loaded_at": datetime.now().isoformat(),
             }
 
             self._state["current_project"] = project_info
@@ -178,7 +177,7 @@ class AppContext(QObject):
                 "created_at": datetime.now().isoformat(),
                 "binary_path": self._state["current_binary"]["path"] if self._state["current_binary"] else None,
                 "analysis_results": self._state["analysis_results"],
-                "settings": self._state["settings"]
+                "settings": self._state["settings"],
             }
 
             path = Path(project_path)
@@ -190,7 +189,7 @@ class AppContext(QObject):
             self._state["current_project"] = {
                 "path": str(path.absolute()),
                 "name": project_data["name"],
-                "data": project_data
+                "data": project_data,
             }
 
             logger.info(f"Project saved: {project_path}")
@@ -209,11 +208,11 @@ class AppContext(QObject):
             self.project_closed.emit()
 
     # Plugin Management
-    def register_plugin(self, plugin_name: str, plugin_info: Dict):
+    def register_plugin(self, plugin_name: str, plugin_info: dict):
         """Register a loaded plugin."""
         self._state["loaded_plugins"][plugin_name] = {
             "info": plugin_info,
-            "loaded_at": datetime.now().isoformat()
+            "loaded_at": datetime.now().isoformat(),
         }
         logger.info(f"Plugin registered: {plugin_name}")
         self.plugin_loaded.emit(plugin_name, plugin_info)
@@ -225,16 +224,16 @@ class AppContext(QObject):
             logger.info(f"Plugin unregistered: {plugin_name}")
             self.plugin_unloaded.emit(plugin_name)
 
-    def get_loaded_plugins(self) -> Dict:
+    def get_loaded_plugins(self) -> dict:
         """Get information about all loaded plugins."""
         return self._state["loaded_plugins"]
 
     # Model Management
-    def register_model(self, model_name: str, model_info: Dict):
+    def register_model(self, model_name: str, model_info: dict):
         """Register a loaded AI model."""
         self._state["loaded_models"][model_name] = {
             "info": model_info,
-            "loaded_at": datetime.now().isoformat()
+            "loaded_at": datetime.now().isoformat(),
         }
         logger.info(f"Model registered: {model_name}")
         self.model_loaded.emit(model_name, model_info)
@@ -246,7 +245,7 @@ class AppContext(QObject):
             logger.info(f"Model unregistered: {model_name}")
             self.model_unloaded.emit(model_name)
 
-    def get_loaded_models(self) -> Dict:
+    def get_loaded_models(self) -> dict:
         """Get information about all loaded models."""
         return self._state["loaded_models"]
 
@@ -256,7 +255,7 @@ class AppContext(QObject):
         self._state["active_tasks"][task_id] = {
             "description": description,
             "started_at": datetime.now().isoformat(),
-            "progress": 0
+            "progress": 0,
         }
         logger.info(f"Task registered: {task_id} - {description}")
         self.task_started.emit(task_id, description)
@@ -284,7 +283,7 @@ class AppContext(QObject):
                 "task_id": task_id,
                 "original_info": task_info,
                 "error_message": error_message,
-                "failed_at": self._get_timestamp()
+                "failed_at": self._get_timestamp(),
             }
 
             if "failed_tasks" not in self._state:
@@ -294,7 +293,7 @@ class AppContext(QObject):
             logger.error(f"Task failed: {task_id} ({task_info.get('description', 'N/A')}) - {error_message}")
             self.task_failed.emit(task_id, error_message)
 
-    def get_active_tasks(self) -> Dict:
+    def get_active_tasks(self) -> dict:
         """Get all active tasks."""
         return self._state["active_tasks"]
 
@@ -315,17 +314,17 @@ class AppContext(QObject):
         """Get a setting value."""
         return self._state["settings"].get(key, default)
 
-    def get_all_settings(self) -> Dict:
+    def get_all_settings(self) -> dict:
         """Get all settings."""
         return self._state["settings"]
 
     # History Management
-    def add_to_session_history(self, action: str, details: Dict):
+    def add_to_session_history(self, action: str, details: dict):
         """Add an action to the session history."""
         entry = {
             "action": action,
             "details": details,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         self._state["session_history"].append(entry)
 
@@ -333,15 +332,15 @@ class AppContext(QObject):
         if len(self._state["session_history"]) > 1000:
             self._state["session_history"] = self._state["session_history"][-1000:]
 
-    def get_session_history(self) -> List[Dict]:
+    def get_session_history(self) -> list[dict]:
         """Get the session history."""
         return self._state["session_history"]
 
-    def get_recent_files(self) -> List[str]:
+    def get_recent_files(self) -> list[str]:
         """Get list of recently opened files."""
         return self._state["recent_files"]
 
-    def get_recent_projects(self) -> List[str]:
+    def get_recent_projects(self) -> list[str]:
         """Get list of recently opened projects."""
         return self._state["recent_projects"]
 
@@ -361,7 +360,7 @@ class AppContext(QObject):
         self._state["recent_projects"] = self._state["recent_projects"][:10]  # Keep last 10
 
     # State observation for debugging
-    def get_full_state(self) -> Dict:
+    def get_full_state(self) -> dict:
         """Get the complete application state (for debugging)."""
         return self._state.copy()
 

@@ -1,5 +1,4 @@
-"""
-File metadata display widget using QDateTime and QFileInfo.
+"""File metadata display widget using QDateTime and QFileInfo.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -142,14 +141,14 @@ class FileMetadataWidget(QWidget):
         self.setLayout(layout)
 
     def analyze_file(self, file_path: str) -> dict:
-        """
-        Analyze a file and update the display.
+        """Analyze a file and update the display.
 
         Args:
             file_path: Path to the file to analyze
 
         Returns:
             Dictionary containing file metadata
+
         """
         if not os.path.exists(file_path):
             logger.error(f"File not found: {file_path}")
@@ -271,7 +270,7 @@ class FileMetadataWidget(QWidget):
             "is_executable": file_info.isExecutable(),
             "owner": file_info.owner() if file_info.owner() else None,
             "suffix": file_info.suffix(),
-            "complete_suffix": file_info.completeSuffix()
+            "complete_suffix": file_info.completeSuffix(),
         }
 
         # Emit signal
@@ -303,14 +302,14 @@ class FileMetadataWidget(QWidget):
         self.timestamps_text.clear()
 
     def _format_size(self, size: int) -> str:
-        """
-        Format file size in human-readable format.
+        """Format file size in human-readable format.
 
         Args:
             size: Size in bytes
 
         Returns:
             Formatted size string
+
         """
         for unit in ["B", "KB", "MB", "GB", "TB"]:
             if size < 1024.0:
@@ -327,14 +326,14 @@ class FileTimestampTracker:
         self.tracked_files = {}
 
     def track_file(self, file_path: str) -> dict:
-        """
-        Start tracking a file's timestamps.
+        """Start tracking a file's timestamps.
 
         Args:
             file_path: Path to the file to track
 
         Returns:
             Dictionary with initial timestamp data
+
         """
         if not os.path.exists(file_path):
             return {}
@@ -346,21 +345,21 @@ class FileTimestampTracker:
             "initial_modified": file_info.lastModified(),
             "initial_accessed": file_info.lastRead(),
             "initial_size": file_info.size(),
-            "checks": []
+            "checks": [],
         }
 
         self.tracked_files[file_path] = timestamp_data
         return timestamp_data
 
     def check_file(self, file_path: str) -> dict:
-        """
-        Check if a tracked file has changed.
+        """Check if a tracked file has changed.
 
         Args:
             file_path: Path to the file to check
 
         Returns:
             Dictionary with change information
+
         """
         if file_path not in self.tracked_files:
             return {"error": "File not being tracked"}
@@ -382,7 +381,7 @@ class FileTimestampTracker:
             "size_changed": current_size != tracked["initial_size"],
             "current_modified": current_modified,
             "current_accessed": current_accessed,
-            "current_size": current_size
+            "current_size": current_size,
         }
 
         tracked["checks"].append(check_data)
@@ -390,18 +389,18 @@ class FileTimestampTracker:
         return {
             "file": file_path,
             "changed": check_data["modified_changed"] or check_data["size_changed"],
-            "details": check_data
+            "details": check_data,
         }
 
     def get_file_history(self, file_path: str) -> dict:
-        """
-        Get the tracking history for a file.
+        """Get the tracking history for a file.
 
         Args:
             file_path: Path to the file
 
         Returns:
             Dictionary with tracking history
+
         """
         if file_path not in self.tracked_files:
             return {}
@@ -409,11 +408,11 @@ class FileTimestampTracker:
         return self.tracked_files[file_path]
 
     def stop_tracking(self, file_path: str):
-        """
-        Stop tracking a file.
+        """Stop tracking a file.
 
         Args:
             file_path: Path to the file to stop tracking
+
         """
         if file_path in self.tracked_files:
             del self.tracked_files[file_path]

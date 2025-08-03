@@ -7,7 +7,7 @@ import os
 import platform
 import subprocess
 import traceback
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -75,8 +75,7 @@ except ImportError as e:
 
 
 class PDFReportGenerator:
-    """
-    PDF report generator for comprehensive analysis findings.
+    """PDF report generator for comprehensive analysis findings.
 
     This system generates professional PDF reports with detailed analysis results,
     including visualizations, code snippets, and recommendations.
@@ -85,18 +84,18 @@ class PDFReportGenerator:
     features of the application-specific implementation.
     """
 
-    def __init__(self, output_dir: str = "reports", app_instance: Optional[Any] = None):
-        """
-        Initialize the PDF report generator.
+    def __init__(self, output_dir: str = "reports", app_instance: Any | None = None):
+        """Initialize the PDF report generator.
 
         Args:
             output_dir: Directory to save generated reports
             app_instance: Reference to the main application instance (optional)
+
         """
         self.output_dir = output_dir
         self.app = app_instance
         self.logger = logging.getLogger(__name__)
-        self.sections: List[Dict[str, Any]] = []  # Store report sections
+        self.sections: list[dict[str, Any]] = []  # Store report sections
 
         # Create output directory if it doesn't exist
         os.makedirs(output_dir, exist_ok=True)
@@ -123,14 +122,13 @@ class PDFReportGenerator:
             "include_code_snippets": True,
             "include_recommendations": True,
             "color_scheme": "professional",  # professional, dark, or light
-            "page_size": "letter"  # letter, a4, legal
+            "page_size": "letter",  # letter, a4, legal
         }
 
         self._check_available_backends()
 
     def _check_available_backends(self) -> None:
-        """
-        Check which PDF generation backends are available.
+        """Check which PDF generation backends are available.
         """
         # Check for ReportLab
         if self.reportlab_available:
@@ -150,9 +148,8 @@ class PDFReportGenerator:
         else:
             self.logger.info("PDFKit HTML-to-PDF conversion not available")
 
-    def add_section(self, section_title: str, content: Optional[str] = None) -> int:
-        """
-        Add a new section to the report.
+    def add_section(self, section_title: str, content: str | None = None) -> int:
+        """Add a new section to the report.
 
         Args:
             section_title: Title of the section
@@ -160,37 +157,37 @@ class PDFReportGenerator:
 
         Returns:
             Index of the added section
+
         """
         section = {
             "title": section_title,
             "content": content or "",
-            "subsections": []
+            "subsections": [],
         }
         self.sections.append(section)
         return len(self.sections) - 1  # Return section index
 
-    def add_subsection(self, section_index: int, title: str, content: Optional[str] = None) -> None:
-        """
-        Add a subsection to an existing section.
+    def add_subsection(self, section_index: int, title: str, content: str | None = None) -> None:
+        """Add a subsection to an existing section.
 
         Args:
             section_index: Index of the parent section
             title: Title of the subsection
             content: Content text for the subsection
+
         """
         if 0 <= section_index < len(self.sections):
             subsection = {
                 "title": title,
-                "content": content or ""
+                "content": content or "",
             }
             self.sections[section_index]["subsections"].append(subsection)
         else:
             self.logger.error("Invalid section index: %s", section_index)
 
-    def generate_report(self, binary_path: Optional[str] = None, analysis_results: Optional[Dict[str, Any]] = None,
-                       report_type: str = "comprehensive", output_path: Optional[str] = None) -> Optional[str]:
-        """
-        Generate a PDF report for the analysis results.
+    def generate_report(self, binary_path: str | None = None, analysis_results: dict[str, Any] | None = None,
+                       report_type: str = "comprehensive", output_path: str | None = None) -> str | None:
+        """Generate a PDF report for the analysis results.
 
         Args:
             binary_path: Path to the analyzed binary (can be obtained from app_instance if None)
@@ -200,6 +197,7 @@ class PDFReportGenerator:
 
         Returns:
             Path to the generated PDF report, or None if generation failed
+
         """
         if not self.reportlab_available:
             self.logger.warning("ReportLab not available. Cannot generate PDF report.")
@@ -226,18 +224,16 @@ class PDFReportGenerator:
         # Choose report generation method based on type
         if report_type == "comprehensive":
             return self._generate_comprehensive_report(binary_path, analysis_results, output_path)
-        elif report_type == "vulnerability":
+        if report_type == "vulnerability":
             return self._generate_vulnerability_report(binary_path, analysis_results, output_path)
-        elif report_type == "license":
+        if report_type == "license":
             return self._generate_license_report(binary_path, analysis_results, output_path)
-        else:
-            self.logger.warning("Unknown report type: %s", report_type)
-            return None
+        self.logger.warning("Unknown report type: %s", report_type)
+        return None
 
-    def _generate_comprehensive_report(self, binary_path: Optional[str], analysis_results: Optional[Dict[str, Any]],
-                                     output_path: Optional[str] = None) -> Optional[str]:
-        """
-        Generate a comprehensive PDF report.
+    def _generate_comprehensive_report(self, binary_path: str | None, analysis_results: dict[str, Any] | None,
+                                     output_path: str | None = None) -> str | None:
+        """Generate a comprehensive PDF report.
 
         Args:
             binary_path: Path to the analyzed binary
@@ -246,6 +242,7 @@ class PDFReportGenerator:
 
         Returns:
             Path to the generated PDF report, or None if generation failed
+
         """
         try:
             try:
@@ -271,7 +268,7 @@ class PDFReportGenerator:
             page_size_map = {
                 "letter": letter,
                 "a4": A4,
-                "legal": legal
+                "legal": legal,
             }
             page_size = page_size_map.get(self.report_config["page_size"].lower(), letter)
 
@@ -282,7 +279,7 @@ class PDFReportGenerator:
                 rightMargin=72,
                 leftMargin=72,
                 topMargin=72,
-                bottomMargin=72
+                bottomMargin=72,
             )
 
             styles = getSampleStyleSheet()
@@ -341,7 +338,7 @@ class PDFReportGenerator:
                     ["Architecture", binary_info.get("architecture", "Unknown")],
                     ["Bit Width", binary_info.get("bit_width", "Unknown")],
                     ["Compiler", binary_info.get("compiler", "Unknown")],
-                    ["Compile Time", binary_info.get("compile_time", "Unknown")]
+                    ["Compile Time", binary_info.get("compile_time", "Unknown")],
                 ]
 
                 # Add protection info if available
@@ -358,7 +355,7 @@ class PDFReportGenerator:
                     ("FONTSIZE", (0, 0), (1, 0), 12),
                     ("BOTTOMPADDING", (0, 0), (1, 0), 12),
                     ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-                    ("GRID", (0, 0), (-1, -1), 1, colors.black)
+                    ("GRID", (0, 0), (-1, -1), 1, colors.black),
                 ]))
                 content.append(binary_table)
                 content.append(Spacer(1, 24))
@@ -431,10 +428,9 @@ class PDFReportGenerator:
             self.logger.error(traceback.format_exc())
             return None
 
-    def _generate_vulnerability_report(self, binary_path: Optional[str], analysis_results: Optional[Dict[str, Any]],
-                                     output_path: Optional[str] = None) -> Optional[str]:
-        """
-        Generate a vulnerability-focused PDF report.
+    def _generate_vulnerability_report(self, binary_path: str | None, analysis_results: dict[str, Any] | None,
+                                     output_path: str | None = None) -> str | None:
+        """Generate a vulnerability-focused PDF report.
 
         Args:
             binary_path: Path to the analyzed binary
@@ -443,16 +439,16 @@ class PDFReportGenerator:
 
         Returns:
             Path to the generated PDF report, or None if generation failed
+
         """
         # Similar to comprehensive report but focused on vulnerabilities
         # For brevity, implementation details are omitted
         self.logger.info("Vulnerability report generation not fully implemented")
         return self._generate_comprehensive_report(binary_path, analysis_results, output_path)
 
-    def _generate_license_report(self, binary_path: Optional[str], analysis_results: Optional[Dict[str, Any]],
-                                output_path: Optional[str] = None) -> Optional[str]:
-        """
-        Generate a license-focused PDF report.
+    def _generate_license_report(self, binary_path: str | None, analysis_results: dict[str, Any] | None,
+                                output_path: str | None = None) -> str | None:
+        """Generate a license-focused PDF report.
 
         Args:
             binary_path: Path to the analyzed binary
@@ -461,15 +457,15 @@ class PDFReportGenerator:
 
         Returns:
             Path to the generated PDF report, or None if generation failed
+
         """
         # Similar to comprehensive report but focused on license checks
         # For brevity, implementation details are omitted
         self.logger.info("License report generation not fully implemented")
         return self._generate_comprehensive_report(binary_path, analysis_results, output_path)
 
-    def _add_pe_section_analysis(self, binary_path: str, elements: List[Any], styles: Any, colors: Any) -> bool:
-        """
-        Add PE section analysis and visualization to the report.
+    def _add_pe_section_analysis(self, binary_path: str, elements: list[Any], styles: Any, colors: Any) -> bool:
+        """Add PE section analysis and visualization to the report.
 
         Args:
             binary_path: Path to the analyzed binary
@@ -479,6 +475,7 @@ class PDFReportGenerator:
 
         Returns:
             True if successful, False otherwise
+
         """
         try:
             from reportlab.graphics.charts.barcharts import VerticalBarChart
@@ -559,7 +556,6 @@ class PDFReportGenerator:
                         chart.legend.fontSize = 8
                 except AttributeError as e:
                     logger.error("Attribute error in pdf_generator: %s", e)
-                    pass
             chart.categoryAxis.labels.angle = 30
             chart.categoryAxis.labels.fontSize = 8
 
@@ -584,10 +580,9 @@ class PDFReportGenerator:
             self.logger.error(traceback.format_exc())
             return False
 
-    def generate_html_report(self, binary_path: str, analysis_results: Dict[str, Any],
-                           report_type: str = "comprehensive") -> Optional[str]:
-        """
-        Generate an HTML report for the analysis results.
+    def generate_html_report(self, binary_path: str, analysis_results: dict[str, Any],
+                           report_type: str = "comprehensive") -> str | None:
+        """Generate an HTML report for the analysis results.
 
         Args:
             binary_path: Path to the analyzed binary
@@ -596,6 +591,7 @@ class PDFReportGenerator:
 
         Returns:
             Path to the generated HTML report, or None if generation failed
+
         """
         try:
             # Create filename for the report based on report type
@@ -611,7 +607,7 @@ class PDFReportGenerator:
                 "comprehensive": "Comprehensive Analysis Report",
                 "summary": "Analysis Summary Report",
                 "technical": "Technical Analysis Report",
-                "executive": "Executive Summary Report"
+                "executive": "Executive Summary Report",
             }
 
             report_title = report_titles.get(report_type, "Analysis Report")
@@ -736,11 +732,10 @@ class PDFReportGenerator:
             self.logger.error(traceback.format_exc())
             return None
 
-    def export_analysis(self, format_type: str = "pdf", binary_path: Optional[str] = None,
-                       analysis_results: Optional[Dict[str, Any]] = None,
-                       output_path: Optional[str] = None) -> bool:
-        """
-        Export analysis results in various formats.
+    def export_analysis(self, format_type: str = "pdf", binary_path: str | None = None,
+                       analysis_results: dict[str, Any] | None = None,
+                       output_path: str | None = None) -> bool:
+        """Export analysis results in various formats.
 
         Args:
             format_type: Export format ('pdf', 'html', 'json', 'xml', 'csv')
@@ -750,6 +745,7 @@ class PDFReportGenerator:
 
         Returns:
             bool: True if export successful, False otherwise
+
         """
         try:
             # Get data from app instance if not provided
@@ -768,29 +764,28 @@ class PDFReportGenerator:
                 result = self.generate_report(binary_path, analysis_results, output_path=output_path)
                 return result is not None
 
-            elif format_type.lower() == "html":
+            if format_type.lower() == "html":
                 result = self.generate_html_report(binary_path, analysis_results)
                 return result is not None
 
-            elif format_type.lower() == "json":
+            if format_type.lower() == "json":
                 return self._export_json(binary_path, analysis_results, output_path)
 
-            elif format_type.lower() == "xml":
+            if format_type.lower() == "xml":
                 return self._export_xml(binary_path, analysis_results, output_path)
 
-            elif format_type.lower() == "csv":
+            if format_type.lower() == "csv":
                 return self._export_csv(binary_path, analysis_results, output_path)
 
-            else:
-                self.logger.error(f"Unsupported export format: {format_type}")
-                return False
+            self.logger.error(f"Unsupported export format: {format_type}")
+            return False
 
         except Exception as e:
             self.logger.error(f"Export error: {e}")
             return False
 
-    def _export_json(self, binary_path: str, analysis_results: Dict[str, Any],
-                     output_path: Optional[str] = None) -> bool:
+    def _export_json(self, binary_path: str, analysis_results: dict[str, Any],
+                     output_path: str | None = None) -> bool:
         """Export analysis results as JSON."""
         try:
             import json
@@ -808,10 +803,10 @@ class PDFReportGenerator:
                     "binary_name": os.path.basename(binary_path),
                     "export_timestamp": datetime.datetime.now().isoformat(),
                     "intellicrack_version": "1.0.0",
-                    "export_format": "json"
+                    "export_format": "json",
                 },
                 "analysis_results": self._sanitize_for_json(analysis_results),
-                "summary": self._generate_analysis_summary(analysis_results)
+                "summary": self._generate_analysis_summary(analysis_results),
             }
 
             # Write JSON file
@@ -825,8 +820,8 @@ class PDFReportGenerator:
             self.logger.error(f"JSON export error: {e}")
             return False
 
-    def _export_xml(self, binary_path: str, analysis_results: Dict[str, Any],
-                    output_path: Optional[str] = None) -> bool:
+    def _export_xml(self, binary_path: str, analysis_results: dict[str, Any],
+                    output_path: str | None = None) -> bool:
         """Export analysis results as XML."""
         try:
             # Create output path if not provided
@@ -871,8 +866,8 @@ class PDFReportGenerator:
             self.logger.error(f"XML export error: {e}")
             return False
 
-    def _export_csv(self, binary_path: str, analysis_results: Dict[str, Any],
-                    output_path: Optional[str] = None) -> bool:
+    def _export_csv(self, binary_path: str, analysis_results: dict[str, Any],
+                    output_path: str | None = None) -> bool:
         """Export analysis results as CSV."""
         try:
             import csv
@@ -916,12 +911,11 @@ class PDFReportGenerator:
         """Sanitize object for JSON serialization."""
         if isinstance(obj, dict):
             return {k: self._sanitize_for_json(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
+        if isinstance(obj, list):
             return [self._sanitize_for_json(item) for item in obj]
-        elif isinstance(obj, (str, int, float, bool, type(None))):
+        if isinstance(obj, (str, int, float, bool, type(None))):
             return obj
-        else:
-            return str(obj)
+        return str(obj)
 
     def _xml_escape(self, text: str) -> str:
         """Escape XML special characters."""
@@ -933,7 +927,7 @@ class PDFReportGenerator:
         text = text.replace("'", "&apos;")
         return text
 
-    def _dict_to_xml(self, data: Any, indent: str = "") -> List[str]:
+    def _dict_to_xml(self, data: Any, indent: str = "") -> list[str]:
         """Convert dictionary to XML elements."""
         xml_lines = []
 
@@ -956,7 +950,7 @@ class PDFReportGenerator:
 
         return xml_lines
 
-    def _flatten_dict_for_csv(self, data: Any, csv_data: List[List[str]],
+    def _flatten_dict_for_csv(self, data: Any, csv_data: list[list[str]],
                              section: str, parent_key: str = "") -> None:
         """Flatten dictionary for CSV export."""
         if isinstance(data, dict):
@@ -976,14 +970,14 @@ class PDFReportGenerator:
         else:
             csv_data.append([section, parent_key or "value", str(data), ""])
 
-    def _generate_analysis_summary(self, analysis_results: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_analysis_summary(self, analysis_results: dict[str, Any]) -> dict[str, Any]:
         """Generate summary of analysis results."""
         summary = {
             "total_items": 0,
             "categories": {},
             "findings_count": 0,
             "vulnerabilities_found": 0,
-            "license_checks": 0
+            "license_checks": 0,
         }
 
         try:
@@ -1013,17 +1007,16 @@ class PDFReportGenerator:
 
         except Exception as e:
             logger.error("Exception in pdf_generator: %s", e)
-            pass
 
         return summary
 
 
 def run_report_generation(app: Any) -> None:
-    """
-    Generate a report for the analysis results.
+    """Generate a report for the analysis results.
 
     Args:
         app: Application instance
+
     """
     if not PYQT_AVAILABLE:
         app.logger.warning("PyQt6 not available. Cannot run report generation UI.")
@@ -1061,7 +1054,7 @@ def run_report_generation(app: Any) -> None:
         "vulnerabilities": [],
         "protections": [],
         "license_checks": [],
-        "recommendations": []
+        "recommendations": [],
     }
 
     # Parse analyze_results to extract structured data
@@ -1090,7 +1083,7 @@ def run_report_generation(app: Any) -> None:
                 analysis_results["vulnerabilities"].append({
                     "type": vuln_type,
                     "description": description,
-                    "severity": "Medium"  # Default severity
+                    "severity": "Medium",  # Default severity
                 })
         elif current_section == "protections" and "detected" in line.lower():
             parts = line.split("(")
@@ -1100,13 +1093,13 @@ def run_report_generation(app: Any) -> None:
                 analysis_results["protections"].append({
                     "type": protection_type,
                     "confidence": confidence,
-                    "description": line
+                    "description": line,
                 })
         elif current_section == "license_checks" and "license" in line.lower():
             analysis_results["license_checks"].append({
                 "type": "License Check",
                 "address": "Unknown",
-                "description": line
+                "description": line,
             })
 
     # Generate report
@@ -1116,13 +1109,13 @@ def run_report_generation(app: Any) -> None:
         report_path = report_generator.generate_report(
             app.binary_path,
             analysis_results,
-            report_type.lower()
+            report_type.lower(),
         )
     else:  # HTML
         report_path = report_generator.generate_html_report(
             app.binary_path,
             analysis_results,
-            report_type.lower()
+            report_type.lower(),
         )
 
     if report_path:
@@ -1133,7 +1126,7 @@ def run_report_generation(app: Any) -> None:
             app,
             "Open Report",
             f"Report generated successfully. Open {report_format} report?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         ) == QMessageBox.Yes
 
         if open_report:

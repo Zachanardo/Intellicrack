@@ -1,5 +1,4 @@
-"""
-Protocol Fingerprinting for Proprietary License Protocols
+"""Protocol Fingerprinting for Proprietary License Protocols
 
 Copyright (C) 2025 Zachary Flint
 
@@ -28,26 +27,25 @@ import re
 import time
 import traceback
 from collections import Counter
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 # Import shared entropy calculation
 from ...utils.protection.protection_utils import calculate_entropy
 
 
 class ProtocolFingerprinter:
-    """
-    Protocol fingerprinting for proprietary license protocols.
+    """Protocol fingerprinting for proprietary license protocols.
 
     This system analyzes network traffic to identify and fingerprint proprietary
     license verification protocols, enabling more effective bypasses.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """
-        Initialize the protocol fingerprinter.
+    def __init__(self, config: dict[str, Any] | None = None):
+        """Initialize the protocol fingerprinter.
 
         Args:
             config: Configuration dictionary (optional)
+
         """
         self.logger = logging.getLogger(__name__)
 
@@ -57,7 +55,7 @@ class ProtocolFingerprinter:
             "max_fingerprints": 100,
             "learning_mode": True,
             "analysis_depth": 3,
-            "signature_db_path": os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "protocol_signatures.json")
+            "signature_db_path": os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "protocol_signatures.json"),
         }
 
         # Update with provided configuration
@@ -78,19 +76,18 @@ class ProtocolFingerprinter:
             8080, 443,     # Adobe
             1688,          # Microsoft KMS
             5093,          # Sentinel RMS
-            8224           # Generic license server
+            8224,           # Generic license server
         ]
 
         # Load known signatures
         self._load_signatures()
 
     def _load_signatures(self):
-        """
-        Load known protocol signatures from database.
+        """Load known protocol signatures from database.
         """
         try:
             if os.path.exists(self.config["signature_db_path"]):
-                with open(self.config["signature_db_path"], "r", encoding="utf-8") as f:
+                with open(self.config["signature_db_path"], encoding="utf-8") as f:
                     self.signatures = json.load(f)
 
                 self.logger.info(f"Loaded {len(self.signatures)} protocol signatures")
@@ -104,8 +101,7 @@ class ProtocolFingerprinter:
             self._initialize_signatures()
 
     def _save_signatures(self):
-        """
-        Save protocol signatures to database.
+        """Save protocol signatures to database.
         """
         try:
             # Create directory if it doesn't exist
@@ -121,8 +117,7 @@ class ProtocolFingerprinter:
             self.logger.error("Error saving signatures: %s", e)
 
     def _initialize_signatures(self):
-        """
-        Initialize with built-in protocol signatures.
+        """Initialize with built-in protocol signatures.
         """
         # FlexLM protocol
         self.signatures["flexlm"] = {
@@ -133,17 +128,17 @@ class ProtocolFingerprinter:
                 {"offset": 0, "bytes": b"VENDOR_", "mask": None, "weight": 0.5},
                 {"offset": 0, "bytes": b"SERVER_", "mask": None, "weight": 0.5},
                 {"offset": 0, "bytes": b"FEATURE", "mask": None, "weight": 0.5},
-                {"offset": 0, "bytes": b"INCREMENT", "mask": None, "weight": 0.5}
+                {"offset": 0, "bytes": b"INCREMENT", "mask": None, "weight": 0.5},
             ],
             "header_format": [
                 {"name": "command", "type": "string", "length": 8},
                 {"name": "version", "type": "uint16", "length": 2},
-                {"name": "payload_length", "type": "uint16", "length": 2}
+                {"name": "payload_length", "type": "uint16", "length": 2},
             ],
             "response_templates": {
                 "heartbeat": b"SERVER_HEARTBEAT\x00\x01\x00\x00",
-                "license_ok": b"FEATURE_RESPONSE\x00\x01\x00\x01\x01"
-            }
+                "license_ok": b"FEATURE_RESPONSE\x00\x01\x00\x01\x01",
+            },
         }
 
         # HASP/Sentinel protocol
@@ -154,17 +149,17 @@ class ProtocolFingerprinter:
             "patterns": [
                 {"offset": 0, "bytes": b"HASP_", "mask": None, "weight": 0.5},
                 {"offset": 0, "bytes": b"SENTINEL_", "mask": None, "weight": 0.5},
-                {"offset": 0, "bytes": b"\x00\x01\x02\x03\x04", "mask": None, "weight": 0.3}
+                {"offset": 0, "bytes": b"\x00\x01\x02\x03\x04", "mask": None, "weight": 0.3},
             ],
             "header_format": [
                 {"name": "signature", "type": "bytes", "length": 4},
                 {"name": "command", "type": "uint8", "length": 1},
-                {"name": "payload_length", "type": "uint16", "length": 2}
+                {"name": "payload_length", "type": "uint16", "length": 2},
             ],
             "response_templates": {
                 "heartbeat": b"\x00\x01\x02\x03\x00\x00\x00",
-                "license_ok": b"\x00\x01\x02\x03\x01\x00\x01\x01"
-            }
+                "license_ok": b"\x00\x01\x02\x03\x01\x00\x01\x01",
+            },
         }
 
         # Adobe licensing protocol
@@ -175,18 +170,18 @@ class ProtocolFingerprinter:
             "patterns": [
                 {"offset": 0, "bytes": b"LCSAP", "mask": None, "weight": 0.5},
                 {"offset": 0, "bytes": b"ADOBE_LICENSE", "mask": None, "weight": 0.5},
-                {"offset": 0, "bytes": b'{"licensing":', "mask": None, "weight": 0.3}
+                {"offset": 0, "bytes": b'{"licensing":', "mask": None, "weight": 0.3},
             ],
             "header_format": [
                 {"name": "signature", "type": "string", "length": 5},
                 {"name": "version", "type": "uint8", "length": 1},
                 {"name": "command", "type": "uint8", "length": 1},
-                {"name": "payload_length", "type": "uint16", "length": 2}
+                {"name": "payload_length", "type": "uint16", "length": 2},
             ],
             "response_templates": {
                 "heartbeat": b"LCSAP\x01\x00\x00\x00",
-                "license_ok": b"LCSAP\x01\x01\x00\x01\x01"
-            }
+                "license_ok": b"LCSAP\x01\x01\x00\x01\x01",
+            },
         }
 
         # Autodesk licensing protocol
@@ -196,18 +191,18 @@ class ProtocolFingerprinter:
             "ports": [2080, 443],
             "patterns": [
                 {"offset": 0, "bytes": b"ADSK", "mask": None, "weight": 0.5},
-                {"offset": 0, "bytes": b'{"license":', "mask": None, "weight": 0.3}
+                {"offset": 0, "bytes": b'{"license":', "mask": None, "weight": 0.3},
             ],
             "header_format": [
                 {"name": "signature", "type": "string", "length": 4},
                 {"name": "version", "type": "uint8", "length": 1},
                 {"name": "command", "type": "uint8", "length": 1},
-                {"name": "payload_length", "type": "uint16", "length": 2}
+                {"name": "payload_length", "type": "uint16", "length": 2},
             ],
             "response_templates": {
                 "heartbeat": b"ADSK\x01\x00\x00\x00",
-                "license_ok": b"ADSK\x01\x01\x00\x01\x01"
-            }
+                "license_ok": b"ADSK\x01\x01\x00\x01\x01",
+            },
         }
 
         # Microsoft KMS protocol
@@ -217,27 +212,27 @@ class ProtocolFingerprinter:
             "ports": [1688],
             "patterns": [
                 {"offset": 0, "bytes": b"\x00\x00\x00\x00\x00\x00\x00\x00", "mask": None, "weight": 0.2},
-                {"offset": 40, "bytes": b"KMSV", "mask": None, "weight": 0.5}
+                {"offset": 40, "bytes": b"KMSV", "mask": None, "weight": 0.5},
             ],
             "header_format": [
                 {"name": "signature", "type": "bytes", "length": 8},
                 {"name": "protocol", "type": "uint16", "length": 2},
-                {"name": "payload_length", "type": "uint16", "length": 2}
+                {"name": "payload_length", "type": "uint16", "length": 2},
             ],
             "response_templates": {
-                "license_ok": b"\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00KMSV\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            }
+                "license_ok": b"\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00KMSV\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+            },
         }
 
-    def _calculate_byte_frequency(self, data: Union[bytes, bytearray]) -> Dict[int, float]:
-        """
-        Calculate the frequency distribution of bytes in the given data.
+    def _calculate_byte_frequency(self, data: bytes | bytearray) -> dict[int, float]:
+        """Calculate the frequency distribution of bytes in the given data.
 
         Args:
             data: Binary data to analyze
 
         Returns:
             dict: Mapping of byte values to their frequency (0.0 to 1.0)
+
         """
         length = len(data)  # pylint: disable=redefined-outer-name
         if length == 0:
@@ -247,9 +242,8 @@ class ProtocolFingerprinter:
         freq = {byte: count / length for byte, count in counts.items()}
         return freq
 
-    def analyze_traffic(self, packet_data: Union[bytes, bytearray], port: Optional[int] = None) -> Optional[Dict[str, Any]]:
-        """
-        Analyze network traffic to identify license protocols.
+    def analyze_traffic(self, packet_data: bytes | bytearray, port: int | None = None) -> dict[str, Any] | None:
+        """Analyze network traffic to identify license protocols.
 
         Args:
             packet_data: Raw packet data
@@ -257,6 +251,7 @@ class ProtocolFingerprinter:
 
         Returns:
             dict: Identified protocol information, or None if not identified
+
         """
         try:
             # Store traffic sample for learning
@@ -264,7 +259,7 @@ class ProtocolFingerprinter:
                 self.traffic_samples.append({
                     "data": packet_data,
                     "port": port,
-                    "timestamp": time.time()
+                    "timestamp": time.time(),
                 })
 
                 # Trim samples if needed
@@ -358,7 +353,7 @@ class ProtocolFingerprinter:
                         "description": signature["description"],
                         "confidence": confidence,
                         "header_format": signature["header_format"],
-                        "response_templates": signature["response_templates"]
+                        "response_templates": signature["response_templates"],
                     })
 
             # Sort by confidence
@@ -377,7 +372,7 @@ class ProtocolFingerprinter:
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error analyzing traffic: %s", e)
 
-    def fingerprint_packet(self, packet_data: Union[bytes, bytearray], port: Optional[int] = None) -> Optional[Dict[str, Any]]:
+    def fingerprint_packet(self, packet_data: bytes | bytearray, port: int | None = None) -> dict[str, Any] | None:
         """Fingerprint a single packet for protocol identification.
 
         Args:
@@ -386,6 +381,7 @@ class ProtocolFingerprinter:
 
         Returns:
             dict: Protocol fingerprint information, or None if not identified
+
         """
         try:
             self.logger.debug("Fingerprinting packet of %d bytes on port %s", len(packet_data), port)
@@ -411,13 +407,13 @@ class ProtocolFingerprinter:
             self.logger.error("Packet fingerprinting failed: %s", e)
             return None
 
-    def _analyze_packet_structure(self, packet_data: Union[bytes, bytearray]) -> Dict[str, Any]:
+    def _analyze_packet_structure(self, packet_data: bytes | bytearray) -> dict[str, Any]:
         """Analyze packet structure for additional fingerprint information."""
         analysis = {
             "packet_entropy": 0.0,
             "ascii_ratio": 0.0,
             "common_patterns": [],
-            "protocol_hints": []
+            "protocol_hints": [],
         }
 
         try:
@@ -452,9 +448,8 @@ class ProtocolFingerprinter:
 
         return analysis
 
-    def parse_packet(self, protocol_id: str, packet_data: Union[bytes, bytearray]) -> Optional[Dict[str, Any]]:
-        """
-        Parse a packet according to the protocol's header format.
+    def parse_packet(self, protocol_id: str, packet_data: bytes | bytearray) -> dict[str, Any] | None:
+        """Parse a packet according to the protocol's header format.
 
         Args:
             protocol_id: Protocol identifier
@@ -462,6 +457,7 @@ class ProtocolFingerprinter:
 
         Returns:
             dict: Parsed packet fields, or None if parsing failed
+
         """
         try:
             if protocol_id not in self.signatures:
@@ -483,9 +479,7 @@ class ProtocolFingerprinter:
 
                 if field_type == "uint8":
                     result[field_name] = packet_data[offset]
-                elif field_type == "uint16":
-                    result[field_name] = int.from_bytes(packet_data[offset:offset+field_length], byteorder="big")
-                elif field_type == "uint32":
+                elif field_type == "uint16" or field_type == "uint32":
                     result[field_name] = int.from_bytes(packet_data[offset:offset+field_length], byteorder="big")
                 elif field_type == "string":
                     result[field_name] = packet_data[offset:offset+field_length].decode("utf-8", errors="ignore").rstrip("\x00")
@@ -504,10 +498,9 @@ class ProtocolFingerprinter:
             self.logger.error("Error parsing packet: %s", e)
             return None
 
-    def generate_response(self, protocol_id: str, request_packet: Union[bytes, bytearray],
-                         response_type: str = "license_ok") -> Optional[bytes]:
-        """
-        Generate a response packet for a license check request.
+    def generate_response(self, protocol_id: str, request_packet: bytes | bytearray,
+                         response_type: str = "license_ok") -> bytes | None:
+        """Generate a response packet for a license check request.
 
         Args:
             protocol_id: Protocol identifier
@@ -516,6 +509,7 @@ class ProtocolFingerprinter:
 
         Returns:
             bytes: Response packet data, or None if generation failed
+
         """
         try:
             if protocol_id not in self.signatures:
@@ -564,9 +558,8 @@ class ProtocolFingerprinter:
             self.logger.error("Error generating response: %s", e)
             return None
 
-    def _learn_new_signature(self, packet_data: Union[bytes, bytearray], port: Optional[int] = None) -> bool:
-        """
-        Attempt to learn a new protocol signature from traffic.
+    def _learn_new_signature(self, packet_data: bytes | bytearray, port: int | None = None) -> bool:
+        """Attempt to learn a new protocol signature from traffic.
 
         Args:
             packet_data: Raw packet data
@@ -574,6 +567,7 @@ class ProtocolFingerprinter:
 
         Returns:
             bool: True if a new signature was learned, False otherwise
+
         """
         try:
             # Need at least 10 samples to learn
@@ -608,11 +602,11 @@ class ProtocolFingerprinter:
                 "patterns": patterns,
                 "header_format": [
                     {"name": "signature", "type": "bytes", "length": len(patterns[0]["bytes"])},
-                    {"name": "payload", "type": "bytes", "length": 0}  # Variable length
+                    {"name": "payload", "type": "bytes", "length": 0},  # Variable length
                 ],
                 "response_templates": {
-                    "license_ok": b"\x01" * 8  # Generic positive response
-                }
+                    "license_ok": b"\x01" * 8,  # Generic positive response
+                },
             }
 
             # Add to learned signatures
@@ -631,9 +625,8 @@ class ProtocolFingerprinter:
             self.logger.error("Error learning new signature: %s", e)
             return False
 
-    def _calculate_similarity(self, data1: Union[bytes, bytearray], data2: Union[bytes, bytearray]) -> float:
-        """
-        Calculate similarity between two data samples.
+    def _calculate_similarity(self, data1: bytes | bytearray, data2: bytes | bytearray) -> float:
+        """Calculate similarity between two data samples.
 
         Args:
             data1: First data sample
@@ -641,6 +634,7 @@ class ProtocolFingerprinter:
 
         Returns:
             float: Similarity score (0.0 to 1.0)
+
         """
         # Simple similarity based on common bytes
         min_len = min(len(data1), len(data2))
@@ -656,15 +650,15 @@ class ProtocolFingerprinter:
 
         return common_bytes / max_len
 
-    def _extract_common_patterns(self, samples: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Extract common patterns from similar packets.
+    def _extract_common_patterns(self, samples: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Extract common patterns from similar packets.
 
         Args:
             samples: List of similar packet samples
 
         Returns:
             list: List of pattern dictionaries
+
         """
         # Extract common prefix
         min_len = min(len(_sample["data"]) for _sample in samples)
@@ -688,12 +682,11 @@ class ProtocolFingerprinter:
         prefix_bytes = samples[0]["data"][:prefix_len]
 
         return [
-            {"offset": 0, "bytes": prefix_bytes, "mask": None, "weight": 0.5}
+            {"offset": 0, "bytes": prefix_bytes, "mask": None, "weight": 0.5},
         ]
 
-    def analyze_pcap(self, pcap_path: str) -> Dict[str, Any]:
-        """
-        Analyze PCAP file for protocol fingerprints.
+    def analyze_pcap(self, pcap_path: str) -> dict[str, Any]:
+        """Analyze PCAP file for protocol fingerprints.
 
         This method processes a PCAP capture file to identify and fingerprint
         network protocols, particularly focusing on license-related communications.
@@ -706,6 +699,7 @@ class ProtocolFingerprinter:
             - file: Path to analyzed file
             - protocols: List of identified protocols
             - fingerprints: Detailed protocol fingerprints
+
         """
         self.logger.info(f"Analyzing PCAP file: {pcap_path}")
 
@@ -718,8 +712,8 @@ class ProtocolFingerprinter:
                 "total_packets": 0,
                 "license_packets": 0,
                 "identified_protocols": 0,
-                "new_signatures_learned": 0
-            }
+                "new_signatures_learned": 0,
+            },
         }
 
         try:
@@ -772,7 +766,7 @@ class ProtocolFingerprinter:
                                                 "confidence": fingerprint_result.get("confidence", 0),
                                                 "packets": 0,
                                                 "ports": set(),
-                                                "sample_data": []
+                                                "sample_data": [],
                                             }
 
                                         fp = results["fingerprints"][protocol_id]
@@ -786,7 +780,7 @@ class ProtocolFingerprinter:
                                                 "src": f"{packet.ip.src}:{src_port}",
                                                 "dst": f"{packet.ip.dst}:{dst_port}",
                                                 "size": len(payload),
-                                                "entropy": calculate_entropy(payload)
+                                                "entropy": calculate_entropy(payload),
                                             })
 
                                 except Exception as e:
@@ -843,9 +837,8 @@ class ProtocolFingerprinter:
 
         return results
 
-    def analyze_binary(self, binary_path: str) -> Dict[str, Any]:
-        """
-        Analyze binary for network protocols.
+    def analyze_binary(self, binary_path: str) -> dict[str, Any]:
+        """Analyze binary for network protocols.
 
         This method analyzes a binary file to identify hardcoded network protocols,
         license server addresses, and protocol-related strings that indicate
@@ -859,6 +852,7 @@ class ProtocolFingerprinter:
             - binary: Path to analyzed file
             - network_functions: List of identified network functions
             - protocols: List of likely protocols used
+
         """
         self.logger.info(f"Analyzing binary for network protocols: {binary_path}")
 
@@ -872,8 +866,8 @@ class ProtocolFingerprinter:
             "summary": {
                 "has_network_code": False,
                 "likely_license_client": False,
-                "protocol_confidence": 0.0
-            }
+                "protocol_confidence": 0.0,
+            },
         }
 
         try:
@@ -892,7 +886,7 @@ class ProtocolFingerprinter:
                 b"socket", b"connect", b"send", b"recv", b"WSAStartup",
                 b"getaddrinfo", b"gethostbyname", b"inet_addr",
                 b"WinHttpOpen", b"InternetOpen", b"URLDownload",
-                b"curl_easy_init", b"SSL_connect", b"TLS_"
+                b"curl_easy_init", b"SSL_connect", b"TLS_",
             ]
 
             for func in network_functions:
@@ -908,7 +902,7 @@ class ProtocolFingerprinter:
                 "Adobe": [b"adobe_license", b"activation.adobe.com", b"lm.licenses.adobe.com"],
                 "Autodesk": [b"adskflex", b"autodesk", b"flexnet", b"2080"],
                 "Microsoft KMS": [b"KMSClient", b"SLMgr", b"1688", b"kms."],
-                "Generic": [b"LICENSE", b"ACTIVATION", b"serial", b"product_key", b"registration"]
+                "Generic": [b"LICENSE", b"ACTIVATION", b"serial", b"product_key", b"registration"],
             }
 
             for protocol, indicators in protocol_indicators.items():
@@ -926,7 +920,7 @@ class ProtocolFingerprinter:
                         results["license_indicators"].append({
                             "protocol": protocol,
                             "indicator": indicator.decode("utf-8", errors="ignore"),
-                            "context": context.hex()
+                            "context": context.hex(),
                         })
 
                 if matches >= 2:  # At least 2 indicators for confidence
@@ -943,7 +937,7 @@ class ProtocolFingerprinter:
                 re.compile(br"(?:port|PORT)\s*[=:]\s*[0-9]{1,5}"),
                 re.compile(br"(?:server|SERVER)\s*[=:]\s*[^\s]+"),
                 re.compile(br"license[_\-]?server", re.IGNORECASE),
-                re.compile(br"activation[_\-]?server", re.IGNORECASE)
+                re.compile(br"activation[_\-]?server", re.IGNORECASE),
             ]
 
             for string in ascii_strings[:1000]:  # Limit to first 1000 strings
@@ -964,7 +958,7 @@ class ProtocolFingerprinter:
                 b"\x08\x20",  # 2080 (License Manager)
                 b"\x20\x28",  # 8224 (License Server)
                 b"\x13\xd5",  # 5093 (Sentinel)
-                b"\x06\x90"   # 1688 (KMS)
+                b"\x06\x90",   # 1688 (KMS)
             ]
 
             for port_bytes in license_ports_bytes:
@@ -992,7 +986,7 @@ class ProtocolFingerprinter:
 
             self.logger.info(
                 f"Binary analysis complete: {len(results['network_functions'])} network functions, "
-                f"{len(results['protocols'])} protocols identified"
+                f"{len(results['protocols'])} protocols identified",
             )
 
         except Exception as e:

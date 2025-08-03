@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -64,7 +64,7 @@ class ScriptMetadata:
     script_id: str
     script_type: ScriptType
     target_binary: str
-    protection_types: List[ProtectionType]
+    protection_types: list[ProtectionType]
     generated_at: datetime = field(default_factory=datetime.now)
     llm_model: str = ""
     generation_time: float = 0.0
@@ -80,9 +80,9 @@ class GeneratedScript:
     content: str
     language: str
     entry_point: str
-    dependencies: List[str] = field(default_factory=list)
-    hooks: List[Dict[str, Any]] = field(default_factory=list)
-    patches: List[Dict[str, Any]] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
+    hooks: list[dict[str, Any]] = field(default_factory=list)
+    patches: list[dict[str, Any]] = field(default_factory=list)
     validation_passed: bool = False
 
 
@@ -91,13 +91,13 @@ class ScriptGenerationResult:
     """Result of script generation process."""
 
     success: bool
-    script: Optional[GeneratedScript] = None
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    script: GeneratedScript | None = None
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
     generation_time: float = 0.0
     iterations: int = 1
     confidence_score: float = 0.0
-    recommendations: List[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
 
 class ScriptValidator:
@@ -109,22 +109,22 @@ class ScriptValidator:
         self.forbidden_patterns = [
             "TODO", "PLACEHOLDER", "FIXME", "XXX",
             "mock", "stub", "dummy", "fake",
-            "pass  # Implement", "...", "NotImplemented"
+            "pass  # Implement", "...", "NotImplemented",
         ]
 
         self.required_frida_elements = [
-            "Interceptor", "Module", "Memory", "console.log"
+            "Interceptor", "Module", "Memory", "console.log",
         ]
 
         self.required_ghidra_elements = [
-            "from ghidra", "GhidraScript", "def run"
+            "from ghidra", "GhidraScript", "def run",
         ]
 
         # Context optimization settings
         self.max_context_tokens = 8000
         self.context_compression_ratio = 0.7
 
-    def validate_script(self, script: GeneratedScript) -> Tuple[bool, List[str]]:
+    def validate_script(self, script: GeneratedScript) -> tuple[bool, list[str]]:
         """Validate a generated script for quality and safety."""
         errors = []
 
@@ -147,7 +147,7 @@ class ScriptValidator:
 
         return is_valid, errors
 
-    def _validate_frida_script(self, content: str) -> List[str]:
+    def _validate_frida_script(self, content: str) -> list[str]:
         """Validate Frida-specific requirements."""
         errors = []
 
@@ -168,7 +168,7 @@ class ScriptValidator:
 
         return errors
 
-    def _validate_ghidra_script(self, content: str) -> List[str]:
+    def _validate_ghidra_script(self, content: str) -> list[str]:
         """Validate Ghidra-specific requirements."""
         errors = []
 
@@ -183,7 +183,7 @@ class ScriptValidator:
 
         return errors
 
-    def _validate_syntax(self, content: str, language: str) -> List[str]:
+    def _validate_syntax(self, content: str, language: str) -> list[str]:
         """Validate basic syntax.
 
         Args:
@@ -219,7 +219,7 @@ class ScriptTemplateEngine:
 
     def __init__(self):
         """Initialize script template engine with base templates."""
-        self.frida_base_template = '''
+        self.frida_base_template = """
 // Auto-generated Frida script by Intellicrack AI
 // Target: {target_info}
 // Protection Type: {protection_type}
@@ -251,9 +251,9 @@ class ScriptTemplateEngine:
 
     {helper_functions}
 }}
-'''
+"""
 
-        self.ghidra_base_template = '''
+        self.ghidra_base_template = """
 # Auto-generated Ghidra script by Intellicrack AI
 # Target: {target_info}
 # Analysis Goal: {analysis_goal}
@@ -278,7 +278,7 @@ class {script_class_name}(GhidraScript):
 
 # Run the script
 {script_class_name}().run()
-'''
+"""
 
     def render_frida_script(self, **kwargs) -> str:
         """Render a Frida script from template."""
@@ -293,7 +293,7 @@ class {script_class_name}(GhidraScript):
             "initialization_code": kwargs.get("initialization_code", "// No initialization required"),
             "hook_installations": kwargs.get("hook_installations", "// No hooks defined"),
             "bypass_logic": kwargs.get("bypass_logic", "// No bypass logic defined"),
-            "helper_functions": kwargs.get("helper_functions", "// No helper functions")
+            "helper_functions": kwargs.get("helper_functions", "// No helper functions"),
         }
         defaults.update(kwargs)
         return self.frida_base_template.format(**defaults)
@@ -309,7 +309,7 @@ class {script_class_name}(GhidraScript):
             "script_name": kwargs.get("script_name", "AI Generated Script"),
             "initialization_code": kwargs.get("initialization_code", "// No initialization required"),
             "analysis_functions": kwargs.get("analysis_functions", "// No analysis functions defined"),
-            "patching_logic": kwargs.get("patching_logic", "// No patching logic defined")
+            "patching_logic": kwargs.get("patching_logic", "// No patching logic defined"),
         }
         defaults.update(kwargs)
         return self.ghidra_base_template.format(**defaults)
@@ -325,7 +325,7 @@ class PatternLibrary:
                 "indicators": ["strcmp", "strcasecmp", "memcmp", "wcscmp"],
                 "bypass_strategy": "hook_comparison_return_zero",
                 "confidence": 0.9,
-                "frida_hook": '''
+                "frida_hook": """
 Interceptor.attach(Module.findExportByName(null, "{function_name}"), {
     onEnter: function(args) {
         console.log("[Hook] {function_name} called");
@@ -337,13 +337,13 @@ Interceptor.attach(Module.findExportByName(null, "{function_name}"), {
         retval.replace(0); // Force success
     }
 });
-'''
+""",
             },
             "time_check": {
                 "indicators": ["GetSystemTime", "time", "clock", "GetTickCount"],
                 "bypass_strategy": "hook_time_functions",
                 "confidence": 0.85,
-                "frida_hook": '''
+                "frida_hook": """
 Interceptor.attach(Module.findExportByName("kernel32.dll", "GetSystemTime"), {
     onEnter: function(args) {
         console.log("[Hook] GetSystemTime called");
@@ -352,13 +352,13 @@ Interceptor.attach(Module.findExportByName("kernel32.dll", "GetSystemTime"), {
         console.log("[Hook] Time function hooked - may need specific manipulation");
     }
 });
-'''
+""",
             },
             "registry_check": {
                 "indicators": ["RegOpenKey", "RegQueryValue", "RegGetValue"],
                 "bypass_strategy": "hook_registry_apis",
                 "confidence": 0.88,
-                "frida_hook": '''
+                "frida_hook": """
 Interceptor.attach(Module.findExportByName("advapi32.dll", "RegQueryValueExW"), {
     onEnter: function(args) {
         console.log("[Hook] Registry query detected");
@@ -371,30 +371,29 @@ Interceptor.attach(Module.findExportByName("advapi32.dll", "RegQueryValueExW"), 
         }
     }
 });
-'''
-            }
+""",
+            },
         }
 
-    def get_bypass_strategy(self, protection_type: ProtectionType) -> Dict[str, Any]:
+    def get_bypass_strategy(self, protection_type: ProtectionType) -> dict[str, Any]:
         """Get bypass strategy for a protection type."""
         if protection_type == ProtectionType.LICENSE_CHECK:
             return {
                 "type": "hook_license_functions",
                 "patterns": self.license_check_patterns,
-                "priority": "high"
+                "priority": "high",
             }
-        elif protection_type == ProtectionType.TIME_BOMB:
+        if protection_type == ProtectionType.TIME_BOMB:
             return {
                 "type": "hook_time_functions",
                 "patterns": self.license_check_patterns["time_check"],
-                "priority": "high"
+                "priority": "high",
             }
-        else:
-            return {
-                "type": "generic_analysis",
-                "patterns": {},
-                "priority": "medium"
-            }
+        return {
+            "type": "generic_analysis",
+            "patterns": {},
+            "priority": "medium",
+        }
 
 
 class AIScriptGenerator:
@@ -420,7 +419,7 @@ class AIScriptGenerator:
         self.max_context_tokens = 8000
         self.context_compression_ratio = 0.7
 
-    def _generate_frida_script_internal(self, analysis_results: Dict[str, Any]) -> GeneratedScript:
+    def _generate_frida_script_internal(self, analysis_results: dict[str, Any]) -> GeneratedScript:
         """Generate a real, working Frida script based on analysis."""
         start_time = time.time()
 
@@ -434,7 +433,7 @@ class AIScriptGenerator:
             script_id=script_id,
             script_type=ScriptType.FRIDA,
             target_binary=target_binary,
-            protection_types=protection_types
+            protection_types=protection_types,
         )
 
         # Generate hook specifications
@@ -458,7 +457,7 @@ class AIScriptGenerator:
             initialization_code=self._generate_initialization_code(),
             hook_installations=hooks,
             bypass_logic=bypass_logic,
-            helper_functions=helper_functions
+            helper_functions=helper_functions,
         )
 
         # Create generated script object
@@ -467,7 +466,7 @@ class AIScriptGenerator:
             content=script_content,
             language="javascript",
             entry_point="run",
-            hooks=self._extract_hook_info(hooks)
+            hooks=self._extract_hook_info(hooks),
         )
 
         # Update metadata
@@ -482,7 +481,7 @@ class AIScriptGenerator:
 
         return script
 
-    def _generate_ghidra_script_internal(self, analysis_results: Dict[str, Any]) -> GeneratedScript:
+    def _generate_ghidra_script_internal(self, analysis_results: dict[str, Any]) -> GeneratedScript:
         """Generate a real, working Ghidra script based on analysis."""
         start_time = time.time()
 
@@ -496,7 +495,7 @@ class AIScriptGenerator:
             script_id=script_id,
             script_type=ScriptType.GHIDRA,
             target_binary=target_binary,
-            protection_types=protection_types
+            protection_types=protection_types,
         )
 
         # Generate analysis functions
@@ -517,7 +516,7 @@ class AIScriptGenerator:
             script_name=f"Analysis for {target_binary}",
             initialization_code=self._generate_ghidra_initialization(),
             analysis_functions=analysis_functions,
-            patching_logic=patching_logic
+            patching_logic=patching_logic,
         )
 
         # Create generated script object
@@ -526,7 +525,7 @@ class AIScriptGenerator:
             content=script_content,
             language="python",
             entry_point=f"{script_class_name}().run()",
-            patches=self._extract_patch_info(patching_logic)
+            patches=self._extract_patch_info(patching_logic),
         )
 
         # Update metadata
@@ -541,7 +540,7 @@ class AIScriptGenerator:
 
         return script
 
-    def _identify_protections(self, analysis_results: Dict[str, Any]) -> List[ProtectionType]:
+    def _identify_protections(self, analysis_results: dict[str, Any]) -> list[ProtectionType]:
         """Identify protection types from analysis results using comprehensive pattern detection."""
         protections = set()  # Use set to avoid duplicates
         confidence_scores = {}
@@ -558,19 +557,19 @@ class AIScriptGenerator:
                 "keywords": ["license", "serial", "activation", "registration", "unlock", "keyfile", "product_key"],
                 "functions": ["check_license", "validate_key", "verify_serial", "IsLicenseValid", "GetLicenseStatus"],
                 "imports": ["GetVolumeSerialNumber", "GetComputerName", "GetUserName", "CryptHashData"],
-                "weight": 0.9
+                "weight": 0.9,
             },
             "medium_indicators": {
                 "keywords": ["trial", "demo", "evaluation", "expire", "days_left", "limited"],
                 "functions": ["CheckTrial", "GetTrialDays", "IsExpired"],
                 "imports": ["RegQueryValueEx", "RegSetValueEx"],
-                "weight": 0.7
+                "weight": 0.7,
             },
             "weak_indicators": {
                 "keywords": ["valid", "invalid", "registered", "unregistered"],
                 "functions": ["strcmp", "memcmp", "strncmp"],
-                "weight": 0.4
-            }
+                "weight": 0.4,
+            },
         }
 
         # Time bomb patterns
@@ -579,13 +578,13 @@ class AIScriptGenerator:
                 "functions": ["time", "localtime", "gmtime", "GetSystemTime", "GetLocalTime", "QueryPerformanceCounter"],
                 "imports": ["time", "GetSystemTimeAsFileTime", "GetTickCount", "timeGetTime"],
                 "keywords": ["expir", "trial_end", "date_check", "time_limit", "days_remaining"],
-                "weight": 0.85
+                "weight": 0.85,
             },
             "medium_indicators": {
                 "functions": ["difftime", "mktime", "clock", "GetFileTime"],
                 "keywords": ["deadline", "cutoff", "enddate", "valid_until"],
-                "weight": 0.6
-            }
+                "weight": 0.6,
+            },
         }
 
         # Network validation patterns
@@ -594,13 +593,13 @@ class AIScriptGenerator:
                 "imports": ["WSAStartup", "socket", "connect", "send", "recv", "InternetOpen", "HttpOpenRequest"],
                 "functions": ["check_online", "validate_server", "phone_home", "activate_online"],
                 "keywords": ["license_server", "auth_server", "validation_url", "activation_endpoint"],
-                "weight": 0.88
+                "weight": 0.88,
             },
             "medium_indicators": {
                 "imports": ["gethostbyname", "getaddrinfo", "InternetConnect"],
                 "keywords": ["server", "endpoint", "api", "cloud"],
-                "weight": 0.65
-            }
+                "weight": 0.65,
+            },
         }
 
         # Hardware lock patterns
@@ -609,8 +608,8 @@ class AIScriptGenerator:
                 "imports": ["GetVolumeInformation", "GetAdaptersInfo", "GetSystemInfo", "DeviceIoControl"],
                 "functions": ["GetHWID", "GetMachineID", "CheckHardware", "VerifySystem"],
                 "keywords": ["hwid", "machine_id", "fingerprint", "hardware_lock", "node_lock"],
-                "weight": 0.92
-            }
+                "weight": 0.92,
+            },
         }
 
         # Anti-debug patterns
@@ -620,13 +619,13 @@ class AIScriptGenerator:
                           "OutputDebugString", "SetUnhandledExceptionFilter"],
                 "functions": ["anti_debug", "detect_debugger", "check_debugger"],
                 "keywords": ["debugger", "breakpoint", "int3", "debug_detect"],
-                "weight": 0.95
+                "weight": 0.95,
             },
             "medium_indicators": {
                 "imports": ["GetTickCount", "QueryPerformanceCounter", "CloseHandle"],
                 "keywords": ["timing_check", "debug_flag"],
-                "weight": 0.7
-            }
+                "weight": 0.7,
+            },
         }
 
         # VM detection patterns
@@ -635,8 +634,8 @@ class AIScriptGenerator:
                 "keywords": ["vmware", "virtualbox", "hypervisor", "qemu", "virtual_machine", "sandboxie"],
                 "functions": ["detect_vm", "check_hypervisor", "is_virtual"],
                 "imports": ["GetSystemFirmwareTable", "EnumSystemFirmwareTables"],
-                "weight": 0.9
-            }
+                "weight": 0.9,
+            },
         }
 
         # Anti-tamper patterns
@@ -645,8 +644,8 @@ class AIScriptGenerator:
                 "imports": ["CryptHashData", "CryptCreateHash", "CryptGetHashParam"],
                 "functions": ["check_integrity", "verify_checksum", "calculate_crc", "self_check"],
                 "keywords": ["checksum", "integrity", "crc32", "hash_check", "tamper"],
-                "weight": 0.88
-            }
+                "weight": 0.88,
+            },
         }
 
         # Obfuscation patterns
@@ -655,8 +654,8 @@ class AIScriptGenerator:
                 "section_names": [".vmp", ".themida", ".enigma", ".aspack", ".upx"],
                 "imports": ["VirtualProtect", "VirtualAlloc", "WriteProcessMemory"],
                 "keywords": ["packed", "encrypted", "obfuscated"],
-                "weight": 0.85
-            }
+                "weight": 0.85,
+            },
         }
 
         # Pattern detection engine
@@ -796,7 +795,7 @@ class AIScriptGenerator:
 
         return list(protections)
 
-    def _generate_hooks(self, analysis_results: Dict[str, Any], protection_types: List[ProtectionType]) -> str:
+    def _generate_hooks(self, analysis_results: dict[str, Any], protection_types: list[ProtectionType]) -> str:
         """Generate hook installation code based on analysis results."""
         hooks = []
 
@@ -860,7 +859,7 @@ class AIScriptGenerator:
 
             elif protection_type == ProtectionType.LICENSE_CHECK:
                 # Generate license check hooks
-                hook_code = '''
+                hook_code = """
         // License check bypass hooks
         var license_functions = ["strcmp", "strcasecmp", "memcmp"];
         license_functions.forEach(function(func_name) {{
@@ -890,12 +889,12 @@ class AIScriptGenerator:
                 });
             }
         });
-'''
+"""
                 hooks.append(hook_code)
 
             elif protection_type == ProtectionType.TIME_BOMB:
                 # Generate time function hooks
-                hook_code = '''
+                hook_code = """
         // Time bomb bypass hooks
         var time_functions = ["GetSystemTime", "time", "clock", "GetTickCount"];
         time_functions.forEach(function(func_name) {{
@@ -912,18 +911,18 @@ class AIScriptGenerator:
                 });
             }
         });
-'''
+"""
                 hooks.append(hook_code)
 
         return "\n".join(hooks) if hooks else "        // No specific hooks generated"
 
-    def _generate_bypass_logic(self, protection_types: List[ProtectionType]) -> str:
+    def _generate_bypass_logic(self, protection_types: list[ProtectionType]) -> str:
         """Generate protection bypass logic."""
         bypass_logic = []
 
         for protection_type in protection_types:
             if protection_type == ProtectionType.LICENSE_CHECK:
-                logic = '''
+                logic = """
         // License validation bypass
         console.log("[Bypass] Setting up license validation bypass...");
 
@@ -952,17 +951,17 @@ class AIScriptGenerator:
                 // Continue if module enumeration fails
             }
         });
-'''
+"""
                 bypass_logic.append(logic)
 
         return "\n".join(bypass_logic) if bypass_logic else "        // No specific bypass logic generated"
 
-    def _generate_helper_functions(self, protection_types: List[ProtectionType]) -> str:
+    def _generate_helper_functions(self, protection_types: list[ProtectionType]) -> str:
         """Generate helper functions for the script."""
         # Use protection_types to generate type-specific helpers
         type_names = [p.name for p in protection_types]
 
-        helpers = f'''
+        helpers = f"""
     // Helper functions for protection types: {', '.join(type_names)}
     // Helper functions
     findLicenseStrings: function() {{
@@ -993,10 +992,10 @@ class AIScriptGenerator:
     logProtectionAttempt: function(type, details) {{
         console.log("[Protection] " + type + ": " + JSON.stringify(details));
     }}
-'''
+"""
         return helpers
 
-    def _generate_analysis_functions(self, analysis_results: Dict[str, Any]) -> str:
+    def _generate_analysis_functions(self, analysis_results: dict[str, Any]) -> str:
         """Generate Ghidra analysis functions based on analysis results."""
         # Extract existing analysis data to guide further analysis
         known_functions = analysis_results.get("functions", [])
@@ -1015,7 +1014,7 @@ class AIScriptGenerator:
         license_functions = []  # Will be populated
         license_strings = []  # Will be populated
 
-        analysis_code = f'''
+        analysis_code = f"""
         # Analyze binary for protection mechanisms
         # Using previous analysis results: {len(known_functions)} functions, {len(target_addresses)} targets
         # Known license strings from analysis: {len(known_license_strings)}
@@ -1055,10 +1054,10 @@ class AIScriptGenerator:
                     print(f"Found license string at {data.getAddress()}: {string_val}")
 
         print(f"Analysis complete: {len(license_functions)} functions, {len(license_strings)} strings")
-'''
+"""
         return analysis_code
 
-    def _generate_patching_logic(self, analysis_results: Dict[str, Any], protection_types: List[ProtectionType]) -> str:
+    def _generate_patching_logic(self, analysis_results: dict[str, Any], protection_types: list[ProtectionType]) -> str:
         """Generate Ghidra patching logic based on analysis results and protection types."""
         # Extract patch targets from analysis results
         patch_addresses = analysis_results.get("patch_addresses", [])
@@ -1083,7 +1082,7 @@ class AIScriptGenerator:
                 protection_patches.extend(
                     [addr for addr in patch_addresses if addr.get("type") == "trial"])
 
-        patching_code = f'''
+        patching_code = f"""
         # Apply patches to bypass protections
         # Analysis found {len(patch_addresses)} potential patch points
         # Protection types detected: {[p.name for p in protection_types]}
@@ -1138,12 +1137,12 @@ class AIScriptGenerator:
         }}
 
         print("Patch summary:", patch_info)
-'''
+"""
         return patching_code
 
     def _generate_initialization_code(self) -> str:
         """Generate initialization code for Frida scripts."""
-        return '''
+        return """
         // Initialize protection detection
         this.target_module = Process.enumerateModules()[0];
         this.protection_counters = {
@@ -1154,11 +1153,11 @@ class AIScriptGenerator:
 
         console.log("[Init] Target module: " + this.target_module.name);
         console.log("[Init] Base address: " + this.target_module.base);
-'''
+"""
 
     def _generate_ghidra_initialization(self) -> str:
         """Generate initialization code for Ghidra scripts."""
-        return '''
+        return """
         # Initialize analysis environment
         program = getCurrentProgram()
         if program is None:
@@ -1168,14 +1167,14 @@ class AIScriptGenerator:
         print(f"Analyzing program: {program.getName()}")
         print(f"Base address: {program.getImageBase()}")
         print(f"Language: {program.getLanguage()}")
-'''
+"""
 
     def _generate_script_id(self, target_binary: str, script_type: ScriptType) -> str:
         """Generate unique script ID."""
         content = f"{target_binary}_{script_type.value}_{datetime.now().isoformat()}"
         return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:16]
 
-    def _calculate_success_probability(self, protection_types: List[ProtectionType]) -> float:
+    def _calculate_success_probability(self, protection_types: list[ProtectionType]) -> float:
         """Calculate estimated success probability based on protection types."""
         base_probability = 0.7
 
@@ -1189,7 +1188,7 @@ class AIScriptGenerator:
 
         return min(max(base_probability, 0.0), 1.0)
 
-    def _extract_hook_info(self, hooks_code: str) -> List[Dict[str, Any]]:
+    def _extract_hook_info(self, hooks_code: str) -> list[dict[str, Any]]:
         """Extract hook information from generated code."""
         hooks = []
 
@@ -1202,12 +1201,12 @@ class AIScriptGenerator:
             hooks.append({
                 "id": f"hook_{i}",
                 "type": "interceptor",
-                "callbacks": ["onEnter", "onLeave"] if "onEnter" in match and "onLeave" in match else ["unknown"]
+                "callbacks": ["onEnter", "onLeave"] if "onEnter" in match and "onLeave" in match else ["unknown"],
             })
 
         return hooks
 
-    def _extract_patch_info(self, patch_code: str) -> List[Dict[str, Any]]:
+    def _extract_patch_info(self, patch_code: str) -> list[dict[str, Any]]:
         """Extract patch information from generated code."""
         patches = []
 
@@ -1215,7 +1214,7 @@ class AIScriptGenerator:
         if "clearListing" in patch_code:
             patches.append({
                 "type": "function_replacement",
-                "description": "License function bypass patch"
+                "description": "License function bypass patch",
             })
 
         return patches
@@ -1254,13 +1253,13 @@ class AIScriptGenerator:
                 "success_probability": script.metadata.success_probability,
                 "validation_passed": script.validation_passed,
                 "hooks": script.hooks,
-                "patches": script.patches
+                "patches": script.patches,
             }, f, indent=2)
 
         logger.info(f"Generated script saved to: {file_path}")
         return str(file_path)
 
-    def optimize_context_for_llm(self, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
+    def optimize_context_for_llm(self, analysis_data: dict[str, Any]) -> dict[str, Any]:
         """Optimize analysis data for LLM context window."""
         optimized = {}
 
@@ -1314,7 +1313,7 @@ class AIScriptGenerator:
 
         protection_keywords = [
             "license", "trial", "demo", "check", "validate", "verify",
-            "auth", "register", "activate", "expire", "time", "crypto"
+            "auth", "register", "activate", "expire", "time", "crypto",
         ]
 
         return any(keyword in name.lower() for keyword in protection_keywords)
@@ -1326,18 +1325,18 @@ class AIScriptGenerator:
 
         license_keywords = [
             "license", "trial", "demo", "expire", "activate", "register",
-            "serial", "key", "validation", "auth", "check"
+            "serial", "key", "validation", "auth", "check",
         ]
 
         return any(keyword in string.lower() for keyword in license_keywords)
 
-    def estimate_context_tokens(self, data: Dict[str, Any]) -> int:
+    def estimate_context_tokens(self, data: dict[str, Any]) -> int:
         """Estimate token count for context data."""
         # Rough estimation: 1 token per 4 characters
         content = json.dumps(data, default=str)
         return len(content) // 4
 
-    def compress_context_if_needed(self, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
+    def compress_context_if_needed(self, analysis_data: dict[str, Any]) -> dict[str, Any]:
         """Compress context data if it exceeds token limits."""
         optimized = self.optimize_context_for_llm(analysis_data)
         estimated_tokens = self.estimate_context_tokens(optimized)
@@ -1367,7 +1366,7 @@ class AIScriptGenerator:
                 "binary_info": optimized.get("binary_info", {}),
                 "protections": optimized.get("protections", []),
                 "key_functions": optimized.get("functions", [])[:5],
-                "key_strings": optimized.get("strings", [])[:10]
+                "key_strings": optimized.get("strings", [])[:10],
             }
             logger.warning(
                 "Applied aggressive compression to fit context window")
@@ -1375,8 +1374,8 @@ class AIScriptGenerator:
 
         return optimized
 
-    def refine_script(self, original_script: str, test_results: Dict[str, Any],
-                      analysis_data: Dict[str, Any]) -> Optional[GeneratedScript]:
+    def refine_script(self, original_script: str, test_results: dict[str, Any],
+                      analysis_data: dict[str, Any]) -> GeneratedScript | None:
         """Refine an existing script based on test results."""
         try:
             # Determine script type
@@ -1393,7 +1392,7 @@ class AIScriptGenerator:
                     original_script=original_script,
                     error_feedback=error_feedback,
                     test_results=test_results,
-                    script_type=script_type.value
+                    script_type=script_type.value,
                 )
 
                 if refined_content:
@@ -1408,7 +1407,7 @@ class AIScriptGenerator:
                         generated_at=datetime.now(),
                         generation_time=time.time() - time.time(),
                         success_probability=0.8,  # Slightly higher for refined scripts
-                        iterations=1
+                        iterations=1,
                     )
 
                     refined_script = GeneratedScript(
@@ -1420,7 +1419,7 @@ class AIScriptGenerator:
                         hooks=self._extract_hook_info(
                             refined_content) if script_type == ScriptType.FRIDA else [],
                         patches=self._extract_patch_info(
-                            refined_content) if script_type == ScriptType.GHIDRA else []
+                            refined_content) if script_type == ScriptType.GHIDRA else [],
                     )
 
                     # Validate refined script
@@ -1429,9 +1428,8 @@ class AIScriptGenerator:
                     if is_valid:
                         logger.info("Script refinement completed successfully")
                         return refined_script
-                    else:
-                        logger.warning(
-                            f"Refined script validation failed: {errors}")
+                    logger.warning(
+                        f"Refined script validation failed: {errors}")
 
             logger.warning("Script refinement failed or not available")
             return None
@@ -1440,7 +1438,7 @@ class AIScriptGenerator:
             logger.error(f"Script refinement error: {e}", exc_info=True)
             return None
 
-    def generate_frida_script(self, binary_path: str, protection_info: Dict, output_format: str = "script") -> Dict:
+    def generate_frida_script(self, binary_path: str, protection_info: dict, output_format: str = "script") -> dict:
         """Generate Frida script using AI assistant - UI interface method.
 
         Args:
@@ -1467,7 +1465,7 @@ class AIScriptGenerator:
                 "ANTI_DEBUG": ProtectionType.ANTI_DEBUG,
                 "VM": ProtectionType.VM_DETECTION,
                 "INTEGRITY": ProtectionType.INTEGRITY_CHECK,
-                "TIME_BOMB": ProtectionType.TIME_BOMB
+                "TIME_BOMB": ProtectionType.TIME_BOMB,
             }
             protection_types = [protection_type_map.get(protection_type_str, ProtectionType.UNKNOWN)]
 
@@ -1485,9 +1483,9 @@ class AIScriptGenerator:
                 "binary_path": binary_path,
                 "protections": {
                     "types": [pt.value for pt in protection_types],
-                    "methods": methods
+                    "methods": methods,
                 },
-                "target_platform": protection_info.get("target_platform", "frida")
+                "target_platform": protection_info.get("target_platform", "frida"),
             }
 
             # Use internal method that returns GeneratedScript
@@ -1508,7 +1506,7 @@ class AIScriptGenerator:
                 generation_time=time.time() - start_time,
                 iterations=generated_script.metadata.iterations,
                 confidence_score=success_prob,
-                recommendations=self._generate_recommendations(protection_types)
+                recommendations=self._generate_recommendations(protection_types),
             )
 
             # Save to cache
@@ -1540,10 +1538,10 @@ class AIScriptGenerator:
                     "protection_types": [pt.value for pt in protection_types],
                     "confidence": success_prob,
                     "iterations": result.iterations,
-                    "generation_time": result.generation_time
+                    "generation_time": result.generation_time,
                 },
                 "result": result,
-                "recommendations": result.recommendations
+                "recommendations": result.recommendations,
             }
 
         except Exception as e:
@@ -1552,7 +1550,7 @@ class AIScriptGenerator:
                 success=False,
                 errors=[str(e)],
                 generation_time=time.time() - start_time,
-                warnings=["Failed to generate script using AI"]
+                warnings=["Failed to generate script using AI"],
             )
 
             return {
@@ -1560,10 +1558,10 @@ class AIScriptGenerator:
                 "error": str(e),
                 "result": result,
                 "documentation": "Script generation failed",
-                "template": ""
+                "template": "",
             }
 
-    def generate_ghidra_script(self, binary_path: str, protection_info: Dict, script_type: str = "bypass") -> Dict:
+    def generate_ghidra_script(self, binary_path: str, protection_info: dict, script_type: str = "bypass") -> dict:
         """Generate Ghidra script using AI assistant - UI interface method.
 
         Args:
@@ -1590,7 +1588,7 @@ class AIScriptGenerator:
                 "ANTI_DEBUG": ProtectionType.ANTI_DEBUG,
                 "VM": ProtectionType.VM_DETECTION,
                 "INTEGRITY": ProtectionType.INTEGRITY_CHECK,
-                "TIME_BOMB": ProtectionType.TIME_BOMB
+                "TIME_BOMB": ProtectionType.TIME_BOMB,
             }
             protection_types = [protection_type_map.get(protection_type_str, ProtectionType.UNKNOWN)]
 
@@ -1599,9 +1597,9 @@ class AIScriptGenerator:
                 "binary_path": binary_path,
                 "protections": {
                     "types": [pt.value for pt in protection_types],
-                    "methods": protection_info.get("methods", [])
+                    "methods": protection_info.get("methods", []),
                 },
-                "script_type": script_type
+                "script_type": script_type,
             }
 
             # Use internal method that returns GeneratedScript
@@ -1622,7 +1620,7 @@ class AIScriptGenerator:
                 generation_time=time.time() - start_time,
                 iterations=generated_script.metadata.iterations,
                 confidence_score=success_prob,
-                recommendations=self._generate_recommendations(protection_types)
+                recommendations=self._generate_recommendations(protection_types),
             )
 
             # Refine script if possible
@@ -1650,10 +1648,10 @@ class AIScriptGenerator:
                     "protection_types": [pt.value for pt in protection_types],
                     "confidence": success_prob,
                     "iterations": result.iterations,
-                    "generation_time": result.generation_time
+                    "generation_time": result.generation_time,
                 },
                 "result": result,
-                "recommendations": result.recommendations
+                "recommendations": result.recommendations,
             }
 
         except Exception as e:
@@ -1662,7 +1660,7 @@ class AIScriptGenerator:
                 success=False,
                 errors=[str(e)],
                 generation_time=time.time() - start_time,
-                warnings=["Failed to generate script using AI"]
+                warnings=["Failed to generate script using AI"],
             )
 
             return {
@@ -1670,10 +1668,10 @@ class AIScriptGenerator:
                 "error": str(e),
                 "result": result,
                 "documentation": "Script generation failed",
-                "template": ""
+                "template": "",
             }
 
-    def _generate_recommendations(self, protection_types: List[ProtectionType]) -> List[str]:
+    def _generate_recommendations(self, protection_types: list[ProtectionType]) -> list[str]:
         """Generate recommendations based on protection types."""
         recommendations = []
 
@@ -1719,7 +1717,7 @@ class AIScriptGenerator:
 
         return recommendations
 
-    def _generate_documentation(self, script: GeneratedScript, protection_types: List[ProtectionType]) -> str:
+    def _generate_documentation(self, script: GeneratedScript, protection_types: list[ProtectionType]) -> str:
         """Generate documentation for the script."""
         doc = f"""# Script Documentation
 
@@ -1755,7 +1753,7 @@ This script was generated to bypass the following protection mechanisms:
 """
         return doc
 
-    def _format_hooks_documentation(self, hooks: List[Dict]) -> str:
+    def _format_hooks_documentation(self, hooks: list[dict]) -> str:
         """Format hooks for documentation."""
         if not hooks:
             return "No hooks defined"
@@ -1765,7 +1763,7 @@ This script was generated to bypass the following protection mechanisms:
             lines.append(f"- **{hook.get('function', 'Unknown')}**: {hook.get('description', 'No description')}")
         return "\n".join(lines)
 
-    def _format_patches_documentation(self, patches: List[Dict]) -> str:
+    def _format_patches_documentation(self, patches: list[dict]) -> str:
         """Format patches for documentation."""
         if not patches:
             return "No patches defined"
@@ -1775,7 +1773,7 @@ This script was generated to bypass the following protection mechanisms:
             lines.append(f"- **{hex(patch.get('address', 0))}**: {patch.get('description', 'No description')}")
         return "\n".join(lines)
 
-    def _get_template_for_protections(self, protection_types: List[ProtectionType], platform: str = "frida") -> str:
+    def _get_template_for_protections(self, protection_types: list[ProtectionType], platform: str = "frida") -> str:
         """Get template code for given protection types."""
         templates = []
 
@@ -1790,7 +1788,7 @@ This script was generated to bypass the following protection mechanisms:
 
         return "\n\n".join(templates) if templates else "// No specific templates available"
 
-    def _extract_hooks_from_script(self, script_content: str) -> List[Dict]:
+    def _extract_hooks_from_script(self, script_content: str) -> list[dict]:
         """Extract comprehensive hook information from script content."""
         hooks = []
         import re
@@ -1810,7 +1808,7 @@ This script was generated to bypass the following protection mechanisms:
 
             # x64dbg patterns
             "bp_cmd": r"bp\s+([x0-9a-fA-F]+|[\w.]+)",
-            "bpc_cmd": r"bpc\s+([x0-9a-fA-F]+|[\w.]+)"
+            "bpc_cmd": r"bpc\s+([x0-9a-fA-F]+|[\w.]+)",
         }
 
         for pattern_name, pattern in patterns.items():
@@ -1849,7 +1847,7 @@ This script was generated to bypass the following protection mechanisms:
                     "purpose": purpose,
                     "context": context_line,
                     "offset": match.start(),
-                    "description": f"{hook_type} hook on {func_name}"
+                    "description": f"{hook_type} hook on {func_name}",
                 })
 
         # Deduplicate hooks
@@ -1868,14 +1866,13 @@ This script was generated to bypass the following protection mechanisms:
         # Look for main function or entry point
         if "function main()" in script_content:
             return "main"
-        elif "function run()" in script_content:
+        if "function run()" in script_content:
             return "run"
-        elif "Java.perform(" in script_content:
+        if "Java.perform(" in script_content:
             return "Java.perform"
-        else:
-            return "auto"
+        return "auto"
 
-    def _generate_license_bypass_frida(self, binary_path: str, protection_info: Dict) -> str:
+    def _generate_license_bypass_frida(self, binary_path: str, protection_info: dict) -> str:
         """Generate Frida script specifically for license bypass."""
         template = """// AI-generated Frida script for license bypass
 // Target: {binary_path}
@@ -1927,13 +1924,13 @@ Java.perform(function() {{
 """.format(
             binary_path=binary_path,
             protection_type=protection_info.get("type", "Unknown"),
-            patterns=", ".join(protection_info.get("patterns", ["Generic"]))
+            patterns=", ".join(protection_info.get("patterns", ["Generic"])),
         )
         return template
 
-    def _generate_trial_bypass_frida(self, binary_path: str, protection_info: Dict) -> str:
+    def _generate_trial_bypass_frida(self, binary_path: str, protection_info: dict) -> str:
         """Generate comprehensive Frida script for trial/timer bypass with real exploitation."""
-        template = """// AI-generated Frida script for trial/timer bypass
+        template = f"""// AI-generated Frida script for trial/timer bypass
 // Target: {binary_path}
 // Protection info: {protection_info}
 
@@ -2237,12 +2234,12 @@ statFuncs.forEach(function(funcName) {{
 console.log("[+] Comprehensive trial/timer bypass hooks installed");
 console.log("[+] Frozen time: " + new Date(FROZEN_TIME).toISOString());
 console.log("[+] Extended time: " + new Date(EXTENDED_TIME).toISOString());
-""".format(binary_path=binary_path, protection_info=protection_info)
+"""
         return template
 
-    def _generate_hardware_bypass_frida(self, binary_path: str, protection_info: Dict) -> str:
+    def _generate_hardware_bypass_frida(self, binary_path: str, protection_info: dict) -> str:
         """Generate comprehensive Frida script for hardware lock bypass with real exploitation."""
-        template = """// AI-generated Frida script for hardware lock bypass
+        template = f"""// AI-generated Frida script for hardware lock bypass
 // Target: {binary_path}
 // Protection info: {protection_info}
 
@@ -2705,10 +2702,10 @@ if (fopen) {{
 
 console.log("[+] Comprehensive hardware lock bypass installed");
 console.log("[+] All hardware identifiers will return consistent fake values");
-""".format(binary_path=binary_path, protection_info=protection_info)
+"""
         return template
 
-    def _generate_antitamper_bypass_frida(self, binary_path: str, protection_info: Dict) -> str:
+    def _generate_antitamper_bypass_frida(self, binary_path: str, protection_info: dict) -> str:
         """Generate comprehensive Frida script for anti-tamper, anti-debug, and integrity check bypass."""
         template = """// Comprehensive Anti-Tamper Bypass Script
 // Target: {binary_path}
@@ -3237,11 +3234,11 @@ send({{
 """.format(
             binary_path=binary_path,
             protection_types=", ".join(protection_info.get("types", ["unknown"])),
-            valid_signature="308203373082021fa003020102020420c"  # Example valid signature
+            valid_signature="308203373082021fa003020102020420c",  # Example valid signature
         )
         return template
 
-    def _generate_generic_bypass_frida(self, binary_path: str, protection_info: Dict) -> str:
+    def _generate_generic_bypass_frida(self, binary_path: str, protection_info: dict) -> str:
         """Generate comprehensive generic bypass script combining multiple techniques."""
         protection_type = protection_info.get("type", "Unknown")
         patterns = protection_info.get("patterns", ["Generic"])
@@ -3744,6 +3741,6 @@ send({{
 """.format(
             binary_path=binary_path,
             protection_type=protection_type,
-            detected_patterns=", ".join(patterns)
+            detected_patterns=", ".join(patterns),
         )
         return template

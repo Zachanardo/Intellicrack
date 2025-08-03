@@ -1,5 +1,4 @@
-"""
-Common Windows structures and utilities for process injection techniques.
+"""Common Windows structures and utilities for process injection techniques.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,7 +22,7 @@ import ctypes
 import ctypes.wintypes
 import logging
 import sys
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +57,7 @@ class WindowsContext:
             if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
                 class CONTEXT(ctypes.Structure):
                     """Windows 64-bit thread context structure."""
+
                     _fields_ = [
                         ("P1Home", ctypes.c_ulonglong),
                         ("P2Home", ctypes.c_ulonglong),
@@ -102,6 +102,7 @@ class WindowsContext:
             else:  # 32-bit
                 class CONTEXT(ctypes.Structure):
                     """Windows 32-bit thread context structure."""
+
                     _fields_ = [
                         ("ContextFlags", ctypes.wintypes.DWORD),
                         ("Dr0", ctypes.wintypes.DWORD),
@@ -136,7 +137,7 @@ class WindowsContext:
             logger.error(f"Failed to create CONTEXT structure: {e}")
             return None, None
 
-    def get_thread_context(self, thread_handle: int) -> Optional[Any]:
+    def get_thread_context(self, thread_handle: int) -> Any | None:
         """Get thread context using shared implementation."""
         if not STRUCTURES_AVAILABLE or not self.kernel32:
             return None
@@ -182,8 +183,8 @@ class WindowsContext:
         try:
             if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
                 return context.Rip
-            else:  # 32-bit
-                return context.Eip
+            # 32-bit
+            return context.Eip
         except Exception as e:
             logger.error(f"Failed to get entry point: {e}")
             return 0
@@ -200,6 +201,7 @@ class WindowsProcessStructures:
 
         class STARTUPINFO(ctypes.Structure):
             """Windows process startup information structure."""
+
             _fields_ = [
                 ("cb", ctypes.wintypes.DWORD),
                 ("lpReserved", ctypes.wintypes.LPWSTR),
@@ -218,7 +220,7 @@ class WindowsProcessStructures:
                 ("lpReserved2", ctypes.POINTER(ctypes.c_ubyte)),
                 ("hStdInput", ctypes.wintypes.HANDLE),
                 ("hStdOutput", ctypes.wintypes.HANDLE),
-                ("hStdError", ctypes.wintypes.HANDLE)
+                ("hStdError", ctypes.wintypes.HANDLE),
             ]
         return STARTUPINFO
 
@@ -230,15 +232,16 @@ class WindowsProcessStructures:
 
         class PROCESS_INFORMATION(ctypes.Structure):
             """Windows process information structure containing process and thread handles."""
+
             _fields_ = [
                 ("hProcess", ctypes.wintypes.HANDLE),
                 ("hThread", ctypes.wintypes.HANDLE),
                 ("dwProcessId", ctypes.wintypes.DWORD),
-                ("dwThreadId", ctypes.wintypes.DWORD)
+                ("dwThreadId", ctypes.wintypes.DWORD),
             ]
         return PROCESS_INFORMATION
 
-    def create_suspended_process(self, exe_path: str, command_line: str = None) -> Optional[Dict]:
+    def create_suspended_process(self, exe_path: str, command_line: str = None) -> dict | None:
         """Create a process in suspended state using shared implementation."""
         if not STRUCTURES_AVAILABLE:
             return None
@@ -268,7 +271,7 @@ class WindowsProcessStructures:
                 None,
                 None,
                 ctypes.byref(startup_info),
-                ctypes.byref(process_info)
+                ctypes.byref(process_info),
             )
 
             if not success:
@@ -280,7 +283,7 @@ class WindowsProcessStructures:
                 "process_handle": process_info.hProcess,
                 "thread_handle": process_info.hThread,
                 "process_id": process_info.dwProcessId,
-                "thread_id": process_info.dwThreadId
+                "thread_id": process_info.dwThreadId,
             }
 
         except Exception as e:
@@ -304,11 +307,11 @@ COMMON_LICENSE_DOMAINS = [
     "lm-autocad.autodesk.com",
     "kms.microsoft.com",
     "kms.core.windows.net",
-    "licensing.mp.microsoft.com"
+    "licensing.mp.microsoft.com",
 ]
 
 
-def parse_objdump_line(line: str) -> Optional[Dict[str, Any]]:
+def parse_objdump_line(line: str) -> dict[str, Any] | None:
     """Parse objdump output line - shared between ROP generator and taint analyzer."""
     line = line.strip()
     if ":" in line and "\t" in line:
@@ -325,11 +328,10 @@ def parse_objdump_line(line: str) -> Optional[Dict[str, Any]]:
                     "address": int(addr_part.strip(), 16),
                     "mnemonic": mnemonic,
                     "op_str": operands,
-                    "bytes": addr_part.strip()
+                    "bytes": addr_part.strip(),
                 }
         except (ValueError, IndexError) as e:
             logger.error("Error in windows_structures: %s", e)
-            pass
     return None
 
 

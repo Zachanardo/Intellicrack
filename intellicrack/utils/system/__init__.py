@@ -1,5 +1,4 @@
-"""
-System utility modules for Intellicrack.
+"""System utility modules for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -32,12 +31,12 @@ from .os_detection import (
 from .os_detection_mixin import OSDetectionMixin
 
 __all__ = [
+    "OSDetectionMixin",
     "detect_operating_system",
-    "is_windows",
+    "get_default_persistence_method",
+    "get_platform_details",
+    "get_platform_specific_paths",
     "is_linux_like",
     "is_unix_like",
-    "get_platform_details",
-    "get_default_persistence_method",
-    "get_platform_specific_paths",
-    "OSDetectionMixin"
+    "is_windows",
 ]

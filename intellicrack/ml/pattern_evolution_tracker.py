@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -44,7 +43,7 @@ from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 from sklearn.cluster import DBSCAN
@@ -54,7 +53,7 @@ PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-cha
 
 class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe classes."""
-    
+
     def find_class(self, module, name):
         """Override find_class to restrict allowed classes."""
         # Allow only safe modules and classes
@@ -63,17 +62,17 @@ class RestrictedUnpickler(pickle.Unpickler):
             "pandas", "pandas.core.frame", "pandas.core.series",
             "sklearn", "torch", "tensorflow",
             "__builtin__", "builtins",
-            "collections", "collections.abc"
+            "collections", "collections.abc",
         }
-        
+
         # Allow model classes from our own modules
         if module.startswith("intellicrack."):
             return super().find_class(module, name)
-            
+
         # Check if module is in allowed list
         if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
             return super().find_class(module, name)
-            
+
         # Deny everything else
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
 
@@ -101,11 +100,12 @@ def secure_pickle_loads(data):
 
     # Deserialize object using RestrictedUnpickler
     import io
-    return RestrictedUnpickler(io.BytesIO(obj_data)).load()  # noqa: S301
+    return RestrictedUnpickler(io.BytesIO(obj_data)).load()
 
 
 class PatternType(Enum):
     """Types of patterns that can evolve"""
+
     BYTE_SEQUENCE = "byte_sequence"
     API_SEQUENCE = "api_sequence"
     STRING_PATTERN = "string_pattern"
@@ -118,6 +118,7 @@ class PatternType(Enum):
 
 class MutationType(Enum):
     """Types of mutations for genetic algorithm"""
+
     BIT_FLIP = "bit_flip"
     INSERTION = "insertion"
     DELETION = "deletion"
@@ -131,14 +132,15 @@ class MutationType(Enum):
 @dataclass
 class PatternGene:
     """Represents a single evolvable pattern gene"""
+
     id: str
     type: PatternType
     pattern_data: Any  # Actual pattern representation
     fitness: float = 0.0
     generation: int = 0
-    parent_ids: List[str] = field(default_factory=list)
-    mutation_history: List[MutationType] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    parent_ids: list[str] = field(default_factory=list)
+    mutation_history: list[MutationType] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         """Initialize pattern gene with generated ID if not provided."""
@@ -161,21 +163,20 @@ class PatternGene:
             generation=self.generation + 1,
             parent_ids=[self.id],
             mutation_history=self.mutation_history + [mutation_type],
-            metadata=self.metadata.copy()
+            metadata=self.metadata.copy(),
         )
 
     def _apply_mutation(self, data: Any, mutation_type: MutationType, rate: float) -> Any:
         """Apply specific mutation to pattern data"""
         if self.type == PatternType.BYTE_SEQUENCE:
             return self._mutate_byte_sequence(data, mutation_type, rate)
-        elif self.type == PatternType.API_SEQUENCE:
+        if self.type == PatternType.API_SEQUENCE:
             return self._mutate_api_sequence(data, mutation_type, rate)
-        elif self.type == PatternType.STRING_PATTERN:
+        if self.type == PatternType.STRING_PATTERN:
             return self._mutate_string_pattern(data, mutation_type, rate)
-        elif self.type == PatternType.OPCODE_SEQUENCE:
+        if self.type == PatternType.OPCODE_SEQUENCE:
             return self._mutate_opcode_sequence(data, mutation_type, rate)
-        else:
-            return data  # No mutation for unsupported types
+        return data  # No mutation for unsupported types
 
     def _mutate_byte_sequence(self, data: bytes, mutation_type: MutationType, rate: float) -> bytes:
         """Mutate byte sequence pattern"""
@@ -205,7 +206,7 @@ class PatternGene:
 
         return bytes(byte_list)
 
-    def _mutate_api_sequence(self, data: List[str], mutation_type: MutationType, rate: float) -> List[str]:
+    def _mutate_api_sequence(self, data: list[str], mutation_type: MutationType, rate: float) -> list[str]:
         """Mutate API sequence pattern based on mutation rate"""
         api_list = data.copy()
 
@@ -215,7 +216,7 @@ class PatternGene:
             "RegQueryValueExA", "RegQueryValueExW", "GetSystemTime",
             "GetTickCount", "IsDebuggerPresent", "GetModuleHandleA",
             "GetProcAddress", "LoadLibraryA", "VirtualProtect",
-            "WriteProcessMemory", "ReadProcessMemory"
+            "WriteProcessMemory", "ReadProcessMemory",
         ]
 
         # Apply mutation rate - number of mutations to perform
@@ -259,14 +260,14 @@ class PatternGene:
 
         return data
 
-    def _mutate_opcode_sequence(self, data: List[str], mutation_type: MutationType, rate: float) -> List[str]:
+    def _mutate_opcode_sequence(self, data: list[str], mutation_type: MutationType, rate: float) -> list[str]:
         """Mutate opcode sequence pattern based on mutation rate"""
         opcode_list = data.copy()
 
         # Common x86/x64 opcodes for mutation
         opcode_pool = [
             "mov", "push", "pop", "call", "jmp", "je", "jne", "cmp",
-            "test", "xor", "add", "sub", "lea", "ret", "nop"
+            "test", "xor", "add", "sub", "lea", "ret", "nop",
         ]
 
         # Apply mutation rate - number of mutations to perform
@@ -291,7 +292,7 @@ class PatternGene:
 
         return opcode_list
 
-    def crossover(self, other: "PatternGene", crossover_point: Optional[int] = None) -> Tuple["PatternGene", "PatternGene"]:
+    def crossover(self, other: "PatternGene", crossover_point: int | None = None) -> tuple["PatternGene", "PatternGene"]:
         """Perform crossover with another gene"""
         if self.type != other.type:
             # Can't crossover different types
@@ -314,7 +315,7 @@ class PatternGene:
                 pattern_data=new_data1,
                 generation=max(self.generation, other.generation) + 1,
                 parent_ids=[self.id, other.id],
-                mutation_history=[MutationType.CROSSOVER]
+                mutation_history=[MutationType.CROSSOVER],
             )
 
             child2 = PatternGene(
@@ -323,7 +324,7 @@ class PatternGene:
                 pattern_data=new_data2,
                 generation=max(self.generation, other.generation) + 1,
                 parent_ids=[self.id, other.id],
-                mutation_history=[MutationType.CROSSOVER]
+                mutation_history=[MutationType.CROSSOVER],
             )
 
             return child1, child2
@@ -489,7 +490,7 @@ class PatternStorage:
                 pattern.generation,
                 parent_ids_json,
                 mutation_history_json,
-                metadata_json
+                metadata_json,
             ))
 
             # Log to evolution history
@@ -500,7 +501,7 @@ class PatternStorage:
 
             self.conn.commit()
 
-    def load_pattern(self, pattern_id: str) -> Optional[PatternGene]:
+    def load_pattern(self, pattern_id: str) -> PatternGene | None:
         """Load pattern from database"""
         with self.lock:
             cursor = self.conn.cursor()
@@ -525,13 +526,13 @@ class PatternStorage:
                 generation=generation,
                 parent_ids=json.loads(parent_ids_json),
                 mutation_history=[MutationType(m) for m in json.loads(mutation_history_json)],
-                metadata=json.loads(metadata_json)
+                metadata=json.loads(metadata_json),
             )
 
             return pattern
 
-    def get_top_patterns(self, pattern_type: Optional[PatternType] = None,
-                        limit: int = 10) -> List[PatternGene]:
+    def get_top_patterns(self, pattern_type: PatternType | None = None,
+                        limit: int = 10) -> list[PatternGene]:
         """Get top performing patterns"""
         with self.lock:
             cursor = self.conn.cursor()
@@ -613,7 +614,7 @@ class PatternMatcher:
             except:
                 pass  # Invalid regex
 
-    def match(self, data: bytes, pattern_type: PatternType) -> List[Tuple[str, float]]:
+    def match(self, data: bytes, pattern_type: PatternType) -> list[tuple[str, float]]:
         """Match data against patterns, return (pattern_id, confidence) tuples"""
         matches = []
 
@@ -640,14 +641,13 @@ class PatternMatcher:
         """Match specific pattern against data"""
         if pattern.type == PatternType.BYTE_SEQUENCE:
             return self._match_byte_sequence(data, pattern.pattern_data)
-        elif pattern.type == PatternType.STRING_PATTERN:
+        if pattern.type == PatternType.STRING_PATTERN:
             return self._match_string_pattern(data, pattern)
-        elif pattern.type == PatternType.API_SEQUENCE:
+        if pattern.type == PatternType.API_SEQUENCE:
             return self._match_api_sequence(data, pattern.pattern_data)
-        elif pattern.type == PatternType.OPCODE_SEQUENCE:
+        if pattern.type == PatternType.OPCODE_SEQUENCE:
             return self._match_opcode_sequence(data, pattern.pattern_data)
-        else:
-            return 0.0
+        return 0.0
 
     def _match_byte_sequence(self, data: bytes, pattern: bytes) -> float:
         """Match byte sequence using Boyer-Moore algorithm"""
@@ -684,7 +684,7 @@ class PatternMatcher:
 
         return 0.0
 
-    def _match_api_sequence(self, data: bytes, pattern: List[str]) -> float:
+    def _match_api_sequence(self, data: bytes, pattern: list[str]) -> float:
         """Match API call sequence"""
         # Extract API calls from data (simplified)
         text = data.decode("utf-8", errors="ignore")
@@ -700,7 +700,7 @@ class PatternMatcher:
 
         return len(found_apis) / len(pattern)
 
-    def _match_opcode_sequence(self, data: bytes, pattern: List[str]) -> float:
+    def _match_opcode_sequence(self, data: bytes, pattern: list[str]) -> float:
         """Match opcode sequence by analyzing binary data for instruction patterns"""
         if not pattern or not data:
             return 0.0
@@ -721,7 +721,7 @@ class PatternMatcher:
             "add": [0x01, 0x03, 0x00, 0x02, 0x83],
             "sub": [0x29, 0x2B, 0x28, 0x2A, 0x83],
             "ret": [0xC3, 0xC2],
-            "nop": [0x90]
+            "nop": [0x90],
         }
 
         matches = 0
@@ -765,6 +765,7 @@ class PatternEvolutionTracker:
             elite_size: Number of elite patterns to preserve.
             mutation_rate: Rate of pattern mutations.
             crossover_rate: Rate of pattern crossover operations.
+
         """
         self.logger = logging.getLogger(__name__)
 
@@ -780,7 +781,7 @@ class PatternEvolutionTracker:
         self.q_agent = QLearningAgent(state_size=50, action_size=10)
 
         # Pattern populations by type
-        self.populations: Dict[PatternType, List[PatternGene]] = {
+        self.populations: dict[PatternType, list[PatternGene]] = {
             ptype: [] for ptype in PatternType
         }
 
@@ -796,7 +797,7 @@ class PatternEvolutionTracker:
             "total_patterns": 0,
             "best_fitness": 0.0,
             "detections": 0,
-            "false_positives": 0
+            "false_positives": 0,
         }
 
         # Initialize populations
@@ -809,7 +810,7 @@ class PatternEvolutionTracker:
         # Load existing patterns
         for pattern_type in PatternType:
             stored_patterns = self.storage.get_top_patterns(
-                pattern_type, self.population_size
+                pattern_type, self.population_size,
             )
 
             if len(stored_patterns) < self.population_size:
@@ -824,7 +825,7 @@ class PatternEvolutionTracker:
             for pattern in self.populations[pattern_type]:
                 self.matcher.add_pattern(pattern)
 
-    def _generate_random_patterns(self, pattern_type: PatternType, count: int) -> List[PatternGene]:
+    def _generate_random_patterns(self, pattern_type: PatternType, count: int) -> list[PatternGene]:
         """Generate random initial patterns"""
         patterns = []
 
@@ -839,7 +840,7 @@ class PatternEvolutionTracker:
                 api_pool = [
                     "CreateFileA", "RegOpenKeyExA", "GetSystemTime",
                     "IsDebuggerPresent", "GetTickCount", "VirtualProtect",
-                    "LoadLibraryA", "GetProcAddress", "MessageBoxA"
+                    "LoadLibraryA", "GetProcAddress", "MessageBoxA",
                 ]
                 length = random.randint(2, 8)
                 data = [random.choice(api_pool) for _ in range(length)]
@@ -856,7 +857,7 @@ class PatternEvolutionTracker:
                     r"activate",
                     r"[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}",
                     r"\d{1,2}/\d{1,2}/\d{4}",  # Date pattern
-                    r"expire[ds]?"
+                    r"expire[ds]?",
                 ]
                 data = random.choice(patterns_pool)
 
@@ -864,7 +865,7 @@ class PatternEvolutionTracker:
                 # Random opcode sequence
                 opcode_pool = [
                     "mov", "push", "pop", "call", "jmp", "je", "jne",
-                    "cmp", "test", "xor", "add", "sub", "lea", "ret"
+                    "cmp", "test", "xor", "add", "sub", "lea", "ret",
                 ]
                 length = random.randint(3, 10)
                 data = [random.choice(opcode_pool) for _ in range(length)]
@@ -877,14 +878,14 @@ class PatternEvolutionTracker:
                 id="",
                 type=pattern_type,
                 pattern_data=data,
-                generation=0
+                generation=0,
             )
 
             patterns.append(pattern)
 
         return patterns
 
-    def evolve_generation(self, pattern_type: Optional[PatternType] = None):
+    def evolve_generation(self, pattern_type: PatternType | None = None):
         """Evolve one generation of patterns"""
         if pattern_type:
             types_to_evolve = [pattern_type]
@@ -935,7 +936,7 @@ class PatternEvolutionTracker:
                     if i < len(new_population) and random.random() < self.mutation_rate:
                         mutation_type = random.choice(list(MutationType))
                         new_population[i] = new_population[i].mutate(
-                            mutation_type, self.mutation_rate
+                            mutation_type, self.mutation_rate,
                         )
 
             # Trim to population size
@@ -1000,13 +1001,13 @@ class PatternEvolutionTracker:
 
         return min(1.0, final_fitness)
 
-    def _tournament_selection(self, population: List[PatternGene],
+    def _tournament_selection(self, population: list[PatternGene],
                             tournament_size: int = 3) -> PatternGene:
         """Tournament selection for genetic algorithm"""
         tournament = random.sample(population, min(tournament_size, len(population)))
         return max(tournament, key=lambda p: p.fitness)
 
-    def detect(self, data: bytes, pattern_types: Optional[List[PatternType]] = None) -> Dict[str, Any]:
+    def detect(self, data: bytes, pattern_types: list[PatternType] | None = None) -> dict[str, Any]:
         """Detect patterns in data using evolved patterns"""
         if not pattern_types:
             pattern_types = list(PatternType)
@@ -1014,7 +1015,7 @@ class PatternEvolutionTracker:
         results = {
             "detections": [],
             "confidence": 0.0,
-            "patterns_matched": []
+            "patterns_matched": [],
         }
 
         for ptype in pattern_types:
@@ -1028,7 +1029,7 @@ class PatternEvolutionTracker:
                         "type": ptype.value,
                         "confidence": confidence,
                         "generation": pattern.generation,
-                        "pattern_data": str(pattern.pattern_data)[:100]  # Preview
+                        "pattern_data": str(pattern.pattern_data)[:100],  # Preview
                     })
                     results["patterns_matched"].append(pattern_id)
 
@@ -1043,7 +1044,7 @@ class PatternEvolutionTracker:
 
         return results
 
-    def _update_q_learning(self, data: bytes, results: Dict[str, Any]):
+    def _update_q_learning(self, data: bytes, results: dict[str, Any]):
         """Update Q-learning agent based on detection results"""
         # Extract features for state
         state = self._extract_state_features(data)
@@ -1125,7 +1126,7 @@ class PatternEvolutionTracker:
             except Exception as e:
                 self.logger.error(f"Error notifying observer: {e}")
 
-    def export_patterns(self, output_file: str, pattern_type: Optional[PatternType] = None):
+    def export_patterns(self, output_file: str, pattern_type: PatternType | None = None):
         """Export patterns to JSON file"""
         patterns_data = []
 
@@ -1143,7 +1144,7 @@ class PatternEvolutionTracker:
                     "fitness": pattern.fitness,
                     "generation": pattern.generation,
                     "parent_ids": pattern.parent_ids,
-                    "mutation_history": [m.value for m in pattern.mutation_history]
+                    "mutation_history": [m.value for m in pattern.mutation_history],
                 }
                 patterns_data.append(pattern_dict)
 
@@ -1151,14 +1152,14 @@ class PatternEvolutionTracker:
             json.dump({
                 "patterns": patterns_data,
                 "stats": self.stats,
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }, f, indent=2)
 
         self.logger.info(f"Exported {len(patterns_data)} patterns to {output_file}")
 
     def import_patterns(self, input_file: str):
         """Import patterns from JSON file"""
-        with open(input_file, "r") as f:
+        with open(input_file) as f:
             data = json.load(f)
 
         imported_count = 0
@@ -1183,7 +1184,7 @@ class PatternEvolutionTracker:
                     fitness=pattern_data["fitness"],
                     generation=pattern_data["generation"],
                     parent_ids=pattern_data["parent_ids"],
-                    mutation_history=[MutationType(m) for m in pattern_data["mutation_history"]]
+                    mutation_history=[MutationType(m) for m in pattern_data["mutation_history"]],
                 )
 
                 # Save to storage
@@ -1208,7 +1209,7 @@ class PatternEvolutionTracker:
                 self.populations[ptype].sort(key=lambda p: p.fitness, reverse=True)
                 self.populations[ptype] = self.populations[ptype][:self.population_size]
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get current statistics"""
         stats = self.stats.copy()
 
@@ -1222,7 +1223,7 @@ class PatternEvolutionTracker:
 
         return stats
 
-    def cluster_patterns(self, pattern_type: PatternType, min_samples: int = 5) -> Dict[int, List[PatternGene]]:
+    def cluster_patterns(self, pattern_type: PatternType, min_samples: int = 5) -> dict[int, list[PatternGene]]:
         """Cluster similar patterns using DBSCAN"""
         population = self.populations[pattern_type]
         if len(population) < min_samples:

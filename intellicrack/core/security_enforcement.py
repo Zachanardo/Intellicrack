@@ -1,5 +1,4 @@
-"""
-Security Enforcement Module for Intellicrack
+"""Security Enforcement Module for Intellicrack
 Implements security policies defined in intellicrack_config.json
 """
 import hashlib
@@ -9,7 +8,7 @@ import os
 import pickle
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -29,18 +28,18 @@ class SecurityEnforcement:
         self._original_functions = {}
         self._bypass_security = False  # Emergency bypass flag
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> dict[str, Any]:
         """Load security configuration from intellicrack_config.json"""
         config_paths = [
             Path(__file__).parent.parent.parent / "config" / "intellicrack_config.json",
             Path.cwd() / "config" / "intellicrack_config.json",
-            Path.home() / ".intellicrack" / "intellicrack_config.json"
+            Path.home() / ".intellicrack" / "intellicrack_config.json",
         ]
 
         for config_path in config_paths:
             if config_path.exists():
                 try:
-                    with open(config_path, "r") as f:
+                    with open(config_path) as f:
                         return json.load(f)
                 except Exception as e:
                     logger.error(f"Failed to load config from {config_path}: {e}")
@@ -48,7 +47,7 @@ class SecurityEnforcement:
         logger.warning("No configuration found, using default security settings")
         return self._get_default_config()
 
-    def _get_default_config(self) -> Dict[str, Any]:
+    def _get_default_config(self) -> dict[str, Any]:
         """Return default security configuration"""
         return {
             "security": {
@@ -58,22 +57,22 @@ class SecurityEnforcement:
                 "encrypt_config": False,
                 "hashing": {
                     "default_algorithm": "sha256",
-                    "allow_md5_for_security": False
+                    "allow_md5_for_security": False,
                 },
                 "subprocess": {
                     "allow_shell_true": False,
-                    "shell_whitelist": []
+                    "shell_whitelist": [],
                 },
                 "serialization": {
                     "default_format": "json",
-                    "restrict_pickle": True
+                    "restrict_pickle": True,
                 },
                 "input_validation": {
                     "strict_mode": True,
                     "max_file_size": False,
-                    "allowed_extensions": False
-                }
-            }
+                    "allowed_extensions": False,
+                },
+            },
         }
 
     def enable_bypass(self):
@@ -191,9 +190,8 @@ def _secure_pickle_dump(obj, file, protocol=None, *, fix_imports=True, buffer_ca
             if hasattr(file, "write"):
                 json.dump(obj, file)
                 logger.info("Successfully serialized to JSON instead of pickle")
-                return
-            else:
-                raise TypeError("File object required for JSON dump")
+                return None
+            raise TypeError("File object required for JSON dump")
         except (TypeError, ValueError) as e:
             logger.warning(f"JSON serialization failed, falling back to pickle: {e}")
 
@@ -230,8 +228,7 @@ def _secure_pickle_load(file, *, fix_imports=True, encoding="ASCII", errors="str
             if hasattr(file, "read"):
                 file.seek(0)
                 return json.load(file)
-            else:
-                raise TypeError("File object required for JSON load")
+            raise TypeError("File object required for JSON load")
         except (json.JSONDecodeError, ValueError, TypeError) as e:
             logger.warning(f"JSON deserialization failed, falling back to pickle: {e}")
             if hasattr(file, "seek"):
@@ -340,7 +337,7 @@ def _secure_hashlib_md5(data=b"", **kwargs):
     return _security._original_functions["hashlib.md5"](data, **kwargs)
 
 # File Input Validation
-def validate_file_input(file_path: Union[str, Path], operation: str = "read") -> bool:
+def validate_file_input(file_path: str | Path, operation: str = "read") -> bool:
     """Validate file input based on security configuration"""
     if _security._bypass_security:
         return True
@@ -406,6 +403,7 @@ def _monkey_patch_subprocess():
     # Create a subclassable Popen wrapper
     class SecurePopen(_security._original_functions["subprocess.Popen"]):
         """Secure wrapper for subprocess.Popen that can be subclassed"""
+
         def __init__(self, *args, **kwargs):
             if _security._bypass_security:
                 super().__init__(*args, **kwargs)
@@ -488,7 +486,7 @@ def initialize_security():
         logger.error(f"Failed to initialize security: {e}")
         logger.warning("Running without security enforcement")
 
-def get_security_status() -> Dict[str, Any]:
+def get_security_status() -> dict[str, Any]:
     """Get current security enforcement status"""
     return {
         "initialized": bool(_security._original_functions),
@@ -497,14 +495,14 @@ def get_security_status() -> Dict[str, Any]:
         "patches_applied": {
             "subprocess": "subprocess.run" in _security._original_functions,
             "pickle": "pickle.dump" in _security._original_functions,
-            "hashlib": "hashlib.new" in _security._original_functions
-        }
+            "hashlib": "hashlib.new" in _security._original_functions,
+        },
     }
 
 # Custom exception
 class SecurityError(Exception):
     """Raised when a security policy is violated"""
-    pass
+
 
 # Auto-initialize on import
 # initialize_security()  # Temporarily disabled for testing
@@ -513,9 +511,9 @@ class SecurityError(Exception):
 __all__ = [
     "SecurityEnforcement",
     "SecurityError",
-    "initialize_security",
+    "_security",  # For advanced usage
     "get_security_status",
-    "validate_file_input",
+    "initialize_security",
     "secure_open",
-    "_security"  # For advanced usage
+    "validate_file_input",
 ]

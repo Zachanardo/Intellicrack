@@ -26,7 +26,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -48,8 +48,7 @@ from ...utils.protection.protection_utils import calculate_entropy
 
 
 class MultiFormatBinaryAnalyzer:
-    """
-    Multi-format binary analyzer supporting PE, ELF, Mach-O, and other formats.
+    """Multi-format binary analyzer supporting PE, ELF, Mach-O, and other formats.
 
     This class provides a unified interface for analyzing different binary formats
     and extracting relevant information for security research and reverse engineering.
@@ -107,15 +106,15 @@ class MultiFormatBinaryAnalyzer:
         else:
             self.logger.info("XML parsing not available")
 
-    def identify_format(self, binary_path: Union[str, Path]) -> str:
-        """
-        Identify the format of a binary file.
+    def identify_format(self, binary_path: str | Path) -> str:
+        """Identify the format of a binary file.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             Format of the binary ('PE', 'ELF', 'MACHO', 'DOTNET', 'CLASS', 'DEX', 'APK', 'JAR', 'MSI', 'COM', 'UNKNOWN')
+
         """
         try:
             with open(binary_path, "rb") as f:
@@ -159,20 +158,19 @@ class MultiFormatBinaryAnalyzer:
                     file_extension = str(binary_path).lower().split(".")[-1]
                     if file_extension in ["apk", "xapk"]:
                         return "APK"
-                    elif file_extension in ["jar", "war", "ear"]:
+                    if file_extension in ["jar", "war", "ear"]:
                         return "JAR"
-                    else:
-                        # Check if it's an APK by looking for AndroidManifest.xml
-                        try:
-                            import zipfile as zf
-                            with zf.ZipFile(binary_path, "r") as zip_file:
-                                if "AndroidManifest.xml" in zip_file.namelist():
-                                    return "APK"
-                                elif "META-INF/MANIFEST.MF" in zip_file.namelist():
-                                    return "JAR"
-                        except Exception as e:
-                            self.logger.debug(f"Failed to check ZIP sub-type: {e}")
-                        return "ZIP"
+                    # Check if it's an APK by looking for AndroidManifest.xml
+                    try:
+                        import zipfile as zf
+                        with zf.ZipFile(binary_path, "r") as zip_file:
+                            if "AndroidManifest.xml" in zip_file.namelist():
+                                return "APK"
+                            if "META-INF/MANIFEST.MF" in zip_file.namelist():
+                                return "JAR"
+                    except Exception as e:
+                        self.logger.debug(f"Failed to check ZIP sub-type: {e}")
+                    return "ZIP"
 
                 # Check for MSI (Microsoft Installer)
                 if magic.startswith(b"\xd0\xcf\x11\xe0"):
@@ -197,15 +195,15 @@ class MultiFormatBinaryAnalyzer:
             self.logger.error("Error identifying binary format: %s", e)
             return "UNKNOWN"
 
-    def analyze_binary(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
-        """
-        Analyze a binary file of any supported format.
+    def analyze_binary(self, binary_path: str | Path) -> dict[str, Any]:
+        """Analyze a binary file of any supported format.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             Analysis results dictionary
+
         """
         # Identify format
         binary_format = self.identify_format(binary_path)
@@ -213,44 +211,43 @@ class MultiFormatBinaryAnalyzer:
         # Choose appropriate analysis method
         if binary_format == "PE":
             return self.analyze_pe(binary_path)
-        elif binary_format == "ELF":
+        if binary_format == "ELF":
             return self.analyze_elf(binary_path)
-        elif binary_format == "MACHO":
+        if binary_format == "MACHO":
             return self.analyze_macho(binary_path)
-        elif binary_format == "DOTNET":
+        if binary_format == "DOTNET":
             return self.analyze_dotnet(binary_path)
-        elif binary_format == "CLASS":
+        if binary_format == "CLASS":
             return self.analyze_java(binary_path)
-        elif binary_format == "DEX":
+        if binary_format == "DEX":
             return self.analyze_dex(binary_path)
-        elif binary_format == "APK":
+        if binary_format == "APK":
             return self.analyze_apk(binary_path)
-        elif binary_format == "JAR":
+        if binary_format == "JAR":
             return self.analyze_jar(binary_path)
-        elif binary_format == "MSI":
+        if binary_format == "MSI":
             return self.analyze_msi(binary_path)
-        elif binary_format == "COM":
+        if binary_format == "COM":
             return self.analyze_com(binary_path)
-        else:
-            return {
-                "format": binary_format,
-                "error": "Unsupported binary format"
-            }
+        return {
+            "format": binary_format,
+            "error": "Unsupported binary format",
+        }
 
-    def analyze_pe(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
-        """
-        Analyze a PE (Windows) binary.
+    def analyze_pe(self, binary_path: str | Path) -> dict[str, Any]:
+        """Analyze a PE (Windows) binary.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             Analysis results dictionary
+
         """
         if not self.pefile_available:
             return {
                 "format": "PE",
-                "error": "pefile library not available"
+                "error": "pefile library not available",
             }
 
         try:
@@ -265,7 +262,7 @@ class MultiFormatBinaryAnalyzer:
                 "characteristics": self._get_characteristics(getattr(pe.FILE_HEADER, "Characteristics", 0)),
                 "sections": [],
                 "imports": [],
-                "exports": []
+                "exports": [],
             }
 
             # Section information
@@ -277,7 +274,7 @@ class MultiFormatBinaryAnalyzer:
                     "virtual_size": _section.Misc_VirtualSize,
                     "raw_size": _section.SizeOfRawData,
                     "characteristics": hex(_section.Characteristics),
-                    "entropy": calculate_entropy(_section.get_data())
+                    "entropy": calculate_entropy(_section.get_data()),
                 }
                 info["sections"].append(section_info)
 
@@ -294,7 +291,7 @@ class MultiFormatBinaryAnalyzer:
 
                     info["imports"].append({
                         "dll": dll_name,
-                        "functions": imports
+                        "functions": imports,
                     })
 
             # Export information
@@ -304,7 +301,7 @@ class MultiFormatBinaryAnalyzer:
                         export_name = _exp.name.decode("utf-8", "ignore")
                         info["exports"].append({
                             "name": export_name,
-                            "address": hex(_exp.address)
+                            "address": hex(_exp.address),
                         })
 
             return info
@@ -313,23 +310,23 @@ class MultiFormatBinaryAnalyzer:
             self.logger.error("Error analyzing PE binary: %s", e)
             return {
                 "format": "PE",
-                "error": str(e)
+                "error": str(e),
             }
 
-    def analyze_elf(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
-        """
-        Analyze an ELF (Linux) binary.
+    def analyze_elf(self, binary_path: str | Path) -> dict[str, Any]:
+        """Analyze an ELF (Linux) binary.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             Analysis results dictionary
+
         """
         if not self.lief_available and not self.pyelftools_available:
             return {
                 "format": "ELF",
-                "error": "No ELF analysis backend available"
+                "error": "No ELF analysis backend available",
             }
 
         try:
@@ -346,7 +343,7 @@ class MultiFormatBinaryAnalyzer:
                     "entry_point": hex(binary.header.entrypoint),
                     "sections": [],
                     "symbols": [],
-                    "dynamic": []
+                    "dynamic": [],
                 }
 
                 # Section information
@@ -355,7 +352,7 @@ class MultiFormatBinaryAnalyzer:
                         "name": _section.name,
                         "type": _section.type.name if hasattr(_section.type, "name") else str(_section.type),
                         "address": hex(_section.virtual_address),
-                        "size": _section.size
+                        "size": _section.size,
                     }
 
                     # Calculate entropy if section has content
@@ -371,14 +368,14 @@ class MultiFormatBinaryAnalyzer:
                             "name": _symbol.name,
                             "type": _symbol.type.name if hasattr(_symbol.type, "name") else str(_symbol.type),
                             "value": hex(_symbol.value),
-                            "size": _symbol.size
+                            "size": _symbol.size,
                         }
                         info["symbols"].append(symbol_info)
 
                 return info
 
             # Use pyelftools if LIEF not available
-            elif self.pyelftools_available:
+            if self.pyelftools_available:
                 with open(binary_path, "rb") as f:
                     elf = ELFFile(f)
 
@@ -390,7 +387,7 @@ class MultiFormatBinaryAnalyzer:
                         "type": elf.header["e_type"],
                         "entry_point": hex(elf.header["e_entry"]),
                         "sections": [],
-                        "symbols": []
+                        "symbols": [],
                     }
 
                     # Section information
@@ -399,7 +396,7 @@ class MultiFormatBinaryAnalyzer:
                             "name": _section.name,
                             "type": _section["sh_type"],
                             "address": hex(_section["sh_addr"]),
-                            "size": _section["sh_size"]
+                            "size": _section["sh_size"],
                         }
 
                         info["sections"].append(section_info)
@@ -410,23 +407,23 @@ class MultiFormatBinaryAnalyzer:
             self.logger.error("Error analyzing ELF binary: %s", e)
             return {
                 "format": "ELF",
-                "error": str(e)
+                "error": str(e),
             }
 
-    def analyze_macho(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
-        """
-        Analyze a Mach-O (macOS) binary.
+    def analyze_macho(self, binary_path: str | Path) -> dict[str, Any]:
+        """Analyze a Mach-O (macOS) binary.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             Analysis results dictionary
+
         """
         if not self.lief_available and not self.macholib_available:
             return {
                 "format": "MACHO",
-                "error": "No Mach-O analysis backend available"
+                "error": "No Mach-O analysis backend available",
             }
 
         try:
@@ -440,14 +437,14 @@ class MultiFormatBinaryAnalyzer:
                     "headers": [],
                     "segments": [],
                     "symbols": [],
-                    "libraries": []
+                    "libraries": [],
                 }
 
                 # Header information
                 header_info = {
                     "magic": hex(binary.magic),
                     "cpu_type": binary.header.cpu_type.name if hasattr(binary.header.cpu_type, "name") else str(binary.header.cpu_type),
-                    "file_type": binary.header.file_type.name if hasattr(binary.header.file_type, "name") else str(binary.header.file_type)
+                    "file_type": binary.header.file_type.name if hasattr(binary.header.file_type, "name") else str(binary.header.file_type),
                 }
                 info["headers"].append(header_info)
 
@@ -457,7 +454,7 @@ class MultiFormatBinaryAnalyzer:
                         "name": _segment.name,
                         "address": hex(_segment.virtual_address),
                         "size": _segment.virtual_size,
-                        "sections": []
+                        "sections": [],
                     }
 
                     # Section information
@@ -465,7 +462,7 @@ class MultiFormatBinaryAnalyzer:
                         section_info = {
                             "name": _section.name,
                             "address": hex(_section.virtual_address),
-                            "size": _section.size
+                            "size": _section.size,
                         }
 
                         segment_info["sections"].append(section_info)
@@ -475,7 +472,7 @@ class MultiFormatBinaryAnalyzer:
                 return info
 
             # Use macholib if LIEF not available
-            elif self.macholib_available:
+            if self.macholib_available:
                 macho = MachO(str(binary_path))
 
                 # Basic information
@@ -483,7 +480,7 @@ class MultiFormatBinaryAnalyzer:
                     "format": "MACHO",
                     "headers": [],
                     "segments": [],
-                    "libraries": []
+                    "libraries": [],
                 }
 
                 # Process each header
@@ -492,7 +489,7 @@ class MultiFormatBinaryAnalyzer:
                         "magic": hex(_header.MH_MAGIC),
                         "cpu_type": _header.header.cputype,
                         "cpu_subtype": _header.header.cpusubtype,
-                        "filetype": _header.header.filetype
+                        "filetype": _header.header.filetype,
                     }
                     info["headers"].append(header_info)
 
@@ -502,18 +499,18 @@ class MultiFormatBinaryAnalyzer:
             self.logger.error("Error analyzing Mach-O binary: %s", e)
             return {
                 "format": "MACHO",
-                "error": str(e)
+                "error": str(e),
             }
 
-    def analyze_dotnet(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
-        """
-        Analyze a .NET assembly.
+    def analyze_dotnet(self, binary_path: str | Path) -> dict[str, Any]:
+        """Analyze a .NET assembly.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             Analysis results dictionary
+
         """
         # For now, return basic PE analysis with .NET note
         result = self.analyze_pe(binary_path)
@@ -521,30 +518,30 @@ class MultiFormatBinaryAnalyzer:
             result["note"] = "This is a .NET assembly. Consider using specialized .NET analysis tools."
         return result
 
-    def analyze_java(self, _binary_path: Union[str, Path]) -> Dict[str, Any]:  # pylint: disable=unused-argument
-        """
-        Analyze a Java class file.
+    def analyze_java(self, _binary_path: str | Path) -> dict[str, Any]:  # pylint: disable=unused-argument
+        """Analyze a Java class file.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             Analysis results dictionary
+
         """
         return {
             "format": "CLASS",
-            "note": "Java class file analysis not yet implemented"
+            "note": "Java class file analysis not yet implemented",
         }
 
-    def analyze_dex(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
-        """
-        Analyze an Android DEX (Dalvik Executable) file.
+    def analyze_dex(self, binary_path: str | Path) -> dict[str, Any]:
+        """Analyze an Android DEX (Dalvik Executable) file.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             Analysis results dictionary
+
         """
         try:
             with open(binary_path, "rb") as f:
@@ -553,7 +550,7 @@ class MultiFormatBinaryAnalyzer:
                 if not magic.startswith(b"dex\n"):
                     return {
                         "format": "DEX",
-                        "error": "Invalid DEX magic bytes"
+                        "error": "Invalid DEX magic bytes",
                     }
 
                 # Read basic header information
@@ -615,7 +612,7 @@ class MultiFormatBinaryAnalyzer:
                     "field_ids_count": field_ids_size,
                     "method_ids_count": method_ids_size,
                     "class_defs_count": class_defs_size,
-                    "sections": []
+                    "sections": [],
                 }
 
                 # Add section information
@@ -623,42 +620,42 @@ class MultiFormatBinaryAnalyzer:
                     info["sections"].append({
                         "name": "String IDs",
                         "offset": f"0x{string_ids_off:08X}",
-                        "count": string_ids_size
+                        "count": string_ids_size,
                     })
 
                 if type_ids_size > 0:
                     info["sections"].append({
                         "name": "Type IDs",
                         "offset": f"0x{type_ids_off:08X}",
-                        "count": type_ids_size
+                        "count": type_ids_size,
                     })
 
                 if proto_ids_size > 0:
                     info["sections"].append({
                         "name": "Proto IDs",
                         "offset": f"0x{proto_ids_off:08X}",
-                        "count": proto_ids_size
+                        "count": proto_ids_size,
                     })
 
                 if field_ids_size > 0:
                     info["sections"].append({
                         "name": "Field IDs",
                         "offset": f"0x{field_ids_off:08X}",
-                        "count": field_ids_size
+                        "count": field_ids_size,
                     })
 
                 if method_ids_size > 0:
                     info["sections"].append({
                         "name": "Method IDs",
                         "offset": f"0x{method_ids_off:08X}",
-                        "count": method_ids_size
+                        "count": method_ids_size,
                     })
 
                 if class_defs_size > 0:
                     info["sections"].append({
                         "name": "Class Definitions",
                         "offset": f"0x{class_defs_off:08X}",
-                        "count": class_defs_size
+                        "count": class_defs_size,
                     })
 
                 return info
@@ -667,29 +664,29 @@ class MultiFormatBinaryAnalyzer:
             self.logger.error("Error analyzing DEX binary: %s", e)
             return {
                 "format": "DEX",
-                "error": str(e)
+                "error": str(e),
             }
 
-    def analyze_apk(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
-        """
-        Analyze an Android APK (Android Package) file.
+    def analyze_apk(self, binary_path: str | Path) -> dict[str, Any]:
+        """Analyze an Android APK (Android Package) file.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             Analysis results dictionary
+
         """
         if not self.zipfile_available:
             return {
                 "format": "APK",
-                "error": "zipfile library not available"
+                "error": "zipfile library not available",
             }
 
         if not self.xml_available:
             return {
                 "format": "APK",
-                "error": "XML parsing not available"
+                "error": "XML parsing not available",
             }
 
         try:
@@ -700,7 +697,7 @@ class MultiFormatBinaryAnalyzer:
                 "native_libs": [],
                 "resources": [],
                 "manifest_info": {},
-                "certificates": []
+                "certificates": [],
             }
 
             with zipfile.ZipFile(binary_path, "r") as apk_file:
@@ -717,7 +714,7 @@ class MultiFormatBinaryAnalyzer:
                         "name": file_name,
                         "compressed_size": file_info.compress_size,
                         "uncompressed_size": file_info.file_size,
-                        "compression_type": file_info.compress_type
+                        "compression_type": file_info.compress_type,
                     }
 
                     if file_name.endswith(".dex"):
@@ -739,13 +736,13 @@ class MultiFormatBinaryAnalyzer:
                         info["manifest_info"] = {
                             "present": True,
                             "size": len(manifest_data),
-                            "note": "Binary XML format - specialized parser required for full analysis"
+                            "note": "Binary XML format - specialized parser required for full analysis",
                         }
                     except Exception as e:
                         logger.error("Exception in multi_format_analyzer: %s", e)
                         info["manifest_info"] = {
                             "present": True,
-                            "error": f"Failed to read manifest: {str(e)}"
+                            "error": f"Failed to read manifest: {e!s}",
                         }
                 else:
                     info["manifest_info"] = {"present": False}
@@ -757,7 +754,7 @@ class MultiFormatBinaryAnalyzer:
                     "resource_count": len(info["resources"]),
                     "certificate_count": len(info["certificates"]),
                     "total_uncompressed_size": sum(f["uncompressed_size"] for f in info["files"]),
-                    "total_compressed_size": sum(f["compressed_size"] for f in info["files"])
+                    "total_compressed_size": sum(f["compressed_size"] for f in info["files"]),
                 }
 
                 return info
@@ -766,23 +763,23 @@ class MultiFormatBinaryAnalyzer:
             self.logger.error("Error analyzing APK binary: %s", e)
             return {
                 "format": "APK",
-                "error": str(e)
+                "error": str(e),
             }
 
-    def analyze_jar(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
-        """
-        Analyze a Java JAR (Java Archive) file.
+    def analyze_jar(self, binary_path: str | Path) -> dict[str, Any]:
+        """Analyze a Java JAR (Java Archive) file.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             Analysis results dictionary
+
         """
         if not self.zipfile_available:
             return {
                 "format": "JAR",
-                "error": "zipfile library not available"
+                "error": "zipfile library not available",
             }
 
         try:
@@ -792,7 +789,7 @@ class MultiFormatBinaryAnalyzer:
                 "class_files": [],
                 "resources": [],
                 "manifest_info": {},
-                "meta_inf": []
+                "meta_inf": [],
             }
 
             with zipfile.ZipFile(binary_path, "r") as jar_file:
@@ -809,7 +806,7 @@ class MultiFormatBinaryAnalyzer:
                         "name": file_name,
                         "compressed_size": file_info.compress_size,
                         "uncompressed_size": file_info.file_size,
-                        "compression_type": file_info.compress_type
+                        "compression_type": file_info.compress_type,
                     }
 
                     if file_name.endswith(".class"):
@@ -838,13 +835,13 @@ class MultiFormatBinaryAnalyzer:
                             "attributes": manifest_attrs,
                             "main_class": manifest_attrs.get("Main-Class", "Not specified"),
                             "manifest_version": manifest_attrs.get("Manifest-Version", "Unknown"),
-                            "created_by": manifest_attrs.get("Created-By", "Unknown")
+                            "created_by": manifest_attrs.get("Created-By", "Unknown"),
                         }
                     except Exception as e:
                         logger.error("Exception in multi_format_analyzer: %s", e)
                         info["manifest_info"] = {
                             "present": True,
-                            "error": f"Failed to parse manifest: {str(e)}"
+                            "error": f"Failed to parse manifest: {e!s}",
                         }
                 else:
                     info["manifest_info"] = {"present": False}
@@ -855,7 +852,7 @@ class MultiFormatBinaryAnalyzer:
                     "resource_count": len(info["resources"]),
                     "meta_inf_count": len(info["meta_inf"]),
                     "total_uncompressed_size": sum(f["uncompressed_size"] for f in info["files"]),
-                    "total_compressed_size": sum(f["compressed_size"] for f in info["files"])
+                    "total_compressed_size": sum(f["compressed_size"] for f in info["files"]),
                 }
 
                 return info
@@ -864,18 +861,18 @@ class MultiFormatBinaryAnalyzer:
             self.logger.error("Error analyzing JAR binary: %s", e)
             return {
                 "format": "JAR",
-                "error": str(e)
+                "error": str(e),
             }
 
-    def analyze_msi(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
-        """
-        Analyze a Microsoft Installer (MSI) file.
+    def analyze_msi(self, binary_path: str | Path) -> dict[str, Any]:
+        """Analyze a Microsoft Installer (MSI) file.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             Analysis results dictionary
+
         """
         try:
             with open(binary_path, "rb") as f:
@@ -885,7 +882,7 @@ class MultiFormatBinaryAnalyzer:
                 if not header.startswith(b"\\xd0\\xcf\\x11\\xe0"):
                     return {
                         "format": "MSI",
-                        "error": "Invalid compound document signature"
+                        "error": "Invalid compound document signature",
                     }
 
                 # Basic MSI analysis (compound document format)
@@ -893,7 +890,7 @@ class MultiFormatBinaryAnalyzer:
                     "format": "MSI",
                     "compound_document": True,
                     "file_size": Path(binary_path).stat().st_size,
-                    "note": "MSI files use compound document format - specialized parser needed for full analysis"
+                    "note": "MSI files use compound document format - specialized parser needed for full analysis",
                 }
 
                 # Extract basic compound document information
@@ -914,8 +911,8 @@ class MultiFormatBinaryAnalyzer:
                         "sectors_in_fat": int.from_bytes(header[48:52], byteorder="little"),
                         "directory_first_sector": int.from_bytes(header[52:56], byteorder="little"),
                         "transaction_signature": int.from_bytes(header[56:60], byteorder="little"),
-                        "mini_stream_cutoff": int.from_bytes(header[60:64], byteorder="little")
-                    }
+                        "mini_stream_cutoff": int.from_bytes(header[60:64], byteorder="little"),
+                    },
                 })
 
                 return info
@@ -924,18 +921,18 @@ class MultiFormatBinaryAnalyzer:
             self.logger.error("Error analyzing MSI binary: %s", e)
             return {
                 "format": "MSI",
-                "error": str(e)
+                "error": str(e),
             }
 
-    def analyze_com(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
-        """
-        Analyze a DOS COM (Command) executable.
+    def analyze_com(self, binary_path: str | Path) -> dict[str, Any]:
+        """Analyze a DOS COM (Command) executable.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             Analysis results dictionary
+
         """
         try:
             file_size = Path(binary_path).stat().st_size
@@ -943,7 +940,7 @@ class MultiFormatBinaryAnalyzer:
             if file_size > 65536:  # 64KB limit for COM files
                 return {
                     "format": "COM",
-                    "error": "File too large for COM format (>64KB)"
+                    "error": "File too large for COM format (>64KB)",
                 }
 
             with open(binary_path, "rb") as f:
@@ -958,8 +955,8 @@ class MultiFormatBinaryAnalyzer:
                     "max_size": "64KB",
                     "header_analysis": {
                         "first_bytes": header_bytes[:16].hex(),
-                        "possible_instructions": []
-                    }
+                        "possible_instructions": [],
+                    },
                 }
 
                 # Try to identify common COM file patterns
@@ -1008,7 +1005,7 @@ class MultiFormatBinaryAnalyzer:
             self.logger.error("Error analyzing COM binary: %s", e)
             return {
                 "format": "COM",
-                "error": str(e)
+                "error": str(e),
             }
 
     # Helper methods
@@ -1039,7 +1036,7 @@ class MultiFormatBinaryAnalyzer:
             0x1a6: "SH4",
             0x1a8: "SH5",
             0x1c2: "THUMB",
-            0x169: "WCEMIPSV2"
+            0x169: "WCEMIPSV2",
         }
         return machine_types.get(machine_value, f"UNKNOWN (0x{machine_value:04X})")
 
@@ -1051,7 +1048,7 @@ class MultiFormatBinaryAnalyzer:
             self.logger.error("Exception in multi_format_analyzer: %s", e)
             return f"Invalid timestamp ({timestamp})"
 
-    def _get_characteristics(self, characteristics: int) -> List[str]:
+    def _get_characteristics(self, characteristics: int) -> list[str]:
         """Convert PE characteristics flags to readable descriptions."""
         char_flags = {
             0x0001: "Relocation info stripped",
@@ -1068,7 +1065,7 @@ class MultiFormatBinaryAnalyzer:
             0x1000: "System file",
             0x2000: "DLL",
             0x4000: "Uniprocessor machine only",
-            0x8000: "Bytes reversed hi"
+            0x8000: "Bytes reversed hi",
         }
 
         result = []
@@ -1080,15 +1077,15 @@ class MultiFormatBinaryAnalyzer:
 
 
 
-    def analyze(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
-        """
-        Analyze a binary file and extract structure information.
+    def analyze(self, binary_path: str | Path) -> dict[str, Any]:
+        """Analyze a binary file and extract structure information.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             Dictionary containing structure analysis results
+
         """
         binary_path = Path(binary_path)
 
@@ -1102,7 +1099,7 @@ class MultiFormatBinaryAnalyzer:
             "format": format_type,
             "file_path": str(binary_path),
             "file_size": binary_path.stat().st_size,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         # Analyze based on format
@@ -1112,19 +1109,18 @@ class MultiFormatBinaryAnalyzer:
             result.update(self.analyze_elf(binary_path))
         elif format_type == "MACHO":
             result.update(self.analyze_macho(binary_path))
-        else:
-            # Try generic analysis with LIEF
-            if self.lief_available:
-                try:
-                    binary = lief.parse(str(binary_path))
-                    if binary:
-                        result.update(self._analyze_lief_binary(binary))
-                except Exception as e:
-                    self.logger.error(f"LIEF analysis failed: {e}")
+        # Try generic analysis with LIEF
+        elif self.lief_available:
+            try:
+                binary = lief.parse(str(binary_path))
+                if binary:
+                    result.update(self._analyze_lief_binary(binary))
+            except Exception as e:
+                self.logger.error(f"LIEF analysis failed: {e}")
 
         return result
 
-    def _analyze_lief_binary(self, binary) -> Dict[str, Any]:
+    def _analyze_lief_binary(self, binary) -> dict[str, Any]:
         """Analyze a binary using LIEF"""
         result = {}
 
@@ -1141,14 +1137,13 @@ class MultiFormatBinaryAnalyzer:
                     "virtual_address": section.virtual_address,
                     "virtual_size": section.virtual_size,
                     "size": section.size,
-                    "entropy": section.entropy if hasattr(section, "entropy") else 0
+                    "entropy": section.entropy if hasattr(section, "entropy") else 0,
                 })
             result["sections"] = sections
 
         return result
-def run_multi_format_analysis(app, binary_path: Optional[Union[str, Path]] = None) -> Dict[str, Any]:
-    """
-    Run analysis on a binary of any supported format.
+def run_multi_format_analysis(app, binary_path: str | Path | None = None) -> dict[str, Any]:
+    """Run analysis on a binary of any supported format.
 
     Args:
         app: Application instance with update_output signal
@@ -1156,6 +1151,7 @@ def run_multi_format_analysis(app, binary_path: Optional[Union[str, Path]] = Non
 
     Returns:
         Analysis results dictionary
+
     """
     from ...utils.logger import log_message
 

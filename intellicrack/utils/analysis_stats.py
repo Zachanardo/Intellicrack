@@ -1,5 +1,4 @@
-"""
-Copyright (C) 2025 Zachary Flint
+"""Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
 
@@ -20,20 +19,19 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import time
 from collections import Counter, defaultdict
-from typing import Any, Callable, Dict, List, Optional, Union
+from collections.abc import Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class AnalysisStatsGenerator:
-    """
-    Utility class for generating analysis statistics and reports.
+    """Utility class for generating analysis statistics and reports.
     """
 
     @staticmethod
-    def count_by_attribute(items: List[Dict[str, Any]], attribute: str) -> Dict[str, int]:
-        """
-        Count items by a specific attribute.
+    def count_by_attribute(items: list[dict[str, Any]], attribute: str) -> dict[str, int]:
+        """Count items by a specific attribute.
 
         Args:
             items: List of dictionaries to analyze
@@ -41,6 +39,7 @@ class AnalysisStatsGenerator:
 
         Returns:
             Dictionary with counts for each attribute value
+
         """
         try:
             if not items:
@@ -60,10 +59,9 @@ class AnalysisStatsGenerator:
             return {}
 
     @staticmethod
-    def calculate_distribution(items: List[Dict[str, Any]],
-                             attribute: str) -> Dict[str, float]:
-        """
-        Calculate percentage distribution of an attribute.
+    def calculate_distribution(items: list[dict[str, Any]],
+                             attribute: str) -> dict[str, float]:
+        """Calculate percentage distribution of an attribute.
 
         Args:
             items: List of dictionaries to analyze
@@ -71,6 +69,7 @@ class AnalysisStatsGenerator:
 
         Returns:
             Dictionary with percentage distribution
+
         """
         try:
             counts = AnalysisStatsGenerator.count_by_attribute(items, attribute)
@@ -90,10 +89,9 @@ class AnalysisStatsGenerator:
             return {}
 
     @staticmethod
-    def aggregate_numeric_stats(items: List[Dict[str, Any]],
-                              attribute: str) -> Dict[str, float]:
-        """
-        Calculate numeric statistics for an attribute.
+    def aggregate_numeric_stats(items: list[dict[str, Any]],
+                              attribute: str) -> dict[str, float]:
+        """Calculate numeric statistics for an attribute.
 
         Args:
             items: List of dictionaries to analyze
@@ -101,6 +99,7 @@ class AnalysisStatsGenerator:
 
         Returns:
             Dictionary with min, max, avg, sum statistics
+
         """
         try:
             values = []
@@ -116,7 +115,7 @@ class AnalysisStatsGenerator:
                     "min": 0.0,
                     "max": 0.0,
                     "avg": 0.0,
-                    "sum": 0.0
+                    "sum": 0.0,
                 }
 
             return {
@@ -124,7 +123,7 @@ class AnalysisStatsGenerator:
                 "min": float(min(values)),
                 "max": float(max(values)),
                 "avg": float(sum(values) / len(values)),
-                "sum": float(sum(values))
+                "sum": float(sum(values)),
             }
 
         except Exception as e:
@@ -134,14 +133,13 @@ class AnalysisStatsGenerator:
                 "min": 0.0,
                 "max": 0.0,
                 "avg": 0.0,
-                "sum": 0.0
+                "sum": 0.0,
             }
 
     @staticmethod
-    def generate_correlation_matrix(items: List[Dict[str, Any]],
-                                  attributes: List[str]) -> Dict[str, Dict[str, float]]:
-        """
-        Generate correlation matrix between numeric attributes.
+    def generate_correlation_matrix(items: list[dict[str, Any]],
+                                  attributes: list[str]) -> dict[str, dict[str, float]]:
+        """Generate correlation matrix between numeric attributes.
 
         Args:
             items: List of dictionaries to analyze
@@ -149,6 +147,7 @@ class AnalysisStatsGenerator:
 
         Returns:
             Correlation matrix as nested dictionary
+
         """
         try:
             # Extract numeric values for each attribute
@@ -172,7 +171,7 @@ class AnalysisStatsGenerator:
                     else:
                         correlation = AnalysisStatsGenerator._calculate_correlation(
                             attribute_values.get(attr1, []),
-                            attribute_values.get(attr2, [])
+                            attribute_values.get(attr2, []),
                         )
                         correlation_matrix[attr1][attr2] = correlation
 
@@ -183,7 +182,7 @@ class AnalysisStatsGenerator:
             return {}
 
     @staticmethod
-    def _calculate_correlation(values1: List[float], values2: List[float]) -> float:
+    def _calculate_correlation(values1: list[float], values2: list[float]) -> float:
         """Calculate Pearson correlation coefficient."""
         try:
             if len(values1) != len(values2) or len(values1) < 2:
@@ -210,12 +209,11 @@ class AnalysisStatsGenerator:
             return 0.0
 
     @staticmethod
-    def generate_time_series_stats(items: List[Dict[str, Any]],
+    def generate_time_series_stats(items: list[dict[str, Any]],
                                  time_attribute: str = "timestamp",
                                  value_attribute: str = "value",
-                                 interval_seconds: int = 3600) -> Dict[str, Any]:
-        """
-        Generate time series statistics.
+                                 interval_seconds: int = 3600) -> dict[str, Any]:
+        """Generate time series statistics.
 
         Args:
             items: List of dictionaries with time and value data
@@ -225,6 +223,7 @@ class AnalysisStatsGenerator:
 
         Returns:
             Time series statistics
+
         """
         try:
             # Group items by time intervals
@@ -254,13 +253,13 @@ class AnalysisStatsGenerator:
                         "min": min(numeric_values),
                         "max": max(numeric_values),
                         "avg": sum(numeric_values) / len(numeric_values),
-                        "sum": sum(numeric_values)
+                        "sum": sum(numeric_values),
                     }
 
             return {
                 "interval_seconds": interval_seconds,
                 "total_buckets": len(time_series),
-                "data": time_series
+                "data": time_series,
             }
 
         except Exception as e:
@@ -268,14 +267,13 @@ class AnalysisStatsGenerator:
             return {
                 "interval_seconds": interval_seconds,
                 "total_buckets": 0,
-                "data": {}
+                "data": {},
             }
 
     @staticmethod
     def safe_stats_generation(stats_function: Callable[[], Any],
-                            default_return: Optional[Any] = None) -> Any:
-        """
-        Safely execute a statistics generation function with error handling.
+                            default_return: Any | None = None) -> Any:
+        """Safely execute a statistics generation function with error handling.
 
         Args:
             stats_function: Function to execute
@@ -283,6 +281,7 @@ class AnalysisStatsGenerator:
 
         Returns:
             Function result or default value on error
+
         """
         try:
             return stats_function()
@@ -291,10 +290,9 @@ class AnalysisStatsGenerator:
             return default_return
 
     @staticmethod
-    def generate_summary_report(items: List[Dict[str, Any]],
+    def generate_summary_report(items: list[dict[str, Any]],
                               title: str = "Analysis Summary") -> str:
-        """
-        Generate a text summary report.
+        """Generate a text summary report.
 
         Args:
             items: List of dictionaries to summarize
@@ -302,6 +300,7 @@ class AnalysisStatsGenerator:
 
         Returns:
             Formatted text report
+
         """
         try:
             report_lines = [
@@ -309,7 +308,7 @@ class AnalysisStatsGenerator:
                 "=" * len(title),
                 "",
                 f"Total Items: {len(items)}",
-                ""
+                "",
             ]
 
             if not items:
@@ -347,7 +346,7 @@ class AnalysisStatsGenerator:
                         f"  Min: {stats['min']:.2f}",
                         f"  Max: {stats['max']:.2f}",
                         f"  Average: {stats['avg']:.2f}",
-                        f"  Sum: {stats['sum']:.2f}"
+                        f"  Sum: {stats['sum']:.2f}",
                     ])
                 else:
                     # Categorical data
@@ -367,10 +366,9 @@ class AnalysisStatsGenerator:
             return f"{title}\n{'=' * len(title)}\n\nError generating report: {e}"
 
     @staticmethod
-    def calculate_growth_rate(current_value: Union[int, float],
-                            previous_value: Union[int, float]) -> float:
-        """
-        Calculate growth rate between two values.
+    def calculate_growth_rate(current_value: float,
+                            previous_value: float) -> float:
+        """Calculate growth rate between two values.
 
         Args:
             current_value: Current measurement
@@ -378,6 +376,7 @@ class AnalysisStatsGenerator:
 
         Returns:
             Growth rate as percentage
+
         """
         try:
             if previous_value == 0:
@@ -391,10 +390,9 @@ class AnalysisStatsGenerator:
             return 0.0
 
     @staticmethod
-    def detect_outliers(values: List[Union[int, float]],
-                       method: str = "iqr") -> List[int]:
-        """
-        Detect outliers in a list of numeric values.
+    def detect_outliers(values: list[int | float],
+                       method: str = "iqr") -> list[int]:
+        """Detect outliers in a list of numeric values.
 
         Args:
             values: List of numeric values
@@ -402,6 +400,7 @@ class AnalysisStatsGenerator:
 
         Returns:
             List of indices of outlier values
+
         """
         try:
             if len(values) < 4:
@@ -447,10 +446,9 @@ class AnalysisStatsGenerator:
             return []
 
     @staticmethod
-    def generate_percentiles(values: List[Union[int, float]],
-                           percentiles: List[int] = None) -> Dict[int, float]:
-        """
-        Calculate percentiles for a list of values.
+    def generate_percentiles(values: list[int | float],
+                           percentiles: list[int] = None) -> dict[int, float]:
+        """Calculate percentiles for a list of values.
 
         Args:
             values: List of numeric values
@@ -458,6 +456,7 @@ class AnalysisStatsGenerator:
 
         Returns:
             Dictionary mapping percentile to value
+
         """
         try:
             if not values:
@@ -493,8 +492,7 @@ class AnalysisStatsGenerator:
 
 
 class PerformanceTracker:
-    """
-    Track performance metrics for analysis operations.
+    """Track performance metrics for analysis operations.
     """
 
     def __init__(self):
@@ -518,7 +516,7 @@ class PerformanceTracker:
                         "total_items": 0,
                         "call_count": 0,
                         "avg_time_per_call": 0.0,
-                        "avg_time_per_item": 0.0
+                        "avg_time_per_item": 0.0,
                     }
 
                 self.metrics[operation_name]["total_time"] += duration
@@ -539,7 +537,7 @@ class PerformanceTracker:
         except Exception as e:
             logger.debug(f"Performance tracking failed: {e}")
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get all collected metrics."""
         return dict(self.metrics)
 
@@ -552,5 +550,5 @@ class PerformanceTracker:
 # Export commonly used classes and functions
 __all__ = [
     "AnalysisStatsGenerator",
-    "PerformanceTracker"
+    "PerformanceTracker",
 ]

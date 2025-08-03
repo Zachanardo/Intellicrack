@@ -24,8 +24,7 @@ from .base_tab import BaseTab
 
 
 class DashboardTab(BaseTab):
-    """
-    Dashboard Tab - Manages project files, binary information, and workspace overview.
+    """Dashboard Tab - Manages project files, binary information, and workspace overview.
     Consolidates functionality from the previous Project & Dashboard tab.
     """
 
@@ -209,7 +208,7 @@ class DashboardTab(BaseTab):
         """Open an existing project"""
         file_dialog = QFileDialog()
         project_file, _ = file_dialog.getOpenFileName(
-            self, "Open Project", "", "Intellicrack Projects (*.icp);;All Files (*)"
+            self, "Open Project", "", "Intellicrack Projects (*.icp);;All Files (*)",
         )
         if project_file:
             self.log_activity(f"Opening project: {project_file}")
@@ -223,7 +222,7 @@ class DashboardTab(BaseTab):
 
         file_dialog = QFileDialog()
         project_file, _ = file_dialog.getSaveFileName(
-            self, "Save Project", "", "Intellicrack Projects (*.icp);;All Files (*)"
+            self, "Save Project", "", "Intellicrack Projects (*.icp);;All Files (*)",
         )
         if project_file:
             self.log_activity(f"Saving project: {project_file}")
@@ -233,7 +232,7 @@ class DashboardTab(BaseTab):
         """Select a binary file for analysis"""
         file_dialog = QFileDialog()
         binary_file, _ = file_dialog.getOpenFileName(
-            self, "Select Binary", "", "All Files (*)"
+            self, "Select Binary", "", "All Files (*)",
         )
         if binary_file:
             self.load_binary(binary_file)
@@ -295,7 +294,7 @@ class DashboardTab(BaseTab):
 
         file_dialog = QFileDialog()
         results_file, _ = file_dialog.getSaveFileName(
-            self, "Save Analysis Results", "", "JSON Files (*.json);;All Files (*)"
+            self, "Save Analysis Results", "", "JSON Files (*.json);;All Files (*)",
         )
         if results_file:
             self.log_activity(f"Saving analysis results: {results_file}")
@@ -311,7 +310,7 @@ class DashboardTab(BaseTab):
         reply = QMessageBox.question(
             self, "Clear Analysis",
             "Are you sure you want to clear all analysis results?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         )
         if reply == QMessageBox.Yes:
             self.log_activity("Cleared analysis results")

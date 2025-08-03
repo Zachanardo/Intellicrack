@@ -1,5 +1,4 @@
-"""
-Comprehensive Analysis Orchestrator
+"""Comprehensive Analysis Orchestrator
 
 Coordinates multiple analysis engines to perform deep binary analysis,
 including static analysis, dynamic analysis, entropy analysis, structure
@@ -12,7 +11,7 @@ Licensed under GNU General Public License v3.0
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
@@ -27,6 +26,7 @@ from .yara_pattern_engine import YaraPatternEngine
 
 class AnalysisPhase(Enum):
     """Analysis phases"""
+
     PREPARATION = "preparation"
     BASIC_INFO = "basic_info"
     STATIC_ANALYSIS = "static_analysis"
@@ -41,12 +41,13 @@ class AnalysisPhase(Enum):
 @dataclass
 class OrchestrationResult:
     """Result of orchestrated analysis"""
+
     binary_path: str
     success: bool
-    phases_completed: List[AnalysisPhase] = field(default_factory=list)
-    results: Dict[str, Any] = field(default_factory=dict)
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    phases_completed: list[AnalysisPhase] = field(default_factory=list)
+    results: dict[str, Any] = field(default_factory=dict)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
     def add_result(self, phase: AnalysisPhase, result: Any):
         """Add result for a phase"""
@@ -63,8 +64,7 @@ class OrchestrationResult:
 
 
 class AnalysisOrchestrator(QObject):
-    """
-    Orchestrates comprehensive binary analysis using multiple engines
+    """Orchestrates comprehensive binary analysis using multiple engines
     """
 
     # Signals
@@ -96,9 +96,8 @@ class AnalysisOrchestrator(QObject):
         self.enabled_phases = list(AnalysisPhase)
         self.timeout_per_phase = 300  # 5 minutes per phase
 
-    def analyze_binary(self, binary_path: str, phases: Optional[List[AnalysisPhase]] = None) -> OrchestrationResult:
-        """
-        Perform orchestrated analysis on a binary
+    def analyze_binary(self, binary_path: str, phases: list[AnalysisPhase] | None = None) -> OrchestrationResult:
+        """Perform orchestrated analysis on a binary
 
         Args:
             binary_path: Path to the binary file
@@ -106,6 +105,7 @@ class AnalysisOrchestrator(QObject):
 
         Returns:
             OrchestrationResult with all analysis data
+
         """
         result = OrchestrationResult(binary_path=binary_path, success=True)
 
@@ -152,7 +152,7 @@ class AnalysisOrchestrator(QObject):
                 self.phase_completed.emit(phase.value, phase_result)
 
             except Exception as e:
-                error_msg = f"Phase {phase.value} failed: {str(e)}"
+                error_msg = f"Phase {phase.value} failed: {e!s}"
                 result.add_error(phase, str(e))
                 self.phase_failed.emit(phase.value, error_msg)
                 # Continue with other phases even if one fails
@@ -161,7 +161,7 @@ class AnalysisOrchestrator(QObject):
         self.analysis_completed.emit(result)
         return result
 
-    def _prepare_analysis(self, binary_path: str) -> Dict[str, Any]:
+    def _prepare_analysis(self, binary_path: str) -> dict[str, Any]:
         """Prepare for analysis"""
         file_stat = os.stat(binary_path)
         return {
@@ -171,7 +171,7 @@ class AnalysisOrchestrator(QObject):
             "modified_time": file_stat.st_mtime,
         }
 
-    def _analyze_basic_info(self, binary_path: str) -> Dict[str, Any]:
+    def _analyze_basic_info(self, binary_path: str) -> dict[str, Any]:
         """Get basic binary information"""
         try:
             # Use binary analyzer for basic info
@@ -179,7 +179,7 @@ class AnalysisOrchestrator(QObject):
         except Exception as e:
             return {"error": str(e), "fallback": True}
 
-    def _perform_static_analysis(self, binary_path: str) -> Dict[str, Any]:
+    def _perform_static_analysis(self, binary_path: str) -> dict[str, Any]:
         """Perform static analysis using radare2"""
         try:
             result = {}
@@ -208,7 +208,7 @@ class AnalysisOrchestrator(QObject):
         except Exception as e:
             return {"error": str(e)}
 
-    def _perform_entropy_analysis(self, binary_path: str) -> Dict[str, Any]:
+    def _perform_entropy_analysis(self, binary_path: str) -> dict[str, Any]:
         """Perform entropy analysis"""
         try:
             result = {"sections": []}
@@ -231,7 +231,7 @@ class AnalysisOrchestrator(QObject):
                         "offset": i,
                         "size": len(chunk_data),
                         "entropy": entropy,
-                        "suspicious": entropy > self.entropy_analyzer.high_entropy_threshold
+                        "suspicious": entropy > self.entropy_analyzer.high_entropy_threshold,
                     })
 
             result["chunks"] = chunks
@@ -241,7 +241,7 @@ class AnalysisOrchestrator(QObject):
         except Exception as e:
             return {"error": str(e)}
 
-    def _analyze_structure(self, binary_path: str) -> Dict[str, Any]:
+    def _analyze_structure(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary structure"""
         try:
             # Use multi-format analyzer
@@ -249,14 +249,14 @@ class AnalysisOrchestrator(QObject):
         except Exception as e:
             return {"error": str(e)}
 
-    def _scan_vulnerabilities(self, binary_path: str) -> Dict[str, Any]:
+    def _scan_vulnerabilities(self, binary_path: str) -> dict[str, Any]:
         """Scan for vulnerabilities"""
         try:
             return self.vulnerability_engine.scan(binary_path)
         except Exception as e:
             return {"error": str(e)}
 
-    def _match_patterns(self, binary_path: str) -> Dict[str, Any]:
+    def _match_patterns(self, binary_path: str) -> dict[str, Any]:
         """Match YARA patterns"""
         try:
             # Load rules if available
@@ -268,24 +268,23 @@ class AnalysisOrchestrator(QObject):
         except Exception as e:
             return {"error": str(e)}
 
-    def _perform_dynamic_analysis(self, binary_path: str) -> Dict[str, Any]:
+    def _perform_dynamic_analysis(self, binary_path: str) -> dict[str, Any]:
         """Perform dynamic analysis if possible"""
         try:
             # Check if dynamic analysis is available
             if hasattr(self.dynamic_analyzer, "is_available") and self.dynamic_analyzer.is_available():
                 return self.dynamic_analyzer.analyze(binary_path)
-            else:
-                return {"status": "skipped", "reason": "Dynamic analysis not available"}
+            return {"status": "skipped", "reason": "Dynamic analysis not available"}
         except Exception as e:
             return {"error": str(e)}
 
-    def _finalize_analysis(self, result: OrchestrationResult) -> Dict[str, Any]:
+    def _finalize_analysis(self, result: OrchestrationResult) -> dict[str, Any]:
         """Finalize and summarize analysis"""
         summary = {
             "total_phases": len(self.enabled_phases),
             "completed_phases": len(result.phases_completed),
             "errors": len(result.errors),
-            "warnings": len(result.warnings)
+            "warnings": len(result.warnings),
         }
 
         # Add key findings

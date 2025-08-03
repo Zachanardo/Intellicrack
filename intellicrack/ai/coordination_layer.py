@@ -1,5 +1,4 @@
-"""
-AI Coordination Layer for Intellicrack
+"""AI Coordination Layer for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -27,7 +26,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Local imports
 try:
@@ -48,6 +47,7 @@ except ImportError as e:
 
 class AnalysisStrategy(Enum):
     """Strategy for coordinating ML and LLM analysis."""
+
     ML_FIRST = "ml_first"              # Start with ML, escalate if needed
     LLM_FIRST = "llm_first"            # Start with LLM, use ML for validation
     PARALLEL = "parallel"              # Run both simultaneously
@@ -59,31 +59,32 @@ class AnalysisStrategy(Enum):
 @dataclass
 class AnalysisRequest:
     """Request for coordinated analysis."""
+
     binary_path: str
     analysis_type: str
     strategy: AnalysisStrategy = AnalysisStrategy.ADAPTIVE
     confidence_threshold: float = 0.7
     max_processing_time: float = 30.0  # seconds
     use_cache: bool = True
-    context: Dict[str, Any] = None
+    context: dict[str, Any] = None
 
 
 @dataclass
 class CoordinatedResult:
     """Result from coordinated analysis."""
-    ml_results: Optional[Dict[str, Any]] = None
-    llm_results: Optional[Dict[str, Any]] = None
+
+    ml_results: dict[str, Any] | None = None
+    llm_results: dict[str, Any] | None = None
     combined_confidence: float = 0.0
     strategy_used: AnalysisStrategy = AnalysisStrategy.ML_FIRST
     processing_time: float = 0.0
     escalated: bool = False
     cache_hit: bool = False
-    recommendations: List[str] = None
+    recommendations: list[str] = None
 
 
 class AICoordinationLayer:
-    """
-    Coordination layer for intelligent LLMs.
+    """Coordination layer for intelligent LLMs.
 
     This class orchestrates the interaction with:
     - ModelManager: Intelligent LLM reasoning and complex analysis
@@ -92,8 +93,8 @@ class AICoordinationLayer:
     intelligent workflows that leverage LLM capabilities.
     """
 
-    def __init__(self, shared_context: Optional[AISharedContext] = None,
-                 event_bus: Optional[AIEventBus] = None):
+    def __init__(self, shared_context: AISharedContext | None = None,
+                 event_bus: AIEventBus | None = None):
         """Initialize the coordination layer."""
         logger.info("Initializing AI Coordination Layer...")
 
@@ -112,7 +113,7 @@ class AICoordinationLayer:
             "escalations": 0,
             "cache_hits": 0,
             "avg_ml_time": 0.0,
-            "avg_llm_time": 0.0
+            "avg_llm_time": 0.0,
         }
 
         # Analysis cache for performance optimization
@@ -138,7 +139,7 @@ class AICoordinationLayer:
         key_data = f"{request.binary_path}_{request.analysis_type}_{request.strategy}"
         return hashlib.sha256(key_data.encode()).hexdigest()
 
-    def _is_cache_valid(self, cache_entry: Dict) -> bool:
+    def _is_cache_valid(self, cache_entry: dict) -> bool:
         """Check if cache entry is still valid."""
         cached_time = cache_entry.get("timestamp", datetime.min)
         return datetime.now() - cached_time < self.cache_ttl
@@ -147,7 +148,7 @@ class AICoordinationLayer:
         """Cache analysis result."""
         self.analysis_cache[cache_key] = {
             "result": result,
-            "timestamp": datetime.now()
+            "timestamp": datetime.now(),
         }
 
     def _choose_strategy(self, request: AnalysisRequest) -> AnalysisStrategy:
@@ -165,18 +166,16 @@ class AICoordinationLayer:
 
             if file_size > 50 * 1024 * 1024:  # > 50MB
                 return AnalysisStrategy.ML_FIRST  # Start with fast analysis
-            elif file_size < 1024 * 1024:  # < 1MB
+            if file_size < 1024 * 1024:  # < 1MB
                 return AnalysisStrategy.PARALLEL  # Small files can handle both
-            else:
-                return AnalysisStrategy.ML_FIRST  # Default to ML first
+            return AnalysisStrategy.ML_FIRST  # Default to ML first
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in coordination_layer: %s", e)
             return AnalysisStrategy.ML_FIRST
 
     def analyze_vulnerabilities(self, request: AnalysisRequest) -> CoordinatedResult:
-        """
-        Coordinate vulnerability analysis between ML and LLM components.
+        """Coordinate vulnerability analysis between ML and LLM components.
 
         This method intelligently combines fast ML prediction with deep
         LLM reasoning to provide comprehensive vulnerability analysis.
@@ -226,7 +225,7 @@ class AICoordinationLayer:
                 "strategy": strategy,
                 "processing_time": result.processing_time,
                 "confidence": result.combined_confidence,
-                "escalated": result.escalated
+                "escalated": result.escalated,
             }, "coordination_layer")
 
             logger.info("Coordinated analysis complete in %fs",
@@ -388,7 +387,7 @@ class AICoordinationLayer:
 
         return result
 
-    def _perform_llm_analysis(self, request: AnalysisRequest) -> Dict[str, Any]:
+    def _perform_llm_analysis(self, request: AnalysisRequest) -> dict[str, Any]:
         """Perform LLM-based analysis using available language models."""
         try:
             from .llm_backends import LLMManager, LLMMessage
@@ -415,12 +414,12 @@ class AICoordinationLayer:
                     role="system",
                     content="You are a cybersecurity expert specializing in binary analysis and vulnerability research. "
                     "Analyze the provided binary information and identify potential security vulnerabilities, "
-                    "exploitation techniques, and recommend appropriate security measures."
+                    "exploitation techniques, and recommend appropriate security measures.",
                 ),
                 LLMMessage(
                     role="user",
-                    content=analysis_prompt
-                )
+                    content=analysis_prompt,
+                ),
             ]
 
             # Perform LLM analysis
@@ -435,10 +434,9 @@ class AICoordinationLayer:
                 self.performance_stats["llm_calls"] += 1
 
                 return analysis_result
-            else:
-                logger.warning(
-                    "No response from LLM, using fallback analysis")
-                return self._fallback_analysis(request)
+            logger.warning(
+                "No response from LLM, using fallback analysis")
+            return self._fallback_analysis(request)
 
         except Exception as e:
             logger.error("LLM analysis failed: %s", e)
@@ -479,7 +477,7 @@ class AICoordinationLayer:
                         allowed_dirs = [
                             os.path.realpath(os.getcwd()),
                             os.path.realpath(os.path.expanduser("~")),
-                            os.path.realpath(tempfile.gettempdir())
+                            os.path.realpath(tempfile.gettempdir()),
                         ]
 
                         if (os.path.exists(real_path) and
@@ -536,7 +534,7 @@ class AICoordinationLayer:
 
         return prompt
 
-    def _parse_llm_response(self, response_content: str, request: AnalysisRequest) -> Dict[str, Any]:
+    def _parse_llm_response(self, response_content: str, request: AnalysisRequest) -> dict[str, Any]:
         """Parse LLM response into structured analysis result."""
         # Extract key information from LLM response
         # Parse using common AI response parser
@@ -559,10 +557,10 @@ class AICoordinationLayer:
             "reasoning": "Deep analysis performed using Large Language Model reasoning and pattern recognition",
             # Store first 1000 chars for debugging
             "raw_response": response_content[:1000],
-            "analysis_timestamp": self._get_timestamp()
+            "analysis_timestamp": self._get_timestamp(),
         }
 
-    def _fallback_analysis(self, request: AnalysisRequest) -> Dict[str, Any]:
+    def _fallback_analysis(self, request: AnalysisRequest) -> dict[str, Any]:
         """Fallback analysis when LLM is not available."""
         return {
             "analysis_type": "fallback_static_analysis",
@@ -570,23 +568,23 @@ class AICoordinationLayer:
             "confidence": 0.6,
             "vulnerabilities": [
                 "Unable to perform advanced LLM analysis - basic static analysis only",
-                "Recommend manual code review for comprehensive security assessment"
+                "Recommend manual code review for comprehensive security assessment",
             ],
             "attack_vectors": [],
             "recommendations": [
                 "Install and configure LLM backend for enhanced analysis",
                 "Perform manual static analysis with specialized tools",
-                "Consider dynamic analysis and fuzzing"
+                "Consider dynamic analysis and fuzzing",
             ],
             "reasoning": "Fallback analysis due to LLM unavailability",
-            "analysis_timestamp": self._get_timestamp()
+            "analysis_timestamp": self._get_timestamp(),
         }
 
     def _get_timestamp(self) -> str:
         """Get current timestamp for analysis."""
         return datetime.now().isoformat()
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """Get coordination layer performance statistics."""
         return {
             "ml_calls": self.performance_stats["ml_calls"],
@@ -597,8 +595,8 @@ class AICoordinationLayer:
             "avg_llm_time": self.performance_stats["avg_llm_time"],
             "cache_size": len(self.analysis_cache),
             "components_available": {
-                "model_manager": self.model_manager is not None
-            }
+                "model_manager": self.model_manager is not None,
+            },
         }
 
     def clear_cache(self):
@@ -617,12 +615,11 @@ class AICoordinationLayer:
                 return AnalysisStrategy.ML_FIRST  # Large files benefit from fast initial scan
             if file_size < 512 * 1024:  # < 512KB
                 return AnalysisStrategy.PARALLEL  # Small files can handle both
-            elif analysis_type in ["license_analysis", "complex_patterns"]:
+            if analysis_type in ["license_analysis", "complex_patterns"]:
                 return AnalysisStrategy.LLM_FIRST  # These need reasoning
-            elif analysis_type in ["vulnerability_scan", "quick_check"]:
+            if analysis_type in ["vulnerability_scan", "quick_check"]:
                 return AnalysisStrategy.ML_FIRST  # These benefit from speed
-            else:
-                return AnalysisStrategy.ADAPTIVE  # Let the system decide
+            return AnalysisStrategy.ADAPTIVE  # Let the system decide
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in coordination_layer: %s", e)
@@ -637,7 +634,7 @@ def quick_vulnerability_scan(binary_path: str, confidence_threshold: float = 0.7
         binary_path=binary_path,
         analysis_type="vulnerability_scan",
         strategy=AnalysisStrategy.ML_FIRST,
-        confidence_threshold=confidence_threshold
+        confidence_threshold=confidence_threshold,
     )
     return coordinator.analyze_vulnerabilities(request)
 
@@ -650,6 +647,6 @@ def comprehensive_analysis(binary_path: str) -> CoordinatedResult:
         analysis_type="comprehensive",
         strategy=AnalysisStrategy.PARALLEL,
         confidence_threshold=0.8,
-        max_processing_time=60.0
+        max_processing_time=60.0,
     )
     return coordinator.analyze_vulnerabilities(request)

@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -25,7 +24,7 @@ accessing models via LMStudio's API.
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelInfo
@@ -42,11 +41,10 @@ class LMStudioRepository(APIRepositoryBase):
                  api_key: str = "",
                  timeout: int = 60,
                  proxy: str = "",
-                 rate_limit_config: Optional[RateLimitConfig] = None,
-                 cache_config: Optional[Dict[str, Any]] = None,
+                 rate_limit_config: RateLimitConfig | None = None,
+                 cache_config: dict[str, Any] | None = None,
                  download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads")):
-        """
-        Initialize the LMStudio repository.
+        """Initialize the LMStudio repository.
 
         Args:
             repository_name: Name of the repository
@@ -57,6 +55,7 @@ class LMStudioRepository(APIRepositoryBase):
             rate_limit_config: Rate limiting configuration
             cache_config: Cache configuration
             download_dir: Directory for downloaded models (unused for API-only repos)
+
         """
         super().__init__(
             repository_name=repository_name,
@@ -66,38 +65,37 @@ class LMStudioRepository(APIRepositoryBase):
             proxy=proxy,
             rate_limit_config=rate_limit_config,
             cache_config=cache_config,
-            download_dir=download_dir
+            download_dir=download_dir,
         )
 
-    def authenticate(self) -> Tuple[bool, str]:
-        """
-        Authenticate with the LMStudio API.
+    def authenticate(self) -> tuple[bool, str]:
+        """Authenticate with the LMStudio API.
 
         Returns:
             Tuple of (success, message)
+
         """
         # Test connectivity by making a simple request to list models
         success, _, error_message = self._make_request(
             endpoint="models",
             method="GET",
-            use_cache=False
+            use_cache=False,
         )
 
         if success:
             return True, "Connection successful"
-        else:
-            return False, f"Connection failed: {error_message}"
+        return False, f"Connection failed: {error_message}"
 
-    def get_available_models(self) -> List[ModelInfo]:
-        """
-        Get a list of available models from the LMStudio API.
+    def get_available_models(self) -> list[ModelInfo]:
+        """Get a list of available models from the LMStudio API.
 
         Returns:
             A list of ModelInfo objects representing the available models.
+
         """
         success, data, error_message = self._make_request(
             endpoint="models",
-            method="GET"
+            method="GET",
         )
 
         if not success:
@@ -120,21 +118,21 @@ class LMStudioRepository(APIRepositoryBase):
             logger.error(f"Error parsing LMStudio models response: {e}")
             return []
 
-    def get_model_details(self, model_id: str) -> Optional[ModelInfo]:
-        """
-        Get detailed information about a specific model.
+    def get_model_details(self, model_id: str) -> ModelInfo | None:
+        """Get detailed information about a specific model.
 
         Args:
             model_id: The ID of the model to get details for
 
         Returns:
             A ModelInfo object containing the model details, or None if the model is not found.
+
         """
         # LMStudio follows OpenAI API format but doesn't always implement all endpoints
         # Try to get direct model info, but fall back to listing all models if needed
         success, data, error_message = self._make_request(
             endpoint=f"models/{model_id}",
-            method="GET"
+            method="GET",
         )
 
         if success:
@@ -147,7 +145,7 @@ class LMStudioRepository(APIRepositoryBase):
         # If direct model endpoint fails, fall back to looking through all models
         success, data, error_message = self._make_request(
             endpoint="models",
-            method="GET"
+            method="GET",
         )
 
         if not success:
@@ -167,9 +165,8 @@ class LMStudioRepository(APIRepositoryBase):
             logger.error(f"Error parsing LMStudio model details for {model_id}: {e}")
             return None
 
-    def _create_model_info(self, model_id: str, model_data: Dict[str, Any]) -> Optional[ModelInfo]:
-        """
-        Create a ModelInfo object from the API data.
+    def _create_model_info(self, model_id: str, model_data: dict[str, Any]) -> ModelInfo | None:
+        """Create a ModelInfo object from the API data.
 
         Args:
             model_id: The ID of the model
@@ -177,6 +174,7 @@ class LMStudioRepository(APIRepositoryBase):
 
         Returns:
             ModelInfo object, or None if failed
+
         """
         try:
             # LMStudio typically serves local models loaded as GGUF files
@@ -193,7 +191,7 @@ class LMStudioRepository(APIRepositoryBase):
                 version=model_data.get("version", "1.0"),
                 checksum=None,
                 download_url=None,
-                local_path=None  # We don't know the actual path of the local model
+                local_path=None,  # We don't know the actual path of the local model
             )
 
             return model_info
@@ -202,12 +200,12 @@ class LMStudioRepository(APIRepositoryBase):
             logger.error(f"Error creating ModelInfo for {model_id}: {e}")
             return None
 
-    def download_model(self, model_id: str, destination_path: str) -> Tuple[bool, str]:
-        """
-        LMStudio doesn't support model downloads through its API.
+    def download_model(self, model_id: str, destination_path: str) -> tuple[bool, str]:
+        """LMStudio doesn't support model downloads through its API.
 
         Returns:
             Always returns (False, "LMStudio doesn't support model downloads through API")
+
         """
         logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
         return False, "LMStudio doesn't support model downloads through API"

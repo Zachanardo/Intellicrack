@@ -1,5 +1,4 @@
-"""
-Startup Checks and Path Resolution
+"""Startup Checks and Path Resolution
 
 Performs startup checks and ensures paths are properly resolved.
 
@@ -12,11 +11,10 @@ import logging
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
-def check_dependencies() -> Dict[str, bool]:
+def check_dependencies() -> dict[str, bool]:
     """Check for required dependencies."""
     print("[DEPS] Starting dependency checks...")
     dependencies = {}
@@ -151,7 +149,7 @@ def check_dependencies() -> Dict[str, bool]:
 
     return dependencies
 
-def check_data_paths() -> Dict[str, Tuple[str, bool]]:
+def check_data_paths() -> dict[str, tuple[str, bool]]:
     """Check and create required data paths."""
     from ..utils.path_resolver import (
         ensure_data_directories,
@@ -175,7 +173,7 @@ def check_data_paths() -> Dict[str, Tuple[str, bool]]:
     qemu_images = [
         "windows_base.qcow2",
         "linux_base.qcow2",
-        "rootfs-x86_64.img"
+        "rootfs-x86_64.img",
     ]
 
     for image in qemu_images:
@@ -207,14 +205,13 @@ def check_qemu_setup() -> bool:
     if existing_images:
         logger.info(f"Found {len(existing_images)} QEMU images")
         return True
-    elif qemu_available:
+    if qemu_available:
         logger.info("QEMU installed but no images found")
         logger.info("Use the QEMU setup tools to download/create images if needed")
         return False
-    else:
-        return False
+    return False
 
-def create_minimal_qemu_disk() -> Optional[Path]:
+def create_minimal_qemu_disk() -> Path | None:
     """Create a real QEMU disk image automatically."""
     from ..utils.path_resolver import get_qemu_images_dir
 
@@ -227,7 +224,7 @@ def create_minimal_qemu_disk() -> Optional[Path]:
 
         # Create a real QEMU disk image
         cmd = ["qemu-img", "create", "-f", "qcow2", str(minimal_disk), "1G"]
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True)
 
         if result.returncode == 0:
             logger.info(f"Created QEMU disk image: {minimal_disk}")
@@ -242,9 +239,8 @@ def create_minimal_qemu_disk() -> Optional[Path]:
                 logger.debug(f"Failed to format QEMU disk (optional): {e}")
 
             return minimal_disk
-        else:
-            logger.error(f"Failed to create QEMU disk: {result.stderr}")
-            return None
+        logger.error(f"Failed to create QEMU disk: {result.stderr}")
+        return None
 
     except (FileNotFoundError, subprocess.CalledProcessError):
         logger.error("qemu-img not found. QEMU must be installed for emulation features.")
@@ -257,7 +253,7 @@ def check_protection_models() -> bool:
     logger.info("Protection detection using native ICP Engine - ML models removed")
     return True
 
-def validate_flask_server() -> Dict[str, any]:
+def validate_flask_server() -> dict[str, any]:
     """Validate Flask server can be initialized for web UI."""
     try:
         import flask
@@ -271,7 +267,7 @@ def validate_flask_server() -> Dict[str, any]:
         app.config.update(
             SECRET_KEY="test-key-for-validation",
             JSON_SORT_KEYS=False,
-            MAX_CONTENT_LENGTH=16 * 1024 * 1024  # 16MB max upload
+            MAX_CONTENT_LENGTH=16 * 1024 * 1024,  # 16MB max upload
         )
 
         # Verify request context works
@@ -283,17 +279,17 @@ def validate_flask_server() -> Dict[str, any]:
             "status": True,
             "message": "Flask server validated",
             "cors_enabled": True,
-            "max_upload_mb": 16
+            "max_upload_mb": 16,
         }
     except Exception as e:
         return {
             "status": False,
-            "message": f"Flask validation failed: {str(e)}",
+            "message": f"Flask validation failed: {e!s}",
             "cors_enabled": False,
-            "max_upload_mb": 0
+            "max_upload_mb": 0,
         }
 
-def validate_tensorflow_models() -> Dict[str, any]:
+def validate_tensorflow_models() -> dict[str, any]:
     """Validate TensorFlow and check model compatibility."""
     try:
         # Configure TensorFlow to prevent GPU initialization issues
@@ -316,14 +312,14 @@ def validate_tensorflow_models() -> Dict[str, any]:
             "version": tf.__version__,
             "gpu_available": len(tf.config.list_physical_devices("GPU")) > 0,
             "gpu_count": len(tf.config.list_physical_devices("GPU")),
-            "keras_available": hasattr(tf, "keras")
+            "keras_available": hasattr(tf, "keras"),
         }
 
         # Test model building capability
         test_model = tf.keras.Sequential([
             tf.keras.layers.Dense(64, activation="relu", input_shape=(10,)),
             tf.keras.layers.Dense(32, activation="relu"),
-            tf.keras.layers.Dense(1, activation="sigmoid")
+            tf.keras.layers.Dense(1, activation="sigmoid"),
         ])
         test_model.compile(optimizer="adam", loss="binary_crossentropy")
 
@@ -357,10 +353,10 @@ def validate_tensorflow_models() -> Dict[str, any]:
             "status": False,
             "version": "N/A",
             "gpu_available": False,
-            "error": str(e)
+            "error": str(e),
         }
 
-def validate_llama_cpp() -> Dict[str, any]:
+def validate_llama_cpp() -> dict[str, any]:
     """Validate llama-cpp-python installation and capabilities."""
     try:
         import llama_cpp
@@ -369,7 +365,7 @@ def validate_llama_cpp() -> Dict[str, any]:
         llama_info = {
             "status": True,
             "version": getattr(llama_cpp, "__version__", "Unknown"),
-            "supports_gpu": hasattr(llama_cpp, "llama_backend_init")
+            "supports_gpu": hasattr(llama_cpp, "llama_backend_init"),
         }
 
         # Check available model formats
@@ -410,10 +406,10 @@ def validate_llama_cpp() -> Dict[str, any]:
         return {
             "status": False,
             "version": "N/A",
-            "error": str(e)
+            "error": str(e),
         }
 
-def perform_startup_checks() -> Dict[str, any]:
+def perform_startup_checks() -> dict[str, any]:
     """Perform all startup checks."""
     print("[STARTUP] Performing startup checks...")
     logger.info("Performing startup checks...")
@@ -438,7 +434,7 @@ def perform_startup_checks() -> Dict[str, any]:
     results = {
         "dependencies": deps,
         "paths": paths,
-        "config_valid": config_valid
+        "config_valid": config_valid,
     }
 
     # Perform enhanced validation for critical components
@@ -481,13 +477,13 @@ def perform_startup_checks() -> Dict[str, any]:
     return results
 
 
-def get_system_health_report() -> Dict[str, any]:
+def get_system_health_report() -> dict[str, any]:
     """Generate a comprehensive system health report using all available dependencies."""
     report = {
         "timestamp": sys.version,
         "platform": sys.platform,
         "python_version": sys.version.split()[0],
-        "services": {}
+        "services": {},
     }
 
     # Check Flask web service health
@@ -503,7 +499,7 @@ def get_system_health_report() -> Dict[str, any]:
                 "available": True,
                 "framework": "Flask",
                 "cors_enabled": True,
-                "debug_mode": test_app.debug
+                "debug_mode": test_app.debug,
             }
     except:
         report["services"]["web_ui"] = {"available": False}
@@ -536,7 +532,7 @@ def get_system_health_report() -> Dict[str, any]:
             "backend": "TensorFlow",
             "version": tf.__version__,
             "gpu_support": len(tf.config.list_physical_devices("GPU")) > 0,
-            "memory_info": memory_info
+            "memory_info": memory_info,
         }
     except:
         report["services"]["ml_engine"] = {"available": False}
@@ -549,7 +545,7 @@ def get_system_health_report() -> Dict[str, any]:
             "available": True,
             "backend": "llama-cpp-python",
             "version": getattr(llama_cpp, "__version__", "Unknown"),
-            "gpu_support": hasattr(llama_cpp, "llama_backend_init")
+            "gpu_support": hasattr(llama_cpp, "llama_backend_init"),
         }
     except:
         report["services"]["llm_engine"] = {"available": False}
@@ -566,7 +562,7 @@ def get_system_health_report() -> Dict[str, any]:
             "total_gb": round(disk_usage.total / (1024**3), 2),
             "used_gb": round(disk_usage.used / (1024**3), 2),
             "free_gb": round(disk_usage.free / (1024**3), 2),
-            "percent_used": round((disk_usage.used / disk_usage.total) * 100, 1)
+            "percent_used": round((disk_usage.used / disk_usage.total) * 100, 1),
         }
     except:
         report["disk_space"] = {"available": False}

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Advanced Configuration Manager - Granular CLI settings for Intellicrack
+"""Advanced Configuration Manager - Granular CLI settings for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -24,8 +23,9 @@ import json
 import logging
 import os
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 # Optional imports for enhanced config management
 try:
@@ -43,13 +43,14 @@ except ImportError:
 @dataclass
 class ConfigOption:
     """Represents a single configuration option."""
+
     name: str
     value: Any
     description: str
     data_type: type
     default: Any
-    validator: Optional[Callable[[Any], bool]] = None
-    choices: Optional[List[Any]] = None
+    validator: Callable[[Any], bool] | None = None
+    choices: list[Any] | None = None
     category: str = "general"
     requires_restart: bool = False
     advanced: bool = False
@@ -58,11 +59,12 @@ class ConfigOption:
 class ConfigManager:
     """Advanced configuration management for Intellicrack CLI."""
 
-    def __init__(self, config_dir: Optional[str] = None):
+    def __init__(self, config_dir: str | None = None):
         """Initialize configuration manager.
 
         Args:
             config_dir: Custom configuration directory path
+
         """
         self.config_dir = config_dir or os.path.expanduser("~/.intellicrack")
         self.config_file = os.path.join(self.config_dir, "cli_config.json")
@@ -99,7 +101,7 @@ class ConfigManager:
                 data_type=str,
                 default="default",
                 choices=["default", "dark", "light", "cyberpunk", "matrix", "minimal"],
-                category="appearance"
+                category="appearance",
             ),
             "auto_save": ConfigOption(
                 name="auto_save",
@@ -107,7 +109,7 @@ class ConfigManager:
                 description="Automatically save analysis results",
                 data_type=bool,
                 default=True,
-                category="general"
+                category="general",
             ),
             "max_history": ConfigOption(
                 name="max_history",
@@ -116,7 +118,7 @@ class ConfigManager:
                 data_type=int,
                 default=1000,
                 validator=lambda x: 10 <= x <= 10000,
-                category="general"
+                category="general",
             ),
 
             # Analysis Settings
@@ -127,7 +129,7 @@ class ConfigManager:
                 data_type=int,
                 default=300,
                 validator=lambda x: 10 <= x <= 3600,
-                category="analysis"
+                category="analysis",
             ),
             "parallel_workers": ConfigOption(
                 name="parallel_workers",
@@ -136,7 +138,7 @@ class ConfigManager:
                 data_type=int,
                 default=4,
                 validator=lambda x: 1 <= x <= 32,
-                category="analysis"
+                category="analysis",
             ),
             "cache_results": ConfigOption(
                 name="cache_results",
@@ -144,7 +146,7 @@ class ConfigManager:
                 description="Cache analysis results for faster repeated analysis",
                 data_type=bool,
                 default=True,
-                category="analysis"
+                category="analysis",
             ),
             "detailed_logging": ConfigOption(
                 name="detailed_logging",
@@ -153,7 +155,7 @@ class ConfigManager:
                 data_type=bool,
                 default=False,
                 category="analysis",
-                advanced=True
+                advanced=True,
             ),
 
             # Progress and Display
@@ -163,7 +165,7 @@ class ConfigManager:
                 description="Show progress bars during analysis",
                 data_type=bool,
                 default=True,
-                category="display"
+                category="display",
             ),
             "progress_style": ConfigOption(
                 name="progress_style",
@@ -172,7 +174,7 @@ class ConfigManager:
                 data_type=str,
                 default="rich",
                 choices=["rich", "simple", "minimal", "verbose"],
-                category="display"
+                category="display",
             ),
             "table_style": ConfigOption(
                 name="table_style",
@@ -181,7 +183,7 @@ class ConfigManager:
                 data_type=str,
                 default="default",
                 choices=["default", "ascii", "double", "rounded", "heavy"],
-                category="display"
+                category="display",
             ),
             "page_size": ConfigOption(
                 name="page_size",
@@ -190,7 +192,7 @@ class ConfigManager:
                 data_type=int,
                 default=20,
                 validator=lambda x: 5 <= x <= 100,
-                category="display"
+                category="display",
             ),
 
             # Export Settings
@@ -201,7 +203,7 @@ class ConfigManager:
                 data_type=str,
                 default="json",
                 choices=["json", "html", "markdown", "csv", "xlsx", "xml"],
-                category="export"
+                category="export",
             ),
             "export_compression": ConfigOption(
                 name="export_compression",
@@ -209,7 +211,7 @@ class ConfigManager:
                 description="Compress large export files",
                 data_type=bool,
                 default=True,
-                category="export"
+                category="export",
             ),
             "include_raw_data": ConfigOption(
                 name="include_raw_data",
@@ -218,7 +220,7 @@ class ConfigManager:
                 data_type=bool,
                 default=False,
                 category="export",
-                advanced=True
+                advanced=True,
             ),
 
             # Security Settings
@@ -229,7 +231,7 @@ class ConfigManager:
                 data_type=bool,
                 default=True,
                 category="security",
-                requires_restart=True
+                requires_restart=True,
             ),
             "network_access": ConfigOption(
                 name="network_access",
@@ -239,7 +241,7 @@ class ConfigManager:
                 default=False,
                 category="security",
                 advanced=True,
-                requires_restart=True
+                requires_restart=True,
             ),
             "temp_cleanup": ConfigOption(
                 name="temp_cleanup",
@@ -247,7 +249,7 @@ class ConfigManager:
                 description="Automatically clean temporary files",
                 data_type=bool,
                 default=True,
-                category="security"
+                category="security",
             ),
 
             # AI Settings
@@ -259,7 +261,7 @@ class ConfigManager:
                 default="local",
                 choices=["local", "openai", "anthropic", "mock"],
                 category="ai",
-                requires_restart=True
+                requires_restart=True,
             ),
             "ai_model": ConfigOption(
                 name="ai_model",
@@ -267,7 +269,7 @@ class ConfigManager:
                 description="AI model to use",
                 data_type=str,
                 default="gpt-3.5-turbo",
-                category="ai"
+                category="ai",
             ),
             "ai_max_tokens": ConfigOption(
                 name="ai_max_tokens",
@@ -276,7 +278,7 @@ class ConfigManager:
                 data_type=int,
                 default=2000,
                 validator=lambda x: 100 <= x <= 8000,
-                category="ai"
+                category="ai",
             ),
             "ai_temperature": ConfigOption(
                 name="ai_temperature",
@@ -286,7 +288,7 @@ class ConfigManager:
                 default=0.7,
                 validator=lambda x: 0.0 <= x <= 2.0,
                 category="ai",
-                advanced=True
+                advanced=True,
             ),
 
             # Performance Settings
@@ -298,7 +300,7 @@ class ConfigManager:
                 default=2048,
                 validator=lambda x: 512 <= x <= 16384,
                 category="performance",
-                advanced=True
+                advanced=True,
             ),
             "cpu_limit": ConfigOption(
                 name="cpu_limit",
@@ -308,7 +310,7 @@ class ConfigManager:
                 default=80,
                 validator=lambda x: 10 <= x <= 100,
                 category="performance",
-                advanced=True
+                advanced=True,
             ),
             "disk_cache_size": ConfigOption(
                 name="disk_cache_size",
@@ -317,7 +319,7 @@ class ConfigManager:
                 data_type=int,
                 default=1024,
                 validator=lambda x: 100 <= x <= 10240,
-                category="performance"
+                category="performance",
             ),
 
             # Developer Settings
@@ -328,7 +330,7 @@ class ConfigManager:
                 data_type=bool,
                 default=False,
                 category="developer",
-                advanced=True
+                advanced=True,
             ),
             "verbose_errors": ConfigOption(
                 name="verbose_errors",
@@ -337,7 +339,7 @@ class ConfigManager:
                 data_type=bool,
                 default=False,
                 category="developer",
-                advanced=True
+                advanced=True,
             ),
             "profile_performance": ConfigOption(
                 name="profile_performance",
@@ -346,7 +348,7 @@ class ConfigManager:
                 data_type=bool,
                 default=False,
                 category="developer",
-                advanced=True
+                advanced=True,
             ),
         }
 
@@ -358,7 +360,7 @@ class ConfigManager:
         """Load configuration from file."""
         try:
             if os.path.exists(self.config_file):
-                with open(self.config_file, "r", encoding="utf-8") as f:
+                with open(self.config_file, encoding="utf-8") as f:
                     saved_config = json.load(f)
 
                 # Update config with saved values, validating each one
@@ -380,6 +382,7 @@ class ConfigManager:
 
         Args:
             create_backup: Whether to create a backup before saving
+
         """
         try:
             # Create backup if requested
@@ -405,6 +408,7 @@ class ConfigManager:
 
         Returns:
             Configuration value
+
         """
         return self.config.get(key, default)
 
@@ -417,6 +421,7 @@ class ConfigManager:
 
         Returns:
             True if successful, False otherwise
+
         """
         if key not in self.options:
             return False
@@ -448,7 +453,7 @@ You can modify core analysis, AI backend, and export preferences.
             welcome_text.strip(),
             title="🔧 Configuration Setup",
             border_style="green",
-            padding=(1, 2)
+            padding=(1, 2),
         )
         console.print(welcome_panel)
 
@@ -488,6 +493,7 @@ You can modify core analysis, AI backend, and export preferences.
         Args:
             console: Rich console instance
             category: Configuration category to configure
+
         """
         category_options = self.get_category_options(category)
         if not category_options:
@@ -498,7 +504,7 @@ You can modify core analysis, AI backend, and export preferences.
         category_panel = Panel(
             f"Configuring {category_title} Settings",
             border_style="blue",
-            title=f"📋 {category_title}"
+            title=f"📋 {category_title}",
         )
         console.print(category_panel)
 
@@ -513,7 +519,7 @@ You can modify core analysis, AI backend, and export preferences.
             option_panel = Panel(
                 f"[bold]Current value:[/bold] {current_value}\n[dim]{description}[/dim]",
                 title=f"⚙️  {option.name}",
-                border_style="cyan"
+                border_style="cyan",
             )
             console.print(option_panel)
 
@@ -600,7 +606,7 @@ You can modify core analysis, AI backend, and export preferences.
 
         console.print(status_text)
 
-    def update(self, updates: Dict[str, Any]) -> Dict[str, bool]:
+    def update(self, updates: dict[str, Any]) -> dict[str, bool]:
         """Update multiple configuration values at once.
 
         Args:
@@ -608,6 +614,7 @@ You can modify core analysis, AI backend, and export preferences.
 
         Returns:
             Dictionary mapping keys to success status
+
         """
         results = {}
 
@@ -634,23 +641,24 @@ You can modify core analysis, AI backend, and export preferences.
 
         return results
 
-    def reset_to_defaults(self, category: Optional[str] = None):
+    def reset_to_defaults(self, category: str | None = None):
         """Reset configuration to defaults.
 
         Args:
             category: Optional category to reset (resets all if None)
+
         """
         for option in self.options.values():
             if category is None or option.category == category:
                 self.config[option.name] = option.default
                 option.value = option.default
 
-    def get_categories(self) -> List[str]:
+    def get_categories(self) -> list[str]:
         """Get list of configuration categories."""
         categories = set(option.category for option in self.options.values())
         return sorted(list(categories))
 
-    def get_category_options(self, category: str, include_advanced: bool = True) -> List[ConfigOption]:
+    def get_category_options(self, category: str, include_advanced: bool = True) -> list[ConfigOption]:
         """Get configuration options for a specific category.
 
         Args:
@@ -659,13 +667,14 @@ You can modify core analysis, AI backend, and export preferences.
 
         Returns:
             List of ConfigOption objects in the category
+
         """
         return [
             option for option in self.options.values()
             if option.category == category and (include_advanced or not option.advanced)
         ]
 
-    def get_options_by_category(self, category: str, include_advanced: bool = False) -> Dict[str, ConfigOption]:
+    def get_options_by_category(self, category: str, include_advanced: bool = False) -> dict[str, ConfigOption]:
         """Get configuration options by category.
 
         Args:
@@ -674,6 +683,7 @@ You can modify core analysis, AI backend, and export preferences.
 
         Returns:
             Dictionary of options in the category
+
         """
         return {
             name: option for name, option in self.options.items()
@@ -689,6 +699,7 @@ You can modify core analysis, AI backend, and export preferences.
 
         Returns:
             True if valid, False otherwise
+
         """
         if key not in self.options:
             return False
@@ -747,6 +758,7 @@ You can modify core analysis, AI backend, and export preferences.
 
         Returns:
             True if successful
+
         """
         try:
             if format_type.lower() == "json":
@@ -754,7 +766,7 @@ You can modify core analysis, AI backend, and export preferences.
                     "metadata": {
                         "export_time": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "version": "2.1",
-                        "tool": "Intellicrack CLI"
+                        "tool": "Intellicrack CLI",
                     },
                     "configuration": self.config,
                     "option_descriptions": {
@@ -762,10 +774,10 @@ You can modify core analysis, AI backend, and export preferences.
                             "description": opt.description,
                             "category": opt.category,
                             "default": opt.default,
-                            "advanced": opt.advanced
+                            "advanced": opt.advanced,
                         }
                         for name, opt in self.options.items()
-                    }
+                    },
                 }
 
                 with open(export_path, "w", encoding="utf-8") as f:
@@ -778,8 +790,8 @@ You can modify core analysis, AI backend, and export preferences.
                         "configuration": self.config,
                         "metadata": {
                             "export_time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                            "version": "2.1"
-                        }
+                            "version": "2.1",
+                        },
                     }
 
                     with open(export_path, "w", encoding="utf-8") as f:
@@ -804,9 +816,10 @@ You can modify core analysis, AI backend, and export preferences.
 
         Returns:
             True if successful
+
         """
         try:
-            with open(import_path, "r", encoding="utf-8") as f:
+            with open(import_path, encoding="utf-8") as f:
                 if import_path.endswith(".yaml") or import_path.endswith(".yml"):
                     import yaml
                     data = yaml.safe_load(f)
@@ -830,12 +843,13 @@ You can modify core analysis, AI backend, and export preferences.
         except Exception:
             return False
 
-    def display_config(self, category: Optional[str] = None, advanced: bool = False):
+    def display_config(self, category: str | None = None, advanced: bool = False):
         """Display configuration in formatted table.
 
         Args:
             category: Category to display (all if None)
             advanced: Include advanced options
+
         """
         if not self.console:
             self._display_config_basic(category, advanced)
@@ -878,7 +892,7 @@ You can modify core analysis, AI backend, and export preferences.
             self.console.print(table)
             self.console.print()
 
-    def _display_config_basic(self, category: Optional[str] = None, advanced: bool = False):
+    def _display_config_basic(self, category: str | None = None, advanced: bool = False):
         """Display configuration in basic text format."""
         if category:
             categories = [category]

@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -32,7 +31,7 @@ class DEPBypass:
             "rop_chain",
             "jop_chain",
             "ret2libc",
-            "heap_spray"
+            "heap_spray",
         ]
 
     def analyze_dep_bypass(self, binary_info):
@@ -82,8 +81,8 @@ class DEPBypass:
             "binary_analysis": {
                 "architecture": binary_info.get("architecture", "unknown") if binary_info else "unknown",
                 "gadget_availability": binary_info.get("gadget_count", 0) if binary_info else 0,
-                "import_functions": len(binary_info.get("imports", [])) if binary_info else 0
-            }
+                "import_functions": len(binary_info.get("imports", [])) if binary_info else 0,
+            },
         }
 
 

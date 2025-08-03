@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -27,11 +26,11 @@ and analysis strategies for the ML system.
 import json
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional
 
 
 class BypassDifficulty(Enum):
     """Protection bypass difficulty levels"""
+
     TRIVIAL = "trivial"
     LOW = "low"
     MEDIUM = "medium"
@@ -42,6 +41,7 @@ class BypassDifficulty(Enum):
 
 class ProtectionCategory(Enum):
     """Protection scheme categories"""
+
     NONE = "none"
     HARDWARE_DONGLE = "hardware_dongle"
     NETWORK_LICENSE = "network_license"
@@ -56,31 +56,33 @@ class ProtectionCategory(Enum):
 @dataclass
 class BypassTechnique:
     """Bypass technique information"""
+
     name: str
     description: str
     difficulty: BypassDifficulty
-    tools_required: List[str]
+    tools_required: list[str]
     success_rate: float  # 0.0 to 1.0
     time_estimate: str  # e.g., "2-4 hours", "1-2 days"
-    risks: List[str] = field(default_factory=list)
-    prerequisites: List[str] = field(default_factory=list)
+    risks: list[str] = field(default_factory=list)
+    prerequisites: list[str] = field(default_factory=list)
 
 
 @dataclass
 class ProtectionSchemeInfo:
     """Complete information about a protection scheme"""
+
     name: str
     vendor: str
     category: ProtectionCategory
     description: str
-    versions: List[str]
-    common_applications: List[str]
-    detection_signatures: List[str]
+    versions: list[str]
+    common_applications: list[str]
+    detection_signatures: list[str]
     bypass_difficulty: BypassDifficulty
-    bypass_techniques: List[BypassTechnique]
-    analysis_tips: List[str]
-    common_mistakes: List[str]
-    resources: List[str]  # URLs, papers, tools
+    bypass_techniques: list[BypassTechnique]
+    analysis_tips: list[str]
+    common_mistakes: list[str]
+    resources: list[str]  # URLs, papers, tools
 
 
 class ProtectionKnowledgeBase:
@@ -92,7 +94,7 @@ class ProtectionKnowledgeBase:
         self.bypass_strategies = self._initialize_bypass_strategies()
         self.analysis_workflows = self._initialize_analysis_workflows()
 
-    def _initialize_protection_schemes(self) -> Dict[str, ProtectionSchemeInfo]:
+    def _initialize_protection_schemes(self) -> dict[str, ProtectionSchemeInfo]:
         """Initialize comprehensive protection scheme database"""
         schemes = {}
 
@@ -106,7 +108,7 @@ class ProtectionKnowledgeBase:
             common_applications=["AutoCAD", "SolidWorks", "MATLAB", "MasterCAM", "CATIA"],
             detection_signatures=[
                 "hasp_login", "hasp_encrypt", "hasp_decrypt",
-                "hasplms.exe", "aksusbd.sys", "HASP HL", "Sentinel"
+                "hasplms.exe", "aksusbd.sys", "HASP HL", "Sentinel",
             ],
             bypass_difficulty=BypassDifficulty.HIGH,
             bypass_techniques=[
@@ -118,7 +120,7 @@ class ProtectionKnowledgeBase:
                     success_rate=0.7,
                     time_estimate="1-3 days",
                     risks=["Detection by anti-emulation checks"],
-                    prerequisites=["Physical access to dongle", "Driver analysis skills"]
+                    prerequisites=["Physical access to dongle", "Driver analysis skills"],
                 ),
                 BypassTechnique(
                     name="API Hooking",
@@ -128,7 +130,7 @@ class ProtectionKnowledgeBase:
                     success_rate=0.8,
                     time_estimate="4-8 hours",
                     risks=["Integrity checks may detect hooks"],
-                    prerequisites=["Understanding of Windows API hooking"]
+                    prerequisites=["Understanding of Windows API hooking"],
                 ),
                 BypassTechnique(
                     name="Memory Patching",
@@ -138,26 +140,26 @@ class ProtectionKnowledgeBase:
                     success_rate=0.6,
                     time_estimate="2-6 hours",
                     risks=["CRC checks", "Anti-debugging"],
-                    prerequisites=["Assembly knowledge", "Debugging skills"]
-                )
+                    prerequisites=["Assembly knowledge", "Debugging skills"],
+                ),
             ],
             analysis_tips=[
                 "Monitor hasp_login calls to identify feature IDs",
                 "Check for aksusbd.sys driver installation",
                 "Look for encrypted HASP communication",
-                "Analyze vendor daemon if present"
+                "Analyze vendor daemon if present",
             ],
             common_mistakes=[
                 "Not handling all HASP API functions",
                 "Ignoring time-based checks",
                 "Missing network HASP scenarios",
-                "Incomplete dongle dumps"
+                "Incomplete dongle dumps",
             ],
             resources=[
                 "https://www.thalesgroup.com/en/markets/digital-identity-and-security/software-monetization/sentinel-ldk",
                 "HASP HL/SL API Reference",
-                "Dongle emulation forums"
-            ]
+                "Dongle emulation forums",
+            ],
         )
 
         # FlexLM/FlexNet
@@ -170,7 +172,7 @@ class ProtectionKnowledgeBase:
             common_applications=["ANSYS", "Cadence", "Synopsys", "MATLAB", "Mentor Graphics"],
             detection_signatures=[
                 "lmgrd", "lmutil", "lmstat", "FEATURE", "INCREMENT",
-                "license.dat", "license.lic", "flexnet"
+                "license.dat", "license.lic", "flexnet",
             ],
             bypass_difficulty=BypassDifficulty.MEDIUM,
             bypass_techniques=[
@@ -182,7 +184,7 @@ class ProtectionKnowledgeBase:
                     success_rate=0.85,
                     time_estimate="4-8 hours",
                     risks=["Network detection", "Vendor daemon checks"],
-                    prerequisites=["Understanding of FlexLM protocol"]
+                    prerequisites=["Understanding of FlexLM protocol"],
                 ),
                 BypassTechnique(
                     name="License File Manipulation",
@@ -192,7 +194,7 @@ class ProtectionKnowledgeBase:
                     success_rate=0.7,
                     time_estimate="1-2 hours",
                     risks=["Signature verification failure"],
-                    prerequisites=["License file format knowledge"]
+                    prerequisites=["License file format knowledge"],
                 ),
                 BypassTechnique(
                     name="System Time Manipulation",
@@ -202,26 +204,26 @@ class ProtectionKnowledgeBase:
                     success_rate=0.5,
                     time_estimate="30 minutes",
                     risks=["Other software affected", "Online checks"],
-                    prerequisites=["None"]
-                )
+                    prerequisites=["None"],
+                ),
             ],
             analysis_tips=[
                 "Locate license.dat or license.lic files",
                 "Monitor lmgrd.exe process",
                 "Check environment variables (LM_LICENSE_FILE)",
-                "Analyze vendor daemon behavior"
+                "Analyze vendor daemon behavior",
             ],
             common_mistakes=[
                 "Not handling vendor-specific daemons",
                 "Ignoring redundant license servers",
                 "Missing borrowed license scenarios",
-                "Incomplete FEATURE line emulation"
+                "Incomplete FEATURE line emulation",
             ],
             resources=[
                 "https://www.flexera.com/products/software-monetization/flexnet-publisher",
                 "FlexLM Programmers Guide",
-                "License administration guides"
-            ]
+                "License administration guides",
+            ],
         )
 
         # WinLicense/Themida
@@ -234,7 +236,7 @@ class ProtectionKnowledgeBase:
             common_applications=["Commercial software", "Games", "Utilities"],
             detection_signatures=[
                 "WinLicense", "Themida", "SecureEngine", "Oreans",
-                ".themida", ".winlicense", "SE_InitializeEngine"
+                ".themida", ".winlicense", "SE_InitializeEngine",
             ],
             bypass_difficulty=BypassDifficulty.VERY_HIGH,
             bypass_techniques=[
@@ -246,7 +248,7 @@ class ProtectionKnowledgeBase:
                     success_rate=0.4,
                     time_estimate="1-2 weeks",
                     risks=["Multiple layers", "Anti-unpacking tricks"],
-                    prerequisites=["Advanced unpacking skills", "VM understanding"]
+                    prerequisites=["Advanced unpacking skills", "VM understanding"],
                 ),
                 BypassTechnique(
                     name="Hardware Breakpoint Bypass",
@@ -256,7 +258,7 @@ class ProtectionKnowledgeBase:
                     success_rate=0.5,
                     time_estimate="2-5 days",
                     risks=["Detection and crashes", "False paths"],
-                    prerequisites=["Low-level debugging", "Anti-anti-debug"]
+                    prerequisites=["Low-level debugging", "Anti-anti-debug"],
                 ),
                 BypassTechnique(
                     name="License Key Bruteforce",
@@ -266,26 +268,26 @@ class ProtectionKnowledgeBase:
                     success_rate=0.3,
                     time_estimate="Variable",
                     risks=["Time consuming", "Blacklisting"],
-                    prerequisites=["Cryptanalysis", "Key algorithm RE"]
-                )
+                    prerequisites=["Cryptanalysis", "Key algorithm RE"],
+                ),
             ],
             analysis_tips=[
                 "Expect multiple anti-debugging layers",
                 "Look for virtualized entry points",
                 "Check for encrypted sections",
-                "Monitor exception handlers"
+                "Monitor exception handlers",
             ],
             common_mistakes=[
                 "Using standard debuggers without plugins",
                 "Not handling all anti-debug checks",
                 "Ignoring VM obfuscation layers",
-                "Incomplete IAT reconstruction"
+                "Incomplete IAT reconstruction",
             ],
             resources=[
                 "https://www.oreans.com/winlicense.php",
                 "Tuts4You Themida unpacking",
-                "Advanced unpacking tutorials"
-            ]
+                "Advanced unpacking tutorials",
+            ],
         )
 
         # VMProtect
@@ -298,7 +300,7 @@ class ProtectionKnowledgeBase:
             common_applications=["Commercial software", "Games", "Security tools"],
             detection_signatures=[
                 "VMProtect", ".vmp", "VMProtectBegin", "VMProtectEnd",
-                "vmp sections", "virtualized code patterns"
+                "vmp sections", "virtualized code patterns",
             ],
             bypass_difficulty=BypassDifficulty.EXTREME,
             bypass_techniques=[
@@ -310,7 +312,7 @@ class ProtectionKnowledgeBase:
                     success_rate=0.2,
                     time_estimate="2-4 weeks",
                     risks=["Incomplete devirtualization", "Errors"],
-                    prerequisites=["VM architecture knowledge", "Compiler theory"]
+                    prerequisites=["VM architecture knowledge", "Compiler theory"],
                 ),
                 BypassTechnique(
                     name="Symbolic Execution",
@@ -320,7 +322,7 @@ class ProtectionKnowledgeBase:
                     success_rate=0.3,
                     time_estimate="1-2 weeks",
                     risks=["Path explosion", "Constraints"],
-                    prerequisites=["Symbolic execution expertise"]
+                    prerequisites=["Symbolic execution expertise"],
                 ),
                 BypassTechnique(
                     name="Side Channel Analysis",
@@ -330,26 +332,26 @@ class ProtectionKnowledgeBase:
                     success_rate=0.4,
                     time_estimate="1 week",
                     risks=["Limited information", "Noise"],
-                    prerequisites=["Performance analysis skills"]
-                )
+                    prerequisites=["Performance analysis skills"],
+                ),
             ],
             analysis_tips=[
                 "Identify VM entry/exit points",
                 "Trace VM handlers systematically",
                 "Look for VM context structure",
-                "Analyze obfuscated constants"
+                "Analyze obfuscated constants",
             ],
             common_mistakes=[
                 "Trying to debug VM directly",
                 "Not understanding VM architecture",
                 "Ignoring mutation engine",
-                "Incomplete handler analysis"
+                "Incomplete handler analysis",
             ],
             resources=[
                 "https://vmpsoft.com",
                 "VMProtect Analysis papers",
-                "Devirtualization research"
-            ]
+                "Devirtualization research",
+            ],
         )
 
         # Steam CEG
@@ -362,7 +364,7 @@ class ProtectionKnowledgeBase:
             common_applications=["Steam games", "VR applications"],
             detection_signatures=[
                 "steam_api.dll", "steam_api64.dll", "SteamAPI_Init",
-                "steamclient.dll", "tier0_s.dll", "vstdlib_s.dll"
+                "steamclient.dll", "tier0_s.dll", "vstdlib_s.dll",
             ],
             bypass_difficulty=BypassDifficulty.MEDIUM,
             bypass_techniques=[
@@ -374,7 +376,7 @@ class ProtectionKnowledgeBase:
                     success_rate=0.8,
                     time_estimate="1-2 hours",
                     risks=["Version differences", "Additional protections"],
-                    prerequisites=["Understanding of CEG structure"]
+                    prerequisites=["Understanding of CEG structure"],
                 ),
                 BypassTechnique(
                     name="Steam Emulation",
@@ -384,7 +386,7 @@ class ProtectionKnowledgeBase:
                     success_rate=0.9,
                     time_estimate="30 minutes",
                     risks=["Online features broken"],
-                    prerequisites=["Basic Steam API knowledge"]
+                    prerequisites=["Basic Steam API knowledge"],
                 ),
                 BypassTechnique(
                     name="Offline Patching",
@@ -394,26 +396,26 @@ class ProtectionKnowledgeBase:
                     success_rate=0.7,
                     time_estimate="1 hour",
                     risks=["Updates revert patches"],
-                    prerequisites=["Basic patching skills"]
-                )
+                    prerequisites=["Basic patching skills"],
+                ),
             ],
             analysis_tips=[
                 "Check for steam_appid.txt",
                 "Monitor Steam API calls",
                 "Look for CEG stub sections",
-                "Analyze steamclient.dll loading"
+                "Analyze steamclient.dll loading",
             ],
             common_mistakes=[
                 "Not handling all Steam API functions",
                 "Missing DLC checks",
                 "Incomplete CEG removal",
-                "Ignoring workshop content"
+                "Ignoring workshop content",
             ],
             resources=[
                 "https://partner.steamgames.com/doc/features/drm",
                 "Steamless GitHub repository",
-                "Steam API documentation"
-            ]
+                "Steam API documentation",
+            ],
         )
 
         # Denuvo
@@ -426,7 +428,7 @@ class ProtectionKnowledgeBase:
             common_applications=["AAA games", "Major game releases"],
             detection_signatures=[
                 "denuvo", "uplay_r1_loader", "massive VM usage",
-                "trigger-based checks", "performance impact"
+                "trigger-based checks", "performance impact",
             ],
             bypass_difficulty=BypassDifficulty.EXTREME,
             bypass_techniques=[
@@ -438,7 +440,7 @@ class ProtectionKnowledgeBase:
                     success_rate=0.1,
                     time_estimate="1-6 months",
                     risks=["Constant updates", "Multiple triggers"],
-                    prerequisites=["Expert RE skills", "VM analysis", "Patience"]
+                    prerequisites=["Expert RE skills", "VM analysis", "Patience"],
                 ),
                 BypassTechnique(
                     name="Binary Reconstruction",
@@ -448,26 +450,26 @@ class ProtectionKnowledgeBase:
                     success_rate=0.15,
                     time_estimate="2-8 months",
                     risks=["Incomplete reconstruction", "Bugs"],
-                    prerequisites=["Deep binary knowledge", "Team effort"]
-                )
+                    prerequisites=["Deep binary knowledge", "Team effort"],
+                ),
             ],
             analysis_tips=[
                 "Expect 100+ triggers throughout code",
                 "Look for performance bottlenecks",
                 "Analyze VM handler patterns",
-                "Check for online activation"
+                "Check for online activation",
             ],
             common_mistakes=[
                 "Underestimating complexity",
                 "Missing hidden triggers",
                 "Not handling all versions",
-                "Public discussion of methods"
+                "Public discussion of methods",
             ],
             resources=[
                 "Limited public information",
                 "Scene group NFOs",
-                "Performance analysis papers"
-            ]
+                "Performance analysis papers",
+            ],
         )
 
         # Microsoft Activation
@@ -480,7 +482,7 @@ class ProtectionKnowledgeBase:
             common_applications=["Windows OS", "Microsoft Office", "Visual Studio"],
             detection_signatures=[
                 "SLMgr", "OSPP.vbs", "sppsvc.exe", "Software Protection",
-                "KMS", "MAK", "Digital License", "Product Key"
+                "KMS", "MAK", "Digital License", "Product Key",
             ],
             bypass_difficulty=BypassDifficulty.MEDIUM,
             bypass_techniques=[
@@ -492,7 +494,7 @@ class ProtectionKnowledgeBase:
                     success_rate=0.9,
                     time_estimate="30 minutes",
                     risks=["Detection by genuine check", "Updates"],
-                    prerequisites=["Understanding of KMS protocol"]
+                    prerequisites=["Understanding of KMS protocol"],
                 ),
                 BypassTechnique(
                     name="Digital License Manipulation",
@@ -502,7 +504,7 @@ class ProtectionKnowledgeBase:
                     success_rate=0.6,
                     time_estimate="1-2 hours",
                     risks=["System instability", "Validation failures"],
-                    prerequisites=["Windows internals knowledge"]
+                    prerequisites=["Windows internals knowledge"],
                 ),
                 BypassTechnique(
                     name="MAK Exploitation",
@@ -512,31 +514,31 @@ class ProtectionKnowledgeBase:
                     success_rate=0.4,
                     time_estimate="15 minutes",
                     risks=["Key blacklisting", "Limited activations"],
-                    prerequisites=["Access to keys"]
-                )
+                    prerequisites=["Access to keys"],
+                ),
             ],
             analysis_tips=[
                 "Check HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\SoftwareProtectionPlatform",
                 "Monitor sppsvc.exe service",
                 "Analyze tokens.dat",
-                "Look for KMS client setup keys"
+                "Look for KMS client setup keys",
             ],
             common_mistakes=[
                 "Not handling all activation methods",
                 "Ignoring online validation",
                 "Missing Office integration",
-                "Incomplete token manipulation"
+                "Incomplete token manipulation",
             ],
             resources=[
                 "https://docs.microsoft.com/en-us/windows-server/get-started/activation-overview",
                 "KMS client setup keys",
-                "Volume activation guides"
-            ]
+                "Volume activation guides",
+            ],
         )
 
         return schemes
 
-    def _initialize_bypass_strategies(self) -> Dict[str, List[str]]:
+    def _initialize_bypass_strategies(self) -> dict[str, list[str]]:
         """Initialize general bypass strategies by category"""
         return {
             "hardware_dongle": [
@@ -544,39 +546,39 @@ class ProtectionKnowledgeBase:
                 "Hook and redirect API calls",
                 "Patch validation checks",
                 "Use network redirection for network dongles",
-                "Analyze communication protocol"
+                "Analyze communication protocol",
             ],
             "network_license": [
                 "Set up local license server",
                 "Modify license files",
                 "Redirect network traffic",
                 "Patch timeout checks",
-                "Emulate vendor daemon"
+                "Emulate vendor daemon",
             ],
             "software_protection": [
                 "Unpack/devirtualize protected code",
                 "Bypass anti-debugging checks",
                 "Reconstruct import table",
                 "Patch license validation",
-                "Generate valid keys"
+                "Generate valid keys",
             ],
             "gaming_drm": [
                 "Remove DRM wrapper",
                 "Emulate platform APIs",
                 "Patch online checks",
                 "Bypass integrity verification",
-                "Use scene releases as reference"
+                "Use scene releases as reference",
             ],
             "time_based": [
                 "Manipulate system time",
                 "Patch time checks",
                 "Extend trial period in storage",
                 "Bypass date validation",
-                "Reset trial data"
-            ]
+                "Reset trial data",
+            ],
         }
 
-    def _initialize_analysis_workflows(self) -> Dict[str, List[str]]:
+    def _initialize_analysis_workflows(self) -> dict[str, list[str]]:
         """Initialize standard analysis workflows"""
         return {
             "initial_analysis": [
@@ -584,39 +586,39 @@ class ProtectionKnowledgeBase:
                 "Check for known packers/protectors",
                 "Scan for protection signatures",
                 "Analyze imports and exports",
-                "Look for encrypted/compressed sections"
+                "Look for encrypted/compressed sections",
             ],
             "static_analysis": [
                 "Disassemble with IDA Pro/Ghidra",
                 "Identify protection initialization",
                 "Find license check functions",
                 "Analyze string references",
-                "Map out control flow"
+                "Map out control flow",
             ],
             "dynamic_analysis": [
                 "Run with API monitoring",
                 "Trace system calls",
                 "Monitor file/registry access",
                 "Capture network traffic",
-                "Debug with anti-anti-debug"
+                "Debug with anti-anti-debug",
             ],
             "protection_removal": [
                 "Identify protection entry points",
                 "Bypass/remove protection layers",
                 "Reconstruct original code",
                 "Fix imports and relocations",
-                "Test functionality"
+                "Test functionality",
             ],
             "validation": [
                 "Verify all features work",
                 "Check for hidden checks",
                 "Test edge cases",
                 "Monitor for callbacks",
-                "Ensure stability"
-            ]
+                "Ensure stability",
+            ],
         }
 
-    def get_protection_info(self, protection_name: str) -> Optional[ProtectionSchemeInfo]:
+    def get_protection_info(self, protection_name: str) -> ProtectionSchemeInfo | None:
         """Get detailed information about a protection scheme"""
         # Normalize name
         normalized_name = protection_name.lower().replace(" ", "_").replace("/", "_")
@@ -634,18 +636,18 @@ class ProtectionKnowledgeBase:
 
         return None
 
-    def get_bypass_techniques(self, protection_name: str) -> List[BypassTechnique]:
+    def get_bypass_techniques(self, protection_name: str) -> list[BypassTechnique]:
         """Get bypass techniques for a specific protection"""
         info = self.get_protection_info(protection_name)
         if info:
             return info.bypass_techniques
         return []
 
-    def get_analysis_workflow(self, workflow_type: str) -> List[str]:
+    def get_analysis_workflow(self, workflow_type: str) -> list[str]:
         """Get a standard analysis workflow"""
         return self.analysis_workflows.get(workflow_type, [])
 
-    def search_by_signature(self, signature: str) -> List[ProtectionSchemeInfo]:
+    def search_by_signature(self, signature: str) -> list[ProtectionSchemeInfo]:
         """Search for protections containing a specific signature"""
         results = []
         signature_lower = signature.lower()
@@ -658,7 +660,7 @@ class ProtectionKnowledgeBase:
 
         return results
 
-    def get_tools_for_protection(self, protection_name: str) -> List[str]:
+    def get_tools_for_protection(self, protection_name: str) -> list[str]:
         """Get all tools needed for bypassing a protection"""
         info = self.get_protection_info(protection_name)
         if not info:
@@ -681,7 +683,7 @@ class ProtectionKnowledgeBase:
             "beginner": 3.0,
             "intermediate": 1.5,
             "advanced": 1.0,
-            "expert": 0.7
+            "expert": 0.7,
         }
 
         multiplier = skill_multipliers.get(skill_level, 1.5)
@@ -712,12 +714,11 @@ class ProtectionKnowledgeBase:
 
             if avg_hours < 24:
                 return f"{int(avg_hours)} hours"
-            elif avg_hours < 168:
+            if avg_hours < 168:
                 return f"{int(avg_hours / 24)} days"
-            elif avg_hours < 720:
+            if avg_hours < 720:
                 return f"{int(avg_hours / 168)} weeks"
-            else:
-                return f"{int(avg_hours / 720)} months"
+            return f"{int(avg_hours / 720)} months"
 
         return "Variable"
 
@@ -726,7 +727,7 @@ class ProtectionKnowledgeBase:
         data = {
             "protection_schemes": {},
             "bypass_strategies": self.bypass_strategies,
-            "analysis_workflows": self.analysis_workflows
+            "analysis_workflows": self.analysis_workflows,
         }
 
         # Convert dataclasses to dicts
@@ -743,7 +744,7 @@ class ProtectionKnowledgeBase:
                 "analysis_tips": scheme.analysis_tips,
                 "common_mistakes": scheme.common_mistakes,
                 "resources": scheme.resources,
-                "bypass_techniques": []
+                "bypass_techniques": [],
             }
 
             for technique in scheme.bypass_techniques:
@@ -755,7 +756,7 @@ class ProtectionKnowledgeBase:
                     "success_rate": technique.success_rate,
                     "time_estimate": technique.time_estimate,
                     "risks": technique.risks,
-                    "prerequisites": technique.prerequisites
+                    "prerequisites": technique.prerequisites,
                 }
                 scheme_dict["bypass_techniques"].append(technique_dict)
 

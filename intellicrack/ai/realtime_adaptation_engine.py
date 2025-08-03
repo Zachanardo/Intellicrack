@@ -1,5 +1,4 @@
-"""
-Real-Time Adaptation Engine
+"""Real-Time Adaptation Engine
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,10 +21,11 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import threading
 import time
 from collections import defaultdict, deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from ..utils.logger import get_logger
 from .learning_engine_simple import get_learning_engine
@@ -44,6 +44,7 @@ except ImportError as e:
 
 class AdaptationType(Enum):
     """Types of real-time adaptations."""
+
     PARAMETER_TUNING = "parameter_tuning"
     ALGORITHM_SELECTION = "algorithm_selection"
     RESOURCE_ALLOCATION = "resource_allocation"
@@ -55,6 +56,7 @@ class AdaptationType(Enum):
 
 class TriggerCondition(Enum):
     """Conditions that trigger adaptations."""
+
     PERFORMANCE_DEGRADATION = "performance_degradation"
     ERROR_RATE_INCREASE = "error_rate_increase"
     RESOURCE_EXHAUSTION = "resource_exhaustion"
@@ -67,6 +69,7 @@ class TriggerCondition(Enum):
 @dataclass
 class AdaptationRule:
     """Rule for triggering adaptations."""
+
     rule_id: str
     name: str
     condition: TriggerCondition
@@ -76,7 +79,7 @@ class AdaptationRule:
     priority: int = 1
     enabled: bool = True
     cooldown_seconds: int = 60
-    last_triggered: Optional[datetime] = None
+    last_triggered: datetime | None = None
     trigger_count: int = 0
     success_count: int = 0
 
@@ -84,26 +87,28 @@ class AdaptationRule:
 @dataclass
 class RuntimeMetric:
     """Real-time metric for monitoring."""
+
     metric_name: str
     value: float
     timestamp: datetime
     source: str
     category: str = "general"
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class AdaptationEvent:
     """Event representing an adaptation."""
+
     event_id: str
     adaptation_type: AdaptationType
     trigger_condition: TriggerCondition
     action_taken: str
     success: bool
-    impact_metrics: Dict[str, float]
+    impact_metrics: dict[str, float]
     timestamp: datetime = field(default_factory=datetime.now)
     execution_time: float = 0.0
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class RuntimeMonitor:
@@ -117,20 +122,20 @@ class RuntimeMonitor:
         """
         self.active = False
         self.metrics_buffer: deque = deque(maxlen=10000)
-        self.metric_aggregates: Dict[str, Dict[str, float]] = defaultdict(dict)
-        self.anomaly_detectors: Dict[str, AnomalyDetector] = {}
-        self.subscribers: List[Callable[[RuntimeMetric], None]] = []
+        self.metric_aggregates: dict[str, dict[str, float]] = defaultdict(dict)
+        self.anomaly_detectors: dict[str, AnomalyDetector] = {}
+        self.subscribers: list[Callable[[RuntimeMetric], None]] = []
 
         # Monitoring thread
-        self.monitor_thread: Optional[threading.Thread] = None
+        self.monitor_thread: threading.Thread | None = None
         self.monitor_interval = 0.5  # 500ms
 
         # Metric history for trend analysis
-        self.metric_history: Dict[str, deque] = defaultdict(
+        self.metric_history: dict[str, deque] = defaultdict(
             lambda: deque(maxlen=1000))
 
         # Adaptation rules for real-time response
-        self.adaptation_rules: Dict[str, Dict] = {}
+        self.adaptation_rules: dict[str, dict] = {}
 
         logger.info("Runtime monitor initialized")
 
@@ -142,7 +147,7 @@ class RuntimeMonitor:
         self.active = True
         self.monitor_thread = threading.Thread(
             target=self._monitoring_loop,
-            daemon=True
+            daemon=True,
         )
         self.monitor_thread.start()
 
@@ -205,7 +210,7 @@ class RuntimeMonitor:
             logger.error(f"Error collecting system metrics: {e}")
 
     def record_metric(self, metric_name: str, value: float, source: str,
-                      category: str = "general", metadata: Dict[str, Any] = None):
+                      category: str = "general", metadata: dict[str, Any] = None):
         """Record a runtime metric."""
         metric = RuntimeMetric(
             metric_name=metric_name,
@@ -213,7 +218,7 @@ class RuntimeMonitor:
             timestamp=datetime.now(),
             source=source,
             category=category,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
         self.metrics_buffer.append(metric)
@@ -247,7 +252,7 @@ class RuntimeMonitor:
                     "min": min(values),
                     "max": max(values),
                     "last": values[-1],
-                    "timestamp": datetime.now().timestamp()
+                    "timestamp": datetime.now().timestamp(),
                 }
 
     def _check_anomalies(self):
@@ -289,7 +294,7 @@ class RuntimeMonitor:
             "timestamp": time.time(),
             "metric": metric_name,
             "value": value,
-            "adaptation_triggered": adaptation_triggered
+            "adaptation_triggered": adaptation_triggered,
         })
 
     def _execute_adaptation_rule(self, rule_id: str, metric_name: str, value: float):
@@ -328,7 +333,7 @@ class RuntimeMonitor:
         """Subscribe to real-time metrics."""
         self.subscribers.append(callback)
 
-    def get_metric_trend(self, metric_name: str, window_minutes: int = 5) -> Dict[str, Any]:
+    def get_metric_trend(self, metric_name: str, window_minutes: int = 5) -> dict[str, Any]:
         """Get trend analysis for metric."""
         if metric_name not in self.metric_history:
             return {"trend": "unknown", "data_points": 0}
@@ -362,7 +367,7 @@ class RuntimeMonitor:
             "data_points": len(recent_data),
             "avg_first_half": avg_first,
             "avg_second_half": avg_second,
-            "change_percent": ((avg_second - avg_first) / avg_first * 100) if avg_first > 0 else 0
+            "change_percent": ((avg_second - avg_first) / avg_first * 100) if avg_first > 0 else 0,
         }
 
 
@@ -376,6 +381,7 @@ class AnomalyDetector:
             metric_name: Name of the metric to monitor for anomalies.
             sensitivity: Detection sensitivity factor (default: 2.0).
                 Higher values reduce false positives but may miss anomalies.
+
         """
         self.metric_name = metric_name
         self.sensitivity = sensitivity
@@ -436,9 +442,9 @@ class DynamicHookManager:
         and statistics collection. Manages dynamic code hooks for
         runtime adaptation.
         """
-        self.active_hooks: Dict[str, Dict[str, Any]] = {}
-        self.hook_registry: Dict[str, Callable] = {}
-        self.hook_statistics: Dict[str, Dict[str, int]] = defaultdict(
+        self.active_hooks: dict[str, dict[str, Any]] = {}
+        self.hook_registry: dict[str, Callable] = {}
+        self.hook_statistics: dict[str, dict[str, int]] = defaultdict(
             lambda: {"calls": 0, "modifications": 0})
 
         logger.info("Dynamic hook manager initialized")
@@ -451,12 +457,12 @@ class DynamicHookManager:
             "type": hook_type,
             "original": target_function,
             "active": False,
-            "modifications": []
+            "modifications": [],
         }
 
         logger.info(f"Registered hook point: {hook_id}")
 
-    def install_hook(self, hook_id: str, modification: Dict[str, Any]) -> bool:
+    def install_hook(self, hook_id: str, modification: dict[str, Any]) -> bool:
         """Install a hook modification."""
         if hook_id not in self.hook_registry:
             logger.error(f"Hook point {hook_id} not registered")
@@ -468,7 +474,7 @@ class DynamicHookManager:
             # Create modified function
             modified_function = self._create_modified_function(
                 hook_info["original"],
-                modification
+                modification,
             )
 
             # Install the hook
@@ -508,7 +514,7 @@ class DynamicHookManager:
         return False
 
     def _create_modified_function(self, original_function: Callable,
-                                  modification: Dict[str, Any]) -> Callable:
+                                  modification: dict[str, Any]) -> Callable:
         """Create modified function based on modification specification."""
         def modified_wrapper(*args, **kwargs):
             # Record hook call
@@ -552,7 +558,7 @@ class DynamicHookManager:
         return modified_wrapper
 
     def _apply_parameter_modification(self, args: tuple, kwargs: dict,
-                                      modification: Dict[str, Any]) -> tuple:
+                                      modification: dict[str, Any]) -> tuple:
         """Apply parameter modification."""
         mod_type = modification.get("type", "")
 
@@ -576,14 +582,14 @@ class DynamicHookManager:
 
         return args, kwargs
 
-    def _apply_result_modification(self, result: Any, modification: Dict[str, Any]) -> Any:
+    def _apply_result_modification(self, result: Any, modification: dict[str, Any]) -> Any:
         """Apply result modification."""
         mod_type = modification.get("type", "")
 
         if mod_type == "replace_result":
             return modification.get("value", result)
 
-        elif mod_type == "modify_field" and isinstance(result, dict):
+        if mod_type == "modify_field" and isinstance(result, dict):
             field_name = modification.get("field", "")
             new_value = modification.get("value")
             if field_name in result:
@@ -635,7 +641,7 @@ class DynamicHookManager:
 
         return False
 
-    def get_hook_statistics(self) -> Dict[str, Dict[str, int]]:
+    def get_hook_statistics(self) -> dict[str, dict[str, int]]:
         """Get hook usage statistics."""
         return dict(self.hook_statistics)
 
@@ -649,11 +655,12 @@ class LiveDebuggingSystem:
         Args:
             runtime_monitor: Runtime monitor instance to subscribe to
                 for receiving metrics and performance data.
+
         """
         self.runtime_monitor = runtime_monitor
-        self.active_debug_sessions: Dict[str, Dict[str, Any]] = {}
+        self.active_debug_sessions: dict[str, dict[str, Any]] = {}
         self.debug_history: deque = deque(maxlen=1000)
-        self.automated_fixes: Dict[str, Callable] = {}
+        self.automated_fixes: dict[str, Callable] = {}
 
         # Subscribe to runtime metrics
         self.runtime_monitor.subscribe_to_metrics(
@@ -676,7 +683,7 @@ class LiveDebuggingSystem:
             "events": [],
             "breakpoints": [],
             "watches": [],
-            "active": True
+            "active": True,
         }
 
         self.active_debug_sessions[session_id] = session
@@ -711,7 +718,7 @@ class LiveDebuggingSystem:
             "component": component,
             "condition": condition,
             "hit_count": 0,
-            "created_at": datetime.now()
+            "created_at": datetime.now(),
         }
 
         self.active_debug_sessions[session_id]["breakpoints"].append(
@@ -732,7 +739,7 @@ class LiveDebuggingSystem:
             "alert_condition": alert_condition,
             "last_value": None,
             "value_history": deque(maxlen=100),
-            "created_at": datetime.now()
+            "created_at": datetime.now(),
         }
 
         self.active_debug_sessions[session_id]["watches"].append(watch)
@@ -747,7 +754,7 @@ class LiveDebuggingSystem:
             "system.cpu_usage": 90.0,
             "system.memory_usage": 85.0,
             "process.memory_rss": 1024 * 1024 * 1024,  # 1GB
-            "error_rate": 0.1  # 10%
+            "error_rate": 0.1,  # 10%
         }
 
         threshold = problem_indicators.get(metric.metric_name)
@@ -771,23 +778,23 @@ class LiveDebuggingSystem:
                     self._log_debug_event(debug_session_id, "automated_fix", {
                         "metric": metric.metric_name,
                         "fix_applied": True,
-                        "fix_result": fix_result
+                        "fix_result": fix_result,
                     })
                 except Exception as e:
                     self.logger.error(
                         "Exception in realtime_adaptation_engine: %s", e)
                     self._log_debug_event(debug_session_id, "automated_fix_failed", {
                         "metric": metric.metric_name,
-                        "error": str(e)
+                        "error": str(e),
                     })
 
-    def _log_debug_event(self, session_id: str, event_type: str, data: Dict[str, Any]):
+    def _log_debug_event(self, session_id: str, event_type: str, data: dict[str, Any]):
         """Log debugging event."""
         if session_id in self.active_debug_sessions:
             event = {
                 "timestamp": datetime.now(),
                 "type": event_type,
-                "data": data
+                "data": data,
             }
             self.active_debug_sessions[session_id]["events"].append(event)
 
@@ -796,7 +803,7 @@ class LiveDebuggingSystem:
         self.automated_fixes[metric_name] = fix_function
         logger.info(f"Registered automated fix for {metric_name}")
 
-    def get_debug_insights(self, session_id: str) -> Dict[str, Any]:
+    def get_debug_insights(self, session_id: str) -> dict[str, Any]:
         """Get debugging insights for session."""
         if session_id not in self.active_debug_sessions:
             return {"error": "Session not found"}
@@ -808,17 +815,17 @@ class LiveDebuggingSystem:
                 "id": session_id,
                 "target": session["target_component"],
                 "duration": (datetime.now() - session["start_time"]).total_seconds(),
-                "events_count": len(session["events"])
+                "events_count": len(session["events"]),
             },
             "recent_events": session["events"][-10:],  # Last 10 events
             "breakpoint_hits": sum(bp["hit_count"] for bp in session["breakpoints"]),
             "watch_alerts": self._check_watch_alerts(session),
-            "recommendations": self._generate_debug_recommendations(session)
+            "recommendations": self._generate_debug_recommendations(session),
         }
 
         return insights
 
-    def _check_watch_alerts(self, session: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _check_watch_alerts(self, session: dict[str, Any]) -> list[dict[str, Any]]:
         """Check watch expressions for alerts."""
         alerts = []
 
@@ -831,14 +838,14 @@ class LiveDebuggingSystem:
                             "watch_id": watch["id"],
                             "expression": watch["expression"],
                             "value": watch["last_value"],
-                            "condition": watch["alert_condition"]
+                            "condition": watch["alert_condition"],
                         })
                 except Exception as e:
                     logger.debug(f"Error checking watch alert condition: {e}")
 
         return alerts
 
-    def _generate_debug_recommendations(self, session: Dict[str, Any]) -> List[str]:
+    def _generate_debug_recommendations(self, session: dict[str, Any]) -> list[str]:
         """Generate debugging recommendations."""
         recommendations = []
 
@@ -876,16 +883,16 @@ class RealTimeAdaptationEngine:
         self.learning_engine = get_learning_engine()
 
         # Adaptation configuration
-        self.adaptation_rules: List[AdaptationRule] = []
+        self.adaptation_rules: list[AdaptationRule] = []
         self.adaptation_history: deque = deque(maxlen=1000)
-        self.active_adaptations: Dict[str, Dict[str, Any]] = {}
+        self.active_adaptations: dict[str, dict[str, Any]] = {}
 
         # Performance tracking
         self.adaptation_stats = {
             "total_adaptations": 0,
             "successful_adaptations": 0,
             "failed_adaptations": 0,
-            "rules_triggered": 0
+            "rules_triggered": 0,
         }
 
         # Initialize default adaptation rules
@@ -918,7 +925,7 @@ class RealTimeAdaptationEngine:
                 adaptation_type=AdaptationType.RESOURCE_ALLOCATION,
                 action="reduce_concurrency",
                 priority=1,
-                cooldown_seconds=30
+                cooldown_seconds=30,
             ),
             AdaptationRule(
                 rule_id="high_memory_usage",
@@ -928,7 +935,7 @@ class RealTimeAdaptationEngine:
                 adaptation_type=AdaptationType.RESOURCE_ALLOCATION,
                 action="trigger_garbage_collection",
                 priority=1,
-                cooldown_seconds=60
+                cooldown_seconds=60,
             ),
             AdaptationRule(
                 rule_id="high_error_rate",
@@ -938,7 +945,7 @@ class RealTimeAdaptationEngine:
                 adaptation_type=AdaptationType.ERROR_RECOVERY,
                 action="enable_fallback_mode",
                 priority=2,
-                cooldown_seconds=120
+                cooldown_seconds=120,
             ),
             AdaptationRule(
                 rule_id="slow_response_time",
@@ -948,8 +955,8 @@ class RealTimeAdaptationEngine:
                 adaptation_type=AdaptationType.PERFORMANCE_OPTIMIZATION,
                 action="optimize_algorithm_selection",
                 priority=2,
-                cooldown_seconds=180
-            )
+                cooldown_seconds=180,
+            ),
         ]
 
         self.adaptation_rules.extend(default_rules)
@@ -991,7 +998,7 @@ class RealTimeAdaptationEngine:
             TriggerCondition.MEMORY_PRESSURE: ["memory_usage", "memory_rss"],
             TriggerCondition.ERROR_RATE_INCREASE: ["error_rate", "failure_rate"],
             TriggerCondition.RESOURCE_EXHAUSTION: ["cpu_usage", "memory_usage", "disk_usage"],
-            TriggerCondition.TIMEOUT_OCCURRENCE: ["timeout", "execution_time"]
+            TriggerCondition.TIMEOUT_OCCURRENCE: ["timeout", "execution_time"],
         }
 
         relevant_metrics = condition_map.get(rule.condition, [])
@@ -1033,7 +1040,7 @@ class RealTimeAdaptationEngine:
                 action_taken=rule.action,
                 success=success,
                 impact_metrics=self._measure_adaptation_impact(trigger_metric),
-                execution_time=execution_time
+                execution_time=execution_time,
             )
 
             # Update statistics
@@ -1060,12 +1067,12 @@ class RealTimeAdaptationEngine:
                     "rule_id": rule.rule_id,
                     "trigger_metric": trigger_metric.metric_name,
                     "trigger_value": trigger_metric.value,
-                    "threshold": rule.threshold
+                    "threshold": rule.threshold,
                 },
                 output_data={
                     "action": rule.action,
                     "success": success,
-                    "impact": event.impact_metrics
+                    "impact": event.impact_metrics,
                 },
                 success=success,
                 confidence=0.8 if success else 0.3,
@@ -1073,8 +1080,8 @@ class RealTimeAdaptationEngine:
                 memory_usage=0,
                 context={
                     "adaptation_engine": "real_time",
-                    "trigger_condition": rule.condition.value
-                }
+                    "trigger_condition": rule.condition.value,
+                },
             )
 
         except Exception as e:
@@ -1088,7 +1095,7 @@ class RealTimeAdaptationEngine:
                 success=False,
                 impact_metrics={},
                 execution_time=execution_time,
-                error_message=str(e)
+                error_message=str(e),
             )
 
             self.adaptation_history.append(event)
@@ -1108,24 +1115,23 @@ class RealTimeAdaptationEngine:
             if action == "reduce_concurrency":
                 return self._reduce_system_concurrency()
 
-            elif action == "trigger_garbage_collection":
+            if action == "trigger_garbage_collection":
                 return self._trigger_garbage_collection()
 
-            elif action == "enable_fallback_mode":
+            if action == "enable_fallback_mode":
                 return self._enable_fallback_mode(adaptation_id)
 
-            elif action == "optimize_algorithm_selection":
+            if action == "optimize_algorithm_selection":
                 return self._optimize_algorithm_selection()
 
-            elif action == "increase_timeout":
+            if action == "increase_timeout":
                 return self._increase_timeout_values()
 
-            elif action == "reduce_cache_size":
+            if action == "reduce_cache_size":
                 return self._reduce_cache_size()
 
-            else:
-                logger.warning(f"Unknown adaptation action: {action}")
-                return False
+            logger.warning(f"Unknown adaptation action: {action}")
+            return False
 
         except Exception as e:
             logger.error(f"Error executing adaptation action {action}: {e}")
@@ -1168,9 +1174,9 @@ class RealTimeAdaptationEngine:
                 "result_modifications": [
                     {
                         "type": "replace_result",
-                        "value": {"success": True, "fallback": True, "message": "Fallback mode active"}
-                    }
-                ]
+                        "value": {"success": True, "fallback": True, "message": "Fallback mode active"},
+                    },
+                ],
             }
 
             # Store the hook modification for later use
@@ -1181,7 +1187,7 @@ class RealTimeAdaptationEngine:
                 "type": "fallback_mode",
                 "enabled_at": datetime.now(),
                 "hook_ids": [hook_modification["hook_id"]],
-                "hook_modification": hook_modification
+                "hook_modification": hook_modification,
             }
 
             return True
@@ -1231,7 +1237,7 @@ class RealTimeAdaptationEngine:
             logger.error(f"Failed to reduce cache size: {e}")
             return False
 
-    def _measure_adaptation_impact(self, trigger_metric: RuntimeMetric) -> Dict[str, float]:
+    def _measure_adaptation_impact(self, trigger_metric: RuntimeMetric) -> dict[str, float]:
         """Measure impact of adaptation."""
         # Get current metric value for comparison
         current_aggregates = self.runtime_monitor.metric_aggregates
@@ -1254,7 +1260,7 @@ class RealTimeAdaptationEngine:
 
         return impact
 
-    def get_adaptation_status(self) -> Dict[str, Any]:
+    def get_adaptation_status(self) -> dict[str, Any]:
         """Get current adaptation status."""
         return {
             "engine_active": self.runtime_monitor.active,
@@ -1272,18 +1278,18 @@ class RealTimeAdaptationEngine:
                     "enabled": rule.enabled,
                     "trigger_count": rule.trigger_count,
                     "success_count": rule.success_count,
-                    "last_triggered": rule.last_triggered.isoformat() if rule.last_triggered else None
+                    "last_triggered": rule.last_triggered.isoformat() if rule.last_triggered else None,
                 }
                 for rule in self.adaptation_rules
-            ]
+            ],
         }
 
-    def get_adaptation_insights(self) -> Dict[str, Any]:
+    def get_adaptation_insights(self) -> dict[str, Any]:
         """Get adaptation insights and recommendations."""
         insights = {
             "effectiveness": {},
             "recommendations": [],
-            "patterns": {}
+            "patterns": {},
         }
 
         if self.adaptation_history:
@@ -1301,7 +1307,7 @@ class RealTimeAdaptationEngine:
                 insights["effectiveness"][adaptation_type.value] = {
                     "success_rate": success_rate,
                     "avg_execution_time": avg_execution_time,
-                    "total_events": len(events)
+                    "total_events": len(events),
                 }
 
         # Generate recommendations

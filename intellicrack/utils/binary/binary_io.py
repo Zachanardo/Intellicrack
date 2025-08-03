@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -18,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """Binary I/O utilities for reading and writing binary data."""
 import os
-from typing import Any, Dict, List
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -30,9 +29,8 @@ This module provides shared utilities for reading and analyzing binary files.
 
 
 
-def find_all_pattern_offsets(data: bytes, pattern: bytes) -> List[int]:
-    """
-    Find all occurrences of a pattern in binary data.
+def find_all_pattern_offsets(data: bytes, pattern: bytes) -> list[int]:
+    """Find all occurrences of a pattern in binary data.
 
     Args:
         data: Binary data to search
@@ -40,6 +38,7 @@ def find_all_pattern_offsets(data: bytes, pattern: bytes) -> List[int]:
 
     Returns:
         List of offsets where pattern was found
+
     """
     offsets = []
     offset = 0
@@ -52,9 +51,8 @@ def find_all_pattern_offsets(data: bytes, pattern: bytes) -> List[int]:
     return offsets
 
 
-def analyze_binary_for_strings(binary_path: str, search_strings: list) -> Dict[str, Any]:
-    """
-    Analyze a binary file for specific strings.
+def analyze_binary_for_strings(binary_path: str, search_strings: list) -> dict[str, Any]:
+    """Analyze a binary file for specific strings.
 
     Args:
         binary_path: Path to the binary file
@@ -62,11 +60,12 @@ def analyze_binary_for_strings(binary_path: str, search_strings: list) -> Dict[s
 
     Returns:
         Dictionary with analysis results
+
     """
     results = {
         "strings_found": [],
         "confidence": 0.0,
-        "error": None
+        "error": None,
     }
 
     if not binary_path or not os.path.exists(binary_path):

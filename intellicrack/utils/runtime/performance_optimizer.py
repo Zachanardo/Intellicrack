@@ -1,5 +1,4 @@
-"""
-Performance Optimizer for Large Binary Analysis
+"""Performance Optimizer for Large Binary Analysis
 
 Copyright (C) 2025 Zachary Flint
 
@@ -28,16 +27,16 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "PerformanceOptimizer",
+    "AdaptiveAnalyzer",
     "BinaryChunker",
-    "MemoryManager",
     "CacheManager",
-    "AdaptiveAnalyzer"
+    "MemoryManager",
+    "PerformanceOptimizer",
 ]
 
 
@@ -51,7 +50,7 @@ class MemoryManager:
         self.current_usage = 0
         self.memory_lock = threading.Lock()
 
-    def check_memory_usage(self) -> Dict[str, Any]:
+    def check_memory_usage(self) -> dict[str, Any]:
         """Check current memory usage."""
         try:
             import psutil
@@ -62,7 +61,7 @@ class MemoryManager:
                 "rss_mb": memory_info.rss / 1024 / 1024,
                 "vms_mb": memory_info.vms / 1024 / 1024,
                 "percent": process.memory_percent(),
-                "available_mb": (self.max_memory_bytes - memory_info.rss) / 1024 / 1024
+                "available_mb": (self.max_memory_bytes - memory_info.rss) / 1024 / 1024,
             }
         except ImportError as e:
             logger.error("Import error in performance_optimizer: %s", e)
@@ -71,7 +70,7 @@ class MemoryManager:
                 "rss_mb": 0,
                 "vms_mb": 0,
                 "percent": 0,
-                "available_mb": self.max_memory_mb
+                "available_mb": self.max_memory_mb,
             }
 
     def should_limit_analysis(self) -> bool:
@@ -107,9 +106,8 @@ class BinaryChunker:
         """Initialize binary chunker with memory manager for efficient data processing."""
         self.memory_manager = memory_manager
 
-    def chunk_binary(self, file_path: str, chunk_size: Optional[int] = None) -> List[Dict[str, Any]]:
-        """
-        Split binary into manageable chunks for analysis.
+    def chunk_binary(self, file_path: str, chunk_size: int | None = None) -> list[dict[str, Any]]:
+        """Split binary into manageable chunks for analysis.
 
         Args:
             file_path: Path to binary file
@@ -117,6 +115,7 @@ class BinaryChunker:
 
         Returns:
             List of chunk metadata dictionaries
+
         """
         file_path = Path(file_path)
         file_size = file_path.stat().st_size
@@ -139,7 +138,7 @@ class BinaryChunker:
                 "end_offset": offset + current_chunk_size,
                 "file_path": str(file_path),
                 "file_size": file_size,
-                "is_last": (offset + current_chunk_size >= file_size)
+                "is_last": (offset + current_chunk_size >= file_size),
             }
 
             chunks.append(chunk_info)
@@ -149,7 +148,7 @@ class BinaryChunker:
         logger.info(f"Split {file_path.name} into {len(chunks)} chunks of ~{chunk_size//1024//1024}MB each")
         return chunks
 
-    def read_chunk(self, chunk_info: Dict[str, Any]) -> bytes:
+    def read_chunk(self, chunk_info: dict[str, Any]) -> bytes:
         """Read a specific chunk from the binary."""
         try:
             with open(chunk_info["file_path"], "rb") as f:
@@ -159,10 +158,9 @@ class BinaryChunker:
             logger.error(f"Error reading chunk {chunk_info['id']}: {e}")
             return b""
 
-    def analyze_chunk_parallel(self, chunks: List[Dict[str, Any]],
-                             analysis_func, max_workers: int = 4) -> List[Dict[str, Any]]:
-        """
-        Analyze chunks in parallel with controlled concurrency.
+    def analyze_chunk_parallel(self, chunks: list[dict[str, Any]],
+                             analysis_func, max_workers: int = 4) -> list[dict[str, Any]]:
+        """Analyze chunks in parallel with controlled concurrency.
 
         Args:
             chunks: List of chunk metadata
@@ -171,6 +169,7 @@ class BinaryChunker:
 
         Returns:
             List of analysis results for each chunk
+
         """
         results = []
 
@@ -199,7 +198,7 @@ class BinaryChunker:
                     results.append({
                         "chunk_id": chunk["id"],
                         "error": str(e),
-                        "status": "failed"
+                        "status": "failed",
                     })
 
         # Sort results by chunk_id to maintain order
@@ -236,7 +235,7 @@ class CacheManager:
         file_hash = self.get_file_hash(file_path)
         return f"{analysis_type}_{file_hash}"
 
-    def get_cached_result(self, file_path: str, analysis_type: str) -> Optional[Dict[str, Any]]:
+    def get_cached_result(self, file_path: str, analysis_type: str) -> dict[str, Any] | None:
         """Get cached analysis result if available."""
         cache_key = self.get_cache_key(file_path, analysis_type)
 
@@ -250,7 +249,7 @@ class CacheManager:
         if cache_file.exists():
             try:
                 import json
-                with open(cache_file, "r", encoding="utf-8") as f:
+                with open(cache_file, encoding="utf-8") as f:
                     result = json.load(f)
 
                 # Add to memory cache
@@ -263,7 +262,7 @@ class CacheManager:
 
         return None
 
-    def cache_result(self, file_path: str, analysis_type: str, result: Dict[str, Any]):
+    def cache_result(self, file_path: str, analysis_type: str, result: dict[str, Any]):
         """Cache analysis result."""
         cache_key = self.get_cache_key(file_path, analysis_type)
 
@@ -301,15 +300,15 @@ class AdaptiveAnalyzer:
         self.memory_manager = memory_manager
         self.cache_manager = cache_manager
 
-    def get_analysis_strategy(self, file_path: str) -> Dict[str, Any]:
-        """
-        Determine optimal analysis strategy for the binary.
+    def get_analysis_strategy(self, file_path: str) -> dict[str, Any]:
+        """Determine optimal analysis strategy for the binary.
 
         Args:
             file_path: Path to binary file
 
         Returns:
             Dictionary with recommended analysis strategy
+
         """
         file_size = Path(file_path).stat().st_size
         memory_info = self.memory_manager.check_memory_usage()
@@ -323,7 +322,7 @@ class AdaptiveAnalyzer:
             "skip_heavy_analysis": False,
             "use_sampling": False,
             "sample_rate": 1.0,
-            "priority_sections": []
+            "priority_sections": [],
         }
 
         # Large file strategies
@@ -355,7 +354,7 @@ class AdaptiveAnalyzer:
 
         return strategy
 
-    def _identify_priority_sections(self, file_path: str) -> List[Dict[str, Any]]:
+    def _identify_priority_sections(self, file_path: str) -> list[dict[str, Any]]:
         """Identify important sections to prioritize during analysis."""
         priority_sections = []
 
@@ -370,7 +369,7 @@ class AdaptiveAnalyzer:
                         "name": "PE_Header",
                         "offset": 0,
                         "size": 1024,
-                        "priority": "high"
+                        "priority": "high",
                     })
 
                 # Look for common string patterns near end
@@ -388,7 +387,7 @@ class AdaptiveAnalyzer:
                                 "name": f"License_Section_{keyword.decode()}",
                                 "offset": offset,
                                 "size": 10000,
-                                "priority": "high"
+                                "priority": "high",
                             })
                             break
 
@@ -407,15 +406,15 @@ class PerformanceOptimizer:
         Args:
             max_memory_mb: Maximum memory limit in MB
             cache_dir: Directory for cache storage
+
         """
         self.memory_manager = MemoryManager(max_memory_mb)
         self.cache_manager = CacheManager(cache_dir)
         self.binary_chunker = BinaryChunker(self.memory_manager)
         self.adaptive_analyzer = AdaptiveAnalyzer(self.memory_manager, self.cache_manager)
 
-    def optimize_analysis(self, file_path: str, analysis_functions: List[callable]) -> Dict[str, Any]:
-        """
-        Perform optimized analysis of a large binary.
+    def optimize_analysis(self, file_path: str, analysis_functions: list[callable]) -> dict[str, Any]:
+        """Perform optimized analysis of a large binary.
 
         Args:
             file_path: Path to binary file
@@ -423,6 +422,7 @@ class PerformanceOptimizer:
 
         Returns:
             Comprehensive analysis results
+
         """
         start_time = time.time()
 
@@ -440,7 +440,7 @@ class PerformanceOptimizer:
             "analysis_results": {},
             "performance_metrics": {},
             "cache_hits": 0,
-            "cache_misses": 0
+            "cache_misses": 0,
         }
 
         # Run each analysis function with optimization
@@ -475,13 +475,13 @@ class PerformanceOptimizer:
                 logger.error("Error in %s: %s", func_name, e)
                 results["analysis_results"][func_name] = {
                     "error": str(e),
-                    "status": "failed"
+                    "status": "failed",
                 }
 
             func_time = time.time() - func_start
             results["performance_metrics"][func_name] = {
                 "execution_time": func_time,
-                "memory_peak": self.memory_manager.check_memory_usage()["rss_mb"]
+                "memory_peak": self.memory_manager.check_memory_usage()["rss_mb"],
             }
 
             # Cleanup between analyses
@@ -500,7 +500,7 @@ class PerformanceOptimizer:
         return results
 
     def _run_chunked_analysis(self, file_path: str, analysis_func: callable,
-                             strategy: Dict[str, Any]) -> Dict[str, Any]:
+                             strategy: dict[str, Any]) -> dict[str, Any]:
         """Run analysis on binary chunks."""
         chunk_size = int(strategy["chunk_size_mb"] * 1024 * 1024)
         chunks = self.binary_chunker.chunk_binary(file_path, chunk_size)
@@ -518,12 +518,11 @@ class PerformanceOptimizer:
             chunk_data = self.binary_chunker.read_chunk(chunk_info)
             if chunk_data:
                 return analysis_func(chunk_data, chunk_info)
-            else:
-                return {"error": "Failed to read chunk", "status": "failed"}
+            return {"error": "Failed to read chunk", "status": "failed"}
 
         # Run parallel analysis
         chunk_results = self.binary_chunker.analyze_chunk_parallel(
-            chunks, analyze_chunk, strategy["max_workers"]
+            chunks, analyze_chunk, strategy["max_workers"],
         )
 
         # Aggregate results
@@ -534,7 +533,7 @@ class PerformanceOptimizer:
         return aggregated_result
 
     def _run_standard_analysis(self, file_path: str, analysis_func: callable,
-                              strategy: Dict[str, Any]) -> Dict[str, Any]:
+                              strategy: dict[str, Any]) -> dict[str, Any]:
         """Run standard analysis on entire file."""
         _ = strategy
         try:
@@ -549,15 +548,15 @@ class PerformanceOptimizer:
                 data = f.read()
                 return analysis_func(data)
 
-    def _aggregate_chunk_results(self, chunk_results: List[Dict[str, Any]],
-                                analysis_name: str) -> Dict[str, Any]:
+    def _aggregate_chunk_results(self, chunk_results: list[dict[str, Any]],
+                                analysis_name: str) -> dict[str, Any]:
         """Aggregate results from multiple chunks."""
         aggregated = {
             "analysis_type": analysis_name,
             "chunks_processed": len(chunk_results),
             "successful_chunks": len([r for r in chunk_results if r.get("status") != "failed"]),
             "combined_results": {},
-            "chunk_summaries": []
+            "chunk_summaries": [],
         }
 
         # Combine results based on analysis type
@@ -566,7 +565,7 @@ class PerformanceOptimizer:
                 chunk_summary = {
                     "chunk_id": result.get("chunk_id"),
                     "findings_count": len(result.get("findings", [])),
-                    "notable_items": result.get("notable_items", [])
+                    "notable_items": result.get("notable_items", []),
                 }
                 aggregated["chunk_summaries"].append(chunk_summary)
 
@@ -584,7 +583,7 @@ def create_performance_optimizer(max_memory_mb: int = 2048, cache_dir: str = "ca
 
 
 # Example analysis functions for testing
-def example_string_analysis(data, chunk_info=None) -> Dict[str, Any]:
+def example_string_analysis(data, chunk_info=None) -> dict[str, Any]:
     """Example string analysis function."""
     # Include chunk information in results for comprehensive analysis
     result_metadata = {}
@@ -592,7 +591,7 @@ def example_string_analysis(data, chunk_info=None) -> Dict[str, Any]:
         result_metadata = {
             "chunk_id": chunk_info.get("id", "unknown"),
             "chunk_offset": chunk_info.get("offset", 0),
-            "chunk_size": chunk_info.get("size", len(data) if hasattr(data, "__len__") else 0)
+            "chunk_size": chunk_info.get("size", len(data) if hasattr(data, "__len__") else 0),
         }
 
     if isinstance(data, mmap.mmap):
@@ -617,7 +616,7 @@ def example_string_analysis(data, chunk_info=None) -> Dict[str, Any]:
     result = {
         "status": "success",
         "findings": strings[:100],  # Limit to first 100 strings
-        "total_strings": len(strings)
+        "total_strings": len(strings),
     }
 
     # Include chunk metadata in result
@@ -625,7 +624,7 @@ def example_string_analysis(data, chunk_info=None) -> Dict[str, Any]:
     return result
 
 
-def example_entropy_analysis(data, chunk_info=None) -> Dict[str, Any]:
+def example_entropy_analysis(data, chunk_info=None) -> dict[str, Any]:
     """Example entropy analysis function."""
     # Include chunk information in entropy analysis for position-aware results
     result_metadata = {}
@@ -634,7 +633,7 @@ def example_entropy_analysis(data, chunk_info=None) -> Dict[str, Any]:
             "chunk_id": chunk_info.get("id", "unknown"),
             "chunk_offset": chunk_info.get("offset", 0),
             "chunk_size": chunk_info.get("size", len(data) if hasattr(data, "__len__") else 0),
-            "analysis_region": f"Offset {chunk_info.get('offset', 0)} - {chunk_info.get('end_offset', 'unknown')}"
+            "analysis_region": f"Offset {chunk_info.get('offset', 0)} - {chunk_info.get('end_offset', 'unknown')}",
         }
 
     if isinstance(data, mmap.mmap):
@@ -662,7 +661,7 @@ def example_entropy_analysis(data, chunk_info=None) -> Dict[str, Any]:
         "status": "success",
         "entropy": entropy,
         "sample_size": len(sample_data),
-        "findings": [f"Entropy: {entropy:.2f}"]
+        "findings": [f"Entropy: {entropy:.2f}"],
     }
 
     # Include chunk metadata in result for positional context

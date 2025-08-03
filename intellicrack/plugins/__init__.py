@@ -1,5 +1,4 @@
-"""
-Intellicrack Plugins Package
+"""Intellicrack Plugins Package
 
 Copyright (C) 2025 Zachary Flint
 
@@ -114,11 +113,11 @@ except ImportError as e:
     logger.warning("Failed to import plugin system functions: %s", e)
     # Provide fallback empty functions
     def load_plugins(*args, **kwargs):
-        """
-        Fallback function for loading plugins when plugin system is not available.
+        """Fallback function for loading plugins when plugin system is not available.
 
         Returns:
             dict: Empty dictionary
+
         """
         logger.debug(f"Fallback load_plugins called with args: {args}, kwargs: {kwargs}")
         # Try to load available plugins from directories
@@ -131,12 +130,12 @@ except ImportError as e:
                     try:
                         module = importlib.import_module(
                             f".custom_modules.{plugin_file.stem}",
-                            package="intellicrack.plugins"
+                            package="intellicrack.plugins",
                         )
                         loaded_plugins[plugin_file.stem] = {
                             "type": "python",
                             "module": module,
-                            "path": str(plugin_file)
+                            "path": str(plugin_file),
                         }
                         logger.info("Loaded Python plugin: %s", plugin_file.stem)
                     except Exception as exc:
@@ -147,7 +146,7 @@ except ImportError as e:
             for script_file in FRIDA_SCRIPTS_DIR.glob("*.js"):
                 loaded_plugins[script_file.stem] = {
                     "type": "frida",
-                    "path": str(script_file)
+                    "path": str(script_file),
                 }
                 logger.info("Found Frida script: %s", script_file.stem)
 
@@ -158,69 +157,57 @@ except ImportError as e:
                     loaded_plugins[script_file.stem] = {
                         "type": "ghidra",
                         "path": str(script_file),
-                        "language": "java" if ext == "*.java" else "python"
+                        "language": "java" if ext == "*.java" else "python",
                     }
                     logger.info("Found Ghidra script: %s", script_file.stem)
 
         return loaded_plugins
     def run_plugin(*args, **kwargs):
-        """
-        Fallback function for running plugins when plugin system is not available.
+        """Fallback function for running plugins when plugin system is not available.
 
         Does nothing when the actual plugin system cannot be imported.
         """
         logger.debug(f"Fallback run_plugin called with args: {args}, kwargs: {kwargs}")
-        pass
     def run_custom_plugin(*args, **kwargs):
-        """
-        Fallback function for running custom plugins when plugin system is not available.
+        """Fallback function for running custom plugins when plugin system is not available.
 
         Does nothing when the actual plugin system cannot be imported.
         """
         logger.debug(f"Fallback run_custom_plugin called with args: {args}, kwargs: {kwargs}")
-        pass
     def run_frida_plugin_from_file(*args, **kwargs):
-        """
-        Fallback function for running Frida plugins when plugin system is not available.
+        """Fallback function for running Frida plugins when plugin system is not available.
 
         Does nothing when the actual plugin system cannot be imported.
         """
         logger.debug(f"Fallback run_frida_plugin_from_file called with args: {args}, kwargs: {kwargs}")
-        pass
     def run_ghidra_plugin_from_file(*args, **kwargs):
-        """
-        Fallback function for running Ghidra plugins when plugin system is not available.
+        """Fallback function for running Ghidra plugins when plugin system is not available.
 
         Does nothing when the actual plugin system cannot be imported.
         """
         logger.debug(f"Fallback run_ghidra_plugin_from_file called with args: {args}, kwargs: {kwargs}")
-        pass
     def create_sample_plugins(*args, **kwargs):
-        """
-        Fallback function for creating sample plugins when plugin system is not available.
+        """Fallback function for creating sample plugins when plugin system is not available.
 
         Does nothing when the actual plugin system cannot be imported.
         """
         logger.debug(f"Fallback create_sample_plugins called with args: {args}, kwargs: {kwargs}")
-        pass
     def run_plugin_in_sandbox(*args, **kwargs):
-        """
-        Fallback function for running plugins in sandbox when plugin system is not available.
+        """Fallback function for running plugins in sandbox when plugin system is not available.
 
         Returns:
             None
+
         """
         logger.debug(f"Fallback run_plugin_in_sandbox called with args: {args}, kwargs: {kwargs}")
-        return None
     def run_plugin_remotely(*args, **kwargs):
-        """
-        Fallback function for running plugins remotely when plugin system is not available.
+        """Fallback function for running plugins remotely when plugin system is not available.
 
         Returns:
             None
+
         """
         logger.debug(f"Fallback run_plugin_remotely called with args: {args}, kwargs: {kwargs}")
-        return None
 
 # Import remote executor if available
 try:  # pylint: disable=unused-argument

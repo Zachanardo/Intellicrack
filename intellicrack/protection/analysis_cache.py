@@ -1,5 +1,4 @@
-"""
-Advanced Analysis Cache for Protection Engine
+"""Advanced Analysis Cache for Protection Engine
 
 Provides efficient caching with persistence, size management, and automatic invalidation.
 
@@ -16,7 +15,7 @@ import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from threading import Lock
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -38,7 +37,7 @@ class RestrictedUnpickler(pickle.Unpickler):
             "sklearn", "torch", "tensorflow",
             "__builtin__", "builtins",
             "collections", "collections.abc",
-            "datetime"
+            "datetime",
         }
 
         # Allow model classes from our own modules
@@ -87,12 +86,13 @@ def secure_pickle_load(file_path):
 
     # Load object using RestrictedUnpickler
     import io
-    return RestrictedUnpickler(io.BytesIO(data)).load()  # noqa: S301
+    return RestrictedUnpickler(io.BytesIO(data)).load()
 
 
 @dataclass
 class CacheEntry:
     """Single cache entry with metadata"""
+
     data: Any
     timestamp: float
     file_mtime: float
@@ -135,6 +135,7 @@ class CacheEntry:
 @dataclass
 class CacheStats:
     """Cache statistics"""
+
     total_entries: int = 0
     cache_hits: int = 0
     cache_misses: int = 0
@@ -149,14 +150,13 @@ class CacheStats:
         total = self.cache_hits + self.cache_misses
         return (self.cache_hits / total * 100) if total > 0 else 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
         return asdict(self)
 
 
 class AnalysisCache:
-    """
-    Advanced cache for protection analysis results
+    """Advanced cache for protection analysis results
 
     Features:
     - Persistent storage to disk
@@ -168,19 +168,19 @@ class AnalysisCache:
 
     def __init__(
         self,
-        cache_dir: Optional[str] = None,
+        cache_dir: str | None = None,
         max_entries: int = 1000,
         max_size_mb: int = 100,
-        auto_save: bool = True
+        auto_save: bool = True,
     ):
-        """
-        Initialize cache
+        """Initialize cache
 
         Args:
             cache_dir: Directory for persistent cache storage
             max_entries: Maximum number of cache entries
             max_size_mb: Maximum cache size in MB
             auto_save: Automatically save cache to disk
+
         """
         # Set up cache directory
         if cache_dir is None:
@@ -195,7 +195,7 @@ class AnalysisCache:
         self.auto_save = auto_save
 
         # Cache storage
-        self._cache: Dict[str, CacheEntry] = {}
+        self._cache: dict[str, CacheEntry] = {}
         self._lock = Lock()
 
         # Statistics
@@ -211,9 +211,8 @@ class AnalysisCache:
         logger.info(f"Analysis cache initialized: {len(self._cache)} entries, "
                    f"{self._get_cache_size_mb():.1f}MB")
 
-    def get(self, file_path: str, scan_options: str = "") -> Optional[Any]:
-        """
-        Get cached analysis result
+    def get(self, file_path: str, scan_options: str = "") -> Any | None:
+        """Get cached analysis result
 
         Args:
             file_path: Path to analyzed file
@@ -221,6 +220,7 @@ class AnalysisCache:
 
         Returns:
             Cached result or None if not found/invalid
+
         """
         cache_key = self._generate_cache_key(file_path, scan_options)
 
@@ -248,13 +248,13 @@ class AnalysisCache:
             return entry.data
 
     def put(self, file_path: str, data: Any, scan_options: str = "") -> None:
-        """
-        Store analysis result in cache
+        """Store analysis result in cache
 
         Args:
             file_path: Path to analyzed file
             data: Analysis result to cache
             scan_options: Additional scan options for cache key
+
         """
         cache_key = self._generate_cache_key(file_path, scan_options)
 
@@ -268,7 +268,7 @@ class AnalysisCache:
                 timestamp=time.time(),
                 file_mtime=file_mtime,
                 file_size=file_size,
-                cache_key=cache_key
+                cache_key=cache_key,
             )
 
             with self._lock:
@@ -282,8 +282,7 @@ class AnalysisCache:
                 # Update stats
                 if not self._stats.oldest_entry or entry.timestamp < self._stats.oldest_entry:
                     self._stats.oldest_entry = entry.timestamp
-                if entry.timestamp > self._stats.newest_entry:
-                    self._stats.newest_entry = entry.timestamp
+                self._stats.newest_entry = max(self._stats.newest_entry, entry.timestamp)
 
                 logger.debug(f"Cached: {cache_key}")
 
@@ -295,8 +294,7 @@ class AnalysisCache:
             logger.error(f"Failed to cache result for {file_path}: {e}")
 
     def remove(self, file_path: str, scan_options: str = "") -> bool:
-        """
-        Remove specific entry from cache
+        """Remove specific entry from cache
 
         Args:
             file_path: Path to analyzed file
@@ -304,6 +302,7 @@ class AnalysisCache:
 
         Returns:
             True if entry was removed, False if not found
+
         """
         cache_key = self._generate_cache_key(file_path, scan_options)
 
@@ -332,11 +331,11 @@ class AnalysisCache:
                 logger.error(f"Failed to remove cache files: {e}")
 
     def cleanup_invalid(self) -> int:
-        """
-        Remove invalid cache entries
+        """Remove invalid cache entries
 
         Returns:
             Number of entries removed
+
         """
         removed_count = 0
 
@@ -368,7 +367,7 @@ class AnalysisCache:
             self._stats.total_size_bytes = self._calculate_cache_size()
             return self._stats
 
-    def get_cache_info(self) -> Dict[str, Any]:
+    def get_cache_info(self) -> dict[str, Any]:
         """Get detailed cache information"""
         stats = self.get_stats()
 
@@ -377,7 +376,7 @@ class AnalysisCache:
             sorted_entries = sorted(
                 self._cache.items(),
                 key=lambda x: x[1].access_count,
-                reverse=True
+                reverse=True,
             )
 
             top_entries = []
@@ -387,7 +386,7 @@ class AnalysisCache:
                     "file": os.path.basename(file_path),
                     "access_count": entry.access_count,
                     "size_kb": len(str(entry.data)) / 1024,
-                    "age_hours": (time.time() - entry.timestamp) / 3600
+                    "age_hours": (time.time() - entry.timestamp) / 3600,
                 })
 
         return {
@@ -396,7 +395,7 @@ class AnalysisCache:
             "cache_directory": str(self.cache_dir),
             "max_entries": self.max_entries,
             "max_size_mb": self.max_size_bytes / (1024 * 1024),
-            "top_entries": top_entries
+            "top_entries": top_entries,
         }
 
     def save_cache(self) -> None:
@@ -441,7 +440,7 @@ class AnalysisCache:
         # Sort by last access time (least recent first)
         sorted_entries = sorted(
             self._cache.items(),
-            key=lambda x: x[1].last_access or x[1].timestamp
+            key=lambda x: x[1].last_access or x[1].timestamp,
         )
 
         # Remove oldest entries
@@ -476,7 +475,7 @@ class AnalysisCache:
 
             # Load statistics
             if self.stats_file.exists():
-                with open(self.stats_file, "r") as f:
+                with open(self.stats_file) as f:
                     stats_data = json.load(f)
                     self._stats = CacheStats(**stats_data)
 
@@ -500,7 +499,7 @@ class AnalysisCache:
 
 
 # Global cache instance
-_analysis_cache: Optional[AnalysisCache] = None
+_analysis_cache: AnalysisCache | None = None
 
 
 def get_analysis_cache() -> AnalysisCache:

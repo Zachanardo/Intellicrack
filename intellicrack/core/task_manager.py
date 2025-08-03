@@ -7,9 +7,10 @@ import logging
 import traceback
 import uuid
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
 
@@ -20,6 +21,7 @@ logger = get_logger(__name__)
 
 class TaskStatus(Enum):
     """Task execution status."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -29,6 +31,7 @@ class TaskStatus(Enum):
 
 class TaskSignals(QObject):
     """Signals for task communication."""
+
     started = pyqtSignal(str)  # task_id
     progress = pyqtSignal(str, int, str)  # task_id, percentage, message
     result = pyqtSignal(str, object)  # task_id, result
@@ -43,12 +46,13 @@ class TaskMeta(type(QRunnable), type(ABC)):
 class BaseTask(QRunnable, ABC, metaclass=TaskMeta):
     """Base class for all background tasks."""
 
-    def __init__(self, task_id: Optional[str] = None, description: str = ""):
+    def __init__(self, task_id: str | None = None, description: str = ""):
         """Initialize the base task with ID, description, and status tracking.
 
         Args:
             task_id: Optional unique identifier for the task
             description: Description of what the task does
+
         """
         super().__init__()
         self.task_id = task_id or str(uuid.uuid4())
@@ -95,7 +99,6 @@ class BaseTask(QRunnable, ABC, metaclass=TaskMeta):
     @abstractmethod
     def execute(self) -> Any:
         """Execute the task logic. Must be implemented by subclasses."""
-        pass
 
     def cancel(self):
         """Cancel the task."""
@@ -116,7 +119,7 @@ class CallableTask(BaseTask):
     """Task that wraps a callable function."""
 
     def __init__(self, func: Callable, args: tuple = (), kwargs: dict = None,
-                 task_id: Optional[str] = None, description: str = ""):
+                 task_id: str | None = None, description: str = ""):
         """Initialize the callable task with function, arguments, and task metadata.
 
         Args:
@@ -125,6 +128,7 @@ class CallableTask(BaseTask):
             kwargs: Keyword arguments for the function
             task_id: Optional unique identifier for the task
             description: Description of what the task does
+
         """
         super().__init__(task_id, description)
         self.func = func
@@ -150,7 +154,7 @@ class TaskManager(QObject):
     all_tasks_completed = pyqtSignal()
     active_task_count_changed = pyqtSignal(int)
 
-    def __init__(self, max_thread_count: Optional[int] = None):
+    def __init__(self, max_thread_count: int | None = None):
         """Initialize the task manager.
 
         Sets up the Qt thread pool-based task management system for handling
@@ -159,6 +163,7 @@ class TaskManager(QObject):
 
         Args:
             max_thread_count: Maximum number of concurrent threads. If None, uses Qt default.
+
         """
         super().__init__()
         self.thread_pool = QThreadPool.globalInstance()
@@ -166,9 +171,9 @@ class TaskManager(QObject):
         if max_thread_count:
             self.thread_pool.setMaxThreadCount(max_thread_count)
 
-        self._active_tasks: Dict[str, BaseTask] = {}
-        self._task_history: List[Dict] = []
-        self._task_results: Dict[str, Any] = {}
+        self._active_tasks: dict[str, BaseTask] = {}
+        self._task_history: list[dict] = []
+        self._task_results: dict[str, Any] = {}
 
         logger.info(f"TaskManager initialized with {self.thread_pool.maxThreadCount()} threads")
 
@@ -195,7 +200,7 @@ class TaskManager(QObject):
         return task.task_id
 
     def submit_callable(self, func: Callable, args: tuple = (), kwargs: dict = None,
-                       task_id: Optional[str] = None, description: str = "") -> str:
+                       task_id: str | None = None, description: str = "") -> str:
         """Submit a callable as a task."""
         task = CallableTask(func, args, kwargs, task_id, description)
         return self.submit_task(task)
@@ -218,15 +223,15 @@ class TaskManager(QObject):
         """Wait for all tasks to complete."""
         return self.thread_pool.waitForDone(timeout_ms)
 
-    def get_active_tasks(self) -> Dict[str, str]:
+    def get_active_tasks(self) -> dict[str, str]:
         """Get dictionary of active task IDs to descriptions."""
         return {task_id: task.description for task_id, task in self._active_tasks.items()}
 
-    def get_task_result(self, task_id: str) -> Optional[Any]:
+    def get_task_result(self, task_id: str) -> Any | None:
         """Get the result of a completed task."""
         return self._task_results.get(task_id)
 
-    def get_task_history(self) -> List[Dict]:
+    def get_task_history(self) -> list[dict]:
         """Get the history of all tasks."""
         return self._task_history.copy()
 
@@ -273,7 +278,7 @@ class TaskManager(QObject):
                 "description": task.description,
                 "started_at": task._started_at.isoformat() if task._started_at else None,
                 "finished_at": task._finished_at.isoformat() if task._finished_at else None,
-                "cancelled": task._is_cancelled
+                "cancelled": task._is_cancelled,
             }
             self._task_history.append(history_entry)
 
@@ -294,12 +299,13 @@ class TaskManager(QObject):
 class LongRunningTask(BaseTask):
     """Example of a long-running task with progress updates."""
 
-    def __init__(self, duration: int = 10, task_id: Optional[str] = None):
+    def __init__(self, duration: int = 10, task_id: str | None = None):
         """Initialize the long running task with specified duration.
 
         Args:
             duration: Task duration in seconds
             task_id: Optional unique identifier for the task
+
         """
         super().__init__(task_id, f"Long running task ({duration}s)")
         self.duration = duration

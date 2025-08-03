@@ -1,5 +1,4 @@
-"""
-Kernel-level injection using Windows driver
+"""Kernel-level injection using Windows driver
 
 Copyright (C) 2025 Zachary Flint
 
@@ -50,9 +49,10 @@ FILE_ANY_ACCESS = 0
 # Injection structure for driver communication
 class INJECTION_INFO(ctypes.Structure):
     """Structure for passing injection information to kernel driver."""
+
     _fields_ = [
         ("ProcessId", ctypes.c_ulong),
-        ("DllPath", ctypes.c_wchar * 260)
+        ("DllPath", ctypes.c_wchar * 260),
     ]
 
 
@@ -86,7 +86,7 @@ class KernelInjector:
             FILE_DEVICE_UNKNOWN,
             0x800,
             METHOD_BUFFERED,
-            FILE_ANY_ACCESS
+            FILE_ANY_ACCESS,
         )
 
     def _ctl_code(self, device_type: int, function: int, method: int, access: int) -> int:
@@ -94,8 +94,7 @@ class KernelInjector:
         return (device_type << 16) | (access << 14) | (function << 2) | method
 
     def inject_kernel_mode(self, target_pid: int, dll_path: str) -> bool:
-        """
-        Inject DLL using kernel driver
+        """Inject DLL using kernel driver
 
         Args:
             target_pid: Target process ID
@@ -103,6 +102,7 @@ class KernelInjector:
 
         Returns:
             True if successful, False otherwise
+
         """
         try:
             # Create driver if not exists
@@ -170,7 +170,6 @@ class KernelInjector:
 
     def _build_driver_pe_structure(self) -> bytes:
         """Build realistic PE driver structure with proper headers and sections"""
-
         # DOS Header (64 bytes)
         dos_header = bytearray(64)
         dos_header[0:2] = b"MZ"  # DOS signature
@@ -400,7 +399,7 @@ class KernelInjector:
             sc_manager = self.advapi32.OpenSCManagerW(
                 None,
                 None,
-                SC_MANAGER_ALL_ACCESS
+                SC_MANAGER_ALL_ACCESS,
             )
 
             if not sc_manager:
@@ -423,7 +422,7 @@ class KernelInjector:
                     None,
                     None,
                     None,
-                    None
+                    None,
                 )
 
                 if not service:
@@ -434,7 +433,7 @@ class KernelInjector:
                         service = self.advapi32.OpenServiceW(
                             sc_manager,
                             self.service_name,
-                            SERVICE_ALL_ACCESS
+                            SERVICE_ALL_ACCESS,
                         )
                         if not service:
                             logger.error("Failed to open existing service")
@@ -478,7 +477,7 @@ class KernelInjector:
                 None,
                 3,           # OPEN_EXISTING
                 0,           # Normal attributes
-                None
+                None,
             )
 
             if self.driver_handle == -1:
@@ -516,7 +515,7 @@ class KernelInjector:
                 None,
                 0,
                 ctypes.byref(bytes_returned),
-                None
+                None,
             )
 
             if not success:
@@ -546,9 +545,8 @@ class KernelInjector:
             if self.driver_path and os.path.exists(self.driver_path):
                 try:
                     os.remove(self.driver_path)
-                except (OSError, IOError, Exception) as e:
+                except (OSError, Exception) as e:
                     self.logger.error("Error in kernel_injection: %s", e)
-                    pass
 
         except Exception as e:
             logger.error(f"Cleanup error: {e}")
@@ -559,7 +557,7 @@ class KernelInjector:
             sc_manager = self.advapi32.OpenSCManagerW(
                 None,
                 None,
-                SC_MANAGER_ALL_ACCESS
+                SC_MANAGER_ALL_ACCESS,
             )
 
             if not sc_manager:
@@ -569,7 +567,7 @@ class KernelInjector:
                 service = self.advapi32.OpenServiceW(
                     sc_manager,
                     self.service_name,
-                    SERVICE_ALL_ACCESS
+                    SERVICE_ALL_ACCESS,
                 )
 
                 if service:
@@ -578,7 +576,7 @@ class KernelInjector:
                     self.advapi32.ControlService(
                         service,
                         SERVICE_CONTROL_STOP,
-                        ctypes.byref(service_status())
+                        ctypes.byref(service_status()),
                     )
 
                     # Delete service
@@ -593,8 +591,7 @@ class KernelInjector:
 
 
 def inject_via_kernel_driver(target_pid: int, dll_path: str) -> bool:
-    """
-    Convenience function for kernel-level injection
+    """Convenience function for kernel-level injection
 
     Args:
         target_pid: Target process ID
@@ -602,6 +599,7 @@ def inject_via_kernel_driver(target_pid: int, dll_path: str) -> bool:
 
     Returns:
         True if successful, False otherwise
+
     """
     if not AVAILABLE:
         logger.error("Kernel injection not available on this platform")

@@ -1,5 +1,4 @@
-"""
-Advanced Search and Replace functionality for Hex Viewer.
+"""Advanced Search and Replace functionality for Hex Viewer.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -25,7 +24,7 @@ import logging
 import re
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 from ..ui.common_imports import (
     PYQT6_AVAILABLE,
@@ -60,13 +59,19 @@ from ..ui.common_imports import (
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "SearchType", "SearchResult", "SearchEngine", "AdvancedSearchDialog",
-    "SearchHistory", "FindAllDialog", "ReplaceDialog"
+    "AdvancedSearchDialog",
+    "FindAllDialog",
+    "ReplaceDialog",
+    "SearchEngine",
+    "SearchHistory",
+    "SearchResult",
+    "SearchType",
 ]
 
 
 class SearchType(Enum):
     """Types of search patterns."""
+
     HEX = "hex"
     TEXT = "text"
     REGEX = "regex"
@@ -87,23 +92,23 @@ class SearchResult:
         """Return string representation of the search result."""
         return f"SearchResult(offset=0x{self.offset:X}, length={self.length})"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "offset": self.offset,
             "length": self.length,
             "data": self.data.hex(),
-            "context": self.context.hex() if self.context else ""
+            "context": self.context.hex() if self.context else "",
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SearchResult":
+    def from_dict(cls, data: dict[str, Any]) -> "SearchResult":
         """Create from dictionary."""
         return cls(
             offset=data["offset"],
             length=data["length"],
             data=bytes.fromhex(data["data"]),
-            context=bytes.fromhex(data["context"]) if data["context"] else b""
+            context=bytes.fromhex(data["context"]) if data["context"] else b"",
         )
 
 
@@ -114,16 +119,16 @@ class SearchHistory:
         """Initialize the SearchHistory with maximum entries limit."""
         self.max_entries = max_entries
         self.history_file = Path.home() / ".intellicrack" / "hex_search_history.json"
-        self.entries: List[Dict[str, Any]] = []
+        self.entries: list[dict[str, Any]] = []
         self.load_history()
 
-    def add_search(self, pattern: str, search_type: SearchType, options: Dict[str, Any]):
+    def add_search(self, pattern: str, search_type: SearchType, options: dict[str, Any]):
         """Add a search to history."""
         entry = {
             "pattern": pattern,
             "type": search_type.value,
             "options": options,
-            "timestamp": __import__("time").time()
+            "timestamp": __import__("time").time(),
         }
 
         # Remove duplicate if exists
@@ -138,7 +143,7 @@ class SearchHistory:
 
         self.save_history()
 
-    def get_recent_searches(self, search_type: Optional[SearchType] = None, limit: int = 10) -> List[str]:
+    def get_recent_searches(self, search_type: SearchType | None = None, limit: int = 10) -> list[str]:
         """Get recent search patterns."""
         filtered_entries = self.entries
         if search_type:
@@ -150,7 +155,7 @@ class SearchHistory:
         """Load history from file."""
         try:
             if self.history_file.exists():
-                with open(self.history_file, "r", encoding="utf-8") as f:
+                with open(self.history_file, encoding="utf-8") as f:
                     data = json.load(f)
                     self.entries = data.get("searches", [])
         except (OSError, ValueError, RuntimeError) as e:
@@ -175,11 +180,10 @@ class SearchEngine:
         self.file_handler = file_handler
         self.chunk_size = 1024 * 1024  # 1MB chunks  # 1MB chunks  # 1MB chunks
 
-    def search(self, pattern: Union[str, bytes], search_type: SearchType,
+    def search(self, pattern: str | bytes, search_type: SearchType,
                start_offset: int = 0, case_sensitive: bool = True,
-               whole_words: bool = False, direction: str = "forward") -> Optional[SearchResult]:
-        """
-        Search for a single occurrence of a pattern.
+               whole_words: bool = False, direction: str = "forward") -> SearchResult | None:
+        """Search for a single occurrence of a pattern.
 
         Args:
             pattern: Search pattern
@@ -191,6 +195,7 @@ class SearchEngine:
 
         Returns:
             First search result or None if not found
+
         """
         compiled_pattern = self._compile_pattern(pattern, search_type, case_sensitive)
         if not compiled_pattern:
@@ -198,14 +203,12 @@ class SearchEngine:
 
         if direction == "forward":
             return self._search_forward(compiled_pattern, start_offset, whole_words)
-        else:
-            return self._search_backward(compiled_pattern, start_offset, whole_words)
+        return self._search_backward(compiled_pattern, start_offset, whole_words)
 
-    def search_all(self, pattern: Union[str, bytes], search_type: SearchType,
+    def search_all(self, pattern: str | bytes, search_type: SearchType,
                    case_sensitive: bool = True, whole_words: bool = False,
-                   max_results: int = 1000) -> List[SearchResult]:
-        """
-        Search for all occurrences of a pattern.
+                   max_results: int = 1000) -> list[SearchResult]:
+        """Search for all occurrences of a pattern.
 
         Args:
             pattern: Search pattern
@@ -216,6 +219,7 @@ class SearchEngine:
 
         Returns:
             List of all search results
+
         """
         compiled_pattern = self._compile_pattern(pattern, search_type, case_sensitive)
         if not compiled_pattern:
@@ -235,7 +239,7 @@ class SearchEngine:
 
             # Find all matches in this chunk
             chunk_results = self._find_matches_in_chunk(
-                compiled_pattern, chunk_data, offset, search_type, whole_words
+                compiled_pattern, chunk_data, offset, search_type, whole_words,
             )
 
             results.extend(chunk_results)
@@ -247,11 +251,10 @@ class SearchEngine:
 
         return results[:max_results]
 
-    def replace_all(self, find_pattern: Union[str, bytes], replace_pattern: Union[str, bytes],
+    def replace_all(self, find_pattern: str | bytes, replace_pattern: str | bytes,
                     search_type: SearchType, case_sensitive: bool = True,
-                    whole_words: bool = False) -> List[Tuple[int, int]]:
-        """
-        Replace all occurrences of a pattern.
+                    whole_words: bool = False) -> list[tuple[int, int]]:
+        """Replace all occurrences of a pattern.
 
         Args:
             find_pattern: Pattern to find
@@ -262,6 +265,7 @@ class SearchEngine:
 
         Returns:
             List of (offset, length) tuples for replaced ranges
+
         """
         if self.file_handler.read_only:
             raise ValueError("Cannot replace in read-only file")
@@ -288,8 +292,8 @@ class SearchEngine:
 
         return list(reversed(replaced_ranges))
 
-    def _compile_pattern(self, pattern: Union[str, bytes], search_type: SearchType,
-                        case_sensitive: bool) -> Optional[Union[bytes, re.Pattern]]:
+    def _compile_pattern(self, pattern: str | bytes, search_type: SearchType,
+                        case_sensitive: bool) -> bytes | re.Pattern | None:
         """Compile pattern based on search type."""
         try:
             if search_type == SearchType.HEX:
@@ -298,7 +302,7 @@ class SearchEngine:
                     return bytes.fromhex(hex_clean)
                 return pattern
 
-            elif search_type == SearchType.TEXT:
+            if search_type == SearchType.TEXT:
                 if isinstance(pattern, bytes):
                     text_pattern = pattern
                 else:
@@ -310,13 +314,13 @@ class SearchEngine:
 
                 return text_pattern
 
-            elif search_type == SearchType.REGEX:
+            if search_type == SearchType.REGEX:
                 flags = 0 if case_sensitive else re.IGNORECASE
                 if isinstance(pattern, bytes):
                     pattern = pattern.decode("utf-8", errors="replace")
                 return re.compile(pattern, flags)
 
-            elif search_type == SearchType.WILDCARD:
+            if search_type == SearchType.WILDCARD:
                 # Convert wildcard to regex
                 if isinstance(pattern, bytes):
                     pattern = pattern.decode("utf-8", errors="replace")
@@ -334,8 +338,8 @@ class SearchEngine:
 
         return None
 
-    def _search_forward(self, compiled_pattern: Union[bytes, re.Pattern],
-                       start_offset: int, whole_words: bool) -> Optional[SearchResult]:
+    def _search_forward(self, compiled_pattern: bytes | re.Pattern,
+                       start_offset: int, whole_words: bool) -> SearchResult | None:
         """Search forward from start_offset."""
         file_size = self.file_handler.get_file_size()
         offset = start_offset
@@ -350,7 +354,7 @@ class SearchEngine:
 
             # Find first match in this chunk
             match = self._find_first_match_in_chunk(
-                compiled_pattern, chunk_data, offset, whole_words
+                compiled_pattern, chunk_data, offset, whole_words,
             )
 
             if match:
@@ -361,8 +365,8 @@ class SearchEngine:
 
         return None
 
-    def _search_backward(self, compiled_pattern: Union[bytes, re.Pattern],
-                        start_offset: int, whole_words: bool) -> Optional[SearchResult]:
+    def _search_backward(self, compiled_pattern: bytes | re.Pattern,
+                        start_offset: int, whole_words: bool) -> SearchResult | None:
         """Search backward from start_offset."""
         offset = min(start_offset, self.file_handler.get_file_size())
         overlap_size = 100
@@ -377,7 +381,7 @@ class SearchEngine:
 
             # Find last match in this chunk
             matches = self._find_matches_in_chunk(
-                compiled_pattern, chunk_data, chunk_start, SearchType.HEX, whole_words
+                compiled_pattern, chunk_data, chunk_start, SearchType.HEX, whole_words,
             )
 
             if matches:
@@ -388,9 +392,9 @@ class SearchEngine:
 
         return None
 
-    def _find_matches_in_chunk(self, compiled_pattern: Union[bytes, re.Pattern],
+    def _find_matches_in_chunk(self, compiled_pattern: bytes | re.Pattern,
                              chunk_data: bytes, chunk_offset: int,
-                             search_type: SearchType, whole_words: bool) -> List[SearchResult]:
+                             search_type: SearchType, whole_words: bool) -> list[SearchResult]:
         """Find all matches in a chunk of data."""
         matches = []
         _search_type = search_type  # Store for potential future use
@@ -414,7 +418,7 @@ class SearchEngine:
                             offset=chunk_offset + pos,
                             length=len(compiled_pattern),
                             data=compiled_pattern,
-                            context=context
+                            context=context,
                         )
                         matches.append(match)
 
@@ -443,7 +447,7 @@ class SearchEngine:
                             offset=chunk_offset + byte_start,
                             length=byte_end - byte_start,
                             data=matched_data,
-                            context=context
+                            context=context,
                         )
                         matches.append(result)
 
@@ -452,12 +456,12 @@ class SearchEngine:
 
         return matches
 
-    def _find_first_match_in_chunk(self, compiled_pattern: Union[bytes, re.Pattern],
+    def _find_first_match_in_chunk(self, compiled_pattern: bytes | re.Pattern,
                                   chunk_data: bytes, chunk_offset: int,
-                                  whole_words: bool) -> Optional[SearchResult]:
+                                  whole_words: bool) -> SearchResult | None:
         """Find first match in a chunk of data."""
         matches = self._find_matches_in_chunk(
-            compiled_pattern, chunk_data, chunk_offset, SearchType.HEX, whole_words
+            compiled_pattern, chunk_data, chunk_offset, SearchType.HEX, whole_words,
         )
         return matches[0] if matches else None
 
@@ -501,13 +505,13 @@ class SearchThread(QThread if PYQT6_AVAILABLE else object):
         try:
             if self.find_all:
                 results = self.search_engine.search_all(
-                    self.pattern, self.search_type, **self.kwargs
+                    self.pattern, self.search_type, **self.kwargs,
                 )
                 if self.search_completed:
                     self.search_completed.emit(results)
             else:
                 result = self.search_engine.search(
-                    self.pattern, self.search_type, **self.kwargs
+                    self.pattern, self.search_type, **self.kwargs,
                 )
                 if result and self.result_found:
                     self.result_found.emit(result)
@@ -835,7 +839,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
         options = {
             "case_sensitive": self.case_sensitive_check.isChecked(),
             "whole_words": self.whole_words_check.isChecked(),
-            "direction": "forward"
+            "direction": "forward",
         }
         self.search_history.add_search(pattern, search_type, options)
 
@@ -846,7 +850,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
                     pattern, search_type,
                     case_sensitive=options["case_sensitive"],
                     whole_words=options["whole_words"],
-                    direction="forward"
+                    direction="forward",
                 )
 
                 if result:
@@ -875,7 +879,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
                     pattern, search_type,
                     case_sensitive=self.case_sensitive_check.isChecked(),
                     whole_words=self.whole_words_check.isChecked(),
-                    direction="backward"
+                    direction="backward",
                 )
 
                 if result:
@@ -909,7 +913,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
                 replaced_ranges = self.search_engine.replace_all(
                     find_pattern, replace_pattern, search_type,
                     case_sensitive=self.replace_case_sensitive_check.isChecked(),
-                    whole_words=self.replace_whole_words_check.isChecked()
+                    whole_words=self.replace_whole_words_check.isChecked(),
                 )
 
                 self.replace_status_label.setText(f"Replaced {len(replaced_ranges)} occurrences")
@@ -936,14 +940,14 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
         # Start search thread
         self.current_search_thread = SearchThread(
             self.search_engine, pattern, search_type, find_all=True,
-            max_results=max_results
+            max_results=max_results,
         )
 
         if self.current_search_thread.search_completed:
             self.current_search_thread.search_completed.connect(self.on_find_all_completed)
         self.current_search_thread.start()
 
-    def on_find_all_completed(self, results: List[SearchResult]):
+    def on_find_all_completed(self, results: list[SearchResult]):
         """Handle find all completion."""
         self.search_progress.setVisible(False)
         self.find_all_button.setEnabled(True)
@@ -988,7 +992,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
         reply = QMessageBox.question(
             self, "Clear History",
             "Are you sure you want to clear the search history?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         )
 
         if reply == QMessageBox.Yes:
@@ -1002,7 +1006,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
             "Hex": SearchType.HEX,
             "Text": SearchType.TEXT,
             "Regex": SearchType.REGEX,
-            "Wildcard": SearchType.WILDCARD
+            "Wildcard": SearchType.WILDCARD,
         }
         return type_map.get(type_str, SearchType.HEX)
 

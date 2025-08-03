@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -26,7 +25,7 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -34,16 +33,17 @@ logger = logging.getLogger(__name__)
 class PayloadResultHandler:
     """Handles results from payload execution and exploitation attempts."""
 
-    def __init__(self, storage_path: Optional[str] = None):
+    def __init__(self, storage_path: str | None = None):
         """Initialize the payload result handler.
 
         Args:
             storage_path: Optional path to store results
+
         """
         self.storage_path = storage_path or "exploitation_results"
         self.results_cache = []
 
-    def handle_result(self, payload_info: Dict[str, Any], result: Dict[str, Any]) -> Dict[str, Any]:
+    def handle_result(self, payload_info: dict[str, Any], result: dict[str, Any]) -> dict[str, Any]:
         """Handle the result of a payload execution.
 
         Args:
@@ -52,6 +52,7 @@ class PayloadResultHandler:
 
         Returns:
             Processed result dictionary
+
         """
         processed_result = {
             "timestamp": time.time(),
@@ -62,7 +63,7 @@ class PayloadResultHandler:
             "error": result.get("error", ""),
             "execution_time": result.get("execution_time", 0),
             "target_info": result.get("target_info", {}),
-            "metadata": result.get("metadata", {})
+            "metadata": result.get("metadata", {}),
         }
 
         self.results_cache.append(processed_result)
@@ -75,7 +76,7 @@ class PayloadResultHandler:
 
         return processed_result
 
-    def get_results(self, payload_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_results(self, payload_id: str | None = None) -> list[dict[str, Any]]:
         """Get stored results, optionally filtered by payload ID.
 
         Args:
@@ -83,6 +84,7 @@ class PayloadResultHandler:
 
         Returns:
             List of result dictionaries
+
         """
         if payload_id:
             return [r for r in self.results_cache if r["payload_id"] == payload_id]
@@ -93,7 +95,7 @@ class PayloadResultHandler:
         self.results_cache.clear()
         logger.info("Payload results cache cleared")
 
-    def save_results(self, filename: Optional[str] = None) -> str:
+    def save_results(self, filename: str | None = None) -> str:
         """Save results to file.
 
         Args:
@@ -101,6 +103,7 @@ class PayloadResultHandler:
 
         Returns:
             Path to saved file
+
         """
         if not filename:
             timestamp = int(time.time())

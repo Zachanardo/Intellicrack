@@ -1,5 +1,4 @@
-"""
-Resilience & Self-Healing System
+"""Resilience & Self-Healing System
 
 Copyright (C) 2025 Zachary Flint
 
@@ -28,11 +27,12 @@ import threading
 import time
 import uuid
 from collections import defaultdict, deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any
 
 from ..utils.logger import get_logger
 from .learning_engine_simple import get_learning_engine
@@ -77,7 +77,7 @@ class RestrictedUnpickler(pickle.Unpickler):
             "sklearn", "torch", "tensorflow",
             "__builtin__", "builtins",
             "collections", "collections.abc",
-            "datetime"
+            "datetime",
         }
 
         # Allow classes from our own modules
@@ -113,10 +113,11 @@ def secure_pickle_load(file_path):
     except ImportError:
         # Fallback to restricted pickle unpickler
         import io
-        return RestrictedUnpickler(io.BytesIO(data)).load()  # noqa: S301
+        return RestrictedUnpickler(io.BytesIO(data)).load()
 
 class FailureType(Enum):
     """Types of system failures."""
+
     COMPONENT_CRASH = "component_crash"
     MEMORY_LEAK = "memory_leak"
     PERFORMANCE_DEGRADATION = "performance_degradation"
@@ -131,6 +132,7 @@ class FailureType(Enum):
 
 class RecoveryStrategy(Enum):
     """Recovery strategies for different failure types."""
+
     RESTART_COMPONENT = "restart_component"
     GARBAGE_COLLECTION = "garbage_collection"
     RESOURCE_CLEANUP = "resource_cleanup"
@@ -145,6 +147,7 @@ class RecoveryStrategy(Enum):
 
 class HealthStatus(Enum):
     """System health status levels."""
+
     HEALTHY = "healthy"
     WARNING = "warning"
     CRITICAL = "critical"
@@ -155,43 +158,46 @@ class HealthStatus(Enum):
 @dataclass
 class FailureEvent:
     """Represents a system failure event."""
+
     failure_id: str
     failure_type: FailureType
     component: str
     description: str
     severity: str  # low, medium, high, critical
     timestamp: datetime = field(default_factory=datetime.now)
-    stack_trace: Optional[str] = None
-    context: Dict[str, Any] = field(default_factory=dict)
+    stack_trace: str | None = None
+    context: dict[str, Any] = field(default_factory=dict)
     recovery_attempted: bool = False
     recovery_successful: bool = False
-    recovery_strategy: Optional[RecoveryStrategy] = None
+    recovery_strategy: RecoveryStrategy | None = None
 
 
 @dataclass
 class RecoveryAction:
     """Represents a recovery action."""
+
     action_id: str
     strategy: RecoveryStrategy
     target_component: str
     description: str
     estimated_time: float  # seconds
     success_probability: float
-    side_effects: List[str] = field(default_factory=list)
-    prerequisites: List[str] = field(default_factory=list)
+    side_effects: list[str] = field(default_factory=list)
+    prerequisites: list[str] = field(default_factory=list)
 
 
 @dataclass
 class SystemState:
     """Represents the current system state."""
+
     state_id: str
     timestamp: datetime
     health_status: HealthStatus
-    active_components: Set[str]
-    failed_components: Set[str]
-    resource_usage: Dict[str, float]
-    performance_metrics: Dict[str, float]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    active_components: set[str]
+    failed_components: set[str]
+    resource_usage: dict[str, float]
+    performance_metrics: dict[str, float]
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class HealthMonitor:
@@ -205,8 +211,8 @@ class HealthMonitor:
         response time, and success rate. Starts automated monitoring thread.
         """
         self.logger = logging.getLogger(__name__ + ".HealthMonitor")
-        self.health_checks: Dict[str, Callable] = {}
-        self.component_status: Dict[str, HealthStatus] = {}
+        self.health_checks: dict[str, Callable] = {}
+        self.component_status: dict[str, HealthStatus] = {}
         self.failure_history: deque = deque(maxlen=1000)
         self.monitoring_enabled = True
         self.check_interval = 30  # seconds
@@ -218,7 +224,7 @@ class HealthMonitor:
             "memory_usage": 90.0,
             "error_rate": 10.0,
             "response_time": 30.0,
-            "success_rate": 70.0
+            "success_rate": 70.0,
         }
 
         self._initialize_health_checks()
@@ -233,7 +239,7 @@ class HealthMonitor:
             "component_responsiveness": self._check_component_responsiveness,
             "error_rates": self._check_error_rates,
             "performance_metrics": self._check_performance_metrics,
-            "memory_leaks": self._check_memory_leaks
+            "memory_leaks": self._check_memory_leaks,
         }
 
     def _start_monitoring(self):
@@ -263,10 +269,10 @@ class HealthMonitor:
                     FailureType.COMPONENT_CRASH,
                     check_name,
                     f"Health check failed: {e}",
-                    "medium"
+                    "medium",
                 )
 
-    def _check_system_resources(self) -> Dict[str, Any]:
+    def _check_system_resources(self) -> dict[str, Any]:
         """Check system resource usage."""
         if not PSUTIL_AVAILABLE:
             return {
@@ -274,7 +280,7 @@ class HealthMonitor:
                 "cpu_percent": 50.0,
                 "memory_percent": 50.0,
                 "disk_percent": 50.0,
-                "issues": []
+                "issues": [],
             }
 
         try:
@@ -303,7 +309,7 @@ class HealthMonitor:
                 "cpu_usage": cpu_percent,
                 "memory_usage": memory.percent,
                 "disk_usage": disk.percent,
-                "issues": issues
+                "issues": issues,
             }
 
         except Exception as e:
@@ -311,10 +317,10 @@ class HealthMonitor:
             return {
                 "status": "error",
                 "error": str(e),
-                "issues": ["Failed to check system resources"]
+                "issues": ["Failed to check system resources"],
             }
 
-    def _check_component_responsiveness(self) -> Dict[str, Any]:
+    def _check_component_responsiveness(self) -> dict[str, Any]:
         """Check if AI components are responsive."""
         component_status = {}
         issues = []
@@ -369,10 +375,10 @@ class HealthMonitor:
             "status": "critical" if any(s == "failing" for s in component_status.values()) else
             "warning" if issues else "healthy",
             "component_status": component_status,
-            "issues": issues
+            "issues": issues,
         }
 
-    def _check_error_rates(self) -> Dict[str, Any]:
+    def _check_error_rates(self) -> dict[str, Any]:
         """Check system error rates."""
         try:
             insights = self.learning_engine.get_learning_insights()
@@ -391,7 +397,7 @@ class HealthMonitor:
                 "status": "warning" if issues else "healthy",
                 "error_rate": error_rate,
                 "success_rate": success_rate,
-                "issues": issues
+                "issues": issues,
             }
 
         except Exception as e:
@@ -399,10 +405,10 @@ class HealthMonitor:
             return {
                 "status": "error",
                 "error": str(e),
-                "issues": ["Failed to check error rates"]
+                "issues": ["Failed to check error rates"],
             }
 
-    def _check_performance_metrics(self) -> Dict[str, Any]:
+    def _check_performance_metrics(self) -> dict[str, Any]:
         """Check performance metrics for degradation."""
         try:
             metrics = performance_monitor.get_metrics_summary()
@@ -426,7 +432,7 @@ class HealthMonitor:
                 "status": "warning" if issues else "healthy",
                 "health_score": health_score,
                 "operation_count": len(operation_summary),
-                "issues": issues
+                "issues": issues,
             }
 
         except Exception as e:
@@ -434,17 +440,17 @@ class HealthMonitor:
             return {
                 "status": "error",
                 "error": str(e),
-                "issues": ["Failed to check performance metrics"]
+                "issues": ["Failed to check performance metrics"],
             }
 
-    def _check_memory_leaks(self) -> Dict[str, Any]:
+    def _check_memory_leaks(self) -> dict[str, Any]:
         """Check for potential memory leaks."""
         if not PSUTIL_AVAILABLE:
             return {
                 "healthy": True,
                 "memory_mb": 100.0,
                 "trend": "stable",
-                "issues": []
+                "issues": [],
             }
 
         try:
@@ -475,7 +481,7 @@ class HealthMonitor:
                 "status": "warning" if issues else "healthy",
                 "memory_usage_mb": memory_mb,
                 "memory_trend": "increasing" if issues else "stable",
-                "issues": issues
+                "issues": issues,
             }
 
         except Exception as e:
@@ -483,10 +489,10 @@ class HealthMonitor:
             return {
                 "status": "error",
                 "error": str(e),
-                "issues": ["Failed to check memory usage"]
+                "issues": ["Failed to check memory usage"],
             }
 
-    def _process_health_check_result(self, check_name: str, result: Dict[str, Any]):
+    def _process_health_check_result(self, check_name: str, result: dict[str, Any]):
         """Process the result of a health check."""
         status = result.get("status", "unknown")
         issues = result.get("issues", [])
@@ -508,7 +514,7 @@ class HealthMonitor:
                     FailureType.PERFORMANCE_DEGRADATION,
                     check_name,
                     issue,
-                    "high" if status == "critical" else "medium"
+                    "high" if status == "critical" else "medium",
                 )
 
     def _record_failure(self, failure_type: FailureType, component: str,
@@ -520,7 +526,7 @@ class HealthMonitor:
             component=component,
             description=description,
             severity=severity,
-            context={"check_timestamp": datetime.now().isoformat()}
+            context={"check_timestamp": datetime.now().isoformat()},
         )
 
         self.failure_history.append(failure)
@@ -530,7 +536,7 @@ class HealthMonitor:
         if hasattr(self, "recovery_system"):
             self.recovery_system.handle_failure(failure)
 
-    def get_system_health(self) -> Dict[str, Any]:
+    def get_system_health(self) -> dict[str, Any]:
         """Get overall system health status."""
         overall_status = HealthStatus.HEALTHY
 
@@ -558,7 +564,7 @@ class HealthMonitor:
             "recent_failures": len(recent_failures),
             "critical_failures": len(critical_failures),
             "total_failures": len(self.failure_history),
-            "monitoring_enabled": self.monitoring_enabled
+            "monitoring_enabled": self.monitoring_enabled,
         }
 
 
@@ -571,14 +577,15 @@ class RecoverySystem:
         Args:
             health_monitor: Health monitor instance for bidirectional
                 communication and failure detection.
+
         """
         self.health_monitor = health_monitor
         self.health_monitor.recovery_system = self  # Bidirectional reference
         self.learning_engine = get_learning_engine()
 
-        self.recovery_strategies: Dict[FailureType, List[RecoveryAction]] = {}
+        self.recovery_strategies: dict[FailureType, list[RecoveryAction]] = {}
         self.recovery_history: deque = deque(maxlen=500)
-        self.circuit_breakers: Dict[str, Dict[str, Any]] = {}
+        self.circuit_breakers: dict[str, dict[str, Any]] = {}
 
         # Recovery configuration
         self.max_recovery_attempts = 3
@@ -591,7 +598,6 @@ class RecoverySystem:
 
     def _initialize_recovery_strategies(self):
         """Initialize recovery strategies for different failure types."""
-
         # Memory-related failures
         self.recovery_strategies[FailureType.MEMORY_LEAK] = [
             RecoveryAction(
@@ -600,7 +606,7 @@ class RecoverySystem:
                 target_component="system",
                 description="Force garbage collection and memory cleanup",
                 estimated_time=5.0,
-                success_probability=0.7
+                success_probability=0.7,
             ),
             RecoveryAction(
                 action_id="restart_component",
@@ -608,8 +614,8 @@ class RecoverySystem:
                 target_component="affected_component",
                 description="Restart memory-leaking component",
                 estimated_time=30.0,
-                success_probability=0.9
-            )
+                success_probability=0.9,
+            ),
         ]
 
         # Performance degradation
@@ -620,7 +626,7 @@ class RecoverySystem:
                 target_component="system",
                 description="Reduce system load and concurrent operations",
                 estimated_time=10.0,
-                success_probability=0.8
+                success_probability=0.8,
             ),
             RecoveryAction(
                 action_id="circuit_breaker",
@@ -628,8 +634,8 @@ class RecoverySystem:
                 target_component="affected_component",
                 description="Enable circuit breaker to prevent cascading failures",
                 estimated_time=2.0,
-                success_probability=0.9
-            )
+                success_probability=0.9,
+            ),
         ]
 
         # Component crashes
@@ -640,7 +646,7 @@ class RecoverySystem:
                 target_component="crashed_component",
                 description="Restart crashed component",
                 estimated_time=30.0,
-                success_probability=0.85
+                success_probability=0.85,
             ),
             RecoveryAction(
                 action_id="fallback_mode",
@@ -648,8 +654,8 @@ class RecoverySystem:
                 target_component="system",
                 description="Switch to fallback mode for affected functionality",
                 estimated_time=5.0,
-                success_probability=0.9
-            )
+                success_probability=0.9,
+            ),
         ]
 
         # Resource exhaustion
@@ -660,7 +666,7 @@ class RecoverySystem:
                 target_component="system",
                 description="Clean up unused resources and connections",
                 estimated_time=15.0,
-                success_probability=0.8
+                success_probability=0.8,
             ),
             RecoveryAction(
                 action_id="scale_down",
@@ -668,8 +674,8 @@ class RecoverySystem:
                 target_component="system",
                 description="Reduce resource usage by scaling down operations",
                 estimated_time=10.0,
-                success_probability=0.9
-            )
+                success_probability=0.9,
+            ),
         ]
 
     @profile_ai_operation("failure_recovery")
@@ -718,8 +724,8 @@ class RecoverySystem:
                              datetime.now() - timedelta(seconds=self.recovery_cooldown)]
         return len(recent_recoveries) >= self.max_recovery_attempts
 
-    def _select_recovery_strategy(self, strategies: List[RecoveryAction],
-                                  failure: FailureEvent) -> Optional[RecoveryAction]:
+    def _select_recovery_strategy(self, strategies: list[RecoveryAction],
+                                  failure: FailureEvent) -> RecoveryAction | None:
         """Select the best recovery strategy for the failure."""
         if not strategies:
             return None
@@ -758,7 +764,7 @@ class RecoverySystem:
             "strategy": strategy.strategy.value,
             "status": "in_progress",
             "timestamp": datetime.now(),
-            "estimated_time": strategy.estimated_time
+            "estimated_time": strategy.estimated_time,
         }
 
         self.recovery_history.append(recovery_record)
@@ -786,7 +792,7 @@ class RecoverySystem:
                 "success": success,
                 "execution_time": execution_time,
                 "error_message": error_message,
-                "completed_at": datetime.now()
+                "completed_at": datetime.now(),
             })
 
             # Update failure record
@@ -800,7 +806,7 @@ class RecoverySystem:
                 input_data={
                     "failure_type": failure.failure_type.value,
                     "strategy": strategy.strategy.value,
-                    "component": failure.component
+                    "component": failure.component,
                 },
                 output_data={"recovery_success": success},
                 success=success,
@@ -808,7 +814,7 @@ class RecoverySystem:
                 execution_time=execution_time,
                 memory_usage=0,
                 error_message=error_message,
-                context={"recovery_id": recovery_id}
+                context={"recovery_id": recovery_id},
             )
 
             if success:
@@ -827,25 +833,24 @@ class RecoverySystem:
             if strategy.strategy == RecoveryStrategy.GARBAGE_COLLECTION:
                 return self._execute_garbage_collection()
 
-            elif strategy.strategy == RecoveryStrategy.RESOURCE_CLEANUP:
+            if strategy.strategy == RecoveryStrategy.RESOURCE_CLEANUP:
                 return self._execute_resource_cleanup()
 
-            elif strategy.strategy == RecoveryStrategy.CIRCUIT_BREAKER:
+            if strategy.strategy == RecoveryStrategy.CIRCUIT_BREAKER:
                 return self._execute_circuit_breaker(failure.component)
 
-            elif strategy.strategy == RecoveryStrategy.SCALE_DOWN:
+            if strategy.strategy == RecoveryStrategy.SCALE_DOWN:
                 return self._execute_scale_down()
 
-            elif strategy.strategy == RecoveryStrategy.FALLBACK_MODE:
+            if strategy.strategy == RecoveryStrategy.FALLBACK_MODE:
                 return self._execute_fallback_mode(failure.component)
 
-            elif strategy.strategy == RecoveryStrategy.RESTART_COMPONENT:
+            if strategy.strategy == RecoveryStrategy.RESTART_COMPONENT:
                 return self._execute_component_restart(failure.component)
 
-            else:
-                logger.warning(
-                    f"Unknown recovery strategy: {strategy.strategy.value}")
-                return False
+            logger.warning(
+                f"Unknown recovery strategy: {strategy.strategy.value}")
+            return False
 
         except Exception as e:
             logger.error(f"Strategy execution failed: {e}")
@@ -910,7 +915,7 @@ class RecoverySystem:
                 "state": "open",
                 "failures": 0,
                 "last_failure": datetime.now(),
-                "timeout": 300  # 5 minutes
+                "timeout": 300,  # 5 minutes
             }
 
             logger.info(f"Circuit breaker opened for {component}")
@@ -960,7 +965,7 @@ class RecoverySystem:
             logger.error(f"Component restart failed: {e}")
             return False
 
-    def get_recovery_statistics(self) -> Dict[str, Any]:
+    def get_recovery_statistics(self) -> dict[str, Any]:
         """Get recovery system statistics."""
         if not self.recovery_history:
             return {"total_recoveries": 0}
@@ -996,7 +1001,7 @@ class RecoverySystem:
             "successful_recoveries": len(successful_recoveries),
             "overall_success_rate": len(successful_recoveries) / max(1, len(completed_recoveries)),
             "strategy_statistics": dict(strategy_stats),
-            "active_circuit_breakers": len(self.circuit_breakers)
+            "active_circuit_breakers": len(self.circuit_breakers),
         }
 
 
@@ -1044,7 +1049,7 @@ class StateManager:
                     resource_usage = {
                         "cpu_percent": psutil.cpu_percent(),
                         "memory_percent": psutil.virtual_memory().percent,
-                        "disk_percent": psutil.disk_usage("/").percent
+                        "disk_percent": psutil.disk_usage("/").percent,
                     }
                 except (OSError, PermissionError) as e:
                     self.logger.error(
@@ -1052,13 +1057,13 @@ class StateManager:
                     resource_usage = {
                         "cpu_percent": 50.0,
                         "memory_percent": 50.0,
-                        "disk_percent": 50.0
+                        "disk_percent": 50.0,
                     }
             else:
                 resource_usage = {
                     "cpu_percent": 50.0,
                     "memory_percent": 50.0,
-                    "disk_percent": 50.0
+                    "disk_percent": 50.0,
                 }
 
             # Get performance metrics
@@ -1066,7 +1071,7 @@ class StateManager:
                 metrics = performance_monitor.get_metrics_summary()
                 performance_metrics = {
                     "health_score": metrics.get("system_health", {}).get("score", 100),
-                    "operation_count": len(metrics.get("operation_summary", {}))
+                    "operation_count": len(metrics.get("operation_summary", {})),
                 }
             except (KeyError, TypeError, AttributeError):
                 performance_metrics = {}
@@ -1086,7 +1091,7 @@ class StateManager:
                     "learning_engine", "performance_monitor", "predictive_intelligence"},
                 failed_components=set(),
                 resource_usage=resource_usage,
-                performance_metrics=performance_metrics
+                performance_metrics=performance_metrics,
             )
 
             self.state_history.append(state)
@@ -1102,7 +1107,7 @@ class StateManager:
                 active_components=set(),
                 failed_components=set(),
                 resource_usage={},
-                performance_metrics={}
+                performance_metrics={},
             )
 
     def _save_checkpoint(self):
@@ -1114,7 +1119,7 @@ class StateManager:
                 "timestamp": datetime.now(),
                 "current_state": current_state,
                 # Last 10 states
-                "recent_states": list(self.state_history)[-10:]
+                "recent_states": list(self.state_history)[-10:],
             }
 
             secure_pickle_dump(checkpoint_data, self.state_file)
@@ -1124,7 +1129,7 @@ class StateManager:
         except Exception as e:
             logger.error(f"Failed to save state checkpoint: {e}")
 
-    def restore_from_checkpoint(self) -> Optional[SystemState]:
+    def restore_from_checkpoint(self) -> SystemState | None:
         """Restore system state from checkpoint."""
         try:
             if not self.state_file.exists():
@@ -1147,7 +1152,7 @@ class StateManager:
             logger.error(f"Failed to restore from checkpoint: {e}")
             return None
 
-    def get_state_analytics(self) -> Dict[str, Any]:
+    def get_state_analytics(self) -> dict[str, Any]:
         """Get analytics about system state evolution."""
         if not self.state_history:
             return {"message": "No state history available"}
@@ -1172,7 +1177,7 @@ class StateManager:
             "health_distribution": dict(status_counts),
             "avg_cpu_usage": sum(cpu_values) / max(1, len(cpu_values)),
             "avg_memory_usage": sum(memory_values) / max(1, len(memory_values)),
-            "current_health": states[-1].health_status.value if states else "unknown"
+            "current_health": states[-1].health_status.value if states else "unknown",
         }
 
 
@@ -1216,7 +1221,7 @@ class ResilienceSelfHealingSystem:
         # Start monitoring
         logger.info("Resilience system active")
 
-    def get_system_resilience_status(self) -> Dict[str, Any]:
+    def get_system_resilience_status(self) -> dict[str, Any]:
         """Get comprehensive resilience status."""
         health_status = self.health_monitor.get_system_health()
         recovery_stats = self.recovery_system.get_recovery_statistics()
@@ -1232,11 +1237,11 @@ class ResilienceSelfHealingSystem:
             "recovery_statistics": recovery_stats,
             "state_analytics": state_analytics,
             "auto_recovery_enabled": self.auto_recovery_enabled,
-            "system_uptime": self._get_system_uptime()
+            "system_uptime": self._get_system_uptime(),
         }
 
-    def _calculate_resilience_score(self, health_status: Dict[str, Any],
-                                    recovery_stats: Dict[str, Any]) -> float:
+    def _calculate_resilience_score(self, health_status: dict[str, Any],
+                                    recovery_stats: dict[str, Any]) -> float:
         """Calculate overall resilience score (0-100)."""
         score = 100.0
 
@@ -1275,7 +1280,7 @@ class ResilienceSelfHealingSystem:
             "Clear all caches",
             "Scale down operations",
             "Enable circuit breakers",
-            "Save emergency state checkpoint"
+            "Save emergency state checkpoint",
         ]
 
         for action in emergency_actions:

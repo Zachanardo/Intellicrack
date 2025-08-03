@@ -1,5 +1,4 @@
-"""
-Centralized Secrets Management for Intellicrack
+"""Centralized Secrets Management for Intellicrack
 
 This module provides secure storage and retrieval of sensitive information
 such as API keys, tokens, and passwords.
@@ -12,7 +11,7 @@ import json
 import os
 import platform
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .logger import get_logger
 
@@ -47,8 +46,7 @@ except ImportError as e:
 
 
 class SecretsManager:
-    """
-    Centralized secrets management with multiple backend support.
+    """Centralized secrets management with multiple backend support.
 
     Features:
     - Environment variable loading (.env files)
@@ -95,10 +93,10 @@ class SecretsManager:
         # Custom/Generic
         "API_KEY",
         "SECRET_KEY",
-        "PRIVATE_KEY"
+        "PRIVATE_KEY",
     ]
 
-    def __init__(self, config_dir: Optional[Path] = None):
+    def __init__(self, config_dir: Path | None = None):
         """Initialize the secrets manager."""
         self.config_dir = config_dir or self._get_default_config_dir()
         self.secrets_file = self.config_dir / "secrets.enc"
@@ -114,7 +112,7 @@ class SecretsManager:
         self._init_encryption()
 
         # Cache for loaded secrets
-        self._cache: Dict[str, Any] = {}
+        self._cache: dict[str, Any] = {}
         self._load_secrets()
 
     def _get_default_config_dir(self) -> Path:
@@ -141,7 +139,7 @@ class SecretsManager:
             ".env.local",      # Highest priority - user's local overrides
             ".env.production", # Production settings
             ".env",           # Default settings
-            ".env.example"    # Fallback example (should not contain real secrets)
+            ".env.example",    # Fallback example (should not contain real secrets)
         ]
 
         # Find project root (where .env files typically are)
@@ -245,9 +243,8 @@ class SecretsManager:
         except Exception as e:
             logger.error(f"Failed to save secrets: {e}")
 
-    def get(self, key: str, default: Optional[str] = None) -> Optional[str]:
-        """
-        Get a secret value.
+    def get(self, key: str, default: str | None = None) -> str | None:
+        """Get a secret value.
 
         Search order:
         1. Environment variables
@@ -277,13 +274,13 @@ class SecretsManager:
         return default
 
     def set(self, key: str, value: str, use_keychain: bool = True):
-        """
-        Set a secret value.
+        """Set a secret value.
 
         Args:
             key: Secret key
             value: Secret value
             use_keychain: Whether to try storing in OS keychain
+
         """
         # Update cache
         self._cache[key] = value
@@ -310,7 +307,7 @@ class SecretsManager:
                 keyring.delete_password(self.SERVICE_NAME, key)
             except Exception as e:
                 logger.error("Exception in secrets_manager: %s", e)
-                pass  # Ignore if not in keychain
+                # Ignore if not in keychain
 
         # Save updated cache
         self._save_secrets()
@@ -329,15 +326,15 @@ class SecretsManager:
 
         return sorted(list(keys))
 
-    def export_secrets(self, include_values: bool = False) -> Dict[str, Any]:
-        """
-        Export secrets configuration.
+    def export_secrets(self, include_values: bool = False) -> dict[str, Any]:
+        """Export secrets configuration.
 
         Args:
             include_values: Whether to include actual values (dangerous!)
 
         Returns:
             Dictionary of secrets (values redacted by default)
+
         """
         result = {}
 
@@ -354,15 +351,14 @@ class SecretsManager:
 
         return result
 
-    def import_secrets(self, secrets: Dict[str, str], use_keychain: bool = True):
+    def import_secrets(self, secrets: dict[str, str], use_keychain: bool = True):
         """Import secrets from a dictionary."""
         for key, value in secrets.items():
             if value and not value.endswith("*" * 4):  # Skip redacted values
                 self.set(key, value, use_keychain)
 
-    def get_api_key(self, service: str) -> Optional[str]:
-        """
-        Get API key for a specific service.
+    def get_api_key(self, service: str) -> str | None:
+        """Get API key for a specific service.
 
         Common service names are mapped to their environment variables.
         """
@@ -376,7 +372,7 @@ class SecretsManager:
             "groq": "GROQ_API_KEY",
             "together": "TOGETHER_API_KEY",
             "virustotal": "VIRUSTOTAL_API_KEY",
-            "hybrid_analysis": "HYBRID_ANALYSIS_API_KEY"
+            "hybrid_analysis": "HYBRID_ANALYSIS_API_KEY",
         }
 
         # Normalize service name
@@ -407,7 +403,7 @@ class SecretsManager:
         self._cache.clear()
         logger.info("Cleared secrets cache")
 
-    def generate_key_from_password(self, password: str, salt: Optional[bytes] = None) -> bytes:
+    def generate_key_from_password(self, password: str, salt: bytes | None = None) -> bytes:
         """Generate a key from password using PBKDF2HMAC and hashes.
 
         Args:
@@ -416,6 +412,7 @@ class SecretsManager:
 
         Returns:
             Derived key bytes
+
         """
         if not HAS_CRYPTOGRAPHY:
             logger.error("Cryptography library not available for key generation")
@@ -434,11 +431,12 @@ class SecretsManager:
         key = kdf.derive(password.encode())
         return key
 
-    def find_env_file_location(self) -> Optional[str]:
+    def find_env_file_location(self) -> str | None:
         """Find .env file location using find_dotenv.
 
         Returns:
             Path to .env file or None if not found
+
         """
         if not HAS_DOTENV:
             logger.warning("python-dotenv not available for finding .env files")
@@ -450,9 +448,8 @@ class SecretsManager:
             if env_path:
                 logger.info(f"Found .env file at: {env_path}")
                 return env_path
-            else:
-                logger.info("No .env file found in search path")
-                return None
+            logger.info("No .env file found in search path")
+            return None
         except Exception as e:
             logger.error(f"Error finding .env file: {e}")
             return None
@@ -467,6 +464,7 @@ class SecretsManager:
 
         Returns:
             True if password matches, False otherwise
+
         """
         if not HAS_CRYPTOGRAPHY:
             logger.error("Cryptography library not available for password verification")
@@ -490,7 +488,7 @@ class SecretsManager:
 
 
 # Singleton instance
-_secrets_manager: Optional[SecretsManager] = None
+_secrets_manager: SecretsManager | None = None
 
 
 def get_secrets_manager() -> SecretsManager:
@@ -502,7 +500,7 @@ def get_secrets_manager() -> SecretsManager:
 
 
 # Convenience functions
-def get_secret(key: str, default: Optional[str] = None) -> Optional[str]:
+def get_secret(key: str, default: str | None = None) -> str | None:
     """Get a secret value."""
     return get_secrets_manager().get(key, default)
 
@@ -512,6 +510,6 @@ def set_secret(key: str, value: str, use_keychain: bool = True):
     get_secrets_manager().set(key, value, use_keychain)
 
 
-def get_api_key(service: str) -> Optional[str]:
+def get_api_key(service: str) -> str | None:
     """Get API key for a service."""
     return get_secrets_manager().get_api_key(service)

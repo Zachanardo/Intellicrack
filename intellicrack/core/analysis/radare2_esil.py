@@ -1,7 +1,7 @@
 """Radare2 ESIL (Evaluable Strings Intermediate Language) analysis module."""
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -32,8 +32,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 class ESILAnalysisEngine:
-    """
-    Advanced ESIL analysis engine for dynamic binary analysis and emulation.
+    """Advanced ESIL analysis engine for dynamic binary analysis and emulation.
 
     Provides sophisticated emulation capabilities for:
     - License validation routine analysis
@@ -43,13 +42,13 @@ class ESILAnalysisEngine:
     - Register state tracking
     """
 
-    def __init__(self, binary_path: str, radare2_path: Optional[str] = None):
-        """
-        Initialize ESIL analysis engine.
+    def __init__(self, binary_path: str, radare2_path: str | None = None):
+        """Initialize ESIL analysis engine.
 
         Args:
             binary_path: Path to binary file
             radare2_path: Optional path to radare2 executable
+
         """
         self.binary_path = binary_path
         self.radare2_path = radare2_path
@@ -57,14 +56,14 @@ class ESILAnalysisEngine:
         self.emulation_cache = {}
 
     def initialize_esil_vm(self, r2: R2Session) -> bool:
-        """
-        Initialize ESIL virtual machine with optimal settings.
+        """Initialize ESIL virtual machine with optimal settings.
 
         Args:
             r2: Active radare2 session
 
         Returns:
             Success status
+
         """
         try:
             # Initialize ESIL VM
@@ -86,9 +85,8 @@ class ESILAnalysisEngine:
             self.logger.error(f"Failed to initialize ESIL VM: {e}")
             return False
 
-    def emulate_function_execution(self, address: int, max_steps: int = 100) -> Dict[str, Any]:
-        """
-        Emulate function execution using ESIL.
+    def emulate_function_execution(self, address: int, max_steps: int = 100) -> dict[str, Any]:
+        """Emulate function execution using ESIL.
 
         Args:
             address: Function start address
@@ -96,6 +94,7 @@ class ESILAnalysisEngine:
 
         Returns:
             Comprehensive emulation results
+
         """
         cache_key = f"{address}_{max_steps}"
         if cache_key in self.emulation_cache:
@@ -113,7 +112,7 @@ class ESILAnalysisEngine:
             "steps_executed": 0,
             "vulnerabilities_detected": [],
             "license_checks_detected": [],
-            "error": None
+            "error": None,
         }
 
         start_time = time.time()
@@ -133,7 +132,7 @@ class ESILAnalysisEngine:
                 result["register_states"].append({
                     "step": 0,
                     "address": hex(address),
-                    "registers": initial_registers
+                    "registers": initial_registers,
                 })
 
                 # Perform step-by-step emulation
@@ -155,7 +154,7 @@ class ESILAnalysisEngine:
                                 "step": step + 1,
                                 "address": current_pc,
                                 "instruction": instruction.strip() if instruction else "",
-                                "esil_output": esil_output.strip() if esil_output else ""
+                                "esil_output": esil_output.strip() if esil_output else "",
                             }
                             result["execution_trace"].append(trace_entry)
 
@@ -168,7 +167,7 @@ class ESILAnalysisEngine:
                                 result["register_states"].append({
                                     "step": step + 1,
                                     "address": current_pc,
-                                    "registers": registers
+                                    "registers": registers,
                                 })
 
                             # Check for function exit conditions
@@ -187,7 +186,7 @@ class ESILAnalysisEngine:
                 result["final_state"] = {
                     "registers": r2.get_esil_registers(),
                     "stack_pointer": r2._execute_command("dr?SP"),
-                    "program_counter": r2._execute_command("dr?PC")
+                    "program_counter": r2._execute_command("dr?PC"),
                 }
 
                 result["steps_executed"] = min(step + 1, max_steps)
@@ -205,7 +204,7 @@ class ESILAnalysisEngine:
 
         return result
 
-    def _analyze_instruction_patterns(self, trace_entry: Dict[str, Any], result: Dict[str, Any]):
+    def _analyze_instruction_patterns(self, trace_entry: dict[str, Any], result: dict[str, Any]):
         """Analyze individual instruction for interesting patterns."""
         instruction = trace_entry.get("instruction", "").lower()
         address = trace_entry.get("address", "")
@@ -219,7 +218,7 @@ class ESILAnalysisEngine:
                     "step": trace_entry["step"],
                     "caller_address": address,
                     "target_address": f"0x{target}",
-                    "instruction": instruction
+                    "instruction": instruction,
                 })
 
         # Detect conditional branches
@@ -228,7 +227,7 @@ class ESILAnalysisEngine:
                 "step": trace_entry["step"],
                 "address": address,
                 "instruction": instruction,
-                "branch_type": self._extract_branch_type(instruction)
+                "branch_type": self._extract_branch_type(instruction),
             })
 
         # Detect memory access patterns
@@ -238,7 +237,7 @@ class ESILAnalysisEngine:
                     "step": trace_entry["step"],
                     "address": address,
                     "instruction": instruction,
-                    "access_type": self._extract_memory_access_type(instruction)
+                    "access_type": self._extract_memory_access_type(instruction),
                 })
 
         # Detect license check patterns
@@ -250,7 +249,7 @@ class ESILAnalysisEngine:
                     "step": trace_entry["step"],
                     "address": address,
                     "instruction": instruction,
-                    "pattern_type": "license_comparison"
+                    "pattern_type": "license_comparison",
                 })
 
         # Detect vulnerability patterns
@@ -260,38 +259,36 @@ class ESILAnalysisEngine:
                 "step": trace_entry["step"],
                 "address": address,
                 "instruction": instruction,
-                "vulnerability_type": "buffer_overflow_risk"
+                "vulnerability_type": "buffer_overflow_risk",
             })
 
     def _extract_branch_type(self, instruction: str) -> str:
         """Extract branch type from instruction."""
         if "je" in instruction or "jz" in instruction:
             return "jump_if_equal"
-        elif "jne" in instruction or "jnz" in instruction:
+        if "jne" in instruction or "jnz" in instruction:
             return "jump_if_not_equal"
-        elif "jg" in instruction:
+        if "jg" in instruction:
             return "jump_if_greater"
-        elif "jl" in instruction:
+        if "jl" in instruction:
             return "jump_if_less"
-        elif "jge" in instruction:
+        if "jge" in instruction:
             return "jump_if_greater_equal"
-        elif "jle" in instruction:
+        if "jle" in instruction:
             return "jump_if_less_equal"
-        else:
-            return "unknown"
+        return "unknown"
 
     def _extract_memory_access_type(self, instruction: str) -> str:
         """Extract memory access type from instruction."""
         if "mov" in instruction:
             return "move"
-        elif "lea" in instruction:
+        if "lea" in instruction:
             return "load_effective_address"
-        elif "push" in instruction:
+        if "push" in instruction:
             return "stack_push"
-        elif "pop" in instruction:
+        if "pop" in instruction:
             return "stack_pop"
-        else:
-            return "unknown"
+        return "unknown"
 
     def _is_function_exit(self, instruction: str) -> bool:
         """Check if instruction indicates function exit."""
@@ -301,7 +298,7 @@ class ESILAnalysisEngine:
         instruction_lower = instruction.lower()
         return any(exit_pattern in instruction_lower for exit_pattern in ["ret", "retn", "iret"])
 
-    def _perform_post_execution_analysis(self, result: Dict[str, Any]):
+    def _perform_post_execution_analysis(self, result: dict[str, Any]):
         """Perform analysis on the complete execution trace."""
         trace = result.get("execution_trace", [])
 
@@ -317,7 +314,7 @@ class ESILAnalysisEngine:
         # Detect anti-analysis techniques
         self._detect_anti_analysis_techniques(result, trace)
 
-    def _analyze_execution_patterns(self, result: Dict[str, Any], trace: List[Dict[str, Any]]):
+    def _analyze_execution_patterns(self, result: dict[str, Any], trace: list[dict[str, Any]]):
         """Analyze overall execution patterns."""
         if not trace:
             return
@@ -339,10 +336,10 @@ class ESILAnalysisEngine:
             "total_instructions_executed": total_instructions,
             "unique_addresses_visited": unique_addresses,
             "loops_detected": loops_detected,
-            "code_coverage_ratio": unique_addresses / total_instructions if total_instructions > 0 else 0
+            "code_coverage_ratio": unique_addresses / total_instructions if total_instructions > 0 else 0,
         }
 
-    def _detect_license_validation_patterns(self, result: Dict[str, Any], trace: List[Dict[str, Any]]):
+    def _detect_license_validation_patterns(self, result: dict[str, Any], trace: list[dict[str, Any]]):
         """Detect license validation patterns in execution trace."""
         validation_patterns = []
 
@@ -358,7 +355,7 @@ class ESILAnalysisEngine:
                         "type": "string_comparison_validation",
                         "start_step": entry["step"],
                         "end_step": trace[i + 1]["step"],
-                        "instructions": [entry["instruction"], trace[i + 1]["instruction"]]
+                        "instructions": [entry["instruction"], trace[i + 1]["instruction"]],
                     })
 
             # Pattern 2: Multiple comparisons (complex validation)
@@ -374,12 +371,12 @@ class ESILAnalysisEngine:
                         "type": "complex_validation_routine",
                         "start_step": entry["step"],
                         "comparison_count": comparison_count,
-                        "pattern_strength": "high"
+                        "pattern_strength": "high",
                     })
 
         result["license_validation_patterns"] = validation_patterns
 
-    def _analyze_api_call_sequences(self, result: Dict[str, Any]):
+    def _analyze_api_call_sequences(self, result: dict[str, Any]):
         """Analyze sequences of API calls for patterns."""
         api_calls = result.get("api_calls_detected", [])
 
@@ -403,7 +400,7 @@ class ESILAnalysisEngine:
 
         result["api_call_sequences"] = call_sequences
 
-    def _detect_anti_analysis_techniques(self, result: Dict[str, Any], trace: List[Dict[str, Any]]):
+    def _detect_anti_analysis_techniques(self, result: dict[str, Any], trace: list[dict[str, Any]]):
         """Detect anti-analysis and anti-debugging techniques."""
         anti_analysis_detected = []
 
@@ -416,7 +413,7 @@ class ESILAnalysisEngine:
                     "type": "debugger_detection",
                     "step": entry["step"],
                     "instruction": instruction,
-                    "severity": "high"
+                    "severity": "high",
                 })
 
             # Detect timing checks
@@ -425,7 +422,7 @@ class ESILAnalysisEngine:
                     "type": "timing_check",
                     "step": entry["step"],
                     "instruction": instruction,
-                    "severity": "medium"
+                    "severity": "medium",
                 })
 
             # Detect VM detection
@@ -434,15 +431,14 @@ class ESILAnalysisEngine:
                     "type": "vm_detection",
                     "step": entry["step"],
                     "instruction": instruction,
-                    "severity": "medium"
+                    "severity": "medium",
                 })
 
         result["anti_analysis_techniques"] = anti_analysis_detected
 
-    def emulate_multiple_functions(self, function_addresses: List[int],
-                                 max_steps_per_function: int = 50) -> Dict[str, Any]:
-        """
-        Emulate multiple functions and provide comparative analysis.
+    def emulate_multiple_functions(self, function_addresses: list[int],
+                                 max_steps_per_function: int = 50) -> dict[str, Any]:
+        """Emulate multiple functions and provide comparative analysis.
 
         Args:
             function_addresses: List of function addresses to emulate
@@ -450,6 +446,7 @@ class ESILAnalysisEngine:
 
         Returns:
             Comparative emulation results
+
         """
         results = {
             "emulation_summary": {
@@ -457,10 +454,10 @@ class ESILAnalysisEngine:
                 "total_steps_executed": 0,
                 "total_api_calls": 0,
                 "total_license_checks": 0,
-                "total_vulnerabilities": 0
+                "total_vulnerabilities": 0,
             },
             "function_results": {},
-            "comparative_analysis": {}
+            "comparative_analysis": {},
         }
 
         for i, address in enumerate(function_addresses):
@@ -481,14 +478,14 @@ class ESILAnalysisEngine:
 
         return results
 
-    def _perform_comparative_analysis(self, function_results: Dict[str, Any]) -> Dict[str, Any]:
+    def _perform_comparative_analysis(self, function_results: dict[str, Any]) -> dict[str, Any]:
         """Perform comparative analysis across multiple function emulations."""
         analysis = {
             "most_complex_function": None,
             "most_api_calls": None,
             "most_license_checks": None,
             "common_patterns": [],
-            "suspicious_functions": []
+            "suspicious_functions": [],
         }
 
         max_steps = 0
@@ -522,16 +519,15 @@ class ESILAnalysisEngine:
                     "address": addr,
                     "license_checks": license_checks,
                     "anti_analysis_techniques": len(result.get("anti_analysis_techniques", [])),
-                    "suspicion_score": license_checks * 2 + len(result.get("anti_analysis_techniques", []))
+                    "suspicion_score": license_checks * 2 + len(result.get("anti_analysis_techniques", [])),
                 })
 
         return analysis
 
 
-def analyze_binary_esil(binary_path: str, radare2_path: Optional[str] = None,
-                       function_limit: int = 10, max_steps: int = 100) -> Dict[str, Any]:
-    """
-    Perform comprehensive ESIL analysis on a binary.
+def analyze_binary_esil(binary_path: str, radare2_path: str | None = None,
+                       function_limit: int = 10, max_steps: int = 100) -> dict[str, Any]:
+    """Perform comprehensive ESIL analysis on a binary.
 
     Args:
         binary_path: Path to binary file
@@ -541,6 +537,7 @@ def analyze_binary_esil(binary_path: str, radare2_path: Optional[str] = None,
 
     Returns:
         Complete ESIL analysis results
+
     """
     engine = ESILAnalysisEngine(binary_path, radare2_path)
 

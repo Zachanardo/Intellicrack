@@ -93,7 +93,7 @@ if _config:
     # Update configuration with runtime defaults if needed
     runtime_config = {
         "initialized": True,  # Mark configuration as initialized
-        "version": __version__  # Store current version for compatibility checks
+        "version": __version__,  # Store current version for compatibility checks
     }
     _config.update(runtime_config)
 
@@ -144,6 +144,7 @@ def get_version():
     This function provides a programmatic way to access the version string
     of the Intellicrack package, useful for version checking, logging,
     and compatibility verification.
+
     Returns:
         str: The version string in semantic versioning format (e.g., "1.0.0")
 
@@ -241,18 +242,18 @@ def get_default_device():
 __all__ = [
     "CONFIG",
     "IntellicrackApp",
-    "main",
-    "core",
-    "ai",
-    "utils",
-    "ui",
-    "plugins",
-    "hexview",
-    "get_version",
-    "create_app",
-    "run_app",
-    "get_default_device",
-    "__version__",
     "__author__",
-    "__license__"
+    "__license__",
+    "__version__",
+    "ai",
+    "core",
+    "create_app",
+    "get_default_device",
+    "get_version",
+    "hexview",
+    "main",
+    "plugins",
+    "run_app",
+    "ui",
+    "utils",
 ]

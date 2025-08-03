@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -34,7 +33,7 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -73,8 +72,8 @@ class DemoPlugin(BasePlugin):
             categories=PLUGIN_CATEGORIES,
             capabilities=[
                 "analyze", "patch", "validate", "configure",
-                "entropy_analysis", "string_extraction", "pattern_matching"
-            ]
+                "entropy_analysis", "string_extraction", "pattern_matching",
+            ],
         )
 
         # Plugin configuration from environment
@@ -83,7 +82,7 @@ class DemoPlugin(BasePlugin):
             "detailed_output": os.environ.get("PLUGIN_DETAILED_OUTPUT", "true").lower() == "true",
             "include_file_hash": os.environ.get("PLUGIN_INCLUDE_HASH", "true").lower() == "true",
             "show_hex_preview": os.environ.get("PLUGIN_SHOW_HEX", "true").lower() == "true",
-            "analysis_timeout": int(os.environ.get("PLUGIN_ANALYSIS_TIMEOUT", "15"))
+            "analysis_timeout": int(os.environ.get("PLUGIN_ANALYSIS_TIMEOUT", "15")),
         }
 
         # Initialize base plugin
@@ -103,7 +102,7 @@ class DemoPlugin(BasePlugin):
             "macho_signature": b"\xcf\xfa\xed\xfe",
             "zip_signature": b"PK",
             "pdf_signature": b"%PDF",
-            "java_signature": b"\xca\xfe\xba\xbe"
+            "java_signature": b"\xca\xfe\xba\xbe",
         }
 
         # Common system library names for detection
@@ -112,7 +111,7 @@ class DemoPlugin(BasePlugin):
         # Initialize demo patterns that were missing
         self.demo_patterns = self.file_signatures  # Use file_signatures as demo_patterns for backward compatibility
 
-    def get_metadata(self) -> Dict[str, Any]:
+    def get_metadata(self) -> dict[str, Any]:
         """Return comprehensive plugin metadata with custom state."""
         metadata = super().get_metadata()
         # Add custom state information
@@ -151,7 +150,7 @@ class DemoPlugin(BasePlugin):
 
         except Exception as e:
             logger.error("Exception in demo_plugin: %s", e)
-            return False, f"Validation error: {str(e)}"
+            return False, f"Validation error: {e!s}"
 
     def _detect_file_type(self, data: bytes) -> str:
         """Detect file type based on magic bytes."""
@@ -163,44 +162,43 @@ class DemoPlugin(BasePlugin):
                     "macho_signature": "Mach-O (macOS Executable)",
                     "zip_signature": "ZIP Archive",
                     "pdf_signature": "PDF Document",
-                    "java_signature": "Java Class File"
+                    "java_signature": "Java Class File",
                 }
                 return file_types.get(sig_name, "Unknown")
         return "Unknown/Generic Binary"
 
-    def _load_system_libraries(self) -> List[bytes]:
+    def _load_system_libraries(self) -> list[bytes]:
         """Load system library names based on platform."""
         import platform
 
         if platform.system() == "Windows":
             return [
                 b"kernel32.dll", b"ntdll.dll", b"user32.dll", b"advapi32.dll",
-                b"gdi32.dll", b"shell32.dll", b"ole32.dll", b"msvcrt.dll"
+                b"gdi32.dll", b"shell32.dll", b"ole32.dll", b"msvcrt.dll",
             ]
-        elif platform.system() == "Linux":
+        if platform.system() == "Linux":
             return [
                 b"libc.so", b"libpthread.so", b"libdl.so", b"libm.so",
-                b"librt.so", b"libgcc_s.so", b"libstdc++.so"
+                b"librt.so", b"libgcc_s.so", b"libstdc++.so",
             ]
-        elif platform.system() == "Darwin":
+        if platform.system() == "Darwin":
             return [
                 b"libSystem.dylib", b"libc++.dylib", b"libobjc.dylib",
-                b"CoreFoundation", b"Foundation"
+                b"CoreFoundation", b"Foundation",
             ]
-        else:
-            return [b"libc", b"libm", b"libdl"]  # Generic Unix
+        return [b"libc", b"libm", b"libdl"]  # Generic Unix
 
     def _calculate_entropy(self, data: bytes) -> float:
         """Calculate Shannon entropy of data."""
         return calculate_byte_entropy(data)
 
-    def _find_strings(self, data: bytes, min_length: int = 4) -> List[str]:
+    def _find_strings(self, data: bytes, min_length: int = 4) -> list[str]:
         """Extract printable strings from binary data."""
         strings = extract_ascii_strings(data, min_length)
         max_strings = int(os.environ.get("PLUGIN_MAX_STRINGS", "20"))
         return strings[:max_strings]
 
-    def analyze(self, binary_path: str) -> List[str]:
+    def analyze(self, binary_path: str) -> list[str]:
         """Enhanced binary analysis with comprehensive demonstrations."""
         results = []
         start_time = time.time()
@@ -286,10 +284,9 @@ class DemoPlugin(BasePlugin):
                     for pattern in pattern_bytes:
                         if pattern in file_data:
                             patterns_found.append(f"{pattern_name}: {pattern.decode('utf-8', errors='ignore')}")
-                else:
-                    # Handle single pattern
-                    if pattern_bytes in file_data:
-                        patterns_found.append(pattern_name)
+                # Handle single pattern
+                elif pattern_bytes in file_data:
+                    patterns_found.append(pattern_name)
 
             if patterns_found:
                 results.append("Detected patterns:")
@@ -323,12 +320,12 @@ class DemoPlugin(BasePlugin):
 
         except Exception as e:
             logger.error("Exception in demo_plugin: %s", e)
-            results.append(f"❌ Analysis error: {str(e)}")
+            results.append(f"❌ Analysis error: {e!s}")
             results.append("💡 This error is being handled gracefully")
 
         return results
 
-    def patch(self, binary_path: str, options: Optional[Dict] = None) -> List[str]:
+    def patch(self, binary_path: str, options: dict | None = None) -> list[str]:
         """Enhanced patching demonstration with safety features."""
         results = []
 
@@ -339,8 +336,8 @@ class DemoPlugin(BasePlugin):
         # Extract configuration from options
         create_backup = options.get("create_backup", True)
         patch_mode = options.get("mode", "analysis")  # 'analysis', 'apply', 'simulate'
-        target_offset = options.get("target_offset", None)
-        patch_bytes = options.get("patch_bytes", None)
+        target_offset = options.get("target_offset")
+        patch_bytes = options.get("patch_bytes")
         patch_type = options.get("patch_type", "auto")  # 'nop', 'jmp', 'call', 'custom'
         max_patches = options.get("max_patches", 10)
         verbose = options.get("verbose", True)
@@ -414,7 +411,7 @@ class DemoPlugin(BasePlugin):
                 if b"\x90\x90\x90\x90" in data:
                     patch_opportunities.append({
                         "type": "nop",
-                        "description": "NOP sled detected - safe patch target"
+                        "description": "NOP sled detected - safe patch target",
                     })
 
             if patch_type in ["auto", "jmp", "call"]:
@@ -422,7 +419,7 @@ class DemoPlugin(BasePlugin):
                 if b"\x55\x8b\xec" in data:
                     patch_opportunities.append({
                         "type": "prologue",
-                        "description": "Function prologue found - potential hook point"
+                        "description": "Function prologue found - potential hook point",
                     })
 
             if patch_type in ["auto", "api"]:
@@ -430,7 +427,7 @@ class DemoPlugin(BasePlugin):
                 if b"kernel32" in data.lower():
                     patch_opportunities.append({
                         "type": "api",
-                        "description": "Windows API usage detected - IAT patching possible"
+                        "description": "Windows API usage detected - IAT patching possible",
                     })
 
             # Limit opportunities based on max_patches option
@@ -471,7 +468,7 @@ class DemoPlugin(BasePlugin):
             analysis_options = {
                 "patch_type": patch_type,
                 "max_results": max_patches,
-                "scan_depth": options.get("scan_depth", 8192)
+                "scan_depth": options.get("scan_depth", 8192),
             }
             patch_results = self._perform_safe_patch_analysis(binary_path, analysis_options)
 
@@ -506,12 +503,12 @@ class DemoPlugin(BasePlugin):
 
         except Exception as e:
             logger.error("Exception in demo_plugin: %s", e)
-            results.append(f"❌ Patch demonstration error: {str(e)}")
+            results.append(f"❌ Patch demonstration error: {e!s}")
             results.append("💡 This error is being handled gracefully")
 
         return results
 
-    def _perform_safe_patch_analysis(self, binary_path: str, options: Dict[str, Any] = None) -> Dict[str, Any]:
+    def _perform_safe_patch_analysis(self, binary_path: str, options: dict[str, Any] = None) -> dict[str, Any]:
         """Perform real but safe binary patch analysis."""
         if options is None:
             options = {}
@@ -534,7 +531,7 @@ class DemoPlugin(BasePlugin):
                         "offset": i,
                         "description": "NOP sled - safe for instruction patching",
                         "original_bytes": data[i:i+4].hex(),
-                        "type": "nop_sled"
+                        "type": "nop_sled",
                     })
 
                 # Look for function prologues (push ebp; mov ebp, esp)
@@ -543,7 +540,7 @@ class DemoPlugin(BasePlugin):
                         "offset": i,
                         "description": "Function prologue - hook point",
                         "original_bytes": data[i:i+3].hex(),
-                        "type": "function_prologue"
+                        "type": "function_prologue",
                     })
 
                 # Look for call instructions (0xE8)
@@ -552,7 +549,7 @@ class DemoPlugin(BasePlugin):
                         "offset": i,
                         "description": "Call instruction - redirect opportunity",
                         "original_bytes": data[i:i+5].hex(),
-                        "type": "call_instruction"
+                        "type": "call_instruction",
                     })
 
             # Look for string patterns that could be patched
@@ -566,7 +563,7 @@ class DemoPlugin(BasePlugin):
                     "offset": offset,
                     "description": f"License string: '{match.group()}' - patchable text",
                     "original_bytes": match.group().encode().hex(),
-                    "type": "license_string"
+                    "type": "license_string",
                 })
 
             # Apply type filtering based on options
@@ -577,7 +574,7 @@ class DemoPlugin(BasePlugin):
                     "jmp": ["function_prologue", "call_instruction"],
                     "call": ["call_instruction", "function_prologue"],
                     "api": ["license_string"],
-                    "custom": ["nop_sled", "function_prologue", "call_instruction", "license_string"]
+                    "custom": ["nop_sled", "function_prologue", "call_instruction", "license_string"],
                 }
                 allowed_types = type_map.get(patch_type_filter, [])
                 for location in patchable_locations:
@@ -590,7 +587,7 @@ class DemoPlugin(BasePlugin):
                 "patchable_locations": patchable_locations[:max_results],
                 "analysis_size": len(data),
                 "total_opportunities": len(patchable_locations),
-                "filtered_by": patch_type_filter if patch_type_filter != "auto" else None
+                "filtered_by": patch_type_filter if patch_type_filter != "auto" else None,
             }
 
         except Exception as e:
@@ -598,14 +595,14 @@ class DemoPlugin(BasePlugin):
             return {
                 "success": False,
                 "error": str(e),
-                "patchable_locations": []
+                "patchable_locations": [],
             }
 
-    def _apply_patch_at_offset(self, binary_path: str, offset: int, patch_bytes: bytes, options: Dict[str, Any]) -> bool:
+    def _apply_patch_at_offset(self, binary_path: str, offset: int, patch_bytes: bytes, options: dict[str, Any]) -> bool:
         """Apply patch at specific offset in binary."""
         try:
             # Safety checks based on options
-            verify_bytes = options.get("verify_original_bytes", None)
+            verify_bytes = options.get("verify_original_bytes")
             update_checksum = options.get("update_checksum", False)
             patch_method = options.get("patch_method", "direct")  # 'direct', 'temporary', 'memory_mapped'
 
@@ -668,9 +665,8 @@ class DemoPlugin(BasePlugin):
     def _update_pe_checksum(self, binary_path: str):
         """Update PE file checksum after patching."""
         # This is a placeholder - real implementation would calculate proper PE checksum
-        pass
 
-    def configure(self, new_config: Dict[str, Any]) -> bool:
+    def configure(self, new_config: dict[str, Any]) -> bool:
         """Update plugin configuration."""
         try:
             # Validate configuration keys
@@ -689,7 +685,7 @@ class DemoPlugin(BasePlugin):
             self.logger.error("Exception in demo_plugin: %s", e)
             return False
 
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         """Return list of plugin capabilities."""
         return [
             "file_validation",
@@ -703,10 +699,10 @@ class DemoPlugin(BasePlugin):
             "backup_creation",
             "configuration_management",
             "progress_tracking",
-            "educational_output"
+            "educational_output",
         ]
 
-    def run(self, *args, **kwargs) -> Dict[str, Any]:
+    def run(self, *args, **kwargs) -> dict[str, Any]:
         """Execute the main plugin method required by BasePlugin.
 
         Routes to appropriate method based on operation type.
@@ -726,7 +722,7 @@ class DemoPlugin(BasePlugin):
             return {
                 "success": False,
                 "error": "No target specified",
-                "results": []
+                "results": [],
             }
 
         try:
@@ -735,27 +731,26 @@ class DemoPlugin(BasePlugin):
                 return {
                     "success": True,
                     "operation": "analyze",
-                    "results": results
+                    "results": results,
                 }
-            elif operation == "patch":
+            if operation == "patch":
                 results = self.patch(target, kwargs.get("options"))
                 return {
                     "success": True,
                     "operation": "patch",
-                    "results": results
+                    "results": results,
                 }
-            else:
-                return {
-                    "success": False,
-                    "error": f"Unknown operation: {operation}",
-                    "results": []
-                }
+            return {
+                "success": False,
+                "error": f"Unknown operation: {operation}",
+                "results": [],
+            }
         except Exception as e:
             logger.error("Exception in demo_plugin: %s", e)
             return {
                 "success": False,
                 "error": str(e),
-                "results": []
+                "results": [],
             }
 
 # Function to register this plugin with Intellicrack
@@ -772,7 +767,7 @@ _plugin_metadata = PluginMetadata(
     categories=PLUGIN_CATEGORIES,
     capabilities=[
         "analyze", "patch", "validate", "configure",
-        "entropy_analysis", "string_extraction", "pattern_matching"
-    ]
+        "entropy_analysis", "string_extraction", "pattern_matching",
+    ],
 )
 PLUGIN_INFO = create_plugin_info(_plugin_metadata, "register")

@@ -1,5 +1,4 @@
-"""
-Report generation and formatting utilities for Intellicrack
+"""Report generation and formatting utilities for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 

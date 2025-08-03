@@ -1,5 +1,4 @@
-"""
-Report Manager Dialog for Intellicrack.
+"""Report Manager Dialog for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -27,7 +26,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 from .base_dialog import BaseTemplateDialog
 
@@ -59,7 +58,6 @@ try:
     from PyQt6.QtWidgets import QTextBrowser
 except ImportError as e:
     logger.error("Import error in report_manager_dialog: %s", e)
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +69,7 @@ class ReportGenerationThread(QThread):
     status_updated = pyqtSignal(str)
     generation_finished = pyqtSignal(bool, str, str)
 
-    def __init__(self, report_config: Dict[str, Any], output_path: str):
+    def __init__(self, report_config: dict[str, Any], output_path: str):
         """Initialize the ReportGenerationThread with default values."""
         super().__init__()
         self.report_config = report_config
@@ -107,7 +105,7 @@ class ReportGenerationThread(QThread):
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in report_manager_dialog: %s", e)
-            self.generation_finished.emit(False, f"Report generation failed: {str(e)}", "")
+            self.generation_finished.emit(False, f"Report generation failed: {e!s}", "")
 
     def generate_report_content(self) -> str:
         """Generate report content based on configuration."""
@@ -163,7 +161,6 @@ class ReportManagerDialog(BaseTemplateDialog):
 
     def __init__(self, parent=None):
         """Initialize the ReportManagerDialog with default values."""
-
         # Initialize UI attributes
         self.binary_path_edit = None
         self.browse_binary_btn = None
@@ -213,14 +210,14 @@ class ReportManagerDialog(BaseTemplateDialog):
 
         # Create main tabbed dialog layout
         layout, self.tab_widget = UILayoutHelpers.create_tabbed_dialog_layout(
-            self, "Report Manager", (1000, 700), is_modal=True
+            self, "Report Manager", (1000, 700), is_modal=True,
         )
 
         # Create and add tabs
         tab_specs = [
             ("Reports", self.create_reports_tab()),
             ("Generate Report", self.create_generate_tab()),
-            ("Templates", self.create_templates_tab())
+            ("Templates", self.create_templates_tab()),
         ]
         UILayoutHelpers.create_tabs_from_specs(self.tab_widget, tab_specs)
 
@@ -228,7 +225,7 @@ class ReportManagerDialog(BaseTemplateDialog):
         button_specs = [
             ("Refresh", self.refresh_report_list, False),
             ("Export Report...", self.export_report, False),
-            ("Close", self.accept, True)
+            ("Close", self.accept, True),
         ]
         buttons = UILayoutHelpers.create_dialog_buttons(button_specs, layout)
 
@@ -273,7 +270,7 @@ class ReportManagerDialog(BaseTemplateDialog):
         self.reports_table = QTableWidget()
         self.reports_table.setColumnCount(6)
         self.reports_table.setHorizontalHeaderLabels([
-            "Name", "Type", "Created", "Size", "Status", "Actions"
+            "Name", "Type", "Created", "Size", "Status", "Actions",
         ])
         self.reports_table.horizontalHeader().setStretchLastSection(True)
         self.reports_table.itemSelectionChanged.connect(self.on_report_selected)
@@ -415,7 +412,7 @@ class ReportManagerDialog(BaseTemplateDialog):
             "License Compliance Report",
             "Performance Analysis Report",
             "Executive Summary Report",
-            "Technical Deep Dive Report"
+            "Technical Deep Dive Report",
         ]
 
         # Use base class to create template widget
@@ -457,7 +454,7 @@ class ReportManagerDialog(BaseTemplateDialog):
                     "created": datetime.fromtimestamp(stat.st_ctime),
                     "modified": datetime.fromtimestamp(stat.st_mtime),
                     "size": stat.st_size,
-                    "status": "Complete"
+                    "status": "Complete",
                 }
 
     def refresh_report_list(self):
@@ -504,10 +501,9 @@ class ReportManagerDialog(BaseTemplateDialog):
         """Format file size in human readable format."""
         if size_bytes < 1024:
             return f"{size_bytes} B"
-        elif size_bytes < 1024 * 1024:
+        if size_bytes < 1024 * 1024:
             return f"{size_bytes / 1024:.1f} KB"
-        else:
-            return f"{size_bytes / (1024 * 1024):.1f} MB"
+        return f"{size_bytes / (1024 * 1024):.1f} MB"
 
     def on_report_selected(self):
         """Handle report selection."""
@@ -539,7 +535,7 @@ class ReportManagerDialog(BaseTemplateDialog):
         report_path = report_info["path"]
 
         try:
-            with open(report_path, "r", encoding="utf-8") as f:
+            with open(report_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Show first 1000 characters
@@ -551,7 +547,7 @@ class ReportManagerDialog(BaseTemplateDialog):
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in report_manager_dialog: %s", e)
-            self.report_preview.setPlainText(f"Error loading preview: {str(e)}")
+            self.report_preview.setPlainText(f"Error loading preview: {e!s}")
 
     def filter_reports(self):
         """Filter reports based on search criteria."""
@@ -632,7 +628,7 @@ class ReportManagerDialog(BaseTemplateDialog):
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in report_manager_dialog: %s", e)
             if HAS_PYQT:
-                QMessageBox.warning(self, "Warning", f"Could not open report: {str(e)}")
+                QMessageBox.warning(self, "Warning", f"Could not open report: {e!s}")
 
     def edit_report(self):
         """Edit the selected report."""
@@ -663,7 +659,7 @@ class ReportManagerDialog(BaseTemplateDialog):
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in report_manager_dialog: %s", e)
             if HAS_PYQT:
-                QMessageBox.critical(self, "Error", f"Failed to duplicate report: {str(e)}")
+                QMessageBox.critical(self, "Error", f"Failed to duplicate report: {e!s}")
 
     def delete_report(self):
         """Delete the selected report."""
@@ -674,7 +670,7 @@ class ReportManagerDialog(BaseTemplateDialog):
             self,
             "Confirm Delete",
             f"Are you sure you want to delete report '{self.current_report}'?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         )
 
         if reply == QMessageBox.Yes:
@@ -695,7 +691,7 @@ class ReportManagerDialog(BaseTemplateDialog):
 
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in report_manager_dialog: %s", e)
-                QMessageBox.critical(self, "Error", f"Failed to delete report: {str(e)}")
+                QMessageBox.critical(self, "Error", f"Failed to delete report: {e!s}")
 
     def browse_binary(self):
         """Browse for binary file."""
@@ -706,7 +702,7 @@ class ReportManagerDialog(BaseTemplateDialog):
             self,
             "Select Binary File",
             "",
-            "Binary Files (*.exe *.dll *.so *.dylib);;All Files (*.*)"
+            "Binary Files (*.exe *.dll *.so *.dylib);;All Files (*.*)",
         )
 
         if file_path:
@@ -720,7 +716,7 @@ class ReportManagerDialog(BaseTemplateDialog):
         dir_path = QFileDialog.getExistingDirectory(
             self,
             "Select Output Directory",
-            self.reports_dir
+            self.reports_dir,
         )
 
         if dir_path:
@@ -749,7 +745,7 @@ class ReportManagerDialog(BaseTemplateDialog):
             "include_screenshots": self.include_screenshots.isChecked(),
             "include_detailed_logs": self.include_detailed_logs.isChecked(),
             "include_recommendations": self.include_recommendations.isChecked(),
-            "include_executive_summary": self.include_executive_summary.isChecked()
+            "include_executive_summary": self.include_executive_summary.isChecked(),
         }
 
         # Determine output path
@@ -796,7 +792,6 @@ class ReportManagerDialog(BaseTemplateDialog):
                         subprocess.run(["xdg-open", output_path], check=False)
                 except Exception as e:
                     logger.error("Exception in report_manager_dialog: %s", e)
-                    pass
         else:
             QMessageBox.critical(self, "Error", message)
 
@@ -814,7 +809,7 @@ class ReportManagerDialog(BaseTemplateDialog):
             self,
             "Export Report",
             self.current_report,
-            "All Files (*.*)"
+            "All Files (*.*)",
         )
 
         if file_path:
@@ -826,7 +821,7 @@ class ReportManagerDialog(BaseTemplateDialog):
 
             except (OSError, ValueError, RuntimeError) as e:
                 self.logger.error("Error in report_manager_dialog: %s", e)
-                QMessageBox.critical(self, "Error", f"Failed to export report: {str(e)}")
+                QMessageBox.critical(self, "Error", f"Failed to export report: {e!s}")
 
     def on_template_selected(self):
         """Handle template selection."""
@@ -843,7 +838,7 @@ class ReportManagerDialog(BaseTemplateDialog):
                 "License Compliance Report": "Analysis of license usage and compliance issues with legal recommendations.",
                 "Performance Analysis Report": "Detailed performance metrics and optimization suggestions.",
                 "Executive Summary Report": "High-level overview suitable for management and stakeholders.",
-                "Technical Deep Dive Report": "Detailed technical analysis for security professionals and developers."
+                "Technical Deep Dive Report": "Detailed technical analysis for security professionals and developers.",
             }
 
             description = descriptions.get(template_name, "No description available.")
@@ -890,4 +885,4 @@ class ReportManagerDialog(BaseTemplateDialog):
 
 
 # Export for external use
-__all__ = ["ReportManagerDialog", "ReportGenerationThread"]
+__all__ = ["ReportGenerationThread", "ReportManagerDialog"]

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Interactive Tutorial System - Step-by-step CLI guidance for Intellicrack
+"""Interactive Tutorial System - Step-by-step CLI guidance for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -20,9 +19,10 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 # Optional imports for enhanced tutorials
 try:
@@ -44,28 +44,30 @@ except ImportError:
 @dataclass
 class TutorialStep:
     """Represents a single tutorial step."""
+
     title: str
     description: str
-    commands: List[str] = field(default_factory=list)
+    commands: list[str] = field(default_factory=list)
     explanation: str = ""
-    expected_output: Optional[str] = None
-    validation: Optional[Callable] = None
-    hints: List[str] = field(default_factory=list)
-    prerequisites: List[str] = field(default_factory=list)
+    expected_output: str | None = None
+    validation: Callable | None = None
+    hints: list[str] = field(default_factory=list)
+    prerequisites: list[str] = field(default_factory=list)
     skip_allowed: bool = True
 
 
 @dataclass
 class Tutorial:
     """Represents a complete tutorial."""
+
     name: str
     title: str
     description: str
     difficulty: str = "beginner"  # beginner, intermediate, advanced
     estimated_time: int = 10  # minutes
-    steps: List[TutorialStep] = field(default_factory=list)
+    steps: list[TutorialStep] = field(default_factory=list)
     completion_message: str = ""
-    prerequisites: List[str] = field(default_factory=list)
+    prerequisites: list[str] = field(default_factory=list)
 
 
 class TutorialSystem:
@@ -76,6 +78,7 @@ class TutorialSystem:
 
         Args:
             cli_instance: Reference to CLI instance for command execution
+
         """
         self.console = Console() if RICH_AVAILABLE else None
         self.cli_instance = cli_instance
@@ -92,7 +95,6 @@ class TutorialSystem:
 
     def _init_tutorials(self):
         """Initialize all available tutorials."""
-
         # Beginner Tutorial: Getting Started
         getting_started = Tutorial(
             name="getting_started",
@@ -106,38 +108,38 @@ class TutorialSystem:
                     description="Let's start by exploring the help system to understand available commands.",
                     commands=["help"],
                     explanation="The help command shows all available commands in Intellicrack CLI. This is your starting point for any analysis session.",
-                    hints=["Type 'help' and press Enter", "Look for commands related to loading and analyzing binaries"]
+                    hints=["Type 'help' and press Enter", "Look for commands related to loading and analyzing binaries"],
                 ),
                 TutorialStep(
                     title="Loading a Binary",
                     description="Learn how to load a binary file for analysis.",
                     commands=["load <binary_path>"],
                     explanation="Before analyzing, you need to load a binary file. Use 'load' followed by the path to your binary.",
-                    hints=["Use 'load /path/to/your/binary.exe'", "If you don't have a binary, you can skip this step"]
+                    hints=["Use 'load /path/to/your/binary.exe'", "If you don't have a binary, you can skip this step"],
                 ),
                 TutorialStep(
                     title="Quick Analysis",
                     description="Perform a quick analysis to get an overview of the binary.",
                     commands=["analyze --quick"],
                     explanation="Quick analysis provides basic information about the binary including file type, protections, and strings.",
-                    hints=["Make sure you have loaded a binary first", "This will show basic binary information"]
+                    hints=["Make sure you have loaded a binary first", "This will show basic binary information"],
                 ),
                 TutorialStep(
                     title="Viewing Results",
                     description="Learn how to view analysis results in different ways.",
                     commands=["show summary", "show protections", "show imports"],
                     explanation="The 'show' command displays analysis results in various formats. Try different categories to explore the data.",
-                    hints=["Start with 'show summary' for an overview", "Try 'show protections' to see security features"]
+                    hints=["Start with 'show summary' for an overview", "Try 'show protections' to see security features"],
                 ),
                 TutorialStep(
                     title="Exporting Results",
                     description="Save your analysis results to a file.",
                     commands=["export json results.json"],
                     explanation="Export functionality allows you to save analysis results in various formats for later use or reporting.",
-                    hints=["Try different formats: json, html, markdown", "The file will be saved in the current directory"]
-                )
+                    hints=["Try different formats: json, html, markdown", "The file will be saved in the current directory"],
+                ),
             ],
-            completion_message="🎉 Congratulations! You've completed the Getting Started tutorial. You now know the basics of loading, analyzing, and exporting binary analysis results."
+            completion_message="🎉 Congratulations! You've completed the Getting Started tutorial. You now know the basics of loading, analyzing, and exporting binary analysis results.",
         )
 
         # Intermediate Tutorial: Advanced Analysis
@@ -154,21 +156,21 @@ class TutorialSystem:
                     description="Run a full comprehensive analysis with all features enabled.",
                     commands=["analyze --full"],
                     explanation="Comprehensive analysis performs deep inspection including vulnerability scanning, symbolic execution, and advanced pattern matching.",
-                    hints=["This may take longer than quick analysis", "You'll get much more detailed results"]
+                    hints=["This may take longer than quick analysis", "You'll get much more detailed results"],
                 ),
                 TutorialStep(
                     title="Vulnerability Scanning",
                     description="Focus specifically on vulnerability detection.",
                     commands=["analyze --vuln"],
                     explanation="Vulnerability scanning looks for common security issues like buffer overflows, format string bugs, and unsafe function usage.",
-                    hints=["This focuses only on security vulnerabilities", "Results will show severity levels"]
+                    hints=["This focuses only on security vulnerabilities", "Results will show severity levels"],
                 ),
                 TutorialStep(
                     title="Exploring Vulnerabilities",
                     description="Learn how to examine vulnerability findings in detail.",
                     commands=["show vulnerabilities"],
                     explanation="Understanding vulnerability details helps prioritize security fixes and understand attack vectors.",
-                    hints=["Look for HIGH severity vulnerabilities first", "Each vulnerability includes location and description"]
+                    hints=["Look for HIGH severity vulnerabilities first", "Each vulnerability includes location and description"],
                 ),
                 TutorialStep(
                     title="Interactive Hex Viewer",
@@ -176,17 +178,17 @@ class TutorialSystem:
                     commands=["hex"],
                     explanation="The hex viewer allows you to inspect raw binary data, make modifications, and understand file structure.",
                     hints=["Press 'q' to exit the hex viewer", "Use arrow keys to navigate", "Press F1 for help inside the viewer"],
-                    skip_allowed=True
+                    skip_allowed=True,
                 ),
                 TutorialStep(
                     title="AI-Assisted Analysis",
                     description="Use AI to get insights about your analysis results.",
                     commands=["ai What vulnerabilities were found?"],
                     explanation="The AI assistant can help interpret results, suggest remediation steps, and answer questions about your analysis.",
-                    hints=["Try asking specific questions about vulnerabilities", "AI can explain technical details in plain language"]
-                )
+                    hints=["Try asking specific questions about vulnerabilities", "AI can explain technical details in plain language"],
+                ),
             ],
-            completion_message="🎉 Excellent work! You've mastered advanced analysis techniques. You can now perform comprehensive security assessments."
+            completion_message="🎉 Excellent work! You've mastered advanced analysis techniques. You can now perform comprehensive security assessments.",
         )
 
         # Project Management Tutorial
@@ -200,40 +202,40 @@ class TutorialSystem:
                 TutorialStep(
                     title="Creating a Project",
                     description="Organize your analysis work by creating a project.",
-                    commands=["project create MyFirstProject \"Learning project management\""],
+                    commands=['project create MyFirstProject "Learning project management"'],
                     explanation="Projects help organize multiple binaries, analysis results, and collaboration. They provide persistence across sessions.",
-                    hints=["Use descriptive project names", "Projects are stored in ~/.intellicrack/projects/"]
+                    hints=["Use descriptive project names", "Projects are stored in ~/.intellicrack/projects/"],
                 ),
                 TutorialStep(
                     title="Adding Binaries to Project",
                     description="Add binaries to your project for organized analysis.",
                     commands=["project add-binary"],
                     explanation="Projects can contain multiple binaries. Each binary's analysis results are automatically saved to the project.",
-                    hints=["Load a binary first, then add it to the project", "Or specify a path directly"]
+                    hints=["Load a binary first, then add it to the project", "Or specify a path directly"],
                 ),
                 TutorialStep(
                     title="Project Information",
                     description="View detailed information about your project.",
                     commands=["project show"],
                     explanation="Project information shows statistics, contained binaries, analysis results, and project metadata.",
-                    hints=["This shows all project details", "Note the statistics about binaries and analysis results"]
+                    hints=["This shows all project details", "Note the statistics about binaries and analysis results"],
                 ),
                 TutorialStep(
                     title="Configuration Management",
                     description="Customize Intellicrack settings for your workflow.",
                     commands=["config list", "config categories"],
                     explanation="Configuration system allows customizing analysis behavior, UI preferences, and performance settings.",
-                    hints=["Try 'config get theme' to see current theme", "Use 'config set' to change settings"]
+                    hints=["Try 'config get theme' to see current theme", "Use 'config set' to change settings"],
                 ),
                 TutorialStep(
                     title="Exporting Projects",
                     description="Learn to export projects for sharing or backup.",
                     commands=["project export MyFirstProject myproject_backup.zip"],
                     explanation="Project export creates a complete archive including binaries, results, and metadata for sharing or backup.",
-                    hints=["Exported projects can be imported on other systems", "This includes all project data"]
-                )
+                    hints=["Exported projects can be imported on other systems", "This includes all project data"],
+                ),
             ],
-            completion_message="🎉 Great job! You now know how to manage projects efficiently and customize Intellicrack for your workflow."
+            completion_message="🎉 Great job! You now know how to manage projects efficiently and customize Intellicrack for your workflow.",
         )
 
         # Dashboard and Monitoring Tutorial
@@ -249,7 +251,7 @@ class TutorialSystem:
                     description="Check current system status and resource usage.",
                     commands=["status"],
                     explanation="The status command provides a quick overview of system health, session statistics, and analysis progress.",
-                    hints=["This shows CPU, memory, and session info", "Great for checking system load"]
+                    hints=["This shows CPU, memory, and session info", "Great for checking system load"],
                 ),
                 TutorialStep(
                     title="Interactive Dashboard",
@@ -257,31 +259,31 @@ class TutorialSystem:
                     commands=["dashboard 10"],
                     explanation="The dashboard provides real-time monitoring of system metrics, analysis progress, and session activity.",
                     hints=["Press Ctrl+C to exit the dashboard", "The number specifies display duration in seconds", "Try 'dashboard --basic' for simple mode"],
-                    skip_allowed=True
+                    skip_allowed=True,
                 ),
                 TutorialStep(
                     title="Specific Monitoring",
                     description="Monitor specific system metrics in real-time.",
                     commands=["monitor cpu 5"],
                     explanation="Targeted monitoring allows tracking specific metrics like CPU usage, memory consumption, or analysis statistics.",
-                    hints=["Try 'monitor memory 5' for memory usage", "Numbers specify duration in seconds"]
+                    hints=["Try 'monitor memory 5' for memory usage", "Numbers specify duration in seconds"],
                 ),
                 TutorialStep(
                     title="Workspace Management",
                     description="Manage your workspace and clean up temporary files.",
                     commands=["workspace info", "workspace clean"],
                     explanation="Workspace commands help maintain your Intellicrack environment and manage storage usage.",
-                    hints=["This shows workspace location and project count", "Clean removes temporary files"]
+                    hints=["This shows workspace location and project count", "Clean removes temporary files"],
                 ),
                 TutorialStep(
                     title="Session Statistics",
                     description="View detailed statistics about your analysis session.",
                     commands=["stats"],
                     explanation="Session statistics provide insights into your analysis work including charts and performance metrics.",
-                    hints=["This creates visual charts of your analysis data", "Great for understanding patterns"]
-                )
+                    hints=["This creates visual charts of your analysis data", "Great for understanding patterns"],
+                ),
             ],
-            completion_message="🎉 Perfect! You now have full control over monitoring and can track your analysis work effectively."
+            completion_message="🎉 Perfect! You now have full control over monitoring and can track your analysis work effectively.",
         )
 
         # Store tutorials
@@ -289,7 +291,7 @@ class TutorialSystem:
             "getting_started": getting_started,
             "advanced_analysis": advanced_analysis,
             "project_management": project_management,
-            "monitoring_dashboard": monitoring_tutorial
+            "monitoring_dashboard": monitoring_tutorial,
         }
 
     def list_tutorials(self) -> None:
@@ -323,7 +325,7 @@ class TutorialSystem:
                 tutorial.title,
                 difficulty,
                 f"{tutorial.estimated_time} min",
-                progress_str
+                progress_str,
             )
 
         self.console.print(table)
@@ -358,6 +360,7 @@ class TutorialSystem:
 
         Returns:
             True if tutorial started successfully
+
         """
         if tutorial_name not in self.tutorials:
             return False
@@ -402,7 +405,7 @@ class TutorialSystem:
             intro_panel = Panel(
                 intro_content,
                 title="📚 Tutorial Introduction",
-                border_style="blue"
+                border_style="blue",
             )
             self.console.print(intro_panel)
         else:
@@ -452,7 +455,7 @@ class TutorialSystem:
             step_panel = Panel(
                 step_content,
                 title=f"📝 Tutorial Step {step_num}",
-                border_style="green"
+                border_style="green",
             )
             self.console.print(step_panel)
 
@@ -487,7 +490,7 @@ class TutorialSystem:
         tutorial_name = self.current_tutorial.name
         self.tutorial_progress[tutorial_name] = max(
             self.tutorial_progress.get(tutorial_name, 0),
-            self.current_step
+            self.current_step,
         )
 
         self._show_current_step()
@@ -526,7 +529,7 @@ class TutorialSystem:
         tutorial_name = self.current_tutorial.name
         self.tutorial_progress[tutorial_name] = max(
             self.tutorial_progress.get(tutorial_name, 0),
-            self.current_step
+            self.current_step,
         )
 
         # Add to history
@@ -534,7 +537,7 @@ class TutorialSystem:
             "name": tutorial_name,
             "completed_steps": self.current_step,
             "total_steps": len(self.current_tutorial.steps),
-            "quit_time": datetime.now()
+            "quit_time": datetime.now(),
         })
 
         if self.console:
@@ -564,7 +567,7 @@ class TutorialSystem:
             "name": tutorial_name,
             "completed_steps": len(tutorial.steps),
             "total_steps": len(tutorial.steps),
-            "completion_time": datetime.now()
+            "completion_time": datetime.now(),
         })
 
         # Show completion message
@@ -572,7 +575,7 @@ class TutorialSystem:
             completion_panel = Panel(
                 tutorial.completion_message,
                 title="🎉 Tutorial Completed!",
-                border_style="green"
+                border_style="green",
             )
             self.console.print(completion_panel)
 
@@ -731,7 +734,7 @@ class TutorialSystem:
             diff_colors = {
                 "beginner": "green",
                 "intermediate": "yellow",
-                "advanced": "red"
+                "advanced": "red",
             }
             diff_color = diff_colors.get(tutorial.difficulty, "white")
 
@@ -757,7 +760,7 @@ class TutorialSystem:
                 card_content,
                 title=f"{title_prefix}{tutorial.title}",
                 border_style=border_style,
-                width=25
+                width=25,
             )
             cards.append(card)
 
@@ -786,7 +789,7 @@ class TutorialSystem:
             centered_header,
             title="🎓 Tutorial Information",
             border_style="blue",
-            padding=(1, 2)
+            padding=(1, 2),
         )
 
         self.console.print(header_panel)
@@ -809,7 +812,7 @@ class TutorialSystem:
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-            console=self.console
+            console=self.console,
         ) as progress:
             task = progress.add_task(f"Tutorial: {tutorial.title}", total=total_steps)
             progress.update(task, completed=current_step)
@@ -823,7 +826,7 @@ class TutorialSystem:
         step_panel = Panel(
             f"[bold cyan]{step.title}[/bold cyan]\n\n{step.description}",
             title="📖 Tutorial Step",
-            border_style="blue"
+            border_style="blue",
         )
         self.console.print(step_panel)
 
@@ -834,7 +837,7 @@ class TutorialSystem:
                 cmd_panel = Panel(
                     syntax,
                     title="💻 Command to Run",
-                    border_style="green"
+                    border_style="green",
                 )
                 self.console.print(cmd_panel)
 
@@ -843,11 +846,11 @@ class TutorialSystem:
             explanation_panel = Panel(
                 step.explanation,
                 title="💡 Explanation",
-                border_style="yellow"
+                border_style="yellow",
             )
             self.console.print(explanation_panel)
 
-    def interactive_tutorial_selection(self) -> Optional[str]:
+    def interactive_tutorial_selection(self) -> str | None:
         """Interactive tutorial selection using Prompt."""
         if not RICH_AVAILABLE or not self.console:
             return None
@@ -866,7 +869,7 @@ class TutorialSystem:
         try:
             selection = IntPrompt.ask(
                 "Select tutorial number",
-                choices=[str(i) for i in range(1, len(tutorial_names) + 1)]
+                choices=[str(i) for i in range(1, len(tutorial_names) + 1)],
             )
             return tutorial_names[selection - 1]
         except (KeyboardInterrupt, ValueError):
@@ -883,10 +886,10 @@ class TutorialSystem:
 
         return Confirm.ask(
             f"[yellow]Reset progress for tutorial '{tutorial.title}'?[/yellow]",
-            default=False
+            default=False,
         )
 
-    def get_custom_tutorial_settings(self) -> Dict[str, Any]:
+    def get_custom_tutorial_settings(self) -> dict[str, Any]:
         """Get custom tutorial settings using Prompt."""
         if not RICH_AVAILABLE or not self.console:
             return {}
@@ -903,7 +906,7 @@ class TutorialSystem:
         difficulty_filter = Prompt.ask(
             "Filter tutorials by difficulty",
             choices=["all", "beginner", "intermediate", "advanced"],
-            default="all"
+            default="all",
         )
         settings["difficulty_filter"] = difficulty_filter
 
@@ -938,7 +941,7 @@ class TutorialSystem:
                 tutorial.difficulty.title(),
                 f"{tutorial.estimated_time} min",
                 str(len(tutorial.steps)),
-                status
+                status,
             )
 
         self.console.print(table)

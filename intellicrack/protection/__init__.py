@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -43,16 +42,16 @@ from .unified_protection_engine import (
 )
 
 __all__ = [
-    "ProtectionDetector",
-    "get_protection_detector",
-    "quick_analyze",
-    "deep_analyze",
-    "IntellicrackProtectionCore",
     "DIEProtectionDetector",  # Backward compatibility
+    "DetectionResult",
+    "IntellicrackProtectionCore",
+    "ProtectionAnalysis",
+    "ProtectionDetector",
+    "ProtectionType",
     "UnifiedProtectionEngine",
     "UnifiedProtectionResult",
+    "deep_analyze",
+    "get_protection_detector",
     "get_unified_engine",
-    "DetectionResult",
-    "ProtectionAnalysis",
-    "ProtectionType",
+    "quick_analyze",
 ]

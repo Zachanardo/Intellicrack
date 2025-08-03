@@ -1,5 +1,4 @@
-"""
-FlexLM License Protocol Parser and Response Generator
+"""FlexLM License Protocol Parser and Response Generator
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,7 +22,7 @@ import hashlib
 import struct
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ...utils.logger import get_logger
 
@@ -32,6 +31,7 @@ logger = get_logger(__name__)
 @dataclass
 class FlexLMRequest:
     """FlexLM request structure"""
+
     command: int
     version: int
     sequence: int
@@ -43,11 +43,12 @@ class FlexLMRequest:
     username: str
     pid: int
     checkout_time: int
-    additional_data: Dict[str, Any]
+    additional_data: dict[str, Any]
 
 @dataclass
 class FlexLMResponse:
     """FlexLM response structure"""
+
     status: int
     sequence: int
     server_version: str
@@ -55,7 +56,7 @@ class FlexLMResponse:
     expiry_date: str
     license_key: str
     server_id: str
-    additional_data: Dict[str, Any]
+    additional_data: dict[str, Any]
 
 class FlexLMProtocolParser:
     """Real FlexLM protocol parser and response generator"""
@@ -79,7 +80,7 @@ class FlexLMProtocolParser:
         0x10: "HOSTID_REQUEST",
         0x11: "ENCRYPTION_SEED",
         0x12: "BORROW_REQUEST",
-        0x13: "RETURN_REQUEST"
+        0x13: "RETURN_REQUEST",
     }
 
     FLEXLM_STATUS_CODES = {
@@ -95,7 +96,7 @@ class FlexLMProtocolParser:
         0x09: "VENDOR_DOWN",
         0x0A: "LICENSE_EXPIRED",
         0x0B: "INVALID_SIGNATURE",
-        0x0C: "ENCRYPTION_FAILED"
+        0x0C: "ENCRYPTION_FAILED",
     }
 
     def __init__(self):
@@ -115,21 +116,21 @@ class FlexLMProtocolParser:
                 "expiry": "31-dec-2025",
                 "count": 100,
                 "vendor": "ADSKFLEX",
-                "signature": "A1B2C3D4E5F6789012345678901234567890ABCD"
+                "signature": "A1B2C3D4E5F6789012345678901234567890ABCD",
             },
             "INVENTOR": {
                 "version": "2024.0",
                 "expiry": "31-dec-2025",
                 "count": 50,
                 "vendor": "ADSKFLEX",
-                "signature": "B2C3D4E5F6789012345678901234567890ABCDEF"
+                "signature": "B2C3D4E5F6789012345678901234567890ABCDEF",
             },
             "MAYA": {
                 "version": "2024.0",
                 "expiry": "31-dec-2025",
                 "count": 25,
                 "vendor": "ADSKFLEX",
-                "signature": "C3D4E5F6789012345678901234567890ABCDEF12"
+                "signature": "C3D4E5F6789012345678901234567890ABCDEF12",
             },
 
             # MATLAB Products
@@ -138,14 +139,14 @@ class FlexLMProtocolParser:
                 "expiry": "31-dec-2025",
                 "count": 100,
                 "vendor": "MLM",
-                "signature": "D4E5F6789012345678901234567890ABCDEF1234"
+                "signature": "D4E5F6789012345678901234567890ABCDEF1234",
             },
             "SIMULINK": {
                 "version": "R2024a",
                 "expiry": "31-dec-2025",
                 "count": 50,
                 "vendor": "MLM",
-                "signature": "E5F6789012345678901234567890ABCDEF123456"
+                "signature": "E5F6789012345678901234567890ABCDEF123456",
             },
 
             # SolidWorks
@@ -154,7 +155,7 @@ class FlexLMProtocolParser:
                 "expiry": "31-dec-2025",
                 "count": 100,
                 "vendor": "SW_D",
-                "signature": "F6789012345678901234567890ABCDEF12345678"
+                "signature": "F6789012345678901234567890ABCDEF12345678",
             },
 
             # ANSYS Products
@@ -163,7 +164,7 @@ class FlexLMProtocolParser:
                 "expiry": "31-dec-2025",
                 "count": 50,
                 "vendor": "ANSYS",
-                "signature": "6789012345678901234567890ABCDEF1234567890"
+                "signature": "6789012345678901234567890ABCDEF1234567890",
             },
 
             # Generic features for testing
@@ -172,23 +173,23 @@ class FlexLMProtocolParser:
                 "expiry": "31-dec-2025",
                 "count": 999,
                 "vendor": "FLEX",
-                "signature": "789012345678901234567890ABCDEF123456789A"
-            }
+                "signature": "789012345678901234567890ABCDEF123456789A",
+            },
         }
 
     def _generate_encryption_seed(self) -> bytes:
         """Generate encryption seed for FlexLM communication"""
         return hashlib.md5(str(time.time()).encode()).digest()
 
-    def parse_request(self, data: bytes) -> Optional[FlexLMRequest]:
-        """
-        Parse incoming FlexLM request
+    def parse_request(self, data: bytes) -> FlexLMRequest | None:
+        """Parse incoming FlexLM request
 
         Args:
             data: Raw FlexLM request data
 
         Returns:
             Parsed FlexLMRequest object or None if invalid
+
         """
         try:
             if len(data) < 16:  # Minimum FlexLM header size
@@ -270,7 +271,7 @@ class FlexLMProtocolParser:
                 username=username,
                 pid=pid,
                 checkout_time=checkout_time,
-                additional_data=additional_data
+                additional_data=additional_data,
             )
 
             self.logger.info(f"Parsed FlexLM {self.FLEXLM_COMMANDS.get(command, 'UNKNOWN')} request for feature '{feature}'")
@@ -291,7 +292,7 @@ class FlexLMProtocolParser:
             self.logger.error("Error in flexlm_parser: %s", e)
             return ""
 
-    def _parse_additional_data(self, data: bytes) -> Dict[str, Any]:
+    def _parse_additional_data(self, data: bytes) -> dict[str, Any]:
         """Parse additional FlexLM data fields"""
         additional = {}
         try:
@@ -325,36 +326,35 @@ class FlexLMProtocolParser:
         return additional
 
     def generate_response(self, request: FlexLMRequest) -> FlexLMResponse:
-        """
-        Generate appropriate FlexLM response based on request
+        """Generate appropriate FlexLM response based on request
 
         Args:
             request: Parsed FlexLM request
 
         Returns:
             FlexLM response object
+
         """
         command_name = self.FLEXLM_COMMANDS.get(request.command, "UNKNOWN")
         self.logger.info(f"Generating response for {command_name} command")
 
         if request.command == 0x01:  # CHECKOUT
             return self._handle_checkout(request)
-        elif request.command == 0x02:  # CHECKIN
+        if request.command == 0x02:  # CHECKIN
             return self._handle_checkin(request)
-        elif request.command == 0x03:  # STATUS
+        if request.command == 0x03:  # STATUS
             return self._handle_status(request)
-        elif request.command == 0x04:  # HEARTBEAT
+        if request.command == 0x04:  # HEARTBEAT
             return self._handle_heartbeat(request)
-        elif request.command == 0x05:  # FEATURE_INFO
+        if request.command == 0x05:  # FEATURE_INFO
             return self._handle_feature_info(request)
-        elif request.command == 0x06:  # SERVER_INFO
+        if request.command == 0x06:  # SERVER_INFO
             return self._handle_server_info(request)
-        elif request.command == 0x10:  # HOSTID_REQUEST
+        if request.command == 0x10:  # HOSTID_REQUEST
             return self._handle_hostid_request(request)
-        elif request.command == 0x11:  # ENCRYPTION_SEED
+        if request.command == 0x11:  # ENCRYPTION_SEED
             return self._handle_encryption_seed(request)
-        else:
-            return self._handle_unknown_command(request)
+        return self._handle_unknown_command(request)
 
     def _handle_checkout(self, request: FlexLMRequest) -> FlexLMResponse:
         """Handle license checkout request"""
@@ -375,7 +375,7 @@ class FlexLMProtocolParser:
                     expiry_date="",
                     license_key="",
                     server_id="intellicrack-flexlm",
-                    additional_data={"error": f"Feature {request.feature} not found"}
+                    additional_data={"error": f"Feature {request.feature} not found"},
                 )
 
         feature_info = self.server_features[feature]
@@ -388,7 +388,7 @@ class FlexLMProtocolParser:
         self.active_checkouts[checkout_id] = {
             "request": request,
             "checkout_time": time.time(),
-            "key": checkout_key
+            "key": checkout_key,
         }
 
         return FlexLMResponse(
@@ -403,8 +403,8 @@ class FlexLMProtocolParser:
                 "vendor": feature_info["vendor"],
                 "version": feature_info["version"],
                 "count_remaining": feature_info["count"] - 1,
-                "signature": feature_info["signature"]
-            }
+                "signature": feature_info["signature"],
+            },
         )
 
     def _handle_checkin(self, request: FlexLMRequest) -> FlexLMResponse:
@@ -425,7 +425,7 @@ class FlexLMProtocolParser:
             expiry_date="",
             license_key="",
             server_id="intellicrack-flexlm",
-            additional_data={"checkin_time": int(time.time())}
+            additional_data={"checkin_time": int(time.time())},
         )
 
     def _handle_status(self, request: FlexLMRequest) -> FlexLMResponse:
@@ -442,8 +442,8 @@ class FlexLMProtocolParser:
                 "server_status": "UP",
                 "active_checkouts": len(self.active_checkouts),
                 "features_available": len(self.server_features),
-                "uptime": int(time.time())
-            }
+                "uptime": int(time.time()),
+            },
         )
 
     def _handle_heartbeat(self, request: FlexLMRequest) -> FlexLMResponse:
@@ -465,7 +465,7 @@ class FlexLMProtocolParser:
             expiry_date="",
             license_key="",
             server_id="intellicrack-flexlm",
-            additional_data={"heartbeat_time": int(time.time())}
+            additional_data={"heartbeat_time": int(time.time())},
         )
 
     def _handle_feature_info(self, request: FlexLMRequest) -> FlexLMResponse:
@@ -482,19 +482,18 @@ class FlexLMProtocolParser:
                 expiry_date=feature_info["expiry"],
                 license_key="",
                 server_id="intellicrack-flexlm",
-                additional_data=feature_info
+                additional_data=feature_info,
             )
-        else:
-            return FlexLMResponse(
-                status=0x01,  # FEATURE_NOT_FOUND
-                sequence=request.sequence,
-                server_version="11.18.0",
-                feature=request.feature,
-                expiry_date="",
-                license_key="",
-                server_id="intellicrack-flexlm",
-                additional_data={}
-            )
+        return FlexLMResponse(
+            status=0x01,  # FEATURE_NOT_FOUND
+            sequence=request.sequence,
+            server_version="11.18.0",
+            feature=request.feature,
+            expiry_date="",
+            license_key="",
+            server_id="intellicrack-flexlm",
+            additional_data={},
+        )
 
     def _handle_server_info(self, request: FlexLMRequest) -> FlexLMResponse:
         """Handle server information request"""
@@ -511,8 +510,8 @@ class FlexLMProtocolParser:
                 "server_version": "11.18.0",
                 "features": list(self.server_features.keys()),
                 "max_connections": 1000,
-                "current_connections": len(self.active_checkouts)
-            }
+                "current_connections": len(self.active_checkouts),
+            },
         )
 
     def _handle_hostid_request(self, request: FlexLMRequest) -> FlexLMResponse:
@@ -528,7 +527,7 @@ class FlexLMProtocolParser:
             expiry_date="",
             license_key="",
             server_id="intellicrack-flexlm",
-            additional_data={"hostid": hostid}
+            additional_data={"hostid": hostid},
         )
 
     def _handle_encryption_seed(self, request: FlexLMRequest) -> FlexLMResponse:
@@ -541,7 +540,7 @@ class FlexLMProtocolParser:
             expiry_date="",
             license_key="",
             server_id="intellicrack-flexlm",
-            additional_data={"encryption_seed": self.encryption_seed.hex()}
+            additional_data={"encryption_seed": self.encryption_seed.hex()},
         )
 
     def _handle_unknown_command(self, request: FlexLMRequest) -> FlexLMResponse:
@@ -555,10 +554,10 @@ class FlexLMProtocolParser:
             expiry_date="",
             license_key="",
             server_id="intellicrack-flexlm",
-            additional_data={"error": f"Unknown command: 0x{request.command:02X}"}
+            additional_data={"error": f"Unknown command: 0x{request.command:02X}"},
         )
 
-    def _generate_checkout_key(self, request: FlexLMRequest, feature_info: Dict[str, Any]) -> str:
+    def _generate_checkout_key(self, request: FlexLMRequest, feature_info: dict[str, Any]) -> str:
         """Generate checkout key for license"""
         # Incorporate feature information into key generation
         feature_version = feature_info.get("version", "1.0")
@@ -585,14 +584,14 @@ class FlexLMProtocolParser:
         return key
 
     def serialize_response(self, response: FlexLMResponse) -> bytes:
-        """
-        Serialize FlexLM response to bytes
+        """Serialize FlexLM response to bytes
 
         Args:
             response: FlexLM response object
 
         Returns:
             Serialized response bytes
+
         """
         try:
             # Build response packet
@@ -643,7 +642,7 @@ class FlexLMProtocolParser:
             # Return minimal error response
             return struct.pack(">IHI", 0x464C4558, 0x03, response.sequence) + b"\x00"
 
-    def _serialize_additional_data(self, data: Dict[str, Any]) -> bytes:
+    def _serialize_additional_data(self, data: dict[str, Any]) -> bytes:
         """Serialize additional data fields"""
         serialized = bytearray()
 

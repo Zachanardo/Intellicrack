@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -27,8 +26,7 @@ from enum import Enum
 
 
 class ProtectionType(Enum):
-    """
-    Classification of protection techniques.
+    """Classification of protection techniques.
 
     Enumerates common software protection mechanisms that can be
     detected and bypassed using Frida. Each protection type has
@@ -45,6 +43,7 @@ class ProtectionType(Enum):
     - Obfuscation: PACKING, MEMORY, MEMORY_PROTECTION
     - Advanced: KERNEL, BEHAVIOR
     """
+
     ANTI_DEBUG = "Anti-Debugging"  # Detects debuggers like GDB, IDA, x64dbg
     ANTI_VM = "Anti-VM/Sandbox"  # Detects VMs/sandboxes (VMware, VirtualBox)
     ANTI_ATTACH = "Anti-Attach"  # Prevents process attachment/injection
@@ -65,8 +64,7 @@ class ProtectionType(Enum):
 
 
 class HookCategory(Enum):
-    """
-    Categories for hook batching.
+    """Categories for hook batching.
 
     Defines priority levels for Frida hooks to optimize performance
     and minimize detection. Higher priority hooks are applied
@@ -86,6 +84,7 @@ class HookCategory(Enum):
     - LOW: Logging, statistics gathering
     - MONITORING: Performance monitoring, analytics
     """
+
     CRITICAL = "critical"      # Must hook immediately (no delay)
     HIGH = "high"             # Hook soon (max 100ms delay)
     MEDIUM = "medium"         # Can batch (max 500ms delay)
@@ -93,4 +92,4 @@ class HookCategory(Enum):
     MONITORING = "monitoring" # Passive monitoring hooks (lowest priority)
 
 
-__all__ = ["ProtectionType", "HookCategory"]
+__all__ = ["HookCategory", "ProtectionType"]

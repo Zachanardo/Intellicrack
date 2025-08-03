@@ -1,5 +1,4 @@
-"""
-Base class for plugin-based dialogs.
+"""Base class for plugin-based dialogs.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -65,7 +64,7 @@ class PluginDialogBase(QDialog):
     def browse_plugin(self):
         """Browse for a plugin file"""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Plugin", "", "Python Files (*.py);;All Files (*.*)"
+            self, "Select Plugin", "", "Python Files (*.py);;All Files (*.*)",
         )
 
         if file_path:
@@ -101,7 +100,7 @@ class PluginDialogBase(QDialog):
             "name": plugin_name,
             "directory": plugin_dir,
             "loaded_at": QDateTime.currentDateTime(),
-            "status": "loaded"
+            "status": "loaded",
         }
 
         # Update window title to reflect loaded plugin

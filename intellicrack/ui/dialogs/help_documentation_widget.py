@@ -1,5 +1,4 @@
-"""
-Help and Documentation Widget
+"""Help and Documentation Widget
 
 Copyright (C) 2025 Zachary Flint
 
@@ -43,8 +42,7 @@ __all__ = ["HelpDocumentationWidget"]
 
 
 class HelpDocumentationWidget(QWidget):
-    """
-    Comprehensive help and documentation widget for Intellicrack.
+    """Comprehensive help and documentation widget for Intellicrack.
 
     Provides organized access to all features, tutorials, guides,
     and troubleshooting information.
@@ -62,7 +60,6 @@ class HelpDocumentationWidget(QWidget):
 
     def setup_ui(self):
         """Set up the user interface."""
-
         # Initialize UI attributes
         self.issues_tree = None
         self.solution_viewer = None
@@ -408,7 +405,7 @@ class HelpDocumentationWidget(QWidget):
             "5. Using the Guided Wizard",
             "6. Setting Up External Tools",
             "7. Creating Your First Patch",
-            "8. Using the AI Assistant"
+            "8. Using the AI Assistant",
         ]
         for _tutorial in tutorials:
             list_widget.addItem(_tutorial)
@@ -425,7 +422,7 @@ class HelpDocumentationWidget(QWidget):
             "7. Dynamic Analysis with Frida",
             "8. Network Traffic Analysis",
             "9. Using Ghidra Integration",
-            "10. Binary Similarity Search"
+            "10. Binary Similarity Search",
         ]
         for _tutorial in tutorials:
             list_widget.addItem(_tutorial)
@@ -442,7 +439,7 @@ class HelpDocumentationWidget(QWidget):
             "7. Feature Unlocking",
             "8. Anti-Debug Bypass",
             "9. Creating Patch Scripts",
-            "10. Verifying Patches"
+            "10. Verifying Patches",
         ]
         for _tutorial in tutorials:
             list_widget.addItem(_tutorial)
@@ -459,7 +456,7 @@ class HelpDocumentationWidget(QWidget):
             "7. Advanced Frida Scripting",
             "8. Protocol Reverse Engineering",
             "9. Exploit Development",
-            "10. Custom Report Templates"
+            "10. Custom Report Templates",
         ]
         for _tutorial in tutorials:
             list_widget.addItem(_tutorial)
@@ -553,7 +550,7 @@ class HelpDocumentationWidget(QWidget):
                 self,
                 "Try Feature",
                 f"Would you like to try '{feature}' now?",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
 
             if reply == QMessageBox.Yes:
@@ -830,9 +827,8 @@ class HelpDocumentationWidget(QWidget):
         if matches or child_matches:
             item.setHidden(False)
             return True
-        else:
-            item.setHidden(True)
-            return False
+        item.setHidden(True)
+        return False
 
     def hide_all_tree_items(self, tree: QTreeWidget):
         """Hide all items in a tree."""

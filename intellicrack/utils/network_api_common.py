@@ -1,5 +1,4 @@
-"""
-Copyright (C) 2025 Zachary Flint
+"""Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
 
@@ -27,5 +26,11 @@ from .templates.network_api_common import (
     summarize_network_capabilities,
 )
 
-__all__ = ["analyze_network_apis", "process_network_api_results", "get_scapy_layers",
-           "detect_network_apis", "get_network_api_categories", "summarize_network_capabilities"]
+__all__ = [
+    "analyze_network_apis",
+    "detect_network_apis",
+    "get_network_api_categories",
+    "get_scapy_layers",
+    "process_network_api_results",
+    "summarize_network_capabilities",
+]

@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -32,8 +31,7 @@ except ImportError as e:
 
 
 def add_extra_buttons(header_layout, extra_buttons, widget_refs=None):
-    """
-    Add extra buttons to a header layout with consistent styling.
+    """Add extra buttons to a header layout with consistent styling.
 
     Args:
         header_layout: Qt layout to add buttons to
@@ -42,6 +40,7 @@ def add_extra_buttons(header_layout, extra_buttons, widget_refs=None):
 
     Returns:
         dict: Dictionary of button text -> button widget
+
     """
     if not PYQT_AVAILABLE or not extra_buttons:
         return {}
@@ -70,14 +69,14 @@ def add_extra_buttons(header_layout, extra_buttons, widget_refs=None):
 
 
 def get_button_style(button_text):
-    """
-    Get the appropriate style for a button based on its text.
+    """Get the appropriate style for a button based on its text.
 
     Args:
         button_text: Text of the button
 
     Returns:
         str: Style sheet string
+
     """
     if button_text == "Analyze Binary":
         return "QPushButton { background-color: #2196F3; color: white; font-weight: bold; }"

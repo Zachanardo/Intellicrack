@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -30,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class FontManager:
     """Manages custom font loading and configuration for the application."""
+
     def __init__(self):
         """Initialize the font manager with configuration and setup font directories."""
         self.fonts_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "fonts")
@@ -40,7 +40,7 @@ class FontManager:
     def _load_config(self):
         """Load font configuration"""
         try:
-            with open(self.config_file, "r") as f:
+            with open(self.config_file) as f:
                 return json.load(f)
         except Exception as e:
             logger.warning(f"Could not load font config: {e}")

@@ -1,5 +1,4 @@
-"""
-Miscellaneous utility functions for the Intellicrack framework.
+"""Miscellaneous utility functions for the Intellicrack framework.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -24,7 +23,7 @@ import datetime
 import logging
 import re
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 # Module logger
 logger = logging.getLogger(__name__)
@@ -42,6 +41,7 @@ def log_message(msg: str) -> str:
 
     Returns:
         str: Formatted log message with timestamp prefix
+
     """
     return f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}"
 
@@ -54,6 +54,7 @@ def get_timestamp(format_string: str = "%Y-%m-%d %H:%M:%S") -> str:
 
     Returns:
         str: Formatted timestamp
+
     """
     return datetime.datetime.now().strftime(format_string)
 
@@ -67,6 +68,7 @@ def format_bytes(size: int, precision: int = 2) -> str:
 
     Returns:
         str: Formatted size string (e.g., "1.23 MB")
+
     """
     for _unit in ["B", "KB", "MB", "GB", "TB"]:
         if size < 1024.0:
@@ -75,7 +77,7 @@ def format_bytes(size: int, precision: int = 2) -> str:
     return f"{size:.{precision}f} PB"
 
 
-def validate_path(path: Union[str, Path], must_exist: bool = True) -> bool:
+def validate_path(path: str | Path, must_exist: bool = True) -> bool:
     """Validate a file or directory path.
 
     Args:
@@ -84,6 +86,7 @@ def validate_path(path: Union[str, Path], must_exist: bool = True) -> bool:
 
     Returns:
         bool: True if path is valid
+
     """
     try:
         path = Path(path)
@@ -114,6 +117,7 @@ def sanitize_filename(filename: str, replacement: str = "_") -> str:
 
     Returns:
         str: Sanitized filename
+
     """
     # Define invalid characters for filenames
     invalid_chars = r'[<>:"/\\|?*]'
@@ -141,6 +145,7 @@ def truncate_string(text: str, max_length: int = 100, suffix: str = "...") -> st
 
     Returns:
         str: Truncated string
+
     """
     if len(text) <= max_length:
         return text
@@ -157,6 +162,7 @@ def safe_str(obj: Any, max_length: int = 100) -> str:
 
     Returns:
         str: String representation
+
     """
     try:
         result = str(obj)
@@ -177,6 +183,7 @@ def parse_size_string(size_str: str) -> int:
 
     Raises:
         ValueError: If string cannot be parsed
+
     """
     units = {
         "B": 1,
@@ -184,7 +191,7 @@ def parse_size_string(size_str: str) -> int:
         "MB": 1024**2,
         "GB": 1024**3,
         "TB": 1024**4,
-        "PB": 1024**5
+        "PB": 1024**5,
     }
 
     # Remove spaces and convert to uppercase
@@ -204,7 +211,7 @@ def parse_size_string(size_str: str) -> int:
     return int(number * units[unit])
 
 
-def get_file_extension(file_path: Union[str, Path], lower: bool = True) -> str:
+def get_file_extension(file_path: str | Path, lower: bool = True) -> str:
     """Get file extension from path.
 
     Args:
@@ -213,13 +220,14 @@ def get_file_extension(file_path: Union[str, Path], lower: bool = True) -> str:
 
     Returns:
         str: File extension (including dot)
+
     """
     path = Path(file_path)
     ext = path.suffix
     return ext.lower() if lower else ext
 
 
-def ensure_directory_exists(directory: Union[str, Path]) -> bool:
+def ensure_directory_exists(directory: str | Path) -> bool:
     """Ensure a directory exists, creating it if necessary.
 
     Args:
@@ -227,6 +235,7 @@ def ensure_directory_exists(directory: Union[str, Path]) -> bool:
 
     Returns:
         bool: True if directory exists or was created
+
     """
     try:
         path = Path(directory)
@@ -245,15 +254,16 @@ def is_valid_ip_address(ip: str) -> bool:
 
     Returns:
         bool: True if valid IP
+
     """
     # IPv4 pattern
     ipv4_pattern = re.compile(
-        r"^(\d{1,3}\.){3}\d{1,3}$"
+        r"^(\d{1,3}\.){3}\d{1,3}$",
     )
 
     # IPv6 pattern (simplified)
     ipv6_pattern = re.compile(
-        r"^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$"
+        r"^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$",
     )
 
     if ipv4_pattern.match(ip):
@@ -264,7 +274,7 @@ def is_valid_ip_address(ip: str) -> bool:
     return bool(ipv6_pattern.match(ip))
 
 
-def is_valid_port(port: Union[str, int]) -> bool:
+def is_valid_port(port: str | int) -> bool:
     """Check if a port number is valid.
 
     Args:
@@ -272,6 +282,7 @@ def is_valid_port(port: Union[str, int]) -> bool:
 
     Returns:
         bool: True if valid port
+
     """
     try:
         port_num = int(port)
@@ -283,16 +294,16 @@ def is_valid_port(port: Union[str, int]) -> bool:
 
 # Exported functions
 __all__ = [
-    "log_message",
-    "get_timestamp",
-    "format_bytes",
-    "validate_path",
-    "sanitize_filename",
-    "truncate_string",
-    "safe_str",
-    "parse_size_string",
-    "get_file_extension",
     "ensure_directory_exists",
+    "format_bytes",
+    "get_file_extension",
+    "get_timestamp",
     "is_valid_ip_address",
     "is_valid_port",
+    "log_message",
+    "parse_size_string",
+    "safe_str",
+    "sanitize_filename",
+    "truncate_string",
+    "validate_path",
 ]

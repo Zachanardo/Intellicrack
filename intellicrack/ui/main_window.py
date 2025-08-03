@@ -20,7 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QAction, QFont, QIcon
@@ -87,9 +87,9 @@ class IntellicrackMainWindow(QMainWindow):
         self.logger.info("Initializing main application window")
 
         # Initialize core attributes
-        self.binary_path: Optional[str] = None
-        self.analyze_results: List[str] = []
-        self.binary_info: Optional[Dict[str, Any]] = None
+        self.binary_path: str | None = None
+        self.analyze_results: list[str] = []
+        self.binary_info: dict[str, Any] | None = None
 
         # Initialize analyzers
         self.vulnerability_engine = AdvancedVulnerabilityEngine()
@@ -499,7 +499,7 @@ class IntellicrackMainWindow(QMainWindow):
             self,
             "Select Binary File",
             "",
-            "All Files (*)"
+            "All Files (*)",
         )
 
         if file_path:
@@ -596,14 +596,14 @@ Licensing Files Found: {len(licensing_files)}"""
                         QMessageBox.information(
                             self,
                             "Auto-Analysis",
-                            f"Starting automatic analysis of {program_info['display_name']} and {len(licensing_files)} licensing files."
+                            f"Starting automatic analysis of {program_info['display_name']} and {len(licensing_files)} licensing files.",
                         )
                         self._run_analysis()
                 else:
                     QMessageBox.warning(
                         self,
                         "No Executable Found",
-                        f"No executable files found for {program_info['display_name']}. Please select a different program."
+                        f"No executable files found for {program_info['display_name']}. Please select a different program.",
                     )
 
         except Exception as e:
@@ -611,7 +611,7 @@ Licensing Files Found: {len(licensing_files)}"""
             QMessageBox.critical(
                 self,
                 "Program Selector Error",
-                f"An error occurred while opening the Program Selector:\n{str(e)}"
+                f"An error occurred while opening the Program Selector:\n{e!s}",
             )
 
     def _run_analysis(self):
@@ -651,7 +651,7 @@ Licensing Files Found: {len(licensing_files)}"""
                     # Prepare ML results if available
                     ml_results = {
                         "confidence": 0.85,
-                        "predictions": []
+                        "predictions": [],
                     }
 
                     # Extract protection detections if available
@@ -661,7 +661,7 @@ Licensing Files Found: {len(licensing_files)}"""
                     # Run AI complex analysis
                     ai_analysis = self.ai_assistant.analyze_binary_complex(
                         self.binary_path,
-                        ml_results
+                        ml_results,
                     )
 
                     # Display AI analysis results
@@ -683,8 +683,8 @@ Licensing Files Found: {len(licensing_files)}"""
                             self.update_output.emit(f"\nML Integration Confidence: {ml_info.get('ml_confidence', 0.0):.2%}")
 
                 except Exception as e:
-                    self.logger.warning(f"AI complex analysis failed: {str(e)}")
-                    self.update_output.emit(f"AI analysis unavailable: {str(e)}")
+                    self.logger.warning(f"AI complex analysis failed: {e!s}")
+                    self.update_output.emit(f"AI analysis unavailable: {e!s}")
 
                 self.generate_report_button.setEnabled(True)
 
@@ -692,9 +692,9 @@ Licensing Files Found: {len(licensing_files)}"""
             self.update_status.emit("Analysis completed")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.update_output.emit(f"Analysis error: {str(e)}")
+            self.update_output.emit(f"Analysis error: {e!s}")
             self.update_status.emit("Analysis failed")
-            self.logger.error(f"Analysis error: {str(e)}")
+            self.logger.error(f"Analysis error: {e!s}")
 
     def _scan_vulnerabilities(self):
         """Run vulnerability scanning."""
@@ -727,9 +727,9 @@ Licensing Files Found: {len(licensing_files)}"""
             self.update_status.emit("Vulnerability scan completed")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.update_output.emit(f"Vulnerability scan error: {str(e)}")
+            self.update_output.emit(f"Vulnerability scan error: {e!s}")
             self.update_status.emit("Vulnerability scan failed")
-            self.logger.error(f"Vulnerability scan error: {str(e)}")
+            self.logger.error(f"Vulnerability scan error: {e!s}")
 
     def _generate_report(self):
         """Generate analysis report."""
@@ -738,7 +738,7 @@ Licensing Files Found: {len(licensing_files)}"""
         self.update_output.emit("Report generation not yet implemented in this refactored version.")
         self.update_status.emit("Ready")
 
-    def _display_analysis_results(self, results: Dict[str, Any]):
+    def _display_analysis_results(self, results: dict[str, Any]):
         """Display analysis results in the results tab."""
         self.results_display.clear()
 
@@ -784,7 +784,7 @@ Licensing Files Found: {len(licensing_files)}"""
             self,
             "Export Results",
             "analysis_results.txt",
-            "Text Files (*.txt);;All Files (*)"
+            "Text Files (*.txt);;All Files (*)",
         )
 
         if file_path:
@@ -796,8 +796,8 @@ Licensing Files Found: {len(licensing_files)}"""
                 self.update_status.emit(f"Results exported to {os.path.basename(file_path)}")
 
             except (OSError, ValueError, RuntimeError) as e:
-                QMessageBox.critical(self, "Error", f"Failed to export results: {str(e)}")
-                self.logger.error(f"Export error: {str(e)}")
+                QMessageBox.critical(self, "Error", f"Failed to export results: {e!s}")
+                self.logger.error(f"Export error: {e!s}")
 
     def _analyze_protection(self, file_path: str):
         """Analyze protection for the given file."""
@@ -816,7 +816,7 @@ Licensing Files Found: {len(licensing_files)}"""
 
         except Exception as e:
             self.logger.error(f"Protection analysis error: {e}")
-            QMessageBox.critical(self, "Error", f"Protection analysis failed: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Protection analysis failed: {e!s}")
 
     def _generate_bypass_script(self, file_path: str, protection_type: str):
         """Generate bypass script for the detected protection."""
@@ -846,7 +846,7 @@ Licensing Files Found: {len(licensing_files)}"""
 
         except Exception as e:
             self.logger.error(f"Script generation error: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to generate bypass script: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to generate bypass script: {e!s}")
 
     def _analyze_current_protection(self):
         """Analyze protection for the currently selected binary."""
@@ -880,7 +880,7 @@ Licensing Files Found: {len(licensing_files)}"""
         else:
             self.update_status.emit("Analysis complete: No protections detected")
 
-    def _on_bypass_requested(self, file_path: str, protection_data: Dict[str, Any]):
+    def _on_bypass_requested(self, file_path: str, protection_data: dict[str, Any]):
         """Handle bypass script generation request."""
         self.logger.info(f"Bypass requested for: {protection_data['name']}")
         self._generate_bypass_script(file_path, protection_data["type"])
@@ -931,7 +931,7 @@ Licensing Files Found: {len(licensing_files)}"""
             QMessageBox.warning(
                 self,
                 "No Analysis Available",
-                "Please perform a protection analysis first before generating a report."
+                "Please perform a protection analysis first before generating a report.",
             )
             return
 
@@ -944,7 +944,7 @@ Licensing Files Found: {len(licensing_files)}"""
             QMessageBox.warning(
                 self,
                 "No Analysis Available",
-                "Please perform a protection analysis first before generating scripts."
+                "Please perform a protection analysis first before generating scripts.",
             )
             return
 
@@ -960,7 +960,7 @@ Licensing Files Found: {len(licensing_files)}"""
             QMessageBox.critical(
                 self,
                 "Signature Editor Error",
-                f"Failed to open signature editor: {str(e)}"
+                f"Failed to open signature editor: {e!s}",
             )
             self.logger.error(f"Failed to open signature editor: {e}")
 
@@ -980,7 +980,7 @@ Licensing Files Found: {len(licensing_files)}"""
                         "protections": getattr(results, "protections", []),
                         "file_type": getattr(results, "file_type", "Unknown"),
                         "architecture": getattr(results, "architecture", "Unknown"),
-                        "is_protected": getattr(results, "is_protected", False)
+                        "is_protected": getattr(results, "is_protected", False),
                     }
 
             # Open export dialog
@@ -991,7 +991,7 @@ Licensing Files Found: {len(licensing_files)}"""
             QMessageBox.critical(
                 self,
                 "Export Error",
-                f"Failed to open export dialog: {str(e)}"
+                f"Failed to open export dialog: {e!s}",
             )
             self.logger.error(f"Failed to open export dialog: {e}")
 

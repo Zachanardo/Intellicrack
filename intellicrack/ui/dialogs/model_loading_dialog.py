@@ -1,5 +1,4 @@
-"""
-Model Loading Dialog
+"""Model Loading Dialog
 
 A dialog that demonstrates the integration of BackgroundModelLoader
 with progress tracking and management capabilities.
@@ -106,7 +105,7 @@ class ModelLoadingDialog(QDialog):
         self.model_name_combo.setEditable(True)
         self.model_name_combo.addItems([
             "llama2", "codellama", "mistral", "gpt-3.5-turbo",
-            "gpt-4", "claude-2", "claude-instant"
+            "gpt-4", "claude-2", "claude-instant",
         ])
         config_layout.addRow("Model Name:", self.model_name_combo)
 
@@ -117,7 +116,7 @@ class ModelLoadingDialog(QDialog):
             "http://localhost:11434",  # Ollama
             "http://localhost:1234",   # LM Studio
             "https://api.openai.com/v1",
-            "https://api.anthropic.com/v1"
+            "https://api.anthropic.com/v1",
         ])
         config_layout.addRow("API URL:", self.api_url_combo)
 
@@ -190,7 +189,7 @@ class ModelLoadingDialog(QDialog):
                 model_name=model_name,
                 api_url=api_url if api_url else None,
                 max_tokens=2048,
-                temperature=0.7
+                temperature=0.7,
             )
 
             # Generate unique ID
@@ -200,7 +199,7 @@ class ModelLoadingDialog(QDialog):
             task = self.llm_manager.load_model_in_background(
                 llm_id=model_id,
                 config=config,
-                priority=priority
+                priority=priority,
             )
 
             if task:
@@ -214,7 +213,7 @@ class ModelLoadingDialog(QDialog):
         except Exception as e:
             logger.error(f"Error loading model: {e}")
             QMessageBox.critical(self, "Error",
-                f"Error loading model:\n{str(e)}")
+                f"Error loading model:\n{e!s}")
 
     def get_next_id(self):
         """Get next available ID number."""

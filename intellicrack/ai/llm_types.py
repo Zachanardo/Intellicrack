@@ -1,5 +1,4 @@
-"""
-Shared types and dataclasses for LLM backends and background loading.
+"""Shared types and dataclasses for LLM backends and background loading.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -19,13 +18,15 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 
 class LoadingState(Enum):
     """States for background model loading."""
+
     PENDING = "pending"
     DOWNLOADING = "downloading"
     INITIALIZING = "initializing"
@@ -38,10 +39,11 @@ class LoadingState(Enum):
 @dataclass
 class LoadingProgress:
     """Progress information for model loading."""
+
     state: LoadingState
     progress: float  # 0.0 to 1.0
     message: str
-    details: Optional[Dict[str, Any]] = None
+    details: dict[str, Any] | None = None
 
 
 # Type alias for progress callbacks

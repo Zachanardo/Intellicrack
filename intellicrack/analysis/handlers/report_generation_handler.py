@@ -1,5 +1,4 @@
-"""
-Report Generation Handler
+"""Report Generation Handler
 
 Manages the generation of comprehensive analysis reports in multiple formats
 (HTML, Markdown, PDF) based on protection analysis results.
@@ -9,7 +8,6 @@ Licensed under GNU General Public License v3.0
 """
 
 from datetime import datetime
-from typing import Optional
 
 from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -47,6 +45,7 @@ except ImportError:
 
         Returns:
             A logging.Logger instance
+
         """
         return logging.getLogger(name)
 
@@ -55,6 +54,7 @@ logger = get_logger(__name__)
 
 class ReportGeneratorWorkerSignals(QObject):
     """Signals for report generation worker"""
+
     finished = pyqtSignal()
     error = pyqtSignal(tuple)
     result = pyqtSignal(dict)
@@ -73,6 +73,7 @@ class ReportGeneratorWorker(QRunnable):
             format_type: The format type for the report (e.g., 'pdf', 'html').
             output_path: The path where the report should be saved.
             options: Additional options for report generation.
+
         """
         super().__init__()
         self.result = result
@@ -101,7 +102,7 @@ class ReportGeneratorWorker(QRunnable):
                     "include_recommendations", True),
                 include_technical_details=self.options.get(
                     "include_technical", True),
-                output_format=self.format_type.lower()
+                output_format=self.format_type.lower(),
             )
 
             # Generate report (returns path)
@@ -111,7 +112,7 @@ class ReportGeneratorWorker(QRunnable):
             self.signals.result.emit({
                 "success": True,
                 "path": report_path,
-                "format": self.format_type
+                "format": self.format_type,
             })
 
         except Exception as e:
@@ -130,6 +131,7 @@ class ReportOptionsDialog(QDialog):
 
         Args:
             parent: Optional parent widget for Qt integration.
+
         """
         super().__init__(parent)
         self.setWindowTitle("Report Generation Options")
@@ -221,13 +223,12 @@ class ReportOptionsDialog(QDialog):
             "include_entropy": self.include_entropy.isChecked(),
             "include_bypass": self.include_bypass.isChecked(),
             "include_recommendations": self.include_recommendations.isChecked(),
-            "include_raw_json": self.include_raw_json.isChecked()
+            "include_raw_json": self.include_raw_json.isChecked(),
         }
 
 
 class ReportGenerationHandler(QObject):
-    """
-    Handler for comprehensive report generation based on protection analysis.
+    """Handler for comprehensive report generation based on protection analysis.
 
     Supports multiple output formats and customizable content.
     """
@@ -242,22 +243,21 @@ class ReportGenerationHandler(QObject):
 
         Args:
             parent: Optional parent widget for Qt integration.
+
         """
         super().__init__(parent)
         self.thread_pool = QThreadPool.globalInstance()
-        self.current_result: Optional[UnifiedProtectionResult] = None
+        self.current_result: UnifiedProtectionResult | None = None
 
     def on_analysis_complete(self, result: UnifiedProtectionResult):
-        """
-        Main slot called when protection analysis completes.
+        """Main slot called when protection analysis completes.
         """
         self.current_result = result
         logger.info(
             f"Report generation handler received analysis for: {result.file_path}")
 
     def generate_report(self, parent_widget=None):
-        """
-        Show options dialog and generate report based on user selection.
+        """Show options dialog and generate report based on user selection.
         """
         if not self.current_result:
             self.report_error.emit("No analysis result available")
@@ -288,7 +288,7 @@ class ReportGenerationHandler(QObject):
             parent_widget,
             "Save Report",
             default_name,
-            file_filter
+            file_filter,
         )
 
         if not output_path:
@@ -299,7 +299,7 @@ class ReportGenerationHandler(QObject):
             self.current_result,
             format_type,
             output_path,
-            options
+            options,
         )
 
         worker.signals.result.connect(self._on_report_ready)

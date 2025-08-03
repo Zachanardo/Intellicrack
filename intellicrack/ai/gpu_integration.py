@@ -1,5 +1,4 @@
-"""
-GPU Integration Module for AI Components
+"""GPU Integration Module for AI Components
 
 This module provides GPU integration for AI components using the unified GPU autoloader system.
 
@@ -8,7 +7,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +48,7 @@ except ImportError:
             "type": "cpu",
             "device": "cpu",
             "info": {},
-            "memory": {}
+            "memory": {},
         }
 
     def to_device(tensor_or_model):
@@ -86,7 +85,7 @@ class GPUIntegration:
         self.device = get_device()
         logger.info(f"GPU Integration initialized: {self.gpu_info['type']}")
 
-    def get_device_info(self) -> Dict[str, Any]:
+    def get_device_info(self) -> dict[str, Any]:
         """Get comprehensive device information"""
         info = self.gpu_info.copy()
 
@@ -97,18 +96,18 @@ class GPUIntegration:
                 if self.gpu_info["type"] == "intel_xpu" and hasattr(torch, "xpu"):
                     info["runtime"] = {
                         "xpu_available": torch.xpu.is_available(),
-                        "device_count": torch.xpu.device_count() if torch.xpu.is_available() else 0
+                        "device_count": torch.xpu.device_count() if torch.xpu.is_available() else 0,
                     }
                 elif self.gpu_info["type"] == "nvidia_cuda" and torch.cuda.is_available():
                     info["runtime"] = {
                         "cuda_available": True,
                         "device_count": torch.cuda.device_count(),
-                        "current_device": torch.cuda.current_device()
+                        "current_device": torch.cuda.current_device(),
                     }
                 elif self.gpu_info["type"] == "amd_rocm" and hasattr(torch, "hip"):
                     info["runtime"] = {
                         "hip_available": torch.hip.is_available() if hasattr(torch.hip, "is_available") else False,
-                        "device_count": torch.hip.device_count() if hasattr(torch.hip, "device_count") else 0
+                        "device_count": torch.hip.device_count() if hasattr(torch.hip, "device_count") else 0,
                     }
             except Exception as e:
                 logger.debug(f"Failed to get runtime info: {e}")
@@ -129,12 +128,11 @@ class GPUIntegration:
         """Prepare tensor for GPU execution"""
         return to_device(tensor)
 
-    def get_memory_usage(self) -> Dict[str, Any]:
+    def get_memory_usage(self) -> dict[str, Any]:
         """Get current GPU memory usage"""
         if GPU_AUTOLOADER_AVAILABLE:
             return gpu_autoloader.get_memory_info()
-        else:
-            return {}
+        return {}
 
     def synchronize(self):
         """Synchronize GPU operations"""
@@ -170,7 +168,7 @@ def prepare_ai_tensor(tensor: Any) -> Any:
     return gpu_integration.prepare_tensor(tensor)
 
 
-def get_ai_gpu_info() -> Dict[str, Any]:
+def get_ai_gpu_info() -> dict[str, Any]:
     """Get GPU information for AI operations"""
     return gpu_integration.get_device_info()
 

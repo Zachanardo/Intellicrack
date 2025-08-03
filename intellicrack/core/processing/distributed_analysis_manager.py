@@ -1,7 +1,7 @@
 """Distributed analysis manager for coordinating multi-node analysis tasks."""
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -46,28 +46,26 @@ __all__ = ["DistributedAnalysisManager"]
 
 
 class DistributedAnalysisManager:
-    """
-    Manages distributed analysis across multiple VMs/containers.
+    """Manages distributed analysis across multiple VMs/containers.
 
     Coordinates binary analysis across different virtual environments to provide
     comprehensive security assessment and license validation testing.
     """
 
-    def __init__(self, binary_path: Optional[str] = None):
-        """
-        Initialize the distributed analysis manager.
+    def __init__(self, binary_path: str | None = None):
+        """Initialize the distributed analysis manager.
 
         Args:
             binary_path: Path to the binary to analyze
+
         """
         self.binary_path = binary_path
-        self.vms: List[Dict[str, Any]] = []
-        self.containers: List[Dict[str, Any]] = []
+        self.vms: list[dict[str, Any]] = []
+        self.containers: list[dict[str, Any]] = []
         self.logger = logging.getLogger(__name__)
 
     def add_vm(self, vm_type: str = "qemu", arch: str = "x86_64", memory_mb: int = 2048) -> int:
-        """
-        Add a VM to the distributed analysis pool.
+        """Add a VM to the distributed analysis pool.
 
         Args:
             vm_type: Type of VM (qemu, virtualbox, etc.)
@@ -76,6 +74,7 @@ class DistributedAnalysisManager:
 
         Returns:
             VM ID, or -1 if failed
+
         """
         if not HAS_QEMU and vm_type == "qemu":
             self.logger.error("QEMU support not available")
@@ -92,7 +91,7 @@ class DistributedAnalysisManager:
                     "arch": arch,
                     "memory_mb": memory_mb,
                     "instance": vm,
-                    "status": "created"
+                    "status": "created",
                 })
                 self.logger.info("Added QEMU VM (ID: %s, Arch: %s)", vm_id, arch)
                 return vm_id
@@ -104,8 +103,7 @@ class DistributedAnalysisManager:
             return -1
 
     def add_container(self, container_type: str = "docker", image: str = "ubuntu:latest") -> int:
-        """
-        Add a container to the distributed analysis pool.
+        """Add a container to the distributed analysis pool.
 
         Args:
             container_type: Type of container (docker, podman, etc.)
@@ -113,6 +111,7 @@ class DistributedAnalysisManager:
 
         Returns:
             Container ID, or -1 if failed
+
         """
         if not HAS_DOCKER and container_type == "docker":
             self.logger.error("Docker support not available")
@@ -128,7 +127,7 @@ class DistributedAnalysisManager:
                     "type": container_type,
                     "image": image,
                     "instance": instance,
-                    "status": "created"
+                    "status": "created",
                 })
                 self.logger.info("Added Docker container (ID: %s, Image: %s)", container_id, image)
                 return container_id
@@ -140,11 +139,11 @@ class DistributedAnalysisManager:
             return -1
 
     def start_all(self) -> bool:
-        """
-        Start all VMs and containers in the pool.
+        """Start all VMs and containers in the pool.
 
         Returns:
             True if all started successfully, False otherwise
+
         """
         success = True
 
@@ -184,20 +183,20 @@ class DistributedAnalysisManager:
 
         return success
 
-    def run_distributed_analysis(self, analysis_type: str = "license_check") -> Dict[str, Any]:
-        """
-        Run distributed analysis across all VMs and containers.
+    def run_distributed_analysis(self, analysis_type: str = "license_check") -> dict[str, Any]:
+        """Run distributed analysis across all VMs and containers.
 
         Args:
             analysis_type: Type of analysis to run
 
         Returns:
             Analysis results from all VMs and containers
+
         """
         results = {
             "vms": [],
             "containers": [],
-            "summary": {}
+            "summary": {},
         }
 
         # Run analysis on VMs
@@ -213,7 +212,7 @@ class DistributedAnalysisManager:
                     if self.binary_path:
                         binary_name = os.path.basename(self.binary_path)
                         output = _vm["instance"].execute_command(
-                            f"cd /mnt/host && chmod +x {binary_name} && ./{binary_name}"
+                            f"cd /mnt/host && chmod +x {binary_name} && ./{binary_name}",
                         )
                     else:
                         output = "No binary path specified"
@@ -229,7 +228,7 @@ class DistributedAnalysisManager:
                         "arch": _vm["arch"],
                         "output": output,
                         "diff": diff,
-                        "status": "completed"
+                        "status": "completed",
                     })
 
                 except (OSError, ValueError, RuntimeError) as e:
@@ -239,7 +238,7 @@ class DistributedAnalysisManager:
                         "arch": _vm["arch"],
                         "output": f"Error: {e}",
                         "diff": {},
-                        "status": "error"
+                        "status": "error",
                     })
 
         # Run analysis on containers
@@ -255,13 +254,13 @@ class DistributedAnalysisManager:
                     if self.binary_path:
                         binary_name = os.path.basename(self.binary_path)
                         copy_result = _container["instance"].copy_file_to_container(
-                            self.binary_path, f"/tmp/{binary_name}"
+                            self.binary_path, f"/tmp/{binary_name}",
                         )
 
                         if copy_result:
                             # Run the binary in container
                             output = _container["instance"].execute_command(
-                                f"chmod +x /tmp/{binary_name} && /tmp/{binary_name}"
+                                f"chmod +x /tmp/{binary_name} && /tmp/{binary_name}",
                             )
                         else:
                             output = "Failed to copy binary to container"
@@ -281,7 +280,7 @@ class DistributedAnalysisManager:
                         "output": output,
                         "diff": diff,
                         "artifacts": artifacts,
-                        "status": "completed"
+                        "status": "completed",
                     })
 
                 except (OSError, ValueError, RuntimeError) as e:
@@ -292,7 +291,7 @@ class DistributedAnalysisManager:
                         "output": f"Error: {e}",
                         "diff": {},
                         "artifacts": [],
-                        "status": "error"
+                        "status": "error",
                     })
 
         # Generate summary
@@ -305,17 +304,17 @@ class DistributedAnalysisManager:
             "total_nodes": len(self.vms) + len(self.containers),
             "successful_vm_analyses": len([_r for _r in results["vms"] if _r["status"] == "completed"]),
             "successful_container_analyses": len([_r for _r in results["containers"] if _r["status"] == "completed"]),
-            "analysis_type": analysis_type
+            "analysis_type": analysis_type,
         }
 
         return results
 
     def stop_all(self) -> bool:
-        """
-        Stop all VMs and containers in the pool.
+        """Stop all VMs and containers in the pool.
 
         Returns:
             True if all stopped successfully, False otherwise
+
         """
         success = True
 
@@ -356,8 +355,7 @@ class DistributedAnalysisManager:
         return success
 
     def assign_task(self, node_id: int, task: str) -> bool:
-        """
-        Assign a specific task to a node (VM or container).
+        """Assign a specific task to a node (VM or container).
 
         Args:
             node_id: ID of the node
@@ -365,6 +363,7 @@ class DistributedAnalysisManager:
 
         Returns:
             True if task assigned successfully
+
         """
         # Find the node in VMs
         for _vm in self.vms:
@@ -387,12 +386,12 @@ class DistributedAnalysisManager:
         self.logger.error("Node %s not found", node_id)
         return False
 
-    def get_status(self) -> Dict[str, Any]:
-        """
-        Get status of all nodes in the analysis pool.
+    def get_status(self) -> dict[str, Any]:
+        """Get status of all nodes in the analysis pool.
 
         Returns:
             Status information for all VMs and containers
+
         """
         return {
             "vms": [
@@ -401,7 +400,7 @@ class DistributedAnalysisManager:
                     "type": vm["type"],
                     "arch": vm["arch"],
                     "status": vm["status"],
-                    "tasks": vm.get("tasks", [])
+                    "tasks": vm.get("tasks", []),
                 }
                 for vm in self.vms],
             "containers": [
@@ -410,9 +409,9 @@ class DistributedAnalysisManager:
                     "type": container["type"],
                     "image": container["image"],
                     "status": container["status"],
-                    "tasks": container.get("tasks", [])
+                    "tasks": container.get("tasks", []),
                 }
-                for container in self.containers]
+                for container in self.containers],
         }
 
     def cleanup(self) -> None:
@@ -443,14 +442,14 @@ class DistributedAnalysisManager:
         self.cleanup()
 
 
-def create_distributed_manager(binary_path: Optional[str] = None) -> DistributedAnalysisManager:
-    """
-    Factory function to create a DistributedAnalysisManager.
+def create_distributed_manager(binary_path: str | None = None) -> DistributedAnalysisManager:
+    """Factory function to create a DistributedAnalysisManager.
 
     Args:
         binary_path: Path to binary for analysis
 
     Returns:
         Configured DistributedAnalysisManager instance
+
     """
     return DistributedAnalysisManager(binary_path)

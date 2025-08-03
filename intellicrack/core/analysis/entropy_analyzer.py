@@ -25,7 +25,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import math
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any
 
 
 class EntropyAnalyzer:
@@ -38,14 +38,14 @@ class EntropyAnalyzer:
         self.medium_entropy_threshold = 5.0
 
     def calculate_entropy(self, data: bytes) -> float:
-        """
-        Calculate Shannon entropy of binary data.
+        """Calculate Shannon entropy of binary data.
 
         Args:
             data: Binary data to analyze
 
         Returns:
             Entropy value (0.0 to 8.0)
+
         """
         if not data:
             return 0.0
@@ -64,15 +64,15 @@ class EntropyAnalyzer:
 
         return entropy
 
-    def analyze_entropy(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
-        """
-        Analyze entropy characteristics of a binary file.
+    def analyze_entropy(self, binary_path: str | Path) -> dict[str, Any]:
+        """Analyze entropy characteristics of a binary file.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             Entropy analysis results
+
         """
         try:
             with open(binary_path, "rb") as f:
@@ -84,7 +84,7 @@ class EntropyAnalyzer:
                 "overall_entropy": overall_entropy,
                 "file_size": len(data),
                 "entropy_classification": self._classify_entropy(overall_entropy),
-                "analysis_status": "completed"
+                "analysis_status": "completed",
             }
         except Exception as e:
             self.logger.error("Entropy analysis failed: %s", e)
@@ -94,7 +94,6 @@ class EntropyAnalyzer:
         """Classify entropy level."""
         if entropy >= self.high_entropy_threshold:
             return "high"
-        elif entropy >= self.medium_entropy_threshold:
+        if entropy >= self.medium_entropy_threshold:
             return "medium"
-        else:
-            return "low"
+        return "low"

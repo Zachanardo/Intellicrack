@@ -1,5 +1,4 @@
-"""
-AI Orchestrator for Intellicrack
+"""AI Orchestrator for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,10 +22,11 @@ import json
 import logging
 import queue
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -54,6 +54,7 @@ logger = get_logger(__name__)
 
 class AnalysisComplexity(Enum):
     """Defines the complexity level of analysis tasks."""
+
     SIMPLE = "simple"      # Use fast detection tools only
     MODERATE = "moderate"  # Use detection tools + basic LLM
     COMPLEX = "complex"    # Use full agentic reasoning
@@ -62,6 +63,7 @@ class AnalysisComplexity(Enum):
 
 class AITaskType(Enum):
     """Types of AI tasks in the system."""
+
     VULNERABILITY_SCAN = "vulnerability_scan"
     LICENSE_ANALYSIS = "license_analysis"
     PATTERN_RECOGNITION = "pattern_recognition"
@@ -82,28 +84,30 @@ class AITaskType(Enum):
 @dataclass
 class AITask:
     """Represents an AI task to be processed."""
+
     task_id: str
     task_type: AITaskType
     complexity: AnalysisComplexity
-    input_data: Dict[str, Any]
+    input_data: dict[str, Any]
     priority: int = 5  # 1-10, 10 being highest
     created_at: datetime = field(default_factory=datetime.now)
-    context: Dict[str, Any] = field(default_factory=dict)
-    callback: Optional[Callable] = None
+    context: dict[str, Any] = field(default_factory=dict)
+    callback: Callable | None = None
 
 
 @dataclass
 class AIResult:
     """Represents the result of an AI task."""
+
     task_id: str
     task_type: AITaskType
     success: bool
-    result_data: Dict[str, Any]
+    result_data: dict[str, Any]
     confidence: float
     processing_time: float
-    components_used: List[str]
+    components_used: list[str]
     completed_at: datetime = field(default_factory=datetime.now)
-    errors: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
 
 
 class AISharedContext:
@@ -123,7 +127,7 @@ class AISharedContext:
             "user_session": {},
             "workflow_state": {},
             "cached_analyses": {},
-            "global_patterns": []
+            "global_patterns": [],
         }
         self._lock = threading.RLock()
 
@@ -137,23 +141,23 @@ class AISharedContext:
         with self._lock:
             self._context[key] = value
 
-    def update(self, updates: Dict[str, Any]) -> None:
+    def update(self, updates: dict[str, Any]) -> None:
         """Update multiple values in shared context."""
         with self._lock:
             self._context.update(updates)
 
-    def get_analysis_cache(self, binary_hash: str) -> Optional[Dict]:
+    def get_analysis_cache(self, binary_hash: str) -> dict | None:
         """Get cached analysis results for a binary."""
         with self._lock:
             return self._context["cached_analyses"].get(binary_hash)
 
-    def cache_analysis(self, binary_hash: str, results: Dict) -> None:
+    def cache_analysis(self, binary_hash: str, results: dict) -> None:
         """Cache analysis results for a binary."""
         with self._lock:
             self._context["cached_analyses"][binary_hash] = {
                 "results": results,
                 "timestamp": datetime.now(),
-                "access_count": 0
+                "access_count": 0,
             }
 
     def clear_session(self) -> None:
@@ -184,13 +188,13 @@ class AIEventBus:
 
             self._subscribers[event_type].append({
                 "callback": callback,
-                "component": component_name
+                "component": component_name,
             })
 
         logger.debug("Component %s subscribed to %s",
                      component_name, event_type)
 
-    def emit(self, event_type: str, data: Dict[str, Any], source_component: str) -> None:
+    def emit(self, event_type: str, data: dict[str, Any], source_component: str) -> None:
         """Emit an event to all subscribers."""
         with self._lock:
             subscribers = self._subscribers.get(event_type, [])
@@ -203,14 +207,14 @@ class AIEventBus:
                 try:
                     # Call subscriber in a separate thread to avoid blocking
                     def call_subscriber(sub):
-                        """
-                        Call a subscriber's callback function with event data.
+                        """Call a subscriber's callback function with event data.
 
                         Args:
                             sub: Subscriber dictionary containing 'callback' and 'component' keys
 
                         Executes the subscriber's callback with the event data and source component.
                         Catches and logs any errors that occur during callback execution.
+
                         """
                         try:
                             sub["callback"](data, source_component)
@@ -236,8 +240,7 @@ class AIEventBus:
 
 
 class AIOrchestrator:
-    """
-    Central AI Orchestrator for Intellicrack
+    """Central AI Orchestrator for Intellicrack
 
     Coordinates between fast ML models and intelligent LLM agents,
     creating a truly agentic environment that leverages the strengths
@@ -347,7 +350,7 @@ class AIOrchestrator:
         self.event_bus.subscribe(
             "error_occurred", self._on_error_occurred, "orchestrator")
 
-    def _on_analysis_complete(self, data: Dict[str, Any], source: str):
+    def _on_analysis_complete(self, data: dict[str, Any], source: str):
         """Handle analysis completion events."""
         logger.info("Analysis complete from %s: %s",
                     source, data.get("task_id", "unknown"))
@@ -356,10 +359,10 @@ class AIOrchestrator:
         if "results" in data:
             self.shared_context.update({
                 f"last_analysis_{source}": data["results"],
-                f"last_analysis_time_{source}": datetime.now()
+                f"last_analysis_time_{source}": datetime.now(),
             })
 
-    def _on_ml_prediction_complete(self, data: Dict[str, Any], source: str):
+    def _on_ml_prediction_complete(self, data: dict[str, Any], source: str):
         """Handle ML prediction completion events."""
         logger.info("ML prediction complete from %s", source)
 
@@ -368,17 +371,17 @@ class AIOrchestrator:
         if confidence < 0.7:  # Low confidence, use LLM for verification
             self._escalate_to_complex_analysis(data)
 
-    def _on_model_loaded(self, data: Dict[str, Any], source: str):
+    def _on_model_loaded(self, data: dict[str, Any], source: str):
         """Handle model loading events."""
         logger.info("Model loaded in %s: %s", source,
                     data.get("model_name", "unknown"))
 
-    def _on_error_occurred(self, data: Dict[str, Any], source: str):
+    def _on_error_occurred(self, data: dict[str, Any], source: str):
         """Handle error events."""
         logger.error("Error in %s: %s", source,
                      data.get("error", "unknown error"))
 
-    def _escalate_to_complex_analysis(self, ml_data: Dict[str, Any]):
+    def _escalate_to_complex_analysis(self, ml_data: dict[str, Any]):
         """Escalate low-confidence ML results to complex LLM analysis."""
         if self.model_manager:
             logger.info(
@@ -390,8 +393,8 @@ class AIOrchestrator:
                 complexity=AnalysisComplexity.COMPLEX,
                 input_data={
                     "ml_results": ml_data,
-                    "escalation_reason": "low_confidence"
-                }
+                    "escalation_reason": "low_confidence",
+                },
             )
             self.submit_task(task)
 
@@ -528,7 +531,7 @@ class AIOrchestrator:
         except (OSError, ValueError, RuntimeError) as e:
             errors.append(str(e))
             logger.error("Error executing task %s: %s", task.task_id, e)
-            self.update_task_progress(task.task_id, 0, f"Error: {str(e)}")
+            self.update_task_progress(task.task_id, 0, f"Error: {e!s}")
 
         # Update progress to completion
         if success:
@@ -545,7 +548,7 @@ class AIOrchestrator:
             confidence=confidence,
             processing_time=processing_time,
             components_used=components_used,
-            errors=errors
+            errors=errors,
         )
 
         # Mark task as completed
@@ -560,7 +563,7 @@ class AIOrchestrator:
         self.event_bus.emit("task_complete", {
             "task_id": task.task_id,
             "success": success,
-            "result": result_data
+            "result": result_data,
         }, "orchestrator")
 
         # Call callback if provided
@@ -682,7 +685,7 @@ class AIOrchestrator:
                 # Prepare ML results for AI analysis
                 ml_results_for_ai = {
                     "confidence": confidence,
-                    "predictions": []
+                    "predictions": [],
                 }
 
                 # Include ML features if available
@@ -695,7 +698,7 @@ class AIOrchestrator:
 
                 # Run AI complex analysis
                 ai_complex_results = self.ai_assistant.analyze_binary_complex(
-                    binary_path, ml_results_for_ai
+                    binary_path, ml_results_for_ai,
                 )
 
                 if ai_complex_results and not ai_complex_results.get("error"):
@@ -728,7 +731,7 @@ class AIOrchestrator:
                 messages = [
                     LLMMessage(role="system", content=system_content),
                     LLMMessage(
-                        role="user", content=f"Analyze this data and provide reasoning: {json.dumps(task.input_data, indent=2)}")
+                        role="user", content=f"Analyze this data and provide reasoning: {json.dumps(task.input_data, indent=2)}"),
                 ]
 
                 # Get LLM response
@@ -740,7 +743,7 @@ class AIOrchestrator:
                         "confidence": 0.85,  # LLM reasoning typically high confidence
                         "model_used": response.model,
                         "reasoning_type": "llm_analysis",
-                        "recommendations": self._extract_recommendations(response.content)
+                        "recommendations": self._extract_recommendations(response.content),
                     }
 
                     result_data["reasoning"] = reasoning_results
@@ -775,7 +778,7 @@ class AIOrchestrator:
 
         return result_data, components_used, confidence
 
-    def _extract_recommendations(self, content: str) -> List[str]:
+    def _extract_recommendations(self, content: str) -> list[str]:
         """Extract actionable recommendations from LLM response."""
         recommendations = []
 
@@ -822,7 +825,7 @@ class AIOrchestrator:
                     "entry_point": generated_script.entry_point,
                     "dependencies": generated_script.dependencies,
                     "hooks": generated_script.hooks,
-                    "patches": generated_script.patches
+                    "patches": generated_script.patches,
                 }
                 confidence = generated_script.metadata.success_probability
 
@@ -872,7 +875,7 @@ class AIOrchestrator:
                     "entry_point": generated_script.entry_point,
                     "dependencies": generated_script.dependencies,
                     "hooks": generated_script.hooks,
-                    "patches": generated_script.patches
+                    "patches": generated_script.patches,
                 }
                 confidence = generated_script.metadata.success_probability
 
@@ -924,8 +927,8 @@ class AIOrchestrator:
                         "success_probability": frida_script.metadata.success_probability,
                         "entry_point": frida_script.entry_point,
                         "dependencies": frida_script.dependencies,
-                        "hooks": frida_script.hooks
-                    }
+                        "hooks": frida_script.hooks,
+                    },
                 }
                 confidences.append(frida_script.metadata.success_probability)
 
@@ -937,8 +940,8 @@ class AIOrchestrator:
                         "success_probability": ghidra_script.metadata.success_probability,
                         "entry_point": ghidra_script.entry_point,
                         "dependencies": ghidra_script.dependencies,
-                        "patches": ghidra_script.patches
-                    }
+                        "patches": ghidra_script.patches,
+                    },
                 }
                 confidences.append(ghidra_script.metadata.success_probability)
 
@@ -991,7 +994,7 @@ class AIOrchestrator:
                 "error": test_result.error,
                 "exit_code": test_result.exit_code,
                 "runtime_ms": test_result.runtime_ms,
-                "snapshot_id": snapshot_id
+                "snapshot_id": snapshot_id,
             }
 
             confidence = 0.9 if test_result.success else 0.3
@@ -1100,16 +1103,16 @@ class AIOrchestrator:
                     task.task_id, task.priority)
         return task.task_id
 
-    def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
+    def get_task_status(self, task_id: str) -> dict[str, Any] | None:
         """Get the status of a task."""
         if task_id in self.active_tasks:
             return {
                 "status": "active",
-                "task": self.active_tasks[task_id]
+                "task": self.active_tasks[task_id],
             }
         return None
 
-    def quick_vulnerability_scan(self, binary_path: str, callback: Optional[Callable] = None) -> str:
+    def quick_vulnerability_scan(self, binary_path: str, callback: Callable | None = None) -> str:
         """Quick vulnerability scan using fast ML models."""
         task = AITask(
             task_id=f"vuln_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
@@ -1117,11 +1120,11 @@ class AIOrchestrator:
             complexity=AnalysisComplexity.SIMPLE,
             input_data={"binary_path": binary_path},
             priority=7,
-            callback=callback
+            callback=callback,
         )
         return self.submit_task(task)
 
-    def complex_license_analysis(self, binary_path: str, callback: Optional[Callable] = None) -> str:
+    def complex_license_analysis(self, binary_path: str, callback: Callable | None = None) -> str:
         """Complex license analysis using LLM reasoning."""
         task = AITask(
             task_id=f"license_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
@@ -1129,11 +1132,11 @@ class AIOrchestrator:
             complexity=AnalysisComplexity.COMPLEX,
             input_data={"binary_path": binary_path},
             priority=8,
-            callback=callback
+            callback=callback,
         )
         return self.submit_task(task)
 
-    def comprehensive_analysis(self, binary_path: str, callback: Optional[Callable] = None) -> str:
+    def comprehensive_analysis(self, binary_path: str, callback: Callable | None = None) -> str:
         """Comprehensive analysis using all available AI resources."""
         task = AITask(
             task_id=f"comprehensive_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
@@ -1141,17 +1144,17 @@ class AIOrchestrator:
             complexity=AnalysisComplexity.CRITICAL,
             input_data={"binary_path": binary_path},
             priority=10,
-            callback=callback
+            callback=callback,
         )
         return self.submit_task(task)
 
-    def get_component_status(self) -> Dict[str, Any]:
+    def get_component_status(self) -> dict[str, Any]:
         """Get status of all AI components."""
         llm_status = {}
         if self.llm_manager:
             llm_status = {
                 "available_llms": self.llm_manager.get_available_llms(),
-                "active_llm": self.llm_manager.active_backend
+                "active_llm": self.llm_manager.active_backend,
             }
 
         return {
@@ -1163,40 +1166,40 @@ class AIOrchestrator:
             "event_bus_subscribers": len(self.event_bus._subscribers),
             "active_tasks": len(self.active_tasks),
             "queue_size": self.task_queue.qsize(),
-            "is_processing": self.is_running
+            "is_processing": self.is_running,
         }
 
     def register_progress_callback(self, task_id: str, callback: Callable[[str, int, str], None]) -> None:
-        """
-        Register a progress callback for a specific task.
+        """Register a progress callback for a specific task.
 
         Args:
             task_id: Task identifier
             callback: Function that takes (task_id, progress_percent, status_message)
+
         """
         self.progress_callbacks[task_id] = callback
         logger.debug(f"Registered progress callback for task {task_id}")
 
     def update_task_progress(self, task_id: str, progress: int, status: str = "") -> None:
-        """
-        Update progress for a specific task and notify callbacks.
+        """Update progress for a specific task and notify callbacks.
 
         Args:
             task_id: Task identifier
             progress: Progress percentage (0-100)
             status: Status message
+
         """
         self.task_progress[task_id] = {
             "progress": progress,
             "status": status,
-            "timestamp": datetime.now()
+            "timestamp": datetime.now(),
         }
 
         # Emit progress event
         self.event_bus.emit("task_progress", {
             "task_id": task_id,
             "progress": progress,
-            "status": status
+            "status": status,
         }, "orchestrator")
 
         # Call registered callback if exists
@@ -1209,19 +1212,19 @@ class AIOrchestrator:
 
         logger.debug(f"Task {task_id} progress: {progress}% - {status}")
 
-    def get_task_progress(self, task_id: str) -> Optional[Dict[str, Any]]:
-        """
-        Get current progress for a task.
+    def get_task_progress(self, task_id: str) -> dict[str, Any] | None:
+        """Get current progress for a task.
 
         Args:
             task_id: Task identifier
 
         Returns:
             Progress information or None if not found
+
         """
         return self.task_progress.get(task_id)
 
-    def get_all_task_progress(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_task_progress(self) -> dict[str, dict[str, Any]]:
         """Get progress information for all tasks."""
         return self.task_progress.copy()
 

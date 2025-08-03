@@ -3,7 +3,7 @@ import logging
 import os
 import threading
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -39,8 +39,7 @@ for various license verification protocols including FlexLM, HASP, Adobe, and ot
 
 
 class LicenseProtocolHandler(ABC):
-    """
-    Base class for license protocol handlers.
+    """Base class for license protocol handlers.
 
     This abstract base class defines the interface for implementing protocol-specific
     handlers for various license verification systems. Subclasses must implement
@@ -58,18 +57,18 @@ class LicenseProtocolHandler(ABC):
         Binding to all interfaces poses security risks and should be avoided in production.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """
-        Initialize the base LicenseProtocolHandler.
+    def __init__(self, config: dict[str, Any] | None = None):
+        """Initialize the base LicenseProtocolHandler.
 
         Sets up the running state, proxy thread, and logger for protocol handling.
 
         Args:
             config: Optional configuration dictionary for the protocol handler
+
         """
         self.config = config or {}
         self.running = False
-        self.proxy_thread: Optional[threading.Thread] = None
+        self.proxy_thread: threading.Thread | None = None
         self.logger = logging.getLogger(__name__)
 
         # Initialize protocol-specific configuration
@@ -81,8 +80,7 @@ class LicenseProtocolHandler(ABC):
         self.logger.info("Initialized %s protocol handler", self.__class__.__name__)
 
     def clear_data(self) -> None:
-        """
-        Clear any captured data.
+        """Clear any captured data.
 
         This method clears captured requests, responses, and any cached information.
         Subclasses should override this to clear protocol-specific data structures.
@@ -107,14 +105,14 @@ class LicenseProtocolHandler(ABC):
             self.logger.debug("Cleared client connections tracking")
 
     def start_proxy(self, port: int = 8080) -> bool:
-        """
-        Start the proxy server for intercepting license requests.
+        """Start the proxy server for intercepting license requests.
 
         Args:
             port: Port number to bind the proxy server to
 
         Returns:
             True if proxy started successfully, False if already running
+
         """
         if self.running:
             self.logger.warning("Proxy server is already running")
@@ -131,7 +129,7 @@ class LicenseProtocolHandler(ABC):
             target=self._run_proxy,
             args=(port,),
             daemon=True,
-            name=f"{self.__class__.__name__}Proxy"
+            name=f"{self.__class__.__name__}Proxy",
         )
         self.proxy_thread.start()
 
@@ -139,11 +137,11 @@ class LicenseProtocolHandler(ABC):
         return True
 
     def stop_proxy(self) -> bool:
-        """
-        Stop the proxy server.
+        """Stop the proxy server.
 
         Returns:
             True if proxy stopped successfully, False if not running
+
         """
         if not self.running:
             self.logger.warning("Proxy server is not running")
@@ -161,8 +159,7 @@ class LicenseProtocolHandler(ABC):
         return True
 
     def shutdown(self) -> None:
-        """
-        Shutdown the protocol handler completely.
+        """Shutdown the protocol handler completely.
 
         This method stops the proxy server and cleans up all resources.
         """
@@ -182,46 +179,45 @@ class LicenseProtocolHandler(ABC):
         self.logger.info("Protocol handler shutdown complete")
 
     def is_running(self) -> bool:
-        """
-        Check if the proxy server is currently running.
+        """Check if the proxy server is currently running.
 
         Returns:
             True if proxy is running, False otherwise
+
         """
         return self.running
 
-    def get_status(self) -> Dict[str, Any]:
-        """
-        Get current status of the protocol handler.
+    def get_status(self) -> dict[str, Any]:
+        """Get current status of the protocol handler.
 
         Returns:
             Dictionary containing handler status information
+
         """
         return {
             "protocol": self.__class__.__name__,
             "running": self.running,
             "port": self.port,
             "host": self.host,
-            "thread_active": self.proxy_thread.is_alive() if self.proxy_thread else False
+            "thread_active": self.proxy_thread.is_alive() if self.proxy_thread else False,
         }
 
     @abstractmethod
     def _run_proxy(self, port: int) -> None:
-        """
-        Run the proxy server - must be implemented by subclasses.
+        """Run the proxy server - must be implemented by subclasses.
 
         This method contains the main proxy server loop and should handle
         incoming connections according to the specific protocol requirements.
 
         Args:
             port: Port number to bind the proxy server to
+
         """
         raise NotImplementedError("Subclasses must implement _run_proxy")
 
     @abstractmethod
     def handle_connection(self, socket: Any, initial_data: bytes) -> None:
-        """
-        Handle a client connection with the specific protocol.
+        """Handle a client connection with the specific protocol.
 
         This method should process incoming connections and implement
         protocol-specific communication handling.
@@ -229,13 +225,13 @@ class LicenseProtocolHandler(ABC):
         Args:
             socket: Client socket connection
             initial_data: Initial data received from the client
+
         """
         raise NotImplementedError("Subclasses must implement handle_connection")
 
     @abstractmethod
     def generate_response(self, request_data: bytes) -> bytes:
-        """
-        Generate a protocol-specific response.
+        """Generate a protocol-specific response.
 
         This method should analyze the request data and generate an appropriate
         response according to the specific license protocol requirements.
@@ -245,16 +241,17 @@ class LicenseProtocolHandler(ABC):
 
         Returns:
             Protocol-specific response data
+
         """
         raise NotImplementedError("Subclasses must implement generate_response")
 
     def log_request(self, request_data: bytes, source: str = "unknown") -> None:
-        """
-        Log incoming request data for analysis.
+        """Log incoming request data for analysis.
 
         Args:
             request_data: Raw request data to log
             source: Source identifier for the request
+
         """
         self.logger.debug("Request from %s: %d bytes", source, len(request_data))
 
@@ -264,12 +261,12 @@ class LicenseProtocolHandler(ABC):
             self.logger.debug("Request hex: %s", hex_data)
 
     def log_response(self, response_data: bytes, destination: str = "unknown") -> None:
-        """
-        Log outgoing response data for analysis.
+        """Log outgoing response data for analysis.
 
         Args:
             response_data: Raw response data to log
             destination: Destination identifier for the response
+
         """
         self.logger.debug("Response to %s: %d bytes", destination, len(response_data))
 
@@ -280,14 +277,13 @@ class LicenseProtocolHandler(ABC):
 
 
 class FlexLMProtocolHandler(LicenseProtocolHandler):
-    """
-    FlexLM license protocol handler implementation.
+    """FlexLM license protocol handler implementation.
 
     Handles FlexNet (FlexLM) license server protocol communication
     for intercepting and emulating FlexLM license verification.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize FlexLM protocol handler."""
         super().__init__(config)
         self.flexlm_port = self.config.get("flexlm_port", 27000)
@@ -311,11 +307,11 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
         self.logger.debug("Cleared FlexLM protocol data")
 
     def _run_proxy(self, port: int) -> None:
-        """
-        Run FlexLM proxy server.
+        """Run FlexLM proxy server.
 
         Args:
             port: Port to bind the proxy server to
+
         """
         import socket
 
@@ -343,11 +339,11 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
                     client_thread = threading.Thread(
                         target=self._handle_flexlm_client,
                         args=(client_socket, client_addr),
-                        daemon=True
+                        daemon=True,
                     )
                     client_thread.start()
 
-                except socket.timeout as e:
+                except TimeoutError as e:
                     logger.error("socket.timeout in license_protocol_handler: %s", e)
                     continue  # Check self.running and continue
                 except Exception as e:
@@ -359,12 +355,12 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             self.logger.info("FlexLM proxy stopped")
 
     def handle_connection(self, socket: Any, initial_data: bytes) -> None:
-        """
-        Handle FlexLM client connection.
+        """Handle FlexLM client connection.
 
         Args:
             socket: Client socket
             initial_data: Initial request data
+
         """
         self.log_request(initial_data, "FlexLM client")
 
@@ -378,12 +374,12 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             self.logger.error("Failed to send FlexLM response: %s", e)
 
     def _handle_flexlm_client(self, client_socket, client_addr):
-        """
-        Handle individual FlexLM client connection.
+        """Handle individual FlexLM client connection.
 
         Args:
             client_socket: Client socket connection
             client_addr: Client address tuple (ip, port)
+
         """
         try:
             # Receive initial data
@@ -396,14 +392,14 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             client_socket.close()
 
     def generate_response(self, request_data: bytes) -> bytes:
-        """
-        Generate FlexLM protocol response.
+        """Generate FlexLM protocol response.
 
         Args:
             request_data: FlexLM request data
 
         Returns:
             FlexLM response data
+
         """
         import time
 
@@ -411,7 +407,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
         self.captured_requests.append({
             "timestamp": time.time(),
             "data": request_data,
-            "hex": request_data.hex()
+            "hex": request_data.hex(),
         })
 
         # Parse FlexLM request to determine type
@@ -425,9 +421,9 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
         if request_str.startswith("HELLO"):
             # Initial handshake - use configured vendor daemon port
             major, minor = self.flexlm_version.split(".")[:2]
-            return f"HELLO {major} {minor} {self.vendor_daemon_port}\n".encode("utf-8")
+            return f"HELLO {major} {minor} {self.vendor_daemon_port}\n".encode()
 
-        elif request_str.startswith("GETLIC"):
+        if request_str.startswith("GETLIC"):
             # License checkout request
             # Format: GETLIC feature version user host display
             parts = request_str.split()
@@ -461,14 +457,13 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
 
 
 class HASPProtocolHandler(LicenseProtocolHandler):
-    """
-    HASP/Sentinel license protocol handler implementation.
+    """HASP/Sentinel license protocol handler implementation.
 
     Handles HASP (Hardware Against Software Piracy) / Sentinel
     license verification protocol communication.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize HASP protocol handler."""
         super().__init__(config)
         self.hasp_port = self.config.get("hasp_port", 1947)
@@ -484,7 +479,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         self.hasp_version = self.config.get("hasp_version", "7.50")
         self.hasp_vendor_id = self.config.get("hasp_vendor_id", 0x1234)
         self.license_features = self.config.get("license_features", [
-            "PROFESSIONAL", "ENTERPRISE", "DEVELOPER", "RUNTIME"
+            "PROFESSIONAL", "ENTERPRISE", "DEVELOPER", "RUNTIME",
         ])
         self.hasp_emulator_version = self.config.get("hasp_emulator_version", "HASP_EMU_v2.1")
 
@@ -495,11 +490,11 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         self.logger.debug("Cleared HASP protocol data")
 
     def _run_proxy(self, port: int) -> None:
-        """
-        Run HASP proxy server.
+        """Run HASP proxy server.
 
         Args:
             port: Port to bind the proxy server to
+
         """
         import socket
 
@@ -527,11 +522,11 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                     client_thread = threading.Thread(
                         target=self._handle_hasp_client,  # pylint: disable=no-member
                         args=(client_socket, client_addr),
-                        daemon=True
+                        daemon=True,
                     )
                     client_thread.start()
 
-                except socket.timeout as e:
+                except TimeoutError as e:
                     logger.error("socket.timeout in license_protocol_handler: %s", e)
                     continue
                 except Exception as e:
@@ -543,12 +538,12 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             self.logger.info("HASP proxy stopped")
 
     def handle_connection(self, socket: Any, initial_data: bytes) -> None:
-        """
-        Handle HASP client connection.
+        """Handle HASP client connection.
 
         Args:
             socket: Client socket
             initial_data: Initial request data
+
         """
         self.log_request(initial_data, "HASP client")
 
@@ -561,12 +556,12 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             self.logger.error("Failed to send HASP response: %s", e)
 
     def _handle_hasp_client(self, client_socket, client_addr):
-        """
-        Handle individual HASP client connection.
+        """Handle individual HASP client connection.
 
         Args:
             client_socket: Client socket connection
             client_addr: Client address tuple (ip, port)
+
         """
         try:
             # Receive initial data
@@ -579,14 +574,14 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             client_socket.close()
 
     def generate_response(self, request_data: bytes) -> bytes:
-        """
-        Generate HASP protocol response.
+        """Generate HASP protocol response.
 
         Args:
             request_data: HASP request data
 
         Returns:
             HASP response data
+
         """
         import struct
         import time
@@ -595,7 +590,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         self.captured_requests.append({
             "timestamp": time.time(),
             "data": request_data,
-            "hex": request_data.hex()
+            "hex": request_data.hex(),
         })
 
         # HASP protocol uses binary format
@@ -617,11 +612,11 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                 self.session_data["handle"] = handle
                 return response
 
-            elif command_id == 0x02:  # HASP_LOGOUT
+            if command_id == 0x02:  # HASP_LOGOUT
                 # Logout response: success
                 return struct.pack("<I", 0x00000000)
 
-            elif command_id == 0x03:  # HASP_ENCRYPT
+            if command_id == 0x03:  # HASP_ENCRYPT
                 # Encryption response: return encrypted data using AES-CTR
                 if len(request_data) > 8:
                     data_to_encrypt = request_data[8:]
@@ -641,7 +636,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         cipher = Cipher(
                             algorithms.AES(self._hasp_aes_key),
                             modes.CTR(self._hasp_nonce),
-                            backend=default_backend()
+                            backend=default_backend(),
                         )
                         encryptor = cipher.encryptor()
                         encrypted = encryptor.update(data_to_encrypt) + encryptor.finalize()
@@ -654,7 +649,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         return struct.pack("<I", 0x00000000) + encrypted
                 return struct.pack("<I", 0x00000000)
 
-            elif command_id == 0x04:  # HASP_DECRYPT
+            if command_id == 0x04:  # HASP_DECRYPT
                 # Decryption response: return decrypted data using AES-CTR
                 if len(request_data) > 8:
                     data_to_decrypt = request_data[8:]
@@ -668,7 +663,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                             cipher = Cipher(
                                 algorithms.AES(self._hasp_aes_key),
                                 modes.CTR(self._hasp_nonce),
-                                backend=default_backend()
+                                backend=default_backend(),
                             )
                             decryptor = cipher.decryptor()
                             decrypted = decryptor.update(data_to_decrypt) + decryptor.finalize()
@@ -685,11 +680,11 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         return struct.pack("<I", 0x00000000) + decrypted
                 return struct.pack("<I", 0x00000000)
 
-            elif command_id == 0x05:  # HASP_GET_SIZE
+            if command_id == 0x05:  # HASP_GET_SIZE
                 # Return size of available memory from configuration
                 return struct.pack("<II", 0x00000000, self.hasp_memory_size)  # Success + configured size
 
-            elif command_id == 0x06:  # HASP_READ
+            if command_id == 0x06:  # HASP_READ
                 # Read memory response
                 # Parse read request to get offset and size
                 try:
@@ -759,6 +754,6 @@ except ImportError as e:
     GenericProtocolHandler = None
 
 # Export main classes
-__all__ = ["LicenseProtocolHandler", "FlexLMProtocolHandler", "HASPProtocolHandler"]
+__all__ = ["FlexLMProtocolHandler", "HASPProtocolHandler", "LicenseProtocolHandler"]
 if GenericProtocolHandler:
     __all__.append("GenericProtocolHandler")

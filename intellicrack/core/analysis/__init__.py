@@ -122,5 +122,5 @@ __all__ = [
     "MultiFormatBinaryAnalyzer",
     "CFGExplorer",
     "IncrementalAnalysisManager",
-    "SimilaritySearcher"
+    "SimilaritySearcher",
 ]

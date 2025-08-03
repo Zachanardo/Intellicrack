@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -23,7 +22,7 @@ This module provides reusable event handling patterns to reduce
 code duplication across dialog implementations.
 """
 
-from typing import Callable, Dict, Optional
+from collections.abc import Callable
 
 from PyQt6.QtCore import QThread, QTimer
 from PyQt6.QtGui import QCloseEvent
@@ -39,10 +38,9 @@ class DialogEventHandler:
         condition_check: Callable[[], bool],
         title: str,
         message: str,
-        cleanup_action: Optional[Callable] = None,
+        cleanup_action: Callable | None = None,
     ) -> Callable[[QCloseEvent], None]:
-        """
-        Create a close event handler with confirmation dialog.
+        """Create a close event handler with confirmation dialog.
 
         Args:
             dialog: The dialog instance
@@ -53,12 +51,13 @@ class DialogEventHandler:
 
         Returns:
             Close event handler function
+
         """
 
         def close_event_handler(event: QCloseEvent):
             if condition_check():
                 reply = QMessageBox.question(
-                    dialog, title, message, QMessageBox.Yes | QMessageBox.No
+                    dialog, title, message, QMessageBox.Yes | QMessageBox.No,
                 )
                 if reply == QMessageBox.Yes:
                     if cleanup_action:
@@ -72,13 +71,13 @@ class DialogEventHandler:
         return close_event_handler
 
     @staticmethod
-    def connect_thread_signals(thread: QThread, signal_connections: Dict[str, Callable]):
-        """
-        Connect multiple thread signals to their handlers.
+    def connect_thread_signals(thread: QThread, signal_connections: dict[str, Callable]):
+        """Connect multiple thread signals to their handlers.
 
         Args:
             thread: The thread instance
             signal_connections: Dict mapping signal names to handler functions
+
         """
         for signal_name, handler in signal_connections.items():
             signal = getattr(thread, signal_name, None)
@@ -89,11 +88,10 @@ class DialogEventHandler:
     def create_context_menu(
         parent: QWidget,
         position_widget: QWidget,
-        actions: Dict[str, Callable],
-        condition_check: Optional[Callable] = None,
+        actions: dict[str, Callable],
+        condition_check: Callable | None = None,
     ) -> Callable:
-        """
-        Create a context menu handler.
+        """Create a context menu handler.
 
         Args:
             parent: Parent widget for the menu
@@ -103,6 +101,7 @@ class DialogEventHandler:
 
         Returns:
             Context menu handler function
+
         """
 
         def context_menu_handler(position):
@@ -120,8 +119,7 @@ class DialogEventHandler:
 
     @staticmethod
     def create_periodic_timer(interval_ms: int, callback: Callable) -> QTimer:
-        """
-        Create a timer that calls a function periodically.
+        """Create a timer that calls a function periodically.
 
         Args:
             interval_ms: Interval in milliseconds
@@ -129,6 +127,7 @@ class DialogEventHandler:
 
         Returns:
             Configured QTimer
+
         """
         timer = QTimer()
         timer.timeout.connect(callback)
@@ -137,12 +136,12 @@ class DialogEventHandler:
 
     @staticmethod
     def cleanup_thread(thread: QThread, timeout_seconds: int = 2):
-        """
-        Safely cleanup a thread.
+        """Safely cleanup a thread.
 
         Args:
             thread: Thread to cleanup
             timeout_seconds: Timeout for waiting
+
         """
         if thread and thread.isRunning():
             thread.quit()
@@ -158,22 +157,22 @@ class UIStateManager:
         """Initialize the UIStateManager with default values."""
         self.state_mappings = {}
 
-    def register_state_mapping(self, state_name: str, widget_states: Dict[QWidget, bool]):
-        """
-        Register a state mapping for widgets.
+    def register_state_mapping(self, state_name: str, widget_states: dict[QWidget, bool]):
+        """Register a state mapping for widgets.
 
         Args:
             state_name: Name of the state
             widget_states: Dict mapping widgets to their enabled state
+
         """
         self.state_mappings[state_name] = widget_states
 
     def apply_state(self, state_name: str):
-        """
-        Apply a registered state to all widgets.
+        """Apply a registered state to all widgets.
 
         Args:
             state_name: Name of the state to apply
+
         """
         if state_name in self.state_mappings:
             for widget, enabled in self.state_mappings[state_name].items():
@@ -181,14 +180,14 @@ class UIStateManager:
 
 
 def format_file_size(size_bytes: int) -> str:
-    """
-    Format file size in human-readable format.
+    """Format file size in human-readable format.
 
     Args:
         size_bytes: Size in bytes
 
     Returns:
         Formatted size string
+
     """
     if size_bytes == 0:
         return "0 B"
@@ -204,8 +203,7 @@ def format_file_size(size_bytes: int) -> str:
 
 
 def create_colored_message(message: str, message_type: str = "info") -> str:
-    """
-    Create a colored message with appropriate formatting.
+    """Create a colored message with appropriate formatting.
 
     Args:
         message: The message text
@@ -213,6 +211,7 @@ def create_colored_message(message: str, message_type: str = "info") -> str:
 
     Returns:
         Formatted message string
+
     """
     colors = {
         "info": "#0066cc",
@@ -226,4 +225,4 @@ def create_colored_message(message: str, message_type: str = "info") -> str:
     return f'<span style="color: {color};">{message}</span>'
 
 
-__all__ = ["DialogEventHandler", "UIStateManager", "format_file_size", "create_colored_message"]
+__all__ = ["DialogEventHandler", "UIStateManager", "create_colored_message", "format_file_size"]

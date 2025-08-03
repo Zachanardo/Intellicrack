@@ -1,5 +1,4 @@
-"""
-Protection detection and analysis utilities for Intellicrack
+"""Protection detection and analysis utilities for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 

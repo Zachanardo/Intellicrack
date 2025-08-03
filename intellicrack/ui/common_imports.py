@@ -347,7 +347,7 @@ try:
         "create_wizard_with_pages", "create_wizard_page", "configure_abstract_item_view",
         "configure_abstract_scroll_area", "create_main_window_with_statusbar",
         "create_text_browser_with_html", "create_standard_dialog_buttons",
-        "create_spacer_item"
+        "create_spacer_item",
     ]
 
 except ImportError as e:
@@ -487,6 +487,7 @@ except ImportError as e:
 
         Returns:
             tuple: Default values (0, 0, '') representing key code, modifiers, and text
+
         """
         return (0, 0, "")
     def handle_mouse_event(event):
@@ -497,6 +498,7 @@ except ImportError as e:
 
         Returns:
             tuple: Default values (0, 0, 0, 0) representing x, y, button, and buttons state
+
         """
         return (0, 0, 0, 0)
     def handle_paint_event(widget, event, func=None):
@@ -551,6 +553,7 @@ except ImportError as e:
 
         Returns:
             tuple: Default values (0, 0, 0, 0) for new width/height and old width/height
+
         """
         return (0, 0, 0, 0)
     def create_standard_action(text, parent=None, slot=None, shortcut=None):
@@ -668,6 +671,7 @@ except ImportError as e:
 
         Returns:
             tuple: Default screen resolution (1920, 1080)
+
         """
         return (1920, 1080)
     def create_frame_with_style(style=None, shadow=None):
@@ -701,6 +705,7 @@ except ImportError as e:
 
                 Returns:
                     int: Sum of line width and mid-line width
+
                 """
                 return self.line_width + self.mid_line_width
 
@@ -716,6 +721,7 @@ except ImportError as e:
 
         Returns:
             tuple: Empty string and False (no input provided)
+
         """
         return ("", False)
     def create_context_menu(actions, parent=None):
@@ -739,7 +745,6 @@ except ImportError as e:
                 self.visible = True
                 # In a real implementation, this would show the menu
                 # and return the selected action
-                return None
 
             def popup(self, pos):
                 self.exec_(pos)
@@ -761,6 +766,7 @@ except ImportError as e:
 
         Returns:
             list: Empty list (no buttons created in fallback)
+
         """
         return []
     def create_scroll_area_with_widget(widget):
@@ -988,6 +994,7 @@ except ImportError as e:
 
         Returns:
             The same view object passed in
+
         """
         return view
 
@@ -1001,19 +1008,19 @@ except ImportError as e:
 
         Returns:
             The same scroll area object passed in
+
         """
         return area
     # Create dummy classes for missing imports
     class MockQtClass:
-        """
-        Mock class to stand in for PyQt5 classes when PyQt5 is not available.
+        """Mock class to stand in for PyQt5 classes when PyQt5 is not available.
 
         Provides a no-op implementation that allows the code to run without
         PyQt5 installed, returning itself for any attribute access or calls.
         """
+
         def __init__(self, *args, **kwargs):
             """Initialize mock Qt class with any arguments."""
-            pass
         def __call__(self, *args, **kwargs):
             return self
         def __getattr__(self, name):
@@ -1092,8 +1099,7 @@ except ImportError as e:
     QWizardPage = MockQtClass
 
     def pyqtSignal(*args, **kwargs):  # pylint: disable=unused-argument
-        """
-        Mock implementation of PyQt5's pyqtSignal when PyQt5 is not available.
+        """Mock implementation of PyQt5's pyqtSignal when PyQt5 is not available.
 
         Args:
             *args: Signal type arguments (ignored)
@@ -1101,5 +1107,6 @@ except ImportError as e:
 
         Returns:
             lambda: A no-op function that can be used as a signal attribute
+
         """
         return lambda: None

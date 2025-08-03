@@ -1,5 +1,4 @@
-"""
-Code Modification Dialog with Diff Viewer
+"""Code Modification Dialog with Diff Viewer
 
 Copyright (C) 2025 Zachary Flint
 
@@ -20,7 +19,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from pathlib import Path
-from typing import List
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
@@ -94,9 +92,7 @@ class DiffSyntaxHighlighter(QSyntaxHighlighter):
         if not text:
             return
 
-        if text.startswith("+++") or text.startswith("---"):
-            self.setFormat(0, len(text), self.formats["header"])
-        elif text.startswith("@@"):
+        if text.startswith("+++") or text.startswith("---") or text.startswith("@@"):
             self.setFormat(0, len(text), self.formats["header"])
         elif text.startswith("+"):
             self.setFormat(0, len(text), self.formats["added"])
@@ -291,7 +287,7 @@ class CodeModificationDialog(QDialog):
 
         self.changes_tree = QTreeWidget()
         self.changes_tree.setHeaderLabels([
-            "Change", "File", "Type", "Confidence", "Status"
+            "Change", "File", "Type", "Confidence", "Status",
         ])
         self.changes_tree.setAlternatingRowColors(True)
         self.changes_tree.itemSelectionChanged.connect(self.on_change_selected)
@@ -413,7 +409,7 @@ class CodeModificationDialog(QDialog):
         # History tree
         self.history_tree = QTreeWidget()
         self.history_tree.setHeaderLabels([
-            "Change ID", "File", "Description", "Type", "Status", "Confidence", "Date"
+            "Change ID", "File", "Description", "Type", "Status", "Confidence", "Date",
         ])
 
         header = self.history_tree.header()
@@ -467,7 +463,7 @@ class CodeModificationDialog(QDialog):
         """Add a target file to the request."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Select Target File", self.project_root,
-            "Python Files (*.py);;JavaScript Files (*.js);;All Files (*)"
+            "Python Files (*.py);;JavaScript Files (*.js);;All Files (*)",
         )
 
         if file_path:
@@ -526,7 +522,7 @@ class CodeModificationDialog(QDialog):
             description=description,
             target_files=target_files,
             requirements=requirements,
-            constraints=constraints
+            constraints=constraints,
         )
 
         # Start analysis in background
@@ -540,7 +536,7 @@ class CodeModificationDialog(QDialog):
         self.analysis_thread.error_occurred.connect(self.on_analysis_error)
         self.analysis_thread.start()
 
-    def on_analysis_complete(self, changes: List[CodeChange]):
+    def on_analysis_complete(self, changes: list[CodeChange]):
         """Handle completion of analysis."""
         self.analyze_btn.setEnabled(True)
         self.progress_bar.setVisible(False)
@@ -630,7 +626,7 @@ class CodeModificationDialog(QDialog):
         unified_diff = self.modifier.diff_generator.generate_unified_diff(
             change.original_code,
             change.modified_code,
-            Path(change.file_path).name
+            Path(change.file_path).name,
         )
         self.unified_diff.setPlainText(unified_diff)
 
@@ -650,7 +646,7 @@ class CodeModificationDialog(QDialog):
             item = self.changes_tree.topLevelItem(i)
             item.setCheckState(0, Qt.Unchecked)
 
-    def get_selected_change_ids(self) -> List[str]:
+    def get_selected_change_ids(self) -> list[str]:
         """Get IDs of selected changes."""
         change_ids = []
         for i in range(self.changes_tree.topLevelItemCount()):
@@ -673,7 +669,7 @@ class CodeModificationDialog(QDialog):
             self, "Confirm Application",
             f"Apply {len(change_ids)} selected changes?\n\n"
             "This will modify the files. Backups will be created.",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         )
 
         if reply != QMessageBox.Yes:
@@ -691,14 +687,14 @@ class CodeModificationDialog(QDialog):
                 QMessageBox.information(
                     self, "Success",
                     f"Successfully applied {applied} changes.\n\n"
-                    f"Backups created: {len(results['backups_created'])}"
+                    f"Backups created: {len(results['backups_created'])}",
                 )
             else:
                 error_details = "\n".join(results["errors"])
                 QMessageBox.warning(
                     self, "Partial Success",
                     f"Applied {applied} changes, {failed} failed.\n\n"
-                    f"Errors:\n{error_details}"
+                    f"Errors:\n{error_details}",
                 )
 
             # Refresh display

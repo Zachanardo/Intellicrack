@@ -1,5 +1,4 @@
-"""
-Intelligent Code Modification System
+"""Intelligent Code Modification System
 
 Copyright (C) 2025 Zachary Flint
 
@@ -27,7 +26,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..utils.logger import get_logger
 from .llm_backends import LLMManager, LLMMessage
@@ -37,6 +36,7 @@ logger = get_logger(__name__)
 
 class ModificationType(Enum):
     """Types of code modifications."""
+
     FUNCTION_CREATION = "function_creation"
     FUNCTION_MODIFICATION = "function_modification"
     CLASS_CREATION = "class_creation"
@@ -52,6 +52,7 @@ class ModificationType(Enum):
 
 class ChangeStatus(Enum):
     """Status of a code change."""
+
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
@@ -62,6 +63,7 @@ class ChangeStatus(Enum):
 @dataclass
 class CodeChange:
     """Represents a single code change."""
+
     change_id: str
     file_path: str
     modification_type: ModificationType
@@ -74,20 +76,21 @@ class CodeChange:
     reasoning: str
     status: ChangeStatus = ChangeStatus.PENDING
     created_at: datetime = field(default_factory=datetime.now)
-    applied_at: Optional[datetime] = None
-    dependencies: List[str] = field(default_factory=list)
-    impact_analysis: Dict[str, Any] = field(default_factory=dict)
+    applied_at: datetime | None = None
+    dependencies: list[str] = field(default_factory=list)
+    impact_analysis: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class ModificationRequest:
     """Request for code modification."""
+
     request_id: str
     description: str
-    target_files: List[str]
-    context_files: List[str]
-    requirements: List[str]
-    constraints: List[str]
+    target_files: list[str]
+    context_files: list[str]
+    requirements: list[str]
+    constraints: list[str]
     created_at: datetime = field(default_factory=datetime.now)
     priority: str = "medium"
 
@@ -95,15 +98,16 @@ class ModificationRequest:
 @dataclass
 class CodeContext:
     """Context information for code modification."""
+
     file_path: str
     content: str
     language: str
-    imports: List[str]
-    classes: List[str]
-    functions: List[str]
-    variables: List[str]
-    dependencies: List[str]
-    ast_info: Dict[str, Any]
+    imports: list[str]
+    classes: list[str]
+    functions: list[str]
+    variables: list[str]
+    dependencies: list[str]
+    ast_info: dict[str, Any]
 
 
 class CodeAnalyzer:
@@ -123,7 +127,7 @@ class CodeAnalyzer:
             ".cpp": "cpp",
             ".c": "c",
             ".h": "c",
-            ".hpp": "cpp"
+            ".hpp": "cpp",
         }
 
     def analyze_file(self, file_path: str) -> CodeContext:
@@ -142,7 +146,7 @@ class CodeAnalyzer:
 
             # Fallback to direct file reading if AIFileTools not available
             if content is None:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read()
 
             file_ext = Path(file_path).suffix.lower()
@@ -150,10 +154,9 @@ class CodeAnalyzer:
 
             if language == "python":
                 return self._analyze_python_file(file_path, content)
-            elif language in ["javascript", "typescript"]:
+            if language in ["javascript", "typescript"]:
                 return self._analyze_js_file(file_path, content)
-            else:
-                return self._analyze_generic_file(file_path, content, language)
+            return self._analyze_generic_file(file_path, content, language)
 
         except Exception as e:
             logger.error(f"Error analyzing file {file_path}: {e}")
@@ -166,7 +169,7 @@ class CodeAnalyzer:
                 functions=[],
                 variables=[],
                 dependencies=[],
-                ast_info={}
+                ast_info={},
             )
 
     def _analyze_python_file(self, file_path: str, content: str) -> CodeContext:
@@ -198,7 +201,7 @@ class CodeAnalyzer:
 
             ast_info = {
                 "node_count": len(list(ast.walk(tree))),
-                "complexity": self._calculate_complexity(tree)
+                "complexity": self._calculate_complexity(tree),
             }
 
         except SyntaxError as e:
@@ -213,7 +216,7 @@ class CodeAnalyzer:
             functions=list(set(functions)),
             variables=list(set(variables)),
             dependencies=self._extract_dependencies(imports),
-            ast_info=ast_info
+            ast_info=ast_info,
         )
 
     def _analyze_js_file(self, file_path: str, content: str) -> CodeContext:
@@ -245,7 +248,7 @@ class CodeAnalyzer:
             functions=list(set(functions)),
             variables=list(set(variables)),
             dependencies=self._extract_dependencies(imports),
-            ast_info={"estimated_complexity": len(functions) + len(classes)}
+            ast_info={"estimated_complexity": len(functions) + len(classes)},
         )
 
     def _analyze_generic_file(self, file_path: str, content: str, language: str) -> CodeContext:
@@ -254,7 +257,7 @@ class CodeAnalyzer:
         function_patterns = {
             "c": r"(?:\w+\s+)*(\w+)\s*\([^)]*\)\s*\{",
             "cpp": r"(?:\w+\s+)*(\w+)\s*\([^)]*\)\s*\{",
-            "java": r"(?:public|private|protected)?\s*(?:static)?\s*\w+\s+(\w+)\s*\([^)]*\)"
+            "java": r"(?:public|private|protected)?\s*(?:static)?\s*\w+\s+(\w+)\s*\([^)]*\)",
         }
 
         functions = []
@@ -271,7 +274,7 @@ class CodeAnalyzer:
             functions=list(set(functions)),
             variables=[],
             dependencies=[],
-            ast_info={}
+            ast_info={},
         )
 
     def _calculate_complexity(self, tree: ast.AST) -> int:
@@ -279,21 +282,17 @@ class CodeAnalyzer:
         complexity = 1  # Base complexity
 
         for node in ast.walk(tree):
-            if isinstance(node, (ast.If, ast.While, ast.For, ast.AsyncFor)):
-                complexity += 1
-            elif isinstance(node, ast.ExceptHandler):
-                complexity += 1
-            elif isinstance(node, (ast.And, ast.Or)):
+            if isinstance(node, (ast.If, ast.While, ast.For, ast.AsyncFor)) or isinstance(node, ast.ExceptHandler) or isinstance(node, (ast.And, ast.Or)):
                 complexity += 1
 
         return complexity
 
-    def _extract_dependencies(self, imports: List[str]) -> List[str]:
+    def _extract_dependencies(self, imports: list[str]) -> list[str]:
         """Extract external dependencies from imports."""
         # Filter out standard library and relative imports
         standard_libs = {
             "os", "sys", "json", "time", "datetime", "pathlib", "re",
-            "collections", "itertools", "functools", "typing", "enum"
+            "collections", "itertools", "functools", "typing", "enum",
         }
 
         dependencies = []
@@ -323,12 +322,12 @@ class DiffGenerator:
             modified_lines,
             fromfile=f"a/{filename}",
             tofile=f"b/{filename}",
-            lineterm=""
+            lineterm="",
         )
 
         return "".join(diff)
 
-    def generate_side_by_side_diff(self, original: str, modified: str) -> Dict[str, Any]:
+    def generate_side_by_side_diff(self, original: str, modified: str) -> dict[str, Any]:
         """Generate side-by-side diff data."""
         original_lines = original.splitlines()
         modified_lines = modified.splitlines()
@@ -337,7 +336,7 @@ class DiffGenerator:
         diff_data = {
             "original_lines": [],
             "modified_lines": [],
-            "changes": []
+            "changes": [],
         }
 
         for tag, i1, i2, j1, j2 in differ.get_opcodes():
@@ -346,12 +345,12 @@ class DiffGenerator:
                     diff_data["original_lines"].append({
                         "line_number": i + 1,
                         "content": original_lines[i],
-                        "type": "unchanged"
+                        "type": "unchanged",
                     })
                     diff_data["modified_lines"].append({
                         "line_number": j1 + (i - i1) + 1,
                         "content": original_lines[i],
-                        "type": "unchanged"
+                        "type": "unchanged",
                     })
 
             elif tag == "delete":
@@ -359,7 +358,7 @@ class DiffGenerator:
                     diff_data["original_lines"].append({
                         "line_number": i + 1,
                         "content": original_lines[i],
-                        "type": "deleted"
+                        "type": "deleted",
                     })
 
             elif tag == "insert":
@@ -367,7 +366,7 @@ class DiffGenerator:
                     diff_data["modified_lines"].append({
                         "line_number": j + 1,
                         "content": modified_lines[j],
-                        "type": "added"
+                        "type": "added",
                     })
 
             elif tag == "replace":
@@ -375,13 +374,13 @@ class DiffGenerator:
                     diff_data["original_lines"].append({
                         "line_number": i + 1,
                         "content": original_lines[i],
-                        "type": "modified"
+                        "type": "modified",
                     })
                 for j in range(j1, j2):
                     diff_data["modified_lines"].append({
                         "line_number": j + 1,
                         "content": modified_lines[j],
-                        "type": "modified"
+                        "type": "modified",
                     })
 
             if tag != "equal":
@@ -390,12 +389,12 @@ class DiffGenerator:
                     "original_start": i1,
                     "original_end": i2,
                     "modified_start": j1,
-                    "modified_end": j2
+                    "modified_end": j2,
                 })
 
         return diff_data
 
-    def get_change_summary(self, original: str, modified: str) -> Dict[str, int]:
+    def get_change_summary(self, original: str, modified: str) -> dict[str, int]:
         """Get summary of changes."""
         original_lines = original.splitlines()
         modified_lines = modified.splitlines()
@@ -418,26 +417,27 @@ class DiffGenerator:
             "additions": additions,
             "deletions": deletions,
             "modifications": modifications,
-            "total_changes": additions + deletions + modifications
+            "total_changes": additions + deletions + modifications,
         }
 
 
 class IntelligentCodeModifier:
     """Main class for intelligent code modification."""
 
-    def __init__(self, llm_manager: Optional[LLMManager] = None):
+    def __init__(self, llm_manager: LLMManager | None = None):
         """Initialize the intelligent code modifier.
 
         Args:
             llm_manager: Optional LLM manager for AI-powered code modifications
+
         """
         self.llm_manager = llm_manager or LLMManager()
         self.analyzer = CodeAnalyzer()
         self.diff_generator = DiffGenerator()
 
-        self.pending_changes: Dict[str, CodeChange] = {}
-        self.modification_history: List[CodeChange] = []
-        self.project_context: Dict[str, CodeContext] = {}
+        self.pending_changes: dict[str, CodeChange] = {}
+        self.modification_history: list[CodeChange] = []
+        self.project_context: dict[str, CodeContext] = {}
 
         # Configuration
         self.max_context_files = 10
@@ -447,7 +447,7 @@ class IntelligentCodeModifier:
         self.backup_directory.mkdir(parents=True, exist_ok=True)
 
     def gather_project_context(self, project_root: str,
-                               target_files: List[str] = None) -> Dict[str, CodeContext]:
+                               target_files: list[str] = None) -> dict[str, CodeContext]:
         """Gather context about the entire project."""
         logger.info(f"Gathering project context from: {project_root}")
 
@@ -482,10 +482,10 @@ class IntelligentCodeModifier:
         logger.info(f"Analyzed {len(context)} files for project context")
         return context
 
-    def create_modification_request(self, description: str, target_files: List[str],
-                                    requirements: List[str] = None,
-                                    constraints: List[str] = None,
-                                    context_files: List[str] = None) -> ModificationRequest:
+    def create_modification_request(self, description: str, target_files: list[str],
+                                    requirements: list[str] = None,
+                                    constraints: list[str] = None,
+                                    context_files: list[str] = None) -> ModificationRequest:
         """Create a new modification request."""
         request_id = f"mod_{int(datetime.now().timestamp())}"
 
@@ -495,10 +495,10 @@ class IntelligentCodeModifier:
             target_files=target_files,
             context_files=context_files or [],
             requirements=requirements or [],
-            constraints=constraints or []
+            constraints=constraints or [],
         )
 
-    def analyze_modification_request(self, request: ModificationRequest) -> List[CodeChange]:
+    def analyze_modification_request(self, request: ModificationRequest) -> list[CodeChange]:
         """Analyze a modification request and generate code changes."""
         logger.info(f"Analyzing modification request: {request.request_id}")
 
@@ -594,7 +594,7 @@ Requirements:
             messages = [
                 LLMMessage(
                     role="system", content="You are an expert code modification assistant. Provide only working, production-ready code modifications."),
-                LLMMessage(role="user", content=prompt)
+                LLMMessage(role="user", content=prompt),
             ]
 
             response = self.llm_manager.chat(messages)
@@ -605,7 +605,7 @@ Requirements:
             return ""
 
     def _parse_modification_response(self, response: str, file_path: str,
-                                     request: ModificationRequest) -> List[CodeChange]:
+                                     request: ModificationRequest) -> list[CodeChange]:
         """Parse AI response into CodeChange objects."""
         changes = []
 
@@ -650,7 +650,7 @@ Requirements:
                     confidence=float(mod.get("confidence", 0.5)),
                     reasoning=mod.get("reasoning", ""),
                     impact_analysis={"impact": mod.get(
-                        "impact", "Unknown impact")}
+                        "impact", "Unknown impact")},
                 )
 
                 changes.append(change)
@@ -662,13 +662,13 @@ Requirements:
 
         return changes
 
-    def preview_changes(self, change_ids: List[str]) -> Dict[str, Any]:
+    def preview_changes(self, change_ids: list[str]) -> dict[str, Any]:
         """Preview changes before applying them."""
         preview_data = {
             "changes": [],
             "files_affected": set(),
             "total_changes": 0,
-            "high_risk_changes": 0
+            "high_risk_changes": 0,
         }
 
         for change_id in change_ids:
@@ -686,7 +686,7 @@ Requirements:
             diff = self.diff_generator.generate_unified_diff(
                 change.original_code,
                 change.modified_code,
-                Path(change.file_path).name
+                Path(change.file_path).name,
             )
 
             change_info = {
@@ -698,7 +698,7 @@ Requirements:
                 "reasoning": change.reasoning,
                 "diff": diff,
                 "lines_affected": f"{change.start_line}-{change.end_line}",
-                "impact": change.impact_analysis
+                "impact": change.impact_analysis,
             }
 
             preview_data["changes"].append(change_info)
@@ -706,14 +706,14 @@ Requirements:
         preview_data["files_affected"] = list(preview_data["files_affected"])
         return preview_data
 
-    def apply_changes(self, change_ids: List[str],
-                      create_backup: bool = True) -> Dict[str, Any]:
+    def apply_changes(self, change_ids: list[str],
+                      create_backup: bool = True) -> dict[str, Any]:
         """Apply the specified changes to files."""
         results = {
             "applied": [],
             "failed": [],
             "backups_created": [],
-            "errors": []
+            "errors": [],
         }
 
         # Group changes by file
@@ -765,7 +765,7 @@ Requirements:
                     change.status = ChangeStatus.FAILED
                     results["failed"].append(change.change_id)
                 results["errors"].append(
-                    f"Exception applying {file_path}: {str(e)}")
+                    f"Exception applying {file_path}: {e!s}")
 
         return results
 
@@ -782,7 +782,7 @@ Requirements:
         logger.info(f"Created backup: {backup_path}")
         return backup_path
 
-    def _apply_changes_to_file(self, file_path: str, changes: List[CodeChange]) -> bool:
+    def _apply_changes_to_file(self, file_path: str, changes: list[CodeChange]) -> bool:
         """Apply multiple changes to a single file."""
         try:
             # Read current file content
@@ -798,7 +798,7 @@ Requirements:
 
             # Fallback to direct file reading if AIFileTools not available
             if content is None:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read()
 
             lines = content.splitlines()
@@ -833,7 +833,7 @@ Requirements:
             logger.error(f"Failed to apply changes to {file_path}: {e}")
             return False
 
-    def reject_changes(self, change_ids: List[str]) -> Dict[str, Any]:
+    def reject_changes(self, change_ids: list[str]) -> dict[str, Any]:
         """Reject the specified changes."""
         results = {"rejected": [], "not_found": []}
 
@@ -849,7 +849,7 @@ Requirements:
 
         return results
 
-    def get_modification_history(self, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_modification_history(self, limit: int = 50) -> list[dict[str, Any]]:
         """Get modification history."""
         history = sorted(self.modification_history,
                          key=lambda c: c.created_at, reverse=True)
@@ -863,12 +863,12 @@ Requirements:
                 "status": change.status.value,
                 "confidence": change.confidence,
                 "created_at": change.created_at.isoformat(),
-                "applied_at": change.applied_at.isoformat() if change.applied_at else None
+                "applied_at": change.applied_at.isoformat() if change.applied_at else None,
             }
             for change in history[:limit]
         ]
 
-    def get_pending_changes(self) -> List[Dict[str, Any]]:
+    def get_pending_changes(self) -> list[dict[str, Any]]:
         """Get all pending changes."""
         return [
             {
@@ -878,7 +878,7 @@ Requirements:
                 "type": change.modification_type.value,
                 "confidence": change.confidence,
                 "reasoning": change.reasoning,
-                "lines": f"{change.start_line}-{change.end_line}"
+                "lines": f"{change.start_line}-{change.end_line}",
             }
             for change in self.pending_changes.values()
         ]

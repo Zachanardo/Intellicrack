@@ -2,7 +2,7 @@
 import os
 import subprocess
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -41,8 +41,7 @@ with container lifecycle management, state snapshots, and artifact collection.
 
 
 class DockerContainer(BaseSnapshotHandler):
-    """
-    Manages Docker container operations for distributed analysis.
+    """Manages Docker container operations for distributed analysis.
 
     This class provides a complete Docker container management interface for running
     isolated binary analysis tasks with state management and artifact collection.
@@ -56,9 +55,8 @@ class DockerContainer(BaseSnapshotHandler):
         - Comprehensive error handling and logging
     """
 
-    def __init__(self, binary_path: Optional[str] = None, image: str = "ubuntu:latest"):
-        """
-        Initialize Docker container manager.
+    def __init__(self, binary_path: str | None = None, image: str = "ubuntu:latest"):
+        """Initialize Docker container manager.
 
         Args:
             binary_path: Path to the binary to analyze
@@ -66,12 +64,13 @@ class DockerContainer(BaseSnapshotHandler):
 
         Raises:
             RuntimeError: If Docker is not available on the system
+
         """
         super().__init__()
         self.binary_path = binary_path
         self.image = image
-        self.container_id: Optional[str] = None
-        self.container_name: Optional[str] = None
+        self.container_id: str | None = None
+        self.container_name: str | None = None
 
         # Validate binary path if provided
         if binary_path and not os.path.exists(binary_path):
@@ -83,18 +82,18 @@ class DockerContainer(BaseSnapshotHandler):
         self.logger.info("DockerContainer initialized with image: %s", image)
 
     def _check_docker_availability(self) -> None:
-        """
-        Check if Docker is available and accessible.
+        """Check if Docker is available and accessible.
 
         Raises:
             RuntimeError: If Docker is not available or accessible
+
         """
         try:
             from ...utils.system.subprocess_utils import run_subprocess_check
             result = run_subprocess_check(
                 ["docker", "--version"],
                 timeout=10,
-                check=False
+                check=False,
             )
 
             if result.returncode != 0:
@@ -120,12 +119,11 @@ class DockerContainer(BaseSnapshotHandler):
             logger.error("File not found in docker_container: %s", e)
             raise RuntimeError("Docker command not found - Docker is not installed")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Docker initialization error: {str(e)}")
-            raise RuntimeError(f"Docker initialization failed: {str(e)}")
+            self.logger.error(f"Docker initialization error: {e!s}")
+            raise RuntimeError(f"Docker initialization failed: {e!s}")
 
     def start_container(self, privileged: bool = True, network_mode: str = "bridge") -> bool:
-        """
-        Start a Docker container with the specified image.
+        """Start a Docker container with the specified image.
 
         Args:
             privileged: Whether to run container in privileged mode
@@ -133,6 +131,7 @@ class DockerContainer(BaseSnapshotHandler):
 
         Returns:
             True if container started successfully, False otherwise
+
         """
         try:
             # Pull the image if not already available
@@ -155,7 +154,7 @@ class DockerContainer(BaseSnapshotHandler):
                 "docker", "run",
                 "-d",  # Detached mode
                 "--name", self.container_name,
-                "--network", network_mode
+                "--network", network_mode,
             ]
 
             # Add privileged mode if requested
@@ -193,18 +192,18 @@ class DockerContainer(BaseSnapshotHandler):
             self.logger.error("Container start operation timed out")
             return False
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Error starting Docker container: {str(e)}")
+            self.logger.error(f"Error starting Docker container: {e!s}")
             return False
 
     def stop_container(self, force: bool = False) -> bool:
-        """
-        Stop and remove the Docker container.
+        """Stop and remove the Docker container.
 
         Args:
             force: Whether to force stop the container
 
         Returns:
             True if container stopped successfully, False otherwise
+
         """
         if not self.container_id:
             self.logger.warning("No container ID available to stop")
@@ -249,15 +248,15 @@ class DockerContainer(BaseSnapshotHandler):
             self.logger.error("Container stop operation timed out")
             return False
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Error stopping Docker container: {str(e)}")
+            self.logger.error(f"Error stopping Docker container: {e!s}")
             return False
 
     def _is_container_running(self) -> bool:
-        """
-        Check if the container is currently running.
+        """Check if the container is currently running.
 
         Returns:
             True if container is running, False otherwise
+
         """
         if not self.container_id:
             return False
@@ -276,9 +275,8 @@ class DockerContainer(BaseSnapshotHandler):
             self.logger.error("Error in docker_container: %s", e)
             return False
 
-    def execute_command(self, command: str, timeout: int = 60, working_dir: Optional[str] = None) -> str:
-        """
-        Execute a command in the Docker container.
+    def execute_command(self, command: str, timeout: int = 60, working_dir: str | None = None) -> str:
+        """Execute a command in the Docker container.
 
         Args:
             command: Command to execute
@@ -287,6 +285,7 @@ class DockerContainer(BaseSnapshotHandler):
 
         Returns:
             Command output as string
+
         """
         if not self.container_id or not self._is_container_running():
             error_msg = "Container not running"
@@ -323,13 +322,12 @@ class DockerContainer(BaseSnapshotHandler):
             self.logger.error(error_msg)
             return f"ERROR: {error_msg}"
         except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error executing command: {str(e)}"
+            error_msg = f"Error executing command: {e!s}"
             self.logger.error(error_msg)
             return f"ERROR: {error_msg}"
 
     def copy_file_to_container(self, source_path: str, dest_path: str) -> bool:
-        """
-        Copy a file from host to the Docker container.
+        """Copy a file from host to the Docker container.
 
         Args:
             source_path: Source file path on host
@@ -337,6 +335,7 @@ class DockerContainer(BaseSnapshotHandler):
 
         Returns:
             True if file copied successfully, False otherwise
+
         """
         if not self.container_id or not self._is_container_running():
             self.logger.error("Container not running for file copy")
@@ -381,18 +380,18 @@ class DockerContainer(BaseSnapshotHandler):
             self.logger.error("File copy operation timed out")
             return False
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Error copying file to container: {str(e)}")
+            self.logger.error(f"Error copying file to container: {e!s}")
             return False
 
     def create_snapshot(self, name: str) -> bool:
-        """
-        Create a snapshot of the container state.
+        """Create a snapshot of the container state.
 
         Args:
             name: Unique snapshot name
 
         Returns:
             True if snapshot created successfully, False otherwise
+
         """
         if not self.container_id or not self._is_container_running():
             self.logger.error("Container not running for snapshot creation")
@@ -407,7 +406,7 @@ class DockerContainer(BaseSnapshotHandler):
             # Get filesystem state (recent files only for performance)
             files = self.execute_command(
                 "find / -type f -mtime -1 -not -path '/proc/*' -not -path '/sys/*' "
-                "-not -path '/dev/*' -not -path '/tmp/*' 2>/dev/null | sort"
+                "-not -path '/dev/*' -not -path '/tmp/*' 2>/dev/null | sort",
             )
 
             # Get process list
@@ -429,19 +428,18 @@ class DockerContainer(BaseSnapshotHandler):
                 "processes": processes,
                 "network": network,
                 "environment": env_vars,
-                "disk_usage": disk_usage
+                "disk_usage": disk_usage,
             }
 
             self.logger.info(f"Snapshot '{name}' created successfully")
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Error creating container snapshot: {str(e)}")
+            self.logger.error(f"Error creating container snapshot: {e!s}")
             return False
 
-    def compare_snapshots(self, snapshot1: str, snapshot2: str) -> Dict[str, Any]:
-        """
-        Compare two container snapshots.
+    def compare_snapshots(self, snapshot1: str, snapshot2: str) -> dict[str, Any]:
+        """Compare two container snapshots.
 
         Args:
             snapshot1: First snapshot name
@@ -449,13 +447,13 @@ class DockerContainer(BaseSnapshotHandler):
 
         Returns:
             Dictionary containing differences between snapshots
+
         """
         # Use base class functionality to eliminate duplicate code
         return self.compare_snapshots_base(snapshot1, snapshot2)
 
-    def _perform_platform_specific_comparison(self, s1: Dict[str, Any], s2: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Perform Docker-specific snapshot comparison logic.
+    def _perform_platform_specific_comparison(self, s1: dict[str, Any], s2: dict[str, Any]) -> dict[str, Any]:
+        """Perform Docker-specific snapshot comparison logic.
 
         Args:
             s1: First snapshot data
@@ -463,6 +461,7 @@ class DockerContainer(BaseSnapshotHandler):
 
         Returns:
             Dictionary containing Docker-specific comparison results
+
         """
         try:
             # Compare files
@@ -520,19 +519,19 @@ class DockerContainer(BaseSnapshotHandler):
                 "removed_env_vars": removed_env,
                 "total_changes": (len(new_files) + len(deleted_files) + len(new_processes) +
                                 len(ended_processes) + len(new_connections) + len(closed_connections) +
-                                len(new_env) + len(removed_env))
+                                len(new_env) + len(removed_env)),
             }
 
         except Exception as e:
             self.logger.error(f"Docker-specific comparison failed: {e}")
             return {"docker_comparison_error": str(e)}
 
-    def collect_analysis_artifacts(self) -> Dict[str, Any]:
-        """
-        Collect analysis artifacts from the container.
+    def collect_analysis_artifacts(self) -> dict[str, Any]:
+        """Collect analysis artifacts from the container.
 
         Returns:
             Dictionary containing analysis artifacts and metadata
+
         """
         if not self.container_id or not self._is_container_running():
             error_msg = "Container not running for artifact collection"
@@ -545,12 +544,12 @@ class DockerContainer(BaseSnapshotHandler):
             # Check for recently modified files
             modified_files = self.execute_command(
                 "find / -type f -mtime -1 -not -path '/proc/*' -not -path '/sys/*' "
-                "-not -path '/dev/*' 2>/dev/null | head -50"
+                "-not -path '/dev/*' 2>/dev/null | head -50",
             )
 
             # Check for log entries
             logs = self.execute_command(
-                "find /var/log -name '*.log' -type f -exec tail -10 {} + 2>/dev/null | head -100"
+                "find /var/log -name '*.log' -type f -exec tail -10 {} + 2>/dev/null | head -100",
             )
 
             # Check for network activity
@@ -558,7 +557,7 @@ class DockerContainer(BaseSnapshotHandler):
 
             # Check for open files (limited output)
             open_files = self.execute_command(
-                "lsof 2>/dev/null | grep -v '/lib/' | grep -v '/usr/lib/' | head -50"
+                "lsof 2>/dev/null | grep -v '/lib/' | grep -v '/usr/lib/' | head -50",
             )
 
             # Check running processes
@@ -579,23 +578,23 @@ class DockerContainer(BaseSnapshotHandler):
                 "open_files": open_files,
                 "processes": processes,
                 "memory_usage": memory,
-                "disk_usage": disk
+                "disk_usage": disk,
             }
 
             self.logger.info("Analysis artifacts collected successfully")
             return artifacts
 
         except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error collecting analysis artifacts: {str(e)}"
+            error_msg = f"Error collecting analysis artifacts: {e!s}"
             self.logger.error(error_msg)
             return {"error": error_msg}
 
-    def get_container_status(self) -> Dict[str, Any]:
-        """
-        Get comprehensive container status information.
+    def get_container_status(self) -> dict[str, Any]:
+        """Get comprehensive container status information.
 
         Returns:
             Dictionary containing container status and metadata
+
         """
         status = {
             "container_id": self.container_id,
@@ -604,7 +603,7 @@ class DockerContainer(BaseSnapshotHandler):
             "binary_path": self.binary_path,
             "is_running": self._is_container_running() if self.container_id else False,
             "snapshots": list(self.snapshots.keys()),
-            "snapshot_count": len(self.snapshots)
+            "snapshot_count": len(self.snapshots),
         }
 
         if self.container_id and self._is_container_running():
@@ -624,7 +623,7 @@ class DockerContainer(BaseSnapshotHandler):
                         "start_time": container_info["State"]["StartedAt"],
                         "status_detail": container_info["State"]["Status"],
                         "network_mode": container_info["HostConfig"]["NetworkMode"],
-                        "privileged": container_info["HostConfig"]["Privileged"]
+                        "privileged": container_info["HostConfig"]["Privileged"],
                     })
 
             except (OSError, ValueError, RuntimeError) as e:
@@ -633,11 +632,11 @@ class DockerContainer(BaseSnapshotHandler):
         return status
 
     def cleanup(self) -> bool:
-        """
-        Clean up container and resources.
+        """Clean up container and resources.
 
         Returns:
             True if cleanup successful, False otherwise
+
         """
         success = True
 

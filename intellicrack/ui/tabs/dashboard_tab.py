@@ -40,8 +40,7 @@ from .base_tab import BaseTab
 
 
 class DashboardTab(BaseTab):
-    """
-    Dashboard Tab - Manages project files, binary information, and workspace overview.
+    """Dashboard Tab - Manages project files, binary information, and workspace overview.
     Consolidates functionality from the previous Project & Dashboard tab.
     """
 
@@ -309,13 +308,13 @@ class DashboardTab(BaseTab):
             self,
             "Open Project",
             "",
-            "Intellicrack Projects (*.icp);;All Files (*)"
+            "Intellicrack Projects (*.icp);;All Files (*)",
         )
 
         if project_file:
             try:
                 # Load project data from JSON
-                with open(project_file, "r", encoding="utf-8") as f:
+                with open(project_file, encoding="utf-8") as f:
                     project_data = json.load(f)
 
                 # Validate project data structure
@@ -349,13 +348,13 @@ class DashboardTab(BaseTab):
                 QMessageBox.critical(
                     self,
                     "Load Error",
-                    f"Invalid project file format:\n{str(e)}"
+                    f"Invalid project file format:\n{e!s}",
                 )
             except Exception as e:
                 QMessageBox.critical(
                     self,
                     "Load Error",
-                    f"Failed to load project:\n{str(e)}"
+                    f"Failed to load project:\n{e!s}",
                 )
 
     def save_project(self):
@@ -368,7 +367,7 @@ class DashboardTab(BaseTab):
             self,
             "Save Project",
             f"{self.current_project}.icp",
-            "Intellicrack Projects (*.icp);;All Files (*)"
+            "Intellicrack Projects (*.icp);;All Files (*)",
         )
 
         if project_file:
@@ -381,7 +380,7 @@ class DashboardTab(BaseTab):
                     "binary": self.current_binary,
                     "files": self.project_files,
                     "analysis_results": self.analysis_results,
-                    "version": "1.0"
+                    "version": "1.0",
                 }
 
                 # Write JSON with pretty formatting
@@ -392,15 +391,15 @@ class DashboardTab(BaseTab):
                 QMessageBox.information(
                     self,
                     "Success",
-                    f"Project saved successfully to:\n{project_file}"
+                    f"Project saved successfully to:\n{project_file}",
                 )
             except Exception as e:
                 QMessageBox.critical(
                     self,
                     "Save Error",
-                    f"Failed to save project:\n{str(e)}"
+                    f"Failed to save project:\n{e!s}",
                 )
-                self.log_activity(f"Error saving project: {str(e)}")
+                self.log_activity(f"Error saving project: {e!s}")
 
     def browse_binary(self):
         """Browse for a binary file"""
@@ -408,7 +407,7 @@ class DashboardTab(BaseTab):
             self,
             "Select Binary File",
             "",
-            "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)"
+            "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)",
         )
 
         if binary_file:
@@ -465,7 +464,7 @@ class DashboardTab(BaseTab):
             self.binary_info_text.setText(info_text)
 
         except Exception as e:
-            self.binary_info_text.setText(f"Error reading file: {str(e)}")
+            self.binary_info_text.setText(f"Error reading file: {e!s}")
 
     def get_file_type(self, file_path):
         """Get basic file type information"""
@@ -478,7 +477,7 @@ class DashboardTab(BaseTab):
             ".dylib": "macOS Dynamic Library",
             ".app": "macOS Application Bundle",
             ".bin": "Binary File",
-            ".elf": "ELF Executable"
+            ".elf": "ELF Executable",
         }
 
         return type_map.get(ext, "Unknown Binary")
@@ -507,7 +506,7 @@ class DashboardTab(BaseTab):
                     ("Analyzing architecture", 40),
                     ("Detecting compiler", 60),
                     ("Checking for packers", 80),
-                    ("Calculating entropy", 100)
+                    ("Calculating entropy", 100),
                 ]
 
                 for step, progress in steps:
@@ -527,7 +526,7 @@ class DashboardTab(BaseTab):
                     "compiler": "Microsoft Visual C++",
                     "packer": "None detected",
                     "entropy": 6.2,
-                    "entropy_status": "Normal"
+                    "entropy_status": "Normal",
                 }
 
                 # Store results in AppContext
@@ -539,7 +538,7 @@ class DashboardTab(BaseTab):
             # Submit the task
             task_id = self.task_manager.submit_callable(
                 analyze_binary,
-                description=f"Quick analysis of {os.path.basename(self.current_binary)}"
+                description=f"Quick analysis of {os.path.basename(self.current_binary)}",
             )
 
             self.log_activity(f"Analysis task submitted: {task_id[:8]}...")
@@ -582,7 +581,7 @@ class DashboardTab(BaseTab):
             "C:\\samples\\malware1.exe",
             "C:\\samples\\target_app.exe",
             "/home/user/binaries/test.so",
-            "C:\\analysis\\crackme.exe"
+            "C:\\analysis\\crackme.exe",
         ]
 
         self.recent_files_list.clear()
@@ -647,7 +646,7 @@ class DashboardTab(BaseTab):
             self,
             "Save Activity Log",
             "activity_log.txt",
-            "Text Files (*.txt);;All Files (*)"
+            "Text Files (*.txt);;All Files (*)",
         )
 
         if log_file:
@@ -656,7 +655,7 @@ class DashboardTab(BaseTab):
                     f.write(self.activity_log.toPlainText())
                 self.log_activity(f"Activity log saved to: {log_file}")
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to save log: {str(e)}")
+                QMessageBox.critical(self, "Error", f"Failed to save log: {e!s}")
 
     def populate_file_tree(self):
         """Populate the file tree with project files"""
@@ -732,7 +731,7 @@ class DashboardTab(BaseTab):
                         os.startfile(file_path) if os.name == "nt" else os.system(f'open "{file_path}"')
                         self.log_activity(f"Opened file: {os.path.basename(file_path)}")
                     except Exception as e:
-                        QMessageBox.warning(self, "Open Error", f"Failed to open file: {str(e)}")
+                        QMessageBox.warning(self, "Open Error", f"Failed to open file: {e!s}")
             else:
                 QMessageBox.warning(self, "File Not Found", "The selected file no longer exists.")
             # Implement file opening logic here
@@ -749,7 +748,7 @@ class DashboardTab(BaseTab):
                 "Remove from Project",
                 f"Remove '{file_name}' from the project?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.No
+                QMessageBox.StandardButton.No,
             )
 
             if reply == QMessageBox.StandardButton.Yes:
@@ -821,7 +820,7 @@ class DashboardTab(BaseTab):
         supported_extensions = [
             ".exe", ".dll", ".so", ".dylib", ".elf", ".bin",
             ".sys", ".drv", ".ocx", ".app", ".apk", ".ipa",
-            ".dex", ".jar", ".class", ".pyc", ".pyd"
+            ".dex", ".jar", ".class", ".pyc", ".pyd",
         ]
 
         ext = os.path.splitext(file_path)[1].lower()
@@ -880,7 +879,7 @@ class DashboardTab(BaseTab):
                     ".bin": "Binary",
                     ".json": "JSON",
                     ".xml": "XML",
-                    ".gpr": "Ghidra Project"
+                    ".gpr": "Ghidra Project",
                 }
                 file_type = type_mapping.get(ext, "File")
 
@@ -895,7 +894,7 @@ class DashboardTab(BaseTab):
                 "size_bytes": file_size,
                 "modified": modified_time,
                 "md5": md5_hash,
-                "exists": True
+                "exists": True,
             }
         except Exception as e:
             self.logger.error(f"Error getting metadata for {file_path}: {e}")
@@ -1027,7 +1026,7 @@ class DashboardTab(BaseTab):
                     self.log_activity(f"Added to project: {os.path.basename(file_path)}")
                     added_count += 1
             except Exception as e:
-                self.log_activity(f"Error adding file {file_path}: {str(e)}")
+                self.log_activity(f"Error adding file {file_path}: {e!s}")
 
         self.refresh_file_tree()
 
@@ -1035,11 +1034,11 @@ class DashboardTab(BaseTab):
             QMessageBox.information(
                 self,
                 "Files Added",
-                f"Added {added_count} new files to the current project."
+                f"Added {added_count} new files to the current project.",
             )
         else:
             QMessageBox.information(
                 self,
                 "No Files Added",
-                "All selected files are already in the project."
+                "All selected files are already in the project.",
             )

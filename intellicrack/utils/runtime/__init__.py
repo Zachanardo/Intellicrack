@@ -1,5 +1,4 @@
-"""
-Runtime execution and process management utilities for Intellicrack
+"""Runtime execution and process management utilities for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 

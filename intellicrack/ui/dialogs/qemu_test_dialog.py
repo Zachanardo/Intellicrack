@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -63,7 +62,7 @@ class QEMUTestDialog(QDialog):
         # Warning icon
         icon_label = QLabel()
         icon_label.setPixmap(self.style().standardPixmap(
-            self.style().SP_MessageBoxWarning
+            self.style().SP_MessageBoxWarning,
         ).scaled(48, 48, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         header_layout.addWidget(icon_label)
 
@@ -72,7 +71,7 @@ class QEMUTestDialog(QDialog):
             f"<b>About to execute {self.script_type.upper()} script</b><br>"
             f"Target: {os.path.basename(self.target_binary)}<br><br>"
             "This script will interact with the target binary. "
-            "Would you like to test it in a safe QEMU environment first?"
+            "Would you like to test it in a safe QEMU environment first?",
         )
         warning_text.setWordWrap(True)
         header_layout.addWidget(warning_text, 1)
@@ -144,7 +143,7 @@ class QEMUTestDialog(QDialog):
             "• Isolates script execution from host system<br>"
             "• Shows script behavior before deployment<br>"
             "• Prevents potential system damage<br>"
-            "• Allows safe experimentation"
+            "• Allows safe experimentation",
         )
         benefits_text.setStyleSheet("""
             QLabel {
@@ -193,11 +192,10 @@ class QEMUTestDialog(QDialog):
                 self.user_choice = "always_test"
             else:
                 self.user_choice = "test_qemu"
-        else:  # host_run_radio is checked
-            if self.remember_checkbox.isChecked():
-                self.user_choice = "never_test"
-            else:
-                self.user_choice = "run_host"
+        elif self.remember_checkbox.isChecked():
+            self.user_choice = "never_test"
+        else:
+            self.user_choice = "run_host"
 
         self.accept()
 

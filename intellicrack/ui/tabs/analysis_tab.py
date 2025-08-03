@@ -30,8 +30,7 @@ from .base_tab import BaseTab
 
 
 class AnalysisTab(BaseTab):
-    """
-    Analysis Tab - Comprehensive binary analysis tools including static analysis,
+    """Analysis Tab - Comprehensive binary analysis tools including static analysis,
     dynamic analysis, protection detection, and advanced execution engines.
     """
 
@@ -527,8 +526,8 @@ class AnalysisTab(BaseTab):
                                 "imports": self.imports_analysis_cb.isChecked(),
                                 "entropy": self.entropy_analysis_cb.isChecked(),
                                 "signatures": self.signature_analysis_cb.isChecked(),
-                                "depth": self.analysis_depth_combo.currentText()
-                            }
+                                "depth": self.analysis_depth_combo.currentText(),
+                            },
                         })
 
                     # Determine which phases to run based on options
@@ -553,7 +552,7 @@ class AnalysisTab(BaseTab):
                     # Run orchestrated analysis
                     result = self.analysis_orchestrator.analyze_binary(
                         self.current_binary,
-                        phases=phases
+                        phases=phases,
                     )
 
                     # Convert orchestration result to AppContext format
@@ -563,7 +562,7 @@ class AnalysisTab(BaseTab):
                         "success": result.success,
                         "phases_completed": [p.value for p in result.phases_completed],
                         "errors": result.errors,
-                        "warnings": result.warnings
+                        "warnings": result.warnings,
                     }
 
                     # Extract specific results
@@ -574,7 +573,7 @@ class AnalysisTab(BaseTab):
                             analysis_result["disassembly"] = {
                                 "functions": len(static_data.get("functions", [])),
                                 "imports": len(static_data.get("imports", [])),
-                                "exports": len(static_data.get("exports", []))
+                                "exports": len(static_data.get("exports", [])),
                             }
 
                         if self.string_analysis_cb.isChecked() and "strings" in static_data:
@@ -585,21 +584,21 @@ class AnalysisTab(BaseTab):
                             )]
                             analysis_result["strings"] = {
                                 "total": len(strings),
-                                "suspicious": suspicious_strings[:10]  # Limit to first 10
+                                "suspicious": suspicious_strings[:10],  # Limit to first 10
                             }
 
                         if self.imports_analysis_cb.isChecked() and "imports" in static_data:
                             imports = static_data.get("imports", [])
                             analysis_result["imports"] = {
                                 "total": len(imports),
-                                "functions": imports[:20]  # Limit to first 20
+                                "functions": imports[:20],  # Limit to first 20
                             }
 
                     if AnalysisPhase.ENTROPY_ANALYSIS in result.phases_completed:
                         entropy_data = result.results.get("entropy_analysis", {})
                         analysis_result["entropy"] = {
                             "overall": entropy_data.get("overall_entropy", 0),
-                            "high_entropy_sections": len(entropy_data.get("high_entropy_chunks", []))
+                            "high_entropy_sections": len(entropy_data.get("high_entropy_chunks", [])),
                         }
 
                     if AnalysisPhase.PATTERN_MATCHING in result.phases_completed:
@@ -625,18 +624,18 @@ class AnalysisTab(BaseTab):
 
                 except Exception as e:
                     import traceback
-                    self.log_activity(f"Analysis error: {str(e)}", is_error=True)
+                    self.log_activity(f"Analysis error: {e!s}", is_error=True)
                     if self.app_context:
                         self.app_context.fail_analysis("static_analysis", str(e))
                     return {
                         "error": str(e),
-                        "traceback": traceback.format_exc()
+                        "traceback": traceback.format_exc(),
                     }
 
             # Submit the task
             task_id = self.task_manager.submit_callable(
                 run_static_analysis,
-                description=f"Static analysis of {os.path.basename(self.current_binary)}"
+                description=f"Static analysis of {os.path.basename(self.current_binary)}",
             )
 
             self.log_activity(f"Static analysis task submitted: {task_id[:8]}...")
@@ -672,8 +671,8 @@ class AnalysisTab(BaseTab):
                                 "obfuscation_detection": self.obfuscation_detection_cb.isChecked(),
                                 "anti_debug_detection": self.anti_debug_detection_cb.isChecked(),
                                 "vm_detection": self.vm_detection_cb.isChecked(),
-                                "license_check_detection": self.license_check_detection_cb.isChecked()
-                            }
+                                "license_check_detection": self.license_check_detection_cb.isChecked(),
+                            },
                         })
 
                     # Get unified protection engine
@@ -687,7 +686,7 @@ class AnalysisTab(BaseTab):
                     result = engine.analyze_unified(
                         self.current_binary,
                         enable_icp=True,
-                        enable_die=True
+                        enable_die=True,
                     )
 
                     if task:
@@ -702,7 +701,7 @@ class AnalysisTab(BaseTab):
                         "anti_debug": result.get("anti_debug", []),
                         "vm_protection": result.get("vm_protection", {}),
                         "license_checks": result.get("license_checks", []),
-                        "bypass_recommendations": result.get("bypass_recommendations", [])
+                        "bypass_recommendations": result.get("bypass_recommendations", []),
                     }
 
                     # Store results in AppContext
@@ -715,7 +714,7 @@ class AnalysisTab(BaseTab):
                     return formatted_results
 
                 except Exception as e:
-                    self.log_activity(f"Protection detection error: {str(e)}")
+                    self.log_activity(f"Protection detection error: {e!s}")
                     if self.app_context:
                         self.app_context.fail_analysis("protection_detection", str(e))
                     raise
@@ -723,7 +722,7 @@ class AnalysisTab(BaseTab):
             # Submit the task
             task_id = self.task_manager.submit_callable(
                 run_protection_detection,
-                description=f"Protection detection for {self.current_binary}"
+                description=f"Protection detection for {self.current_binary}",
             )
 
             self.log_activity(f"Protection detection task submitted: {task_id[:8]}...")
@@ -753,14 +752,14 @@ class AnalysisTab(BaseTab):
                         "memory_monitoring": self.memory_monitoring_cb.isChecked(),
                         "file_monitoring": self.file_monitoring_cb.isChecked(),
                         "network_monitoring": self.network_monitoring_cb.isChecked(),
-                        "framework": self.hooking_framework_combo.currentText()
+                        "framework": self.hooking_framework_combo.currentText(),
                     }
 
                     # Notify start of analysis
                     if self.app_context:
                         self.app_context.start_analysis("dynamic_analysis", {
                             "binary": self.current_binary,
-                            "options": options
+                            "options": options,
                         })
 
                     # Update progress
@@ -771,12 +770,12 @@ class AnalysisTab(BaseTab):
                     phases = [
                         AnalysisPhase.PREPARATION,
                         AnalysisPhase.DYNAMIC_ANALYSIS,
-                        AnalysisPhase.FINALIZATION
+                        AnalysisPhase.FINALIZATION,
                     ]
 
                     result = self.analysis_orchestrator.analyze_binary(
                         self.current_binary,
-                        phases=phases
+                        phases=phases,
                     )
 
                     if task:
@@ -788,7 +787,7 @@ class AnalysisTab(BaseTab):
                         "file_name": os.path.basename(self.current_binary),
                         "success": result.success,
                         "monitoring_options": options,
-                        "framework": options["framework"]
+                        "framework": options["framework"],
                     }
 
                     if AnalysisPhase.DYNAMIC_ANALYSIS in result.phases_completed:
@@ -817,18 +816,18 @@ class AnalysisTab(BaseTab):
 
                 except Exception as e:
                     import traceback
-                    self.log_activity(f"Dynamic analysis error: {str(e)}", is_error=True)
+                    self.log_activity(f"Dynamic analysis error: {e!s}", is_error=True)
                     if self.app_context:
                         self.app_context.fail_analysis("dynamic_analysis", str(e))
                     return {
                         "error": str(e),
-                        "traceback": traceback.format_exc()
+                        "traceback": traceback.format_exc(),
                     }
 
             # Submit the task
             task_id = self.task_manager.submit_callable(
                 run_dynamic_analysis,
-                description=f"Dynamic analysis of {os.path.basename(self.current_binary)}"
+                description=f"Dynamic analysis of {os.path.basename(self.current_binary)}",
             )
 
             self.log_activity(f"Dynamic analysis task submitted: {task_id[:8]}...")
@@ -881,13 +880,13 @@ class AnalysisTab(BaseTab):
             hex_dialog.show()
 
         except ImportError as e:
-            self.log_activity(f"Hex viewer not available: {str(e)}")
+            self.log_activity(f"Hex viewer not available: {e!s}")
             from PyQt6.QtWidgets import QMessageBox
             QMessageBox.warning(self, "Error", "Hex viewer module not available. Please check installation.")
         except Exception as e:
-            self.log_activity(f"Error opening hex viewer: {str(e)}")
+            self.log_activity(f"Error opening hex viewer: {e!s}")
             from PyQt6.QtWidgets import QMessageBox
-            QMessageBox.critical(self, "Error", f"Failed to open hex viewer: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to open hex viewer: {e!s}")
 
     def embed_hex_viewer(self):
         """Embed hex viewer in the results panel"""
@@ -925,13 +924,13 @@ class AnalysisTab(BaseTab):
                 layout.addWidget(error_label)
 
         except ImportError as e:
-            self.log_activity(f"Hex viewer widget not available: {str(e)}")
+            self.log_activity(f"Hex viewer widget not available: {e!s}")
             error_label = QLabel("Hex viewer module not available")
             error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.hex_view_container.layout().addWidget(error_label)
         except Exception as e:
-            self.log_activity(f"Error embedding hex viewer: {str(e)}")
-            error_label = QLabel(f"Error: {str(e)}")
+            self.log_activity(f"Error embedding hex viewer: {e!s}")
+            error_label = QLabel(f"Error: {e!s}")
             error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.hex_view_container.layout().addWidget(error_label)
 
@@ -947,7 +946,7 @@ class AnalysisTab(BaseTab):
         pid_text, ok = QInputDialog.getText(
             self,
             "Attach to Process",
-            "Enter Process ID (PID) or Process Name:"
+            "Enter Process ID (PID) or Process Name:",
         )
 
         if ok and pid_text:
@@ -981,7 +980,7 @@ class AnalysisTab(BaseTab):
                             "framework": framework,
                             "target": pid,
                             "target_type": target_type,
-                            "message": f"Successfully attached to process {pid} using {framework}"
+                            "message": f"Successfully attached to process {pid} using {framework}",
                         }
 
                         if task:
@@ -992,13 +991,13 @@ class AnalysisTab(BaseTab):
                     except Exception as e:
                         return {
                             "success": False,
-                            "error": str(e)
+                            "error": str(e),
                         }
 
                 # Submit attachment task
                 task_id = self.task_manager.submit_callable(
                     attach_process,
-                    description=f"Attaching to process {pid_text}"
+                    description=f"Attaching to process {pid_text}",
                 )
 
                 self.log_activity(f"Process attachment task submitted: {task_id[:8]}...")

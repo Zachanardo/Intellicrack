@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -110,7 +109,7 @@ def get_capstone():
         "CS_ARCH_X86": CS_ARCH_X86,
         "CS_MODE_32": CS_MODE_32,
         "CS_MODE_64": CS_MODE_64,
-        "available": CAPSTONE_AVAILABLE
+        "available": CAPSTONE_AVAILABLE,
     }
 
 
@@ -123,7 +122,7 @@ def get_elftools():
     """Get elftools components if available."""
     return {
         "ELFFile": ELFFile,
-        "available": PYELFTOOLS_AVAILABLE
+        "available": PYELFTOOLS_AVAILABLE,
     }
 
 
@@ -131,7 +130,7 @@ def get_macholib():
     """Get macholib components if available."""
     return {
         "MachO": MachO,
-        "available": MACHOLIB_AVAILABLE
+        "available": MACHOLIB_AVAILABLE,
     }
 
 
@@ -139,7 +138,7 @@ def get_zipfile():
     """Get zipfile module if available."""
     return {
         "zipfile": zipfile,
-        "available": ZIPFILE_AVAILABLE
+        "available": ZIPFILE_AVAILABLE,
     }
 
 
@@ -147,7 +146,7 @@ def get_xml():
     """Get XML parsing components if available."""
     return {
         "ET": ET,
-        "available": XML_AVAILABLE
+        "available": XML_AVAILABLE,
     }
 
 
@@ -158,12 +157,31 @@ def get_psutil():
 
 # Export all
 __all__ = [
-    "PEFILE_AVAILABLE", "pefile", "get_pefile",
-    "CAPSTONE_AVAILABLE", "CS_ARCH_X86", "CS_MODE_32", "CS_MODE_64", "Cs", "get_capstone",
-    "LIEF_AVAILABLE", "lief", "get_lief",
-    "PYELFTOOLS_AVAILABLE", "ELFFile", "get_elftools",
-    "MACHOLIB_AVAILABLE", "MachO", "get_macholib",
-    "ZIPFILE_AVAILABLE", "zipfile", "get_zipfile",
-    "XML_AVAILABLE", "ET", "get_xml",
-    "PSUTIL_AVAILABLE", "psutil", "get_psutil",
+    "CAPSTONE_AVAILABLE",
+    "CS_ARCH_X86",
+    "CS_MODE_32",
+    "CS_MODE_64",
+    "ET",
+    "LIEF_AVAILABLE",
+    "MACHOLIB_AVAILABLE",
+    "PEFILE_AVAILABLE",
+    "PSUTIL_AVAILABLE",
+    "PYELFTOOLS_AVAILABLE",
+    "XML_AVAILABLE",
+    "ZIPFILE_AVAILABLE",
+    "Cs",
+    "ELFFile",
+    "MachO",
+    "get_capstone",
+    "get_elftools",
+    "get_lief",
+    "get_macholib",
+    "get_pefile",
+    "get_psutil",
+    "get_xml",
+    "get_zipfile",
+    "lief",
+    "pefile",
+    "psutil",
+    "zipfile",
 ]

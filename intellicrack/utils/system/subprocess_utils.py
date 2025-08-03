@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -24,19 +23,17 @@ This module provides common subprocess execution patterns.
 
 import logging
 import subprocess
-from typing import List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
 
-def run_subprocess(cmd: Union[str, List[str]],
-                  timeout: Optional[int] = None,
+def run_subprocess(cmd: str | list[str],
+                  timeout: int | None = None,
                   capture_output: bool = True,
                   text: bool = True,
-                  cwd: Optional[str] = None,
-                  env: Optional[dict] = None) -> Tuple[int, str, str]:
-    """
-    Run a subprocess command with standard error handling.
+                  cwd: str | None = None,
+                  env: dict | None = None) -> tuple[int, str, str]:
+    """Run a subprocess command with standard error handling.
 
     Args:
         cmd: Command to run (string or list)
@@ -48,6 +45,7 @@ def run_subprocess(cmd: Union[str, List[str]],
 
     Returns:
         Tuple of (returncode, stdout, stderr)
+
     """
     try:
         # Convert string command to list if needed
@@ -60,7 +58,7 @@ def run_subprocess(cmd: Union[str, List[str]],
             stderr=subprocess.PIPE if capture_output else None,
             text=text,
             cwd=cwd,
-            env=env
+            env=env,
         )
 
         try:
@@ -77,13 +75,12 @@ def run_subprocess(cmd: Union[str, List[str]],
         return -1, "", str(e)
 
 
-def run_subprocess_check(cmd: Union[str, List[str]],
+def run_subprocess_check(cmd: str | list[str],
                         timeout: int = 10,
                         capture_output: bool = True,
                         text: bool = True,
                         check: bool = False) -> subprocess.CompletedProcess:
-    """
-    Run subprocess with standard settings used in docker_container and qemu_emulator.
+    """Run subprocess with standard settings used in docker_container and qemu_emulator.
 
     This is the common pattern extracted from duplicate code.
 
@@ -96,6 +93,7 @@ def run_subprocess_check(cmd: Union[str, List[str]],
 
     Returns:
         CompletedProcess object
+
     """
     try:
         result = subprocess.run(
@@ -103,7 +101,7 @@ def run_subprocess_check(cmd: Union[str, List[str]],
             capture_output=capture_output,
             text=text,
             timeout=timeout,
-            check=check
+            check=check,
         )
         return result
 
@@ -118,10 +116,9 @@ def run_subprocess_check(cmd: Union[str, List[str]],
         raise
 
 
-def create_popen_with_encoding(cmd: List[str], encoding: str = "utf-8",
-                              timeout: Optional[int] = None) -> Tuple[int, str, str]:
-    """
-    Create Popen process with encoding and error handling.
+def create_popen_with_encoding(cmd: list[str], encoding: str = "utf-8",
+                              timeout: int | None = None) -> tuple[int, str, str]:
+    """Create Popen process with encoding and error handling.
 
     Common pattern for process creation with output capture and encoding.
 
@@ -132,6 +129,7 @@ def create_popen_with_encoding(cmd: List[str], encoding: str = "utf-8",
 
     Returns:
         Tuple of (return_code, stdout, stderr)
+
     """
     try:
         process = subprocess.Popen(
@@ -140,7 +138,7 @@ def create_popen_with_encoding(cmd: List[str], encoding: str = "utf-8",
             stderr=subprocess.PIPE,
             text=True,
             encoding=encoding,
-            errors="replace"
+            errors="replace",
         )
 
         if timeout:

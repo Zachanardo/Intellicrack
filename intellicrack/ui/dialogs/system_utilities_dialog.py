@@ -56,15 +56,13 @@ except ImportError as e:
     logger.error("Import error in system_utilities_dialog: %s", e)
     # Fallback for environments without PyQt6
     class QDialog:
-        """
-        Stub class for QDialog when PyQt6 is not available.
+        """Stub class for QDialog when PyQt6 is not available.
 
         Provides a placeholder to prevent import errors in non-GUI environments.
         """
-        pass
+
     def pyqtSignal(*args, **kwargs):
-        """
-        Stub function for pyqtSignal when PyQt6 is not available.
+        """Stub function for pyqtSignal when PyQt6 is not available.
 
         Args:
             *args: Signal type arguments (ignored)
@@ -72,6 +70,7 @@ except ImportError as e:
 
         Returns:
             lambda: A no-op function
+
         """
         _ = args, kwargs
         return lambda: None
@@ -126,7 +125,7 @@ class SystemUtilitiesWorker(QThread):
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in system_utilities_dialog: %s", e)
-            self.error_occurred.emit(f"Icon extraction failed: {str(e)}")
+            self.error_occurred.emit(f"Icon extraction failed: {e!s}")
 
     def _get_system_info(self):
         """Get comprehensive system information."""
@@ -142,7 +141,7 @@ class SystemUtilitiesWorker(QThread):
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in system_utilities_dialog: %s", e)
-            self.error_occurred.emit(f"System info collection failed: {str(e)}")
+            self.error_occurred.emit(f"System info collection failed: {e!s}")
 
     def _check_dependencies(self):
         """Check system dependencies."""
@@ -155,7 +154,7 @@ class SystemUtilitiesWorker(QThread):
             default_deps = {
                 "python": "python3",
                 "pip": "pip3",
-                "git": "git"
+                "git": "git",
             }
             result = check_dependencies(dependencies=default_deps)
 
@@ -164,7 +163,7 @@ class SystemUtilitiesWorker(QThread):
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in system_utilities_dialog: %s", e)
-            self.error_occurred.emit(f"Dependency check failed: {str(e)}")
+            self.error_occurred.emit(f"Dependency check failed: {e!s}")
 
     def _get_process_list(self):
         """Get running process list."""
@@ -180,7 +179,7 @@ class SystemUtilitiesWorker(QThread):
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in system_utilities_dialog: %s", e)
-            self.error_occurred.emit(f"Process enumeration failed: {str(e)}")
+            self.error_occurred.emit(f"Process enumeration failed: {e!s}")
 
     def _optimize_memory(self):
         """Optimize system memory usage."""
@@ -196,7 +195,7 @@ class SystemUtilitiesWorker(QThread):
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in system_utilities_dialog: %s", e)
-            self.error_occurred.emit(f"Memory optimization failed: {str(e)}")
+            self.error_occurred.emit(f"Memory optimization failed: {e!s}")
 
     def stop(self):
         """Stop the worker thread."""
@@ -208,7 +207,6 @@ class SystemUtilitiesDialog(QDialog):
 
     def __init__(self, parent=None):
         """Initialize the system utilities dialog with UI components and system monitoring capabilities."""
-
         # Initialize UI attributes
         self.close_btn = None
         self.deps_check_btn = None
@@ -398,7 +396,7 @@ class SystemUtilitiesDialog(QDialog):
         self.deps_table = QTableWidget()
         self.deps_table.setColumnCount(4)
         self.deps_table.setHorizontalHeaderLabels([
-            "Dependency", "Required", "Installed", "Status"
+            "Dependency", "Required", "Installed", "Status",
         ])
 
         header = self.deps_table.horizontalHeader()
@@ -439,7 +437,7 @@ class SystemUtilitiesDialog(QDialog):
         self.process_table = QTableWidget()
         self.process_table.setColumnCount(5)
         self.process_table.setHorizontalHeaderLabels([
-            "PID", "Name", "CPU %", "Memory", "Status"
+            "PID", "Name", "CPU %", "Memory", "Status",
         ])
         self.process_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.process_table.itemSelectionChanged.connect(self.on_process_selection_changed)
@@ -600,7 +598,7 @@ class SystemUtilitiesDialog(QDialog):
         """Browse for executable file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Select Executable File", "",
-            "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)"
+            "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)",
         )
         if file_path:
             self.icon_file_edit.setText(file_path)
@@ -608,7 +606,7 @@ class SystemUtilitiesDialog(QDialog):
     def browse_icon_output(self):
         """Browse for output directory."""
         dir_path = QFileDialog.getExistingDirectory(
-            self, "Select Output Directory"
+            self, "Select Output Directory",
         )
         if dir_path:
             self.icon_output_edit.setText(dir_path)
@@ -634,7 +632,7 @@ class SystemUtilitiesDialog(QDialog):
             file_path=file_path,
             output_path=output_path,
             format=self.icon_format_combo.currentText(),
-            size=self.icon_size_combo.currentText()
+            size=self.icon_size_combo.currentText(),
         )
         self.worker.operation_completed.connect(self.on_icon_extracted)
         self.worker.progress_updated.connect(self.on_progress_updated)
@@ -657,7 +655,7 @@ class SystemUtilitiesDialog(QDialog):
                     self.icon_preview.setText("Could not load extracted icon")
             except (OSError, ValueError, RuntimeError) as e:
                 self.logger.error("Error in system_utilities_dialog: %s", e)
-                self.icon_preview.setText(f"Preview error: {str(e)}")
+                self.icon_preview.setText(f"Preview error: {e!s}")
         else:
             self.icon_preview.setText("Icon extracted successfully")
 
@@ -737,7 +735,7 @@ class SystemUtilitiesDialog(QDialog):
         file_path, _ = QFileDialog.getSaveFileName(
             self, "Export System Information",
             f"system_info_{int(time.time())}.json",
-            "JSON Files (*.json);;Text Files (*.txt)"
+            "JSON Files (*.json);;Text Files (*.txt)",
         )
 
         if file_path:
@@ -752,7 +750,7 @@ class SystemUtilitiesDialog(QDialog):
                 self.status_label.setText(f"System info exported to {os.path.basename(file_path)}")
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in system_utilities_dialog: %s", e)
-                QMessageBox.critical(self, "Export Error", f"Failed to export: {str(e)}")
+                QMessageBox.critical(self, "Export Error", f"Failed to export: {e!s}")
 
     def check_dependencies(self):
         """Check system dependencies."""
@@ -808,7 +806,7 @@ class SystemUtilitiesDialog(QDialog):
             "This would automatically install missing packages using:\n"
             "• pip for Python packages\n"
             "• System package managers\n"
-            "• Direct downloads for tools"
+            "• Direct downloads for tools",
         )
 
     def get_process_list(self):
@@ -877,7 +875,7 @@ class SystemUtilitiesDialog(QDialog):
             reply = QMessageBox.question(
                 self, "Kill Process",
                 f"Are you sure you want to kill process '{name}' (PID: {pid})?",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
 
             if reply == QMessageBox.Yes:
@@ -894,7 +892,7 @@ class SystemUtilitiesDialog(QDialog):
 
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error in system_utilities_dialog: %s", e)
-                    QMessageBox.critical(self, "Error", f"Failed to kill process: {str(e)}")
+                    QMessageBox.critical(self, "Error", f"Failed to kill process: {e!s}")
 
     def optimize_memory(self):
         """Optimize system memory."""

@@ -177,7 +177,7 @@ class HexViewerWidget(QWidget):
             selection_info = f"0x{self.selection_start:08X} - 0x{self.selection_end-1:08X} ({self.selection_end - self.selection_start} bytes)"
 
         self.status_label.setText(
-            f"Offset: 0x{offset:08X} | Byte: 0x{byte_val:02X} ({byte_val}) '{ascii_val}' | Selection: {selection_info}"
+            f"Offset: 0x{offset:08X} | Byte: 0x{byte_val:02X} ({byte_val}) '{ascii_val}' | Selection: {selection_info}",
         )
 
 

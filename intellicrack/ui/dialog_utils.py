@@ -1,5 +1,4 @@
-"""
-Common dialog utilities and methods.
+"""Common dialog utilities and methods.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -66,7 +65,7 @@ def browse_binary_file(dialog):
     """Standard binary file browser."""
     file_path, _ = QFileDialog.getOpenFileName(
         dialog, "Select Target Binary", "",
-        "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)"
+        "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)",
     )
     if file_path:
         dialog.binary_path_edit.setText(file_path)

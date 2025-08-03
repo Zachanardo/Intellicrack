@@ -1,5 +1,4 @@
-"""
-Analysis Result Orchestrator
+"""Analysis Result Orchestrator
 
 Coordinates the distribution of protection analysis results to various handlers
 for LLM integration, script generation, and report generation.
@@ -8,7 +7,6 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from typing import Optional
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
@@ -35,8 +33,7 @@ logger = get_logger(__name__)
 
 
 class AnalysisResultOrchestrator(QObject):
-    """
-    Central orchestrator that distributes analysis results to specialized handlers.
+    """Central orchestrator that distributes analysis results to specialized handlers.
 
     This class follows the orchestrator pattern to maintain separation of concerns
     and keep the UI components decoupled from business logic.
@@ -50,17 +47,18 @@ class AnalysisResultOrchestrator(QObject):
 
         Args:
             parent: Optional parent widget for Qt integration.
+
         """
         super().__init__(parent)
         self.handlers = []
-        self._current_result: Optional[UnifiedProtectionResult] = None
+        self._current_result: UnifiedProtectionResult | None = None
 
     def register_handler(self, handler: QObject):
-        """
-        Register a handler to receive analysis results.
+        """Register a handler to receive analysis results.
 
         Args:
             handler: A QObject with an on_analysis_complete(result) slot
+
         """
         if hasattr(handler, "on_analysis_complete"):
             self.handlers.append(handler)
@@ -74,14 +72,14 @@ class AnalysisResultOrchestrator(QObject):
 
         Args:
             handler: The QObject handler to remove from the registry
+
         """
         if handler in self.handlers:
             self.handlers.remove(handler)
             logger.info(f"Unregistered handler: {handler.__class__.__name__}")
 
     def on_protection_analyzed(self, result: UnifiedProtectionResult):
-        """
-        Main slot connected to UnifiedProtectionWidget.protection_analyzed signal.
+        """Main slot connected to UnifiedProtectionWidget.protection_analyzed signal.
 
         Distributes the result to all registered handlers.
         """
@@ -95,22 +93,22 @@ class AnalysisResultOrchestrator(QObject):
                 handler.on_analysis_complete(result)
                 self.handler_status.emit(
                     handler.__class__.__name__,
-                    "Processing complete"
+                    "Processing complete",
                 )
             except Exception as e:
                 logger.error(
                     f"Handler {handler.__class__.__name__} error: {e}")
                 self.handler_status.emit(
                     handler.__class__.__name__,
-                    f"Error: {str(e)}"
+                    f"Error: {e!s}",
                 )
 
     def on_icp_analysis_complete(self, result: "ICPScanResult"):
-        """
-        Handle ICP analysis completion and distribute to relevant handlers.
+        """Handle ICP analysis completion and distribute to relevant handlers.
 
         Args:
             result: ICPScanResult object from ICP analysis
+
         """
         logger.info(f"Orchestrator received ICP analysis result for: {result.file_path}")
 
@@ -127,23 +125,23 @@ class AnalysisResultOrchestrator(QObject):
                     handler.on_icp_analysis_complete(result)
                     self.handler_status.emit(
                         handler.__class__.__name__,
-                        "ICP processing complete"
+                        "ICP processing complete",
                     )
                 # Fallback to general analysis method if ICP result can be converted
                 elif hasattr(handler, "on_analysis_complete") and hasattr(self, "_current_result") and self._current_result:
                     handler.on_analysis_complete(self._current_result)
                     self.handler_status.emit(
                         handler.__class__.__name__,
-                        "Analysis processing complete"
+                        "Analysis processing complete",
                     )
             except Exception as e:
                 logger.error(f"Handler {handler.__class__.__name__} ICP error: {e}")
                 self.handler_status.emit(
                     handler.__class__.__name__,
-                    f"ICP Error: {str(e)}"
+                    f"ICP Error: {e!s}",
                 )
 
-    def get_current_result(self) -> Optional[UnifiedProtectionResult]:
+    def get_current_result(self) -> UnifiedProtectionResult | None:
         """Get the most recent analysis result"""
         return self._current_result
 
@@ -155,6 +153,7 @@ class AnalysisResultOrchestrator(QObject):
 
         Returns:
             True if valid, False otherwise
+
         """
         if not ICPScanResult:
             logger.warning("ICPScanResult class not available for validation")
@@ -183,7 +182,7 @@ class AnalysisResultOrchestrator(QObject):
         logger.info(f"ICPScanResult validation passed for {result.file_path}")
         return True
 
-    def merge_icp_with_unified_result(self, icp_result: "ICPScanResult", unified_result: Optional[UnifiedProtectionResult] = None) -> UnifiedProtectionResult:
+    def merge_icp_with_unified_result(self, icp_result: "ICPScanResult", unified_result: UnifiedProtectionResult | None = None) -> UnifiedProtectionResult:
         """Merge ICP scan results with unified protection result.
 
         Args:
@@ -192,6 +191,7 @@ class AnalysisResultOrchestrator(QObject):
 
         Returns:
             Updated UnifiedProtectionResult
+
         """
         if unified_result is None:
             if UnifiedProtectionResult:
@@ -236,6 +236,7 @@ class AnalysisResultOrchestrator(QObject):
 
         Returns:
             List of recommendation strings
+
         """
         recommendations = []
 

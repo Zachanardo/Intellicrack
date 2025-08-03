@@ -1,5 +1,4 @@
-"""
-First Run Setup Dialog
+"""First Run Setup Dialog
 
 Automatically configures Intellicrack on first run.
 
@@ -11,7 +10,6 @@ This file is part of Intellicrack.
 import logging
 import subprocess
 import sys
-from typing import Dict, List
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QFont
@@ -32,11 +30,12 @@ logger = logging.getLogger(__name__)
 
 class SetupWorker(QThread):
     """Worker thread for setup tasks"""
+
     progress = pyqtSignal(int)
     status = pyqtSignal(str)
     finished = pyqtSignal(bool)
 
-    def __init__(self, tasks: List[str]):
+    def __init__(self, tasks: list[str]):
         """Initialize the SetupWorker with default values."""
         super().__init__()
         self.tasks = tasks
@@ -67,7 +66,7 @@ class SetupWorker(QThread):
         """Install a Python package"""
         try:
             cmd = [sys.executable, "-m", "pip", "install"] + package.split()
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
             if result.returncode != 0:
                 logger.error(f"Failed to install {package}: {result.stderr}")
                 self.success = False
@@ -80,7 +79,7 @@ class SetupWorker(QThread):
 class FirstRunSetupDialog(QDialog):
     """Dialog for first-run setup"""
 
-    def __init__(self, missing_components: Dict[str, bool], parent=None):
+    def __init__(self, missing_components: dict[str, bool], parent=None):
         """Initialize the FirstRunSetupDialog with default values."""
         super().__init__(parent)
         self.missing_components = missing_components

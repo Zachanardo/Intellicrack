@@ -1,5 +1,4 @@
-"""
-Config-as-Code Support for Intellicrack LLM System
+"""Config-as-Code Support for Intellicrack LLM System
 
 Provides YAML/JSON configuration management with schema validation.
 
@@ -11,7 +10,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -38,17 +37,18 @@ except ImportError:
 
 class ConfigValidationError(Exception):
     """Raised when configuration validation fails."""
-    pass
+
 
 
 class ConfigAsCodeManager:
     """Manages configuration files with YAML/JSON support and schema validation."""
 
-    def __init__(self, config_dir: Optional[str] = None):
+    def __init__(self, config_dir: str | None = None):
         """Initialize the config-as-code manager.
 
         Args:
             config_dir: Directory for configuration files
+
         """
         if config_dir is None:
             config_dir = Path.home() / ".intellicrack" / "config"
@@ -62,7 +62,7 @@ class ConfigAsCodeManager:
         logger.info(
             f"ConfigAsCodeManager initialized with directory: {self.config_dir}")
 
-    def _load_schemas(self) -> Dict[str, Dict[str, Any]]:
+    def _load_schemas(self) -> dict[str, dict[str, Any]]:
         """Load JSON schemas for validation."""
         schemas = {}
 
@@ -74,7 +74,7 @@ class ConfigAsCodeManager:
                     "type": "string",
                     "enum": ["openai", "anthropic", "llamacpp", "ollama", "huggingface",
                              "local_api", "local_gguf", "pytorch", "tensorflow", "onnx",
-                             "safetensors", "gptq", "huggingface_local"]
+                             "safetensors", "gptq", "huggingface_local"],
                 },
                 "model_name": {"type": "string"},
                 "api_key": {"type": ["string", "null"]},
@@ -84,10 +84,10 @@ class ConfigAsCodeManager:
                 "temperature": {"type": "number", "minimum": 0.0, "maximum": 2.0},
                 "max_tokens": {"type": "integer", "minimum": 1, "maximum": 100000},
                 "tools_enabled": {"type": "boolean"},
-                "custom_params": {"type": "object"}
+                "custom_params": {"type": "object"},
             },
             "required": ["provider", "model_name"],
-            "additionalProperties": True
+            "additionalProperties": True,
         }
 
         # Fallback Chain Configuration Schema
@@ -105,15 +105,15 @@ class ConfigAsCodeManager:
                         "type": "object",
                         "properties": {
                             "model_id": {"type": "string"},
-                            **schemas["llm_model"]["properties"]
+                            **schemas["llm_model"]["properties"],
                         },
-                        "required": ["model_id"] + schemas["llm_model"]["required"]
+                        "required": ["model_id"] + schemas["llm_model"]["required"],
                     },
-                    "minItems": 1
-                }
+                    "minItems": 1,
+                },
             },
             "required": ["chain_id", "models"],
-            "additionalProperties": False
+            "additionalProperties": False,
         }
 
         # Complete Configuration Schema
@@ -129,20 +129,20 @@ class ConfigAsCodeManager:
                         "description": {"type": "string"},
                         "author": {"type": "string"},
                         "created_at": {"type": "string"},
-                        "updated_at": {"type": "string"}
-                    }
+                        "updated_at": {"type": "string"},
+                    },
                 },
                 "models": {
                     "type": "object",
                     "patternProperties": {
-                        "^[a-zA-Z0-9_-]+$": schemas["llm_model"]
-                    }
+                        "^[a-zA-Z0-9_-]+$": schemas["llm_model"],
+                    },
                 },
                 "fallback_chains": {
                     "type": "object",
                     "patternProperties": {
-                        "^[a-zA-Z0-9_-]+$": schemas["fallback_chain"]
-                    }
+                        "^[a-zA-Z0-9_-]+$": schemas["fallback_chain"],
+                    },
                 },
                 "profiles": {
                     "type": "object",
@@ -155,12 +155,12 @@ class ConfigAsCodeManager:
                                 "settings": {"type": "object"},
                                 "recommended_models": {
                                     "type": "array",
-                                    "items": {"type": "string"}
-                                }
+                                    "items": {"type": "string"},
+                                },
                             },
-                            "required": ["name", "settings"]
-                        }
-                    }
+                            "required": ["name", "settings"],
+                        },
+                    },
                 },
                 "default_settings": {
                     "type": "object",
@@ -169,17 +169,17 @@ class ConfigAsCodeManager:
                         "default_model": {"type": "string"},
                         "default_profile": {"type": "string"},
                         "auto_load_models": {"type": "boolean"},
-                        "enable_fallback_chains": {"type": "boolean"}
-                    }
-                }
+                        "enable_fallback_chains": {"type": "boolean"},
+                    },
+                },
             },
             "required": ["version"],
-            "additionalProperties": True
+            "additionalProperties": True,
         }
 
         return schemas
 
-    def validate_config(self, config: Dict[str, Any], schema_name: str = "complete_config") -> bool:
+    def validate_config(self, config: dict[str, Any], schema_name: str = "complete_config") -> bool:
         """Validate configuration against schema.
 
         Args:
@@ -191,6 +191,7 @@ class ConfigAsCodeManager:
 
         Raises:
             ConfigValidationError: If validation fails
+
         """
         if not HAS_JSONSCHEMA:
             logger.warning(
@@ -215,7 +216,7 @@ class ConfigAsCodeManager:
             logger.error(error_msg)
             raise ConfigValidationError(error_msg) from e
 
-    def load_config(self, file_path: Union[str, Path], validate: bool = True) -> Dict[str, Any]:
+    def load_config(self, file_path: str | Path, validate: bool = True) -> dict[str, Any]:
         """Load configuration from YAML or JSON file.
 
         Args:
@@ -228,6 +229,7 @@ class ConfigAsCodeManager:
         Raises:
             ConfigValidationError: If validation fails
             FileNotFoundError: If file doesn't exist
+
         """
         file_path = Path(file_path)
 
@@ -239,7 +241,7 @@ class ConfigAsCodeManager:
         suffix = file_path.suffix.lower()
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 if suffix in [".yaml", ".yml"]:
                     if not HAS_YAML:
                         raise ConfigValidationError(
@@ -276,9 +278,9 @@ class ConfigAsCodeManager:
                 f"Failed to parse configuration file: {e}") from e
 
     def save_config(self,
-                    config: Dict[str, Any],
-                    file_path: Union[str, Path],
-                    format_type: Optional[str] = None,
+                    config: dict[str, Any],
+                    file_path: str | Path,
+                    format_type: str | None = None,
                     validate: bool = True) -> None:
         """Save configuration to YAML or JSON file.
 
@@ -290,6 +292,7 @@ class ConfigAsCodeManager:
 
         Raises:
             ConfigValidationError: If validation fails
+
         """
         file_path = Path(file_path)
 
@@ -335,12 +338,11 @@ class ConfigAsCodeManager:
         """
         if isinstance(obj, dict):
             return {key: self._substitute_env_vars(value) for key, value in obj.items()}
-        elif isinstance(obj, list):
+        if isinstance(obj, list):
             return [self._substitute_env_vars(item) for item in obj]
-        elif isinstance(obj, str):
+        if isinstance(obj, str):
             return self._substitute_string_vars(obj)
-        else:
-            return obj
+        return obj
 
     def _substitute_string_vars(self, text: str) -> str:
         """Substitute environment variables in a string."""
@@ -356,7 +358,7 @@ class ConfigAsCodeManager:
 
         return re.sub(pattern, replace_var, text)
 
-    def create_template_config(self, environment: str = "development") -> Dict[str, Any]:
+    def create_template_config(self, environment: str = "development") -> dict[str, Any]:
         """Create a template configuration file.
 
         Args:
@@ -364,6 +366,7 @@ class ConfigAsCodeManager:
 
         Returns:
             Template configuration dictionary
+
         """
         from datetime import datetime
 
@@ -375,7 +378,7 @@ class ConfigAsCodeManager:
                 "description": "Configuration for LLM models and fallback chains",
                 "author": "Generated by Intellicrack",
                 "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat()
+                "updated_at": datetime.now().isoformat(),
             },
             "models": {
                 "gpt-4": {
@@ -385,7 +388,7 @@ class ConfigAsCodeManager:
                     "context_length": 8192,
                     "temperature": 0.7,
                     "max_tokens": 2048,
-                    "tools_enabled": True
+                    "tools_enabled": True,
                 },
                 "claude-3-sonnet": {
                     "provider": "anthropic",
@@ -394,7 +397,7 @@ class ConfigAsCodeManager:
                     "context_length": 200000,
                     "temperature": 0.7,
                     "max_tokens": 2048,
-                    "tools_enabled": True
+                    "tools_enabled": True,
                 },
                 "local-llama": {
                     "provider": "ollama",
@@ -403,8 +406,8 @@ class ConfigAsCodeManager:
                     "context_length": 4096,
                     "temperature": 0.7,
                     "max_tokens": 2048,
-                    "tools_enabled": False
-                }
+                    "tools_enabled": False,
+                },
             },
             "fallback_chains": {
                 "primary": {
@@ -419,23 +422,23 @@ class ConfigAsCodeManager:
                             "provider": "openai",
                             "model_name": "gpt-4",
                             "api_key": "${OPENAI_API_KEY}",
-                            "tools_enabled": True
+                            "tools_enabled": True,
                         },
                         {
                             "model_id": "claude-3-sonnet",
                             "provider": "anthropic",
                             "model_name": "claude-3-5-sonnet-20241022",
                             "api_key": "${ANTHROPIC_API_KEY}",
-                            "tools_enabled": True
+                            "tools_enabled": True,
                         },
                         {
                             "model_id": "local-llama",
                             "provider": "ollama",
                             "model_name": "llama3.1:8b",
                             "api_base": "http://localhost:11434",
-                            "tools_enabled": False
-                        }
-                    ]
+                            "tools_enabled": False,
+                        },
+                    ],
                 },
                 "fast": {
                     "chain_id": "fast",
@@ -449,10 +452,10 @@ class ConfigAsCodeManager:
                             "provider": "ollama",
                             "model_name": "llama3.1:8b",
                             "api_base": "http://localhost:11434",
-                            "tools_enabled": False
-                        }
-                    ]
-                }
+                            "tools_enabled": False,
+                        },
+                    ],
+                },
             },
             "profiles": {
                 "code_generation": {
@@ -461,9 +464,9 @@ class ConfigAsCodeManager:
                     "settings": {
                         "temperature": 0.2,
                         "max_tokens": 4096,
-                        "top_p": 0.95
+                        "top_p": 0.95,
                     },
-                    "recommended_models": ["gpt-4", "claude-3-sonnet"]
+                    "recommended_models": ["gpt-4", "claude-3-sonnet"],
                 },
                 "analysis": {
                     "name": "Binary Analysis",
@@ -471,23 +474,23 @@ class ConfigAsCodeManager:
                     "settings": {
                         "temperature": 0.1,
                         "max_tokens": 2048,
-                        "top_p": 0.9
+                        "top_p": 0.9,
                     },
-                    "recommended_models": ["gpt-4", "claude-3-sonnet"]
-                }
+                    "recommended_models": ["gpt-4", "claude-3-sonnet"],
+                },
             },
             "default_settings": {
                 "default_chain": "primary",
                 "default_model": "gpt-4",
                 "default_profile": "code_generation",
                 "auto_load_models": True,
-                "enable_fallback_chains": True
-            }
+                "enable_fallback_chains": True,
+            },
         }
 
         return template
 
-    def export_current_config(self, llm_manager=None, fallback_manager=None) -> Dict[str, Any]:
+    def export_current_config(self, llm_manager=None, fallback_manager=None) -> dict[str, Any]:
         """Export current system configuration.
 
         Args:
@@ -496,6 +499,7 @@ class ConfigAsCodeManager:
 
         Returns:
             Current configuration as dictionary
+
         """
         from datetime import datetime
 
@@ -513,15 +517,15 @@ class ConfigAsCodeManager:
             "metadata": {
                 "name": "Exported Intellicrack Configuration",
                 "description": "Exported from running system",
-                "exported_at": datetime.now().isoformat()
+                "exported_at": datetime.now().isoformat(),
             },
             "models": {},
             "fallback_chains": {},
             "profiles": {},
             "default_settings": {
                 "enable_fallback_chains": True,
-                "auto_load_models": True
-            }
+                "auto_load_models": True,
+            },
         }
 
         # Export LLM models
@@ -532,7 +536,7 @@ class ConfigAsCodeManager:
                     "provider": info["provider"],
                     "model_name": info["model_name"],
                     "context_length": info["context_length"],
-                    "tools_enabled": info["tools_enabled"]
+                    "tools_enabled": info["tools_enabled"],
                 }
                 config["models"][llm_id] = model_config
 
@@ -543,13 +547,14 @@ class ConfigAsCodeManager:
 
         return config
 
-    def apply_config(self, config: Dict[str, Any], llm_manager=None, fallback_manager=None):
+    def apply_config(self, config: dict[str, Any], llm_manager=None, fallback_manager=None):
         """Apply configuration to the system.
 
         Args:
             config: Configuration dictionary
             llm_manager: LLMManager instance
             fallback_manager: FallbackManager instance
+
         """
         from .llm_backends import LLMConfig, LLMProvider, get_llm_manager
         from .llm_fallback_chains import get_fallback_manager
@@ -573,7 +578,7 @@ class ConfigAsCodeManager:
                     temperature=model_config.get("temperature", 0.7),
                     max_tokens=model_config.get("max_tokens", 2048),
                     tools_enabled=model_config.get("tools_enabled", True),
-                    custom_params=model_config.get("custom_params", {})
+                    custom_params=model_config.get("custom_params", {}),
                 )
 
                 llm_manager.register_llm(model_id, llm_config)
@@ -585,7 +590,7 @@ class ConfigAsCodeManager:
         # Apply fallback chains
         chains_config = {
             "chains": config.get("fallback_chains", {}),
-            "default_chain": config.get("default_settings", {}).get("default_chain")
+            "default_chain": config.get("default_settings", {}).get("default_chain"),
         }
 
         try:
@@ -595,8 +600,8 @@ class ConfigAsCodeManager:
             logger.error(f"Failed to apply fallback chains: {e}")
 
     def generate_config_files(self,
-                              output_dir: Optional[str] = None,
-                              environments: List[str] = None) -> List[Path]:
+                              output_dir: str | None = None,
+                              environments: list[str] = None) -> list[Path]:
         """Generate configuration files for multiple environments.
 
         Args:
@@ -605,6 +610,7 @@ class ConfigAsCodeManager:
 
         Returns:
             List of generated file paths
+
         """
         if output_dir is None:
             output_dir = self.config_dir
@@ -653,9 +659,9 @@ def get_config_as_code_manager() -> ConfigAsCodeManager:
     return _CONFIG_AS_CODE_MANAGER
 
 
-def load_config_file(file_path: Union[str, Path],
+def load_config_file(file_path: str | Path,
                      apply_to_system: bool = True,
-                     validate: bool = True) -> Dict[str, Any]:
+                     validate: bool = True) -> dict[str, Any]:
     """Convenience function to load and optionally apply configuration.
 
     Args:
@@ -665,6 +671,7 @@ def load_config_file(file_path: Union[str, Path],
 
     Returns:
         Loaded configuration dictionary
+
     """
     manager = get_config_as_code_manager()
     config = manager.load_config(file_path, validate)
@@ -675,26 +682,28 @@ def load_config_file(file_path: Union[str, Path],
     return config
 
 
-def save_current_config(file_path: Union[str, Path],
+def save_current_config(file_path: str | Path,
                         format_type: str = "yaml") -> None:
     """Convenience function to save current system configuration.
 
     Args:
         file_path: Output file path
         format_type: Format ('yaml' or 'json')
+
     """
     manager = get_config_as_code_manager()
     config = manager.export_current_config()
     manager.save_config(config, file_path, format_type)
 
 
-def create_config_template(output_path: Union[str, Path],
+def create_config_template(output_path: str | Path,
                            environment: str = "development") -> None:
     """Create a template configuration file.
 
     Args:
         output_path: Output file path
         environment: Target environment
+
     """
     manager = get_config_as_code_manager()
     template = manager.create_template_config(environment)

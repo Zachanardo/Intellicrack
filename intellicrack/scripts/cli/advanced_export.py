@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Advanced Export Options - Comprehensive reporting system for CLI
+"""Advanced Export Options - Comprehensive reporting system for CLI
 
 Copyright (C) 2025 Zachary Flint
 
@@ -26,7 +25,7 @@ import logging
 import os
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 # Create logger for this module
 logger = logging.getLogger(__name__)
@@ -54,12 +53,13 @@ except ImportError:
 class AdvancedExporter:
     """Advanced export system with multiple formats and detailed reporting."""
 
-    def __init__(self, binary_path: str, analysis_results: Dict[str, Any]):
+    def __init__(self, binary_path: str, analysis_results: dict[str, Any]):
         """Initialize exporter with analysis data.
 
         Args:
             binary_path: Path to analyzed binary
             analysis_results: Dictionary of analysis results
+
         """
         self.binary_path = binary_path
         self.analysis_results = analysis_results
@@ -68,7 +68,7 @@ class AdvancedExporter:
             "binary_path": binary_path,
             "binary_name": os.path.basename(binary_path),
             "export_version": "2.0",
-            "tool": "Intellicrack CLI"
+            "tool": "Intellicrack CLI",
         }
 
     def export_detailed_json(self, output_path: str, include_raw_data: bool = True) -> bool:
@@ -80,6 +80,7 @@ class AdvancedExporter:
 
         Returns:
             True if export successful
+
         """
         try:
             export_data = {
@@ -87,7 +88,7 @@ class AdvancedExporter:
                 "summary": self._generate_summary(),
                 "analysis_results": self.analysis_results,
                 "statistics": self._generate_statistics(),
-                "recommendations": self._generate_recommendations()
+                "recommendations": self._generate_recommendations(),
             }
 
             if include_raw_data:
@@ -110,19 +111,19 @@ class AdvancedExporter:
 
         Returns:
             True if export successful
+
         """
         summary_data = self._generate_executive_summary()
 
         try:
             if format_type.lower() == "markdown":
                 return self._export_markdown_summary(output_path, summary_data)
-            elif format_type.lower() == "html":
+            if format_type.lower() == "html":
                 return self._export_html_summary(output_path, summary_data)
-            elif format_type.lower() == "txt":
+            if format_type.lower() == "txt":
                 return self._export_text_summary(output_path, summary_data)
-            else:
-                print(f"Unsupported format: {format_type}")
-                return False
+            print(f"Unsupported format: {format_type}")
+            return False
         except Exception as e:
             print(f"Executive summary export failed: {e}")
             return False
@@ -135,6 +136,7 @@ class AdvancedExporter:
 
         Returns:
             True if export successful
+
         """
         try:
             vuln_data = self.analysis_results.get("vulnerabilities", {})
@@ -147,11 +149,11 @@ class AdvancedExporter:
                     "high_count": self._count_vulnerabilities_by_severity(vuln_data, "high"),
                     "medium_count": self._count_vulnerabilities_by_severity(vuln_data, "medium"),
                     "low_count": self._count_vulnerabilities_by_severity(vuln_data, "low"),
-                    "risk_score": self._calculate_risk_score(vuln_data)
+                    "risk_score": self._calculate_risk_score(vuln_data),
                 },
                 "detailed_findings": self._format_vulnerability_details(vuln_data),
                 "mitigation_strategies": self._generate_mitigation_strategies(vuln_data),
-                "compliance_notes": self._generate_compliance_notes(vuln_data)
+                "compliance_notes": self._generate_compliance_notes(vuln_data),
             }
 
             with open(output_path, "w", encoding="utf-8") as f:
@@ -171,19 +173,19 @@ class AdvancedExporter:
 
         Returns:
             True if export successful
+
         """
         try:
             if data_type == "vulnerabilities":
                 return self._export_vulnerabilities_csv(output_path)
-            elif data_type == "strings":
+            if data_type == "strings":
                 return self._export_strings_csv(output_path)
-            elif data_type == "imports":
+            if data_type == "imports":
                 return self._export_imports_csv(output_path)
-            elif data_type == "all":
+            if data_type == "all":
                 return self._export_comprehensive_csv(output_path)
-            else:
-                print(f"Unsupported CSV data type: {data_type}")
-                return False
+            print(f"Unsupported CSV data type: {data_type}")
+            return False
         except Exception as e:
             print(f"CSV export failed: {e}")
             return False
@@ -196,6 +198,7 @@ class AdvancedExporter:
 
         Returns:
             True if export successful
+
         """
         try:
             root = ET.Element("intellicrack_report")
@@ -233,6 +236,7 @@ class AdvancedExporter:
 
         Returns:
             True if export successful
+
         """
         if not JINJA2_AVAILABLE:
             print("HTML report generation not available. Install Jinja2: pip install Jinja2")
@@ -240,7 +244,7 @@ class AdvancedExporter:
 
         try:
             # Basic HTML template for analysis report
-            html_template = Template('''
+            html_template = Template("""
 <!DOCTYPE html>
 <html>
 <head>
@@ -288,13 +292,13 @@ class AdvancedExporter:
     </table>
 </body>
 </html>
-            ''')
+            """)
 
             # Render template with data
             html_content = html_template.render(
                 metadata=self.export_metadata,
                 analysis_results=self.analysis_results,
-                analysis_count=len(self.analysis_results)
+                analysis_count=len(self.analysis_results),
             )
 
             with open(output_path, "w", encoding="utf-8") as f:
@@ -313,6 +317,7 @@ class AdvancedExporter:
 
         Returns:
             True if export successful
+
         """
         if not YAML_AVAILABLE:
             print("YAML export not available. Install PyYAML: pip install PyYAML")
@@ -323,7 +328,7 @@ class AdvancedExporter:
                 "metadata": self.export_metadata,
                 "analysis_config": self._generate_analysis_config(),
                 "findings_summary": self._generate_summary(),
-                "detection_rules": self._generate_detection_rules()
+                "detection_rules": self._generate_detection_rules(),
             }
 
             with open(output_path, "w", encoding="utf-8") as f:
@@ -342,6 +347,7 @@ class AdvancedExporter:
 
         Returns:
             True if export successful
+
         """
         if not XLSX_AVAILABLE:
             print("Excel export not available. Install xlsxwriter: pip install xlsxwriter")
@@ -355,7 +361,7 @@ class AdvancedExporter:
                 "bold": True,
                 "bg_color": "#4472C4",
                 "font_color": "white",
-                "border": 1
+                "border": 1,
             })
 
             cell_format = workbook.add_format({"border": 1})
@@ -381,24 +387,22 @@ class AdvancedExporter:
             print(f"Excel export failed: {e}")
             return False
 
-    def _generate_summary(self) -> Dict[str, Any]:
+    def _generate_summary(self) -> dict[str, Any]:
         """Generate analysis summary."""
         summary = {
             "file_info": {
                 "name": os.path.basename(self.binary_path),
                 "path": self.binary_path,
-                "size": os.path.getsize(self.binary_path) if os.path.exists(self.binary_path) else 0
+                "size": os.path.getsize(self.binary_path) if os.path.exists(self.binary_path) else 0,
             },
             "analysis_overview": {},
             "key_findings": [],
-            "security_assessment": {}
+            "security_assessment": {},
         }
 
         # Count different analysis types
         for analysis_type, results in self.analysis_results.items():
-            if isinstance(results, dict):
-                summary["analysis_overview"][analysis_type] = len(results)
-            elif isinstance(results, list):
+            if isinstance(results, dict) or isinstance(results, list):
                 summary["analysis_overview"][analysis_type] = len(results)
             else:
                 summary["analysis_overview"][analysis_type] = 1
@@ -420,19 +424,17 @@ class AdvancedExporter:
 
         return summary
 
-    def _generate_statistics(self) -> Dict[str, Any]:
+    def _generate_statistics(self) -> dict[str, Any]:
         """Generate analysis statistics."""
         stats = {
             "analysis_time": self.export_metadata["export_time"],
             "total_categories": len(self.analysis_results),
             "data_points": 0,
-            "categories": {}
+            "categories": {},
         }
 
         for category, data in self.analysis_results.items():
-            if isinstance(data, dict):
-                count = len(data)
-            elif isinstance(data, list):
+            if isinstance(data, dict) or isinstance(data, list):
                 count = len(data)
             else:
                 count = 1
@@ -442,7 +444,7 @@ class AdvancedExporter:
 
         return stats
 
-    def _generate_recommendations(self) -> List[str]:
+    def _generate_recommendations(self) -> list[str]:
         """Generate security recommendations based on analysis."""
         recommendations = []
 
@@ -467,19 +469,19 @@ class AdvancedExporter:
             "Regular security audits and penetration testing",
             "Keep all dependencies and libraries updated",
             "Implement proper error handling and logging",
-            "Use secure coding practices and code reviews"
+            "Use secure coding practices and code reviews",
         ])
 
         return recommendations
 
-    def _generate_executive_summary(self) -> Dict[str, Any]:
+    def _generate_executive_summary(self) -> dict[str, Any]:
         """Generate executive summary data."""
         return {
             "title": f"Security Analysis Report: {os.path.basename(self.binary_path)}",
             "analysis_date": self.export_metadata["export_time"],
             "binary_info": {
                 "name": os.path.basename(self.binary_path),
-                "size": os.path.getsize(self.binary_path) if os.path.exists(self.binary_path) else 0
+                "size": os.path.getsize(self.binary_path) if os.path.exists(self.binary_path) else 0,
             },
             "risk_assessment": self._assess_overall_risk(),
             "key_findings": self._extract_key_findings(),
@@ -487,11 +489,11 @@ class AdvancedExporter:
             "next_steps": [
                 "Review and address critical vulnerabilities",
                 "Implement recommended security controls",
-                "Conduct follow-up testing after remediation"
-            ]
+                "Conduct follow-up testing after remediation",
+            ],
         }
 
-    def _export_markdown_summary(self, output_path: str, summary_data: Dict[str, Any]) -> bool:
+    def _export_markdown_summary(self, output_path: str, summary_data: dict[str, Any]) -> bool:
         """Export executive summary as Markdown."""
         content = f"""# {summary_data['title']}
 
@@ -527,7 +529,7 @@ class AdvancedExporter:
 
         return True
 
-    def _export_html_summary(self, output_path: str, summary_data: Dict[str, Any]) -> bool:
+    def _export_html_summary(self, output_path: str, summary_data: dict[str, Any]) -> bool:
         """Export executive summary as HTML."""
         html_template = """<!DOCTYPE html>
 <html>
@@ -591,7 +593,7 @@ class AdvancedExporter:
             risk_description=summary_data["risk_assessment"]["description"],
             findings_list=findings_html,
             recommendations_list=recommendations_html,
-            version=self.export_metadata["export_version"]
+            version=self.export_metadata["export_version"],
         )
 
         with open(output_path, "w", encoding="utf-8") as f:
@@ -599,7 +601,7 @@ class AdvancedExporter:
 
         return True
 
-    def _export_text_summary(self, output_path: str, summary_data: Dict[str, Any]) -> bool:
+    def _export_text_summary(self, output_path: str, summary_data: dict[str, Any]) -> bool:
         """Export executive summary as plain text."""
         content = f"""{summary_data['title']}
 {'=' * len(summary_data['title'])}
@@ -635,7 +637,7 @@ KEY FINDINGS
 
         return True
 
-    def _assess_overall_risk(self) -> Dict[str, str]:
+    def _assess_overall_risk(self) -> dict[str, str]:
         """Assess overall security risk."""
         vuln_data = self.analysis_results.get("vulnerabilities", {})
 
@@ -647,25 +649,25 @@ KEY FINDINGS
             if critical_count > 0:
                 return {
                     "level": "HIGH",
-                    "description": f"Critical vulnerabilities detected ({critical_count} critical, {high_count} high severity). Immediate action required."
+                    "description": f"Critical vulnerabilities detected ({critical_count} critical, {high_count} high severity). Immediate action required.",
                 }
-            elif high_count > 2:
+            if high_count > 2:
                 return {
                     "level": "MEDIUM",
-                    "description": f"Multiple high-severity vulnerabilities detected ({high_count}). Prompt remediation recommended."
+                    "description": f"Multiple high-severity vulnerabilities detected ({high_count}). Prompt remediation recommended.",
                 }
-            elif len(vulns) > 0:
+            if len(vulns) > 0:
                 return {
                     "level": "LOW",
-                    "description": f"Some vulnerabilities detected ({len(vulns)} total). Review and address as appropriate."
+                    "description": f"Some vulnerabilities detected ({len(vulns)} total). Review and address as appropriate.",
                 }
 
         return {
             "level": "LOW",
-            "description": "No critical vulnerabilities detected. Continue monitoring and regular assessments."
+            "description": "No critical vulnerabilities detected. Continue monitoring and regular assessments.",
         }
 
-    def _extract_key_findings(self) -> List[str]:
+    def _extract_key_findings(self) -> list[str]:
         """Extract key findings from analysis results."""
         findings = []
 
@@ -690,7 +692,7 @@ KEY FINDINGS
 
         return findings
 
-    def _count_vulnerabilities_by_severity(self, vuln_data: Dict[str, Any], severity: str) -> int:
+    def _count_vulnerabilities_by_severity(self, vuln_data: dict[str, Any], severity: str) -> int:
         """Count vulnerabilities by severity level."""
         if not isinstance(vuln_data, dict):
             return 0
@@ -706,7 +708,7 @@ KEY FINDINGS
 
         return count
 
-    def _calculate_risk_score(self, vuln_data: Dict[str, Any]) -> float:
+    def _calculate_risk_score(self, vuln_data: dict[str, Any]) -> float:
         """Calculate overall risk score."""
         if not isinstance(vuln_data, dict):
             return 0.0
@@ -743,7 +745,7 @@ KEY FINDINGS
         else:
             parent.text = str(data)
 
-    def _extract_raw_data_samples(self) -> Dict[str, str]:
+    def _extract_raw_data_samples(self) -> dict[str, str]:
         """Extract sample raw data from binary."""
         samples = {}
 
@@ -784,12 +786,12 @@ KEY FINDINGS
                         "location": vuln.get("location", "Unknown"),
                         "description": vuln.get("description", "No description"),
                         "impact": vuln.get("impact", "Unknown"),
-                        "recommendation": vuln.get("recommendation", "Review manually")
+                        "recommendation": vuln.get("recommendation", "Review manually"),
                     })
 
         return True
 
-    def _format_vulnerability_details(self, vuln_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _format_vulnerability_details(self, vuln_data: dict[str, Any]) -> list[dict[str, Any]]:
         """Format vulnerability details for reporting."""
         if not isinstance(vuln_data, dict):
             return []
@@ -810,12 +812,12 @@ KEY FINDINGS
                     "impact": vuln.get("impact", "Potential security compromise"),
                     "recommendation": vuln.get("recommendation", "Manual review required"),
                     "cve_references": vuln.get("cve_references", []),
-                    "exploit_likelihood": vuln.get("exploit_likelihood", "Unknown")
+                    "exploit_likelihood": vuln.get("exploit_likelihood", "Unknown"),
                 })
 
         return formatted
 
-    def _generate_mitigation_strategies(self, vuln_data: Dict[str, Any]) -> List[str]:
+    def _generate_mitigation_strategies(self, vuln_data: dict[str, Any]) -> list[str]:
         """Generate mitigation strategies based on vulnerabilities."""
         strategies = [
             "Implement input validation and sanitization",
@@ -824,25 +826,25 @@ KEY FINDINGS
             "Conduct regular security code reviews",
             "Implement proper error handling",
             "Use memory-safe programming languages where appropriate",
-            "Regular security testing and vulnerability assessments"
+            "Regular security testing and vulnerability assessments",
         ]
         return strategies
 
-    def _generate_compliance_notes(self, vuln_data: Dict[str, Any]) -> Dict[str, List[str]]:
+    def _generate_compliance_notes(self, vuln_data: dict[str, Any]) -> dict[str, list[str]]:
         """Generate compliance-related notes."""
         return {
             "OWASP_Top_10": [
                 "Review against OWASP Top 10 vulnerabilities",
-                "Implement OWASP secure coding practices"
+                "Implement OWASP secure coding practices",
             ],
             "NIST": [
                 "Follow NIST Cybersecurity Framework guidelines",
-                "Implement NIST security controls"
+                "Implement NIST security controls",
             ],
             "ISO_27001": [
                 "Ensure compliance with ISO 27001 security standards",
-                "Document security policies and procedures"
-            ]
+                "Document security policies and procedures",
+            ],
         }
 
     def _export_strings_csv(self, output_path: str) -> bool:
@@ -863,7 +865,7 @@ KEY FINDINGS
                             string_item.get("address", ""),
                             string_item.get("section", ""),
                             string_item.get("type", ""),
-                            string_item.get("length", 0)
+                            string_item.get("length", 0),
                         ])
                     else:
                         # Fallback for simple string list
@@ -893,7 +895,7 @@ KEY FINDINGS
                                     library,
                                     func.get("name", ""),
                                     func.get("address", ""),
-                                    func.get("ordinal", "")
+                                    func.get("ordinal", ""),
                                 ])
                             else:
                                 writer.writerow([library, str(func), "", ""])
@@ -935,7 +937,7 @@ KEY FINDINGS
             print(f"Comprehensive CSV export failed: {e}")
             return False
 
-    def _generate_analysis_config(self) -> Dict[str, Any]:
+    def _generate_analysis_config(self) -> dict[str, Any]:
         """Generate analysis configuration for YAML export."""
         return {
             "analysis_settings": {
@@ -943,26 +945,26 @@ KEY FINDINGS
                 "include_strings": True,
                 "include_imports": True,
                 "vulnerability_detection": True,
-                "entropy_analysis": True
+                "entropy_analysis": True,
             },
             "export_settings": {
                 "include_raw_data": False,
                 "detailed_reports": True,
-                "executive_summary": True
+                "executive_summary": True,
             },
             "tool_configuration": {
                 "name": "Intellicrack",
                 "version": "2.0",
-                "scan_date": self.export_metadata["export_time"]
-            }
+                "scan_date": self.export_metadata["export_time"],
+            },
         }
 
-    def _generate_detection_rules(self) -> Dict[str, Any]:
+    def _generate_detection_rules(self) -> dict[str, Any]:
         """Generate detection rules based on analysis results."""
         rules = {
             "yara_rules": [],
             "snort_rules": [],
-            "sigma_rules": []
+            "sigma_rules": [],
         }
 
         # Generate basic YARA rules based on findings
@@ -973,7 +975,7 @@ KEY FINDINGS
                     "name": f"Detect_{vuln_type.replace(' ', '_')}",
                     "description": f"Detects {vuln_type} vulnerability",
                     "strings": vuln_data.get("indicators", [])[:5],  # Limit to 5 indicators
-                    "condition": "any of them"
+                    "condition": "any of them",
                 }
                 rules["yara_rules"].append(rule)
 
@@ -988,7 +990,7 @@ KEY FINDINGS
             header_format = workbook.add_format({
                 "bold": True,
                 "bg_color": "#D7E4BC",
-                "border": 1
+                "border": 1,
             })
 
             # Write headers
@@ -1036,7 +1038,7 @@ KEY FINDINGS
             header_format = workbook.add_format({
                 "bold": True,
                 "bg_color": "#FFB3B3",
-                "border": 1
+                "border": 1,
             })
 
             # Write headers
@@ -1071,7 +1073,7 @@ KEY FINDINGS
             header_format = workbook.add_format({
                 "bold": True,
                 "bg_color": "#B3D9FF",
-                "border": 1
+                "border": 1,
             })
 
             # Write headers
@@ -1109,7 +1111,7 @@ KEY FINDINGS
             header_format = workbook.add_format({
                 "bold": True,
                 "bg_color": "#FFE6B3",
-                "border": 1
+                "border": 1,
             })
 
             # Write headers
@@ -1152,7 +1154,7 @@ KEY FINDINGS
             header_format = workbook.add_format({
                 "bold": True,
                 "bg_color": "#E6E6FA",
-                "border": 1
+                "border": 1,
             })
 
             # Write headers
@@ -1184,7 +1186,7 @@ KEY FINDINGS
             return None
 
 
-def get_available_formats() -> List[str]:
+def get_available_formats() -> list[str]:
     """Get list of available export formats."""
     formats = ["json", "markdown", "html", "txt", "csv", "xml"]
 
@@ -1196,7 +1198,7 @@ def get_available_formats() -> List[str]:
     return formats
 
 
-def export_analysis_results(binary_path: str, analysis_results: Dict[str, Any],
+def export_analysis_results(binary_path: str, analysis_results: dict[str, Any],
                           output_path: str, format_type: str, **kwargs) -> bool:
     """Export analysis results in specified format.
 
@@ -1209,6 +1211,7 @@ def export_analysis_results(binary_path: str, analysis_results: Dict[str, Any],
 
     Returns:
         True if export successful
+
     """
     exporter = AdvancedExporter(binary_path, analysis_results)
 
@@ -1216,19 +1219,18 @@ def export_analysis_results(binary_path: str, analysis_results: Dict[str, Any],
 
     if format_type == "json":
         return exporter.export_detailed_json(output_path, kwargs.get("include_raw_data", True))
-    elif format_type in ["markdown", "html", "txt"]:
+    if format_type in ["markdown", "html", "txt"]:
         return exporter.export_executive_summary(output_path, format_type)
-    elif format_type == "vulnerability":
+    if format_type == "vulnerability":
         return exporter.export_vulnerability_report(output_path)
-    elif format_type == "csv":
+    if format_type == "csv":
         return exporter.export_csv_data(output_path, kwargs.get("data_type", "all"))
-    elif format_type == "xml":
+    if format_type == "xml":
         return exporter.export_xml_report(output_path)
-    elif format_type == "yaml":
+    if format_type == "yaml":
         return exporter.export_yaml_config(output_path)
-    elif format_type == "xlsx":
+    if format_type == "xlsx":
         return exporter.export_excel_workbook(output_path)
-    else:
-        print(f"Unsupported format: {format_type}")
-        print(f"Available formats: {', '.join(get_available_formats())}")
-        return False
+    print(f"Unsupported format: {format_type}")
+    print(f"Available formats: {', '.join(get_available_formats())}")
+    return False

@@ -22,7 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import ast
 import os
-from typing import List, Tuple
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import (
@@ -55,7 +54,7 @@ class PluginValidator:
     """Validates plugin code for syntax and structure"""
 
     @staticmethod
-    def validate_syntax(code: str) -> Tuple[bool, List[str]]:
+    def validate_syntax(code: str) -> tuple[bool, list[str]]:
         """Validate Python syntax"""
         errors = []
         try:
@@ -67,16 +66,16 @@ class PluginValidator:
             return False, errors
 
     @staticmethod
-    def validate_structure(code: str) -> Tuple[bool, List[str]]:
+    def validate_structure(code: str) -> tuple[bool, list[str]]:
         """Validate plugin structure requirements"""
         from ...utils.validation.import_validator import PluginStructureValidator
         # Plugin editor checks for both 'run' and 'get_metadata' methods
         return PluginStructureValidator.validate_structure_from_code(
-            code, {"run", "get_metadata"}
+            code, {"run", "get_metadata"},
         )
 
     @staticmethod
-    def validate_imports(code: str) -> Tuple[bool, List[str]]:
+    def validate_imports(code: str) -> tuple[bool, list[str]]:
         """Check if imports are available"""
         from ...utils.validation.import_validator import validate_imports
         return validate_imports(code)
@@ -214,7 +213,7 @@ class PluginEditor(QWidget):
             reply = QMessageBox.question(
                 self, "Unsaved Changes",
                 "Do you want to save your changes?",
-                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
             )
             if reply == QMessageBox.Yes:
                 self.save_file()
@@ -230,12 +229,12 @@ class PluginEditor(QWidget):
         """Open a file"""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Open Plugin",
-            "", "Plugin Files (*.py *.js);;All Files (*.*)"
+            "", "Plugin Files (*.py *.js);;All Files (*.*)",
         )
 
         if file_path:
             try:
-                with open(file_path, "r") as f:
+                with open(file_path) as f:
                     content = f.read()
 
                 self.editor.setPlainText(content)
@@ -253,14 +252,14 @@ class PluginEditor(QWidget):
 
             except Exception as e:
                 logger.error("Exception in plugin_editor: %s", e)
-                QMessageBox.critical(self, "Error", f"Failed to open file:\n{str(e)}")
+                QMessageBox.critical(self, "Error", f"Failed to open file:\n{e!s}")
 
     def save_file(self):
         """Save the current file"""
         if not self.current_file:
             file_path, _ = QFileDialog.getSaveFileName(
                 self, "Save Plugin",
-                "", "Python Files (*.py);;JavaScript Files (*.js);;All Files (*.*)"
+                "", "Python Files (*.py);;JavaScript Files (*.js);;All Files (*.*)",
             )
             if not file_path:
                 return
@@ -277,7 +276,7 @@ class PluginEditor(QWidget):
 
         except Exception as e:
             logger.error("Exception in plugin_editor: %s", e)
-            QMessageBox.critical(self, "Error", f"Failed to save file:\n{str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to save file:\n{e!s}")
 
     def on_text_changed(self):
         """Handle text changes"""
@@ -345,7 +344,7 @@ class PluginEditor(QWidget):
         results = {
             "valid": syntax_valid and self.validation_list.count() == 1,
             "errors": syntax_errors + (structure_errors if syntax_valid else []),
-            "warnings": import_warnings if syntax_valid else []
+            "warnings": import_warnings if syntax_valid else [],
         }
         self.validationComplete.emit(results)
 

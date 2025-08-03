@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -25,7 +24,7 @@ their type and configuration.
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Type
+from typing import Any
 
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelRepositoryInterface
@@ -38,30 +37,30 @@ class RepositoryFactory:
     """Factory for creating model repositories."""
 
     # Registry of repository types
-    _repository_types: Dict[str, Type[ModelRepositoryInterface]] = {}
+    _repository_types: dict[str, type[ModelRepositoryInterface]] = {}
 
     @classmethod
-    def register_repository_type(cls, type_name: str, repository_class: Type[ModelRepositoryInterface]):
-        """
-        Register a repository type.
+    def register_repository_type(cls, type_name: str, repository_class: type[ModelRepositoryInterface]):
+        """Register a repository type.
 
         Args:
             type_name: Name of the repository type
             repository_class: Class to instantiate for this type
+
         """
         cls._repository_types[type_name] = repository_class
         logger.debug(f"Registered repository type: {type_name}")
 
     @classmethod
-    def create_repository(cls, config: Dict[str, Any]) -> Optional[ModelRepositoryInterface]:
-        """
-        Create a repository instance based on configuration.
+    def create_repository(cls, config: dict[str, Any]) -> ModelRepositoryInterface | None:
+        """Create a repository instance based on configuration.
 
         Args:
             config: Repository configuration
 
         Returns:
             Repository instance, or None if creation failed
+
         """
         repo_type = config.get("type")
         if not repo_type:
@@ -82,7 +81,7 @@ class RepositoryFactory:
                 return LocalFileRepository(models_directory=models_directory)
 
             # Handle API repositories
-            elif issubclass(repo_class, APIRepositoryBase):
+            if issubclass(repo_class, APIRepositoryBase):
                 repository_name = config.get("name", repo_type)
                 api_endpoint = config.get("endpoint", "")
                 api_key = config.get("api_key", "")
@@ -93,7 +92,7 @@ class RepositoryFactory:
                 rate_limit_config = config.get("rate_limit", {})
                 rate_limit = RateLimitConfig(
                     requests_per_minute=rate_limit_config.get("requests_per_minute", 60),
-                    requests_per_day=rate_limit_config.get("requests_per_day", 1000)
+                    requests_per_day=rate_limit_config.get("requests_per_day", 1000),
                 )
 
                 # Create cache config
@@ -110,24 +109,23 @@ class RepositoryFactory:
                     proxy=proxy,
                     rate_limit_config=rate_limit,
                     cache_config=cache_config,
-                    download_dir=download_dir
+                    download_dir=download_dir,
                 )
 
             # Generic case
-            else:
-                return repo_class(**config)
+            return repo_class(**config)
 
         except Exception as e:
-            logger.error(f"Failed to create repository of type {repo_type}: {str(e)}")
+            logger.error(f"Failed to create repository of type {repo_type}: {e!s}")
             return None
 
     @classmethod
-    def get_available_repository_types(cls) -> List[str]:
-        """
-        Get a list of available repository types.
+    def get_available_repository_types(cls) -> list[str]:
+        """Get a list of available repository types.
 
         Returns:
             List of repository type names
+
         """
         return list(cls._repository_types.keys())
 

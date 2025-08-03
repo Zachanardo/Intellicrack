@@ -1,5 +1,4 @@
-"""
-Autodesk Licensing Protocol Parser and Response Generator
+"""Autodesk Licensing Protocol Parser and Response Generator
 
 Copyright (C) 2025 Zachary Flint
 
@@ -26,7 +25,7 @@ import random
 import time
 import uuid
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ...utils.logger import get_logger
 
@@ -35,6 +34,7 @@ logger = get_logger(__name__)
 @dataclass
 class AutodeskRequest:
     """Autodesk licensing request structure"""
+
     request_type: str
     product_key: str
     installation_id: str
@@ -42,21 +42,22 @@ class AutodeskRequest:
     user_id: str
     activation_id: str
     license_method: str
-    request_data: Dict[str, Any]
-    headers: Dict[str, str]
+    request_data: dict[str, Any]
+    headers: dict[str, str]
     auth_token: str
-    platform_info: Dict[str, Any]
+    platform_info: dict[str, Any]
 
 @dataclass
 class AutodeskResponse:
     """Autodesk licensing response structure"""
+
     status: str
     response_code: int
-    activation_data: Dict[str, Any]
-    license_data: Dict[str, Any]
-    entitlement_data: Dict[str, Any]
+    activation_data: dict[str, Any]
+    license_data: dict[str, Any]
+    entitlement_data: dict[str, Any]
     digital_signature: str
-    response_headers: Dict[str, str]
+    response_headers: dict[str, str]
 
 class AutodeskLicensingParser:
     """Real Autodesk licensing protocol parser and response generator"""
@@ -74,7 +75,7 @@ class AutodeskLicensingParser:
         "license_transfer": "License transfer request",
         "offline_activation": "Offline activation request",
         "network_license": "Network license request",
-        "borrowing": "License borrowing request"
+        "borrowing": "License borrowing request",
     }
 
     # Autodesk products with their specific identifiers
@@ -85,7 +86,7 @@ class AutodeskLicensingParser:
             "license_model": "standalone",
             "features": ["2d_drafting", "dwg_files", "pdf_import"],
             "subscription_required": True,
-            "network_license_available": False
+            "network_license_available": False,
         },
         "ACD": {  # AutoCAD
             "name": "AutoCAD",
@@ -93,7 +94,7 @@ class AutodeskLicensingParser:
             "license_model": "standalone_or_network",
             "features": ["2d_drafting", "3d_modeling", "scripting", "api_access"],
             "subscription_required": True,
-            "network_license_available": True
+            "network_license_available": True,
         },
         "INVNTOR": {  # Inventor
             "name": "Autodesk Inventor",
@@ -101,7 +102,7 @@ class AutodeskLicensingParser:
             "license_model": "standalone_or_network",
             "features": ["3d_cad", "simulation", "rendering", "sheet_metal"],
             "subscription_required": True,
-            "network_license_available": True
+            "network_license_available": True,
         },
         "MAYA": {  # Maya
             "name": "Autodesk Maya",
@@ -109,7 +110,7 @@ class AutodeskLicensingParser:
             "license_model": "standalone_or_network",
             "features": ["3d_animation", "modeling", "rendering", "fx"],
             "subscription_required": True,
-            "network_license_available": True
+            "network_license_available": True,
         },
         "3DSMAX": {  # 3ds Max
             "name": "Autodesk 3ds Max",
@@ -117,7 +118,7 @@ class AutodeskLicensingParser:
             "license_model": "standalone_or_network",
             "features": ["3d_modeling", "animation", "rendering", "games"],
             "subscription_required": True,
-            "network_license_available": True
+            "network_license_available": True,
         },
         "REVIT": {  # Revit
             "name": "Autodesk Revit",
@@ -125,7 +126,7 @@ class AutodeskLicensingParser:
             "license_model": "standalone_or_network",
             "features": ["bim", "architecture", "mep", "structural"],
             "subscription_required": True,
-            "network_license_available": True
+            "network_license_available": True,
         },
         "FUSION": {  # Fusion 360
             "name": "Autodesk Fusion 360",
@@ -133,7 +134,7 @@ class AutodeskLicensingParser:
             "license_model": "cloud_subscription",
             "features": ["cad", "cam", "cae", "collaboration"],
             "subscription_required": True,
-            "network_license_available": False
+            "network_license_available": False,
         },
         "EAGLE": {  # EAGLE
             "name": "Autodesk EAGLE",
@@ -141,7 +142,7 @@ class AutodeskLicensingParser:
             "license_model": "subscription",
             "features": ["pcb_design", "schematic", "routing"],
             "subscription_required": True,
-            "network_license_available": False
+            "network_license_available": False,
         },
         "NETFABB": {  # Netfabb
             "name": "Autodesk Netfabb",
@@ -149,7 +150,7 @@ class AutodeskLicensingParser:
             "license_model": "standalone",
             "features": ["3d_printing", "additive_manufacturing", "mesh_repair"],
             "subscription_required": True,
-            "network_license_available": False
+            "network_license_available": False,
         },
         "CIVIL3D": {  # Civil 3D
             "name": "AutoCAD Civil 3D",
@@ -157,8 +158,8 @@ class AutodeskLicensingParser:
             "license_model": "standalone_or_network",
             "features": ["civil_engineering", "surveying", "mapping"],
             "subscription_required": True,
-            "network_license_available": True
-        }
+            "network_license_available": True,
+        },
     }
 
     def __init__(self):
@@ -177,15 +178,15 @@ class AutodeskLicensingParser:
         self.activation_seed = hashlib.md5(str(time.time()).encode()).hexdigest()
         self.adsk_token_key = hashlib.sha256(b"autodesk_token_signing_key").hexdigest()
 
-    def parse_request(self, http_data: str) -> Optional[AutodeskRequest]:
-        """
-        Parse incoming Autodesk licensing HTTP request
+    def parse_request(self, http_data: str) -> AutodeskRequest | None:
+        """Parse incoming Autodesk licensing HTTP request
 
         Args:
             http_data: Raw HTTP request data
 
         Returns:
             Parsed AutodeskRequest object or None if invalid
+
         """
         try:
             # Parse HTTP headers and body
@@ -251,7 +252,7 @@ class AutodeskLicensingParser:
                 request_data=request_data,
                 headers=headers,
                 auth_token=auth_token or "",
-                platform_info=platform_info
+                platform_info=platform_info,
             )
 
             self.logger.info(f"Parsed Autodesk {request_type} request for product {product_key}")
@@ -261,8 +262,8 @@ class AutodeskLicensingParser:
             self.logger.error(f"Failed to parse Autodesk request: {e}")
             return None
 
-    def _determine_request_type(self, request_line: str, headers: Dict[str, str],
-                               data: Dict[str, Any]) -> str:
+    def _determine_request_type(self, request_line: str, headers: dict[str, str],
+                               data: dict[str, Any]) -> str:
         """Determine Autodesk request type from URL and data"""
         request_line_lower = request_line.lower()
 
@@ -284,35 +285,34 @@ class AutodeskLicensingParser:
         if "/activate" in request_line_lower or "/activation" in request_line_lower:
             if "application/x-amf" in content_type or "application/octet-stream" in content_type:
                 return "legacy_activation"
-            elif is_oauth:
+            if is_oauth:
                 return "oauth_activation"
-            elif is_fusion360:
+            if is_fusion360:
                 return "fusion360_activation"
-            else:
-                return "activation"
-        elif "/validate" in request_line_lower or "/validation" in request_line_lower:
+            return "activation"
+        if "/validate" in request_line_lower or "/validation" in request_line_lower:
             if x_autodesk_version:
                 return f"validation_v{x_autodesk_version}"
             return "validation"
-        elif "/deactivate" in request_line_lower or "/deactivation" in request_line_lower:
+        if "/deactivate" in request_line_lower or "/deactivation" in request_line_lower:
             return "deactivation"
-        elif "/entitlement" in request_line_lower:
+        if "/entitlement" in request_line_lower:
             return "entitlement"
-        elif "/heartbeat" in request_line_lower or "/ping" in request_line_lower:
+        if "/heartbeat" in request_line_lower or "/ping" in request_line_lower:
             return "heartbeat"
-        elif "/register" in request_line_lower or "/registration" in request_line_lower:
+        if "/register" in request_line_lower or "/registration" in request_line_lower:
             return "registration"
-        elif "/subscription" in request_line_lower:
+        if "/subscription" in request_line_lower:
             return "subscription"
-        elif "/usage" in request_line_lower:
+        if "/usage" in request_line_lower:
             return "feature_usage"
-        elif "/transfer" in request_line_lower:
+        if "/transfer" in request_line_lower:
             return "license_transfer"
-        elif "/offline" in request_line_lower:
+        if "/offline" in request_line_lower:
             return "offline_activation"
-        elif "/network" in request_line_lower:
+        if "/network" in request_line_lower:
             return "network_license"
-        elif "/borrow" in request_line_lower:
+        if "/borrow" in request_line_lower:
             return "borrowing"
 
         # Check data content
@@ -323,27 +323,27 @@ class AutodeskLicensingParser:
         # Check for specific Autodesk API endpoints
         if "/api/auth/authenticate" in request_line_lower:
             return "activation"
-        elif "/api/license/validate" in request_line_lower:
+        if "/api/license/validate" in request_line_lower:
             return "validation"
-        elif "/api/entitlements" in request_line_lower:
+        if "/api/entitlements" in request_line_lower:
             return "entitlement"
 
         # Refine request type based on detected Autodesk product
         base_type = "validation"  # default
         if is_autocad:
             return f"{base_type}_autocad"
-        elif is_inventor:
+        if is_inventor:
             return f"{base_type}_inventor"
-        elif is_maya:
+        if is_maya:
             return f"{base_type}_maya"
-        elif is_3dsmax:
+        if is_3dsmax:
             return f"{base_type}_3dsmax"
 
         # Default to validation
         return base_type
 
-    def _extract_field(self, data: Dict[str, Any], headers: Dict[str, str],
-                      field_names: List[str]) -> Optional[str]:
+    def _extract_field(self, data: dict[str, Any], headers: dict[str, str],
+                      field_names: list[str]) -> str | None:
         """Extract field from request data or headers"""
         # Check data first
         for field_name in field_names:
@@ -357,7 +357,7 @@ class AutodeskLicensingParser:
 
         return None
 
-    def _extract_platform_info(self, data: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
+    def _extract_platform_info(self, data: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
         """Extract platform and system information"""
         platform_info = {}
 
@@ -378,12 +378,12 @@ class AutodeskLicensingParser:
             "timezone": data.get("timezone", "UTC"),
             "screen_resolution": data.get("screen_resolution", "1920x1080"),
             "processor_count": data.get("processor_count", 4),
-            "memory_total": data.get("memory_total", 8192)
+            "memory_total": data.get("memory_total", 8192),
         })
 
         return platform_info
 
-    def _parse_form_data(self, body: str) -> Dict[str, Any]:
+    def _parse_form_data(self, body: str) -> dict[str, Any]:
         """Parse form-encoded data"""
         data = {}
         try:
@@ -394,47 +394,45 @@ class AutodeskLicensingParser:
                     data[key] = value
         except (ValueError, AttributeError, Exception) as e:
             self.logger.error("Error in autodesk_parser: %s", e)
-            pass
         return data
 
     def generate_response(self, request: AutodeskRequest) -> AutodeskResponse:
-        """
-        Generate appropriate Autodesk response based on request
+        """Generate appropriate Autodesk response based on request
 
         Args:
             request: Parsed Autodesk request
 
         Returns:
             Autodesk response object
+
         """
         self.logger.info(f"Generating response for Autodesk {request.request_type} request")
 
         if request.request_type == "activation":
             return self._handle_activation(request)
-        elif request.request_type == "validation":
+        if request.request_type == "validation":
             return self._handle_validation(request)
-        elif request.request_type == "deactivation":
+        if request.request_type == "deactivation":
             return self._handle_deactivation(request)
-        elif request.request_type == "entitlement":
+        if request.request_type == "entitlement":
             return self._handle_entitlement(request)
-        elif request.request_type == "heartbeat":
+        if request.request_type == "heartbeat":
             return self._handle_heartbeat(request)
-        elif request.request_type == "registration":
+        if request.request_type == "registration":
             return self._handle_registration(request)
-        elif request.request_type == "subscription":
+        if request.request_type == "subscription":
             return self._handle_subscription(request)
-        elif request.request_type == "feature_usage":
+        if request.request_type == "feature_usage":
             return self._handle_feature_usage(request)
-        elif request.request_type == "license_transfer":
+        if request.request_type == "license_transfer":
             return self._handle_license_transfer(request)
-        elif request.request_type == "offline_activation":
+        if request.request_type == "offline_activation":
             return self._handle_offline_activation(request)
-        elif request.request_type == "network_license":
+        if request.request_type == "network_license":
             return self._handle_network_license(request)
-        elif request.request_type == "borrowing":
+        if request.request_type == "borrowing":
             return self._handle_borrowing(request)
-        else:
-            return self._handle_unknown_request(request)
+        return self._handle_unknown_request(request)
     def _handle_activation(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle Autodesk product activation"""
         product_key = request.product_key or "UNKNOWN"
@@ -448,7 +446,7 @@ class AutodeskLicensingParser:
                 license_data={"error": f"Unknown product: {product_key}"},
                 entitlement_data={},
                 digital_signature="",
-                response_headers={"Content-Type": "application/json"}
+                response_headers={"Content-Type": "application/json"},
             )
 
         product = self.AUTODESK_PRODUCTS[product_key]
@@ -471,7 +469,7 @@ class AutodeskLicensingParser:
             "activation_time": time.time(),
             "machine_signature": machine_signature,
             "license_method": request.license_method,
-            "platform_info": request.platform_info
+            "platform_info": request.platform_info,
         }
 
         # Generate license data
@@ -485,7 +483,7 @@ class AutodeskLicensingParser:
             "license_server": "intellicrack-autodesk",
             "license_method": request.license_method,
             "activation_count": 1,
-            "max_activations": 5 if request.license_method == "standalone" else 100
+            "max_activations": 5 if request.license_method == "standalone" else 100,
         }
 
         # Generate entitlement data
@@ -496,13 +494,13 @@ class AutodeskLicensingParser:
             "subscription_end": self._calculate_expiry_date(product),
             "entitled_features": product["features"],
             "usage_type": "commercial",
-            "seats_available": 999
+            "seats_available": 999,
         }
 
         # Generate digital signature
         signature_data = f"{activation_id}:{product_key}:{request.machine_id}:{time.time()}"
         digital_signature = hashlib.sha256(
-            (signature_data + self.server_private_key).encode()
+            (signature_data + self.server_private_key).encode(),
         ).hexdigest()
 
         return AutodeskResponse(
@@ -513,15 +511,15 @@ class AutodeskLicensingParser:
                 "activation_status": "activated",
                 "activation_time": int(time.time()),
                 "machine_signature": machine_signature,
-                "adsk_token": self._generate_adsk_token(request)
+                "adsk_token": self._generate_adsk_token(request),
             },
             license_data=license_data,
             entitlement_data=entitlement_data,
             digital_signature=digital_signature,
             response_headers={
                 "Content-Type": "application/json",
-                "X-Autodesk-License-Server": "intellicrack-autodesk-emulator"
-            }
+                "X-Autodesk-License-Server": "intellicrack-autodesk-emulator",
+            },
         )
 
     def _handle_validation(self, request: AutodeskRequest) -> AutodeskResponse:
@@ -543,7 +541,7 @@ class AutodeskLicensingParser:
                     license_data={"error": "Machine signature mismatch"},
                     entitlement_data={},
                     digital_signature="",
-                    response_headers={"Content-Type": "application/json"}
+                    response_headers={"Content-Type": "application/json"},
                 )
 
             # Update last validation time
@@ -554,43 +552,42 @@ class AutodeskLicensingParser:
                 response_code=200,
                 activation_data={
                     "validation_status": "valid",
-                    "validation_time": int(time.time())
+                    "validation_time": int(time.time()),
                 },
                 license_data={
                     "license_valid": True,
                     "days_remaining": 365,
                     "features_enabled": self.AUTODESK_PRODUCTS.get(
-                        activation["product_key"], {}
-                    ).get("features", [])
+                        activation["product_key"], {},
+                    ).get("features", []),
                 },
                 entitlement_data={
                     "subscription_valid": True,
-                    "access_level": "full"
+                    "access_level": "full",
                 },
                 digital_signature=self._generate_validation_signature(request),
-                response_headers={"Content-Type": "application/json"}
+                response_headers={"Content-Type": "application/json"},
             )
-        else:
-            # Allow validation to succeed for unknown activations
-            return AutodeskResponse(
-                status="success",
-                response_code=200,
-                activation_data={
-                    "validation_status": "valid",
-                    "validation_time": int(time.time())
-                },
-                license_data={
-                    "license_valid": True,
-                    "days_remaining": 365,
-                    "features_enabled": ["full_access"]
-                },
-                entitlement_data={
-                    "subscription_valid": True,
-                    "access_level": "full"
-                },
-                digital_signature=self._generate_validation_signature(request),
-                response_headers={"Content-Type": "application/json"}
-            )
+        # Allow validation to succeed for unknown activations
+        return AutodeskResponse(
+            status="success",
+            response_code=200,
+            activation_data={
+                "validation_status": "valid",
+                "validation_time": int(time.time()),
+            },
+            license_data={
+                "license_valid": True,
+                "days_remaining": 365,
+                "features_enabled": ["full_access"],
+            },
+            entitlement_data={
+                "subscription_valid": True,
+                "access_level": "full",
+            },
+            digital_signature=self._generate_validation_signature(request),
+            response_headers={"Content-Type": "application/json"},
+        )
 
     def _handle_deactivation(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle product deactivation"""
@@ -604,12 +601,12 @@ class AutodeskLicensingParser:
             response_code=200,
             activation_data={
                 "deactivation_status": "deactivated",
-                "deactivation_time": int(time.time())
+                "deactivation_time": int(time.time()),
             },
             license_data={},
             entitlement_data={},
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_entitlement(self, request: AutodeskRequest) -> AutodeskResponse:
@@ -628,7 +625,7 @@ class AutodeskLicensingParser:
                 "subscription_status": "active",
                 "entitlement_origin": "purchase",
                 "contract_number": f"C{random.randint(100000, 999999)}",
-                "support_level": "standard"
+                "support_level": "standard",
             }
 
         entitlement_data = self.entitlement_cache[entitlement_key]
@@ -640,7 +637,7 @@ class AutodeskLicensingParser:
             license_data={},
             entitlement_data=entitlement_data,
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_heartbeat(self, request: AutodeskRequest) -> AutodeskResponse:
@@ -665,21 +662,21 @@ class AutodeskLicensingParser:
                 "heartbeat_status": "alive",
                 "server_time": int(time.time()),
                 "session_id": session_id,
-                "license_checkout_time": int(time.time())
+                "license_checkout_time": int(time.time()),
             },
             license_data={
                 "license_server_status": "online",
                 "next_heartbeat": int(time.time() + heartbeat_interval),
                 "heartbeat_interval": heartbeat_interval,
                 "license_method": license_method,
-                "server_load": "low"
+                "server_load": "low",
             },
             entitlement_data={
                 "product_key": product_key,
-                "heartbeat_count": 1
+                "heartbeat_count": 1,
             },
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_registration(self, request: AutodeskRequest) -> AutodeskResponse:
@@ -692,15 +689,15 @@ class AutodeskLicensingParser:
             activation_data={
                 "registration_id": registration_id,
                 "registration_status": "registered",
-                "registration_time": int(time.time())
+                "registration_time": int(time.time()),
             },
             license_data={
                 "registered_to": request.user_id or "anonymous",
-                "registration_benefits": ["support", "updates", "cloud_services"]
+                "registration_benefits": ["support", "updates", "cloud_services"],
             },
             entitlement_data={},
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
     def _handle_subscription(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle subscription status check"""
@@ -720,8 +717,8 @@ class AutodeskLicensingParser:
                 "latest_updates",
                 "cloud_storage",
                 "technical_support",
-                "learning_resources"
-            ]
+                "learning_resources",
+            ],
         }
 
         return AutodeskResponse(
@@ -731,7 +728,7 @@ class AutodeskLicensingParser:
             license_data={},
             entitlement_data=subscription_data,
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_feature_usage(self, request: AutodeskRequest) -> AutodeskResponse:
@@ -747,7 +744,7 @@ class AutodeskLicensingParser:
             "total_features": len(set(features_used)) if features_used else 0,
             "session_length": session_duration,
             "most_used_feature": max(set(features_used), key=features_used.count) if features_used else "unknown",
-            "usage_frequency": len(features_used) / max(session_duration / 3600, 1) if session_duration > 0 else 0  # features per hour
+            "usage_frequency": len(features_used) / max(session_duration / 3600, 1) if session_duration > 0 else 0,  # features per hour
         }
 
         return AutodeskResponse(
@@ -757,20 +754,20 @@ class AutodeskLicensingParser:
                 "usage_recorded": True,
                 "usage_time": int(time.time()),
                 "user_id": user_id,
-                "report_id": str(uuid.uuid4())
+                "report_id": str(uuid.uuid4()),
             },
             license_data={
                 "usage_analytics": usage_summary,
                 "compliance_status": "within_limits",
-                "next_report_due": int(time.time() + 86400)  # 24 hours
+                "next_report_due": int(time.time() + 86400),  # 24 hours
             },
             entitlement_data={
                 "feature_access_valid": True,
                 "product_version": product_version,
-                "usage_tier": "standard"
+                "usage_tier": "standard",
             },
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_license_transfer(self, request: AutodeskRequest) -> AutodeskResponse:
@@ -783,21 +780,21 @@ class AutodeskLicensingParser:
             activation_data={
                 "transfer_id": transfer_id,
                 "transfer_status": "approved",
-                "transfer_time": int(time.time())
+                "transfer_time": int(time.time()),
             },
             license_data={
                 "new_machine_id": request.machine_id,
-                "old_machine_deactivated": True
+                "old_machine_deactivated": True,
             },
             entitlement_data={},
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_offline_activation(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle offline activation"""
         offline_code = hashlib.md5(
-            f"{request.machine_id}:{request.product_key}:{time.time()}".encode()
+            f"{request.machine_id}:{request.product_key}:{time.time()}".encode(),
         ).hexdigest().upper()
 
         return AutodeskResponse(
@@ -806,12 +803,12 @@ class AutodeskLicensingParser:
             activation_data={
                 "offline_activation_code": offline_code,
                 "activation_status": "pending_offline",
-                "instructions": "Use this code to complete offline activation"
+                "instructions": "Use this code to complete offline activation",
             },
             license_data={},
             entitlement_data={},
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_network_license(self, request: AutodeskRequest) -> AutodeskResponse:
@@ -831,19 +828,19 @@ class AutodeskLicensingParser:
             activation_data={
                 "network_license_id": license_id,
                 "license_server": "intellicrack-autodesk-nlm",
-                "checkout_time": int(time.time())
+                "checkout_time": int(time.time()),
             },
             license_data={
                 "license_type": "network",
                 "seats_in_use": self.network_licenses[product_key]["in_use"],
                 "seats_total": self.network_licenses[product_key]["total"],
                 "license_expiry": self._calculate_expiry_date(
-                    self.AUTODESK_PRODUCTS.get(product_key, {})
-                )
+                    self.AUTODESK_PRODUCTS.get(product_key, {}),
+                ),
             },
             entitlement_data={},
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_borrowing(self, request: AutodeskRequest) -> AutodeskResponse:
@@ -858,17 +855,17 @@ class AutodeskLicensingParser:
                 "borrow_id": borrow_id,
                 "borrow_status": "approved",
                 "borrow_start": int(time.time()),
-                "borrow_end": int(time.time() + (borrow_period * 86400))
+                "borrow_end": int(time.time() + (borrow_period * 86400)),
             },
             license_data={
                 "borrowed_features": self.AUTODESK_PRODUCTS.get(
-                    request.product_key, {}
+                    request.product_key, {},
                 ).get("features", []),
-                "borrow_period_days": borrow_period
+                "borrow_period_days": borrow_period,
             },
             entitlement_data={},
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _handle_unknown_request(self, request: AutodeskRequest) -> AutodeskResponse:
@@ -881,7 +878,7 @@ class AutodeskLicensingParser:
             license_data={"error": f"Unknown request type: {request.request_type}"},
             entitlement_data={},
             digital_signature="",
-            response_headers={"Content-Type": "application/json"}
+            response_headers={"Content-Type": "application/json"},
         )
 
     def _generate_machine_signature(self, request: AutodeskRequest) -> str:
@@ -893,7 +890,7 @@ class AutodeskLicensingParser:
         """Generate validation signature"""
         validation_data = f"{request.activation_id}:{request.machine_id}:{time.time()}"
         return hashlib.sha256(
-            (validation_data + self.server_private_key).encode()
+            (validation_data + self.server_private_key).encode(),
         ).hexdigest()
 
     def _generate_adsk_token(self, request: AutodeskRequest) -> str:
@@ -902,37 +899,36 @@ class AutodeskLicensingParser:
             "user_id": request.user_id,
             "product_key": request.product_key,
             "issued_at": int(time.time()),
-            "expires_at": int(time.time() + 86400)  # 24 hours
+            "expires_at": int(time.time() + 86400),  # 24 hours
         }
         token_json = json.dumps(token_data, separators=(",", ":"))
         token_b64 = base64.b64encode(token_json.encode()).decode()
 
         # Generate signature
         signature = hashlib.sha256(
-            (token_b64 + self.adsk_token_key).encode()
+            (token_b64 + self.adsk_token_key).encode(),
         ).hexdigest()[:16]
 
         return f"{token_b64}.{signature}"
 
-    def _calculate_expiry_date(self, product: Dict[str, Any]) -> str:
+    def _calculate_expiry_date(self, product: dict[str, Any]) -> str:
         """Calculate license expiry date"""
         if product.get("subscription_required", True):
             # Subscription licenses expire in 1 year
             expiry_time = time.time() + (365 * 24 * 3600)
             return time.strftime("%Y-%m-%d", time.localtime(expiry_time))
-        else:
-            # Perpetual licenses don't expire
-            return "permanent"
+        # Perpetual licenses don't expire
+        return "permanent"
 
     def serialize_response(self, response: AutodeskResponse) -> str:
-        """
-        Serialize Autodesk response to HTTP response
+        """Serialize Autodesk response to HTTP response
 
         Args:
             response: Autodesk response object
 
         Returns:
             HTTP response string
+
         """
         try:
             # Prepare response body
@@ -940,7 +936,7 @@ class AutodeskLicensingParser:
                 "status": response.status,
                 "activation_data": response.activation_data,
                 "license_data": response.license_data,
-                "entitlement_data": response.entitlement_data
+                "entitlement_data": response.entitlement_data,
             }
 
             if response.digital_signature:

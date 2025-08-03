@@ -1,5 +1,4 @@
-"""
-Copyright (C) 2025 Zachary Flint
+"""Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
 
@@ -25,4 +24,4 @@ from .tools.ghidra_script_manager import (
     get_script_manager,
 )
 
-__all__ = ["GhidraScript", "GhidraScriptManager", "get_script_manager", "add_script_directory"]
+__all__ = ["GhidraScript", "GhidraScriptManager", "add_script_directory", "get_script_manager"]

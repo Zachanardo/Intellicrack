@@ -42,7 +42,7 @@ if "DISPLAY" not in os.environ and "QT_QPA_PLATFORM" not in os.environ:
     # Check if we're in WSL by examining /proc/version for Microsoft string
     if os.path.exists("/proc/version"):
         try:
-            with open("/proc/version", "r", encoding="utf-8") as f:
+            with open("/proc/version", encoding="utf-8") as f:
                 if "microsoft" in f.read().lower():
                     os.environ["QT_QPA_PLATFORM"] = "offscreen"
         except:
@@ -77,8 +77,7 @@ if os.name == "nt":
 
 
 def main() -> int:
-    """
-    Main entry point for the Intellicrack application.
+    """Main entry point for the Intellicrack application.
 
     This function performs the following operations:
     1. Executes startup checks and auto-configuration
@@ -99,6 +98,7 @@ def main() -> int:
     Example:
         >>> import sys
         >>> sys.exit(main())
+
     """
     try:
         # Initialize security enforcement if available

@@ -1,5 +1,4 @@
-"""
-Analysis utility modules for Intellicrack.
+"""Analysis utility modules for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -53,4 +52,4 @@ from .pattern_search import (
     search_patterns_in_binary,
 )
 
-__all__ = ["binary_analysis", "entropy_utils", "pattern_search", "analysis_exporter"]
+__all__ = ["analysis_exporter", "binary_analysis", "entropy_utils", "pattern_search"]

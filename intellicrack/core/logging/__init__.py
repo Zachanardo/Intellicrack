@@ -1,5 +1,4 @@
-"""
-Logging Package for Intellicrack
+"""Logging Package for Intellicrack
 
 Provides audit logging and monitoring capabilities.
 
@@ -21,14 +20,14 @@ from .audit_logger import (
 )
 
 __all__ = [
-    "AuditLogger",
     "AuditEvent",
     "AuditEventType",
+    "AuditLogger",
     "AuditSeverity",
     "get_audit_logger",
-    "log_exploit_attempt",
     "log_binary_analysis",
-    "log_vm_operation",
     "log_credential_access",
-    "log_tool_execution"
+    "log_exploit_attempt",
+    "log_tool_execution",
+    "log_vm_operation",
 ]

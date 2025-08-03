@@ -10,7 +10,7 @@ import struct
 import threading
 import time
 import traceback
-from typing import Any, Dict, Optional
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -73,19 +73,18 @@ else:
 
 
 class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
-    """
-    Visual network traffic analyzer for license communications.
+    """Visual network traffic analyzer for license communications.
 
     This system captures, analyzes, and visualizes network traffic related to
     license verification, providing insights into license check mechanisms.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """
-        Initialize the network traffic analyzer.
+    def __init__(self, config: dict[str, Any] | None = None):
+        """Initialize the network traffic analyzer.
 
         Args:
             config: Configuration dictionary (optional)
+
         """
         super().__init__()
         self.logger = logging.getLogger(__name__)
@@ -96,7 +95,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             "max_packets": 10000,
             "filter": "tcp",
             "visualization_dir": "visualizations",
-            "auto_analyze": True
+            "auto_analyze": True,
         }
 
         # Update with provided configuration
@@ -111,7 +110,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         self.license_patterns = [
             b"license", b"activation", b"auth", b"key", b"valid",
             b"FEATURE", b"INCREMENT", b"VENDOR", b"SERVER",
-            b"HASP", b"Sentinel", b"FLEXLM", b"LCSAP"
+            b"HASP", b"Sentinel", b"FLEXLM", b"LCSAP",
         ]
 
         # Capture control flag
@@ -130,23 +129,22 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         # Create visualization directory
         os.makedirs(self.config["visualization_dir"], exist_ok=True)
 
-    def start_capture(self, interface: Optional[str] = None) -> bool:
-        """
-        Start capturing network traffic.
+    def start_capture(self, interface: str | None = None) -> bool:
+        """Start capturing network traffic.
 
         Args:
             interface: Network interface to capture on (optional)
 
         Returns:
             bool: True if capture started successfully, False otherwise
+
         """
         try:
             # Set capturing flag
             self.capturing = True
             # Define capture thread function
             def capture_thread():
-                """
-                Thread function for packet capture operations.
+                """Thread function for packet capture operations.
 
                 This function executes the packet capture operation in a separate thread,
                 allowing the network monitoring to run concurrently with the main application.
@@ -161,6 +159,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
                 Raises:
                     No exceptions are propagated as they are caught and logged internally
+
                 """
                 try:
                     self._capture_packets(interface)
@@ -180,12 +179,12 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             self.logger.error(traceback.format_exc())
             return False
 
-    def _capture_packets(self, interface: Optional[str] = None):
-        """
-        Capture packets using available libraries.
+    def _capture_packets(self, interface: str | None = None):
+        """Capture packets using available libraries.
 
         Args:
             interface: Network interface to capture on (optional)
+
         """
         # Try different packet capture libraries
         # Use the detected library based on PACKET_CAPTURE_LIB global variable
@@ -193,22 +192,20 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             if PACKET_CAPTURE_LIB == "scapy":
                 self._capture_with_scapy(interface)
                 return
-            elif PACKET_CAPTURE_LIB == "pyshark":
+            if PACKET_CAPTURE_LIB == "pyshark":
                 self._capture_with_pyshark(interface)
                 return
-            elif PACKET_CAPTURE_LIB == "socket":
+            if PACKET_CAPTURE_LIB == "socket":
                 self._capture_with_socket(interface)
                 return
-            else:
-                self.logger.error("No packet capture library available")
+            self.logger.error("No packet capture library available")
         except Exception as e:
-            self.logger.error(f"Packet capture failed: {str(e)}")
+            self.logger.error(f"Packet capture failed: {e!s}")
 
-    def _capture_with_socket(self, interface: Optional[str] = None, capture_filter: Optional[str] = None,
-                           output_file: Optional[str] = None, packet_count: Optional[int] = None,
-                           timeout: Optional[int] = None) -> Dict[str, Any]:
-        """
-        Capture packets using Python's native socket library.
+    def _capture_with_socket(self, interface: str | None = None, capture_filter: str | None = None,
+                           output_file: str | None = None, packet_count: int | None = None,
+                           timeout: int | None = None) -> dict[str, Any]:
+        """Capture packets using Python's native socket library.
         This is a fallback method when specialized packet capture libraries are not available.
 
         Args:
@@ -217,6 +214,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             output_file: Path to save the capture (optional)
             packet_count: Maximum number of packets to capture (optional)
             timeout: Timeout in seconds (optional)
+
         """
         self.logger.info("Starting packet capture using native socket library")
 
@@ -231,7 +229,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                         try:
                             s.bind((interface, 0))
                         except Exception as e:
-                            self.logger.warning(f"Could not bind to interface {interface}, using default: {str(e)}")
+                            self.logger.warning(f"Could not bind to interface {interface}, using default: {e!s}")
                             # Get host name and attempt to bind to its IP
                             host = socket.gethostbyname(socket.gethostname())
                             s.bind((host, 0))
@@ -253,7 +251,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                         try:
                             s.bind((interface, 0))
                         except Exception as e:
-                            self.logger.warning(f"Could not bind to interface {interface}: {str(e)}")
+                            self.logger.warning(f"Could not bind to interface {interface}: {e!s}")
             except PermissionError:
                 self.logger.error("Permission denied: Raw socket capture requires administrator/root privileges")
                 raise
@@ -272,7 +270,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             capture_stats = {
                 "start_time": start_time,
                 "packets_total": 0,
-                "capture_time": 0
+                "capture_time": 0,
             }
 
             # Inner function to handle the main capture logic
@@ -324,10 +322,10 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
                 except KeyboardInterrupt:
                     self.logger.info("Packet capture interrupted by user")
-                except socket.timeout:
+                except TimeoutError:
                     self.logger.info("Packet capture timeout reached")
                 except Exception as e:
-                    self.logger.error(f"Error during packet capture: {str(e)}")
+                    self.logger.error(f"Error during packet capture: {e!s}")
                 finally:
                     # Clean up
                     capture_stats["packets_total"] = packets_captured
@@ -340,7 +338,6 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                                 s.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
                         except (OSError, AttributeError) as e:
                             logger.error("Error in traffic_analyzer: %s", e)
-                            pass
 
                     s.close()
 
@@ -351,10 +348,10 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                 try:
                     with open(output_file, "wb") as out_file:
                         # Write a simple header (not pcap format, just timestamped raw packets)
-                        out_file.write(f"# Intellicrack socket capture started at {datetime.datetime.now()}\n".encode("utf-8"))
+                        out_file.write(f"# Intellicrack socket capture started at {datetime.datetime.now()}\n".encode())
                         perform_capture(out_file)
                 except Exception as e:
-                    self.logger.error(f"Failed to open output file: {str(e)}")
+                    self.logger.error(f"Failed to open output file: {e!s}")
                     # Continue capture without output file
                     perform_capture(None)
             else:
@@ -364,12 +361,11 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             return capture_stats
 
         except Exception as e:
-            self.logger.error(f"Failed to initialize socket for packet capture: {str(e)}")
+            self.logger.error(f"Failed to initialize socket for packet capture: {e!s}")
             raise
 
     def _process_captured_packet(self, packet_data: bytes):
-        """
-        Simple packet processor for socket-captured packets
+        """Simple packet processor for socket-captured packets
         """
         try:
             # Very basic packet processing - extract IP header info
@@ -407,16 +403,15 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                                 if src_port in self.license_ports or dst_port in self.license_ports:
                                     self.logger.info("Potential license traffic detected: port %s->%s", src_port, dst_port)
                             except Exception as e:
-                                self.logger.debug(f"Error extracting TCP ports: {str(e)}")
+                                self.logger.debug(f"Error extracting TCP ports: {e!s}")
         except Exception as e:
             # Just log the error and continue
-            self.logger.error(f"Error processing packet: {str(e)}")
+            self.logger.error(f"Error processing packet: {e!s}")
 
-    def _capture_with_pyshark(self, interface: Optional[str] = None, capture_filter: Optional[str] = None,
-                            output_file: Optional[str] = None, packet_count: Optional[int] = None,
-                            timeout: Optional[int] = None):
-        """
-        Capture packets using pyshark with enhanced functionality for license traffic analysis.
+    def _capture_with_pyshark(self, interface: str | None = None, capture_filter: str | None = None,
+                            output_file: str | None = None, packet_count: int | None = None,
+                            timeout: int | None = None):
+        """Capture packets using pyshark with enhanced functionality for license traffic analysis.
 
         Args:
             interface: Network interface to capture on (optional)
@@ -424,6 +419,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             output_file: Path to save the capture in pcapng format (optional)
             packet_count: Maximum number of packets to capture before stopping (optional)
             timeout: Timeout in seconds after which to stop capturing (optional)
+
         """
         if not PYSHARK_AVAILABLE:
             self.logger.error("pyshark not available - please install pyshark")
@@ -438,7 +434,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                 "start_time": start_time,
                 "packets_total": 0,
                 "packets_analyzed": 0,
-                "errors": 0
+                "errors": 0,
             }
 
             # Prepare capture options
@@ -483,8 +479,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             original_sigint_handler = signal.getsignal(signal.SIGINT)
 
             def signal_handler(sig, frame):
-                """
-                Handle SIGINT for graceful packet capture termination.
+                """Handle SIGINT for graceful packet capture termination.
 
                 Logs the interrupt and restores the original signal handler.
                 """
@@ -531,11 +526,11 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                     if packets_captured % 100 == 0:
                         elapsed = time.time() - start_time
                         rate = packets_captured / elapsed if elapsed > 0 else 0
-                        self.logger.info(f"Captured {packets_captured} packets ({rate:.2f} packets/sec), " +
+                        self.logger.info(f"Captured {packets_captured} packets ({rate:.2f} packets/sec), "
                                         f"analyzed {len(self.packets)} license-related packets")
 
                 except Exception as packet_ex:
-                    self.logger.error(f"Error processing packet: {str(packet_ex)}")
+                    self.logger.error(f"Error processing packet: {packet_ex!s}")
                     capture_stats["errors"] += 1
                     # Continue capturing despite errors in individual packets
                     continue
@@ -560,19 +555,19 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                 self.logger.info("Capture saved to file: %s", output_file)
 
         except Exception as e:
-            self.logger.error(f"Failed to capture packets: {str(e)}")
+            self.logger.error(f"Failed to capture packets: {e!s}")
             self.logger.error(traceback.format_exc())
             raise
 
     def _process_pyshark_packet(self, packet) -> bool:
-        """
-        Process a captured packet from pyshark.
+        """Process a captured packet from pyshark.
 
         Args:
             packet: Captured packet
 
         Returns:
             bool: True if packet was processed successfully, False otherwise
+
         """
         try:
             # Check if it's a TCP packet
@@ -608,7 +603,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                         "src_port": int(src_port),
                         "dst_ip": dst_ip,
                         "dst_port": int(dst_port),
-                        "protocol": "TCP"
+                        "protocol": "TCP",
                     }
 
                     # Analyze connection pattern
@@ -643,7 +638,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                     "dst_port": int(dst_port),
                     "payload": payload,
                     "size": int(packet.length),
-                    "connection_id": conn_key
+                    "connection_id": conn_key,
                 }
 
                 # Update connection stats
@@ -686,8 +681,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         return False
 
     def _check_payload_for_license_content(self, payload: bytes, conn_key: str) -> bool:
-        """
-        Check if payload contains license-related content.
+        """Check if payload contains license-related content.
 
         Args:
             payload: Packet payload data
@@ -695,6 +689,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
         Returns:
             bool: True if license content detected, False otherwise
+
         """
         try:
             for pattern in self.license_patterns:
@@ -706,12 +701,12 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             self.logger.debug("Error checking payload for license content: %s", e)
             return False
 
-    def _capture_with_scapy(self, interface: Optional[str] = None):
-        """
-        Capture packets using scapy.
+    def _capture_with_scapy(self, interface: str | None = None):
+        """Capture packets using scapy.
 
         Args:
             interface: Network interface to capture on (optional)
+
         """
         if not SCAPY_AVAILABLE:
             self.logger.error("scapy not available - please install scapy")
@@ -759,7 +754,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                                 "src_port": src_port,
                                 "dst_ip": dst_ip,
                                 "dst_port": dst_port,
-                                "protocol": "TCP"
+                                "protocol": "TCP",
                             }
 
                             # Check if it's license-related
@@ -793,7 +788,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                             "dst_port": dst_port,
                             "payload": payload,
                             "size": len(packet),
-                            "connection_id": conn_key
+                            "connection_id": conn_key,
                         }
 
                         # Update connection stats
@@ -817,7 +812,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             packet_handler = self.create_packet_handler(
                 scapy,
                 lambda: self.capturing,
-                process_tcp_packet
+                process_tcp_packet,
             )
 
             # Start sniffing
@@ -834,7 +829,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                 filter=bpf_filter,
                 prn=packet_handler,
                 stop_filter=stop_filter,
-                store=0  # Don't store packets in memory
+                store=0,  # Don't store packets in memory
             )
 
             self.logger.info("Scapy capture completed")
@@ -844,12 +839,12 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             self.logger.info("Falling back to socket capture")
             self._capture_with_socket(interface)
 
-    def analyze_traffic(self) -> Optional[Dict[str, Any]]:
-        """
-        Analyze captured traffic for license communications.
+    def analyze_traffic(self) -> dict[str, Any] | None:
+        """Analyze captured traffic for license communications.
 
         Returns:
             dict: Analysis results
+
         """
         try:
             # Count packets and connections
@@ -874,7 +869,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                         "packets": len(conn["packets"]),
                         "bytes_sent": conn["bytes_sent"],
                         "bytes_received": conn["bytes_received"],
-                        "duration": conn["last_time"] - conn["start_time"]
+                        "duration": conn["last_time"] - conn["start_time"],
                     }
 
                     # Extract license patterns
@@ -894,7 +889,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                 "total_connections": total_connections,
                 "license_connections": license_connections,
                 "license_servers": license_servers,
-                "license_conn_details": license_conn_details
+                "license_conn_details": license_conn_details,
             }
 
             # Generate visualizations
@@ -907,12 +902,12 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             self.logger.error("Error analyzing traffic: %s", e)
             return None
 
-    def _generate_visualizations(self, results: Dict[str, Any]):
-        """
-        Generate visualizations of license traffic.
+    def _generate_visualizations(self, results: dict[str, Any]):
+        """Generate visualizations of license traffic.
 
         Args:
             results: Analysis results
+
         """
         if not MATPLOTLIB_AVAILABLE:
             self.logger.warning("matplotlib not available - skipping visualizations")
@@ -992,9 +987,8 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         except Exception as e:
             self.logger.error("Error generating visualizations: %s", e)
 
-    def get_results(self) -> Dict[str, Any]:
-        """
-        Get network analysis results.
+    def get_results(self) -> dict[str, Any]:
+        """Get network analysis results.
 
         This method returns comprehensive results from the network traffic analysis,
         including packet statistics, protocol detection, license server identification,
@@ -1006,6 +1000,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             - protocols_detected: List of detected protocols
             - suspicious_traffic: List of suspicious traffic patterns
             - statistics: Detailed traffic statistics
+
         """
         # Analyze traffic if not already done
         if not hasattr(self, "_last_analysis_results"):
@@ -1017,7 +1012,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             "total_connections": 0,
             "license_connections": 0,
             "license_servers": [],
-            "license_conn_details": []
+            "license_conn_details": [],
         }
 
         # Detect protocols used
@@ -1032,7 +1027,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             22350: "CodeMeter",
             2080: "License Manager",
             8224: "License Server",
-            5093: "Sentinel RMS"
+            5093: "Sentinel RMS",
         }
 
         detected_ports = set()
@@ -1088,7 +1083,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                     "src_port": conn["src_port"],
                     "dst_port": conn["dst_port"],
                     "indicators": suspicious_indicators,
-                    "severity": self._assess_threat_level(suspicious_indicators)
+                    "severity": self._assess_threat_level(suspicious_indicators),
                 })
 
         # Calculate comprehensive statistics
@@ -1102,7 +1097,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             "port_distribution": self._calculate_port_distribution(),
             "license_traffic_percentage": self._calculate_license_traffic_percentage(),
             "peak_traffic_time": self._identify_peak_traffic_time(),
-            "connection_durations": self._analyze_connection_durations()
+            "connection_durations": self._analyze_connection_durations(),
         }
 
         # Compile final results
@@ -1114,14 +1109,14 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             "license_analysis": {
                 "license_servers": analysis["license_servers"],
                 "license_connections": analysis["license_connections"],
-                "license_connection_details": analysis["license_conn_details"]
+                "license_connection_details": analysis["license_conn_details"],
             },
             "summary": {
                 "total_connections": analysis["total_connections"],
                 "suspicious_connections": len(suspicious_traffic),
                 "identified_license_servers": len(analysis["license_servers"]),
-                "analysis_timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-            }
+                "analysis_timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            },
         }
 
         return results
@@ -1130,10 +1125,9 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         """Assess threat level based on suspicious indicators."""
         if len(indicators) >= 3:
             return "high"
-        elif len(indicators) >= 2:
+        if len(indicators) >= 2:
             return "medium"
-        else:
-            return "low"
+        return "low"
 
     def _calculate_capture_duration(self) -> float:
         """Calculate total capture duration in seconds."""
@@ -1152,13 +1146,13 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             return len(self.packets) / duration
         return 0.0
 
-    def _calculate_protocol_distribution(self) -> Dict[str, int]:
+    def _calculate_protocol_distribution(self) -> dict[str, int]:
         """Calculate distribution of protocols."""
         distribution = {}
 
         port_protocol_map = {
             80: "HTTP", 443: "HTTPS", 27000: "FlexLM", 27001: "FlexLM",
-            1947: "HASP", 6001: "HASP", 22350: "CodeMeter"
+            1947: "HASP", 6001: "HASP", 22350: "CodeMeter",
         }
 
         for conn in self.connections.values():
@@ -1167,7 +1161,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
         return distribution
 
-    def _calculate_port_distribution(self) -> Dict[int, int]:
+    def _calculate_port_distribution(self) -> dict[int, int]:
         """Calculate distribution of destination ports."""
         distribution = {}
 
@@ -1187,7 +1181,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
         return (license_packets / len(self.packets)) * 100 if self.packets else 0.0
 
-    def _identify_peak_traffic_time(self) -> Optional[str]:
+    def _identify_peak_traffic_time(self) -> str | None:
         """Identify time period with peak traffic."""
         if not self.packets:
             return None
@@ -1204,7 +1198,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
         return None
 
-    def _analyze_connection_durations(self) -> Dict[str, float]:
+    def _analyze_connection_durations(self) -> dict[str, float]:
         """Analyze connection duration statistics."""
         durations = []
 
@@ -1220,15 +1214,15 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             "min": min(durations),
             "max": max(durations),
             "avg": sum(durations) / len(durations),
-            "total": len(durations)
+            "total": len(durations),
         }
 
     def stop_capture(self) -> bool:
-        """
-        Stop the packet capture process.
+        """Stop the packet capture process.
 
         Returns:
             bool: True if capture was stopped successfully, False otherwise
+
         """
         try:
             # Set flag to stop capture threads
@@ -1246,7 +1240,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
             self.logger.info(
                 "Packet capture stopped. Total packets: %d, Total connections: %d, License connections: %d",
-                total_packets, total_connections, license_connections
+                total_packets, total_connections, license_connections,
             )
 
             # Auto-analyze if configured
@@ -1259,15 +1253,15 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             self.logger.error("Error stopping capture: %s", e)
             return False
 
-    def generate_report(self, filename: Optional[str] = None) -> bool:
-        """
-        Generate an HTML report of license traffic analysis.
+    def generate_report(self, filename: str | None = None) -> bool:
+        """Generate an HTML report of license traffic analysis.
 
         Args:
             filename: Output filename (optional)
 
         Returns:
             bool: True if generated successfully, False otherwise
+
         """
         try:
             # Analyze traffic

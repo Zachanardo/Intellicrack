@@ -1,5 +1,4 @@
-"""
-Intellicrack Core Protection Bypass Package
+"""Intellicrack Core Protection Bypass Package
 
 Copyright (C) 2025 Zachary Flint
 

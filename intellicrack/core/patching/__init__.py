@@ -1,5 +1,4 @@
-"""
-Intellicrack Core Patching Package
+"""Intellicrack Core Patching Package
 
 Copyright (C) 2025 Zachary Flint
 

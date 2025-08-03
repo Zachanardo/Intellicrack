@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -20,7 +19,7 @@ import logging
 import platform
 import subprocess
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 """
 Base Detector for Anti-Analysis Modules
@@ -30,8 +29,7 @@ Shared functionality for detection implementations to eliminate code duplication
 
 
 class BaseDetector(ABC):
-    """
-    Abstract base class for anti-analysis detectors.
+    """Abstract base class for anti-analysis detectors.
     Provides common detection loop functionality.
     """
 
@@ -42,9 +40,8 @@ class BaseDetector(ABC):
 
     def run_detection_loop(self,
                           aggressive: bool = False,
-                          aggressive_methods: List[str] = None) -> Dict[str, Any]:
-        """
-        Run the detection loop for all configured methods.
+                          aggressive_methods: list[str] = None) -> dict[str, Any]:
+        """Run the detection loop for all configured methods.
 
         Args:
             aggressive: Whether to run aggressive detection methods
@@ -52,6 +49,7 @@ class BaseDetector(ABC):
 
         Returns:
             Detection results dictionary
+
         """
         if aggressive_methods is None:
             aggressive_methods = []
@@ -60,7 +58,7 @@ class BaseDetector(ABC):
             "detections": {},
             "detection_count": 0,
             "total_confidence": 0,
-            "average_confidence": 0
+            "average_confidence": 0,
         }
 
         detection_count = 0
@@ -76,7 +74,7 @@ class BaseDetector(ABC):
                 results["detections"][method_name] = {
                     "detected": detected,
                     "confidence": confidence,
-                    "details": details
+                    "details": details,
                 }
 
                 if detected:
@@ -98,28 +96,26 @@ class BaseDetector(ABC):
         return results
 
     @abstractmethod
-    def get_aggressive_methods(self) -> List[str]:
+    def get_aggressive_methods(self) -> list[str]:
         """Get list of method names that are considered aggressive."""
-        pass
 
     @abstractmethod
     def get_detection_type(self) -> str:
         """Get the type of detection this class performs."""
-        pass
 
-    def get_running_processes(self) -> Tuple[str, List[str]]:
-        """
-        Get list of running processes based on platform.
+    def get_running_processes(self) -> tuple[str, list[str]]:
+        """Get list of running processes based on platform.
 
         Returns:
             Tuple of (raw_output, process_list)
+
         """
         try:
             if platform.system() == "Windows":
-                result = subprocess.run(["tasklist"], capture_output=True, text=True)
+                result = subprocess.run(["tasklist"], check=False, capture_output=True, text=True)
                 processes = result.stdout.lower()
             else:
-                result = subprocess.run(["ps", "aux"], capture_output=True, text=True)
+                result = subprocess.run(["ps", "aux"], check=False, capture_output=True, text=True)
                 processes = result.stdout.lower()
 
             # Also get individual process names
@@ -147,11 +143,10 @@ class BaseDetector(ABC):
             self.logger.debug(f"Error getting process list: {e}")
             return "", []
 
-    def calculate_detection_score(self, detections: Dict[str, Any],
-                                strong_methods: List[str],
-                                medium_methods: List[str] = None) -> int:
-        """
-        Calculate detection score based on method difficulty.
+    def calculate_detection_score(self, detections: dict[str, Any],
+                                strong_methods: list[str],
+                                medium_methods: list[str] = None) -> int:
+        """Calculate detection score based on method difficulty.
 
         Args:
             detections: Dictionary of detection results
@@ -160,6 +155,7 @@ class BaseDetector(ABC):
 
         Returns:
             Score capped at 10
+
         """
         if medium_methods is None:
             medium_methods = []

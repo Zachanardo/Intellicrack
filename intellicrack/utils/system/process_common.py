@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -24,13 +23,12 @@ This module consolidates process creation and management patterns.
 
 import logging
 import subprocess
-from typing import Any, Dict, List
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
-def run_subprocess_safely(cmd: List[str], timeout: int = 30, capture_output: bool = True) -> subprocess.CompletedProcess:
-    """
-    Run a subprocess with common safety patterns.
+def run_subprocess_safely(cmd: list[str], timeout: int = 30, capture_output: bool = True) -> subprocess.CompletedProcess:
+    """Run a subprocess with common safety patterns.
 
     Args:
         cmd: Command and arguments list
@@ -39,6 +37,7 @@ def run_subprocess_safely(cmd: List[str], timeout: int = 30, capture_output: boo
 
     Returns:
         CompletedProcess result
+
     """
     try:
         return subprocess.run(
@@ -47,7 +46,7 @@ def run_subprocess_safely(cmd: List[str], timeout: int = 30, capture_output: boo
             stderr=subprocess.PIPE if capture_output else None,
             text=True,
             timeout=timeout,
-            check=False
+            check=False,
         )
     except subprocess.TimeoutExpired:
         logger.error("Command timed out after %d seconds: %s", timeout, cmd[0])
@@ -56,9 +55,8 @@ def run_subprocess_safely(cmd: List[str], timeout: int = 30, capture_output: boo
         logger.error("Command not found: %s", cmd[0])
         raise
 
-def create_popen_safely(cmd: List[str], **kwargs) -> subprocess.Popen:
-    """
-    Create a Popen process with common patterns.
+def create_popen_safely(cmd: list[str], **kwargs) -> subprocess.Popen:
+    """Create a Popen process with common patterns.
 
     Args:
         cmd: Command and arguments list
@@ -66,11 +64,12 @@ def create_popen_safely(cmd: List[str], **kwargs) -> subprocess.Popen:
 
     Returns:
         Popen process object
+
     """
     defaults = {
         "stdout": subprocess.PIPE,
         "stderr": subprocess.PIPE,
-        "text": True
+        "text": True,
     }
     defaults.update(kwargs)
 
@@ -78,9 +77,8 @@ def create_popen_safely(cmd: List[str], **kwargs) -> subprocess.Popen:
 
 
 def create_suspended_process_with_context(create_func, get_context_func, target_exe: str,
-                                        logger_instance=None) -> Dict[str, Any]:
-    """
-    Common pattern for creating suspended process and getting thread context.
+                                        logger_instance=None) -> dict[str, Any]:
+    """Common pattern for creating suspended process and getting thread context.
 
     Args:
         create_func: Function to create suspended process
@@ -90,6 +88,7 @@ def create_suspended_process_with_context(create_func, get_context_func, target_
 
     Returns:
         dict: Contains process_info and context, or error info
+
     """
     if logger_instance is None:
         logger_instance = logger
@@ -112,10 +111,10 @@ def create_suspended_process_with_context(create_func, get_context_func, target_
         return {
             "success": True,
             "process_info": process_info,
-            "context": context
+            "context": context,
         }
 
     except Exception as e:
-        error_msg = f"Error in process creation: {str(e)}"
+        error_msg = f"Error in process creation: {e!s}"
         logger_instance.error(error_msg)
         return {"success": False, "error": error_msg}

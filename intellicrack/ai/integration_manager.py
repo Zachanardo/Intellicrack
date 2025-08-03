@@ -1,5 +1,4 @@
-"""
-Integration Manager for AI Components
+"""Integration Manager for AI Components
 
 Copyright (C) 2025 Zachary Flint
 
@@ -21,11 +20,12 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import threading
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime
 from queue import Empty, Queue
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from ..utils.logger import get_logger
 from .ai_script_generator import AIScriptGenerator, ScriptGenerationResult
@@ -51,9 +51,9 @@ except ImportError:
             Args:
                 *_args: Ignored positional arguments
                 **_kwargs: Ignored keyword arguments
+
             """
             logger.warning("QEMUTestManager fallback initialized")
-            pass
 
         def test_script_in_vm(self, script, target_binary, vm_config=None):
             """Fallback method for QEMU script testing."""
@@ -78,49 +78,52 @@ except ImportError:
                     "fallback": True,
                     "script_analyzed": script_info,
                     "target": target_binary,
-                    "config": vm_config
-                }
+                    "config": vm_config,
+                },
             }
 
 
 @dataclass
 class IntegrationTask:
     """Represents a task in the integration workflow."""
+
     task_id: str
     task_type: str
     description: str
-    input_data: Dict[str, Any]
-    dependencies: List[str] = field(default_factory=list)
+    input_data: dict[str, Any]
+    dependencies: list[str] = field(default_factory=list)
     status: str = "pending"  # pending, running, completed, failed
     result: Any = None
-    error: Optional[str] = None
+    error: str | None = None
     created_at: datetime = field(default_factory=datetime.now)
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
     priority: int = 1  # 1=high, 5=low
 
 
 @dataclass
 class WorkflowResult:
     """Result of a complete workflow execution."""
+
     workflow_id: str
     success: bool
     tasks_completed: int
     tasks_failed: int
     execution_time: float
-    results: Dict[str, Any]
-    errors: List[str] = field(default_factory=list)
-    artifacts: Dict[str, Any] = field(default_factory=dict)
+    results: dict[str, Any]
+    errors: list[str] = field(default_factory=list)
+    artifacts: dict[str, Any] = field(default_factory=dict)
 
 
 class IntegrationManager:
     """Manages integration and coordination of AI components."""
 
-    def __init__(self, llm_manager: Optional[LLMManager] = None):
+    def __init__(self, llm_manager: LLMManager | None = None):
         """Initialize the integration manager.
 
         Args:
             llm_manager: Optional LLM manager for AI components
+
         """
         self.logger = get_logger(__name__ + ".IntegrationManager")
         self.llm_manager = llm_manager or LLMManager()
@@ -133,22 +136,22 @@ class IntegrationManager:
 
         # Task management
         self.task_queue: Queue = Queue()
-        self.active_tasks: Dict[str, IntegrationTask] = {}
-        self.completed_tasks: Dict[str, IntegrationTask] = {}
-        self.task_dependencies: Dict[str, List[str]] = {}
+        self.active_tasks: dict[str, IntegrationTask] = {}
+        self.completed_tasks: dict[str, IntegrationTask] = {}
+        self.task_dependencies: dict[str, list[str]] = {}
 
         # Workflow management
-        self.active_workflows: Dict[str, Dict[str, Any]] = {}
-        self.workflow_results: Dict[str, WorkflowResult] = {}
+        self.active_workflows: dict[str, dict[str, Any]] = {}
+        self.workflow_results: dict[str, WorkflowResult] = {}
 
         # Execution control
         self.max_workers = 4
         self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
         self.running = False
-        self.worker_threads: List[threading.Thread] = []
+        self.worker_threads: list[threading.Thread] = []
 
         # Event handlers
-        self.event_handlers: Dict[str, List[Callable]] = {}
+        self.event_handlers: dict[str, list[Callable]] = {}
 
         # Optimization settings
         self.enable_caching = True
@@ -170,7 +173,7 @@ class IntegrationManager:
             thread = threading.Thread(
                 target=self._worker_loop,
                 name=f"IntegrationWorker-{i}",
-                daemon=True
+                daemon=True,
             )
             thread.start()
             self.worker_threads.append(thread)
@@ -288,7 +291,7 @@ class IntegrationManager:
 
         return {"scripts": scripts, "script_type": script_type}
 
-    def _execute_code_modification(self, task: IntegrationTask) -> Dict[str, Any]:
+    def _execute_code_modification(self, task: IntegrationTask) -> dict[str, Any]:
         """Execute code modification task."""
         request_data = task.input_data["request"]
 
@@ -310,10 +313,10 @@ class IntegrationManager:
         return {
             "changes": changes,
             "apply_results": apply_results,
-            "request": request
+            "request": request,
         }
 
-    def _execute_script_testing(self, task: IntegrationTask) -> Dict[str, Any]:
+    def _execute_script_testing(self, task: IntegrationTask) -> dict[str, Any]:
         """Execute script testing task."""
         script = task.input_data["script"]
         target_binary = task.input_data["target_binary"]
@@ -325,7 +328,7 @@ class IntegrationManager:
 
         return results
 
-    def _execute_autonomous_analysis(self, task: IntegrationTask) -> Dict[str, Any]:
+    def _execute_autonomous_analysis(self, task: IntegrationTask) -> dict[str, Any]:
         """Execute autonomous analysis task."""
         task_config = task.input_data["task_config"]
 
@@ -334,7 +337,7 @@ class IntegrationManager:
 
         return results
 
-    def _execute_result_combination(self, task: IntegrationTask) -> Dict[str, Any]:
+    def _execute_result_combination(self, task: IntegrationTask) -> dict[str, Any]:
         """Combine results from dependent tasks."""
         dependency_results = {}
 
@@ -361,7 +364,7 @@ class IntegrationManager:
 
         return combined
 
-    def _select_best_result(self, results: Dict[str, Any], criteria: str) -> Any:
+    def _select_best_result(self, results: dict[str, Any], criteria: str) -> Any:
         """Select best result based on criteria."""
         if not results:
             return None
@@ -383,8 +386,8 @@ class IntegrationManager:
         # Default: return first result
         return list(results.values())[0]
 
-    def create_task(self, task_type: str, description: str, input_data: Dict[str, Any],
-                    dependencies: List[str] = None, priority: int = 1) -> str:
+    def create_task(self, task_type: str, description: str, input_data: dict[str, Any],
+                    dependencies: list[str] = None, priority: int = 1) -> str:
         """Create a new integration task."""
         task_id = f"{task_type}_{int(time.time() * 1000)}"
 
@@ -394,7 +397,7 @@ class IntegrationManager:
             description=description,
             input_data=input_data,
             dependencies=dependencies or [],
-            priority=priority
+            priority=priority,
         )
 
         # Add to queue
@@ -403,7 +406,7 @@ class IntegrationManager:
 
         return task_id
 
-    def create_workflow(self, workflow_definition: Dict[str, Any]) -> str:
+    def create_workflow(self, workflow_definition: dict[str, Any]) -> str:
         """Create a complex workflow with multiple tasks."""
         workflow_id = f"workflow_{int(time.time() * 1000)}"
 
@@ -412,7 +415,7 @@ class IntegrationManager:
             "definition": workflow_definition,
             "tasks": {},
             "status": "created",
-            "created_at": datetime.now()
+            "created_at": datetime.now(),
         }
 
         # Create tasks from definition
@@ -431,7 +434,7 @@ class IntegrationManager:
                 description=task_def.get("description", task_def["type"]),
                 input_data=task_def["input"],
                 dependencies=dependencies,
-                priority=task_def.get("priority", 1)
+                priority=task_def.get("priority", 1),
             )
 
             task_mapping[task_def.get("name", task_id)] = task_id
@@ -442,7 +445,7 @@ class IntegrationManager:
 
         return workflow_id
 
-    def wait_for_task(self, task_id: str, timeout: Optional[float] = None) -> IntegrationTask:
+    def wait_for_task(self, task_id: str, timeout: float | None = None) -> IntegrationTask:
         """Wait for a task to complete."""
         start_time = time.time()
 
@@ -456,7 +459,7 @@ class IntegrationManager:
 
             time.sleep(0.1)
 
-    def wait_for_workflow(self, workflow_id: str, timeout: Optional[float] = None) -> WorkflowResult:
+    def wait_for_workflow(self, workflow_id: str, timeout: float | None = None) -> WorkflowResult:
         """Wait for a workflow to complete."""
         if workflow_id not in self.active_workflows:
             raise ValueError(f"Workflow {workflow_id} not found")
@@ -511,7 +514,7 @@ class IntegrationManager:
             execution_time=execution_time,
             results=results,
             errors=errors,
-            artifacts=artifacts
+            artifacts=artifacts,
         )
 
         self.workflow_results[workflow_id] = workflow_result
@@ -522,7 +525,7 @@ class IntegrationManager:
 
         return workflow_result
 
-    def get_task_status(self, task_id: str) -> Dict[str, Any]:
+    def get_task_status(self, task_id: str) -> dict[str, Any]:
         """Get status of a task."""
         if task_id in self.active_tasks:
             task = self.active_tasks[task_id]
@@ -538,10 +541,10 @@ class IntegrationManager:
             "created_at": task.created_at.isoformat(),
             "started_at": task.started_at.isoformat() if task.started_at else None,
             "completed_at": task.completed_at.isoformat() if task.completed_at else None,
-            "error": task.error
+            "error": task.error,
         }
 
-    def get_workflow_status(self, workflow_id: str) -> Dict[str, Any]:
+    def get_workflow_status(self, workflow_id: str) -> dict[str, Any]:
         """Get status of a workflow."""
         if workflow_id in self.active_workflows:
             workflow = self.active_workflows[workflow_id]
@@ -561,9 +564,9 @@ class IntegrationManager:
                 "completed": completed,
                 "failed": failed,
                 "running": running,
-                "pending": pending
+                "pending": pending,
             }
-        elif workflow_id in self.workflow_results:
+        if workflow_id in self.workflow_results:
             result = self.workflow_results[workflow_id]
             return {
                 "workflow_id": workflow_id,
@@ -571,10 +574,9 @@ class IntegrationManager:
                 "success": result.success,
                 "tasks_completed": result.tasks_completed,
                 "tasks_failed": result.tasks_failed,
-                "execution_time": result.execution_time
+                "execution_time": result.execution_time,
             }
-        else:
-            return {"status": "not_found"}
+        return {"status": "not_found"}
 
     def cancel_task(self, task_id: str) -> bool:
         """Cancel a pending task."""
@@ -613,10 +615,10 @@ class IntegrationManager:
                         "task_config": {
                             "objective": f"Analyze {target_binary} for {bypass_type}",
                             "target_file": target_binary,
-                            "analysis_depth": "comprehensive"
-                        }
+                            "analysis_depth": "comprehensive",
+                        },
                     },
-                    "priority": 1
+                    "priority": 1,
                 },
                 {
                     "name": "generate_frida_script",
@@ -625,12 +627,12 @@ class IntegrationManager:
                     "input": {
                         "request": {
                             "target_info": {"file_path": target_binary},
-                            "bypass_type": bypass_type
+                            "bypass_type": bypass_type,
                         },
-                        "script_type": "frida"
+                        "script_type": "frida",
                     },
                     "dependencies": ["analyze_target"],
-                    "priority": 1
+                    "priority": 1,
                 },
                 {
                     "name": "generate_ghidra_script",
@@ -639,12 +641,12 @@ class IntegrationManager:
                     "input": {
                         "request": {
                             "target_info": {"file_path": target_binary},
-                            "analysis_type": "static_analysis"
+                            "analysis_type": "static_analysis",
                         },
-                        "script_type": "ghidra"
+                        "script_type": "ghidra",
                     },
                     "dependencies": ["analyze_target"],
-                    "priority": 2
+                    "priority": 2,
                 },
                 {
                     "name": "test_frida_script",
@@ -655,28 +657,28 @@ class IntegrationManager:
                         "vm_config": {
                             "name": "test_vm",
                             "memory": 2048,
-                            "architecture": "x86_64"
-                        }
+                            "architecture": "x86_64",
+                        },
                     },
                     "dependencies": ["generate_frida_script"],
-                    "priority": 2
+                    "priority": 2,
                 },
                 {
                     "name": "combine_results",
                     "type": "combine_results",
                     "description": "Combine all results",
                     "input": {
-                        "combination_logic": "merge"
+                        "combination_logic": "merge",
                     },
                     "dependencies": ["test_frida_script", "generate_ghidra_script"],
-                    "priority": 3
-                }
-            ]
+                    "priority": 3,
+                },
+            ],
         }
 
         return self.create_workflow(workflow_def)
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """Get performance summary for integration operations."""
         return performance_monitor.get_metrics_summary()
 
@@ -687,7 +689,7 @@ class IntegrationManager:
             sorted_tasks = sorted(
                 self.completed_tasks.items(),
                 key=lambda x: x[1].completed_at or datetime.min,
-                reverse=True
+                reverse=True,
             )
 
             # Keep most recent 100
@@ -698,7 +700,7 @@ class IntegrationManager:
             sorted_workflows = sorted(
                 self.workflow_results.items(),
                 key=lambda x: x[1].workflow_id,
-                reverse=True
+                reverse=True,
             )
 
             self.workflow_results = dict(sorted_workflows[:50])

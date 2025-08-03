@@ -1,5 +1,4 @@
-"""
-Copyright (C) 2025 Zachary Flint
+"""Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
 
@@ -18,7 +17,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from enum import Enum
-from typing import Dict, List
 
 # Import the shared SeverityLevel enum to avoid duplication
 from .analysis.severity_levels import SeverityLevel
@@ -26,6 +24,7 @@ from .analysis.severity_levels import SeverityLevel
 
 class ThreatLevel(Enum):
     """Enumeration for threat assessment levels."""
+
     IMMINENT = "imminent"
     LIKELY = "likely"
     POSSIBLE = "possible"
@@ -35,6 +34,7 @@ class ThreatLevel(Enum):
 
 class ConfidenceLevel(Enum):
     """Enumeration for analysis confidence levels."""
+
     VERY_HIGH = "very_high"
     HIGH = "high"
     MEDIUM = "medium"
@@ -48,7 +48,7 @@ SEVERITY_COLORS = {
     SeverityLevel.HIGH: "#FF6600",      # Orange
     SeverityLevel.MEDIUM: "#FFAA00",    # Yellow-orange
     SeverityLevel.LOW: "#FFFF00",       # Yellow
-    SeverityLevel.INFO: "#00AA00"       # Green
+    SeverityLevel.INFO: "#00AA00",       # Green
 }
 
 SEVERITY_SCORES = {
@@ -56,7 +56,7 @@ SEVERITY_SCORES = {
     SeverityLevel.HIGH: 7.5,
     SeverityLevel.MEDIUM: 5.0,
     SeverityLevel.LOW: 2.5,
-    SeverityLevel.INFO: 1.0
+    SeverityLevel.INFO: 1.0,
 }
 
 THREAT_SCORES = {
@@ -64,7 +64,7 @@ THREAT_SCORES = {
     ThreatLevel.LIKELY: 7.0,
     ThreatLevel.POSSIBLE: 5.0,
     ThreatLevel.UNLIKELY: 2.0,
-    ThreatLevel.NONE: 0.0
+    ThreatLevel.NONE: 0.0,
 }
 
 CONFIDENCE_MULTIPLIERS = {
@@ -72,7 +72,7 @@ CONFIDENCE_MULTIPLIERS = {
     ConfidenceLevel.HIGH: 0.9,
     ConfidenceLevel.MEDIUM: 0.7,
     ConfidenceLevel.LOW: 0.5,
-    ConfidenceLevel.VERY_LOW: 0.3
+    ConfidenceLevel.VERY_LOW: 0.3,
 }
 
 
@@ -80,28 +80,26 @@ def get_severity_from_score(score: float) -> SeverityLevel:
     """Convert numeric score to severity level."""
     if score >= 9.0:
         return SeverityLevel.CRITICAL
-    elif score >= 7.0:
+    if score >= 7.0:
         return SeverityLevel.HIGH
-    elif score >= 4.0:
+    if score >= 4.0:
         return SeverityLevel.MEDIUM
-    elif score >= 2.0:
+    if score >= 2.0:
         return SeverityLevel.LOW
-    else:
-        return SeverityLevel.INFO
+    return SeverityLevel.INFO
 
 
 def get_threat_from_score(score: float) -> ThreatLevel:
     """Convert numeric score to threat level."""
     if score >= 8.0:
         return ThreatLevel.IMMINENT
-    elif score >= 6.0:
+    if score >= 6.0:
         return ThreatLevel.LIKELY
-    elif score >= 3.0:
+    if score >= 3.0:
         return ThreatLevel.POSSIBLE
-    elif score >= 1.0:
+    if score >= 1.0:
         return ThreatLevel.UNLIKELY
-    else:
-        return ThreatLevel.NONE
+    return ThreatLevel.NONE
 
 
 def calculate_risk_score(severity: SeverityLevel, threat: ThreatLevel,
@@ -121,7 +119,7 @@ def get_severity_color(severity: SeverityLevel) -> str:
     return SEVERITY_COLORS.get(severity, "#808080")
 
 
-def format_severity_report(findings: List[Dict]) -> str:
+def format_severity_report(findings: list[dict]) -> str:
     """Format a list of findings into a severity report."""
     if not findings:
         return "No findings to report."
@@ -160,13 +158,13 @@ def format_severity_report(findings: List[Dict]) -> str:
     return "\n".join(report_lines)
 
 
-def aggregate_severity_stats(findings: List[Dict]) -> Dict:
+def aggregate_severity_stats(findings: list[dict]) -> dict:
     """Aggregate severity statistics from findings."""
     stats = {
         "total_findings": len(findings),
         "by_severity": {},
         "risk_distribution": {},
-        "average_risk_score": 0.0
+        "average_risk_score": 0.0,
     }
 
     total_risk = 0.0
@@ -200,7 +198,7 @@ def aggregate_severity_stats(findings: List[Dict]) -> Dict:
     return stats
 
 
-def prioritize_findings(findings: List[Dict]) -> List[Dict]:
+def prioritize_findings(findings: list[dict]) -> list[dict]:
     """Sort findings by priority (risk score)."""
     def get_priority_score(finding):
         severity = finding.get("severity", SeverityLevel.INFO)
@@ -213,16 +211,16 @@ def prioritize_findings(findings: List[Dict]) -> List[Dict]:
 
 # Export commonly used classes and functions
 __all__ = [
+    "SEVERITY_COLORS",
+    "SEVERITY_SCORES",
+    "ConfidenceLevel",
     "SeverityLevel",
     "ThreatLevel",
-    "ConfidenceLevel",
+    "aggregate_severity_stats",
+    "calculate_risk_score",
+    "format_severity_report",
+    "get_severity_color",
     "get_severity_from_score",
     "get_threat_from_score",
-    "calculate_risk_score",
-    "get_severity_color",
-    "format_severity_report",
-    "aggregate_severity_stats",
     "prioritize_findings",
-    "SEVERITY_COLORS",
-    "SEVERITY_SCORES"
 ]

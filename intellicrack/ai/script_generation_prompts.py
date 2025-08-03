@@ -1,6 +1,5 @@
 
-"""
-Specialized Prompts for AI Script Generation
+"""Specialized Prompts for AI Script Generation
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,11 +21,12 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 
 class PromptType(Enum):
     """Types of prompts for script generation."""
+
     FRIDA_BASIC = "frida_basic"
     FRIDA_ADVANCED = "frida_advanced"
     GHIDRA_BASIC = "ghidra_basic"
@@ -37,8 +37,7 @@ class PromptType(Enum):
 
 
 class ScriptGenerationPrompts:
-    """
-    Comprehensive prompt library for AI script generation.
+    """Comprehensive prompt library for AI script generation.
     All prompts enforce zero placeholder policy.
     """
 
@@ -51,7 +50,7 @@ class ScriptGenerationPrompts:
         self.logger = logging.getLogger(__name__ + ".ScriptGenerationPrompts")
         self.prompts = self._initialize_prompts()
 
-    def _initialize_prompts(self) -> Dict[PromptType, Dict[str, str]]:
+    def _initialize_prompts(self) -> dict[PromptType, dict[str, str]]:
         """Initialize all prompt templates."""
         return {
             PromptType.FRIDA_BASIC: {
@@ -96,7 +95,7 @@ Generate a complete Frida JavaScript script that:
 4. Handles errors gracefully
 5. Is immediately ready for execution
 
-Return ONLY the complete Frida script code."""
+Return ONLY the complete Frida script code.""",
             },
 
             PromptType.FRIDA_ADVANCED: {
@@ -145,7 +144,7 @@ Generate an advanced Frida script that:
 5. Includes performance monitoring and optimization
 6. Is resilient against detection and counter-measures
 
-Return ONLY the complete advanced Frida script code."""
+Return ONLY the complete advanced Frida script code.""",
             },
 
             PromptType.GHIDRA_BASIC: {
@@ -192,7 +191,7 @@ Generate a complete Ghidra Python script that:
 5. Generates a comprehensive analysis report
 6. Is ready for headless execution
 
-Return ONLY the complete Ghidra Python script code."""
+Return ONLY the complete Ghidra Python script code.""",
             },
 
             PromptType.GHIDRA_ADVANCED: {
@@ -243,7 +242,7 @@ Generate an advanced Ghidra Python script that:
 6. Provides comprehensive reporting and validation
 7. Is robust against analysis-resistant binaries
 
-Return ONLY the complete advanced Ghidra Python script code."""
+Return ONLY the complete advanced Ghidra Python script code.""",
             },
 
             PromptType.ANALYSIS: {
@@ -270,7 +269,7 @@ Provide comprehensive protection analysis including:
 4. Recommended tools and techniques
 5. Priority order for bypass implementation
 
-Return analysis in structured JSON format."""
+Return analysis in structured JSON format.""",
             },
 
             PromptType.REFINEMENT: {
@@ -306,7 +305,7 @@ Provide a complete refined script that:
 5. Adds better logging and debugging support
 6. Is production-ready and thoroughly tested
 
-Return ONLY the complete refined script code."""
+Return ONLY the complete refined script code.""",
             },
 
             PromptType.VALIDATION: {
@@ -337,11 +336,11 @@ Provide comprehensive validation analysis:
 5. Best practice recommendations
 6. Compatibility and reliability checks
 
-Return validation results in structured JSON format."""
-            }
+Return validation results in structured JSON format.""",
+            },
         }
 
-    def get_prompt(self, prompt_type: PromptType, **kwargs) -> Dict[str, str]:
+    def get_prompt(self, prompt_type: PromptType, **kwargs) -> dict[str, str]:
         """Get formatted prompt for specific type."""
         if prompt_type not in self.prompts:
             raise ValueError(f"Unknown prompt type: {prompt_type}")
@@ -358,22 +357,21 @@ Return validation results in structured JSON format."""
                     "Key error in script_generation_prompts: %s", e)
                 # If a required key is missing, return the template with placeholders
                 # This allows the caller to see what keys are needed
-                pass
 
         return prompt_data
 
-    def get_frida_prompt(self, complexity: str = "basic", **kwargs) -> Dict[str, str]:
+    def get_frida_prompt(self, complexity: str = "basic", **kwargs) -> dict[str, str]:
         """Get Frida-specific prompt."""
         prompt_type = PromptType.FRIDA_ADVANCED if complexity == "advanced" else PromptType.FRIDA_BASIC
         return self.get_prompt(prompt_type, **kwargs)
 
-    def get_ghidra_prompt(self, complexity: str = "basic", **kwargs) -> Dict[str, str]:
+    def get_ghidra_prompt(self, complexity: str = "basic", **kwargs) -> dict[str, str]:
         """Get Ghidra-specific prompt."""
         prompt_type = PromptType.GHIDRA_ADVANCED if complexity == "advanced" else PromptType.GHIDRA_BASIC
         return self.get_prompt(prompt_type, **kwargs)
 
-    def build_context_data(self, binary_analysis: Dict[str, Any],
-                           protection_types: List[str] = None) -> Dict[str, str]:
+    def build_context_data(self, binary_analysis: dict[str, Any],
+                           protection_types: list[str] = None) -> dict[str, str]:
         """Build context data for prompt formatting."""
         context = {
             "binary_name": binary_analysis.get("binary_info", {}).get("name", "unknown"),
@@ -394,12 +392,12 @@ Return validation results in structured JSON format."""
             "protection_functions": ", ".join([f["name"] for f in binary_analysis.get("functions", [])
                                                if "license" in f.get("name", "").lower() or
                                                "check" in f.get("name", "").lower()]),
-            "patching_objectives": self._build_patching_objectives(protection_types or [])
+            "patching_objectives": self._build_patching_objectives(protection_types or []),
         }
 
         return context
 
-    def _summarize_analysis(self, analysis: Dict[str, Any]) -> str:
+    def _summarize_analysis(self, analysis: dict[str, Any]) -> str:
         """Create a summary of binary analysis."""
         protections = analysis.get("protections", [])
         summary_parts = []
@@ -414,7 +412,7 @@ Return validation results in structured JSON format."""
 
         return f"Detected protections: {', '.join(summary_parts)}"
 
-    def _build_functionality_requirements(self, protection_types: List[str]) -> str:
+    def _build_functionality_requirements(self, protection_types: list[str]) -> str:
         """Build functionality requirements based on protection types."""
         requirements = []
 
@@ -446,12 +444,12 @@ Return validation results in structured JSON format."""
             requirements = [
                 "- Analyze binary for protection mechanisms",
                 "- Hook suspicious functions for monitoring",
-                "- Implement generic bypass strategies"
+                "- Implement generic bypass strategies",
             ]
 
         return "\n".join(requirements)
 
-    def _build_patching_objectives(self, protection_types: List[str]) -> str:
+    def _build_patching_objectives(self, protection_types: list[str]) -> str:
         """Build patching objectives for Ghidra scripts."""
         objectives = []
 
@@ -477,16 +475,16 @@ Return validation results in structured JSON format."""
             objectives = [
                 "- Identify and patch protection mechanisms",
                 "- Modify conditional jumps for bypass",
-                "- Apply safety-verified binary patches"
+                "- Apply safety-verified binary patches",
             ]
 
         return "\n".join(objectives)
 
-    def get_available_prompt_types(self) -> List[str]:
+    def get_available_prompt_types(self) -> list[str]:
         """Get list of available prompt types."""
         return [pt.value for pt in PromptType]
 
-    def get_prompt_requirements(self, prompt_type: PromptType) -> List[str]:
+    def get_prompt_requirements(self, prompt_type: PromptType) -> list[str]:
         """Get required parameters for a prompt type."""
         if prompt_type not in self.prompts:
             return []

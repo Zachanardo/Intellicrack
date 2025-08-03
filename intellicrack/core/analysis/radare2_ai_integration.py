@@ -1,7 +1,7 @@
 """Radare2 AI integration module for enhanced binary analysis using AI models."""
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -75,8 +75,7 @@ except Exception as e:
 
 
 class R2AIEngine:
-    """
-    Advanced AI/ML engine for radare2 analysis with pattern recognition capabilities.
+    """Advanced AI/ML engine for radare2 analysis with pattern recognition capabilities.
 
     Provides AI-enhanced analysis for:
     - Automated license validation detection
@@ -87,7 +86,7 @@ class R2AIEngine:
     - Code similarity and family classification
     """
 
-    def __init__(self, binary_path: str, radare2_path: Optional[str] = None):
+    def __init__(self, binary_path: str, radare2_path: str | None = None):
         """Initialize AI engine."""
         self.binary_path = binary_path
         self.radare2_path = radare2_path
@@ -111,7 +110,7 @@ class R2AIEngine:
         self.model_dir = os.path.join(os.path.dirname(__file__), "..", "..", "models", "radare2")
         os.makedirs(self.model_dir, exist_ok=True)
 
-    def analyze_with_ai(self) -> Dict[str, Any]:
+    def analyze_with_ai(self) -> dict[str, Any]:
         """Perform comprehensive AI-enhanced analysis."""
         result = {
             "binary_path": self.binary_path,
@@ -122,7 +121,7 @@ class R2AIEngine:
             "code_similarity": {},
             "automated_bypass_suggestions": {},
             "confidence_scores": {},
-            "model_performance": {}
+            "model_performance": {},
         }
 
         try:
@@ -159,7 +158,7 @@ class R2AIEngine:
 
         return result
 
-    def _extract_comprehensive_features(self) -> Dict[str, Any]:
+    def _extract_comprehensive_features(self) -> dict[str, Any]:
         """Extract comprehensive features for ML analysis."""
         features = {
             "static_features": {},
@@ -167,7 +166,7 @@ class R2AIEngine:
             "string_features": {},
             "import_features": {},
             "graph_features": {},
-            "entropy_features": {}
+            "entropy_features": {},
         }
 
         try:
@@ -201,7 +200,7 @@ class R2AIEngine:
 
         return features
 
-    def _extract_static_features(self, binary_info: Dict[str, Any]) -> Dict[str, float]:
+    def _extract_static_features(self, binary_info: dict[str, Any]) -> dict[str, float]:
         """Extract static binary features."""
         return {
             "file_size": float(binary_info.get("bin", {}).get("size", 0)),
@@ -211,10 +210,10 @@ class R2AIEngine:
             "has_debug": float(1 if binary_info.get("bin", {}).get("dbg_file", "") else 0),
             "is_pie": float(1 if binary_info.get("bin", {}).get("pic", False) else 0),
             "has_nx": float(1 if binary_info.get("bin", {}).get("nx", False) else 0),
-            "has_canary": float(1 if binary_info.get("bin", {}).get("canary", False) else 0)
+            "has_canary": float(1 if binary_info.get("bin", {}).get("canary", False) else 0),
         }
 
-    def _extract_function_features(self, functions: List[Dict[str, Any]]) -> List[Dict[str, float]]:
+    def _extract_function_features(self, functions: list[dict[str, Any]]) -> list[dict[str, float]]:
         """Extract function-level features."""
         function_features = []
 
@@ -227,7 +226,7 @@ class R2AIEngine:
                 "args": float(func.get("args", 0)),
                 "has_license_keywords": 0.0,
                 "has_crypto_keywords": 0.0,
-                "has_debug_keywords": 0.0
+                "has_debug_keywords": 0.0,
             }
 
             # Analyze function name for keywords
@@ -246,7 +245,7 @@ class R2AIEngine:
 
         return function_features
 
-    def _extract_string_features(self, string_analysis: Dict[str, Any]) -> Dict[str, float]:
+    def _extract_string_features(self, string_analysis: dict[str, Any]) -> dict[str, float]:
         """Extract string-based features."""
         total_strings = string_analysis.get("total_strings", 0)
 
@@ -258,10 +257,10 @@ class R2AIEngine:
             "debug_string_ratio": float(len(string_analysis.get("debug_strings", [])) / max(1, total_strings)),
             "average_entropy": float(string_analysis.get("string_entropy_analysis", {}).get("average_entropy", 0)),
             "high_entropy_ratio": float(len(string_analysis.get("string_entropy_analysis", {}).get("high_entropy_strings", [])) / max(1, total_strings)),
-            "suspicious_patterns": float(len(string_analysis.get("suspicious_patterns", [])))
+            "suspicious_patterns": float(len(string_analysis.get("suspicious_patterns", []))),
         }
 
-    def _extract_import_features(self, import_analysis: Dict[str, Any]) -> Dict[str, float]:
+    def _extract_import_features(self, import_analysis: dict[str, Any]) -> dict[str, float]:
         """Extract import/export features."""
         total_imports = len(import_analysis.get("imports", []))
 
@@ -276,10 +275,10 @@ class R2AIEngine:
             "process_api_ratio": float(len(api_categories.get("process_management", [])) / max(1, total_imports)),
             "debug_api_ratio": float(len(api_categories.get("debugging", [])) / max(1, total_imports)),
             "suspicious_api_count": float(len(import_analysis.get("suspicious_apis", []))),
-            "anti_analysis_api_count": float(len(import_analysis.get("anti_analysis_apis", [])))
+            "anti_analysis_api_count": float(len(import_analysis.get("anti_analysis_apis", []))),
         }
 
-    def _extract_graph_features(self, r2, functions: List[Dict[str, Any]]) -> Dict[str, float]:
+    def _extract_graph_features(self, r2, functions: list[dict[str, Any]]) -> dict[str, float]:
         """Extract control flow graph features."""
         total_blocks = 0
         total_edges = 0
@@ -314,10 +313,10 @@ class R2AIEngine:
             "total_edges": float(total_edges),
             "average_blocks_per_function": float(total_blocks / max(1, len(functions))),
             "max_function_depth": float(max_depth),
-            "edge_to_block_ratio": float(total_edges / max(1, total_blocks))
+            "edge_to_block_ratio": float(total_edges / max(1, total_blocks)),
         }
 
-    def _extract_entropy_features(self, r2) -> Dict[str, float]:
+    def _extract_entropy_features(self, r2) -> dict[str, float]:
         """Extract entropy and complexity features."""
         try:
             # Get sections information
@@ -348,7 +347,7 @@ class R2AIEngine:
                 "text_section_entropy": text_section_entropy,
                 "data_section_entropy": data_section_entropy,
                 "total_sections": float(total_sections),
-                "entropy_variance": abs(text_section_entropy - data_section_entropy)
+                "entropy_variance": abs(text_section_entropy - data_section_entropy),
             }
 
         except R2Exception as e:
@@ -357,10 +356,10 @@ class R2AIEngine:
                 "text_section_entropy": 0.0,
                 "data_section_entropy": 0.0,
                 "total_sections": 0.0,
-                "entropy_variance": 0.0
+                "entropy_variance": 0.0,
             }
 
-    def _ai_license_detection(self, features: Dict[str, Any]) -> Dict[str, Any]:
+    def _ai_license_detection(self, features: dict[str, Any]) -> dict[str, Any]:
         """AI-based license validation detection."""
         if not SKLEARN_AVAILABLE:
             return {
@@ -368,7 +367,7 @@ class R2AIEngine:
                 "confidence": 0.0,
                 "license_mechanisms": [],
                 "detection_method": "fallback_rule_based",
-                "error": "sklearn not available"
+                "error": "sklearn not available",
             }
 
         # Load or train license detection model
@@ -393,19 +392,19 @@ class R2AIEngine:
                 "confidence": float(max(probability)),
                 "license_complexity": self._assess_license_complexity(features),
                 "bypass_difficulty": self._predict_bypass_difficulty(features),
-                "validation_methods": self._identify_validation_methods(features)
+                "validation_methods": self._identify_validation_methods(features),
             }
 
         return {"error": "Insufficient features for license detection"}
 
-    def _ai_vulnerability_prediction(self, features: Dict[str, Any]) -> Dict[str, Any]:
+    def _ai_vulnerability_prediction(self, features: dict[str, Any]) -> dict[str, Any]:
         """AI-based vulnerability prediction."""
         if not SKLEARN_AVAILABLE:
             return {
                 "vulnerability_types": [],
                 "confidence_scores": {},
                 "risk_level": "unknown",
-                "error": "sklearn not available"
+                "error": "sklearn not available",
             }
 
         # Load or train vulnerability classifier
@@ -427,7 +426,7 @@ class R2AIEngine:
 
             vulnerability_types = [
                 "buffer_overflow", "format_string", "integer_overflow",
-                "use_after_free", "race_condition", "privilege_escalation"
+                "use_after_free", "race_condition", "privilege_escalation",
             ]
 
             results = {}
@@ -435,25 +434,25 @@ class R2AIEngine:
                 if i < len(probabilities):
                     results[vuln_type] = {
                         "probability": float(probabilities[i]),
-                        "predicted": bool(predictions == i if hasattr(predictions, "__iter__") else predictions == i)
+                        "predicted": bool(predictions == i if hasattr(predictions, "__iter__") else predictions == i),
                     }
 
             return {
                 "vulnerability_predictions": results,
                 "overall_risk_score": float(np.mean(probabilities)),
                 "high_risk_areas": self._identify_high_risk_areas(features),
-                "exploit_likelihood": self._predict_exploit_likelihood(features)
+                "exploit_likelihood": self._predict_exploit_likelihood(features),
             }
 
         return {"error": "Insufficient features for vulnerability prediction"}
 
-    def _function_clustering_analysis(self, features: Dict[str, Any]) -> Dict[str, Any]:
+    def _function_clustering_analysis(self, features: dict[str, Any]) -> dict[str, Any]:
         """Perform function clustering analysis."""
         if not SKLEARN_AVAILABLE:
             return {
                 "clusters": {},
                 "cluster_quality": 0.0,
-                "error": "sklearn not available"
+                "error": "sklearn not available",
             }
 
         function_features = features.get("function_features", [])
@@ -469,7 +468,7 @@ class R2AIEngine:
                 func_features.get("complexity", 0),
                 func_features.get("calls", 0),
                 func_features.get("has_license_keywords", 0),
-                func_features.get("has_crypto_keywords", 0)
+                func_features.get("has_crypto_keywords", 0),
             ]
             feature_matrix.append(feature_vector)
 
@@ -498,24 +497,24 @@ class R2AIEngine:
                 "average_size": np.mean([f.get("size", 0) for f in cluster_functions]),
                 "average_complexity": np.mean([f.get("complexity", 0) for f in cluster_functions]),
                 "has_license_functions": any(f.get("has_license_keywords", 0) for f in cluster_functions),
-                "has_crypto_functions": any(f.get("has_crypto_keywords", 0) for f in cluster_functions)
+                "has_crypto_functions": any(f.get("has_crypto_keywords", 0) for f in cluster_functions),
             }
 
         return {
             "total_clusters": len(unique_clusters) - (1 if -1 in unique_clusters else 0),
             "noise_functions": int(np.sum(cluster_labels == -1)),
             "cluster_analysis": cluster_analysis,
-            "clustering_quality": self._assess_clustering_quality(cluster_labels)
+            "clustering_quality": self._assess_clustering_quality(cluster_labels),
         }
 
-    def _anomaly_detection_analysis(self, features: Dict[str, Any]) -> Dict[str, Any]:
+    def _anomaly_detection_analysis(self, features: dict[str, Any]) -> dict[str, Any]:
         """Perform anomaly detection analysis."""
         if not SKLEARN_AVAILABLE:
             return {
                 "is_anomalous": False,
                 "anomaly_score": 0.0,
                 "anomaly_indicators": [],
-                "error": "sklearn not available"
+                "error": "sklearn not available",
             }
 
         # Combine all features into a single vector
@@ -551,10 +550,10 @@ class R2AIEngine:
             "is_anomalous": bool(is_anomaly),
             "anomaly_score": float(anomaly_score),
             "anomaly_indicators": self._identify_anomaly_indicators(features),
-            "confidence": abs(float(anomaly_score))
+            "confidence": abs(float(anomaly_score)),
         }
 
-    def _code_similarity_analysis(self, features: Dict[str, Any]) -> Dict[str, Any]:
+    def _code_similarity_analysis(self, features: dict[str, Any]) -> dict[str, Any]:
         """Perform code similarity analysis."""
         # This would typically compare against a database of known samples
         # For now, we'll analyze internal similarities
@@ -583,16 +582,16 @@ class R2AIEngine:
             "average_internal_similarity": float(np.mean(similarities)) if similarities else 0.0,
             "max_similarity": float(np.max(similarities)) if similarities else 0.0,
             "similarity_variance": float(np.var(similarities)) if similarities else 0.0,
-            "potential_code_reuse": float(np.mean(similarities)) > 0.8 if similarities else False
+            "potential_code_reuse": float(np.mean(similarities)) > 0.8 if similarities else False,
         }
 
-    def _generate_ai_bypass_suggestions(self, features: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_ai_bypass_suggestions(self, features: dict[str, Any]) -> dict[str, Any]:
         """Generate AI-based bypass suggestions."""
         suggestions = {
             "automated_patches": [],
             "bypass_strategies": [],
             "target_functions": [],
-            "confidence_scores": {}
+            "confidence_scores": {},
         }
 
         # Analyze license-related features
@@ -605,7 +604,7 @@ class R2AIEngine:
                 "strategy": "String patching",
                 "description": "Patch license validation strings",
                 "success_probability": 0.8,
-                "difficulty": "easy"
+                "difficulty": "easy",
             })
 
         if import_features.get("crypto_api_ratio", 0) > 0.1:
@@ -613,7 +612,7 @@ class R2AIEngine:
                 "strategy": "Crypto bypass",
                 "description": "Bypass cryptographic license validation",
                 "success_probability": 0.6,
-                "difficulty": "medium"
+                "difficulty": "medium",
             })
 
         if import_features.get("registry_api_ratio", 0) > 0.1:
@@ -621,7 +620,7 @@ class R2AIEngine:
                 "strategy": "Registry manipulation",
                 "description": "Modify registry-based license checks",
                 "success_probability": 0.9,
-                "difficulty": "easy"
+                "difficulty": "easy",
             })
 
         # Calculate overall confidence
@@ -655,7 +654,7 @@ class R2AIEngine:
 
         return model
 
-    def _generate_license_training_data(self) -> Tuple[np.ndarray, np.ndarray]:
+    def _generate_license_training_data(self) -> tuple[np.ndarray, np.ndarray]:
         """Generate synthetic training data for license detection."""
         # Create synthetic feature vectors and labels
         n_samples = 1000
@@ -673,7 +672,7 @@ class R2AIEngine:
 
         return X, y
 
-    def _generate_vulnerability_training_data(self) -> Tuple[np.ndarray, np.ndarray]:
+    def _generate_vulnerability_training_data(self) -> tuple[np.ndarray, np.ndarray]:
         """Generate synthetic training data for vulnerability classification."""
         n_samples = 1000
         n_features = 10
@@ -684,7 +683,7 @@ class R2AIEngine:
 
         return X, y
 
-    def _prepare_license_feature_vector(self, features: Dict[str, Any]) -> List[float]:
+    def _prepare_license_feature_vector(self, features: dict[str, Any]) -> list[float]:
         """Prepare feature vector for license detection."""
         string_features = features.get("string_features", {})
         import_features = features.get("import_features", {})
@@ -697,10 +696,10 @@ class R2AIEngine:
             import_features.get("file_api_ratio", 0),
             string_features.get("suspicious_patterns", 0),
             import_features.get("anti_analysis_api_count", 0),
-            string_features.get("average_entropy", 0)
+            string_features.get("average_entropy", 0),
         ]
 
-    def _prepare_vulnerability_feature_vector(self, features: Dict[str, Any]) -> List[float]:
+    def _prepare_vulnerability_feature_vector(self, features: dict[str, Any]) -> list[float]:
         """Prepare feature vector for vulnerability prediction."""
         static_features = features.get("static_features", {})
         import_features = features.get("import_features", {})
@@ -716,10 +715,10 @@ class R2AIEngine:
             import_features.get("debug_api_ratio", 0),
             static_features.get("file_size", 0) / 1000000,  # Normalize to MB
             graph_features.get("max_function_depth", 0),
-            import_features.get("network_api_ratio", 0)
+            import_features.get("network_api_ratio", 0),
         ]
 
-    def _assess_license_complexity(self, features: Dict[str, Any]) -> str:
+    def _assess_license_complexity(self, features: dict[str, Any]) -> str:
         """Assess license validation complexity."""
         string_features = features.get("string_features", {})
         import_features = features.get("import_features", {})
@@ -732,23 +731,21 @@ class R2AIEngine:
 
         if complexity_score > 2:
             return "high"
-        elif complexity_score > 1:
+        if complexity_score > 1:
             return "medium"
-        else:
-            return "low"
+        return "low"
 
-    def _predict_bypass_difficulty(self, features: Dict[str, Any]) -> str:
+    def _predict_bypass_difficulty(self, features: dict[str, Any]) -> str:
         """Predict license bypass difficulty."""
         complexity = self._assess_license_complexity(features)
 
         if complexity == "high":
             return "hard"
-        elif complexity == "medium":
+        if complexity == "medium":
             return "medium"
-        else:
-            return "easy"
+        return "easy"
 
-    def _identify_validation_methods(self, features: Dict[str, Any]) -> List[str]:
+    def _identify_validation_methods(self, features: dict[str, Any]) -> list[str]:
         """Identify license validation methods."""
         methods = []
 
@@ -768,7 +765,7 @@ class R2AIEngine:
 
         return methods
 
-    def _identify_high_risk_areas(self, features: Dict[str, Any]) -> List[str]:
+    def _identify_high_risk_areas(self, features: dict[str, Any]) -> list[str]:
         """Identify high-risk areas for vulnerabilities."""
         risk_areas = []
 
@@ -789,7 +786,7 @@ class R2AIEngine:
 
         return risk_areas
 
-    def _predict_exploit_likelihood(self, features: Dict[str, Any]) -> float:
+    def _predict_exploit_likelihood(self, features: dict[str, Any]) -> float:
         """Predict likelihood of successful exploitation."""
         static_features = features.get("static_features", {})
         import_features = features.get("import_features", {})
@@ -817,7 +814,7 @@ class R2AIEngine:
         # Simple silhouette-like score
         return min(1.0, len(unique_labels) / len(cluster_labels))
 
-    def _identify_anomaly_indicators(self, features: Dict[str, Any]) -> List[str]:
+    def _identify_anomaly_indicators(self, features: dict[str, Any]) -> list[str]:
         """Identify indicators that make the binary anomalous."""
         indicators = []
 
@@ -839,7 +836,7 @@ class R2AIEngine:
 
         return indicators
 
-    def _calculate_confidence_scores(self, results: Dict[str, Any]) -> Dict[str, float]:
+    def _calculate_confidence_scores(self, results: dict[str, Any]) -> dict[str, float]:
         """Calculate confidence scores for AI predictions."""
         confidence_scores = {}
 
@@ -864,7 +861,7 @@ class R2AIEngine:
 
         return confidence_scores
 
-    def _get_model_performance_metrics(self) -> Dict[str, Any]:
+    def _get_model_performance_metrics(self) -> dict[str, Any]:
         """Get model performance metrics."""
         return {
             "license_detector_status": "trained" if self.license_detector else "not_trained",
@@ -872,14 +869,13 @@ class R2AIEngine:
             "feature_extraction_success": True,
             "model_versions": {
                 "license_detector": "1.0",
-                "vulnerability_classifier": "1.0"
-            }
+                "vulnerability_classifier": "1.0",
+            },
         }
 
 
-def analyze_binary_with_ai(binary_path: str, radare2_path: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Perform AI-enhanced analysis on a binary.
+def analyze_binary_with_ai(binary_path: str, radare2_path: str | None = None) -> dict[str, Any]:
+    """Perform AI-enhanced analysis on a binary.
 
     Args:
         binary_path: Path to binary file
@@ -887,6 +883,7 @@ def analyze_binary_with_ai(binary_path: str, radare2_path: Optional[str] = None)
 
     Returns:
         Complete AI analysis results
+
     """
     engine = R2AIEngine(binary_path, radare2_path)
     return engine.analyze_with_ai()

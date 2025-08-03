@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -25,9 +24,10 @@ model repositories and handles model import, loading, and verification.
 
 import hashlib
 import os
+from collections.abc import Callable
 from datetime import datetime
 from threading import Thread
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -48,17 +48,17 @@ except ImportError:
         def create_repository(*args, **kwargs):
             """Create repository instance."""
             logger.debug(f"Fallback repository creation called with {len(args)} args and {len(kwargs)} kwargs")
-            return None
 
     class DownloadProgressCallback:
         """Fallback progress callback for downloads."""
+
         def __call__(self, *args, **kwargs):
             """Handle progress callback with fallback logging."""
             logger.debug(f"Progress callback called with {len(args)} args and {len(kwargs)} kwargs")
-            pass
 
     class ModelInfo:
         """Fallback model information container."""
+
         def __init__(self, *args, **kwargs):
             """Initialize fallback ModelInfo with default values and debug logging."""
             logger.debug(f"ModelInfo fallback initialized with {len(args)} args and {len(kwargs)} kwargs")
@@ -67,28 +67,28 @@ except ImportError:
 
     class ModelRepositoryInterface:
         """Fallback model repository interface."""
+
         def __init__(self, *args, **kwargs):
             """Initialize the abstract model repository interface."""
-            pass
 
     class LocalFileRepository:
         """Fallback local file repository."""
+
         def __init__(self, *args, **kwargs):
             """Initialize the local file repository for model storage."""
-            pass
 
 
 class ProgressHandler(DownloadProgressCallback):
     """Handles progress updates during downloads."""
 
-    def __init__(self, progress_callback: Optional[Callable[[int, int], None]] = None,
-                complete_callback: Optional[Callable[[bool, str], None]] = None):
-        """
-        Initialize the progress handler.
+    def __init__(self, progress_callback: Callable[[int, int], None] | None = None,
+                complete_callback: Callable[[bool, str], None] | None = None):
+        """Initialize the progress handler.
 
         Args:
             progress_callback: Function to call with progress updates
             complete_callback: Function to call when download completes
+
         """
         self.progress_callback = progress_callback
         self.complete_callback = complete_callback
@@ -105,23 +105,22 @@ class ProgressHandler(DownloadProgressCallback):
 
 
 class ModelManager:
-    """
-    Manages model repositories and coordinates model operations.
+    """Manages model repositories and coordinates model operations.
 
     This class serves as the central point for all model-related operations,
     including importing models from files or APIs, managing repositories,
     and interacting with the existing model loading process.
     """
 
-    def __init__(self, config: Dict[str, Any]):
-        """
-        Initialize the model manager.
+    def __init__(self, config: dict[str, Any]):
+        """Initialize the model manager.
 
         Args:
             config: Application configuration dictionary
+
         """
         self.config = config
-        self.repositories: Dict[str, ModelRepositoryInterface] = {}
+        self.repositories: dict[str, ModelRepositoryInterface] = {}
         self.download_dir = config.get("download_directory", os.path.join(os.path.dirname(__file__), "downloads"))
 
         # Create download directory
@@ -149,10 +148,9 @@ class ModelManager:
                 if not config_instance.is_repository_enabled(repo_name):
                     logger.info(f"Repository {repo_name} is disabled in configuration")
                     continue
-            else:
-                # Fallback to direct check
-                if not repo_config.get("enabled", True):
-                    continue
+            # Fallback to direct check
+            elif not repo_config.get("enabled", True):
+                continue
 
             # Add the repository name to the config
             repo_config["name"] = repo_name
@@ -165,32 +163,32 @@ class ModelManager:
             else:
                 logger.warning(f"Failed to initialize repository: {repo_name}")
 
-    def get_available_repositories(self) -> Dict[str, Dict[str, Any]]:
-        """
-        Get information about available repositories.
+    def get_available_repositories(self) -> dict[str, dict[str, Any]]:
+        """Get information about available repositories.
 
         Returns:
             Dictionary mapping repository names to information dictionaries
+
         """
         return {
             name: {
                 "name": name,
                 "type": repo.__class__.__name__,
                 "enabled": True,
-                "model_count": len(repo.get_available_models())
+                "model_count": len(repo.get_available_models()),
             }
             for name, repo in self.repositories.items()
         }
 
-    def get_available_models(self, repository_name: Optional[str] = None) -> List[ModelInfo]:
-        """
-        Get available models from one or all repositories.
+    def get_available_models(self, repository_name: str | None = None) -> list[ModelInfo]:
+        """Get available models from one or all repositories.
 
         Args:
             repository_name: Name of the repository to query, or None for all
 
         Returns:
             List of ModelInfo objects
+
         """
         models = []
 
@@ -205,9 +203,8 @@ class ModelManager:
 
         return models
 
-    def get_model_details(self, model_id: str, repository_name: str) -> Optional[ModelInfo]:
-        """
-        Get details for a specific model.
+    def get_model_details(self, model_id: str, repository_name: str) -> ModelInfo | None:
+        """Get details for a specific model.
 
         Args:
             model_id: ID of the model
@@ -215,21 +212,22 @@ class ModelManager:
 
         Returns:
             ModelInfo object, or None if not found
+
         """
         if repository_name not in self.repositories:
             return None
 
         return self.repositories[repository_name].get_model_details(model_id)
 
-    def import_local_model(self, file_path: str) -> Optional[ModelInfo]:
-        """
-        Import a model from a local file.
+    def import_local_model(self, file_path: str) -> ModelInfo | None:
+        """Import a model from a local file.
 
         Args:
             file_path: Path to the model file
 
         Returns:
             ModelInfo object for the imported model, or None if import failed
+
         """
         # Ensure we have a local repository
         if "local" not in self.repositories:
@@ -245,10 +243,9 @@ class ModelManager:
         return local_repo.add_model(file_path)
 
     def import_api_model(self, model_id: str, repository_name: str,
-                        progress_callback: Optional[Callable[[int, int], None]] = None,
-                        complete_callback: Optional[Callable[[bool, str], None]] = None) -> bool:
-        """
-        Import a model from an API repository.
+                        progress_callback: Callable[[int, int], None] | None = None,
+                        complete_callback: Callable[[bool, str], None] | None = None) -> bool:
+        """Import a model from an API repository.
 
         Args:
             model_id: ID of the model to import
@@ -258,6 +255,7 @@ class ModelManager:
 
         Returns:
             True if the import was started successfully, False otherwise
+
         """
         if repository_name not in self.repositories:
             if complete_callback:
@@ -283,7 +281,7 @@ class ModelManager:
         # Start the download in a separate thread
         thread = Thread(
             target=self._download_model_thread,
-            args=(repository, model_id, destination_path, progress_handler)
+            args=(repository, model_id, destination_path, progress_handler),
         )
         thread.daemon = True
         thread.start()
@@ -292,20 +290,20 @@ class ModelManager:
 
     def _download_model_thread(self, repository: ModelRepositoryInterface, model_id: str,
                              destination_path: str, progress_handler: ProgressHandler):
-        """
-        Thread function for downloading a model.
+        """Thread function for downloading a model.
 
         Args:
             repository: Repository to download from
             model_id: ID of the model to download
             destination_path: Path to save the model to
             progress_handler: Handler for progress updates
+
         """
         # Download the model
         success, message = repository.download_model(
             model_id=model_id,
             destination_path=destination_path,
-            progress_callback=progress_handler
+            progress_callback=progress_handler,
         )
 
         # If successful, add to local repository
@@ -318,9 +316,8 @@ class ModelManager:
         # Call the completion handler
         progress_handler.on_complete(success, message)
 
-    def verify_model_integrity(self, model_path: str, expected_checksum: Optional[str] = None) -> Tuple[bool, str]:
-        """
-        Verify the integrity of a model file.
+    def verify_model_integrity(self, model_path: str, expected_checksum: str | None = None) -> tuple[bool, str]:
+        """Verify the integrity of a model file.
 
         Args:
             model_path: Path to the model file
@@ -328,6 +325,7 @@ class ModelManager:
 
         Returns:
             Tuple of (success, message/checksum)
+
         """
         if not os.path.exists(model_path):
             return False, f"Model file not found: {model_path}"
@@ -349,16 +347,14 @@ class ModelManager:
             # Otherwise, compare with the expected checksum
             if actual_checksum == expected_checksum:
                 return True, "Checksum verification successful"
-            else:
-                return False, f"Checksum mismatch: expected {expected_checksum}, got {actual_checksum}"
+            return False, f"Checksum mismatch: expected {expected_checksum}, got {actual_checksum}"
 
-        except IOError as e:
+        except OSError as e:
             logger.error("IO error in model_manager: %s", e)
-            return False, f"Error reading model file: {str(e)}"
+            return False, f"Error reading model file: {e!s}"
 
-    def get_model_path(self, model_id: str, repository_name: str) -> Optional[str]:
-        """
-        Get the local path for a model.
+    def get_model_path(self, model_id: str, repository_name: str) -> str | None:
+        """Get the local path for a model.
 
         Args:
             model_id: ID of the model
@@ -366,6 +362,7 @@ class ModelManager:
 
         Returns:
             Local path, or None if not available locally
+
         """
         if repository_name not in self.repositories:
             return None
@@ -378,8 +375,7 @@ class ModelManager:
         return model_info.local_path if os.path.exists(model_info.local_path) else None
 
     def remove_model(self, model_id: str, repository_name: str) -> bool:
-        """
-        Remove a model from a repository.
+        """Remove a model from a repository.
 
         Args:
             model_id: ID of the model to remove
@@ -387,6 +383,7 @@ class ModelManager:
 
         Returns:
             True if successful, False otherwise
+
         """
         if repository_name not in self.repositories:
             return False
@@ -404,7 +401,7 @@ class ModelManager:
         try:
             os.remove(model_info.local_path)
             return True
-        except IOError as e:
+        except OSError as e:
             logger.error(f"Failed to remove model file: {e}")
             return False
 
@@ -415,8 +412,7 @@ class ModelManager:
             repository.get_available_models()
 
     def train_model(self, training_data: Any, model_type: str) -> bool:
-        """
-        Train machine learning model.
+        """Train machine learning model.
 
         This method trains a new machine learning model using the provided data
         and model type. It supports various model architectures and training
@@ -428,6 +424,7 @@ class ModelManager:
 
         Returns:
             bool: True if training successful, False otherwise
+
         """
         logger.info(f"Training {model_type} model with data")
 
@@ -454,7 +451,7 @@ class ModelManager:
 
                     # Split data
                     X_train, X_test, y_train, y_test = train_test_split(
-                        X, y, test_size=0.2, random_state=42
+                        X, y, test_size=0.2, random_state=42,
                     )
 
                     # Train model
@@ -502,7 +499,7 @@ class ModelManager:
                 try:
                     # Try PyTorch first
                     import torch
-                    import torch.nn as nn
+                    from torch import nn
 
                     class SimpleNN(nn.Module):
                         def __init__(self, input_size, hidden_size, output_size):
@@ -534,7 +531,7 @@ class ModelManager:
 
                         model = keras.Sequential([
                             keras.layers.Dense(50, activation="relu", input_shape=(10,)),
-                            keras.layers.Dense(2, activation="softmax")
+                            keras.layers.Dense(2, activation="softmax"),
                         ])
                         model.compile(optimizer="adam", loss="sparse_categorical_crossentropy")
                         self._last_trained_model = model
@@ -550,7 +547,7 @@ class ModelManager:
                 self._last_trained_model = {
                     "type": model_type,
                     "data": training_data,
-                    "trained_at": str(datetime.now())
+                    "trained_at": str(datetime.now()),
                 }
                 trained = True
 
@@ -561,8 +558,7 @@ class ModelManager:
             return False
 
     def save_model(self, model: Any, path: str) -> bool:
-        """
-        Save trained model to disk.
+        """Save trained model to disk.
 
         This method saves a trained model to disk with support for various
         model formats and serialization methods.
@@ -573,6 +569,7 @@ class ModelManager:
 
         Returns:
             bool: True if save successful, False otherwise
+
         """
         try:
             import os
@@ -635,7 +632,7 @@ class ModelManager:
                 "model_type": type(model).__name__,
                 "saved_at": str(datetime.now()),
                 "intellicrack_version": "2.0",
-                "path": path
+                "path": path,
             }
 
             with open(metadata_path, "w") as f:

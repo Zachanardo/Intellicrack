@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -23,7 +22,8 @@ This module provides utility functions for creating common widget patterns
 to reduce code duplication across dialog implementations.
 """
 
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
@@ -41,10 +41,9 @@ from PyQt6.QtWidgets import (
 
 
 def create_tree_widget(
-    headers: List[str], item_changed_callback: Optional[Callable] = None
+    headers: list[str], item_changed_callback: Callable | None = None,
 ) -> QTreeWidget:
-    """
-    Create a QTreeWidget with standard configuration.
+    """Create a QTreeWidget with standard configuration.
 
     Args:
         headers: List of header labels
@@ -52,6 +51,7 @@ def create_tree_widget(
 
     Returns:
         Configured QTreeWidget
+
     """
     tree = QTreeWidget()
     tree.setHeaderLabels(headers)
@@ -61,8 +61,7 @@ def create_tree_widget(
 
 
 def create_console_text_edit(font_size: int = 9, read_only: bool = True) -> QTextEdit:
-    """
-    Create a console-style QTextEdit widget.
+    """Create a console-style QTextEdit widget.
 
     Args:
         font_size: Font size for the text
@@ -70,6 +69,7 @@ def create_console_text_edit(font_size: int = 9, read_only: bool = True) -> QTex
 
     Returns:
         Configured QTextEdit
+
     """
     console = QTextEdit()
     console.setReadOnly(read_only)
@@ -78,10 +78,9 @@ def create_console_text_edit(font_size: int = 9, read_only: bool = True) -> QTex
 
 
 def create_input_field(
-    placeholder_text: Optional[str] = None, default_value: Optional[str] = None
+    placeholder_text: str | None = None, default_value: str | None = None,
 ) -> QLineEdit:
-    """
-    Create a QLineEdit input field with optional placeholder and default value.
+    """Create a QLineEdit input field with optional placeholder and default value.
 
     Args:
         placeholder_text: Optional placeholder text
@@ -89,6 +88,7 @@ def create_input_field(
 
     Returns:
         Configured QLineEdit
+
     """
     line_edit = QLineEdit()
     if placeholder_text:
@@ -99,10 +99,9 @@ def create_input_field(
 
 
 def create_button_layout(
-    button_configs: List[Dict[str, Any]], add_stretch: bool = True
+    button_configs: list[dict[str, Any]], add_stretch: bool = True,
 ) -> QHBoxLayout:
-    """
-    Create a horizontal layout with buttons.
+    """Create a horizontal layout with buttons.
 
     Args:
         button_configs: List of button configuration dictionaries
@@ -112,6 +111,7 @@ def create_button_layout(
 
     Returns:
         QHBoxLayout with buttons
+
     """
     layout = QHBoxLayout()
 
@@ -129,11 +129,10 @@ def create_button_layout(
 
 
 def create_list_widget(
-    item_clicked_callback: Optional[Callable] = None,
-    context_menu_callback: Optional[Callable] = None,
+    item_clicked_callback: Callable | None = None,
+    context_menu_callback: Callable | None = None,
 ) -> QListWidget:
-    """
-    Create a QListWidget with optional callbacks.
+    """Create a QListWidget with optional callbacks.
 
     Args:
         item_clicked_callback: Optional callback for item clicks
@@ -141,6 +140,7 @@ def create_list_widget(
 
     Returns:
         Configured QListWidget
+
     """
     list_widget = QListWidget()
 
@@ -155,8 +155,7 @@ def create_list_widget(
 
 
 def create_grouped_widget(title: str, content_widget: QWidget) -> QGroupBox:
-    """
-    Create a QGroupBox containing the specified widget.
+    """Create a QGroupBox containing the specified widget.
 
     Args:
         title: Title for the group box
@@ -164,6 +163,7 @@ def create_grouped_widget(title: str, content_widget: QWidget) -> QGroupBox:
 
     Returns:
         QGroupBox containing the content widget
+
     """
     group_box = QGroupBox(title)
     layout = QVBoxLayout()
@@ -172,9 +172,8 @@ def create_grouped_widget(title: str, content_widget: QWidget) -> QGroupBox:
     return group_box
 
 
-def create_standard_dialog_buttons(buttons: List[str], callbacks: List[Callable]) -> QHBoxLayout:
-    """
-    Create standard dialog buttons (OK, Cancel, Apply, etc.).
+def create_standard_dialog_buttons(buttons: list[str], callbacks: list[Callable]) -> QHBoxLayout:
+    """Create standard dialog buttons (OK, Cancel, Apply, etc.).
 
     Args:
         buttons: List of button texts
@@ -182,6 +181,7 @@ def create_standard_dialog_buttons(buttons: List[str], callbacks: List[Callable]
 
     Returns:
         QHBoxLayout with standard dialog buttons
+
     """
     if len(buttons) != len(callbacks):
         raise ValueError("Number of buttons must match number of callbacks")
@@ -198,11 +198,11 @@ def create_standard_dialog_buttons(buttons: List[str], callbacks: List[Callable]
 
 
 __all__ = [
-    "create_tree_widget",
-    "create_console_text_edit",
-    "create_input_field",
     "create_button_layout",
-    "create_list_widget",
+    "create_console_text_edit",
     "create_grouped_widget",
+    "create_input_field",
+    "create_list_widget",
     "create_standard_dialog_buttons",
+    "create_tree_widget",
 ]

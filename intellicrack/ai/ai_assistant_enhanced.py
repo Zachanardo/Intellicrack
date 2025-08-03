@@ -1,5 +1,4 @@
-"""
-Enhanced AI Assistant for Intellicrack.
+"""Enhanced AI Assistant for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,9 +22,10 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import logging
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from .ai_file_tools import get_ai_file_tools
 
@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 
 class ToolCategory(Enum):
     """Categories of tools available to the AI."""
+
     ANALYSIS = "analysis"
     PATCHING = "patching"
     NETWORK = "network"
@@ -46,13 +47,14 @@ class ToolCategory(Enum):
 @dataclass
 class Tool:
     """Represents a tool available to the AI."""
+
     name: str
     description: str
     category: ToolCategory
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
     risk_level: str  # low, medium, high
     function: Callable
-    example: Optional[str] = None
+    example: str | None = None
 
 
 class IntellicrackAIAssistant:
@@ -67,11 +69,11 @@ class IntellicrackAIAssistant:
             "current_binary": None,
             "analysis_results": {},
             "suggested_patches": [],
-            "workflow_state": "idle"
+            "workflow_state": "idle",
         }
         self.conversation_history = []
 
-    def _initialize_tools(self) -> Dict[str, Tool]:
+    def _initialize_tools(self) -> dict[str, Tool]:
         """Initialize all available tools."""
         tools = {}
 
@@ -82,11 +84,11 @@ class IntellicrackAIAssistant:
             category=ToolCategory.ANALYSIS,
             parameters={
                 "binary_path": {"type": "string", "required": True},
-                "analyses": {"type": "array", "default": ["comprehensive"]}
+                "analyses": {"type": "array", "default": ["comprehensive"]},
             },
             risk_level="low",
             function=self._analyze_binary,
-            example="analyze_binary('app.exe', ['comprehensive', 'protections'])"
+            example="analyze_binary('app.exe', ['comprehensive', 'protections'])",
         )
 
         tools["detect_protections"] = Tool(
@@ -94,11 +96,11 @@ class IntellicrackAIAssistant:
             description="Detect all protection mechanisms in a binary",
             category=ToolCategory.ANALYSIS,
             parameters={
-                "binary_path": {"type": "string", "required": True}
+                "binary_path": {"type": "string", "required": True},
             },
             risk_level="low",
             function=self._detect_protections,
-            example="detect_protections('app.exe')"
+            example="detect_protections('app.exe')",
         )
 
         tools["find_license_checks"] = Tool(
@@ -106,11 +108,11 @@ class IntellicrackAIAssistant:
             description="Find license validation routines in the binary",
             category=ToolCategory.ANALYSIS,
             parameters={
-                "binary_path": {"type": "string", "required": True}
+                "binary_path": {"type": "string", "required": True},
             },
             risk_level="low",
             function=self._find_license_checks,
-            example="find_license_checks('app.exe')"
+            example="find_license_checks('app.exe')",
         )
 
         # File System Tools (with user approval)
@@ -120,11 +122,11 @@ class IntellicrackAIAssistant:
             category=ToolCategory.FILE_SYSTEM,
             parameters={
                 "search_path": {"type": "string", "required": True},
-                "custom_patterns": {"type": "array", "default": []}
+                "custom_patterns": {"type": "array", "default": []},
             },
             risk_level="medium",
             function=self._search_license_files,
-            example="search_license_files('/path/to/app', ['*.key', '*.lic'])"
+            example="search_license_files('/path/to/app', ['*.key', '*.lic'])",
         )
 
         tools["read_file"] = Tool(
@@ -133,11 +135,11 @@ class IntellicrackAIAssistant:
             category=ToolCategory.FILE_SYSTEM,
             parameters={
                 "file_path": {"type": "string", "required": True},
-                "purpose": {"type": "string", "default": "License analysis"}
+                "purpose": {"type": "string", "default": "License analysis"},
             },
             risk_level="medium",
             function=self._read_file,
-            example="read_file('license.dat', 'Analyze license file format')"
+            example="read_file('license.dat', 'Analyze license file format')",
         )
 
         tools["analyze_program_directory"] = Tool(
@@ -145,11 +147,11 @@ class IntellicrackAIAssistant:
             description="Comprehensive analysis of a program's directory for licensing files",
             category=ToolCategory.FILE_SYSTEM,
             parameters={
-                "program_path": {"type": "string", "required": True}
+                "program_path": {"type": "string", "required": True},
             },
             risk_level="medium",
             function=self._analyze_program_directory,
-            example="analyze_program_directory('/path/to/app/app.exe')"
+            example="analyze_program_directory('/path/to/app/app.exe')",
         )
 
         # Patching Tools
@@ -159,11 +161,11 @@ class IntellicrackAIAssistant:
             category=ToolCategory.PATCHING,
             parameters={
                 "binary_path": {"type": "string", "required": True},
-                "target": {"type": "string", "default": "auto"}
+                "target": {"type": "string", "default": "auto"},
             },
             risk_level="medium",
             function=self._suggest_patches,
-            example="suggest_patches('app.exe', 'license')"
+            example="suggest_patches('app.exe', 'license')",
         )
 
         tools["apply_patch"] = Tool(
@@ -172,11 +174,11 @@ class IntellicrackAIAssistant:
             category=ToolCategory.PATCHING,
             parameters={
                 "binary_path": {"type": "string", "required": True},
-                "patch_definition": {"type": "object", "required": True}
+                "patch_definition": {"type": "object", "required": True},
             },
             risk_level="high",
             function=self._apply_patch,
-            example="apply_patch('app.exe', {'address': '0x401000', 'bytes': '9090'})"
+            example="apply_patch('app.exe', {'address': '0x401000', 'bytes': '9090'})",
         )
 
         # Network Tools
@@ -185,11 +187,11 @@ class IntellicrackAIAssistant:
             description="Analyze network communications and protocols",
             category=ToolCategory.NETWORK,
             parameters={
-                "binary_path": {"type": "string", "required": True}
+                "binary_path": {"type": "string", "required": True},
             },
             risk_level="low",
             function=self._analyze_network,
-            example="analyze_network('app.exe')"
+            example="analyze_network('app.exe')",
         )
 
         # Bypass Tools
@@ -199,11 +201,11 @@ class IntellicrackAIAssistant:
             category=ToolCategory.BYPASS,
             parameters={
                 "binary_path": {"type": "string", "required": True},
-                "protection_type": {"type": "string", "required": True}
+                "protection_type": {"type": "string", "required": True},
             },
             risk_level="high",
             function=self._generate_bypass,
-            example="generate_bypass('app.exe', 'tpm')"
+            example="generate_bypass('app.exe', 'tpm')",
         )
 
         # Utility Tools
@@ -214,11 +216,11 @@ class IntellicrackAIAssistant:
             parameters={
                 "binary_path": {"type": "string", "required": True},
                 "address": {"type": "string", "required": True},
-                "size": {"type": "integer", "default": 64}
+                "size": {"type": "integer", "default": 64},
             },
             risk_level="low",
             function=self._view_hex,
-            example="view_hex('app.exe', '0x401000', 128)"
+            example="view_hex('app.exe', '0x401000', 128)",
         )
 
         tools["disassemble"] = Tool(
@@ -228,11 +230,11 @@ class IntellicrackAIAssistant:
             parameters={
                 "binary_path": {"type": "string", "required": True},
                 "address": {"type": "string", "required": True},
-                "count": {"type": "integer", "default": 20}
+                "count": {"type": "integer", "default": 20},
             },
             risk_level="low",
             function=self._disassemble,
-            example="disassemble('app.exe', '0x401000', 30)"
+            example="disassemble('app.exe', '0x401000', 30)",
         )
 
         # External tool for calling external analysis services
@@ -243,11 +245,11 @@ class IntellicrackAIAssistant:
             parameters={
                 "file_path": {"type": "string", "required": True},
                 "service": {"type": "string", "default": "virustotal"},
-                "api_key": {"type": "string", "required": False}
+                "api_key": {"type": "string", "required": False},
             },
             risk_level="medium",
             function=self._external_analysis,
-            example="external_analysis('suspicious.exe', 'virustotal')"
+            example="external_analysis('suspicious.exe', 'virustotal')",
         )
 
         return tools
@@ -325,7 +327,7 @@ You are the autonomous expert - take complete ownership of binary analysis chall
 
         return description
 
-    def process_message(self, message: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def process_message(self, message: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
         """Process a message from the user."""
         # Update context if provided
         if context:
@@ -346,7 +348,7 @@ You are the autonomous expert - take complete ownership of binary analysis chall
 
         return response
 
-    def _analyze_intent(self, message: str) -> Dict[str, Any]:
+    def _analyze_intent(self, message: str) -> dict[str, Any]:
         """Analyze user intent from the message."""
         message_lower = message.lower()
 
@@ -388,18 +390,17 @@ You are the autonomous expert - take complete ownership of binary analysis chall
 
         if any(keyword in message_lower for keyword in ["binary", "pe", "elf", "analysis"]):
             return "binary_analysis"
-        elif any(keyword in message_lower for keyword in ["network", "traffic", "protocol"]):
+        if any(keyword in message_lower for keyword in ["network", "traffic", "protocol"]):
             return "network_analysis"
-        elif any(keyword in message_lower for keyword in ["patch", "modify", "crack"]):
+        if any(keyword in message_lower for keyword in ["patch", "modify", "crack"]):
             return "patching"
-        elif any(keyword in message_lower for keyword in ["hex", "bytes", "dump"]):
+        if any(keyword in message_lower for keyword in ["hex", "bytes", "dump"]):
             return "hex_editing"
-        elif any(keyword in message_lower for keyword in ["license", "protection", "bypass"]):
+        if any(keyword in message_lower for keyword in ["license", "protection", "bypass"]):
             return "license_bypass"
-        elif any(keyword in message_lower for keyword in ["frida", "script", "hook"]):
+        if any(keyword in message_lower for keyword in ["frida", "script", "hook"]):
             return "scripting"
-        else:
-            return "general"
+        return "general"
 
     def _extract_aspect(self, message: str) -> str:
         """Extract network aspect from message."""
@@ -408,24 +409,23 @@ You are the autonomous expert - take complete ownership of binary analysis chall
 
         if any(keyword in message_lower for keyword in ["protocol", "http", "tcp", "udp"]):
             return "protocol"
-        elif any(keyword in message_lower for keyword in ["traffic", "capture", "packet"]):
+        if any(keyword in message_lower for keyword in ["traffic", "capture", "packet"]):
             return "traffic"
-        elif any(keyword in message_lower for keyword in ["license", "server", "validation"]):
+        if any(keyword in message_lower for keyword in ["license", "server", "validation"]):
             return "license_server"
-        elif any(keyword in message_lower for keyword in ["firewall", "security", "filter"]):
+        if any(keyword in message_lower for keyword in ["firewall", "security", "filter"]):
             return "security"
-        elif any(keyword in message_lower for keyword in ["dns", "domain", "resolution"]):
+        if any(keyword in message_lower for keyword in ["dns", "domain", "resolution"]):
             return "dns"
-        else:
-            return "protocol"
+        return "protocol"
 
-    def _generate_response(self, intent: Dict[str, Any], message: str) -> Dict[str, Any]:
+    def _generate_response(self, intent: dict[str, Any], message: str) -> dict[str, Any]:
         """Generate response based on intent."""
         response = {
             "message": "",
             "tools_used": [],
             "suggestions": [],
-            "requires_confirmation": False
+            "requires_confirmation": False,
         }
 
         if intent["type"] == "analysis":
@@ -441,7 +441,7 @@ You are the autonomous expert - take complete ownership of binary analysis chall
 
         return response
 
-    def _handle_analysis_intent(self, intent: Dict[str, Any]) -> str:
+    def _handle_analysis_intent(self, intent: dict[str, Any]) -> str:
         """Handle analysis intent."""
         if not self.context.get("current_binary"):
             return "Please specify a binary file to analyze. You can say something like 'analyze app.exe' or provide the full path."
@@ -456,7 +456,7 @@ You are the autonomous expert - take complete ownership of binary analysis chall
             return f"I'll detect all protection mechanisms in {binary}. This includes:\n- Packing and obfuscation\n- Anti-debugging techniques\n- License/trial checks\n- Hardware locks\n\nShall I proceed with the protection scan?"
         return f"I'll perform a comprehensive analysis of {binary}. This will include:\n- Binary structure and format\n- Protection mechanisms\n- Potential vulnerabilities\n- License/trial logic\n\nThis may take a few minutes. Shall I proceed?"
 
-    def _handle_patching_intent(self, intent: Dict[str, Any]) -> str:
+    def _handle_patching_intent(self, intent: dict[str, Any]) -> str:
         """Handle patching intent."""
         target = intent.get("target", "auto")
 
@@ -465,7 +465,7 @@ You are the autonomous expert - take complete ownership of binary analysis chall
 
         return f"Based on my analysis, I can suggest patches for {target} mechanisms. However, I need your confirmation before applying any modifications.\n\nWould you like me to:\n1. Show suggested patches\n2. Explain how the patches work\n3. Create a backup before patching"
 
-    def _handle_explanation_intent(self, intent: Dict[str, Any]) -> str:
+    def _handle_explanation_intent(self, intent: dict[str, Any]) -> str:
         """Handle explanation intent."""
         topic = intent.get("topic", "general")
 
@@ -477,7 +477,7 @@ You are the autonomous expert - take complete ownership of binary analysis chall
 • **Hybrid Approaches**: Combining both methods for comprehensive understanding
 
 Would you like me to analyze a specific binary?"""
-        elif topic == "patching":
+        if topic == "patching":
             return """**Patching Techniques**: Methods to modify binary behavior:
 
 • **NOP Patches**: Replace instructions with no-operation codes
@@ -486,7 +486,7 @@ Would you like me to analyze a specific binary?"""
 • **Function Hooking**: Intercept and modify function calls
 
 What type of patching are you interested in?"""
-        elif topic == "license_bypass":
+        if topic == "license_bypass":
             return """**License Bypass Methods**: Common approaches to software licensing:
 
 • **Trial Extension**: Modify time checks and expiration logic
@@ -495,8 +495,7 @@ What type of patching are you interested in?"""
 • **Server Communication**: Block or redirect license server calls
 
 Which protection mechanism are you analyzing?"""
-        else:
-            return """I can help you understand:
+        return """I can help you understand:
 
 1. **Binary Protection Mechanisms**: How software protections work
 2. **License Validation**: Common licensing schemes and checks
@@ -505,7 +504,7 @@ Which protection mechanism are you analyzing?"""
 
 What would you like to learn about?"""
 
-    def _handle_network_intent(self, intent: Dict[str, Any]) -> str:
+    def _handle_network_intent(self, intent: dict[str, Any]) -> str:
         """Handle network intent."""
         aspect = intent.get("aspect", "protocol")
 
@@ -518,7 +517,7 @@ What would you like to learn about?"""
 • **Offline Simulation**: Create local license server responses
 
 Would you like me to start license server analysis?"""
-        elif aspect == "traffic":
+        if aspect == "traffic":
             return """I can perform network traffic analysis:
 
 • **Packet Capture**: Monitor all network communications
@@ -527,7 +526,7 @@ Would you like me to start license server analysis?"""
 • **Flow Analysis**: Understand communication patterns and timing
 
 Shall I begin traffic capture?"""
-        elif aspect == "security":
+        if aspect == "security":
             return """I can analyze network security measures:
 
 • **SSL/TLS Analysis**: Examine certificate validation and encryption
@@ -536,41 +535,40 @@ Shall I begin traffic capture?"""
 • **Authentication**: Study network-based authentication mechanisms
 
 What security aspect interests you?"""
-        else:
-            return "I can analyze network communications, including:\n- Protocol identification\n- License server communication\n- SSL/TLS traffic\n\nWould you like me to start network analysis?"
+        return "I can analyze network communications, including:\n- Protocol identification\n- License server communication\n- SSL/TLS traffic\n\nWould you like me to start network analysis?"
 
     def _handle_general_intent(self, message: str) -> str:
         """Handle general intent."""
         return f"I understand you want help with: {message}\n\nI can:\n- Analyze binaries\n- Detect protections\n- Suggest patches\n- Explain concepts\n\nWhat would you like to do first?"
 
     # Tool implementation methods
-    def _analyze_binary(self, binary_path: str, analyses: List[str] = None) -> Dict[str, Any]:
+    def _analyze_binary(self, binary_path: str, analyses: list[str] = None) -> dict[str, Any]:
         """Analyze a binary file."""
         if self.cli_interface:
             return self.cli_interface.analyze_binary(binary_path, analyses)
         return {"status": "error", "message": "CLI interface not available"}
 
-    def _detect_protections(self, binary_path: str) -> Dict[str, Any]:
+    def _detect_protections(self, binary_path: str) -> dict[str, Any]:
         """Detect protection mechanisms."""
         if self.cli_interface:
             return self.cli_interface.execute_command(
                 [binary_path, "--detect-protections", "--format", "json"],
                 "Detecting all protection mechanisms",
-                "Scanning for packing, anti-debug, licensing, and other protections"
+                "Scanning for packing, anti-debug, licensing, and other protections",
             )
         return {"status": "error", "message": "CLI interface not available"}
 
-    def _find_license_checks(self, binary_path: str) -> Dict[str, Any]:
+    def _find_license_checks(self, binary_path: str) -> dict[str, Any]:
         """Find license validation routines."""
         if self.cli_interface:
             return self.cli_interface.execute_command(
                 [binary_path, "--license-analysis", "--format", "json"],
                 "Finding license validation routines",
-                "Searching for license checks, key validation, and activation logic"
+                "Searching for license checks, key validation, and activation logic",
             )
         return {"status": "error", "message": "CLI interface not available"}
 
-    def _suggest_patches(self, binary_path: str, target: str = "auto") -> Dict[str, Any]:
+    def _suggest_patches(self, binary_path: str, target: str = "auto") -> dict[str, Any]:
         """Suggest patches for the binary."""
         if self.cli_interface:
             # Use target parameter to focus patch suggestions
@@ -579,27 +577,26 @@ What security aspect interests you?"""
                     [binary_path, "--suggest-patches", "--focus",
                         "license", "--format", "json"],
                     "Generating license bypass patches",
-                    "Analyzing license validation routines and suggesting bypass strategies"
+                    "Analyzing license validation routines and suggesting bypass strategies",
                 )
-            elif target == "trial":
+            if target == "trial":
                 return self.cli_interface.execute_command(
                     [binary_path, "--suggest-patches",
                         "--focus", "trial", "--format", "json"],
                     "Generating trial extension patches",
-                    "Analyzing time-based restrictions and suggesting extension strategies"
+                    "Analyzing time-based restrictions and suggesting extension strategies",
                 )
-            elif target == "protection":
+            if target == "protection":
                 return self.cli_interface.execute_command(
                     [binary_path, "--suggest-patches", "--focus",
                         "protection", "--format", "json"],
                     "Generating protection bypass patches",
-                    "Analyzing protection mechanisms and suggesting bypass strategies"
+                    "Analyzing protection mechanisms and suggesting bypass strategies",
                 )
-            else:
-                return self.cli_interface.suggest_patches(binary_path)
+            return self.cli_interface.suggest_patches(binary_path)
         return {"status": "error", "message": "CLI interface not available"}
 
-    def _apply_patch(self, binary_path: str, patch_definition: Dict[str, Any]) -> Dict[str, Any]:
+    def _apply_patch(self, binary_path: str, patch_definition: dict[str, Any]) -> dict[str, Any]:
         """Apply a patch to the binary."""
         if self.cli_interface:
             # Save patch definition to temporary file
@@ -615,17 +612,17 @@ What security aspect interests you?"""
             return result
         return {"status": "error", "message": "CLI interface not available"}
 
-    def _analyze_network(self, binary_path: str) -> Dict[str, Any]:
+    def _analyze_network(self, binary_path: str) -> dict[str, Any]:
         """Analyze network communications."""
         if self.cli_interface:
             return self.cli_interface.execute_command(
                 [binary_path, "--protocol-fingerprint", "--format", "json"],
                 "Analyzing network protocols",
-                "Identifying network communication patterns and protocols"
+                "Identifying network communication patterns and protocols",
             )
         return {"status": "error", "message": "CLI interface not available"}
 
-    def _generate_bypass(self, binary_path: str, protection_type: str) -> Dict[str, Any]:
+    def _generate_bypass(self, binary_path: str, protection_type: str) -> dict[str, Any]:
         """Generate bypass for protection mechanism."""
         bypass_flags = {
             "tpm": "--bypass-tpm",
@@ -633,7 +630,7 @@ What security aspect interests you?"""
             "dongle": "--emulate-dongle",
             "hwid": "--hwid-spoof",
             "time": "--time-bomb-defuser",
-            "telemetry": "--telemetry-blocker"
+            "telemetry": "--telemetry-blocker",
         }
 
         flag = bypass_flags.get(protection_type.lower())
@@ -644,11 +641,11 @@ What security aspect interests you?"""
             return self.cli_interface.execute_command(
                 [binary_path, flag, "--format", "json"],
                 f"Generating {protection_type} bypass",
-                f"Creating bypass strategy for {protection_type} protection"
+                f"Creating bypass strategy for {protection_type} protection",
             )
         return {"status": "error", "message": "CLI interface not available"}
 
-    def _view_hex(self, binary_path: str, address: str, size: int = 64) -> Dict[str, Any]:
+    def _view_hex(self, binary_path: str, address: str, size: int = 64) -> dict[str, Any]:
         """View hex dump at specific address."""
         try:
             from ..hexview import LargeFileHandler
@@ -680,7 +677,7 @@ What security aspect interests you?"""
                 "address": address,
                 "size": len(data),
                 "hex_dump": "\n".join(hex_lines),
-                "raw_data": data.hex()
+                "raw_data": data.hex(),
             }
 
         except ImportError as e:
@@ -688,24 +685,24 @@ What security aspect interests you?"""
                 f"Failed to import LargeFileHandler: {e}", exc_info=True)
             return {
                 "status": "error",
-                "message": "Hex view module not available"
+                "message": "Hex view module not available",
             }
-        except (FileNotFoundError, OSError, IOError) as e:
+        except (FileNotFoundError, OSError) as e:
             logger.error(
                 f"File access error for {binary_path}: {e}", exc_info=True)
             return {
                 "status": "error",
-                "message": f"Cannot access file: {str(e)}"
+                "message": f"Cannot access file: {e!s}",
             }
         except ValueError as e:
             logger.error(
                 f"Invalid address format '{address}': {e}", exc_info=True)
             return {
                 "status": "error",
-                "message": f"Invalid address format: {str(e)}"
+                "message": f"Invalid address format: {e!s}",
             }
 
-    def _disassemble(self, binary_path: str, address: str, count: int = 20) -> Dict[str, Any]:
+    def _disassemble(self, binary_path: str, address: str, count: int = 20) -> dict[str, Any]:
         """Disassemble code at address."""
         if self.cli_interface:
             # Use CLI interface for disassembly
@@ -713,57 +710,56 @@ What security aspect interests you?"""
                 [binary_path, "--disassemble", "--address", address,
                     "--count", str(count), "--format", "json"],
                 f"Disassembling {count} instructions",
-                f"Disassembling code at {address} in {binary_path}"
+                f"Disassembling code at {address} in {binary_path}",
             )
-        else:
-            # Fallback: basic disassembly attempt
-            try:
-                from ..hexview import LargeFileHandler
+        # Fallback: basic disassembly attempt
+        try:
+            from ..hexview import LargeFileHandler
 
-                # Load the binary file
-                handler = LargeFileHandler(binary_path)
+            # Load the binary file
+            handler = LargeFileHandler(binary_path)
 
-                # Parse address
-                if address.startswith("0x"):
-                    addr_int = int(address, 16)
-                else:
-                    addr_int = int(address)
+            # Parse address
+            if address.startswith("0x"):
+                addr_int = int(address, 16)
+            else:
+                addr_int = int(address)
 
-                # Read some bytes for basic analysis
-                # Assume avg 16 bytes per instruction
-                data = handler.read(addr_int, count * 16)
+            # Read some bytes for basic analysis
+            # Assume avg 16 bytes per instruction
+            data = handler.read(addr_int, count * 16)
 
-                return {
-                    "status": "partial",
-                    "message": f"Raw bytes at {address}: {data[:64].hex()}",
-                    "note": "Full disassembly requires CLI interface",
-                    "raw_data": data.hex()
-                }
+            return {
+                "status": "partial",
+                "message": f"Raw bytes at {address}: {data[:64].hex()}",
+                "note": "Full disassembly requires CLI interface",
+                "raw_data": data.hex(),
+            }
 
-            except ImportError as e:
-                logger.error(
-                    f"Failed to import LargeFileHandler: {e}", exc_info=True)
-                return {
-                    "status": "error",
-                    "message": "Disassembly module not available"
-                }
-            except (FileNotFoundError, OSError, IOError) as e:
-                logger.error(
-                    f"File access error for {binary_path}: {e}", exc_info=True)
-                return {
-                    "status": "error",
-                    "message": f"Cannot access file: {str(e)}"
-                }
-            except ValueError as e:
-                logger.error(
-                    f"Invalid address format '{address}': {e}", exc_info=True)
-                return {
-                    "status": "error",
-                    "message": f"Invalid address format: {str(e)}"
-                }
+        except ImportError as e:
+            logger.error(
+                f"Failed to import LargeFileHandler: {e}", exc_info=True)
+            return {
+                "status": "error",
+                "message": "Disassembly module not available",
+            }
+        except (FileNotFoundError, OSError) as e:
+            logger.error(
+                f"File access error for {binary_path}: {e}", exc_info=True)
+            return {
+                "status": "error",
+                "message": f"Cannot access file: {e!s}",
+            }
+        except ValueError as e:
+            logger.error(
+                f"Invalid address format '{address}': {e}", exc_info=True)
+            return {
+                "status": "error",
+                "message": f"Invalid address format: {e!s}",
+            }
 
     # File System Tool Methods
-    def _search_license_files(self, search_path: str, custom_patterns: List[str] = None) -> Dict[str, Any]:
+    def _search_license_files(self, search_path: str, custom_patterns: list[str] = None) -> dict[str, Any]:
         """Search for license-related files with user approval."""
         try:
             result = self.file_tools.search_for_license_files(
@@ -785,7 +781,7 @@ What security aspect interests you?"""
             logger.error("Error in file search tool: %s", e)
             return {"status": "error", "message": str(e)}
 
-    def _read_file(self, file_path: str, purpose: str = "License analysis") -> Dict[str, Any]:
+    def _read_file(self, file_path: str, purpose: str = "License analysis") -> dict[str, Any]:
         """Read a file with user approval."""
         try:
             result = self.file_tools.read_file(file_path, purpose)
@@ -806,7 +802,7 @@ What security aspect interests you?"""
             logger.error("Error in file read tool: %s", e)
             return {"status": "error", "message": str(e)}
 
-    def _analyze_program_directory(self, program_path: str) -> Dict[str, Any]:
+    def _analyze_program_directory(self, program_path: str) -> dict[str, Any]:
         """Analyze a program's directory for licensing files."""
         try:
             result = self.file_tools.analyze_program_directory(program_path)
@@ -817,7 +813,7 @@ What security aspect interests you?"""
                 files_analyzed = result["analysis_summary"]["files_analyzed"]
                 self._log_tool_usage(
                     f"Program directory analysis completed: {files_found} license files found, "
-                    f"{files_analyzed} files analyzed"
+                    f"{files_analyzed} files analyzed",
                 )
             else:
                 self._log_tool_usage(
@@ -828,9 +824,8 @@ What security aspect interests you?"""
             logger.error("Error in program directory analysis: %s", e)
             return {"status": "error", "message": str(e)}
 
-    def analyze_binary_complex(self, binary_path: str, ml_results: Dict[str, Any] = None) -> Dict[str, Any]:
-        """
-        Perform complex binary analysis using AI reasoning.
+    def analyze_binary_complex(self, binary_path: str, ml_results: dict[str, Any] = None) -> dict[str, Any]:
+        """Perform complex binary analysis using AI reasoning.
 
         Args:
             binary_path: Path to the binary to analyze
@@ -838,6 +833,7 @@ What security aspect interests you?"""
 
         Returns:
             Dictionary containing complex analysis results
+
         """
         try:
             analysis = {
@@ -845,27 +841,27 @@ What security aspect interests you?"""
                 "analysis_type": "complex_binary_analysis",
                 "confidence": 0.8,
                 "findings": [],
-                "recommendations": []
+                "recommendations": [],
             }
 
             # Incorporate ML results if provided
             if ml_results:
                 analysis["ml_integration"] = {
                     "ml_confidence": ml_results.get("confidence", 0.0),
-                    "ml_predictions": ml_results.get("predictions", [])
+                    "ml_predictions": ml_results.get("predictions", []),
                 }
 
             # Add complex analysis findings
             analysis["findings"].extend([
                 "Binary structure analysis completed",
                 "Cross-referenced with ML predictions",
-                "Applied AI reasoning patterns"
+                "Applied AI reasoning patterns",
             ])
 
             analysis["recommendations"].extend([
                 "Further static analysis recommended",
                 "Consider dynamic analysis for runtime behavior",
-                "Verify findings with manual review"
+                "Verify findings with manual review",
             ])
 
             self._log_tool_usage(
@@ -878,18 +874,18 @@ What security aspect interests you?"""
                 "error": str(e),
                 "confidence": 0.0,
                 "findings": [],
-                "recommendations": []
+                "recommendations": [],
             }
 
-    def analyze_license_patterns(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Analyze license patterns using AI reasoning.
+    def analyze_license_patterns(self, input_data: dict[str, Any]) -> dict[str, Any]:
+        """Analyze license patterns using AI reasoning.
 
         Args:
             input_data: Input data containing patterns to analyze
 
         Returns:
             Dictionary containing license pattern analysis
+
         """
         try:
             analysis = {
@@ -897,7 +893,7 @@ What security aspect interests you?"""
                 "confidence": 0.85,
                 "patterns_found": [],
                 "license_type": "unknown",
-                "bypass_suggestions": []
+                "bypass_suggestions": [],
             }
 
             # Analyze patterns from input data
@@ -935,7 +931,7 @@ What security aspect interests you?"""
                 analysis["bypass_suggestions"] = [
                     f"Identified {analysis['license_type']} licensing",
                     "Consider runtime analysis of license checks",
-                    "Look for license validation functions"
+                    "Look for license validation functions",
                 ]
 
             self._log_tool_usage(
@@ -948,18 +944,18 @@ What security aspect interests you?"""
                 "error": str(e),
                 "confidence": 0.0,
                 "patterns_found": [],
-                "license_type": "unknown"
+                "license_type": "unknown",
             }
 
-    def perform_reasoning(self, task_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Perform AI reasoning on given task data.
+    def perform_reasoning(self, task_data: dict[str, Any]) -> dict[str, Any]:
+        """Perform AI reasoning on given task data.
 
         Args:
             task_data: Data to reason about
 
         Returns:
             Dictionary containing reasoning results
+
         """
         try:
             reasoning = {
@@ -967,7 +963,7 @@ What security aspect interests you?"""
                 "reasoning_confidence": 0.75,
                 "conclusions": [],
                 "next_steps": [],
-                "evidence": []
+                "evidence": [],
             }
 
             # Extract evidence from task data
@@ -984,12 +980,12 @@ What security aspect interests you?"""
                 reasoning["conclusions"] = [
                     "Analysis data is available for reasoning",
                     "Multiple information sources can be cross-referenced",
-                    "Confidence level is appropriate for findings"
+                    "Confidence level is appropriate for findings",
                 ]
                 reasoning["next_steps"] = [
                     "Correlate findings across data sources",
                     "Validate conclusions with additional analysis",
-                    "Generate actionable recommendations"
+                    "Generate actionable recommendations",
                 ]
             else:
                 reasoning["conclusions"] = [
@@ -1005,10 +1001,10 @@ What security aspect interests you?"""
                 "error": str(e),
                 "reasoning_confidence": 0.0,
                 "conclusions": [],
-                "next_steps": []
+                "next_steps": [],
             }
 
-    def _external_analysis(self, file_path: str, service: str = "virustotal", api_key: Optional[str] = None) -> Dict[str, Any]:
+    def _external_analysis(self, file_path: str, service: str = "virustotal", api_key: str | None = None) -> dict[str, Any]:
         """Submit file to external analysis service."""
         try:
             import hashlib
@@ -1032,8 +1028,8 @@ What security aspect interests you?"""
                 "results": {
                     "detection_ratio": "0/0",
                     "scan_date": "Not available (API key required)",
-                    "permalink": f"https://{service}.com/file/{file_hash}"
-                }
+                    "permalink": f"https://{service}.com/file/{file_hash}",
+                },
             }
 
             if api_key:
@@ -1047,7 +1043,7 @@ What security aspect interests you?"""
 
         except Exception as e:
             logger.error(f"External analysis error: {e}")
-            return {"error": f"External analysis failed: {str(e)}"}
+            return {"error": f"External analysis failed: {e!s}"}
 
     def _log_tool_usage(self, message: str):
         """Log tool usage for user visibility."""
@@ -1086,8 +1082,7 @@ def create_ai_assistant_widget():
 
     # Connect signals
     def send_message():
-        """
-        Send a message to the AI assistant and display the response.
+        """Send a message to the AI assistant and display the response.
 
         Retrieves the text from the input area, sends it to the assistant,
         displays both the user message and assistant response in the chat display,

@@ -1,5 +1,4 @@
-"""
-Semantic Code Understanding System
+"""Semantic Code Understanding System
 
 Copyright (C) 2025 Zachary Flint
 
@@ -28,7 +27,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..utils.logger import get_logger
 from .learning_engine_simple import get_learning_engine
@@ -40,6 +39,7 @@ logger = get_logger(__name__)
 
 class SemanticIntent(Enum):
     """Types of semantic intent in code."""
+
     AUTHENTICATION = "authentication"
     AUTHORIZATION = "authorization"
     VALIDATION = "validation"
@@ -60,6 +60,7 @@ class SemanticIntent(Enum):
 
 class BusinessLogicPattern(Enum):
     """Common business logic patterns."""
+
     LICENSE_VALIDATION = "license_validation"
     USER_MANAGEMENT = "user_management"
     PAYMENT_PROCESSING = "payment_processing"
@@ -75,22 +76,24 @@ class BusinessLogicPattern(Enum):
 @dataclass
 class SemanticNode:
     """Semantic node representing code element."""
+
     node_id: str
     node_type: str
     name: str
     semantic_intent: SemanticIntent
-    business_pattern: Optional[BusinessLogicPattern]
+    business_pattern: BusinessLogicPattern | None
     confidence: float
-    location: Dict[str, int]  # line, column info
+    location: dict[str, int]  # line, column info
     content: str
-    dependencies: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    nlp_features: Dict[str, Any] = field(default_factory=dict)
+    dependencies: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    nlp_features: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class SemanticRelationship:
     """Relationship between semantic nodes."""
+
     relationship_id: str
     source_node: str
     target_node: str
@@ -98,12 +101,13 @@ class SemanticRelationship:
     strength: float
     confidence: float
     description: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class IntentMismatch:
     """Detected mismatch between intent and implementation."""
+
     mismatch_id: str
     function_name: str
     expected_intent: SemanticIntent
@@ -111,21 +115,22 @@ class IntentMismatch:
     mismatch_type: str
     severity: str
     confidence: float
-    suggested_fixes: List[str] = field(default_factory=list)
-    evidence: Dict[str, Any] = field(default_factory=dict)
+    suggested_fixes: list[str] = field(default_factory=list)
+    evidence: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class SemanticAnalysisResult:
     """Result of semantic code analysis."""
+
     analysis_id: str
     file_path: str
-    semantic_nodes: List[SemanticNode]
-    relationships: List[SemanticRelationship]
-    intent_mismatches: List[IntentMismatch]
-    business_logic_map: Dict[str, BusinessLogicPattern]
-    complexity_metrics: Dict[str, float]
-    semantic_summary: Dict[str, Any]
+    semantic_nodes: list[SemanticNode]
+    relationships: list[SemanticRelationship]
+    intent_mismatches: list[IntentMismatch]
+    business_logic_map: dict[str, BusinessLogicPattern]
+    complexity_metrics: dict[str, float]
+    semantic_summary: dict[str, Any]
     confidence: float
     analysis_time: float
 
@@ -147,44 +152,44 @@ class NLPCodeProcessor:
 
         logger.info("NLP code processor initialized")
 
-    def _build_code_vocabulary(self) -> Dict[str, List[str]]:
+    def _build_code_vocabulary(self) -> dict[str, list[str]]:
         """Build vocabulary for code analysis."""
         return {
             "authentication": [
                 "login", "signin", "authenticate", "verify", "credential", "password",
-                "token", "session", "auth", "validate_user", "check_password"
+                "token", "session", "auth", "validate_user", "check_password",
             ],
             "authorization": [
                 "authorize", "permission", "access", "role", "privilege", "allow",
-                "deny", "grant", "revoke", "check_access", "has_permission"
+                "deny", "grant", "revoke", "check_access", "has_permission",
             ],
             "validation": [
                 "validate", "verify", "check", "sanitize", "filter", "clean",
-                "ensure", "confirm", "assert", "is_valid", "meets_criteria"
+                "ensure", "confirm", "assert", "is_valid", "meets_criteria",
             ],
             "encryption": [
                 "encrypt", "decrypt", "hash", "cipher", "crypto", "encode",
-                "decode", "scramble", "secure", "protect", "obfuscate"
+                "decode", "scramble", "secure", "protect", "obfuscate",
             ],
             "communication": [
                 "send", "receive", "transmit", "broadcast", "message", "signal",
-                "notify", "alert", "communicate", "exchange", "transfer"
+                "notify", "alert", "communicate", "exchange", "transfer",
             ],
             "security": [
                 "secure", "protect", "defend", "guard", "shield", "safe",
-                "security", "vulnerability", "threat", "attack", "exploit"
+                "security", "vulnerability", "threat", "attack", "exploit",
             ],
             "license": [
                 "license", "key", "activation", "registration", "trial",
-                "expire", "valid", "invalid", "check", "verify"
+                "expire", "valid", "invalid", "check", "verify",
             ],
             "error_handling": [
                 "error", "exception", "catch", "handle", "try", "finally",
-                "throw", "raise", "fail", "abort", "recover"
-            ]
+                "throw", "raise", "fail", "abort", "recover",
+            ],
         }
 
-    def _load_semantic_patterns(self) -> Dict[str, List[str]]:
+    def _load_semantic_patterns(self) -> dict[str, list[str]]:
         """Load semantic patterns for intent recognition."""
         return {
             "validation_pattern": [
@@ -193,7 +198,7 @@ class NLPCodeProcessor:
                 r"if\s+len\(\w+\)\s*[<>]=?\s*\d+",
                 r"if\s+\w+\.startswith\(",
                 r"if\s+\w+\.endswith\(",
-                r"if\s+re\.match\("
+                r"if\s+re\.match\(",
             ],
             "authentication_pattern": [
                 r"password\s*==\s*",
@@ -201,79 +206,79 @@ class NLPCodeProcessor:
                 r"verify.*user",
                 r"authenticate.*",
                 r"login.*check",
-                r"session.*valid"
+                r"session.*valid",
             ],
             "license_pattern": [
                 r"license.*valid",
                 r"key.*check",
                 r"trial.*expire",
                 r"activation.*code",
-                r"registration.*verify"
+                r"registration.*verify",
             ],
             "security_pattern": [
                 r"access.*control",
                 r"permission.*check",
                 r"role.*verify",
                 r"security.*validation",
-                r"threat.*detection"
-            ]
+                r"threat.*detection",
+            ],
         }
 
-    def _load_intent_keywords(self) -> Dict[SemanticIntent, List[str]]:
+    def _load_intent_keywords(self) -> dict[SemanticIntent, list[str]]:
         """Load keywords for intent classification."""
         return {
             SemanticIntent.AUTHENTICATION: [
                 "authenticate", "login", "signin", "password", "credential",
-                "verify_user", "check_login", "validate_password"
+                "verify_user", "check_login", "validate_password",
             ],
             SemanticIntent.AUTHORIZATION: [
                 "authorize", "permission", "access_control", "role_check",
-                "privilege", "grant", "deny", "allow"
+                "privilege", "grant", "deny", "allow",
             ],
             SemanticIntent.VALIDATION: [
                 "validate", "verify", "check", "sanitize", "filter",
-                "ensure", "confirm", "is_valid"
+                "ensure", "confirm", "is_valid",
             ],
             SemanticIntent.ENCRYPTION: [
                 "encrypt", "decrypt", "hash", "cipher", "crypto",
-                "encode", "decode", "secure"
+                "encode", "decode", "secure",
             ],
             SemanticIntent.BUSINESS_LOGIC: [
                 "calculate", "process", "compute", "determine", "evaluate",
-                "assess", "analyze", "transform"
+                "assess", "analyze", "transform",
             ],
             SemanticIntent.SECURITY_CHECK: [
                 "security", "protect", "defend", "guard", "shield",
-                "vulnerability", "threat", "attack"
-            ]
+                "vulnerability", "threat", "attack",
+            ],
         }
 
-    def _load_business_keywords(self) -> Dict[BusinessLogicPattern, List[str]]:
+    def _load_business_keywords(self) -> dict[BusinessLogicPattern, list[str]]:
         """Load keywords for business logic pattern recognition."""
         return {
             BusinessLogicPattern.LICENSE_VALIDATION: [
                 "license", "key", "activation", "trial", "expire",
-                "valid", "registration", "serial"
+                "valid", "registration", "serial",
             ],
             BusinessLogicPattern.USER_MANAGEMENT: [
                 "user", "account", "profile", "create_user", "delete_user",
-                "update_user", "manage"
+                "update_user", "manage",
             ],
             BusinessLogicPattern.ACCESS_CONTROL: [
                 "access", "permission", "role", "privilege", "acl",
-                "authorization", "grant", "deny"
+                "authorization", "grant", "deny",
             ],
             BusinessLogicPattern.DATA_VALIDATION: [
                 "validate", "verify", "check", "sanitize", "clean",
-                "format", "constraint"
+                "format", "constraint",
             ],
             BusinessLogicPattern.AUDIT_LOGGING: [
                 "audit", "log", "track", "record", "monitor",
-                "trace", "history"
-            ]
+                "trace", "history",
+            ],
         }
 
-    def extract_semantic_features(self, code: str, function_name: str = "") -> Dict[str, Any]:
+    def extract_semantic_features(self, code: str, function_name: str = "") -> dict[str, Any]:
         """Extract semantic features from code."""
         features = {
             "vocabulary_matches": {},
@@ -281,7 +286,7 @@ class NLPCodeProcessor:
             "intent_scores": {},
             "business_scores": {},
             "complexity_indicators": {},
-            "semantic_tokens": []
+            "semantic_tokens": [],
         }
 
         # Normalize code for analysis
@@ -335,7 +340,7 @@ class NLPCodeProcessor:
         # Convert to lowercase for keyword matching
         return code.strip()
 
-    def _extract_complexity_indicators(self, code: str) -> Dict[str, int]:
+    def _extract_complexity_indicators(self, code: str) -> dict[str, int]:
         """Extract complexity indicators from code."""
         indicators = {
             "conditional_statements": len(re.findall(r"\bif\b", code, re.IGNORECASE)),
@@ -343,7 +348,7 @@ class NLPCodeProcessor:
             "function_calls": len(re.findall(r"\w+\s*\(", code)),
             "return_statements": len(re.findall(r"\breturn\b", code, re.IGNORECASE)),
             "exception_handling": len(re.findall(r"\b(try|catch|except|finally)\b", code, re.IGNORECASE)),
-            "nested_blocks": self._count_nested_blocks(code)
+            "nested_blocks": self._count_nested_blocks(code),
         }
 
         return indicators
@@ -362,7 +367,7 @@ class NLPCodeProcessor:
 
         return max_depth
 
-    def _extract_semantic_tokens(self, code: str, function_name: str) -> List[str]:
+    def _extract_semantic_tokens(self, code: str, function_name: str) -> list[str]:
         """Extract meaningful semantic tokens."""
         tokens = []
 
@@ -380,13 +385,13 @@ class NLPCodeProcessor:
         meaningful_tokens = [
             token.lower() for token in tokens
             if len(token) > 2 and token.lower() not in {
-                "the", "and", "for", "get", "set", "new", "old", "tmp", "temp"
+                "the", "and", "for", "get", "set", "new", "old", "tmp", "temp",
             }
         ]
 
         return list(set(meaningful_tokens))
 
-    def _split_camel_case(self, text: str) -> List[str]:
+    def _split_camel_case(self, text: str) -> list[str]:
         """Split camelCase or snake_case text into words."""
         # Handle camelCase
         camel_split = re.sub(r"([a-z])([A-Z])", r"\1 \2", text).split()
@@ -402,19 +407,20 @@ class NLPCodeProcessor:
 class SemanticCodeAnalyzer:
     """Deep semantic code analysis system."""
 
-    def __init__(self, llm_manager: Optional[LLMManager] = None):
+    def __init__(self, llm_manager: LLMManager | None = None):
         """Initialize the semantic code analyzer.
 
         Args:
             llm_manager: Optional language model manager instance.
                 If not provided, creates a new instance.
+
         """
         self.logger = logging.getLogger(__name__ + ".SemanticCodeAnalyzer")
         self.llm_manager = llm_manager or LLMManager()
         self.nlp_processor = NLPCodeProcessor()
 
         # Analysis cache
-        self.analysis_cache: Dict[str, SemanticAnalysisResult] = {}
+        self.analysis_cache: dict[str, SemanticAnalysisResult] = {}
         self.cache_ttl = 3600  # 1 hour
 
         # Semantic knowledge base
@@ -423,7 +429,7 @@ class SemanticCodeAnalyzer:
         logger.info("Semantic code analyzer initialized")
 
     @profile_ai_operation("semantic_code_analysis")
-    def analyze_file(self, file_path: str, content: Optional[str] = None) -> SemanticAnalysisResult:
+    def analyze_file(self, file_path: str, content: str | None = None) -> SemanticAnalysisResult:
         """Perform semantic analysis of a code file."""
         start_time = datetime.now()
 
@@ -445,12 +451,12 @@ class SemanticCodeAnalyzer:
                     content = file_data["content"]
                 else:
                     # Fallback to direct file reading
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
             except (ImportError, AttributeError, KeyError):
                 # AIFileTools not available, use direct file reading
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
                 except Exception as e:
                     logger.error(f"Failed to read file {file_path}: {e}")
@@ -477,14 +483,14 @@ class SemanticCodeAnalyzer:
                 output_data={
                     "nodes_found": len(analysis_result.semantic_nodes),
                     "relationships_found": len(analysis_result.relationships),
-                    "mismatches_found": len(analysis_result.intent_mismatches)
+                    "mismatches_found": len(analysis_result.intent_mismatches),
                 },
                 success=True,
                 confidence=analysis_result.confidence,
                 execution_time=analysis_result.analysis_time,
                 memory_usage=0,
                 context={"analyzer": "semantic",
-                         "file_type": Path(file_path).suffix}
+                         "file_type": Path(file_path).suffix},
             )
 
             return analysis_result
@@ -503,7 +509,7 @@ class SemanticCodeAnalyzer:
                 memory_usage=0,
                 error_message=str(e),
                 context={"analyzer": "semantic",
-                         "file_type": Path(file_path).suffix}
+                         "file_type": Path(file_path).suffix},
             )
 
             return self._create_empty_result(file_path)
@@ -554,10 +560,10 @@ class SemanticCodeAnalyzer:
             complexity_metrics=complexity_metrics,
             semantic_summary=semantic_summary,
             confidence=confidence,
-            analysis_time=0.0  # Will be set by caller
+            analysis_time=0.0,  # Will be set by caller
         )
 
-    def _parse_code_structure(self, content: str, file_path: str) -> List[Dict[str, Any]]:
+    def _parse_code_structure(self, content: str, file_path: str) -> list[dict[str, Any]]:
         """Parse code structure using AST."""
         ast_nodes = []
 
@@ -574,7 +580,7 @@ class SemanticCodeAnalyzer:
                             "col": node.col_offset,
                             "content": self._extract_node_content(content, node),
                             "docstring": ast.get_docstring(node),
-                            "node": node
+                            "node": node,
                         })
 
             else:
@@ -590,7 +596,7 @@ class SemanticCodeAnalyzer:
 
         return ast_nodes
 
-    def _parse_non_python_structure(self, content: str, file_path: str) -> List[Dict[str, Any]]:
+    def _parse_non_python_structure(self, content: str, file_path: str) -> list[dict[str, Any]]:
         """Parse non-Python code structure using regex."""
         ast_nodes = []
 
@@ -605,7 +611,7 @@ class SemanticCodeAnalyzer:
                     "line": content[:match.start()].count("\n") + 1,
                     "col": match.start() - content.rfind("\n", 0, match.start()),
                     "content": self._extract_function_body(content, match.start()),
-                    "docstring": None
+                    "docstring": None,
                 })
 
             # Class declarations
@@ -617,7 +623,7 @@ class SemanticCodeAnalyzer:
                     "line": content[:match.start()].count("\n") + 1,
                     "col": match.start() - content.rfind("\n", 0, match.start()),
                     "content": self._extract_class_body(content, match.start()),
-                    "docstring": None
+                    "docstring": None,
                 })
 
         # C/C++ function patterns
@@ -631,7 +637,7 @@ class SemanticCodeAnalyzer:
                     "line": content[:match.start()].count("\n") + 1,
                     "col": match.start() - content.rfind("\n", 0, match.start()),
                     "content": self._extract_function_body(content, match.start()),
-                    "docstring": None
+                    "docstring": None,
                 })
 
         return ast_nodes
@@ -669,7 +675,7 @@ class SemanticCodeAnalyzer:
         """Extract class body from position."""
         return self._extract_function_body(content, start_pos)  # Same logic
 
-    def _create_semantic_node(self, ast_node: Dict[str, Any], content: str) -> Optional[SemanticNode]:
+    def _create_semantic_node(self, ast_node: dict[str, Any], content: str) -> SemanticNode | None:
         """Create semantic node from AST node."""
         try:
             node_content = ast_node.get("content", "") or content
@@ -702,21 +708,21 @@ class SemanticCodeAnalyzer:
                 confidence=confidence,
                 location={
                     "line": ast_node.get("line", 0),
-                    "column": ast_node.get("col", 0)
+                    "column": ast_node.get("col", 0),
                 },
                 content=node_content,
                 nlp_features=nlp_features,
                 metadata={
                     "docstring": ast_node.get("docstring"),
-                    "complexity": nlp_features.get("complexity_indicators", {})
-                }
+                    "complexity": nlp_features.get("complexity_indicators", {}),
+                },
             )
 
         except Exception as e:
             logger.error(f"Failed to create semantic node: {e}")
             return None
 
-    def _determine_semantic_intent(self, nlp_features: Dict[str, Any],
+    def _determine_semantic_intent(self, nlp_features: dict[str, Any],
                                    node_name: str, content: str) -> SemanticIntent:
         """Determine semantic intent of code node."""
         intent_scores = nlp_features.get("intent_scores", {})
@@ -730,7 +736,6 @@ class SemanticCodeAnalyzer:
                 except ValueError as e:
                     self.logger.error(
                         "Value error in semantic_code_analyzer: %s", e)
-                    pass
 
         # Fallback to name and content-based analysis
         node_name_lower = node_name.lower()
@@ -738,25 +743,24 @@ class SemanticCodeAnalyzer:
 
         if any(keyword in node_name_lower or keyword in content_lower for keyword in ["auth", "login", "signin", "verify"]):
             return SemanticIntent.AUTHENTICATION
-        elif any(keyword in node_name_lower or keyword in content_lower for keyword in ["validate", "check", "verify"]):
+        if any(keyword in node_name_lower or keyword in content_lower for keyword in ["validate", "check", "verify"]):
             return SemanticIntent.VALIDATION
-        elif any(keyword in node_name_lower or keyword in content_lower for keyword in ["encrypt", "decrypt", "hash"]):
+        if any(keyword in node_name_lower or keyword in content_lower for keyword in ["encrypt", "decrypt", "hash"]):
             return SemanticIntent.ENCRYPTION
-        elif any(keyword in node_name_lower or keyword in content_lower for keyword in ["send", "receive", "connect"]):
+        if any(keyword in node_name_lower or keyword in content_lower for keyword in ["send", "receive", "connect"]):
             return SemanticIntent.COMMUNICATION
-        elif any(keyword in node_name_lower or keyword in content_lower for keyword in ["process", "calculate", "compute"]):
+        if any(keyword in node_name_lower or keyword in content_lower for keyword in ["process", "calculate", "compute"]):
             return SemanticIntent.DATA_PROCESSING
-        elif any(keyword in node_name_lower for keyword in ["error", "exception", "handle"]):
+        if any(keyword in node_name_lower for keyword in ["error", "exception", "handle"]):
             return SemanticIntent.ERROR_HANDLING
-        elif any(keyword in node_name_lower for keyword in ["log", "trace", "debug"]):
+        if any(keyword in node_name_lower for keyword in ["log", "trace", "debug"]):
             return SemanticIntent.LOGGING
-        elif any(keyword in node_name_lower for keyword in ["config", "setting", "option"]):
+        if any(keyword in node_name_lower for keyword in ["config", "setting", "option"]):
             return SemanticIntent.CONFIGURATION
-        else:
-            return SemanticIntent.BUSINESS_LOGIC
+        return SemanticIntent.BUSINESS_LOGIC
 
-    def _determine_business_pattern(self, nlp_features: Dict[str, Any],
-                                    node_name: str, content: str) -> Optional[BusinessLogicPattern]:
+    def _determine_business_pattern(self, nlp_features: dict[str, Any],
+                                    node_name: str, content: str) -> BusinessLogicPattern | None:
         """Determine business logic pattern."""
         business_scores = nlp_features.get("business_scores", {})
 
@@ -769,7 +773,6 @@ class SemanticCodeAnalyzer:
                 except ValueError as e:
                     self.logger.error(
                         "Value error in semantic_code_analyzer: %s", e)
-                    pass
 
         # Fallback to name-based analysis
         node_name_lower = node_name.lower()
@@ -777,18 +780,18 @@ class SemanticCodeAnalyzer:
 
         if any(keyword in node_name_lower or keyword in content_lower for keyword in ["license", "key", "activation"]):
             return BusinessLogicPattern.LICENSE_VALIDATION
-        elif any(keyword in node_name_lower or keyword in content_lower for keyword in ["user", "account", "profile"]):
+        if any(keyword in node_name_lower or keyword in content_lower for keyword in ["user", "account", "profile"]):
             return BusinessLogicPattern.USER_MANAGEMENT
-        elif any(keyword in node_name_lower or keyword in content_lower for keyword in ["access", "permission", "role"]):
+        if any(keyword in node_name_lower or keyword in content_lower for keyword in ["access", "permission", "role"]):
             return BusinessLogicPattern.ACCESS_CONTROL
-        elif any(keyword in node_name_lower or keyword in content_lower for keyword in ["validate", "check", "verify"]):
+        if any(keyword in node_name_lower or keyword in content_lower for keyword in ["validate", "check", "verify"]):
             return BusinessLogicPattern.DATA_VALIDATION
-        elif any(keyword in node_name_lower for keyword in ["audit", "log", "track"]):
+        if any(keyword in node_name_lower for keyword in ["audit", "log", "track"]):
             return BusinessLogicPattern.AUDIT_LOGGING
 
         return None
 
-    def _calculate_node_confidence(self, nlp_features: Dict[str, Any],
+    def _calculate_node_confidence(self, nlp_features: dict[str, Any],
                                    semantic_intent: SemanticIntent) -> float:
         """Calculate confidence score for semantic node."""
         confidence = 0.5  # Base confidence
@@ -813,7 +816,7 @@ class SemanticCodeAnalyzer:
 
         return min(1.0, confidence)
 
-    def _analyze_relationships(self, semantic_nodes: List[SemanticNode]) -> List[SemanticRelationship]:
+    def _analyze_relationships(self, semantic_nodes: list[SemanticNode]) -> list[SemanticRelationship]:
         """Analyze relationships between semantic nodes."""
         relationships = []
 
@@ -825,7 +828,7 @@ class SemanticCodeAnalyzer:
 
         return relationships
 
-    def _detect_relationship(self, node1: SemanticNode, node2: SemanticNode) -> Optional[SemanticRelationship]:
+    def _detect_relationship(self, node1: SemanticNode, node2: SemanticNode) -> SemanticRelationship | None:
         """Detect relationship between two semantic nodes."""
         # Check for function calls
         if node2.name in node1.content or node1.name in node2.content:
@@ -858,11 +861,11 @@ class SemanticCodeAnalyzer:
             relationship_type=relationship_type,
             strength=strength,
             confidence=confidence,
-            description=f"{relationship_type} relationship between {node1.name} and {node2.name}"
+            description=f"{relationship_type} relationship between {node1.name} and {node2.name}",
         )
 
-    def _detect_intent_mismatches(self, semantic_nodes: List[SemanticNode],
-                                  content: str) -> List[IntentMismatch]:
+    def _detect_intent_mismatches(self, semantic_nodes: list[SemanticNode],
+                                  content: str) -> list[IntentMismatch]:
         """Detect mismatches between intent and implementation."""
         mismatches = []
 
@@ -873,7 +876,7 @@ class SemanticCodeAnalyzer:
 
         return mismatches
 
-    def _analyze_node_for_mismatch(self, node: SemanticNode, content: str) -> Optional[IntentMismatch]:
+    def _analyze_node_for_mismatch(self, node: SemanticNode, content: str) -> IntentMismatch | None:
         """Analyze single node for intent mismatch."""
         # Use node content or fallback to full content for analysis
         analysis_content = node.content or content
@@ -892,12 +895,12 @@ class SemanticCodeAnalyzer:
                     suggested_fixes=[
                         "Add proper input validation",
                         "Implement comprehensive checks",
-                        "Add error handling for invalid inputs"
+                        "Add error handling for invalid inputs",
                     ],
                     evidence={
                         "trivial_patterns": self._find_trivial_patterns(analysis_content),
-                        "missing_checks": self._find_missing_validation_checks(analysis_content)
-                    }
+                        "missing_checks": self._find_missing_validation_checks(analysis_content),
+                    },
                 )
 
         # Example: authentication function with weak implementation
@@ -914,11 +917,11 @@ class SemanticCodeAnalyzer:
                     suggested_fixes=[
                         "Implement proper password hashing",
                         "Add multi-factor authentication",
-                        "Use secure session management"
+                        "Use secure session management",
                     ],
                     evidence={
-                        "weak_patterns": self._find_weak_auth_patterns(node.content)
-                    }
+                        "weak_patterns": self._find_weak_auth_patterns(node.content),
+                    },
                 )
 
         return None
@@ -930,7 +933,7 @@ class SemanticCodeAnalyzer:
             r"return\s+True",
             r"return\s+1",
             r'return\s+"ok"',
-            r"pass\s*$"
+            r"pass\s*$",
         ]
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in trivial_patterns)
@@ -945,7 +948,7 @@ class SemanticCodeAnalyzer:
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in weak_patterns)
 
-    def _find_trivial_patterns(self, content: str) -> List[str]:
+    def _find_trivial_patterns(self, content: str) -> list[str]:
         """Find trivial validation patterns."""
         patterns = []
 
@@ -957,7 +960,7 @@ class SemanticCodeAnalyzer:
 
         return patterns
 
-    def _find_missing_validation_checks(self, content: str) -> List[str]:
+    def _find_missing_validation_checks(self, content: str) -> list[str]:
         """Find missing validation checks."""
         missing = []
 
@@ -972,7 +975,7 @@ class SemanticCodeAnalyzer:
 
         return missing
 
-    def _find_weak_auth_patterns(self, content: str) -> List[str]:
+    def _find_weak_auth_patterns(self, content: str) -> list[str]:
         """Find weak authentication patterns."""
         patterns = []
 
@@ -984,7 +987,7 @@ class SemanticCodeAnalyzer:
 
         return patterns
 
-    def _map_business_logic(self, semantic_nodes: List[SemanticNode]) -> Dict[str, BusinessLogicPattern]:
+    def _map_business_logic(self, semantic_nodes: list[SemanticNode]) -> dict[str, BusinessLogicPattern]:
         """Map business logic patterns in the code."""
         business_map = {}
 
@@ -994,8 +997,8 @@ class SemanticCodeAnalyzer:
 
         return business_map
 
-    def _calculate_complexity_metrics(self, semantic_nodes: List[SemanticNode],
-                                      content: str) -> Dict[str, float]:
+    def _calculate_complexity_metrics(self, semantic_nodes: list[SemanticNode],
+                                      content: str) -> dict[str, float]:
         """Calculate complexity metrics."""
         return {
             "semantic_complexity": len(semantic_nodes),
@@ -1003,11 +1006,11 @@ class SemanticCodeAnalyzer:
             "business_pattern_count": len(set(node.business_pattern for node in semantic_nodes if node.business_pattern)),
             "avg_node_confidence": sum(node.confidence for node in semantic_nodes) / len(semantic_nodes) if semantic_nodes else 0,
             "content_length": len(content),
-            "function_count": sum(1 for node in semantic_nodes if node.node_type.lower() == "functiondef")
+            "function_count": sum(1 for node in semantic_nodes if node.node_type.lower() == "functiondef"),
         }
 
-    def _generate_semantic_summary(self, semantic_nodes: List[SemanticNode],
-                                   relationships: List[SemanticRelationship]) -> Dict[str, Any]:
+    def _generate_semantic_summary(self, semantic_nodes: list[SemanticNode],
+                                   relationships: list[SemanticRelationship]) -> dict[str, Any]:
         """Generate semantic summary."""
         intent_counts = Counter(
             node.semantic_intent for node in semantic_nodes)
@@ -1020,20 +1023,19 @@ class SemanticCodeAnalyzer:
             "intent_distribution": {intent.value: count for intent, count in intent_counts.items()},
             "business_pattern_distribution": {pattern.value: count for pattern, count in pattern_counts.items()},
             "primary_intent": intent_counts.most_common(1)[0][0].value if intent_counts else "unknown",
-            "complexity_level": self._assess_complexity_level(semantic_nodes)
+            "complexity_level": self._assess_complexity_level(semantic_nodes),
         }
 
-    def _assess_complexity_level(self, semantic_nodes: List[SemanticNode]) -> str:
+    def _assess_complexity_level(self, semantic_nodes: list[SemanticNode]) -> str:
         """Assess complexity level of the code."""
         if len(semantic_nodes) < 5:
             return "low"
-        elif len(semantic_nodes) < 15:
+        if len(semantic_nodes) < 15:
             return "medium"
-        else:
-            return "high"
+        return "high"
 
-    def _calculate_analysis_confidence(self, semantic_nodes: List[SemanticNode],
-                                       relationships: List[SemanticRelationship]) -> float:
+    def _calculate_analysis_confidence(self, semantic_nodes: list[SemanticNode],
+                                       relationships: list[SemanticRelationship]) -> float:
         """Calculate overall analysis confidence."""
         if not semantic_nodes:
             return 0.0
@@ -1051,7 +1053,7 @@ class SemanticCodeAnalyzer:
 
         return min(1.0, overall_confidence)
 
-    def _calculate_file_hash(self, file_path: str, content: Optional[str]) -> str:
+    def _calculate_file_hash(self, file_path: str, content: str | None) -> str:
         """Calculate hash for caching."""
         if content is None:
             try:
@@ -1062,12 +1064,12 @@ class SemanticCodeAnalyzer:
                     content = file_data["content"]
                 else:
                     # Fallback to direct file reading
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
             except (ImportError, AttributeError, KeyError):
                 # AIFileTools not available, use direct file reading
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
                 except Exception as e:
                     self.logger.error("Exception in semantic_code_analyzer: %s", e)
@@ -1090,10 +1092,10 @@ class SemanticCodeAnalyzer:
             complexity_metrics={},
             semantic_summary={},
             confidence=0.0,
-            analysis_time=0.0
+            analysis_time=0.0,
         )
 
-    def get_semantic_insights(self, file_paths: List[str]) -> Dict[str, Any]:
+    def get_semantic_insights(self, file_paths: list[str]) -> dict[str, Any]:
         """Get semantic insights across multiple files."""
         insights = {
             "files_analyzed": len(file_paths),
@@ -1103,7 +1105,7 @@ class SemanticCodeAnalyzer:
             "business_pattern_distribution": Counter(),
             "mismatches_found": 0,
             "avg_confidence": 0.0,
-            "complexity_overview": {}
+            "complexity_overview": {},
         }
 
         all_results = []
@@ -1137,7 +1139,7 @@ class SemanticCodeAnalyzer:
         insights["complexity_overview"] = {
             "simple_files": len([r for r in all_results if len(r.semantic_nodes) < 5]),
             "moderate_files": len([r for r in all_results if 5 <= len(r.semantic_nodes) < 15]),
-            "complex_files": len([r for r in all_results if len(r.semantic_nodes) >= 15])
+            "complex_files": len([r for r in all_results if len(r.semantic_nodes) >= 15]),
         }
 
         return insights
@@ -1152,9 +1154,9 @@ class SemanticKnowledgeBase:
         Sets up pattern storage, rule definitions, and anti-pattern
         tracking for semantic code analysis and pattern recognition.
         """
-        self.patterns: Dict[str, Dict[str, Any]] = {}
-        self.rules: Dict[str, Dict[str, Any]] = {}
-        self.anti_patterns: Dict[str, Dict[str, Any]] = {}
+        self.patterns: dict[str, dict[str, Any]] = {}
+        self.rules: dict[str, dict[str, Any]] = {}
+        self.anti_patterns: dict[str, dict[str, Any]] = {}
 
         self._initialize_knowledge_base()
 
@@ -1165,7 +1167,7 @@ class SemanticKnowledgeBase:
             "description": "Proper input validation for security",
             "indicators": ["sanitize", "escape", "validate", "filter"],
             "required_checks": ["null_check", "length_check", "format_check"],
-            "confidence_boost": 0.2
+            "confidence_boost": 0.2,
         }
 
         # Authentication patterns
@@ -1173,7 +1175,7 @@ class SemanticKnowledgeBase:
             "description": "Strong authentication implementation",
             "indicators": ["hash", "salt", "bcrypt", "scrypt", "pbkdf2"],
             "required_features": ["password_hashing", "session_management"],
-            "confidence_boost": 0.3
+            "confidence_boost": 0.3,
         }
 
         # Anti-patterns
@@ -1181,14 +1183,14 @@ class SemanticKnowledgeBase:
             "description": "Weak or missing validation",
             "indicators": ["return True", "pass", "# TODO"],
             "severity": "medium",
-            "confidence_penalty": 0.3
+            "confidence_penalty": 0.3,
         }
 
         self.anti_patterns["hardcoded_credentials"] = {
             "description": "Hardcoded passwords or keys",
-            "indicators": ["password = \"", "key = \"", "secret = \""],
+            "indicators": ['password = "', 'key = "', 'secret = "'],
             "severity": "high",
-            "confidence_penalty": 0.5
+            "confidence_penalty": 0.5,
         }
 
 

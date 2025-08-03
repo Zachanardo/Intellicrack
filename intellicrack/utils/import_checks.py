@@ -1,5 +1,4 @@
-"""
-Copyright (C) 2025 Zachary Flint
+"""Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
 
@@ -18,14 +17,13 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class ImportChecker:
-    """
-    Utility class for checking and managing optional imports.
+    """Utility class for checking and managing optional imports.
     """
 
     def __init__(self):
@@ -33,9 +31,8 @@ class ImportChecker:
         self._import_cache = {}
         self._failed_imports = set()
 
-    def check_import(self, module_name: str, package_name: Optional[str] = None) -> bool:
-        """
-        Check if a module can be imported.
+    def check_import(self, module_name: str, package_name: str | None = None) -> bool:
+        """Check if a module can be imported.
 
         Args:
             module_name: Name of the module to import
@@ -43,6 +40,7 @@ class ImportChecker:
 
         Returns:
             True if module can be imported, False otherwise
+
         """
         cache_key = f"{package_name}.{module_name}" if package_name else module_name
 
@@ -68,10 +66,9 @@ class ImportChecker:
             return False
 
     def safe_import(self, module_name: str,
-                   fallback: Optional[Any] = None,
-                   package_name: Optional[str] = None) -> Tuple[bool, Any]:
-        """
-        Safely import a module with fallback.
+                   fallback: Any | None = None,
+                   package_name: str | None = None) -> tuple[bool, Any]:
+        """Safely import a module with fallback.
 
         Args:
             module_name: Name of the module to import
@@ -80,6 +77,7 @@ class ImportChecker:
 
         Returns:
             Tuple of (success, module_or_fallback)
+
         """
         try:
             if package_name:
@@ -93,15 +91,15 @@ class ImportChecker:
             logger.debug(f"Safe import failed for {module_name}: {e}")
             return False, fallback
 
-    def get_available_imports(self, module_list: List[str]) -> Dict[str, bool]:
-        """
-        Check availability of multiple modules.
+    def get_available_imports(self, module_list: list[str]) -> dict[str, bool]:
+        """Check availability of multiple modules.
 
         Args:
             module_list: List of module names to check
 
         Returns:
             Dictionary mapping module names to availability
+
         """
         results = {}
         for module in module_list:
@@ -118,17 +116,17 @@ class ImportChecker:
 _import_checker = ImportChecker()
 
 # Convenience functions using global instance
-def check_import(module_name: str, package_name: Optional[str] = None) -> bool:
+def check_import(module_name: str, package_name: str | None = None) -> bool:
     """Check if a module can be imported."""
     return _import_checker.check_import(module_name, package_name)
 
 def safe_import(module_name: str,
-               fallback: Optional[Any] = None,
-               package_name: Optional[str] = None) -> Tuple[bool, Any]:
+               fallback: Any | None = None,
+               package_name: str | None = None) -> tuple[bool, Any]:
     """Safely import a module with fallback."""
     return _import_checker.safe_import(module_name, fallback, package_name)
 
-def get_available_imports(module_list: List[str]) -> Dict[str, bool]:
+def get_available_imports(module_list: list[str]) -> dict[str, bool]:
     """Check availability of multiple modules."""
     return _import_checker.get_available_imports(module_list)
 
@@ -218,31 +216,31 @@ DOCKER_AVAILABLE = check_import("docker")
 VIRTUALBOX_AVAILABLE = check_import("virtualbox")
 
 
-def get_import_summary() -> Dict[str, Any]:
-    """
-    Get a summary of all import availability checks.
+def get_import_summary() -> dict[str, Any]:
+    """Get a summary of all import availability checks.
 
     Returns:
         Dictionary with categorized import availability
+
     """
     return {
         "data_science": {
             "numpy": NUMPY_AVAILABLE,
             "pandas": PANDAS_AVAILABLE,
             "sklearn": SKLEARN_AVAILABLE,
-            "matplotlib": MATPLOTLIB_AVAILABLE
+            "matplotlib": MATPLOTLIB_AVAILABLE,
         },
         "machine_learning": {
             "tensorflow": TENSORFLOW_AVAILABLE,
             "torch": TORCH_AVAILABLE,
-            "keras": KERAS_AVAILABLE
+            "keras": KERAS_AVAILABLE,
         },
         "gui_frameworks": {
             "pyqt5": PYQT5_AVAILABLE,
             "pyqt6": PYQT6_AVAILABLE,
             "pyside2": PYSIDE2_AVAILABLE,
             "pyside6": PYSIDE6_AVAILABLE,
-            "preferred_qt": PREFERRED_QT
+            "preferred_qt": PREFERRED_QT,
         },
         "security_tools": {
             "lief": LIEF_AVAILABLE,
@@ -257,20 +255,20 @@ def get_import_summary() -> Dict[str, Any]:
             "yara_python": YARA_PYTHON_AVAILABLE,
             "volatility": VOLATILITY_AVAILABLE,
             "volatility3": VOLATILITY3_AVAILABLE,
-            "binwalk": BINWALK_AVAILABLE
+            "binwalk": BINWALK_AVAILABLE,
         },
         "cryptography": {
             "cryptodome": CRYPTODOME_AVAILABLE,
             "cryptography": CRYPTOGRAPHY_AVAILABLE,
             "pynacl": PYNACL_AVAILABLE,
-            "crypto_available": CRYPTO_AVAILABLE
+            "crypto_available": CRYPTO_AVAILABLE,
         },
         "network": {
             "scapy": SCAPY_AVAILABLE,
             "requests": REQUESTS_AVAILABLE,
             "socket": SOCKET_AVAILABLE,
             "ssl": SSL_AVAILABLE,
-            "http_client": HTTP_CLIENT_AVAILABLE
+            "http_client": HTTP_CLIENT_AVAILABLE,
         },
         "system": {
             "psutil": PSUTIL_AVAILABLE,
@@ -278,31 +276,31 @@ def get_import_summary() -> Dict[str, Any]:
             "sys": SYS_AVAILABLE,
             "subprocess": SUBPROCESS_AVAILABLE,
             "threading": THREADING_AVAILABLE,
-            "multiprocessing": MULTIPROCESSING_AVAILABLE
+            "multiprocessing": MULTIPROCESSING_AVAILABLE,
         },
         "data_formats": {
             "json": JSON_AVAILABLE,
             "yaml": YAML_AVAILABLE,
             "xml": XML_AVAILABLE,
-            "toml": TOML_AVAILABLE
+            "toml": TOML_AVAILABLE,
         },
         "virtualization": {
             "docker": DOCKER_AVAILABLE,
             "qemu": QEMU_AVAILABLE,
-            "virtualbox": VIRTUALBOX_AVAILABLE
-        }
+            "virtualbox": VIRTUALBOX_AVAILABLE,
+        },
     }
 
 
-def check_required_imports(required_modules: List[str]) -> Tuple[bool, List[str]]:
-    """
-    Check if all required modules are available.
+def check_required_imports(required_modules: list[str]) -> tuple[bool, list[str]]:
+    """Check if all required modules are available.
 
     Args:
         required_modules: List of required module names
 
     Returns:
         Tuple of (all_available, missing_modules)
+
     """
     missing = []
     for module in required_modules:
@@ -312,12 +310,12 @@ def check_required_imports(required_modules: List[str]) -> Tuple[bool, List[str]
     return len(missing) == 0, missing
 
 
-def get_fallback_implementations() -> Dict[str, Any]:
-    """
-    Get fallback implementations for common missing modules.
+def get_fallback_implementations() -> dict[str, Any]:
+    """Get fallback implementations for common missing modules.
 
     Returns:
         Dictionary of fallback implementations
+
     """
     fallbacks = {}
 
@@ -325,11 +323,13 @@ def get_fallback_implementations() -> Dict[str, Any]:
     if not NUMPY_AVAILABLE:
         class NumpyFallback:
             """Fallback numpy-like operations when numpy is not available."""
+
             # Define ndarray as the list type for compatibility
             ndarray = list
 
             class random:
                 """Random number generation fallback."""
+
                 @staticmethod
                 def uniform(low, high):
                     """Generate uniform random value."""
@@ -377,6 +377,7 @@ def get_fallback_implementations() -> Dict[str, Any]:
 
         class RequestsFallback:
             """Fallback HTTP requests implementation when requests module is not available."""
+
             @staticmethod
             def get(url, **kwargs):
                 """Perform HTTP GET request using urllib."""
@@ -386,14 +387,14 @@ def get_fallback_implementations() -> Dict[str, Any]:
                     return type("Response", (), {
                         "status_code": response.getcode(),
                         "text": response.read().decode("utf-8"),
-                        "content": response.read()
+                        "content": response.read(),
                     })()
                 except Exception as e:
                     logger.error("Exception in import_checks: %s", e)
                     return type("Response", (), {
                         "status_code": 500,
                         "text": str(e),
-                        "content": b""
+                        "content": b"",
                     })()
 
         fallbacks["requests"] = RequestsFallback()
@@ -454,5 +455,5 @@ __all__ = [
     "CRYPTO_AVAILABLE",
     "VOLATILITY3_AVAILABLE",
     "YARA_PYTHON_AVAILABLE",
-    "BINWALK_AVAILABLE"
+    "BINWALK_AVAILABLE",
 ]

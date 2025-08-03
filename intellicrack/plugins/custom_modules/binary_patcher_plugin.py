@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -24,12 +23,12 @@ Specialized template for binary patching operations
 import logging
 import shutil
 from dataclasses import dataclass
-from typing import List
 
 
 @dataclass
 class BinaryPatch:
     """Represents a binary patch operation."""
+
     offset: int
     original_bytes: bytes
     patched_bytes: bytes
@@ -39,10 +38,11 @@ class BinaryPatch:
 
 class BinaryPatcherPlugin:
     """Plugin for binary patching operations on executables."""
+
     def __init__(self):
         """Initialize the binary patcher plugin."""
         super().__init__()
-        self.patches: List[BinaryPatch] = []
+        self.patches: list[BinaryPatch] = []
         self.logger = logging.getLogger(__name__)
 
     def analyze(self, binary_path):
@@ -120,7 +120,7 @@ class BinaryPatcherPlugin:
                 b"Trial",
                 b"demo",
                 b"DEMO",
-                b"Demo"
+                b"Demo",
             ]
 
             for pattern in trial_patterns:

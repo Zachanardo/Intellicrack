@@ -31,6 +31,7 @@ def check_binary_path_and_warn(app_instance):
 
     Returns:
         bool: True if binary path exists, False if missing
+
     """
     if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
         try:
@@ -39,7 +40,6 @@ def check_binary_path_and_warn(app_instance):
                               "Please select a program first.")
         except ImportError as e:
             logger.error("Import error in ui_helpers: %s", e)
-            pass
         return False
     return True
 
@@ -49,6 +49,7 @@ def emit_log_message(app_instance, message):
     Args:
         app_instance: Application instance
         message: Message to log
+
     """
     if hasattr(app_instance, "update_output") and hasattr(app_instance.update_output, "emit"):
         try:
@@ -70,6 +71,7 @@ def show_file_dialog(parent, title, file_filter="HTML Files (*.html);;All Files 
 
     Returns:
         str: Selected filename or empty string if cancelled
+
     """
     try:
         from PyQt6.QtWidgets import QFileDialog
@@ -89,12 +91,13 @@ def ask_yes_no_question(parent, title, question):
 
     Returns:
         bool: True if Yes clicked, False otherwise
+
     """
     try:
         from PyQt6.QtWidgets import QMessageBox
         return QMessageBox.question(
             parent, title, question,
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         ) == QMessageBox.Yes
     except ImportError as e:
         logger.error("Import error in ui_helpers: %s", e)
@@ -112,6 +115,7 @@ def generate_exploit_payload_common(payload_type, target_path="target_software")
 
     Returns:
         dict: Payload result with fields like 'method', 'payload_bytes', 'description', or 'error'
+
     """
     try:
         from ...core.patching.payload_generator import generate_advanced_payload
@@ -125,7 +129,7 @@ def generate_exploit_payload_common(payload_type, target_path="target_software")
             payload_result = {
                 "method": "function_hijacking",
                 "payload_bytes": payload_bytes.hex() if payload_bytes else "Generation failed",
-                "description": "Function hijacking payload for license bypass"
+                "description": "Function hijacking payload for license bypass",
             }
         elif payload_type == "Buffer Overflow":
             payload_result = generate_exploit("buffer_overflow", "x86", "shellcode")
@@ -149,6 +153,7 @@ def generate_exploit_strategy_common(binary_path, vulnerability_type="buffer_ove
 
     Returns:
         dict: Strategy result with 'strategy', 'automation_script' fields or 'error'
+
     """
     try:
         from ..exploitation.exploitation import generate_exploit_strategy

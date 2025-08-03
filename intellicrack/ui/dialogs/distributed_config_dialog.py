@@ -1,5 +1,4 @@
-"""
-Distributed Processing Configuration Dialog
+"""Distributed Processing Configuration Dialog
 
 Copyright (C) 2025 Zachary Flint
 
@@ -21,7 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 import multiprocessing
-from typing import Any, Dict
+from typing import Any
 
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -40,20 +39,19 @@ __all__ = ["DistributedProcessingConfigDialog"]
 
 
 class DistributedProcessingConfigDialog(QDialog):
-    """
-    Configuration dialog for distributed processing setup.
+    """Configuration dialog for distributed processing setup.
 
     Provides a user interface for configuring distributed processing parameters
     including worker count, chunk sizes, analysis options, and pattern types.
     """
 
     def __init__(self, binary_path: str, parent=None):
-        """
-        Initialize the distributed processing configuration dialog.
+        """Initialize the distributed processing configuration dialog.
 
         Args:
             binary_path: Path to the binary for distributed processing
             parent: Optional parent widget
+
         """
         super().__init__(parent)
         self.binary_path = binary_path
@@ -180,7 +178,7 @@ class DistributedProcessingConfigDialog(QDialog):
         # Performance hint
         perf_hint = QLabel(
             "<i>Tip: For large binaries (>100MB), consider using Ray or Dask backends "
-            "with smaller chunk sizes for better performance.</i>"
+            "with smaller chunk sizes for better performance.</i>",
         )
         perf_hint.setWordWrap(True)
         layout.addWidget(perf_hint)
@@ -193,12 +191,12 @@ class DistributedProcessingConfigDialog(QDialog):
 
         self.setLayout(layout)
 
-    def get_config(self) -> Dict[str, Any]:
-        """
-        Get the configuration from the dialog.
+    def get_config(self) -> dict[str, Any]:
+        """Get the configuration from the dialog.
 
         Returns:
             Dictionary containing all configuration parameters
+
         """
         # Parse any custom patterns
         custom_patterns = []
@@ -210,7 +208,7 @@ class DistributedProcessingConfigDialog(QDialog):
             0: "auto",
             1: "ray",
             2: "dask",
-            3: "multiprocessing"
+            3: "multiprocessing",
         }
         preferred_backend = backend_map.get(self.backend_combo.currentIndex(), "auto")
 
@@ -236,15 +234,15 @@ class DistributedProcessingConfigDialog(QDialog):
             "custom_patterns": custom_patterns,
 
             # Binary path
-            "binary_path": self.binary_path
+            "binary_path": self.binary_path,
         }
 
-    def set_defaults(self, config: Dict[str, Any]) -> None:
-        """
-        Set default values from a configuration dictionary.
+    def set_defaults(self, config: dict[str, Any]) -> None:
+        """Set default values from a configuration dictionary.
 
         Args:
             config: Configuration dictionary to apply
+
         """
         if "num_workers" in config:
             self.workers_spin.setValue(config["num_workers"])
@@ -265,7 +263,7 @@ class DistributedProcessingConfigDialog(QDialog):
                 "auto": 0,
                 "ray": 1,
                 "dask": 2,
-                "multiprocessing": 3
+                "multiprocessing": 3,
             }.get(config["preferred_backend"], 0)
             self.backend_combo.setCurrentIndex(backend_index)
 
@@ -295,15 +293,15 @@ class DistributedProcessingConfigDialog(QDialog):
         if "search_crypto_patterns" in config:
             self.crypto_check.setChecked(config["search_crypto_patterns"])
 
-        if "custom_patterns" in config and config["custom_patterns"]:
+        if config.get("custom_patterns"):
             self.custom_patterns_edit.setText(", ".join(config["custom_patterns"]))
 
     def validate_config(self) -> bool:
-        """
-        Validate the current configuration.
+        """Validate the current configuration.
 
         Returns:
             True if configuration is valid, False otherwise
+
         """
         # Basic validation
         if self.workers_spin.value() < 1:
@@ -327,8 +325,7 @@ class DistributedProcessingConfigDialog(QDialog):
 
 
 def create_distributed_config_dialog(binary_path: str, parent=None) -> DistributedProcessingConfigDialog:
-    """
-    Factory function to create a DistributedProcessingConfigDialog.
+    """Factory function to create a DistributedProcessingConfigDialog.
 
     Args:
         binary_path: Path to binary for processing
@@ -336,5 +333,6 @@ def create_distributed_config_dialog(binary_path: str, parent=None) -> Distribut
 
     Returns:
         Configured dialog instance
+
     """
     return DistributedProcessingConfigDialog(binary_path, parent)

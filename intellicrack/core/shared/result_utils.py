@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -22,32 +21,31 @@ Result Dictionary Utilities
 Common functionality for result dictionary operations to eliminate code duplication.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 
 class ResultMixin:
     """Mixin class providing common result dictionary operations."""
 
-    def init_result(self, **kwargs) -> Dict[str, Any]:
-        """
-        Initialize a standard result dictionary.
+    def init_result(self, **kwargs) -> dict[str, Any]:
+        """Initialize a standard result dictionary.
 
         Args:
             **kwargs: Additional fields to include in the result
 
         Returns:
             Initialized result dictionary with success=False and error=None
+
         """
         result = {
             "success": False,
-            "error": None
+            "error": None,
         }
         result.update(kwargs)
         return result
 
-    def create_analysis_result(self, **kwargs) -> Dict[str, Any]:
-        """
-        Create a standardized analysis result dictionary.
+    def create_analysis_result(self, **kwargs) -> dict[str, Any]:
+        """Create a standardized analysis result dictionary.
         Alias for init_result to maintain compatibility.
 
         Args:
@@ -55,5 +53,6 @@ class ResultMixin:
 
         Returns:
             Standardized result dictionary
+
         """
         return self.init_result(**kwargs)

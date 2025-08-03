@@ -1,5 +1,4 @@
-"""
-Early Bird injection - inject before main thread starts
+"""Early Bird injection - inject before main thread starts
 
 Copyright (C) 2025 Zachary Flint
 
@@ -21,7 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import ctypes
 import struct
-from typing import Any, Optional
+from typing import Any
 
 from ...utils.logger import get_logger
 from ...utils.system.windows_common import is_windows_available
@@ -49,8 +48,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
     def inject_early_bird(self, target_exe: str, dll_path: str,
                          command_line: str = None) -> bool:
-        """
-        Perform Early Bird injection
+        """Perform Early Bird injection
 
         Args:
             target_exe: Path to target executable
@@ -59,6 +57,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
         Returns:
             True if successful, False otherwise
+
         """
         try:
             # Create process in suspended state
@@ -71,7 +70,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                 # Allocate memory for DLL path
                 dll_path_addr = self._allocate_and_write_dll_path(
                     process_info["process_handle"],
-                    dll_path
+                    dll_path,
                 )
 
                 if not dll_path_addr:
@@ -88,7 +87,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                 if not self._queue_user_apc(
                     process_info["thread_handle"],
                     load_library_addr,
-                    dll_path_addr
+                    dll_path_addr,
                 ):
                     logger.error("Failed to queue APC")
                     return False
@@ -110,8 +109,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
     def inject_early_bird_shellcode(self, target_exe: str, shellcode: bytes,
                                    command_line: str = None) -> bool:
-        """
-        Inject shellcode using Early Bird technique
+        """Inject shellcode using Early Bird technique
 
         Args:
             target_exe: Path to target executable
@@ -120,6 +118,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
         Returns:
             True if successful, False otherwise
+
         """
         try:
             # Create process in suspended state
@@ -132,7 +131,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                 # Allocate memory for shellcode
                 shellcode_addr = self._allocate_and_write_shellcode(
                     process_info["process_handle"],
-                    shellcode
+                    shellcode,
                 )
 
                 if not shellcode_addr:
@@ -143,7 +142,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                 if not self._queue_user_apc(
                     process_info["thread_handle"],
                     shellcode_addr,
-                    0  # No parameter for shellcode
+                    0,  # No parameter for shellcode
                 ):
                     logger.error("Failed to queue APC")
                     return False
@@ -165,8 +164,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
     def inject_early_bird_with_context(self, target_exe: str, dll_path: str,
                                       modify_entry_point: bool = True) -> bool:
-        """
-        Advanced Early Bird with entry point modification
+        """Advanced Early Bird with entry point modification
 
         Args:
             target_exe: Path to target executable
@@ -175,6 +173,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
         Returns:
             True if successful, False otherwise
+
         """
         try:
             # Create suspended process and handle result
@@ -188,7 +187,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                 stub_addr = self._create_injection_stub(
                     process_info["process_handle"],
                     dll_path,
-                    context
+                    context,
                 )
 
                 if not stub_addr:
@@ -202,7 +201,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                     # Set thread context
                     if not self._set_thread_context(
                         process_info["thread_handle"],
-                        context
+                        context,
                     ):
                         logger.error("Failed to set thread context")
                         return False
@@ -211,13 +210,13 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                     load_library_addr = self._get_load_library_address()
                     dll_path_addr = self._allocate_and_write_dll_path(
                         process_info["process_handle"],
-                        dll_path
+                        dll_path,
                     )
 
                     if not self._queue_user_apc(
                         process_info["thread_handle"],
                         load_library_addr,
-                        dll_path_addr
+                        dll_path_addr,
                     ):
                         return False
 
@@ -237,7 +236,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             return False
 
     def _create_suspended_process(self, exe_path: str,
-                                 command_line: str = None) -> Optional[dict]:
+                                 command_line: str = None) -> dict | None:
         """Create a process in suspended state"""
         from ...utils.system.windows_structures import WindowsProcessStructures
         structures = WindowsProcessStructures()
@@ -256,7 +255,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                 None,
                 path_size,
                 self.MEM_COMMIT | self.MEM_RESERVE,
-                self.PAGE_EXECUTE_READWRITE
+                self.PAGE_EXECUTE_READWRITE,
             )
 
             if not addr:
@@ -269,7 +268,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                 addr,
                 dll_path_bytes,
                 path_size,
-                ctypes.byref(bytes_written)
+                ctypes.byref(bytes_written),
             )
 
             if success and bytes_written.value == path_size:
@@ -290,7 +289,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                 None,
                 len(shellcode),
                 self.MEM_COMMIT | self.MEM_RESERVE,
-                self.PAGE_EXECUTE_READWRITE
+                self.PAGE_EXECUTE_READWRITE,
             )
 
             if not addr:
@@ -303,7 +302,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                 addr,
                 shellcode,
                 len(shellcode),
-                ctypes.byref(bytes_written)
+                ctypes.byref(bytes_written),
             )
 
             if success and bytes_written.value == len(shellcode):
@@ -336,7 +335,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             success = self.kernel32.QueueUserAPC(
                 function_addr,
                 thread_handle,
-                parameter
+                parameter,
             )
 
             if not success:
@@ -351,7 +350,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             logger.error(f"Failed to queue APC: {e}")
             return False
 
-    def _get_thread_context(self, thread_handle: int) -> Optional[Any]:
+    def _get_thread_context(self, thread_handle: int) -> Any | None:
         """Get thread context"""
         from ...utils.system.windows_structures import WindowsContext
         context_helper = WindowsContext()
@@ -449,8 +448,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
 def perform_early_bird_injection(target_exe: str, dll_path: str,
                                command_line: str = None) -> bool:
-    """
-    Convenience function to perform Early Bird injection
+    """Convenience function to perform Early Bird injection
 
     Args:
         target_exe: Path to target executable
@@ -459,6 +457,7 @@ def perform_early_bird_injection(target_exe: str, dll_path: str,
 
     Returns:
         True if successful, False otherwise
+
     """
     if not AVAILABLE:
         logger.error("Early Bird injection not available on this platform")

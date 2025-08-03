@@ -1,5 +1,4 @@
-"""
-Copyright (C) 2025 Zachary Flint
+"""Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
 
@@ -64,5 +63,5 @@ __all__ = [
     "run_import_export_analysis", "run_incremental_analysis_ui", "run_local_protection_scan",
     "run_ml_similarity_search", "run_ml_vulnerability_prediction", "run_multi_format_analysis",
     "run_rop_gadget_finder", "run_section_analysis", "run_vulnerability_scan",
-    "run_weak_crypto_detection", "run_windows_activator", "validate_dataset", "verify_hash"
+    "run_weak_crypto_detection", "run_windows_activator", "validate_dataset", "verify_hash",
 ]

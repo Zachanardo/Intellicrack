@@ -1,5 +1,4 @@
-"""
-Exception handling and error utilities for Intellicrack.
+"""Exception handling and error utilities for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -25,7 +24,7 @@ import logging
 import os
 import sys
 import traceback
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +54,7 @@ class RestrictedUnpickler(pickle.Unpickler):
             "sklearn", "torch", "tensorflow",
             "__builtin__", "builtins",
             "collections", "collections.abc",
-            "traceback", "types"
+            "traceback", "types",
         }
 
         # Allow model classes from our own modules
@@ -104,17 +103,17 @@ def secure_pickle_load(file_path):
 
     # Load object using RestrictedUnpickler
     import io
-    return RestrictedUnpickler(io.BytesIO(data)).load()  # noqa: S301
+    return RestrictedUnpickler(io.BytesIO(data)).load()
 
 
 def handle_exception(exc_type, exc_value, exc_traceback) -> None:
-    """
-    Global exception handler for unhandled exceptions.
+    """Global exception handler for unhandled exceptions.
 
     Args:
         exc_type: Exception type
         exc_value: Exception value
         exc_traceback: Exception traceback
+
     """
     if issubclass(exc_type, KeyboardInterrupt):
         # Allow Ctrl+C to work normally
@@ -132,13 +131,13 @@ def handle_exception(exc_type, exc_value, exc_traceback) -> None:
 
 
 def _display_exception_dialog(exc_type, exc_value, exc_traceback) -> None:
-    """
-    Display an exception dialog to the user.
+    """Display an exception dialog to the user.
 
     Args:
         exc_type: Exception type
         exc_value: Exception value
         exc_traceback: Exception traceback
+
     """
     if not QMessageBox or not QApplication.instance():
         # No GUI available
@@ -161,19 +160,19 @@ def _display_exception_dialog(exc_type, exc_value, exc_traceback) -> None:
 
 
 def _report_error(exc_type, exc_value, exc_traceback) -> None:
-    """
-    Report error to log file and optionally to remote service.
+    """Report error to log file and optionally to remote service.
 
     Args:
         exc_type: Exception type
         exc_value: Exception value
         exc_traceback: Exception traceback
+
     """
     try:
         error_report = {
             "timestamp": logger.handlers[0].format(logging.LogRecord(
                 name="error", level=logging.ERROR, pathname="", lineno=0,
-                msg="", args=(), exc_info=None
+                msg="", args=(), exc_info=None,
             )) if logger.handlers else str(sys.exc_info()),
             "exception_type": exc_type.__name__,
             "exception_value": str(exc_value),
@@ -181,8 +180,8 @@ def _report_error(exc_type, exc_value, exc_traceback) -> None:
             "system_info": {
                 "platform": sys.platform,
                 "python_version": sys.version,
-                "working_directory": os.getcwd()
-            }
+                "working_directory": os.getcwd(),
+            },
         }
 
         # Write to error log file
@@ -196,34 +195,32 @@ def _report_error(exc_type, exc_value, exc_traceback) -> None:
         logger.error("Failed to write error report: %s", e)
 
 
-def load_config(config_path: str = "config.json") -> Dict[str, Any]:
-    """
-    Load configuration from JSON file.
+def load_config(config_path: str = "config.json") -> dict[str, Any]:
+    """Load configuration from JSON file.
 
     Args:
         config_path: Path to configuration file
 
     Returns:
         Configuration dictionary
+
     """
     try:
         if os.path.exists(config_path):
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 config = json.load(f)
             logger.info("Configuration loaded from %s", config_path)
             return config
-        else:
-            logger.warning("Configuration file not found: %s", config_path)
-            return {}
+        logger.warning("Configuration file not found: %s", config_path)
+        return {}
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Failed to load configuration: %s", e)
         return {}
 
 
-def save_config(config: Dict[str, Any], config_path: str = "config.json") -> bool:
-    """
-    Save configuration to JSON file.
+def save_config(config: dict[str, Any], config_path: str = "config.json") -> bool:
+    """Save configuration to JSON file.
 
     Args:
         config: Configuration dictionary to save
@@ -231,6 +228,7 @@ def save_config(config: Dict[str, Any], config_path: str = "config.json") -> boo
 
     Returns:
         True if successful, False otherwise
+
     """
     try:
         with open(config_path, "w", encoding="utf-8") as f:
@@ -245,8 +243,7 @@ def save_config(config: Dict[str, Any], config_path: str = "config.json") -> boo
 
 def setup_file_logging(log_file: str = "intellicrack.log",
                       level: int = logging.INFO) -> logging.Logger:
-    """
-    Set up file logging for the application.
+    """Set up file logging for the application.
 
     Args:
         log_file: Path to log file
@@ -254,6 +251,7 @@ def setup_file_logging(log_file: str = "intellicrack.log",
 
     Returns:
         Configured logger
+
     """
     try:
         # Create logs directory if it doesn't exist
@@ -267,7 +265,7 @@ def setup_file_logging(log_file: str = "intellicrack.log",
 
         # Set up formatter
         formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         )
         file_handler.setFormatter(formatter)
 
@@ -285,11 +283,11 @@ def setup_file_logging(log_file: str = "intellicrack.log",
 
 
 def create_sample_plugins() -> bool:
-    """
-    Create sample plugin files for demonstration.
+    """Create sample plugin files for demonstration.
 
     Returns:
         True if successful, False otherwise
+
     """
     try:
         plugins_dir = "intellicrack/plugins/custom_modules"
@@ -353,15 +351,15 @@ def register():
         return False
 
 
-def load_ai_model(model_path: str) -> Optional[Any]:
-    """
-    Load an AI model from file.
+def load_ai_model(model_path: str) -> Any | None:
+    """Load an AI model from file.
 
     Args:
         model_path: Path to model file
 
     Returns:
         Loaded model or None if failed
+
     """
     try:
         if not os.path.exists(model_path):

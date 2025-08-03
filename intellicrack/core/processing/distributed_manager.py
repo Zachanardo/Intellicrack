@@ -8,7 +8,8 @@ import re
 import time
 import traceback
 from collections import Counter
-from typing import Any, Callable, Dict, List, Optional, Union
+from collections.abc import Callable
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -65,45 +66,44 @@ except ImportError as e:
 
 
 class DistributedProcessingManager:
-    """
-    Distributed Processing Manager for Large Binaries.
+    """Distributed Processing Manager for Large Binaries.
 
     This class manages distributed processing of large binary files across multiple cores or machines,
     significantly improving analysis speed for large executables. It supports multiple backend options
     including Ray, Dask, and standard multiprocessing based on availability.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
-        """
-        Initialize the distributed processing manager.
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
+        """Initialize the distributed processing manager.
 
         Args:
             config: Dictionary with configuration options:
                    - num_workers: Number of worker processes (default: CPU count)
                    - chunk_size: Size of file chunks in bytes (default: 1MB)
                    - preferred_backend: 'ray', 'dask', or 'multiprocessing' (default: auto-detect)
+
         """
         self.config = config or {}
         self.logger = logging.getLogger("IntellicrackLogger.DistributedProcessing")
 
         # Basic configuration
-        self.binary_path: Optional[str] = None
+        self.binary_path: str | None = None
         self.num_workers = self.config.get("num_workers", multiprocessing.cpu_count())
         self.chunk_size = self.config.get("chunk_size", 1024 * 1024)  # 1MB default chunk size
         self.preferred_backend = self.config.get("preferred_backend", "auto")
 
         # Task management
-        self.tasks: List[Dict[str, Any]] = []
-        self.workers: List[multiprocessing.Process] = []
-        self.results: Dict[str, Any] = {}
-        self.task_queue: Optional[multiprocessing.Queue] = None
-        self.result_queue: Optional[multiprocessing.Queue] = None
+        self.tasks: list[dict[str, Any]] = []
+        self.workers: list[multiprocessing.Process] = []
+        self.results: dict[str, Any] = {}
+        self.task_queue: multiprocessing.Queue | None = None
+        self.result_queue: multiprocessing.Queue | None = None
         self.running: bool = False
 
         # Performance tracking
-        self.worker_performance: Dict[int, Dict[str, Any]] = {}
-        self.active_tasks: Dict[str, Dict[str, Any]] = {}
-        self.worker_loads: Dict[int, float] = {}
+        self.worker_performance: dict[int, dict[str, Any]] = {}
+        self.active_tasks: dict[str, dict[str, Any]] = {}
+        self.worker_loads: dict[int, float] = {}
 
         # Check available backends
         self._check_available_backends()
@@ -130,7 +130,7 @@ class DistributedProcessingManager:
         # Always available
         self.multiprocessing_available = True
 
-    def _get_available_backends(self) -> List[str]:
+    def _get_available_backends(self) -> list[str]:
         """Get list of available backends."""
         backends = ["multiprocessing"]
         if self.ray_available:
@@ -143,29 +143,28 @@ class DistributedProcessingManager:
         """Select the best backend based on availability and preference."""
         if self.preferred_backend == "ray" and self.ray_available:
             return "ray"
-        elif self.preferred_backend == "dask" and self.dask_available:
+        if self.preferred_backend == "dask" and self.dask_available:
             return "dask"
-        elif self.preferred_backend in ("multiprocessing", "auto"):
+        if self.preferred_backend in ("multiprocessing", "auto"):
             # For auto, we prefer Ray > Dask > Multiprocessing
             if self.preferred_backend == "auto":
                 if self.ray_available:
                     return "ray"
-                elif self.dask_available:
+                if self.dask_available:
                     return "dask"
             return "multiprocessing"
-        else:
-            self.logger.warning(f"Preferred backend '{self.preferred_backend}' not available, using multiprocessing")
-            return "multiprocessing"
+        self.logger.warning(f"Preferred backend '{self.preferred_backend}' not available, using multiprocessing")
+        return "multiprocessing"
 
     def set_binary(self, binary_path: str) -> bool:
-        """
-        Set the binary file to process.
+        """Set the binary file to process.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             bool: True if binary file exists, False otherwise
+
         """
         if not os.path.exists(binary_path):
             self.logger.error("Binary not found: %s", binary_path)
@@ -175,9 +174,8 @@ class DistributedProcessingManager:
         self.logger.info("Binary set: %s", binary_path)
         return True
 
-    def add_task(self, task_type: str, task_params: Optional[Dict[str, Any]] = None, task_description: Optional[str] = None) -> int:
-        """
-        Add a task to the processing queue.
+    def add_task(self, task_type: str, task_params: dict[str, Any] | None = None, task_description: str | None = None) -> int:
+        """Add a task to the processing queue.
 
         Args:
             task_type: Type of task to run (e.g., 'analyze_section', 'find_patterns')
@@ -186,27 +184,28 @@ class DistributedProcessingManager:
 
         Returns:
             int: Task ID (index in task list)
+
         """
         task = {
             "id": len(self.tasks),
             "type": task_type,
             "params": task_params or {},
-            "description": task_description or f"Task: {task_type}"
+            "description": task_description or f"Task: {task_type}",
         }
 
         self.tasks.append(task)
         self.logger.info(f"Added task: {task_type} (ID: {task['id']})")
         return task["id"]
 
-    def process_binary_chunks(self, process_func: Optional[Callable[[bytes, int], Any]] = None) -> Optional[List[Any]]:
-        """
-        Process a binary file in chunks using distributed workers.
+    def process_binary_chunks(self, process_func: Callable[[bytes, int], Any] | None = None) -> list[Any] | None:
+        """Process a binary file in chunks using distributed workers.
 
         Args:
             process_func: Function to process each chunk, takes (chunk_data, offset) as arguments
 
         Returns:
             list: Combined results from all chunks
+
         """
         if not self.binary_path:
             self.logger.error("No binary set")
@@ -231,14 +230,12 @@ class DistributedProcessingManager:
 
         if backend == "ray":
             return self._process_with_ray(process_func, num_chunks)
-        elif backend == "dask":
+        if backend == "dask":
             return self._process_with_dask(process_func, num_chunks)
-        else:
-            return self._process_with_multiprocessing(process_func, num_chunks)
+        return self._process_with_multiprocessing(process_func, num_chunks)
 
-    def _process_with_ray(self, process_func: Callable, num_chunks: int) -> Optional[List[Any]]:
-        """
-        Process binary chunks using Ray.
+    def _process_with_ray(self, process_func: Callable, num_chunks: int) -> list[Any] | None:
+        """Process binary chunks using Ray.
 
         Args:
             process_func: Function to process each chunk
@@ -246,6 +243,7 @@ class DistributedProcessingManager:
 
         Returns:
             list: Results from all chunks
+
         """
         if not RAY_AVAILABLE:
             self.logger.error("Ray not available, falling back to multiprocessing")
@@ -259,8 +257,7 @@ class DistributedProcessingManager:
             # Define remote function
             @ray.remote
             def process_chunk(chunk_idx: int, binary_path: str, chunk_size: int) -> Any:
-                """
-                Process a specific chunk of the binary file in a distributed manner using Ray.
+                """Process a specific chunk of the binary file in a distributed manner using Ray.
 
                 This function is decorated with @ray.remote to enable distributed execution
                 across multiple processes or nodes. It reads a specific chunk of the binary
@@ -274,6 +271,7 @@ class DistributedProcessingManager:
 
                 Returns:
                     Any: Result of applying the process_func to the chunk data and offset
+
                 """
                 offset = chunk_idx * chunk_size
                 with open(binary_path, "rb") as f:
@@ -302,9 +300,8 @@ class DistributedProcessingManager:
             self.logger.info("Falling back to multiprocessing")
             return self._process_with_multiprocessing(process_func, num_chunks)
 
-    def _process_with_dask(self, process_func: Callable, num_chunks: int) -> Optional[List[Any]]:
-        """
-        Process binary chunks using Dask.
+    def _process_with_dask(self, process_func: Callable, num_chunks: int) -> list[Any] | None:
+        """Process binary chunks using Dask.
 
         Args:
             process_func: Function to process each chunk
@@ -312,6 +309,7 @@ class DistributedProcessingManager:
 
         Returns:
             list: Results from all chunks
+
         """
         if not DASK_AVAILABLE:
             self.logger.error("Dask not available, falling back to multiprocessing")
@@ -323,8 +321,7 @@ class DistributedProcessingManager:
 
             # Define function to read and process chunk
             def read_and_process_chunk(chunk_idx: int) -> Any:
-                """
-                Read and process a specific chunk of data from the binary file.
+                """Read and process a specific chunk of data from the binary file.
 
                 This function handles the file I/O operations needed to read a specific
                 chunk of the binary file based on the provided index. It calculates the
@@ -336,6 +333,7 @@ class DistributedProcessingManager:
 
                 Returns:
                     Any: Result of applying the process_func to the chunk data and offset
+
                 """
                 offset = chunk_idx * self.chunk_size
                 with open(self.binary_path, "rb") as f:
@@ -365,9 +363,8 @@ class DistributedProcessingManager:
             self.logger.info("Falling back to multiprocessing")
             return self._process_with_multiprocessing(process_func, num_chunks)
 
-    def _process_with_multiprocessing(self, process_func: Callable, num_chunks: int) -> List[Any]:
-        """
-        Process binary chunks using multiprocessing.
+    def _process_with_multiprocessing(self, process_func: Callable, num_chunks: int) -> list[Any]:
+        """Process binary chunks using multiprocessing.
 
         Args:
             process_func: Function to process each chunk
@@ -375,17 +372,18 @@ class DistributedProcessingManager:
 
         Returns:
             list: Results from all chunks
+
         """
         # Define function to read and process chunk
-        def read_and_process_chunk(chunk_idx: int) -> Union[Any, Dict[str, Any]]:
-            """
-            Read a chunk from the binary file and process it.
+        def read_and_process_chunk(chunk_idx: int) -> Any | dict[str, Any]:
+            """Read a chunk from the binary file and process it.
 
             Args:
                 chunk_idx: Index of the chunk to read.
 
             Returns:
                 The result of process_func on the chunk data, or an error dict.
+
             """
             try:
                 offset = chunk_idx * self.chunk_size
@@ -409,11 +407,11 @@ class DistributedProcessingManager:
         return results
 
     def start_processing(self) -> bool:
-        """
-        Start distributed processing of tasks using queue-based approach.
+        """Start distributed processing of tasks using queue-based approach.
 
         Returns:
             bool: True if processing started successfully, False otherwise
+
         """
         if not self.binary_path:
             self.logger.error("No binary set")
@@ -432,7 +430,7 @@ class DistributedProcessingManager:
             "tasks_completed": 0,
             "tasks_failed": 0,
             "total_processing_time": 0.0,
-            "task_results": {}
+            "task_results": {},
         }
 
         try:
@@ -453,7 +451,7 @@ class DistributedProcessingManager:
             for _i in range(self.num_workers):
                 worker = multiprocessing.Process(
                     target=self._worker_process,
-                    args=(_i, self.task_queue, self.result_queue, self.binary_path, self.chunk_size)
+                    args=(_i, self.task_queue, self.result_queue, self.binary_path, self.chunk_size),
                 )
                 worker.daemon = True
                 worker.start()
@@ -471,8 +469,7 @@ class DistributedProcessingManager:
 
     def _worker_process(self, worker_id: int, task_queue: multiprocessing.Queue, result_queue: multiprocessing.Queue,
                        binary_path: str, chunk_size: int) -> None:
-        """
-        Worker process function for task-based processing.
+        """Worker process function for task-based processing.
 
         Args:
             worker_id: ID of the worker
@@ -480,6 +477,7 @@ class DistributedProcessingManager:
             result_queue: Queue for results
             binary_path: Path to the binary file
             chunk_size: Size of chunks for file processing
+
         """
         try:
             # Set up worker
@@ -533,14 +531,14 @@ class DistributedProcessingManager:
                         "worker_id": worker_id,
                         "task_id": task["id"],
                         "processing_time": processing_time,
-                        "success": False
+                        "success": False,
                     }
                     result_queue.put((worker_id, task, error_result))
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Worker %s error: %s", worker_id, e)
 
-    def _task_find_patterns(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:
+    def _task_find_patterns(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
         """Process a pattern-finding task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         patterns = task["params"].get("patterns", [])
@@ -567,7 +565,7 @@ class DistributedProcessingManager:
                     matches.append({
                         "pattern": _pattern,
                         "position": chunk_start + _match.start(),
-                        "match": _match.group()
+                        "match": _match.group(),
                     })
             except (OSError, ValueError, RuntimeError) as e:
                 logger.warning("Error processing pattern %s: %s", _pattern, e)
@@ -575,7 +573,7 @@ class DistributedProcessingManager:
         logger.info(f"Found {len(matches)} pattern matches in chunk at offset {chunk_start}")
         return {"matches": matches, "patterns_found": len(matches)}
 
-    def _task_analyze_entropy(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:
+    def _task_analyze_entropy(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
         """Process an entropy analysis task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         chunk_start = task["params"].get("chunk_start", 0)
@@ -602,7 +600,7 @@ class DistributedProcessingManager:
             window_results.append({
                 "offset": chunk_start + _i,
                 "size": len(window_data),
-                "entropy": window_entropy
+                "entropy": window_entropy,
             })
 
         # Find high entropy regions
@@ -615,7 +613,7 @@ class DistributedProcessingManager:
             "chunk_entropy": chunk_entropy,
             "windows": window_results,
             "high_entropy_regions": high_entropy_regions,
-            "high_entropy_count": len(high_entropy_regions)
+            "high_entropy_count": len(high_entropy_regions),
         }
 
     def _calculate_entropy(self, data: bytes) -> float:
@@ -628,7 +626,7 @@ class DistributedProcessingManager:
         entropy = -sum((_count/total) * math.log2(_count/total) for _count in counts.values())
         return entropy
 
-    def _task_analyze_section(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:  # pylint: disable=unused-argument
+    def _task_analyze_section(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:  # pylint: disable=unused-argument
         """Process a section analysis task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         section_name = task["params"].get("section_name", None)
@@ -688,7 +686,7 @@ class DistributedProcessingManager:
                     "chunk_size": len(chunk_data),
                     "entropy": chunk_entropy,
                     "string_count": len(chunk_strings),
-                    "strings": chunk_strings[:10]  # Limit to first 10 strings per chunk
+                    "strings": chunk_strings[:10],  # Limit to first 10 strings per chunk
                 })
 
             # Calculate overall entropy as average of chunk entropies
@@ -711,15 +709,15 @@ class DistributedProcessingManager:
                     "chunk_size_used": chunk_size,
                     "total_chunks": len(results),
                     "chunk_results": results,
-                    "entropy_distribution": total_entropy_samples
-                }
+                    "entropy_distribution": total_entropy_samples,
+                },
             }
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error analyzing section %s: %s", section_name, e)
             return {"error": str(e), "section_name": section_name}
 
-    def _task_symbolic_execution(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:  # pylint: disable=unused-argument
+    def _task_symbolic_execution(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:  # pylint: disable=unused-argument
         """Process a symbolic execution task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         target_function = task["params"].get("target_function", None)
@@ -747,7 +745,7 @@ class DistributedProcessingManager:
                         target_address = _sym.rebased_addr
                         break
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error(f"Error resolving function address: {str(e)}")
+                logger.error(f"Error resolving function address: {e!s}")
 
             if target_address is None:
                 return {"error": f"Could not resolve address for function {target_function}"}
@@ -794,7 +792,7 @@ class DistributedProcessingManager:
                                         "type": "potential_stack_overflow",
                                         "address": f"0x{state.addr:x}",
                                         "chunk": chunk_number,
-                                        "description": "Stack pointer potentially corrupted"
+                                        "description": "Stack pointer potentially corrupted",
                                     })
                             except (AttributeError, Exception):
                                 pass  # Skip states that can't be analyzed
@@ -808,7 +806,7 @@ class DistributedProcessingManager:
                     "initial_active_states": chunk_start_states,
                     "final_active_states": len(simgr.active),
                     "chunk_duration": chunk_duration,
-                    "vulnerabilities_found": len([v for v in vulnerabilities if v.get("chunk") == chunk_number])
+                    "vulnerabilities_found": len([v for v in vulnerabilities if v.get("chunk") == chunk_number]),
                 })
 
                 paths_explored += chunk_paths_explored
@@ -825,23 +823,23 @@ class DistributedProcessingManager:
                 "paths_explored": paths_explored,
                 "execution_time": total_time,
                 "vulnerabilities_found": len(vulnerabilities),
-                "vulnerabilities": vulnerabilities
+                "vulnerabilities": vulnerabilities,
             }
 
             logger.info(f"Symbolic execution completed: {result['paths_explored']} paths explored")
             return result
 
         except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error during symbolic execution: {str(e)}"
+            error_msg = f"Error during symbolic execution: {e!s}"
             logger.error(error_msg)
             return {
                 "error": error_msg,
                 "target_function": target_function,
                 "paths_explored": 0,
-                "vulnerabilities_found": 0
+                "vulnerabilities_found": 0,
             }
 
-    def _task_generic(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:
+    def _task_generic(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
         """Process a generic task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         chunk_start = task["params"].get("chunk_start", 0)
@@ -856,18 +854,18 @@ class DistributedProcessingManager:
             "worker_id": worker_id,
             "chunk_offset": chunk_start,
             "chunk_size": len(chunk_data),
-            "task_type": task["type"]
+            "task_type": task["type"],
         }
 
-    def collect_results(self, timeout: Optional[float] = None) -> bool:
-        """
-        Collect results from workers.
+    def collect_results(self, timeout: float | None = None) -> bool:
+        """Collect results from workers.
 
         Args:
             timeout: Timeout in seconds (None for no timeout)
 
         Returns:
             bool: True if results collected successfully, False otherwise
+
         """
         if not self.running:
             self.logger.warning("Not running")
@@ -879,7 +877,7 @@ class DistributedProcessingManager:
                 "tasks_completed": 0,
                 "tasks_failed": 0,
                 "total_processing_time": 0.0,
-                "task_results": {}
+                "task_results": {},
             }
 
             # Collect results
@@ -942,11 +940,11 @@ class DistributedProcessingManager:
             return False
 
     def stop_processing(self) -> bool:
-        """
-        Stop distributed processing.
+        """Stop distributed processing.
 
         Returns:
             bool: True if processing stopped successfully, False otherwise
+
         """
         if not self.running:
             return True
@@ -986,18 +984,17 @@ class DistributedProcessingManager:
             self.logger.error("Error stopping processing: %s", e)
             return False
 
-    def get_results(self) -> Dict[str, Any]:
-        """
-        Get the distributed processing results.
+    def get_results(self) -> dict[str, Any]:
+        """Get the distributed processing results.
 
         Returns:
             dict: Processing results
+
         """
         return self.results
 
-    def run_distributed_pattern_search(self, patterns: List[Union[str, bytes]], chunk_size_mb: int = 10) -> List[Dict[str, Any]]:
-        """
-        Search for _patterns in a binary file using distributed processing.
+    def run_distributed_pattern_search(self, patterns: list[str | bytes], chunk_size_mb: int = 10) -> list[dict[str, Any]]:
+        """Search for _patterns in a binary file using distributed processing.
 
         Args:
             patterns: List of patterns to search for (bytes or regex strings)
@@ -1005,6 +1002,7 @@ class DistributedProcessingManager:
 
         Returns:
             list: List of matches with their positions
+
         """
         if not self.binary_path:
             self.logger.error("No binary set")
@@ -1025,9 +1023,9 @@ class DistributedProcessingManager:
                 "params": {
                     "patterns": patterns,
                     "chunk_start": _offset,
-                    "chunk_end": min(_offset + chunk_size, file_size)
+                    "chunk_end": min(_offset + chunk_size, file_size),
                 },
-                "description": f"Pattern search in chunk at offset {_offset}"
+                "description": f"Pattern search in chunk at offset {_offset}",
             }
             self.tasks.append(task)
 
@@ -1051,9 +1049,8 @@ class DistributedProcessingManager:
 
         return all_matches
 
-    def run_distributed_entropy_analysis(self, window_size_kb: int = 64, chunk_size_mb: int = 10) -> Dict[str, Any]:
-        """
-        Calculate entropy of a binary file using distributed processing.
+    def run_distributed_entropy_analysis(self, window_size_kb: int = 64, chunk_size_mb: int = 10) -> dict[str, Any]:
+        """Calculate entropy of a binary file using distributed processing.
 
         Args:
             window_size_kb: Size of sliding window in KB
@@ -1061,6 +1058,7 @@ class DistributedProcessingManager:
 
         Returns:
             dict: Entropy analysis results
+
         """
         if not self.binary_path:
             self.logger.error("No binary set")
@@ -1082,9 +1080,9 @@ class DistributedProcessingManager:
                 "params": {
                     "window_size": window_size,
                     "chunk_start": _offset,
-                    "chunk_end": min(_offset + chunk_size, file_size)
+                    "chunk_end": min(_offset + chunk_size, file_size),
                 },
-                "description": f"Entropy analysis of chunk at offset {_offset}"
+                "description": f"Entropy analysis of chunk at offset {_offset}",
             }
             self.tasks.append(task)
 
@@ -1120,18 +1118,18 @@ class DistributedProcessingManager:
             "overall_entropy": overall_entropy,
             "windows": all_windows,
             "high_entropy_regions": high_entropy_regions,
-            "high_entropy_count": len(high_entropy_regions)
+            "high_entropy_count": len(high_entropy_regions),
         }
 
-    def generate_report(self, filename: Optional[str] = None) -> Optional[str]:
-        """
-        Generate a report of the distributed processing results.
+    def generate_report(self, filename: str | None = None) -> str | None:
+        """Generate a report of the distributed processing results.
 
         Args:
             filename: Path to save the HTML report (None to return HTML as string)
 
         Returns:
             str or None: HTML report as string if filename is None, else path to saved file
+
         """
         if not self.results:
             self.logger.error("No results to report")
@@ -1204,15 +1202,15 @@ class DistributedProcessingManager:
                 self.logger.error("Error shutting down Ray: %s", e)
 
 
-def create_distributed_manager(config: Optional[Dict[str, Any]] = None) -> DistributedProcessingManager:
-    """
-    Factory function to create a DistributedProcessingManager instance.
+def create_distributed_manager(config: dict[str, Any] | None = None) -> DistributedProcessingManager:
+    """Factory function to create a DistributedProcessingManager instance.
 
     Args:
         config: Configuration dictionary
 
     Returns:
         DistributedProcessingManager: Configured manager instance
+
     """
     return DistributedProcessingManager(config)
 

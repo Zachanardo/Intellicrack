@@ -4,7 +4,7 @@ import os
 import subprocess
 import tempfile
 import traceback
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -44,20 +44,19 @@ except ImportError as e:
 
 
 class SSLTLSInterceptor:
-    """
-    SSL/TLS interception system for encrypted license verification.
+    """SSL/TLS interception system for encrypted license verification.
 
     This system allows Intellicrack to intercept, analyze, and modify encrypted
     communications between applications and license servers, enabling bypass of
     secure license verification mechanisms.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """
-        Initialize the SSL/TLS interceptor.
+    def __init__(self, config: dict[str, Any] | None = None):
+        """Initialize the SSL/TLS interceptor.
 
         Args:
             config: Configuration dictionary (optional)
+
         """
         self.logger = logging.getLogger(__name__)
 
@@ -70,7 +69,7 @@ class SSLTLSInterceptor:
             "ca_cert_path": get_resource_path("ssl_certificates/ca.crt"),
             "ca_key_path": get_resource_path("ssl_certificates/ca.key"),
             "record_traffic": True,
-            "auto_respond": True
+            "auto_respond": True,
         }
 
         # Update with provided configuration
@@ -89,18 +88,17 @@ class SSLTLSInterceptor:
         self._load_response_templates()
 
     def _load_response_templates(self):
-        """
-        Load response templates for various license verification endpoints.
+        """Load response templates for various license verification endpoints.
         """
         from ...utils.templates.license_response_templates import get_all_response_templates
         self.response_templates = get_all_response_templates()
 
-    def generate_ca_certificate(self) -> Tuple[Optional[bytes], Optional[bytes]]:
-        """
-        Generate a CA certificate for SSL/TLS interception.
+    def generate_ca_certificate(self) -> tuple[bytes | None, bytes | None]:
+        """Generate a CA certificate for SSL/TLS interception.
 
         Returns:
             tuple: (certificate, key) as PEM bytes, or (None, None) if failed
+
         """
         if not CRYPTOGRAPHY_AVAILABLE:
             self.logger.error("cryptography library not available - cannot generate CA certificate")
@@ -114,14 +112,13 @@ class SSLTLSInterceptor:
                 organization="Intellicrack CA",
                 state="California",
                 locality="San Francisco",
-                valid_days=3650
+                valid_days=3650,
             )
 
             if cert_result:
                 return cert_result
-            else:
-                self.logger.error("Failed to generate CA certificate")
-                return None, None
+            self.logger.error("Failed to generate CA certificate")
+            return None, None
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error generating CA certificate: %s", e)
@@ -129,11 +126,11 @@ class SSLTLSInterceptor:
             return None, None
 
     def start(self) -> bool:
-        """
-        Start the SSL/TLS interceptor.
+        """Start the SSL/TLS interceptor.
 
         Returns:
             bool: True if started successfully, False otherwise
+
         """
         try:
             # Generate CA certificate if needed
@@ -243,14 +240,14 @@ def response(flow: http.HTTPFlow) -> None:
                     "--listen-host", self.config["listen_ip"],
                     "--listen-port", str(self.config["listen_port"]),
                     "--set", "block_global=false",
-                    "--set", "ssl_insecure=true"
+                    "--set", "ssl_insecure=true",
                 ]
 
                 self.proxy_process = subprocess.Popen(
                     cmd,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    universal_newlines=True
+                    universal_newlines=True,
                 )
 
                 self.logger.info("mitmproxy started with PID %s", self.proxy_process.pid)
@@ -273,11 +270,11 @@ def response(flow: http.HTTPFlow) -> None:
             return False
 
     def stop(self) -> bool:
-        """
-        Stop the SSL/TLS interceptor.
+        """Stop the SSL/TLS interceptor.
 
         Returns:
             bool: True if stopped successfully, False otherwise
+
         """
         try:
             # Stop proxy process
@@ -292,15 +289,15 @@ def response(flow: http.HTTPFlow) -> None:
             self.logger.error("Error stopping SSL/TLS interceptor: %s", e)
             return False
 
-    def _find_executable(self, executable: str) -> Optional[str]:
-        """
-        Find the path to an executable using the path discovery system.
+    def _find_executable(self, executable: str) -> str | None:
+        """Find the path to an executable using the path discovery system.
 
         Args:
             executable: Name of the executable
 
         Returns:
             str: Path to the executable, or None if not found
+
         """
         from ...utils.core.path_discovery import find_tool
 
@@ -313,49 +310,48 @@ def response(flow: http.HTTPFlow) -> None:
         import shutil
         return shutil.which(executable)
 
-    def get_traffic_log(self) -> List[Dict[str, Any]]:
-        """
-        Get the captured traffic log.
+    def get_traffic_log(self) -> list[dict[str, Any]]:
+        """Get the captured traffic log.
 
         Returns:
             list: List of captured traffic entries
+
         """
         return self.traffic_log.copy()
 
     def add_target_host(self, host: str):
-        """
-        Add a target host for interception.
+        """Add a target host for interception.
 
         Args:
             host: Hostname to intercept
+
         """
         if host not in self.config["target_hosts"]:
             self.config["target_hosts"].append(host)
             self.logger.info("Added target host: %s", host)
 
     def remove_target_host(self, host: str):
-        """
-        Remove a target host from interception.
+        """Remove a target host from interception.
 
         Args:
             host: Hostname to remove
+
         """
         if host in self.config["target_hosts"]:
             self.config["target_hosts"].remove(host)
             self.logger.info("Removed target host: %s", host)
 
-    def get_target_hosts(self) -> List[str]:
-        """
-        Get the list of target hosts.
+    def get_target_hosts(self) -> list[str]:
+        """Get the list of target hosts.
 
         Returns:
             list: List of target hostnames
+
         """
         return self.config["target_hosts"].copy()
 
-    def configure(self, config: Dict[str, Any]) -> bool:
-        """
-        Configure SSL/TLS interception settings.
+    def configure(self, config: dict[str, Any]) -> bool:
+        """Configure SSL/TLS interception settings.
 
         This method allows dynamic configuration of the SSL/TLS interceptor,
         including proxy settings, target hosts, certificate paths, and behavior options.
@@ -365,6 +361,7 @@ def response(flow: http.HTTPFlow) -> None:
 
         Returns:
             bool: True if configuration was successful, False otherwise
+
         """
         try:
             self.logger.info("Configuring SSL/TLS interceptor with new settings")
@@ -373,7 +370,7 @@ def response(flow: http.HTTPFlow) -> None:
             valid_keys = {
                 "listen_ip", "listen_port", "target_hosts", "ca_cert_path",
                 "ca_key_path", "record_traffic", "auto_respond", "proxy_timeout",
-                "max_connections", "log_level", "response_delay", "inject_headers"
+                "max_connections", "log_level", "response_delay", "inject_headers",
             }
 
             invalid_keys = set(config.keys()) - valid_keys
@@ -393,7 +390,7 @@ def response(flow: http.HTTPFlow) -> None:
                 import socket
                 try:
                     socket.inet_aton(ip)
-                except socket.error:
+                except OSError:
                     self.logger.error(f"Invalid IP address: {ip}")
                     return False
 
@@ -435,7 +432,7 @@ def response(flow: http.HTTPFlow) -> None:
                     "DEBUG": logging.DEBUG,
                     "INFO": logging.INFO,
                     "WARNING": logging.WARNING,
-                    "ERROR": logging.ERROR
+                    "ERROR": logging.ERROR,
                 }
                 level = log_levels.get(config["log_level"].upper(), logging.INFO)
                 self.logger.setLevel(level)
@@ -460,19 +457,19 @@ def response(flow: http.HTTPFlow) -> None:
             self.logger.error(traceback.format_exc())
             return False
 
-    def get_config(self) -> Dict[str, Any]:
-        """
-        Get current configuration.
+    def get_config(self) -> dict[str, Any]:
+        """Get current configuration.
 
         Returns the current configuration of the SSL/TLS interceptor with
         sensitive information like private keys redacted for security.
 
         Returns:
             Dictionary containing current configuration settings
+
         """
         return self._get_safe_config()
 
-    def _get_safe_config(self) -> Dict[str, Any]:
+    def _get_safe_config(self) -> dict[str, Any]:
         """Get configuration with sensitive data redacted."""
         safe_config = self.config.copy()
 
@@ -486,7 +483,7 @@ def response(flow: http.HTTPFlow) -> None:
             "traffic_captured": len(self.traffic_log),
             "response_templates_loaded": len(self.response_templates),
             "ca_cert_exists": os.path.exists(self.config["ca_cert_path"]),
-            "ca_key_exists": os.path.exists(self.config["ca_key_path"])
+            "ca_key_exists": os.path.exists(self.config["ca_key_path"]),
         }
 
         return safe_config

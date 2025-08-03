@@ -1,5 +1,4 @@
-"""
-Performance Optimization Layer for AI Operations
+"""Performance Optimization Layer for AI Operations
 
 Copyright (C) 2025 Zachary Flint
 
@@ -24,10 +23,11 @@ import hashlib
 import threading
 import time
 from collections import defaultdict, deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 from ..utils.logger import get_logger
 from .learning_engine_simple import get_learning_engine
@@ -46,6 +46,7 @@ except ImportError as e:
 
 class OptimizationStrategy(Enum):
     """Types of optimization strategies."""
+
     CACHING = "caching"
     PARALLEL_EXECUTION = "parallel_execution"
     RESOURCE_POOLING = "resource_pooling"
@@ -60,6 +61,7 @@ class OptimizationStrategy(Enum):
 
 class ResourceType(Enum):
     """Types of system resources."""
+
     CPU = "cpu"
     MEMORY = "memory"
     DISK_IO = "disk_io"
@@ -72,14 +74,15 @@ class ResourceType(Enum):
 @dataclass
 class PerformanceProfile:
     """Performance profile for optimization."""
+
     operation_id: str
     operation_type: str
     execution_time: float
     memory_usage: int
     cpu_usage: float
     io_operations: int
-    resource_bottlenecks: List[ResourceType]
-    optimization_suggestions: List[str] = field(default_factory=list)
+    resource_bottlenecks: list[ResourceType]
+    optimization_suggestions: list[str] = field(default_factory=list)
     cache_hit_rate: float = 0.0
     parallelization_potential: float = 0.0
     created_at: datetime = field(default_factory=datetime.now)
@@ -88,11 +91,12 @@ class PerformanceProfile:
 @dataclass
 class OptimizationRule:
     """Rule for automatic optimization."""
+
     rule_id: str
     name: str
     condition: str
     strategy: OptimizationStrategy
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
     priority: int = 1
     enabled: bool = True
     success_rate: float = 0.0
@@ -103,6 +107,7 @@ class OptimizationRule:
 @dataclass
 class ResourceAllocation:
     """Resource allocation configuration."""
+
     cpu_cores: int
     memory_mb: int
     max_threads: int
@@ -122,9 +127,9 @@ class PerformanceOptimizer:
         Sets up caching, execution profiling, optimization rules, and resource management
         for AI operation performance optimization.
         """
-        self.optimization_cache: Dict[str, Any] = {}
-        self.execution_profiles: Dict[str, PerformanceProfile] = {}
-        self.optimization_rules: List[OptimizationRule] = []
+        self.optimization_cache: dict[str, Any] = {}
+        self.execution_profiles: dict[str, PerformanceProfile] = {}
+        self.optimization_rules: list[OptimizationRule] = []
         self.resource_manager = ResourceManager()
         self.parallel_executor = ParallelExecutor()
         self.cache_manager = CacheManager()
@@ -136,7 +141,7 @@ class PerformanceOptimizer:
             "cache_misses": 0,
             "parallel_executions": 0,
             "memory_saved_mb": 0.0,
-            "time_saved_seconds": 0.0
+            "time_saved_seconds": 0.0,
         }
 
         # Initialize optimization rules
@@ -153,7 +158,7 @@ class PerformanceOptimizer:
                 condition="execution_time > 5.0",
                 strategy=OptimizationStrategy.CACHING,
                 parameters={"ttl_seconds": 3600, "max_size": 1000},
-                priority=1
+                priority=1,
             ),
             OptimizationRule(
                 rule_id="parallelize_batch_operations",
@@ -161,7 +166,7 @@ class PerformanceOptimizer:
                 condition="batch_size > 5 and cpu_usage < 0.7",
                 strategy=OptimizationStrategy.PARALLEL_EXECUTION,
                 parameters={"max_workers": 4, "chunk_size": 10},
-                priority=2
+                priority=2,
             ),
             OptimizationRule(
                 rule_id="optimize_memory_usage",
@@ -169,7 +174,7 @@ class PerformanceOptimizer:
                 condition="memory_usage > 500",  # MB
                 strategy=OptimizationStrategy.MEMORY_OPTIMIZATION,
                 parameters={"gc_threshold": 0.8, "chunk_processing": True},
-                priority=1
+                priority=1,
             ),
             OptimizationRule(
                 rule_id="batch_io_operations",
@@ -177,7 +182,7 @@ class PerformanceOptimizer:
                 condition="io_operations > 20",
                 strategy=OptimizationStrategy.BATCHING,
                 parameters={"batch_size": 50, "flush_interval": 1.0},
-                priority=2
+                priority=2,
             ),
             OptimizationRule(
                 rule_id="precompute_common_patterns",
@@ -185,8 +190,8 @@ class PerformanceOptimizer:
                 condition="pattern_frequency > 0.8",
                 strategy=OptimizationStrategy.PRECOMPUTATION,
                 parameters={"pattern_cache_size": 200},
-                priority=3
-            )
+                priority=3,
+            ),
         ]
 
     @profile_ai_operation("performance_optimization")
@@ -228,7 +233,7 @@ class PerformanceOptimizer:
                     end_memory - start_memory) // (1024 * 1024),  # MB
                 cpu_usage=psutil.cpu_percent() if PSUTIL_AVAILABLE else 0.0 if PSUTIL_AVAILABLE else 0.0,
                 io_operations=0,  # Would need more detailed tracking
-                resource_bottlenecks=[]
+                resource_bottlenecks=[],
             )
 
             self.execution_profiles[operation_id] = profile
@@ -248,7 +253,7 @@ class PerformanceOptimizer:
                 confidence=0.8,
                 execution_time=profile.execution_time,
                 memory_usage=profile.memory_usage,
-                context={"optimization_applied": True}
+                context={"optimization_applied": True},
             )
 
             self.optimization_stats["total_optimizations"] += 1
@@ -262,7 +267,7 @@ class PerformanceOptimizer:
     def _generate_cache_key(self, operation_id: str, args: tuple, kwargs: dict) -> str:
         """Generate cache key for operation."""
         # Create deterministic hash from operation and arguments
-        content = f"{operation_id}_{str(args)}_{str(sorted(kwargs.items()))}"
+        content = f"{operation_id}_{args!s}_{sorted(kwargs.items())!s}"
         return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()
 
     def _apply_optimizations(self, operation_id: str, operation_func: Callable) -> Callable:
@@ -273,7 +278,7 @@ class PerformanceOptimizer:
         for rule in self.optimization_rules:
             if rule.enabled and self._rule_applies(rule, operation_id):
                 optimized_func = self._apply_optimization_strategy(
-                    optimized_func, rule.strategy, rule.parameters
+                    optimized_func, rule.strategy, rule.parameters,
                 )
                 rule.times_applied += 1
                 logger.debug(f"Applied optimization rule: {rule.name}")
@@ -289,28 +294,27 @@ class PerformanceOptimizer:
             # Simple condition evaluation
             if "execution_time > 5.0" in rule.condition:
                 return profile.execution_time > 5.0
-            elif "memory_usage > 500" in rule.condition:
+            if "memory_usage > 500" in rule.condition:
                 return profile.memory_usage > 500
-            elif "cpu_usage < 0.7" in rule.condition:
+            if "cpu_usage < 0.7" in rule.condition:
                 return profile.cpu_usage < 0.7
 
         # Default to applying rule for new operations
         return True
 
     def _apply_optimization_strategy(self, func: Callable, strategy: OptimizationStrategy,
-                                     parameters: Dict[str, Any]) -> Callable:
+                                     parameters: dict[str, Any]) -> Callable:
         """Apply specific optimization strategy."""
         if strategy == OptimizationStrategy.PARALLEL_EXECUTION:
             return self._wrap_for_parallel_execution(func, parameters)
-        elif strategy == OptimizationStrategy.MEMORY_OPTIMIZATION:
+        if strategy == OptimizationStrategy.MEMORY_OPTIMIZATION:
             return self._wrap_for_memory_optimization(func, parameters)
-        elif strategy == OptimizationStrategy.BATCHING:
+        if strategy == OptimizationStrategy.BATCHING:
             return self._wrap_for_batching(func, parameters)
-        else:
-            # Return original function if strategy not implemented
-            return func
+        # Return original function if strategy not implemented
+        return func
 
-    def _wrap_for_parallel_execution(self, func: Callable, parameters: Dict[str, Any]) -> Callable:
+    def _wrap_for_parallel_execution(self, func: Callable, parameters: dict[str, Any]) -> Callable:
         """Wrap function for parallel execution."""
         max_workers = parameters.get("max_workers", 4)
 
@@ -322,16 +326,15 @@ class PerformanceOptimizer:
                 remaining_args = args[1:]
 
                 results = self.parallel_executor.execute_parallel(
-                    func, items, max_workers, *remaining_args, **kwargs
+                    func, items, max_workers, *remaining_args, **kwargs,
                 )
                 return results
-            else:
-                # Regular execution for non-parallelizable arguments
-                return func(*args, **kwargs)
+            # Regular execution for non-parallelizable arguments
+            return func(*args, **kwargs)
 
         return parallel_wrapper
 
-    def _wrap_for_memory_optimization(self, func: Callable, parameters: Dict[str, Any]) -> Callable:
+    def _wrap_for_memory_optimization(self, func: Callable, parameters: dict[str, Any]) -> Callable:
         """Wrap function for memory optimization."""
         gc_threshold = parameters.get("gc_threshold", 0.8)
 
@@ -361,7 +364,7 @@ class PerformanceOptimizer:
 
         return memory_optimized_wrapper
 
-    def _wrap_for_batching(self, func: Callable, parameters: Dict[str, Any]) -> Callable:
+    def _wrap_for_batching(self, func: Callable, parameters: dict[str, Any]) -> Callable:
         """Wrap function for batched execution."""
         batch_size = parameters.get("batch_size", 50)
 
@@ -379,8 +382,7 @@ class PerformanceOptimizer:
                         batch_result, list) else [batch_result])
 
                 return results
-            else:
-                return func(*args, **kwargs)
+            return func(*args, **kwargs)
 
         return batched_wrapper
 
@@ -389,7 +391,7 @@ class PerformanceOptimizer:
         # Cache expensive operations
         return profile.execution_time > 2.0 or profile.memory_usage > 100
 
-    def get_optimization_recommendations(self, operation_id: str) -> List[str]:
+    def get_optimization_recommendations(self, operation_id: str) -> list[str]:
         """Get optimization recommendations for operation."""
         recommendations = []
 
@@ -415,7 +417,7 @@ class PerformanceOptimizer:
 
         return recommendations
 
-    def get_optimization_stats(self) -> Dict[str, Any]:
+    def get_optimization_stats(self) -> dict[str, Any]:
         """Get optimization statistics."""
         return {
             **self.optimization_stats,
@@ -423,7 +425,7 @@ class PerformanceOptimizer:
             max(1, self.optimization_stats["cache_hits"] +
                 self.optimization_stats["cache_misses"]),
             "total_profiles": len(self.execution_profiles),
-            "active_rules": len([r for r in self.optimization_rules if r.enabled])
+            "active_rules": len([r for r in self.optimization_rules if r.enabled]),
         }
 
 
@@ -436,17 +438,17 @@ class ResourceManager:
         Sets up resource pools, allocation tracking, system limits detection,
         and initializes resource management for optimal system utilization.
         """
-        self.resource_pools: Dict[ResourceType, Any] = {}
+        self.resource_pools: dict[ResourceType, Any] = {}
         self.allocation_history: deque = deque(maxlen=1000)
         self.resource_limits = self._get_system_limits()
-        self.active_allocations: Dict[str, ResourceAllocation] = {}
+        self.active_allocations: dict[str, ResourceAllocation] = {}
 
         # Initialize resource pools
         self._initialize_resource_pools()
 
         logger.info("Resource manager initialized")
 
-    def _get_system_limits(self) -> Dict[ResourceType, int]:
+    def _get_system_limits(self) -> dict[ResourceType, int]:
         """Get system resource limits."""
         return {
             ResourceType.CPU: psutil.cpu_count() if PSUTIL_AVAILABLE else 4,
@@ -455,7 +457,7 @@ class ResourceManager:
             ResourceType.THREADS: 500,  # Reasonable default
             ResourceType.PROCESSES: 100,
             ResourceType.DISK_IO: 1000,  # MB/s estimate
-            ResourceType.NETWORK_IO: 100  # MB/s estimate
+            ResourceType.NETWORK_IO: 100,  # MB/s estimate
         }
 
     def _initialize_resource_pools(self):
@@ -463,13 +465,13 @@ class ResourceManager:
         # Thread pool
         max_threads = min(32, self.resource_limits[ResourceType.CPU] * 4)
         self.resource_pools[ResourceType.THREADS] = concurrent.futures.ThreadPoolExecutor(
-            max_workers=max_threads
+            max_workers=max_threads,
         )
 
         # Process pool
         max_processes = min(self.resource_limits[ResourceType.CPU], 8)
         self.resource_pools[ResourceType.PROCESSES] = concurrent.futures.ProcessPoolExecutor(
-            max_workers=max_processes
+            max_workers=max_processes,
         )
 
         logger.info(
@@ -492,7 +494,7 @@ class ResourceManager:
             "operation_id": operation_id,
             "allocation": requirements,
             "timestamp": datetime.now(),
-            "action": "allocate"
+            "action": "allocate",
         })
 
         logger.debug(f"Allocated resources for operation {operation_id}")
@@ -509,7 +511,7 @@ class ResourceManager:
                 "operation_id": operation_id,
                 "allocation": allocation,
                 "timestamp": datetime.now(),
-                "action": "release"
+                "action": "release",
             })
 
             logger.debug(f"Released resources for operation {operation_id}")
@@ -533,7 +535,7 @@ class ResourceManager:
 
         return True
 
-    def get_resource_usage(self) -> Dict[str, float]:
+    def get_resource_usage(self) -> dict[str, float]:
         """Get current resource usage."""
         cpu_usage = psutil.cpu_percent() if PSUTIL_AVAILABLE else 0.0
         memory = psutil.virtual_memory() if PSUTIL_AVAILABLE else type(
@@ -545,18 +547,18 @@ class ResourceManager:
             "cpu_percent": cpu_usage,
             "memory_percent": memory.percent,
             "memory_available_mb": memory.available // (1024 * 1024),
-            "active_allocations": len(self.active_allocations)
+            "active_allocations": len(self.active_allocations),
         }
 
         if disk_io:
             usage.update({
                 "disk_read_mb": disk_io.read_bytes // (1024 * 1024),
-                "disk_write_mb": disk_io.write_bytes // (1024 * 1024)
+                "disk_write_mb": disk_io.write_bytes // (1024 * 1024),
             })
 
         return usage
 
-    def optimize_resource_allocation(self) -> Dict[str, Any]:
+    def optimize_resource_allocation(self) -> dict[str, Any]:
         """Optimize current resource allocations."""
         optimizations = []
 
@@ -578,7 +580,7 @@ class ResourceManager:
         return {
             "current_usage": current_usage,
             "optimization_suggestions": optimizations,
-            "total_allocations": len(self.active_allocations)
+            "total_allocations": len(self.active_allocations),
         }
 
 
@@ -595,14 +597,14 @@ class ParallelExecutor:
             "parallel_executions": 0,
             "sequential_executions": 0,
             "average_speedup": 0.0,
-            "total_time_saved": 0.0
+            "total_time_saved": 0.0,
         }
 
         logger.info("Parallel executor initialized")
 
     @profile_ai_operation("parallel_execution")
-    def execute_parallel(self, func: Callable, items: List[Any], max_workers: int = None,
-                         *args, **kwargs) -> List[Any]:
+    def execute_parallel(self, func: Callable, items: list[Any], max_workers: int = None,
+                         *args, **kwargs) -> list[Any]:
         """Execute function in parallel for list of items."""
         if not items:
             return []
@@ -663,8 +665,8 @@ class ParallelExecutor:
         return results
 
     @profile_ai_operation("batch_parallel_execution")
-    def execute_batch_parallel(self, operations: List[Tuple[Callable, tuple, dict]],
-                               max_workers: int = None) -> List[Any]:
+    def execute_batch_parallel(self, operations: list[tuple[Callable, tuple, dict]],
+                               max_workers: int = None) -> list[Any]:
         """Execute multiple different operations in parallel."""
         if not operations:
             return []
@@ -709,7 +711,7 @@ class ParallelExecutor:
         total_estimated_time = item_count * estimated_time_per_item
         return total_estimated_time > 2.0
 
-    def get_execution_stats(self) -> Dict[str, Any]:
+    def get_execution_stats(self) -> dict[str, Any]:
         """Get parallel execution statistics."""
         return self.execution_stats.copy()
 
@@ -722,10 +724,11 @@ class CacheManager:
 
         Args:
             max_size_mb: Maximum cache size in megabytes.
+
         """
-        self.cache: Dict[str, Dict[str, Any]] = {}
-        self.access_times: Dict[str, datetime] = {}
-        self.access_counts: Dict[str, int] = defaultdict(int)
+        self.cache: dict[str, dict[str, Any]] = {}
+        self.access_times: dict[str, datetime] = {}
+        self.access_counts: dict[str, int] = defaultdict(int)
         self.max_size_mb = max_size_mb
         self.current_size_mb = 0.0
 
@@ -734,12 +737,12 @@ class CacheManager:
             "hits": 0,
             "misses": 0,
             "evictions": 0,
-            "total_size_mb": 0.0
+            "total_size_mb": 0.0,
         }
 
         logger.info(f"Cache manager initialized with {max_size_mb}MB limit")
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """Get value from cache."""
         if key in self.cache:
             # Update access statistics
@@ -767,7 +770,7 @@ class CacheManager:
         self.cache[key] = {
             "value": value,
             "expiry": expiry_time,
-            "size_mb": item_size_mb
+            "size_mb": item_size_mb,
         }
 
         self.access_times[key] = datetime.now()
@@ -834,7 +837,7 @@ class CacheManager:
         self.current_size_mb = 0.0
         logger.info("Cache cleared")
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         hit_rate = self.stats["hits"] / \
             max(1, self.stats["hits"] + self.stats["misses"])
@@ -845,7 +848,7 @@ class CacheManager:
             "current_size_mb": self.current_size_mb,
             "max_size_mb": self.max_size_mb,
             "item_count": len(self.cache),
-            "utilization": self.current_size_mb / self.max_size_mb
+            "utilization": self.current_size_mb / self.max_size_mb,
         }
 
 
@@ -894,7 +897,7 @@ class PerformanceOptimizationLayer:
         """Main optimization entry point."""
         return self.optimizer.optimize_operation(operation_id, operation_func, *args, **kwargs)
 
-    def execute_parallel(self, func: Callable, items: List[Any], max_workers: int = None) -> List[Any]:
+    def execute_parallel(self, func: Callable, items: list[Any], max_workers: int = None) -> list[Any]:
         """Execute function in parallel."""
         return self.parallel_executor.execute_parallel(func, items, max_workers)
 
@@ -906,7 +909,7 @@ class PerformanceOptimizationLayer:
         """Release resources for operation."""
         self.resource_manager.release_resources(operation_id)
 
-    def get_comprehensive_stats(self) -> Dict[str, Any]:
+    def get_comprehensive_stats(self) -> dict[str, Any]:
         """Get comprehensive optimization statistics."""
         return {
             "optimizer_stats": self.optimizer.get_optimization_stats(),
@@ -916,8 +919,8 @@ class PerformanceOptimizationLayer:
             "system_info": {
                 "cpu_count": psutil.cpu_count() if PSUTIL_AVAILABLE else 4,
                 "memory_total_gb": psutil.virtual_memory() if PSUTIL_AVAILABLE else type("", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})().total / (1024**3),
-                "memory_available_gb": psutil.virtual_memory() if PSUTIL_AVAILABLE else type("", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})().available / (1024**3)
-            }
+                "memory_available_gb": psutil.virtual_memory() if PSUTIL_AVAILABLE else type("", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})().available / (1024**3),
+            },
         }
 
 

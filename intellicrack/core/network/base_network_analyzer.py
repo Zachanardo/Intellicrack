@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -23,12 +22,12 @@ Provides common functionality for network analysis components.
 """
 
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 
 class BaseNetworkAnalyzer:
-    """
-    Base class for network analysis components.
+    """Base class for network analysis components.
     Provides common packet handling functionality.
     """
 
@@ -39,8 +38,7 @@ class BaseNetworkAnalyzer:
     def create_packet_handler(self, scapy_module: Any,
                             is_running_check: Callable[[], bool],
                             process_packet_func: Callable[[Any, Any, Any], None]) -> Callable:
-        """
-        Create a packet handler function with common functionality.
+        """Create a packet handler function with common functionality.
 
         Args:
             scapy_module: The scapy module instance
@@ -49,6 +47,7 @@ class BaseNetworkAnalyzer:
 
         Returns:
             Packet handler function
+
         """
         def packet_handler(packet):
             """Process each captured packet."""

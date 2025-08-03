@@ -24,7 +24,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any
 
 
 class NetworkForensicsEngine:
@@ -35,15 +35,15 @@ class NetworkForensicsEngine:
         self.logger = logging.getLogger(__name__)
         self.supported_formats = ["pcap", "pcapng", "cap"]
 
-    def analyze_capture(self, capture_path: Union[str, Path]) -> Dict[str, Any]:
-        """
-        Analyze a network capture file for forensic artifacts.
+    def analyze_capture(self, capture_path: str | Path) -> dict[str, Any]:
+        """Analyze a network capture file for forensic artifacts.
 
         Args:
             capture_path: Path to the network capture file
 
         Returns:
             Network forensics analysis results
+
         """
         try:
             file_path = Path(capture_path)
@@ -60,7 +60,7 @@ class NetworkForensicsEngine:
                 "suspicious_traffic": [],
                 "connection_flows": [],
                 "dns_queries": [],
-                "http_requests": []
+                "http_requests": [],
             }
 
             try:
@@ -116,9 +116,8 @@ class NetworkForensicsEngine:
             self.logger.error("Network capture analysis failed: %s", e)
             return {"error": str(e)}
 
-    def analyze_live_traffic(self, interface: str, duration: int = 60) -> Dict[str, Any]:
-        """
-        Analyze live network traffic for forensic artifacts.
+    def analyze_live_traffic(self, interface: str, duration: int = 60) -> dict[str, Any]:
+        """Analyze live network traffic for forensic artifacts.
 
         Args:
             interface: Network interface to monitor
@@ -126,6 +125,7 @@ class NetworkForensicsEngine:
 
         Returns:
             Live traffic analysis results
+
         """
         try:
             # Real live traffic analysis implementation
@@ -141,7 +141,7 @@ class NetworkForensicsEngine:
                 "protocols_observed": [],
                 "anomalies_detected": [],
                 "traffic_summary": {},
-                "connection_analysis": []
+                "connection_analysis": [],
             }
 
             # Validate interface exists
@@ -179,7 +179,7 @@ class NetworkForensicsEngine:
                     "bytes_received": bytes_recv,
                     "packets_sent": packets_sent,
                     "packets_received": packets_recv,
-                    "actual_duration": actual_duration
+                    "actual_duration": actual_duration,
                 }
 
                 # Basic traffic analysis
@@ -197,7 +197,7 @@ class NetworkForensicsEngine:
                     "local_address": f"{c.laddr.ip}:{c.laddr.port}" if c.laddr else "N/A",
                     "remote_address": f"{c.raddr.ip}:{c.raddr.port}" if c.raddr else "N/A",
                     "status": c.status,
-                    "pid": c.pid
+                    "pid": c.pid,
                 } for c in active_connections[:10]]  # Limit to 10 connections
 
             return results
@@ -205,15 +205,15 @@ class NetworkForensicsEngine:
             self.logger.error("Live traffic analysis failed: %s", e)
             return {"error": str(e)}
 
-    def extract_artifacts(self, traffic_data: bytes) -> List[Dict[str, Any]]:
-        """
-        Extract forensic artifacts from network traffic data.
+    def extract_artifacts(self, traffic_data: bytes) -> list[dict[str, Any]]:
+        """Extract forensic artifacts from network traffic data.
 
         Args:
             traffic_data: Raw network traffic data
 
         Returns:
             List of extracted artifacts
+
         """
         try:
             artifacts = []
@@ -239,7 +239,7 @@ class NetworkForensicsEngine:
                             "type": "URL",
                             "value": url_str,
                             "offset": data.find(url),
-                            "length": len(url)
+                            "length": len(url),
                         })
                 except:
                     pass
@@ -254,7 +254,7 @@ class NetworkForensicsEngine:
                         "type": "Email",
                         "value": email_str,
                         "offset": data.find(email),
-                        "length": len(email)
+                        "length": len(email),
                     })
                 except:
                     pass
@@ -272,7 +272,7 @@ class NetworkForensicsEngine:
                             "type": "IP_Address",
                             "value": ip_str,
                             "offset": data.find(ip),
-                            "length": len(ip)
+                            "length": len(ip),
                         })
                 except:
                     pass
@@ -289,7 +289,7 @@ class NetworkForensicsEngine:
                             "value": b64_str[:100] + "..." if len(b64_str) > 100 else b64_str,
                             "offset": data.find(b64),
                             "length": len(b64),
-                            "full_length": len(b64_str)
+                            "full_length": len(b64_str),
                         })
                 except:
                     pass
@@ -299,7 +299,7 @@ class NetworkForensicsEngine:
                 (rb"password[=:]\s*([^\s&]+)", "Password"),
                 (rb"user[=:]\s*([^\s&]+)", "Username"),
                 (rb"token[=:]\s*([^\s&]+)", "Token"),
-                (rb"api[_-]?key[=:]\s*([^\s&]+)", "API_Key")
+                (rb"api[_-]?key[=:]\s*([^\s&]+)", "API_Key"),
             ]
 
             for pattern, cred_type in cred_patterns:
@@ -312,7 +312,7 @@ class NetworkForensicsEngine:
                                 "type": cred_type,
                                 "value": value,
                                 "offset": data.find(match),
-                                "length": len(match)
+                                "length": len(match),
                             })
                     except:
                         pass
@@ -320,7 +320,7 @@ class NetworkForensicsEngine:
             # Look for file transfer indicators
             file_patterns = [
                 (rb"filename[=:]\s*([^\s&\r\n]+)", "Filename"),
-                (rb"\.(?:exe|dll|pdf|doc|zip|rar|tar|gz)\b", "File_Extension")
+                (rb"\.(?:exe|dll|pdf|doc|zip|rar|tar|gz)\b", "File_Extension"),
             ]
 
             for pattern, file_type in file_patterns:
@@ -332,7 +332,7 @@ class NetworkForensicsEngine:
                             "type": file_type,
                             "value": value,
                             "offset": data.find(match),
-                            "length": len(match)
+                            "length": len(match),
                         })
                     except:
                         pass
@@ -354,15 +354,15 @@ class NetworkForensicsEngine:
             self.logger.error("Artifact extraction failed: %s", e)
             return []
 
-    def detect_protocols(self, packet_data: bytes) -> List[str]:
-        """
-        Detect network protocols in packet data.
+    def detect_protocols(self, packet_data: bytes) -> list[str]:
+        """Detect network protocols in packet data.
 
         Args:
             packet_data: Raw packet data
 
         Returns:
             List of detected protocols
+
         """
         try:
             protocols = []
@@ -384,7 +384,7 @@ class NetworkForensicsEngine:
                 b"options ",
                 b"content-type:",
                 b"user-agent:",
-                b"host:"
+                b"host:",
             ]
 
             if any(pattern in data for pattern in http_patterns):
@@ -403,7 +403,7 @@ class NetworkForensicsEngine:
                 b"stor ",
                 b"list",
                 b"pwd",
-                b"cwd "
+                b"cwd ",
             ]
 
             if any(pattern in data for pattern in ftp_patterns):
@@ -419,7 +419,7 @@ class NetworkForensicsEngine:
                 b"data",
                 b"subject:",
                 b"from:",
-                b"to:"
+                b"to:",
             ]
 
             smtp_count = sum(1 for pattern in smtp_patterns if pattern in data)
@@ -466,7 +466,7 @@ class NetworkForensicsEngine:
                 b"select ",
                 b"examine ",
                 b"fetch ",
-                b"store "
+                b"store ",
             ]
 
             if any(pattern in data for pattern in pop_imap_patterns):

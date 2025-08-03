@@ -162,10 +162,12 @@ except ImportError as e:
 if not HAS_CTYPES:
     class MockWindll:
         """Mock windll for non-Windows platforms."""
+
         def __getattr__(self, _name):
             """Return a mock function for any attribute access."""
             class MockFunc:
                 """Mock function that accepts any arguments."""
+
                 def __call__(self, *args, **kwargs):
                     pass
             return MockFunc()
@@ -189,21 +191,20 @@ if not HAS_CTYPES:
                 str: 1,  # char size
                 bool: 1,
                 bytes: 1,
-                bytearray: 1
+                bytearray: 1,
             }
             return type_sizes.get(x, 4)
-        elif hasattr(x, "__sizeof__"):
+        if hasattr(x, "__sizeof__"):
             # Use object's actual size if available
             return x.__sizeof__()
-        elif isinstance(x, (list, tuple)):
+        if isinstance(x, (list, tuple)):
             # Array/list size - avoid recursive call
             return len(x) * 4  # Default element size
-        elif isinstance(x, dict):
+        if isinstance(x, dict):
             # Dictionary size estimate
             return len(x) * 8  # Key-value pair estimate
-        else:
-            # Default pointer size
-            return 4
+        # Default pointer size
+        return 4
 
     # Assign mock functions
     windll = MockWindll()
@@ -317,12 +318,13 @@ except ImportError as e:
     # Fallback for environments without PyQt6
     class QMainWindow:
         """Fallback QMainWindow class for environments without PyQt6."""
+
         def __init__(self, parent=None):
             """Initialize fallback QMainWindow."""
-            pass
 
     class DummySignal:
         """Fallback signal class for environments without PyQt6."""
+
         def __init__(self):
             """Initialize dummy signal."""
             self.callbacks = []
@@ -388,6 +390,7 @@ except ImportError as e:
     # Define a dummy SplashScreen for environments without PyQt5
     class SplashScreen:
         """Fallback SplashScreen class for environments without PyQt6."""
+
         def show(self):
             """Show splash screen (no-op in fallback)."""
         def close(self):
@@ -540,7 +543,7 @@ def _fallback_register_hex_viewer_ai_tools(app, *args, **kwargs):  # pylint: dis
                 "name": "Binary Analysis Assistant",
                 "description": "AI-powered analysis of binary data in hex view",
                 "enabled": True,
-                "type": "analysis"
+                "type": "analysis",
             }
 
             # Register pattern detection AI tool
@@ -548,7 +551,7 @@ def _fallback_register_hex_viewer_ai_tools(app, *args, **kwargs):  # pylint: dis
                 "name": "Pattern Detection",
                 "description": "Automatically detect patterns and structures in hex data",
                 "enabled": True,
-                "type": "detection"
+                "type": "detection",
             }
 
             # Register anomaly detection AI tool
@@ -556,7 +559,7 @@ def _fallback_register_hex_viewer_ai_tools(app, *args, **kwargs):  # pylint: dis
                 "name": "Anomaly Detection",
                 "description": "Identify unusual patterns and potential security issues",
                 "enabled": True,
-                "type": "security"
+                "type": "security",
             }
 
             # Register code identification AI tool
@@ -564,7 +567,7 @@ def _fallback_register_hex_viewer_ai_tools(app, *args, **kwargs):  # pylint: dis
                 "name": "Code Identification",
                 "description": "Identify executable code sections and instruction patterns",
                 "enabled": True,
-                "type": "identification"
+                "type": "identification",
             }
 
             # Set up AI analysis integration
@@ -582,13 +585,12 @@ def _fallback_register_hex_viewer_ai_tools(app, *args, **kwargs):  # pylint: dis
                         file_size = os.path.getsize(app.binary_path)
                     except (OSError, ValueError, RuntimeError) as e:
                         logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                        pass
 
                     app.ai_context = {
                         "binary_path": app.binary_path,
                         "file_size": file_size,
                         "analysis_timestamp": time.time(),
-                        "tools_registered": len(app.ai_tools_registry)
+                        "tools_registered": len(app.ai_tools_registry),
                     }
 
                 except (OSError, ValueError, RuntimeError) as e:
@@ -630,7 +632,7 @@ except ImportError as e:
                     "max_patch_size": 1024 * 1024,  # 1MB max patch size
                     "backup_original": True,
                     "verify_patches": True,
-                    "patch_history": []
+                    "patch_history": [],
                 }
 
             # Set up memory analysis tools
@@ -639,7 +641,7 @@ except ImportError as e:
                     "hex_editor": True,
                     "pattern_search": True,
                     "diff_analysis": True,
-                    "auto_backup": True
+                    "auto_backup": True,
                 }
 
             # Initialize patch tracking
@@ -658,7 +660,7 @@ except ImportError as e:
                         "file_size": file_size,
                         "mapped_regions": [],
                         "patch_points": [],
-                        "backup_data": {}
+                        "backup_data": {},
                     }
 
                     # Load binary header info for patch validation
@@ -679,7 +681,7 @@ except ImportError as e:
                 "nop_instruction": b"\x90",  # x86 NOP
                 "jump_instruction": b"\xEB",  # x86 short jump
                 "return_instruction": b"\xC3",  # x86 return
-                "breakpoint": b"\xCC"  # x86 int3
+                "breakpoint": b"\xCC",  # x86 int3
             }
 
             # Set up patch validation
@@ -687,7 +689,7 @@ except ImportError as e:
                 "check_alignment": True,
                 "verify_instructions": True,
                 "backup_before_patch": True,
-                "test_execution": False  # Disabled for safety
+                "test_execution": False,  # Disabled for safety
             }
 
             if hasattr(app, "update_output"):
@@ -725,7 +727,7 @@ def run_rop_chain_generator(app, *args, **kwargs):
                     "max_gadget_size": 10,
                     "architecture": "x86_64",
                     "search_depth": 5,
-                    "optimization_level": 2
+                    "optimization_level": 2,
                 }
 
             # Initialize gadget collection
@@ -745,7 +747,7 @@ def run_rop_chain_generator(app, *args, **kwargs):
                     {"name": "check_license", "type": "license_bypass", "priority": "high"},
                     {"name": "validate_key", "type": "validation_bypass", "priority": "high"},
                     {"name": "memcmp", "type": "comparison_bypass", "priority": "medium"},
-                    {"name": "strcmp", "type": "string_bypass", "priority": "medium"}
+                    {"name": "strcmp", "type": "string_bypass", "priority": "medium"},
                 ]
 
             # Set up gadget search patterns
@@ -756,7 +758,7 @@ def run_rop_chain_generator(app, *args, **kwargs):
                     "mov_ret": {"pattern": b"\\x89\\xC3\\xC3", "description": "mov ebx, eax; ret"},
                     "add_ret": {"pattern": b"\\x01\\xD8\\xC3", "description": "add eax, ebx; ret"},
                     "jmp_eax": {"pattern": b"\\xFF\\xE0", "description": "jmp eax"},
-                    "call_eax": {"pattern": b"\\xFF\\xD0", "description": "call eax"}
+                    "call_eax": {"pattern": b"\\xFF\\xD0", "description": "call eax"},
                 }
 
             # Set up chain generation strategies
@@ -764,16 +766,16 @@ def run_rop_chain_generator(app, *args, **kwargs):
                 app.chain_strategies = {
                     "license_bypass": {
                         "description": "Chain to bypass license validation",
-                        "steps": ["setup_registers", "load_bypass_value", "call_validation", "handle_result"]
+                        "steps": ["setup_registers", "load_bypass_value", "call_validation", "handle_result"],
                     },
                     "shell_execution": {
                         "description": "Chain to execute shell commands",
-                        "steps": ["setup_stack", "load_command", "call_system", "cleanup"]
+                        "steps": ["setup_stack", "load_command", "call_system", "cleanup"],
                     },
                     "memory_manipulation": {
                         "description": "Chain to modify memory permissions",
-                        "steps": ["prepare_args", "call_mprotect", "verify_permissions", "continue_execution"]
-                    }
+                        "steps": ["prepare_args", "call_mprotect", "verify_permissions", "continue_execution"],
+                    },
                 }
 
             # Initialize analysis tools
@@ -782,7 +784,7 @@ def run_rop_chain_generator(app, *args, **kwargs):
                     "gadget_finder": {"enabled": True, "method": "pattern_search"},
                     "chain_builder": {"enabled": True, "method": "constraint_solving"},
                     "exploit_generator": {"enabled": True, "method": "template_based"},
-                    "vulnerability_scanner": {"enabled": True, "method": "heuristic"}
+                    "vulnerability_scanner": {"enabled": True, "method": "heuristic"},
                 }
 
             # Set up exploitation context
@@ -796,7 +798,7 @@ def run_rop_chain_generator(app, *args, **kwargs):
                         "architecture": app.rop_config["architecture"],
                         "analysis_timestamp": time.time(),
                         "gadgets_found": len(app.rop_gadgets),
-                        "chains_generated": len(app.rop_chains)
+                        "chains_generated": len(app.rop_chains),
                     }
 
                 except (OSError, ValueError, RuntimeError) as e:
@@ -832,7 +834,7 @@ def _start_rop_analysis(app):
                     {"address": "0x401234", "gadget": "pop rax; ret", "type": "pop_ret"},
                     {"address": "0x401567", "gadget": "pop rbx; pop rcx; ret", "type": "pop_pop_ret"},
                     {"address": "0x401890", "gadget": "mov rax, rbx; ret", "type": "mov_ret"},
-                    {"address": "0x401abc", "gadget": "add rax, rbx; ret", "type": "add_ret"}
+                    {"address": "0x401abc", "gadget": "add rax, rbx; ret", "type": "add_ret"},
                 ]
                 app.rop_gadgets.extend(sample_gadgets)
 
@@ -846,7 +848,7 @@ def _start_rop_analysis(app):
                     "name": strategy_name,
                     "description": strategy_info["description"],
                     "steps": strategy_info["steps"],
-                    "generated_at": time.time()
+                    "generated_at": time.time(),
                 }
                 app.rop_chains.append(chain)
 
@@ -875,7 +877,7 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
             "listen_ip": "127.0.0.1",
             "listen_port": 8443,
             "record_traffic": True,
-            "auto_respond": True
+            "auto_respond": True,
         })
 
         # Start interceptor
@@ -887,9 +889,8 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
 
             # Store interceptor for later access
             app.ssl_interceptor = interceptor
-        else:
-            if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[SSL Interceptor] Failed to start SSL/TLS interceptor"))
+        elif hasattr(app, "update_output"):
+            app.update_output.emit(log_message("[SSL Interceptor] Failed to start SSL/TLS interceptor"))
 
     except ImportError:
         # Fallback implementation when core module not available
@@ -906,7 +907,7 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
                     "ca_key_path": get_resource_path("ssl_certificates/ca.key"),
                     "record_traffic": True,
                     "auto_respond": True,
-                    "cipher_suites": ["TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256", "TLS_AES_128_GCM_SHA256"]
+                    "cipher_suites": ["TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256", "TLS_AES_128_GCM_SHA256"],
                 }
 
             # Initialize target hosts for interception
@@ -925,26 +926,26 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
                         "status": "SUCCESS",
                         "license": {"status": "ACTIVATED", "type": "PERMANENT", "expires": "2099-12-31"},
                         "isValid": True,
-                        "expired": False
+                        "expired": False,
                     },
                     "autodesk_license": {
                         "valid": True,
                         "license_type": "SUBSCRIPTION",
                         "expiry_date": "2099-12-31",
-                        "features": ["all"]
+                        "features": ["all"],
                     },
                     "jetbrains_license": {
                         "licenseId": "INTELLICRACK_BYPASS",
                         "valid": True,
                         "products": ["ALL"],
-                        "expires": "2099-12-31T23:59:59Z"
+                        "expires": "2099-12-31T23:59:59Z",
                     },
                     "generic_license": {
                         "status": "valid",
                         "licensed": True,
                         "trial": False,
-                        "expires": "2099-12-31"
-                    }
+                        "expires": "2099-12-31",
+                    },
                 }
 
             # Set up certificate generation tools
@@ -952,7 +953,7 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
                 app.ssl_cert_tools = {
                     "ca_generator": {"enabled": True, "key_size": 2048, "validity_days": 3650},
                     "cert_validator": {"enabled": True, "check_expiry": True, "verify_chain": True},
-                    "cert_installer": {"enabled": True, "auto_trust": False, "backup_existing": True}
+                    "cert_installer": {"enabled": True, "auto_trust": False, "backup_existing": True},
                 }
 
             # Initialize proxy server configuration
@@ -963,7 +964,7 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
                     "dns_server": "8.8.8.8",
                     "connection_timeout": 30,
                     "max_connections": 100,
-                    "buffer_size": 8192
+                    "buffer_size": 8192,
                 }
 
             # Set up SSL/TLS analysis tools
@@ -972,7 +973,7 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
                     "traffic_analyzer": {"enabled": True, "decode_json": True, "decode_xml": True},
                     "certificate_analyzer": {"enabled": True, "check_validity": True, "extract_info": True},
                     "protocol_analyzer": {"enabled": True, "detect_version": True, "analyze_handshake": True},
-                    "vulnerability_scanner": {"enabled": True, "check_weak_ciphers": True, "test_protocols": True}
+                    "vulnerability_scanner": {"enabled": True, "check_weak_ciphers": True, "test_protocols": True},
                 }
 
             # Set up interception context
@@ -983,7 +984,7 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
                         "proxy_address": f"{app.ssl_config['listen_ip']}:{app.ssl_config['listen_port']}",
                         "ca_cert_ready": os.path.exists(app.ssl_config["ca_cert_path"]),
                         "target_hosts_count": len(app.ssl_target_hosts),
-                        "analysis_timestamp": time.time()
+                        "analysis_timestamp": time.time(),
                     }
 
                 except (OSError, ValueError, RuntimeError) as e:
@@ -1016,7 +1017,7 @@ def run_ssl_tls_interceptor_fallback(app, *args, **kwargs):
             "target_hosts": kwargs.get("hosts", ["localhost"]),
             "certificate_store": get_resource_path("ssl_certificates/"),
             "log_traffic": True,
-            "decode_responses": True
+            "decode_responses": True,
         }
 
         # Generate real SSL certificates
@@ -1031,9 +1032,8 @@ def run_ssl_tls_interceptor_fallback(app, *args, **kwargs):
             intercepted_traffic = _check_intercepted_traffic(proxy_server)
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"[SSL/TLS] Proxy server listening on port {config['port']}")
-        else:
-            if hasattr(app, "update_output"):
-                app.update_output.emit("[SSL/TLS] Failed to start proxy server")
+        elif hasattr(app, "update_output"):
+            app.update_output.emit("[SSL/TLS] Failed to start proxy server")
 
         result = {
             "success": True,
@@ -1041,7 +1041,7 @@ def run_ssl_tls_interceptor_fallback(app, *args, **kwargs):
             "certificates": certificates,
             "traffic_count": len(intercepted_traffic),
             "intercepted_traffic": intercepted_traffic,
-            "message": f"SSL/TLS interceptor started on port {config['port']}"
+            "message": f"SSL/TLS interceptor started on port {config['port']}",
         }
 
         if hasattr(app, "update_output"):
@@ -1050,9 +1050,9 @@ def run_ssl_tls_interceptor_fallback(app, *args, **kwargs):
 
         return result
 
-    except (OSError, IOError, socket.error, AttributeError, ValueError, TypeError, RuntimeError) as ssl_error:
+    except (OSError, AttributeError, ValueError, TypeError, RuntimeError) as ssl_error:
         logger.error("(OSError, IOError, socket.error, AttributeError, ValueError, TypeError, RuntimeError) in main_app.py: %s", ssl_error)
-        error_msg = f"Error in SSL/TLS interception: {str(ssl_error)}"
+        error_msg = f"Error in SSL/TLS interception: {ssl_error!s}"
         if hasattr(app, "update_output"):
             app.update_output.emit(f"[SSL/TLS] {error_msg}")
         return {"success": False, "error": error_msg}
@@ -1071,7 +1071,7 @@ def run_protocol_fingerprinter(app, *args, **kwargs):
             "min_confidence": 0.7,
             "max_fingerprints": 100,
             "learning_mode": True,
-            "analysis_depth": 3
+            "analysis_depth": 3,
         })
 
         if hasattr(app, "update_output"):
@@ -1097,7 +1097,7 @@ def run_protocol_fingerprinter(app, *args, **kwargs):
                     "learning_mode": True,
                     "analysis_depth": 3,
                     "signature_db_path": get_resource_path("data/protocol_signatures.json"),
-                    "learning_threshold": 10
+                    "learning_threshold": 10,
                 }
 
             # Initialize known protocol signatures
@@ -1108,50 +1108,50 @@ def run_protocol_fingerprinter(app, *args, **kwargs):
                         "description": "Flexible License Manager by Flexera",
                         "ports": [27000, 27001, 1101],
                         "patterns": ["VENDOR_", "SERVER_", "FEATURE", "INCREMENT"],
-                        "confidence_weight": 0.8
+                        "confidence_weight": 0.8,
                     },
                     "hasp": {
                         "name": "HASP/Sentinel",
                         "description": "Hardware key protection by Thales",
                         "ports": [1947],
                         "patterns": ["HASP_", "SENTINEL_"],
-                        "confidence_weight": 0.8
+                        "confidence_weight": 0.8,
                     },
                     "adobe": {
                         "name": "Adobe Licensing",
                         "description": "Adobe Creative Cloud licensing protocol",
                         "ports": [443, 8080],
                         "patterns": ["LCSAP", "ADOBE_LICENSE", '{"licensing":'],
-                        "confidence_weight": 0.7
+                        "confidence_weight": 0.7,
                     },
                     "autodesk": {
                         "name": "Autodesk Licensing",
                         "description": "Autodesk product licensing protocol",
                         "ports": [2080, 443],
                         "patterns": ["ADSK", '{"license":'],
-                        "confidence_weight": 0.7
+                        "confidence_weight": 0.7,
                     },
                     "microsoft_kms": {
                         "name": "Microsoft KMS",
                         "description": "Microsoft Key Management Service protocol",
                         "ports": [1688],
                         "patterns": ["KMSV"],
-                        "confidence_weight": 0.8
+                        "confidence_weight": 0.8,
                     },
                     "jetbrains": {
                         "name": "JetBrains License",
                         "description": "JetBrains licensing protocol",
                         "ports": [443, 80],
                         "patterns": ["jetbrains", "license-server", "floating-license"],
-                        "confidence_weight": 0.6
+                        "confidence_weight": 0.6,
                     },
                     "codemeter": {
                         "name": "CodeMeter",
                         "description": "WIBU-SYSTEMS CodeMeter protection",
                         "ports": [22350, 22351],
                         "patterns": ["CodeMeter", "WIBU"],
-                        "confidence_weight": 0.8
-                    }
+                        "confidence_weight": 0.8,
+                    },
                 }
 
             # Initialize traffic analysis tools
@@ -1161,7 +1161,7 @@ def run_protocol_fingerprinter(app, *args, **kwargs):
                     "pattern_matcher": {"enabled": True, "regex_support": True},
                     "entropy_calculator": {"enabled": True, "threshold": 0.5},
                     "frequency_analyzer": {"enabled": True, "byte_distribution": True},
-                    "similarity_detector": {"enabled": True, "threshold": 0.7}
+                    "similarity_detector": {"enabled": True, "threshold": 0.7},
                 }
 
             # Set up learning system
@@ -1172,7 +1172,7 @@ def run_protocol_fingerprinter(app, *args, **kwargs):
                     "similarity_threshold": 0.7,
                     "confidence_threshold": 0.6,
                     "learned_protocols": [],
-                    "traffic_samples": []
+                    "traffic_samples": [],
                 }
 
             # Initialize response generation templates
@@ -1180,24 +1180,24 @@ def run_protocol_fingerprinter(app, *args, **kwargs):
                 app.protocol_responses = {
                     "flexlm": {
                         "heartbeat": "SERVER_HEARTBEAT\\x00\\x01\\x00\\x00",
-                        "license_ok": "FEATURE_RESPONSE\\x00\\x01\\x00\\x01\\x01"
+                        "license_ok": "FEATURE_RESPONSE\\x00\\x01\\x00\\x01\\x01",
                     },
                     "hasp": {
                         "heartbeat": "\\x00\\x01\\x02\\x03\\x00\\x00\\x00",
-                        "license_ok": "\\x00\\x01\\x02\\x03\\x01\\x00\\x01\\x01"
+                        "license_ok": "\\x00\\x01\\x02\\x03\\x01\\x00\\x01\\x01",
                     },
                     "adobe": {
                         "heartbeat": "LCSAP\\x01\\x00\\x00\\x00",
-                        "license_ok": "LCSAP\\x01\\x01\\x00\\x01\\x01"
+                        "license_ok": "LCSAP\\x01\\x01\\x00\\x01\\x01",
                     },
                     "autodesk": {
                         "heartbeat": "ADSK\\x01\\x00\\x00\\x00",
-                        "license_ok": "ADSK\\x01\\x01\\x00\\x01\\x01"
+                        "license_ok": "ADSK\\x01\\x01\\x00\\x01\\x01",
                     },
                     "generic": {
                         "license_ok": "\\x01" * 8,
-                        "license_valid": '{"status":"valid","licensed":true}'
-                    }
+                        "license_valid": '{"status":"valid","licensed":true}',
+                    },
                 }
 
             # Set up fingerprinting statistics
@@ -1207,7 +1207,7 @@ def run_protocol_fingerprinter(app, *args, **kwargs):
                     "patterns_learned": 0,
                     "packets_analyzed": 0,
                     "confidence_scores": [],
-                    "success_rate": 0.0
+                    "success_rate": 0.0,
                 }
 
             # Initialize protocol analysis context
@@ -1218,7 +1218,7 @@ def run_protocol_fingerprinter(app, *args, **kwargs):
                         "known_protocols": len(app.protocol_signatures),
                         "learning_enabled": app.protocol_learning["enabled"],
                         "analysis_depth": app.fingerprint_config["analysis_depth"],
-                        "analysis_timestamp": time.time()
+                        "analysis_timestamp": time.time(),
                     }
 
                 except (OSError, ValueError, RuntimeError) as e:
@@ -1255,7 +1255,7 @@ def _start_protocol_fingerprinting(app):
                     "protocol": protocol_name,
                     "signatures_count": len(signatures),
                     "confidence": 0.85 + (len(signatures) * 0.02),  # Higher confidence for more signatures
-                    "analyzed_at": time.time()
+                    "analyzed_at": time.time(),
                 }
                 analyzed_protocols.append(analysis_result)
 
@@ -1287,7 +1287,7 @@ def _start_protocol_fingerprinting(app):
             total_patterns = app.fingerprint_stats.get("patterns_learned", 0) if hasattr(app, "fingerprint_stats") else 0
             app.update_output.emit(log_message(f"[Protocol Analysis] Protocol fingerprinting completed - {total_patterns} patterns analyzed"))
 
-    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
         logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
         if hasattr(app, "update_output"):
             app.update_output.emit(log_message(f"[Protocol Analysis] Error during fingerprinting: {e}"))
@@ -1321,9 +1321,8 @@ def run_cloud_license_hooker(app, *args, **kwargs):
             if app.cloud_generator.enable_network_api_hooks():
                 if hasattr(app, "update_output"):
                     app.update_output.emit(log_message("[Cloud License Hooker] Network API hooks enabled"))
-            else:
-                if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Cloud License Hooker] API hooking framework not available, implementing fallback"))
+            elif hasattr(app, "update_output"):
+                app.update_output.emit(log_message("[Cloud License Hooker] API hooking framework not available, implementing fallback"))
 
     except ImportError as e:
         logger.error("Import error in main_app.py: %s", e)
@@ -1340,7 +1339,7 @@ def run_cloud_license_hooker(app, *args, **kwargs):
                     "adaptive_mode": True,
                     "api_hooks_enabled": True,
                     "intercept_https": True,
-                    "intercept_http": True
+                    "intercept_http": True,
                 }
 
             # Initialize supported cloud license services
@@ -1350,38 +1349,38 @@ def run_cloud_license_hooker(app, *args, **kwargs):
                         "name": "Adobe Creative Cloud",
                         "endpoints": ["licensing.adobe.com", "lm.licenses.adobe.com", "activate.adobe.com"],
                         "protocols": ["https", "http"],
-                        "response_format": "json"
+                        "response_format": "json",
                     },
                     "autodesk": {
                         "name": "Autodesk Licensing",
                         "endpoints": ["lm.autodesk.com", "lmaccess.autodesk.com", "lmlicensing.autodesk.com"],
                         "protocols": ["https", "http"],
-                        "response_format": "json"
+                        "response_format": "json",
                     },
                     "jetbrains": {
                         "name": "JetBrains License Server",
                         "endpoints": ["license.jetbrains.com", "account.jetbrains.com"],
                         "protocols": ["https"],
-                        "response_format": "json"
+                        "response_format": "json",
                     },
                     "microsoft": {
                         "name": "Microsoft Licensing",
                         "endpoints": ["licensing.mp.microsoft.com", "activation.microsoft.com", "kms.microsoft.com"],
                         "protocols": ["https", "tcp"],
-                        "response_format": "xml"
+                        "response_format": "xml",
                     },
                     "flexlm": {
                         "name": "FlexLM License Manager",
                         "endpoints": ["flexnet", "macrovision"],
                         "protocols": ["tcp", "udp"],
-                        "response_format": "binary"
+                        "response_format": "binary",
                     },
                     "hasp": {
                         "name": "HASP/Sentinel",
                         "endpoints": ["sentinel", "gemalto"],
                         "protocols": ["tcp", "udp"],
-                        "response_format": "binary"
-                    }
+                        "response_format": "binary",
+                    },
                 }
 
             # Set up response templates for each service
@@ -1392,14 +1391,14 @@ def run_cloud_license_hooker(app, *args, **kwargs):
                             "status": "SUCCESS",
                             "activation_code": "ADOBE-ACTIVATION-SUCCESS-2024",
                             "expiration_date": "2099-12-31T23:59:59Z",
-                            "features": ["PHOTOSHOP_FULL", "ILLUSTRATOR_FULL", "PREMIERE_FULL"]
+                            "features": ["PHOTOSHOP_FULL", "ILLUSTRATOR_FULL", "PREMIERE_FULL"],
                         },
                         "license_check": {
                             "valid": True,
                             "status": "ACTIVE",
                             "expires": "2099-12-31T23:59:59Z",
-                            "features_enabled": True
-                        }
+                            "features_enabled": True,
+                        },
                     },
                     "autodesk": {
                         "license_check": {
@@ -1407,8 +1406,8 @@ def run_cloud_license_hooker(app, *args, **kwargs):
                             "license_type": "COMMERCIAL",
                             "expires": "2099-12-31T23:59:59.000Z",
                             "seat_count": 999,
-                            "features": {"AUTOCAD": "ENABLED", "MAYA": "ENABLED", "3DSMAX": "ENABLED"}
-                        }
+                            "features": {"AUTOCAD": "ENABLED", "MAYA": "ENABLED", "3DSMAX": "ENABLED"},
+                        },
                     },
                     "jetbrains": {
                         "license_check": {
@@ -1416,25 +1415,25 @@ def run_cloud_license_hooker(app, *args, **kwargs):
                             "license_id": "JETBRAINS-LICENSE-2024",
                             "products": ["ALL"],
                             "expires": "2099-12-31T23:59:59Z",
-                            "type": "COMMERCIAL"
-                        }
+                            "type": "COMMERCIAL",
+                        },
                     },
                     "microsoft": {
                         "activation_check": {
                             "status": "ACTIVATED",
                             "license_type": "RETAIL",
                             "expires": "2099-12-31",
-                            "activation_id": "MS-ACTIVATION-SUCCESS"
-                        }
+                            "activation_id": "MS-ACTIVATION-SUCCESS",
+                        },
                     },
                     "generic": {
                         "license_check": {
                             "status": "SUCCESS",
                             "licensed": True,
                             "expires": "2099-12-31",
-                            "message": "License verification successful"
-                        }
-                    }
+                            "message": "License verification successful",
+                        },
+                    },
                 }
 
             # Initialize network API hooking capabilities
@@ -1443,18 +1442,18 @@ def run_cloud_license_hooker(app, *args, **kwargs):
                     "winsock": {
                         "enabled": True,
                         "functions": ["WSAStartup", "WSACleanup", "socket", "connect", "send", "recv"],
-                        "hooked_count": 0
+                        "hooked_count": 0,
                     },
                     "wininet": {
                         "enabled": True,
                         "functions": ["InternetOpen", "InternetConnect", "HttpOpenRequest", "HttpSendRequest"],
-                        "hooked_count": 0
+                        "hooked_count": 0,
                     },
                     "ssl": {
                         "enabled": True,
                         "functions": ["SSL_connect", "SSL_read", "SSL_write"],
-                        "hooked_count": 0
-                    }
+                        "hooked_count": 0,
+                    },
                 }
 
             # Set up traffic interception and analysis
@@ -1465,21 +1464,21 @@ def run_cloud_license_hooker(app, *args, **kwargs):
                     "successful_bypasses": 0,
                     "failed_bypasses": 0,
                     "total_intercepted": 0,
-                    "learning_samples": []
+                    "learning_samples": [],
                 }
 
             # Initialize request pattern recognition
             if not hasattr(app, "request_patterns"):
                 app.request_patterns = {
                     "license_check_patterns": [
-                        "license", "activation", "authenticate", "verify", "check", "validate"
+                        "license", "activation", "authenticate", "verify", "check", "validate",
                     ],
                     "success_indicators": [
-                        "success", "valid", "activated", "authorized", "authenticated", "approved"
+                        "success", "valid", "activated", "authorized", "authenticated", "approved",
                     ],
                     "failure_indicators": [
-                        "error", "invalid", "expired", "unauthorized", "denied", "failed"
-                    ]
+                        "error", "invalid", "expired", "unauthorized", "denied", "failed",
+                    ],
                 }
 
             # Set up cloud license hooking context
@@ -1490,7 +1489,7 @@ def run_cloud_license_hooker(app, *args, **kwargs):
                         "supported_services": len(app.cloud_license_services),
                         "api_hooks_ready": True,
                         "learning_mode": app.cloud_license_config["learning_mode"],
-                        "analysis_timestamp": time.time()
+                        "analysis_timestamp": time.time(),
                     }
 
                 except (OSError, ValueError, RuntimeError) as e:
@@ -1526,7 +1525,7 @@ def _start_cloud_license_hooking(app):
                 "requests_intercepted": 0,
                 "responses_generated": 0,
                 "success_rate": 0.0,
-                "active_hooks": []
+                "active_hooks": [],
             }
 
         # Simulate hook installation for common cloud license endpoints
@@ -1537,7 +1536,7 @@ def _start_cloud_license_hooking(app):
                     "endpoint": endpoint,
                     "method": "intercept_and_respond",
                     "status": "active",
-                    "installed_at": time.time()
+                    "installed_at": time.time(),
                 }
                 app.cloud_hook_stats["active_hooks"].append(hook_info)
 
@@ -1572,7 +1571,7 @@ def _start_cloud_license_hooking(app):
             hooks_active = len(app.cloud_hook_stats["active_hooks"])
             app.update_output.emit(log_message(f"[Cloud Hook] Cloud license hooking completed - {hooks_active} active hooks"))
 
-    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
         logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
         if hasattr(app, "update_output"):
             app.update_output.emit(log_message(f"[Cloud Hook] Error during cloud license hooking: {e}"))
@@ -1637,7 +1636,7 @@ except ImportError as e:
                 "mov_ret": b"\x89\xC3\xC3",  # mov ebx, eax; ret
                 "add_ret": b"\x01\xD8\xC3",  # add eax, ebx; ret
                 "jmp_eax": b"\xFF\xE0",  # jmp eax
-                "call_eax": b"\xFF\xD0"  # call eax
+                "call_eax": b"\xFF\xD0",  # call eax
             }
 
             # Real gadget search in binary
@@ -1660,7 +1659,7 @@ except ImportError as e:
                                 "pattern": pattern.hex(),
                                 "address": f"0x{pos:08x}",
                                 "instructions": f"{name.replace('_', ' ')}",
-                                "file_offset": pos
+                                "file_offset": pos,
                             }
                             found_gadgets.append(gadget)
                             offset = pos + 1
@@ -1674,7 +1673,7 @@ except ImportError as e:
                 else:
                     # No binary loaded - return empty results
                     app.update_output.emit(log_message("[ROP] No binary loaded for gadget search"))
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as gadget_error:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as gadget_error:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", gadget_error)
                 app.update_output.emit(log_message(f"[ROP] Error searching for gadgets: {gadget_error}"))
                 found_gadgets.append(gadget)
@@ -1688,21 +1687,21 @@ except ImportError as e:
                     "name": "License Bypass Chain",
                     "description": "Bypass license validation routine",
                     "gadgets": ["pop_ret", "mov_ret", "jmp_eax"],
-                    "target": "skip_license_check"
+                    "target": "skip_license_check",
                 },
                 {
                     "name": "Shell Execution Chain",
                     "description": "Execute system shell",
                     "gadgets": ["pop_pop_ret", "add_ret", "call_eax"],
-                    "target": "system_call"
-                }
+                    "target": "system_call",
+                },
             ]
 
             result = {
                 "success": True,
                 "gadgets": found_gadgets,
                 "chains": chains,
-                "message": f"Generated {len(chains)} ROP chains with {len(found_gadgets)} gadgets"
+                "message": f"Generated {len(chains)} ROP chains with {len(found_gadgets)} gadgets",
             }
 
             if hasattr(app, "update_output"):
@@ -1710,9 +1709,9 @@ except ImportError as e:
 
             return result
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as rop_error:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as rop_error:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", rop_error)
-            error_msg = f"Error in ROP chain generation: {str(rop_error)}"
+            error_msg = f"Error in ROP chain generation: {rop_error!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"[ROP Generator] {error_msg}")
             return {"success": False, "error": error_msg}
@@ -1807,7 +1806,7 @@ except ImportError as e:
                 b"ASPack": "ASPack packer",
                 b"PECompact": "PECompact packer",
                 b"Themida": "Themida protector",
-                b".vmp": "VMProtect"
+                b".vmp": "VMProtect",
             }
 
             for sig, name in packer_signatures.items():
@@ -1857,9 +1856,9 @@ except ImportError as e:
             except (ImportError, AttributeError, ValueError, RuntimeError) as e:
                 logger.debug("AI analysis not available: %s", e)
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as analysis_error:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as analysis_error:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", analysis_error)
-            results.append(f"Error during analysis: {str(analysis_error)}")
+            results.append(f"Error during analysis: {analysis_error!s}")
 
         return results
     def enhanced_deep_license_analysis(binary_path):
@@ -1876,7 +1875,7 @@ except ImportError as e:
             "registry_checks": [],
             "time_checks": [],
             "hardware_checks": [],
-            "confidence": 0.0
+            "confidence": 0.0,
         }
 
         try:
@@ -1894,7 +1893,7 @@ except ImportError as e:
                 (b"CheckSerialNumber", "Serial number validation"),
                 (b"AuthenticateUser", "User authentication"),
                 (b"LicenseManager", "License management class"),
-                (b"ActivateProduct", "Product activation")
+                (b"ActivateProduct", "Product activation"),
             ]
 
             for pattern, description in license_patterns:
@@ -1902,7 +1901,7 @@ except ImportError as e:
                     results["license_checks"].append({
                         "pattern": pattern.decode("ascii", errors="ignore"),
                         "description": description,
-                        "offset": hex(data.find(pattern))
+                        "offset": hex(data.find(pattern)),
                     })
 
             # Protection method detection
@@ -1914,14 +1913,14 @@ except ImportError as e:
                 (b"VMProtect", "VMProtect virtualization"),
                 (b"Themida", "Themida/WinLicense"),
                 (b"SecuROM", "SecuROM protection"),
-                (b"SafeDisc", "SafeDisc protection")
+                (b"SafeDisc", "SafeDisc protection"),
             ]
 
             for pattern, description in protection_patterns:
                 if pattern in data:
                     results["protection_methods"].append({
                         "type": pattern.decode("ascii", errors="ignore"),
-                        "description": description
+                        "description": description,
                     })
 
             # Cryptographic algorithm detection
@@ -1932,14 +1931,14 @@ except ImportError as e:
                 (b"MD5", "MD5 hashing (weak)"),
                 (b"CryptGenKey", "Windows crypto API"),
                 (b"CryptHashData", "Windows hash API"),
-                (b"ECDSA", "Elliptic curve signatures")
+                (b"ECDSA", "Elliptic curve signatures"),
             ]
 
             for pattern, description in crypto_patterns:
                 if pattern in data:
                     results["key_algorithms"].append({
                         "algorithm": pattern.decode("ascii", errors="ignore"),
-                        "description": description
+                        "description": description,
                     })
 
             # Network license server patterns
@@ -1950,14 +1949,14 @@ except ImportError as e:
                 (b"activation.", "Activation endpoint"),
                 (b":1947", "HASP port (1947)"),
                 (b":27000", "FlexLM port (27000)"),
-                (b":5093", "Sentinel port (5093)")
+                (b":5093", "Sentinel port (5093)"),
             ]
 
             for pattern, description in network_patterns:
                 if pattern in data:
                     results["network_calls"].append({
                         "pattern": pattern.decode("ascii", errors="ignore"),
-                        "description": description
+                        "description": description,
                     })
 
             # Registry key patterns (Windows)
@@ -1966,14 +1965,14 @@ except ImportError as e:
                 (b"HKEY_LOCAL_MACHINE\\\\SOFTWARE", "HKLM software key"),
                 (b"HKEY_CURRENT_USER\\\\Software", "HKCU software key"),
                 (b"RegQueryValueEx", "Registry value query"),
-                (b"RegOpenKeyEx", "Registry key open")
+                (b"RegOpenKeyEx", "Registry key open"),
             ]
 
             for pattern, description in registry_patterns:
                 if pattern in data:
                     results["registry_checks"].append({
                         "pattern": pattern.decode("ascii", errors="ignore"),
-                        "description": description
+                        "description": description,
                     })
 
             # Time-based check patterns
@@ -1982,14 +1981,14 @@ except ImportError as e:
                 (b"GetTickCount", "Tick count check"),
                 (b"QueryPerformanceCounter", "Performance counter"),
                 (b"time.time", "Python time check"),
-                (b"DateTime.Now", ".NET time check")
+                (b"DateTime.Now", ".NET time check"),
             ]
 
             for pattern, description in time_patterns:
                 if pattern in data:
                     results["time_checks"].append({
                         "pattern": pattern.decode("ascii", errors="ignore"),
-                        "description": description
+                        "description": description,
                     })
 
             # Hardware fingerprint patterns
@@ -1999,14 +1998,14 @@ except ImportError as e:
                 (b"GetUserName", "Username check"),
                 (b"GetSystemInfo", "System information"),
                 (b"cpuid", "CPU identification"),
-                (b"MachineGuid", "Machine GUID check")
+                (b"MachineGuid", "Machine GUID check"),
             ]
 
             for pattern, description in hardware_patterns:
                 if pattern in data:
                     results["hardware_checks"].append({
                         "pattern": pattern.decode("ascii", errors="ignore"),
-                        "description": description
+                        "description": description,
                     })
 
             # Calculate confidence score
@@ -2029,7 +2028,7 @@ except ImportError as e:
                 "has_license_checks": len(results["license_checks"]) > 0,
                 "has_network_activation": len(results["network_calls"]) > 0,
                 "has_hardware_binding": len(results["hardware_checks"]) > 0,
-                "protection_level": "high" if total_indicators > 10 else "medium" if total_indicators > 5 else "low"
+                "protection_level": "high" if total_indicators > 10 else "medium" if total_indicators > 5 else "low",
             }
 
             # Add AI-powered analysis and suggestions
@@ -2042,7 +2041,7 @@ except ImportError as e:
                     results["ai_analysis"] = {
                         "findings": ai_analysis.get("findings", []),
                         "security_issues": ai_analysis.get("security_issues", []),
-                        "recommendations": ai_analysis.get("recommendations", [])
+                        "recommendations": ai_analysis.get("recommendations", []),
                     }
 
                 # Get targeted suggestions for license analysis
@@ -2053,9 +2052,9 @@ except ImportError as e:
             except (ImportError, AttributeError, ValueError, RuntimeError) as e:
                 logger.debug("AI analysis not available for license analysis: %s", e)
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as license_error:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as license_error:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", license_error)
-            results["error"] = f"Analysis error: {str(license_error)}"
+            results["error"] = f"Analysis error: {license_error!s}"
 
         return results
     def deep_runtime_monitoring(binary_path, timeout=30000):
@@ -2078,7 +2077,7 @@ except ImportError as e:
                 "process_creation": [],
                 "memory_operations": [],
                 "time_checks": 0,
-                "crypto_operations": 0
+                "crypto_operations": 0,
             }
 
             # Real API call monitoring using psutil and process monitoring
@@ -2099,7 +2098,7 @@ except ImportError as e:
                                     "api": "connect",
                                     "description": f"Network connection to {conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "Local connection",
                                     "pid": proc_info["pid"],
-                                    "timestamp": time.time()
+                                    "timestamp": time.time(),
                                 })
 
                             # Monitor file handles
@@ -2110,11 +2109,10 @@ except ImportError as e:
                                         "api": "CreateFileW",
                                         "description": f"File access: {file_handle.path}",
                                         "pid": proc_info["pid"],
-                                        "timestamp": time.time()
+                                        "timestamp": time.time(),
                                     })
                             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                                 logger.error("(psutil.NoSuchProcess, psutil.AccessDenied) in main_app.py: %s", e)
-                                pass
 
                     except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) as e:
                         logger.error("(psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) in main_app.py: %s", e)
@@ -2125,7 +2123,7 @@ except ImportError as e:
                 else:
                     results.append(f"Real-time monitoring detected {len(monitored_apis)} API operations")
 
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as monitor_error:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as monitor_error:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", monitor_error)
                 results.append(f"API monitoring error: {monitor_error}")
 
@@ -2133,7 +2131,7 @@ except ImportError as e:
             file_ops = [
                 {"operation": "CreateFile", "path": "C:\\\\Windows\\\\System32\\\\license.dat", "access": "READ"},
                 {"operation": "ReadFile", "path": "C:\\\\Program Files\\\\App\\\\config.ini", "bytes": 1024},
-                {"operation": "WriteFile", "path": "%APPDATA%\\\\app_trial.key", "bytes": 64}
+                {"operation": "WriteFile", "path": "%APPDATA%\\\\app_trial.key", "bytes": 64},
             ]
 
             detected_files = random.randint(1, len(file_ops))
@@ -2146,7 +2144,7 @@ except ImportError as e:
             reg_ops = [
                 {"operation": "RegOpenKey", "key": "HKLM\\\\Software\\\\AppName\\\\License"},
                 {"operation": "RegQueryValue", "key": "HKCU\\\\Software\\\\AppName\\\\Trial"},
-                {"operation": "RegSetValue", "key": "HKCU\\\\Software\\\\AppName\\\\InstallDate"}
+                {"operation": "RegSetValue", "key": "HKCU\\\\Software\\\\AppName\\\\InstallDate"},
             ]
 
             detected_reg = random.randint(1, 3)
@@ -2160,7 +2158,7 @@ except ImportError as e:
                 network_ops = [
                     {"operation": "connect", "host": "licensing.vendor.com", "port": 443},
                     {"operation": "send", "host": "activation.vendor.com", "bytes": 256},
-                    {"operation": "recv", "host": "update.vendor.com", "bytes": 1024}
+                    {"operation": "recv", "host": "update.vendor.com", "bytes": 1024},
                 ]
 
                 op = random.choice(network_ops)
@@ -2185,7 +2183,7 @@ except ImportError as e:
                 "hardware_binding": False,
                 "online_validation": False,
                 "time_tampering_detection": False,
-                "debugger_detection": False
+                "debugger_detection": False,
             }
 
             # Real behavior detection from process monitoring
@@ -2241,9 +2239,9 @@ except ImportError as e:
             if license_behaviors["debugger_detection"]:
                 results.append("- Use kernel-mode debugging or virtualization")
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as runtime_error:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as runtime_error:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", runtime_error)
-            results.append(f"Error during monitoring: {str(runtime_error)}")
+            results.append(f"Error during monitoring: {runtime_error!s}")
 
         return results
 
@@ -2271,34 +2269,34 @@ def _generate_ssl_certificates(cert_store_path):
             # Generate CA private key
             ca_key = rsa.generate_private_key(
                 public_exponent=65537,
-                key_size=2048
+                key_size=2048,
             )
 
             # Generate CA certificate
             subject = issuer = x509.Name([
-                x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"Security"),
-                x509.NameAttribute(NameOID.LOCALITY_NAME, u"Research"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Intellicrack CA"),
-                x509.NameAttribute(NameOID.COMMON_NAME, u"Intellicrack Root CA"),
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Security"),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, "Research"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack CA"),
+                x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack Root CA"),
             ])
 
             ca_cert = x509.CertificateBuilder().subject_name(
-                subject
+                subject,
             ).issuer_name(
-                issuer
+                issuer,
             ).public_key(
-                ca_key.public_key()
+                ca_key.public_key(),
             ).serial_number(
-                x509.random_serial_number()
+                x509.random_serial_number(),
             ).not_valid_before(
-                datetime.utcnow()
+                datetime.utcnow(),
             ).not_valid_after(
-                datetime.utcnow() + timedelta(days=3650)
+                datetime.utcnow() + timedelta(days=3650),
             ).add_extension(
                 x509.SubjectAlternativeName([
-                    x509.DNSName(u"localhost"),
-                    x509.DNSName(u"*.local"),
+                    x509.DNSName("localhost"),
+                    x509.DNSName("*.local"),
                 ]),
                 critical=False,
             ).add_extension(
@@ -2309,34 +2307,34 @@ def _generate_ssl_certificates(cert_store_path):
             # Generate server private key
             server_key = rsa.generate_private_key(
                 public_exponent=65537,
-                key_size=2048
+                key_size=2048,
             )
 
             # Generate server certificate
             server_subject = x509.Name([
-                x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"Security"),
-                x509.NameAttribute(NameOID.LOCALITY_NAME, u"Research"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Intellicrack"),
-                x509.NameAttribute(NameOID.COMMON_NAME, u"Intellicrack Server"),
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Security"),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, "Research"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
+                x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack Server"),
             ])
 
             server_cert = x509.CertificateBuilder().subject_name(
-                server_subject
+                server_subject,
             ).issuer_name(
-                ca_cert.issuer
+                ca_cert.issuer,
             ).public_key(
-                server_key.public_key()
+                server_key.public_key(),
             ).serial_number(
-                x509.random_serial_number()
+                x509.random_serial_number(),
             ).not_valid_before(
-                datetime.utcnow()
+                datetime.utcnow(),
             ).not_valid_after(
-                datetime.utcnow() + timedelta(days=365)
+                datetime.utcnow() + timedelta(days=365),
             ).add_extension(
                 x509.SubjectAlternativeName([
-                    x509.DNSName(u"localhost"),
-                    x509.DNSName(u"127.0.0.1"),
+                    x509.DNSName("localhost"),
+                    x509.DNSName("127.0.0.1"),
                 ]),
                 critical=False,
             ).sign(ca_key, hashes.SHA256())
@@ -2348,7 +2346,7 @@ def _generate_ssl_certificates(cert_store_path):
                 f.write(ca_key.private_bytes(
                     encoding=serialization.Encoding.PEM,
                     format=serialization.PrivateFormat.TraditionalOpenSSL,
-                    encryption_algorithm=serialization.NoEncryption()
+                    encryption_algorithm=serialization.NoEncryption(),
                 ))
             with open(server_cert_path, "wb") as f:
                 f.write(server_cert.public_bytes(serialization.Encoding.PEM))
@@ -2356,7 +2354,7 @@ def _generate_ssl_certificates(cert_store_path):
                 f.write(server_key.private_bytes(
                     encoding=serialization.Encoding.PEM,
                     format=serialization.PrivateFormat.TraditionalOpenSSL,
-                    encryption_algorithm=serialization.NoEncryption()
+                    encryption_algorithm=serialization.NoEncryption(),
                 ))
 
         except ImportError:
@@ -2377,10 +2375,10 @@ def _generate_ssl_certificates(cert_store_path):
             "server_cert": server_cert_path,
             "server_key": server_key_path,
             "generated_at": time.time(),
-            "valid_until": time.time() + (365 * 24 * 3600)  # 1 year
+            "valid_until": time.time() + (365 * 24 * 3600),  # 1 year
         }
 
-    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
         logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
         return {"error": f"Certificate generation failed: {e}"}
 
@@ -2403,13 +2401,12 @@ def _create_ssl_proxy_server(config):
                 "started_at": time.time(),
                 "connections": 0,
                 "certificate_store": config.get("certificate_store", get_resource_path("ssl_certificates/")),
-                "interceptor": interceptor
+                "interceptor": interceptor,
             }
             return proxy_info
-        else:
-            return None
+        return None
 
-    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
         logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
         return None
 
@@ -2428,7 +2425,7 @@ def _check_intercepted_traffic(proxy_server):
                 "path": "/api/validate",
                 "request_size": 245,
                 "response_size": 128,
-                "status_code": 200
+                "status_code": 200,
             },
             {
                 "timestamp": time.time() - 15,
@@ -2437,13 +2434,13 @@ def _check_intercepted_traffic(proxy_server):
                 "path": "/check",
                 "request_size": 156,
                 "response_size": 89,
-                "status_code": 200
-            }
+                "status_code": 200,
+            },
         ]
 
         return intercepted_requests
 
-    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
         logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
         return []
 
@@ -2465,7 +2462,7 @@ def _check_intercepted_traffic(proxy_server):
                     "port": 27000,
                     "signatures": ["lmgrd", "HELLO", "GETLIC"],
                     "version": "11.16.2",
-                    "vendor": "Flexera Software"
+                    "vendor": "Flexera Software",
                 },
                 {
                     "protocol": "HASP",
@@ -2473,7 +2470,7 @@ def _check_intercepted_traffic(proxy_server):
                     "port": 1947,
                     "signatures": ["\x00\x00\x00\x0C", "HASP_LOGIN"],
                     "version": "7.60",
-                    "vendor": "SafeNet/Thales"
+                    "vendor": "SafeNet/Thales",
                 },
                 {
                     "protocol": "Sentinel RMS",
@@ -2481,8 +2478,8 @@ def _check_intercepted_traffic(proxy_server):
                     "port": 5093,
                     "signatures": ["SNTL", "RMS_REQUEST"],
                     "version": "9.7.0",
-                    "vendor": "Thales"
-                }
+                    "vendor": "Thales",
+                },
             ]
 
             # Real service fingerprinting using port scanning
@@ -2491,14 +2488,14 @@ def _check_intercepted_traffic(proxy_server):
                     "active": True,
                     "endpoints": ["/api/validate", "/api/activate", "/api/deactivate"],
                     "auth_required": True,
-                    "encryption": "TLS 1.2"
+                    "encryption": "TLS 1.2",
                 },
                 "update_service": {
                     "active": True,
                     "endpoints": ["/updates/check", "/updates/download"],
                     "auth_required": False,
-                    "encryption": "HTTPS"
-                }
+                    "encryption": "HTTPS",
+                },
             }
 
             result = {
@@ -2507,7 +2504,7 @@ def _check_intercepted_traffic(proxy_server):
                 "protocols": detected_protocols,
                 "services": services,
                 "best_match": detected_protocols[0] if detected_protocols else None,
-                "message": f"Identified {len(detected_protocols)} protocols on {target_host}:{target_port}"
+                "message": f"Identified {len(detected_protocols)} protocols on {target_host}:{target_port}",
             }
 
             if hasattr(app, "update_output"):
@@ -2517,9 +2514,9 @@ def _check_intercepted_traffic(proxy_server):
 
             return result
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as protocol_error:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as protocol_error:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", protocol_error)
-            error_msg = f"Error in protocol fingerprinting: {str(protocol_error)}"
+            error_msg = f"Error in protocol fingerprinting: {protocol_error!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"[Protocol] {error_msg}")
             return {"success": False, "error": error_msg}
@@ -2541,7 +2538,7 @@ def _check_intercepted_traffic(proxy_server):
                 "activation.microsoft.com",
                 "license.autodesk.com",
                 "api.licenses.unity3d.com",
-                "licensing.jetbrains.com"
+                "licensing.jetbrains.com",
             ])
 
             # Simulate API hook configuration
@@ -2550,7 +2547,7 @@ def _check_intercepted_traffic(proxy_server):
                 "local_server_port": 8080,
                 "certificate_pinning_bypass": True,
                 "response_modification": True,
-                "logging_enabled": True
+                "logging_enabled": True,
             }
 
             # Simulate hooked API calls
@@ -2562,7 +2559,7 @@ def _check_intercepted_traffic(proxy_server):
                     "method": "POST",
                     "original_response": {"valid": False, "reason": "Invalid license"},
                     "modified_response": {"valid": True, "expires": "2026-12-31", "features": ["all"]},
-                    "status": "Modified"
+                    "status": "Modified",
                 },
                 {
                     "timestamp": "2025-01-06 12:30:15",
@@ -2571,7 +2568,7 @@ def _check_intercepted_traffic(proxy_server):
                     "method": "GET",
                     "original_response": {"activated": False},
                     "modified_response": {"activated": True, "type": "Professional", "volume": True},
-                    "status": "Modified"
+                    "status": "Modified",
                 },
                 {
                     "timestamp": "2025-01-06 12:30:30",
@@ -2580,8 +2577,8 @@ def _check_intercepted_traffic(proxy_server):
                     "method": "POST",
                     "original_response": {"subscription": "expired"},
                     "modified_response": {"subscription": "active", "tier": "premium", "seats": 999},
-                    "status": "Modified"
-                }
+                    "status": "Modified",
+                },
             ]
 
             # Simulate bypass techniques
@@ -2589,18 +2586,18 @@ def _check_intercepted_traffic(proxy_server):
                 "dns_redirect": {
                     "status": "Active",
                     "redirects": len(target_services),
-                    "local_ip": "127.0.0.1"
+                    "local_ip": "127.0.0.1",
                 },
                 "certificate_bypass": {
                     "status": "Active",
                     "method": "Dynamic certificate generation",
-                    "pinning_defeated": True
+                    "pinning_defeated": True,
                 },
                 "api_emulation": {
                     "status": "Active",
                     "endpoints_emulated": 15,
-                    "success_rate": 0.98
-                }
+                    "success_rate": 0.98,
+                },
             }
 
             result = {
@@ -2610,7 +2607,7 @@ def _check_intercepted_traffic(proxy_server):
                 "hooked_calls": hooked_calls,
                 "bypass_techniques": bypass_techniques,
                 "total_intercepted": len(hooked_calls),
-                "message": f"Cloud license hooking active for {len(target_services)} services"
+                "message": f"Cloud license hooking active for {len(target_services)} services",
             }
 
             if hasattr(app, "update_output"):
@@ -2620,9 +2617,9 @@ def _check_intercepted_traffic(proxy_server):
 
             return result
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as cloud_error:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as cloud_error:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", cloud_error)
-            error_msg = f"Error in cloud license hooking: {str(cloud_error)}"
+            error_msg = f"Error in cloud license hooking: {cloud_error!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"[Cloud License] {error_msg}")
             return {"success": False, "error": error_msg}
@@ -2649,7 +2646,7 @@ def _check_intercepted_traffic(proxy_server):
                     "max_edges": 2000,
                     "analysis_depth": 3,
                     "highlight_patterns": True,
-                    "export_formats": ["png", "svg", "dot", "html"]
+                    "export_formats": ["png", "svg", "dot", "html"],
                 }
 
             # Initialize analysis tools
@@ -2659,7 +2656,7 @@ def _check_intercepted_traffic(proxy_server):
                     "networkx_available": False,
                     "matplotlib_available": False,
                     "capstone_available": False,
-                    "use_fallback_analysis": True
+                    "use_fallback_analysis": True,
                 }
 
             # Check for available analysis tools (simplified checking)
@@ -2685,7 +2682,7 @@ def _check_intercepted_traffic(proxy_server):
                             label=func.get("name", f"sub_{func['address']}"),
                             size=func.get("size", 0),
                             type=func.get("type", "function"),
-                            confidence=func.get("confidence", 0.5)
+                            confidence=func.get("confidence", 0.5),
                         )
 
                     # Add edges (control flow)
@@ -2694,7 +2691,7 @@ def _check_intercepted_traffic(proxy_server):
                             edge["from"],
                             edge["to"],
                             type=edge.get("type", "call"),
-                            condition=edge.get("condition", None)
+                            condition=edge.get("condition", None),
                         )
 
                     # Calculate graph metrics
@@ -2702,7 +2699,7 @@ def _check_intercepted_traffic(proxy_server):
                         "nodes": app.cfg_graph.number_of_nodes(),
                         "edges": app.cfg_graph.number_of_edges(),
                         "density": networkx.density(app.cfg_graph) if app.cfg_graph.number_of_nodes() > 0 else 0,
-                        "is_connected": networkx.is_weakly_connected(app.cfg_graph) if app.cfg_graph.number_of_nodes() > 0 else False
+                        "is_connected": networkx.is_weakly_connected(app.cfg_graph) if app.cfg_graph.number_of_nodes() > 0 else False,
                     }
 
                     # Find important nodes
@@ -2800,9 +2797,8 @@ def _check_intercepted_traffic(proxy_server):
                             matplotlib.pyplot.savefig(save_path, dpi=300, bbox_inches="tight")
                             matplotlib.pyplot.close()
                             return {"status": "saved", "path": save_path}
-                        else:
-                            matplotlib.pyplot.show()
-                            return {"status": "displayed"}
+                        matplotlib.pyplot.show()
+                        return {"status": "displayed"}
 
                     except Exception as e:
                         logger.error(f"Error visualizing CFG: {e}")
@@ -2813,7 +2809,6 @@ def _check_intercepted_traffic(proxy_server):
 
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             try:
                 import r2pipe
@@ -2856,7 +2851,7 @@ def _check_intercepted_traffic(proxy_server):
                                 "name": func.get("name", "unknown"),
                                 "size": func.get("size", 0),
                                 "type": "function",
-                                "confidence": 0.9
+                                "confidence": 0.9,
                             })
 
                             # Get function calls
@@ -2866,7 +2861,7 @@ def _check_intercepted_traffic(proxy_server):
                                     func_edges.append({
                                         "from": hex(func.get("offset", 0)),
                                         "to": hex(call.get("to", 0)),
-                                        "type": "call"
+                                        "type": "call",
                                     })
 
                         # Find interesting strings (license-related)
@@ -2877,7 +2872,7 @@ def _check_intercepted_traffic(proxy_server):
                                 license_strings.append({
                                     "address": hex(s.get("vaddr", 0)),
                                     "string": s.get("string", ""),
-                                    "type": "license_related"
+                                    "type": "license_related",
                                 })
 
                         result = {
@@ -2888,7 +2883,7 @@ def _check_intercepted_traffic(proxy_server):
                             "imports": imports[:50],  # Limit imports
                             "strings": strings[:100],  # Limit strings
                             "license_strings": license_strings,
-                            "sections": sections
+                            "sections": sections,
                         }
 
                         # Close r2pipe connection
@@ -2944,7 +2939,7 @@ def _check_intercepted_traffic(proxy_server):
                                 "mnemonic": insn.mnemonic,
                                 "op_str": insn.op_str,
                                 "bytes": insn.bytes.hex(),
-                                "size": insn.size
+                                "size": insn.size,
                             }
 
                             # Check for control flow instructions
@@ -2954,7 +2949,7 @@ def _check_intercepted_traffic(proxy_server):
                                     basic_blocks.append({
                                         "start": current_block[0]["address"],
                                         "end": insn_dict["address"],
-                                        "instructions": current_block + [insn_dict]
+                                        "instructions": current_block + [insn_dict],
                                     })
                                     current_block = []
                             else:
@@ -2975,7 +2970,7 @@ def _check_intercepted_traffic(proxy_server):
                             basic_blocks.append({
                                 "start": current_block[0]["address"],
                                 "end": current_block[-1]["address"],
-                                "instructions": current_block
+                                "instructions": current_block,
                             })
 
                         return {
@@ -2983,7 +2978,7 @@ def _check_intercepted_traffic(proxy_server):
                             "instructions": instructions,
                             "basic_blocks": basic_blocks,
                             "total_instructions": len(instructions),
-                            "architecture": f"{arch}-{mode}"
+                            "architecture": f"{arch}-{mode}",
                         }
 
                     except Exception as e:
@@ -2995,7 +2990,6 @@ def _check_intercepted_traffic(proxy_server):
 
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             # Initialize function analysis data
             if not hasattr(app, "cfg_functions"):
@@ -3010,17 +3004,17 @@ def _check_intercepted_traffic(proxy_server):
                     "keywords": [
                         "license", "licens", "key", "serial", "activation", "activate",
                         "register", "registr", "valid", "check", "verify", "auth",
-                        "trial", "demo", "expire", "expir", "cracked", "crack"
+                        "trial", "demo", "expire", "expir", "cracked", "crack",
                     ],
                     "api_calls": [
                         "GetTickCount", "GetSystemTime", "GetLocalTime", "timeGetTime",
                         "CreateMutex", "OpenMutex", "RegOpenKey", "RegQueryValue",
-                        "GetVolumeInformation", "GetUserName", "GetComputerName"
+                        "GetVolumeInformation", "GetUserName", "GetComputerName",
                     ],
                     "crypto_functions": [
                         "CryptHashData", "CryptCreateHash", "MD5", "SHA1", "SHA256",
-                        "AES_Encrypt", "DES_Encrypt", "RSA_", "encrypt", "decrypt"
-                    ]
+                        "AES_Encrypt", "DES_Encrypt", "RSA_", "encrypt", "decrypt",
+                    ],
                 }
 
             # Initialize basic control flow analysis
@@ -3060,7 +3054,7 @@ def _check_intercepted_traffic(proxy_server):
                                 "address": hex(func["address"]),
                                 "pattern": func["pattern_hex"],
                                 "type": func["type"],
-                                "confidence": func["confidence"]
+                                "confidence": func["confidence"],
                             })
 
                     # Store detected functions
@@ -3077,7 +3071,7 @@ def _check_intercepted_traffic(proxy_server):
                             license_hits.append({
                                 "keyword": keyword,
                                 "address": hex(0x400000 + pos),
-                                "context": binary_data[max(0, pos-10):pos+len(keyword)+10].hex()
+                                "context": binary_data[max(0, pos-10):pos+len(keyword)+10].hex(),
                             })
 
                     app.cfg_license_hits = license_hits[:10]  # Keep top 10
@@ -3092,9 +3086,8 @@ def _check_intercepted_traffic(proxy_server):
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", cfg_error)
                     if hasattr(app, "update_output"):
                         app.update_output.emit(log_message(f"[CFG Explorer] Error analyzing binary: {cfg_error}"))
-            else:
-                if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[CFG Explorer] No binary loaded for analysis"))
+            elif hasattr(app, "update_output"):
+                app.update_output.emit(log_message("[CFG Explorer] No binary loaded for analysis"))
 
             # Initialize graph visualization data
             if not hasattr(app, "cfg_graph_data"):
@@ -3104,7 +3097,7 @@ def _check_intercepted_traffic(proxy_server):
                     "layouts": {},
                     "current_layout": "spring",
                     "node_styles": {},
-                    "edge_styles": {}
+                    "edge_styles": {},
                 }
 
             # Create sample graph if we have detected functions
@@ -3119,7 +3112,7 @@ def _check_intercepted_traffic(proxy_server):
                         "label": f"Function at {func['address']}",
                         "address": func["address"],
                         "type": "function",
-                        "confidence": func.get("confidence", 0.5)
+                        "confidence": func.get("confidence", 0.5),
                     })
 
                 # Perform real CFG analysis to determine edges
@@ -3199,7 +3192,7 @@ def _check_intercepted_traffic(proxy_server):
                     "symbolic_input_size": 16,
                     "enable_hooks": True,
                     "track_constraints": True,
-                    "memory_limit": "2GB"
+                    "memory_limit": "2GB",
                 }
 
             # Initialize symbolic execution tracking
@@ -3211,7 +3204,7 @@ def _check_intercepted_traffic(proxy_server):
                     "discovered_states": 0,
                     "terminated_states": 0,
                     "error_states": 0,
-                    "execution_tree": {}
+                    "execution_tree": {},
                 }
 
             # Check for available symbolic execution engines
@@ -3220,7 +3213,7 @@ def _check_intercepted_traffic(proxy_server):
                 "angr": False,
                 "triton": False,
                 "z3": False,
-                "simconcolic": False
+                "simconcolic": False,
             }
 
             try:
@@ -3259,7 +3252,7 @@ def _check_intercepted_traffic(proxy_server):
                             "status": "success",
                             "states_explored": len(m.all_states),
                             "test_cases": len(m.testcases),
-                            "coverage": m.coverage if hasattr(m, "coverage") else "N/A"
+                            "coverage": m.coverage if hasattr(m, "coverage") else "N/A",
                         }
                     except Exception as e:
                         return {"status": "error", "error": str(e)}
@@ -3268,7 +3261,6 @@ def _check_intercepted_traffic(proxy_server):
 
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             try:
                 import angr
@@ -3302,7 +3294,7 @@ def _check_intercepted_traffic(proxy_server):
                             "paths_explored": len(simgr.active) + len(simgr.deadended),
                             "found_states": len(found_states),
                             "deadended": len(simgr.deadended),
-                            "entry_point": hex(proj.entry)
+                            "entry_point": hex(proj.entry),
                         }
                     except Exception as e:
                         return {"status": "error", "error": str(e)}
@@ -3311,7 +3303,6 @@ def _check_intercepted_traffic(proxy_server):
 
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             try:
                 import triton
@@ -3351,7 +3342,7 @@ def _check_intercepted_traffic(proxy_server):
                         return {
                             "status": "success",
                             "instructions_processed": ctx.getPathConstraints(),
-                            "symbolic_variables": len(ctx.getSymbolicVariables())
+                            "symbolic_variables": len(ctx.getSymbolicVariables()),
                         }
                     except Exception as e:
                         return {"status": "error", "error": str(e)}
@@ -3360,7 +3351,6 @@ def _check_intercepted_traffic(proxy_server):
 
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             try:
                 import z3
@@ -3392,10 +3382,9 @@ def _check_intercepted_traffic(proxy_server):
                             return {
                                 "status": "satisfiable",
                                 "model": str(model),
-                                "solutions": {str(d): model[d].as_long() for d in model.decls()}
+                                "solutions": {str(d): model[d].as_long() for d in model.decls()},
                             }
-                        else:
-                            return {"status": "unsatisfiable"}
+                        return {"status": "unsatisfiable"}
                     except Exception as e:
                         return {"status": "error", "error": str(e)}
 
@@ -3403,7 +3392,6 @@ def _check_intercepted_traffic(proxy_server):
 
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             try:
                 scripts_dir = get_resource_path("scripts")
@@ -3413,7 +3401,6 @@ def _check_intercepted_traffic(proxy_server):
                         app.update_output.emit(log_message("[Concolic] Simconcolic fallback engine available"))
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                pass
 
             app.execution_engines = execution_engines
 
@@ -3424,7 +3411,7 @@ def _check_intercepted_traffic(proxy_server):
                     "authentication_routines": [],
                     "validation_functions": [],
                     "error_handlers": [],
-                    "branch_points": []
+                    "branch_points": [],
                 }
 
             # Perform basic binary analysis for concolic execution
@@ -3494,7 +3481,7 @@ def _check_intercepted_traffic(proxy_server):
                                         "type": "comparison_instruction",
                                         "pattern": full_pattern.hex(),
                                         "address": hex(0x400000 + pos),
-                                        "instruction": "cmp/test/branch"
+                                        "instruction": "cmp/test/branch",
                                     })
                                     if len(interesting_patterns) > 30:
                                         break
@@ -3507,7 +3494,7 @@ def _check_intercepted_traffic(proxy_server):
                                     "type": "comparison_instruction",
                                     "pattern": pattern.hex(),
                                     "address": hex(0x400000 + pos),
-                                    "instruction": "cmp/test"
+                                    "instruction": "cmp/test",
                                 })
 
                     app.concolic_targets = interesting_patterns[:25]  # Keep top 25
@@ -3527,17 +3514,15 @@ def _check_intercepted_traffic(proxy_server):
 
                         # Run actual concolic execution
                         _perform_real_concolic_execution(app, execution_engines)
-                    else:
-                        if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message("[Concolic] No symbolic execution engines available - using pattern-based analysis"))
+                    elif hasattr(app, "update_output"):
+                        app.update_output.emit(log_message("[Concolic] No symbolic execution engines available - using pattern-based analysis"))
 
                 except (OSError, ValueError, RuntimeError) as concolic_error:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", concolic_error)
                     if hasattr(app, "update_output"):
                         app.update_output.emit(log_message(f"[Concolic] Error analyzing binary: {concolic_error}"))
-            else:
-                if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Concolic] No binary loaded for concolic execution"))
+            elif hasattr(app, "update_output"):
+                app.update_output.emit(log_message("[Concolic] No binary loaded for concolic execution"))
 
             # Initialize constraint solving capabilities
             if not hasattr(app, "constraint_solver"):
@@ -3547,8 +3532,8 @@ def _check_intercepted_traffic(proxy_server):
                     "solver_config": {
                         "timeout": 30,
                         "max_memory": "1GB",
-                        "optimization_level": 2
-                    }
+                        "optimization_level": 2,
+                    },
                 }
 
                 # Check for Z3 solver
@@ -3631,7 +3616,7 @@ def _check_intercepted_traffic(proxy_server):
                 "license_checks_bypassed": [],
                 "constraint_solutions": [],
                 "coverage_percentage": 0,
-                "interesting_inputs": []
+                "interesting_inputs": [],
             }
 
             if execution_engines["angr"]:
@@ -3664,8 +3649,8 @@ def _check_intercepted_traffic(proxy_server):
                         stdin=symbolic_input,
                         add_options={
                             angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
-                            angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
-                        }
+                            angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS,
+                        },
                     )
 
                     # Create simulation manager
@@ -3684,7 +3669,7 @@ def _check_intercepted_traffic(proxy_server):
                                         results["license_checks_bypassed"].append({
                                             "address": hex(state.addr),
                                             "constraints": [str(c) for c in state.solver.constraints[-5:]],
-                                            "input": state.solver.eval(symbolic_input, cast_to=bytes) if state.solver.satisfiable() else None
+                                            "input": state.solver.eval(symbolic_input, cast_to=bytes) if state.solver.satisfiable() else None,
                                         })
 
                                     project.hook(addr, license_hook, length=5)
@@ -3706,7 +3691,7 @@ def _check_intercepted_traffic(proxy_server):
                                 results["vulnerabilities_found"].append({
                                     "type": "crash",
                                     "address": hex(state.addr),
-                                    "input": state.solver.eval(symbolic_input, cast_to=bytes) if state.solver.satisfiable() else None
+                                    "input": state.solver.eval(symbolic_input, cast_to=bytes) if state.solver.satisfiable() else None,
                                 })
 
                             # Collect path constraints
@@ -3717,7 +3702,7 @@ def _check_intercepted_traffic(proxy_server):
                                         "path_id": state.history.lineage[0] if state.history.lineage else 0,
                                         "constraints_count": len(state.solver.constraints),
                                         "input": solution.hex(),
-                                        "reaches_address": hex(state.addr)
+                                        "reaches_address": hex(state.addr),
                                     })
                                 except Exception as e:
                                     logger.debug(f"Failed to hook license check: {e}")
@@ -3736,7 +3721,7 @@ def _check_intercepted_traffic(proxy_server):
                                 results["interesting_inputs"].append({
                                     "input": input_bytes.hex(),
                                     "reaches": "program_end",
-                                    "constraints": len(state.solver.constraints)
+                                    "constraints": len(state.solver.constraints),
                                 })
                             except Exception as e:
                                 logger.debug(f"Failed to collect state info: {e}")
@@ -3744,7 +3729,7 @@ def _check_intercepted_traffic(proxy_server):
                     if hasattr(app, "update_output"):
                         app.update_output.emit(log_message(f"[Concolic] Angr execution complete: {results['paths_explored']} paths explored"))
 
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                     logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                     if hasattr(app, "update_output"):
                         app.update_output.emit(log_message(f"[Concolic] Angr execution error: {e}"))
@@ -3782,8 +3767,8 @@ def _check_intercepted_traffic(proxy_server):
                                             "type": "comparison",
                                             "registers": {
                                                 "eax": cpu.EAX if hasattr(cpu, "EAX") else 0,
-                                                "ebx": cpu.EBX if hasattr(cpu, "EBX") else 0
-                                            }
+                                                "ebx": cpu.EBX if hasattr(cpu, "EBX") else 0,
+                                            },
                                         })
                                 except Exception as e:
                                     logger.debug(f"Failed to hook license check: {e}")
@@ -3806,7 +3791,7 @@ def _check_intercepted_traffic(proxy_server):
                     if hasattr(app, "update_output"):
                         app.update_output.emit(log_message(f"[Concolic] Manticore execution complete: {results['paths_explored']} paths"))
 
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                     logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                     if hasattr(app, "update_output"):
                         app.update_output.emit(log_message(f"[Concolic] Manticore execution error: {e}"))
@@ -3828,13 +3813,13 @@ def _check_intercepted_traffic(proxy_server):
                             results["interesting_inputs"].append({
                                 "input": path.get("input", "").hex() if isinstance(path.get("input"), bytes) else str(path.get("input")),
                                 "reaches": path.get("target_address"),
-                                "path_id": path.get("id")
+                                "path_id": path.get("id"),
                             })
 
                     if hasattr(app, "update_output"):
                         app.update_output.emit(log_message(f"[Concolic] Simconcolic execution complete: {results['paths_explored']} paths"))
 
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                     logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                     if hasattr(app, "update_output"):
                         app.update_output.emit(log_message(f"[Concolic] Simconcolic execution error: {e}"))
@@ -3871,7 +3856,7 @@ def _check_intercepted_traffic(proxy_server):
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Concolic] Execution complete! Explored {results['paths_explored']} paths"))
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Concolic] Error in real execution: {e}"))
@@ -3925,7 +3910,7 @@ def _check_intercepted_traffic(proxy_server):
                                                     "source": source_node,
                                                     "target": target_node,
                                                     "type": "call",
-                                                    "weight": 1.0
+                                                    "weight": 1.0,
                                                 })
 
                         r2.quit()
@@ -3937,7 +3922,7 @@ def _check_intercepted_traffic(proxy_server):
                         logger.error("Import error in main_app.py: %s", e)
                         if hasattr(app, "update_output"):
                             app.update_output.emit(log_message("[Analysis] r2pipe not available, skipping CFG analysis"))
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                         logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                         if hasattr(app, "update_output"):
                             app.update_output.emit(log_message(f"[CFG] Radare2 analysis error: {e}"))
@@ -3998,7 +3983,7 @@ def _check_intercepted_traffic(proxy_server):
                                                                     "target": target_node["id"],
                                                                     "type": "call",
                                                                     "instruction": insn.mnemonic,
-                                                                    "offset": hex(insn.address)
+                                                                    "offset": hex(insn.address),
                                                                 })
                                                                 break
 
@@ -4018,7 +4003,7 @@ def _check_intercepted_traffic(proxy_server):
                                                                 "target": target_node["id"],
                                                                 "type": "jump",
                                                                 "condition": insn.mnemonic,
-                                                                "offset": hex(insn.address)
+                                                                "offset": hex(insn.address),
                                                             })
                                                             break
                                 except Exception as e:
@@ -4027,7 +4012,7 @@ def _check_intercepted_traffic(proxy_server):
                             if hasattr(app, "update_output"):
                                 app.update_output.emit(log_message(f"[CFG] Capstone analysis found {len(edges)} edges"))
 
-                        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                             if hasattr(app, "update_output"):
                                 app.update_output.emit(log_message(f"[CFG] Capstone analysis error: {e}"))
@@ -4084,7 +4069,7 @@ def _check_intercepted_traffic(proxy_server):
                                                         "target": target_node["id"],
                                                         "type": "call_heuristic",
                                                         "probability": probability,
-                                                        "pattern": pattern.hex()
+                                                        "pattern": pattern.hex(),
                                                     })
 
                                                     if len(edges) > 50:
@@ -4108,13 +4093,13 @@ def _check_intercepted_traffic(proxy_server):
                                     "source": nodes[i]["id"],
                                     "target": nodes[i + 1]["id"],
                                     "type": "sequential",
-                                    "distance": next_addr - curr_addr
+                                    "distance": next_addr - curr_addr,
                                 })
 
                         if hasattr(app, "update_output"):
                             app.update_output.emit(log_message(f"[CFG] Pattern analysis found {len(edges)} edges"))
 
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                         logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                         if hasattr(app, "update_output"):
                             app.update_output.emit(log_message(f"[CFG] Pattern analysis error: {e}"))
@@ -4144,7 +4129,7 @@ def _check_intercepted_traffic(proxy_server):
                             "source": sorted_nodes[0]["id"],
                             "target": sorted_nodes[i]["id"],
                             "type": "entry_call",
-                            "weight": 1.0 - (i * 0.2)
+                            "weight": 1.0 - (i * 0.2),
                         })
 
                     # Create some additional connections based on proximity
@@ -4154,10 +4139,10 @@ def _check_intercepted_traffic(proxy_server):
                                 "source": sorted_nodes[i]["id"],
                                 "target": sorted_nodes[i + 1]["id"],
                                 "type": "local_call",
-                                "weight": 0.5
+                                "weight": 0.5,
                             })
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[CFG] Error building edges: {e}"))
@@ -4186,7 +4171,7 @@ def _check_intercepted_traffic(proxy_server):
                     "check_anti_debug": True,
                     "check_anti_vm": True,
                     "check_integrity": True,
-                    "confidence_threshold": 0.7
+                    "confidence_threshold": 0.7,
                 }
 
             # Initialize protection detection results
@@ -4200,7 +4185,7 @@ def _check_intercepted_traffic(proxy_server):
                     "integrity_checks": [],
                     "license_protection": [],
                     "encryption": [],
-                    "overall_risk": "unknown"
+                    "overall_risk": "unknown",
                 }
 
             # Protection detection signatures database
@@ -4209,80 +4194,80 @@ def _check_intercepted_traffic(proxy_server):
                     "upx": {
                         "signatures": [b"UPX!", b"UPX0", b"UPX1"],
                         "description": "UPX executable packer",
-                        "risk_level": "medium"
+                        "risk_level": "medium",
                     },
                     "aspack": {
                         "signatures": [b"ASPack", b".aspack"],
                         "description": "ASPack executable packer",
-                        "risk_level": "medium"
+                        "risk_level": "medium",
                     },
                     "themida": {
                         "signatures": [b"Themida", b"WinLicense"],
                         "description": "Themida/WinLicense protector",
-                        "risk_level": "high"
+                        "risk_level": "high",
                     },
                     "vmprotect": {
                         "signatures": [b"VMProtect", b".vmp0", b".vmp1"],
                         "description": "VMProtect virtualization protector",
-                        "risk_level": "very_high"
+                        "risk_level": "very_high",
                     },
                     "armadillo": {
                         "signatures": [b"Armadillo", b"Silicon Realms"],
                         "description": "Armadillo software protector",
-                        "risk_level": "high"
-                    }
+                        "risk_level": "high",
+                    },
                 },
                 "anti_debug": {
                     "isdebuggerpresent": {
                         "signatures": [b"IsDebuggerPresent", b"KERNEL32.dll"],
                         "description": "Windows API anti-debugging",
-                        "risk_level": "medium"
+                        "risk_level": "medium",
                     },
                     "ntqueryinformationprocess": {
                         "signatures": [b"NtQueryInformationProcess", b"ProcessDebugPort"],
                         "description": "Native API anti-debugging",
-                        "risk_level": "high"
+                        "risk_level": "high",
                     },
                     "outputdebugstring": {
                         "signatures": [b"OutputDebugString", b"SetLastError"],
                         "description": "Debug string anti-debugging",
-                        "risk_level": "medium"
-                    }
+                        "risk_level": "medium",
+                    },
                 },
                 "anti_vm": {
                     "vmware_detection": {
                         "signatures": [b"VMware", b"VMXh", b"VBox", b"VBOX"],
                         "description": "Virtual machine detection",
-                        "risk_level": "medium"
+                        "risk_level": "medium",
                     },
                     "hyperv_detection": {
                         "signatures": [b"Microsoft Hv", b"Hyper-V"],
                         "description": "Hyper-V detection",
-                        "risk_level": "medium"
+                        "risk_level": "medium",
                     },
                     "qemu_detection": {
                         "signatures": [b"QEMU", b"KVMKVMKVM"],
                         "description": "QEMU/KVM detection",
-                        "risk_level": "medium"
-                    }
+                        "risk_level": "medium",
+                    },
                 },
                 "license_protection": {
                     "flexlm": {
                         "signatures": [b"FLEXlm", b"VENDOR_STRING", b"INCREMENT"],
                         "description": "FlexLM licensing system",
-                        "risk_level": "high"
+                        "risk_level": "high",
                     },
                     "hasp": {
                         "signatures": [b"HASP", b"Sentinel", b"SafeNet"],
                         "description": "HASP/Sentinel hardware key",
-                        "risk_level": "very_high"
+                        "risk_level": "very_high",
                     },
                     "wibu": {
                         "signatures": [b"WIBU-SYSTEMS", b"CodeMeter"],
                         "description": "WIBU CodeMeter protection",
-                        "risk_level": "high"
-                    }
-                }
+                        "risk_level": "high",
+                    },
+                },
             }
 
             # Perform protection scan if binary is loaded
@@ -4310,7 +4295,7 @@ def _check_intercepted_traffic(proxy_server):
                                         "risk_level": protection_info["risk_level"],
                                         "signature": signature.decode("ascii", errors="ignore"),
                                         "offset": binary_data.find(signature),
-                                        "confidence": 0.9
+                                        "confidence": 0.9,
                                     }
                                     category_detections.append(detection)
                                     total_detections += 1
@@ -4344,7 +4329,7 @@ def _check_intercepted_traffic(proxy_server):
                                         "risk_level": "medium",
                                         "entropy": entropy,
                                         "offset": i,
-                                        "confidence": 0.7
+                                        "confidence": 0.7,
                                     })
 
                     # Check for suspicious API imports
@@ -4352,7 +4337,7 @@ def _check_intercepted_traffic(proxy_server):
                         b"CreateRemoteThread", b"WriteProcessMemory", b"VirtualAllocEx",
                         b"SetWindowsHookEx", b"GetProcAddress", b"LoadLibrary",
                         b"IsDebuggerPresent", b"CheckRemoteDebuggerPresent",
-                        b"NtQueryInformationProcess", b"NtSetInformationThread"
+                        b"NtQueryInformationProcess", b"NtSetInformationThread",
                     ]
 
                     for api in suspicious_apis:
@@ -4363,7 +4348,7 @@ def _check_intercepted_traffic(proxy_server):
                                 "risk_level": "medium",
                                 "api_name": api.decode("ascii", errors="ignore"),
                                 "offset": binary_data.find(api),
-                                "confidence": 0.6
+                                "confidence": 0.6,
                             })
 
                     # Check for code caves (large sections of null bytes)
@@ -4381,7 +4366,7 @@ def _check_intercepted_traffic(proxy_server):
                                 null_sequences.append({
                                     "start": null_start,
                                     "size": null_count,
-                                    "end": null_start + null_count
+                                    "end": null_start + null_count,
                                 })
                             null_start = -1
                             null_count = 0
@@ -4394,7 +4379,7 @@ def _check_intercepted_traffic(proxy_server):
                                 "risk_level": "low",
                                 "offset": cave["start"],
                                 "size": cave["size"],
-                                "confidence": 0.5
+                                "confidence": 0.5,
                             })
 
                     app.protection_results["heuristic"] = heuristic_detections
@@ -4433,9 +4418,8 @@ def _check_intercepted_traffic(proxy_server):
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                     if hasattr(app, "update_output"):
                         app.update_output.emit(log_message(f"[Protection] Error scanning binary: {e}"))
-            else:
-                if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Protection] No binary loaded for protection scan"))
+            elif hasattr(app, "update_output"):
+                app.update_output.emit(log_message("[Protection] No binary loaded for protection scan"))
 
             # Set up analysis results
             if not hasattr(app, "analyze_results"):
@@ -4453,7 +4437,7 @@ def _check_intercepted_traffic(proxy_server):
                             "low": "⚪",
                             "medium": "🟡",
                             "high": "🟠",
-                            "very_high": "🔴"
+                            "very_high": "🔴",
                         }.get(detection.get("risk_level", "low"), "⚪")
 
                         app.analyze_results.append(f"- {risk_indicator} {detection.get('description', detection.get('name', 'Unknown'))}")
@@ -4499,7 +4483,7 @@ def _check_intercepted_traffic(proxy_server):
                 app.update_output.emit(log_message("[Traffic] Starting network traffic analyzer..."))
 
             # Start capture on available interface
-            interface = kwargs.get("interface", None)
+            interface = kwargs.get("interface")
             if analyzer.start_capture(interface):
                 # Let it capture for a bit
                 time.sleep(5)  # Capture for 5 seconds
@@ -4516,7 +4500,7 @@ def _check_intercepted_traffic(proxy_server):
                 "total_connections": 0,
                 "license_connections": 0,
                 "license_servers": [],
-                "license_conn_details": []
+                "license_conn_details": [],
             }
 
         except ImportError as e:
@@ -4536,8 +4520,8 @@ def _check_intercepted_traffic(proxy_server):
                     "alert_thresholds": {
                         "suspicious_connections": 5,
                         "data_exfiltration_mb": 100,
-                        "unusual_ports": [1337, 31337, 4444, 5555]
-                    }
+                        "unusual_ports": [1337, 31337, 4444, 5555],
+                    },
                 }
 
             # Initialize traffic capture state
@@ -4548,7 +4532,7 @@ def _check_intercepted_traffic(proxy_server):
                     "bytes_captured": 0,
                     "start_time": None,
                     "current_session": None,
-                    "capture_interface": "auto"
+                    "capture_interface": "auto",
                 }
 
             # Initialize traffic analysis results
@@ -4561,7 +4545,7 @@ def _check_intercepted_traffic(proxy_server):
                     "license_traffic": [],
                     "dns_queries": [],
                     "http_requests": [],
-                    "encrypted_connections": []
+                    "encrypted_connections": [],
                 }
 
             # Check for available packet capture libraries
@@ -4569,7 +4553,7 @@ def _check_intercepted_traffic(proxy_server):
                 "scapy": False,
                 "pyshark": False,
                 "dpkt": False,
-                "socket_raw": False
+                "socket_raw": False,
             }
 
             try:
@@ -4579,7 +4563,6 @@ def _check_intercepted_traffic(proxy_server):
                     app.update_output.emit(log_message("[Traffic] Scapy packet manipulation library available"))
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             try:
                 import pyshark  # noqa: F401 - Checking availability
@@ -4588,7 +4571,6 @@ def _check_intercepted_traffic(proxy_server):
                     app.update_output.emit(log_message("[Traffic] PyShark packet analysis library available"))
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             # Note: pcapy support removed - using Scapy exclusively for packet capture
 
@@ -4597,7 +4579,6 @@ def _check_intercepted_traffic(proxy_server):
                 capture_libraries["dpkt"] = True
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             try:
                         # Check if we can create raw sockets (requires admin)
@@ -4607,7 +4588,6 @@ def _check_intercepted_traffic(proxy_server):
             except (OSError, PermissionError) as e:
                 logger.error("(OSError, PermissionError) in main_app.py: %s", e)
                 # Raw sockets require administrator privileges
-                pass
 
             app.capture_libraries = capture_libraries
 
@@ -4648,7 +4628,7 @@ def _check_intercepted_traffic(proxy_server):
                         "name": interface_name,
                         "addresses": [],
                         "is_up": False,
-                        "is_loopback": interface_name.lower().startswith("lo")
+                        "is_loopback": interface_name.lower().startswith("lo"),
                     }
 
                     for addr in addresses:
@@ -4656,7 +4636,7 @@ def _check_intercepted_traffic(proxy_server):
                             interface_info["addresses"].append({
                                 "family": addr.family.name,
                                 "address": addr.address,
-                                "netmask": getattr(addr, "netmask", None)
+                                "netmask": getattr(addr, "netmask", None),
                             })
 
                     # Check if interface is up
@@ -4666,7 +4646,6 @@ def _check_intercepted_traffic(proxy_server):
                         interface_info["speed"] = stats.speed
                     except (KeyError, AttributeError) as e:
                         logger.error("(KeyError, AttributeError) in main_app.py: %s", e)
-                        pass
 
                     available_interfaces.append(interface_info)
 
@@ -4680,7 +4659,7 @@ def _check_intercepted_traffic(proxy_server):
                 available_interfaces = [
                     {"name": "eth0", "addresses": [{"family": "AF_INET", "address": "192.168.1.100"}], "is_up": True},
                     {"name": "wlan0", "addresses": [{"family": "AF_INET", "address": "192.168.1.101"}], "is_up": True},
-                    {"name": "lo", "addresses": [{"family": "AF_INET", "address": "127.0.0.1"}], "is_up": True, "is_loopback": True}
+                    {"name": "lo", "addresses": [{"family": "AF_INET", "address": "127.0.0.1"}], "is_up": True, "is_loopback": True},
                 ]
 
             app.available_interfaces = available_interfaces
@@ -4697,7 +4676,7 @@ def _check_intercepted_traffic(proxy_server):
                         "total_packets": 0,
                         "total_bytes": 0,
                         "license_packets": 0,
-                        "capture_duration": 0
+                        "capture_duration": 0,
                     },
                     "protocol_distribution": {},
                     "connection_flows": [],
@@ -4705,11 +4684,10 @@ def _check_intercepted_traffic(proxy_server):
                     "license_traffic": [],
                     "dns_queries": [],
                     "http_requests": [],
-                    "encrypted_connections": []
+                    "encrypted_connections": [],
                 }
-            else:
-                if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Traffic] No packet capture libraries available - limited analysis mode"))
+            elif hasattr(app, "update_output"):
+                app.update_output.emit(log_message("[Traffic] No packet capture libraries available - limited analysis mode"))
 
             # Set up analysis results
             if not hasattr(app, "analyze_results"):
@@ -4790,7 +4768,7 @@ def _check_intercepted_traffic(proxy_server):
                     "check_signatures": True,
                     "detect_packers": True,
                     "export_symbols": True,
-                    "calculate_hashes": True
+                    "calculate_hashes": True,
                 }
 
             # Initialize format analysis results
@@ -4808,7 +4786,7 @@ def _check_intercepted_traffic(proxy_server):
                     "certificates": [],
                     "version_info": {},
                     "file_hashes": {},
-                    "anomalies": []
+                    "anomalies": [],
                 }
 
             # Format detection signatures
@@ -4818,38 +4796,38 @@ def _check_intercepted_traffic(proxy_server):
                     "secondary_magic": [b"PE\x00\x00"],
                     "description": "Portable Executable (Windows)",
                     "extensions": [".exe", ".dll", ".sys", ".scr"],
-                    "architectures": ["x86", "x86_64", "ARM", "ARM64"]
+                    "architectures": ["x86", "x86_64", "ARM", "ARM64"],
                 },
                 "ELF": {
                     "magic": [b"\x7fELF"],
                     "description": "Executable and Linkable Format (Linux/Unix)",
                     "extensions": [".so", ".o", ""],
-                    "architectures": ["x86", "x86_64", "ARM", "ARM64", "MIPS", "PowerPC"]
+                    "architectures": ["x86", "x86_64", "ARM", "ARM64", "MIPS", "PowerPC"],
                 },
                 "Mach-O": {
                     "magic": [b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"],
                     "description": "Mach Object Format (macOS/iOS)",
                     "extensions": [".dylib", ".bundle", ""],
-                    "architectures": ["x86", "x86_64", "ARM", "ARM64"]
+                    "architectures": ["x86", "x86_64", "ARM", "ARM64"],
                 },
                 "COFF": {
                     "magic": [b"\x4c\x01", b"\x64\x86", b"\x64\xaa"],  # x86, x86_64, ARM64
                     "description": "Common Object File Format",
                     "extensions": [".obj", ".lib"],
-                    "architectures": ["x86", "x86_64", "ARM64"]
+                    "architectures": ["x86", "x86_64", "ARM64"],
                 },
                 "Java_Class": {
                     "magic": [b"\xca\xfe\xba\xbe"],
                     "description": "Java Class File",
                     "extensions": [".class"],
-                    "architectures": ["JVM"]
+                    "architectures": ["JVM"],
                 },
                 "DEX": {
                     "magic": [b"dex\n"],
                     "description": "Dalvik Executable Format (Android)",
                     "extensions": [".dex"],
-                    "architectures": ["Dalvik"]
-                }
+                    "architectures": ["Dalvik"],
+                },
             }
 
             # Perform multi-format analysis if binary is loaded
@@ -4936,7 +4914,7 @@ def _check_intercepted_traffic(proxy_server):
                                                     "name": section_name,
                                                     "virtual_size": virtual_size,
                                                     "virtual_address": hex(virtual_address),
-                                                    "type": "code" if section_name.startswith(".text") else "data"
+                                                    "type": "code" if section_name.startswith(".text") else "data",
                                                 })
 
                                         app.format_analysis_results["sections"] = sections
@@ -5022,7 +5000,6 @@ def _check_intercepted_traffic(proxy_server):
                         hashes["sha3_256"] = hashlib.sha3_256(binary_data).hexdigest()
                     except AttributeError as e:
                         logger.error("Attribute error in main_app.py: %s", e)
-                        pass
 
                     app.format_analysis_results["file_hashes"] = hashes
 
@@ -5035,7 +5012,7 @@ def _check_intercepted_traffic(proxy_server):
                         b"LoadLibrary", b"GetProcAddress", b"VirtualAlloc",
                         b"CreateProcess", b"CreateThread", b"GetSystemInfo",
                         b"RegOpenKey", b"RegQueryValue", b"RegSetValue",
-                        b"MessageBox", b"FindWindow", b"GetWindowText"
+                        b"MessageBox", b"FindWindow", b"GetWindowText",
                     ]
 
                     from ..utils.analysis.pattern_search import find_all_pattern_occurrences
@@ -5052,7 +5029,7 @@ def _check_intercepted_traffic(proxy_server):
                             potential_imports.append({
                                 "api": pattern.decode("ascii", errors="ignore"),
                                 "offset": hex(result["offset"]),
-                                "context": context.hex()
+                                "context": context.hex(),
                             })
 
                             if len(potential_imports) > 50:  # Limit results
@@ -5066,7 +5043,7 @@ def _check_intercepted_traffic(proxy_server):
                     version_patterns = [
                         b"FileVersion", b"ProductVersion", b"CompanyName",
                         b"FileDescription", b"InternalName", b"LegalCopyright",
-                        b"OriginalFilename", b"ProductName"
+                        b"OriginalFilename", b"ProductName",
                     ]
 
                     version_info = {}
@@ -5088,7 +5065,6 @@ def _check_intercepted_traffic(proxy_server):
                                             version_info[pattern.decode("ascii")] = value.strip()
                                     except (UnicodeDecodeError, ValueError) as e:
                                         logger.error("(UnicodeDecodeError, ValueError) in main_app.py: %s", e)
-                                        pass
 
                     app.format_analysis_results["version_info"] = version_info
 
@@ -5118,7 +5094,7 @@ def _check_intercepted_traffic(proxy_server):
                                         "description": f"Very high entropy section at offset 0x{i:x}",
                                         "entropy": entropy,
                                         "offset": hex(i),
-                                        "size": len(chunk)
+                                        "size": len(chunk),
                                     })
 
                     # Check for overlapping sections (PE specific)
@@ -5136,11 +5112,10 @@ def _check_intercepted_traffic(proxy_server):
                                         anomalies.append({
                                             "type": "overlapping_sections",
                                             "description": f'Overlapping sections: {sections[i]["name"]} and {sections[j]["name"]}',
-                                            "sections": [sections[i]["name"], sections[j]["name"]]
+                                            "sections": [sections[i]["name"], sections[j]["name"]],
                                         })
                                 except (ValueError, KeyError) as e:
                                     logger.error("(ValueError, KeyError) in main_app.py: %s", e)
-                                    pass
 
                     app.format_analysis_results["anomalies"] = anomalies
 
@@ -5151,9 +5126,8 @@ def _check_intercepted_traffic(proxy_server):
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                     if hasattr(app, "update_output"):
                         app.update_output.emit(log_message(f"[MultiFormat] Error analyzing binary: {e}"))
-            else:
-                if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[MultiFormat] No binary loaded for multi-format analysis"))
+            elif hasattr(app, "update_output"):
+                app.update_output.emit(log_message("[MultiFormat] No binary loaded for multi-format analysis"))
 
             # Set up analysis results
             if not hasattr(app, "analyze_results"):
@@ -5245,7 +5219,7 @@ def _check_intercepted_traffic(proxy_server):
                     "result_aggregation": "merge",
                     "fault_tolerance": True,
                     "auto_scaling": False,
-                    "resource_monitoring": True
+                    "resource_monitoring": True,
                 }
 
             # Initialize processing cluster state
@@ -5257,7 +5231,7 @@ def _check_intercepted_traffic(proxy_server):
                     "current_load": 0,
                     "tasks_completed": 0,
                     "tasks_failed": 0,
-                    "cluster_status": "initializing"
+                    "cluster_status": "initializing",
                 }
 
             # Initialize processing results
@@ -5268,7 +5242,7 @@ def _check_intercepted_traffic(proxy_server):
                     "resource_usage": {},
                     "task_distribution": {},
                     "error_analysis": {},
-                    "optimization_suggestions": []
+                    "optimization_suggestions": [],
                 }
 
             # Check for available distributed processing frameworks
@@ -5278,7 +5252,7 @@ def _check_intercepted_traffic(proxy_server):
                 "dask": False,
                 "celery": False,
                 "joblib": False,
-                "concurrent_futures": False
+                "concurrent_futures": False,
             }
 
             try:
@@ -5288,7 +5262,6 @@ def _check_intercepted_traffic(proxy_server):
                     app.update_output.emit(log_message("[Distributed] Python multiprocessing available"))
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             try:
                 import ray
@@ -5297,7 +5270,6 @@ def _check_intercepted_traffic(proxy_server):
                     app.update_output.emit(log_message("[Distributed] Ray distributed computing framework available"))
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             try:
                 import dask  # noqa: F401 - Checking availability
@@ -5306,28 +5278,24 @@ def _check_intercepted_traffic(proxy_server):
                     app.update_output.emit(log_message("[Distributed] Dask distributed computing library available"))
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             try:
                 import celery  # noqa: F401 - Checking availability
                 processing_frameworks["celery"] = True
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             try:
                 import joblib  # noqa: F401 - Checking availability
                 processing_frameworks["joblib"] = True
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             try:
                 import concurrent.futures
                 processing_frameworks["concurrent_futures"] = True
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             app.processing_frameworks = processing_frameworks
 
@@ -5359,7 +5327,7 @@ def _check_intercepted_traffic(proxy_server):
                     "status": "active",
                     "load_average": 0.3,
                     "tasks_running": 0,
-                    "frameworks": [fw for fw, available in processing_frameworks.items() if available]
+                    "frameworks": [fw for fw, available in processing_frameworks.items() if available],
                 }
                 cluster_nodes.append(local_node)
 
@@ -5388,13 +5356,13 @@ def _check_intercepted_traffic(proxy_server):
                                     "status": "active",
                                     "load_average": 1.0 - (ray.available_resources().get("CPU", 0) / node_resources.get("CPU", 1)),
                                     "tasks_running": 0,
-                                    "frameworks": ["ray"]
+                                    "frameworks": ["ray"],
                                 }
                                 cluster_nodes.append(real_node)
 
                         if hasattr(app, "update_output"):
                             app.update_output.emit(log_message(f"[Distributed] Connected to Ray cluster with {len(ray_nodes)} nodes"))
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                         logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                         if hasattr(app, "update_output"):
                             app.update_output.emit(log_message(f"[Distributed] Ray initialization error: {e}"))
@@ -5422,13 +5390,13 @@ def _check_intercepted_traffic(proxy_server):
                                 "status": "active",
                                 "load_average": worker_info.get("cpu", 0) / 100.0,
                                 "tasks_running": len(worker_info.get("processing", [])),
-                                "frameworks": ["dask"]
+                                "frameworks": ["dask"],
                             }
                             cluster_nodes.append(real_node)
 
                         if hasattr(app, "update_output"):
                             app.update_output.emit(log_message(f"[Distributed] Connected to Dask cluster with {len(scheduler_info['workers'])} workers"))
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                         logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                         if hasattr(app, "update_output"):
                             app.update_output.emit(log_message(f"[Distributed] Dask connection error: {e}"))
@@ -5474,7 +5442,7 @@ def _check_intercepted_traffic(proxy_server):
                                 "type": "binary_chunk_analysis",
                                 "priority": "high",
                                 "data": chunk,
-                                "offset": i
+                                "offset": i,
                             })
                     except:
                         # Fallback tasks if binary can't be read
@@ -5518,7 +5486,7 @@ def _check_intercepted_traffic(proxy_server):
                                 result = ray.get(future, timeout=10)
                                 task_results.append(result)
                                 app.cluster_state["tasks_completed"] += 1
-                            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                                 app.cluster_state["tasks_failed"] += 1
                                 if hasattr(app, "update_output"):
@@ -5554,7 +5522,7 @@ def _check_intercepted_traffic(proxy_server):
                                 result = future.result()
                                 task_results.append(result)
                                 app.cluster_state["tasks_completed"] += 1
-                            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                                 app.cluster_state["tasks_failed"] += 1
 
@@ -5666,7 +5634,7 @@ def _check_intercepted_traffic(proxy_server):
                             "total_execution_time": total_execution_time,
                             "parallel_speedup": len(distributed_tasks) / max(1, total_execution_time / 2),  # Estimated speedup
                             "total_memory_usage": total_memory_usage,
-                            "throughput_tasks_per_second": len(completed_tasks) / max(1, total_execution_time)
+                            "throughput_tasks_per_second": len(completed_tasks) / max(1, total_execution_time),
                         }
 
                         app.distributed_results["performance_metrics"] = performance_metrics
@@ -5691,9 +5659,8 @@ def _check_intercepted_traffic(proxy_server):
                         if hasattr(app, "update_output"):
                             app.update_output.emit(log_message(f"[Distributed] Executed {len(distributed_tasks)} tasks with {performance_metrics['success_rate']:.1%} success rate"))
                             app.update_output.emit(log_message(f"[Distributed] Average execution time: {avg_execution_time:.2f}s, Speedup: {performance_metrics['parallel_speedup']:.2f}x"))
-                else:
-                    if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message("[Distributed] No binary loaded - cluster ready for distributed tasks"))
+                elif hasattr(app, "update_output"):
+                    app.update_output.emit(log_message("[Distributed] No binary loaded - cluster ready for distributed tasks"))
             else:
                 if hasattr(app, "update_output"):
                     app.update_output.emit(log_message("[Distributed] No distributed processing frameworks available"))
@@ -5773,7 +5740,7 @@ def _check_intercepted_traffic(proxy_server):
                     "compute_intensity": "high",
                     "parallel_streams": 4,
                     "optimization_level": "aggressive",
-                    "enable_mixed_precision": True
+                    "enable_mixed_precision": True,
                 }
 
             # Initialize GPU device information
@@ -5783,7 +5750,7 @@ def _check_intercepted_traffic(proxy_server):
                     "selected_device": None,
                     "compute_capability": None,
                     "memory_info": {},
-                    "performance_metrics": {}
+                    "performance_metrics": {},
                 }
 
             # Initialize GPU analysis results
@@ -5794,7 +5761,7 @@ def _check_intercepted_traffic(proxy_server):
                     "gpu_utilization": {},
                     "memory_usage": {},
                     "compute_tasks": [],
-                    "optimization_results": {}
+                    "optimization_results": {},
                 }
 
             # Check for available GPU computing frameworks
@@ -5805,7 +5772,7 @@ def _check_intercepted_traffic(proxy_server):
                 "pytorch_cuda": False,
                 "cupy": False,
                 "numba_cuda": False,
-                "pycuda": False
+                "pycuda": False,
             }
 
             try:
@@ -5816,7 +5783,6 @@ def _check_intercepted_traffic(proxy_server):
                     app.update_output.emit(log_message("[GPU] PyCUDA available for GPU computing"))
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             try:
                 import cupy  # noqa: F401 - Checking availability
@@ -5825,7 +5791,6 @@ def _check_intercepted_traffic(proxy_server):
                     app.update_output.emit(log_message("[GPU] CuPy GPU array library available"))
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             try:
                 from numba import cuda as numba_cuda  # noqa: F401 - Checking availability
@@ -5834,7 +5799,6 @@ def _check_intercepted_traffic(proxy_server):
                     app.update_output.emit(log_message("[GPU] Numba CUDA JIT compiler available"))
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             try:
                 # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
@@ -5848,7 +5812,6 @@ def _check_intercepted_traffic(proxy_server):
                         app.update_output.emit(log_message("[GPU] TensorFlow GPU support available"))
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             try:
                 from ..utils.gpu_autoloader import get_gpu_info, gpu_autoloader
@@ -5877,7 +5840,6 @@ def _check_intercepted_traffic(proxy_server):
                 gpu_frameworks["opencl"] = True
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
-                pass
 
             app.gpu_frameworks = gpu_frameworks
 
@@ -5899,10 +5861,10 @@ def _check_intercepted_traffic(proxy_server):
                             "multiprocessor_count": device.multiprocessor_count,
                             "max_threads_per_block": device.max_threads_per_block,
                             "framework": "CUDA",
-                            "status": "available"
+                            "status": "available",
                         }
                         detected_devices.append(device_info)
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                     logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                     if hasattr(app, "update_output"):
                         app.update_output.emit(log_message(f"[GPU] CUDA device detection failed: {e}"))
@@ -5919,7 +5881,7 @@ def _check_intercepted_traffic(proxy_server):
                             "total_memory": gpu_info["info"].get("total_memory", "Unknown"),
                             "framework": f"Unified GPU ({gpu_info['type']})",
                             "backend": gpu_info["info"].get("backend", "Unknown"),
-                            "status": "available"
+                            "status": "available",
                         }
 
                         # Add compute capability for CUDA devices
@@ -5950,12 +5912,12 @@ def _check_intercepted_traffic(proxy_server):
                                     "multiprocessor_count": props.multi_processor_count,
                                     "max_threads_per_block": props.max_threads_per_block,
                                     "framework": "PyTorch CUDA",
-                                    "status": "available"
+                                    "status": "available",
                                 }
                                 detected_devices.append(device_info)
                     except ImportError:
                         pass
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                         logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                         if hasattr(app, "update_output"):
                             app.update_output.emit(log_message(f"[GPU] PyTorch CUDA device detection failed: {e}"))
@@ -5982,11 +5944,11 @@ def _check_intercepted_traffic(proxy_server):
                                     "multiprocessor_count": device.max_compute_units,
                                     "max_threads_per_block": device.max_work_group_size,
                                     "framework": "OpenCL",
-                                    "status": "available"
+                                    "status": "available",
                                 }
                                 detected_devices.append(device_info)
                                 device_id += 1
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                         logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                         if hasattr(app, "update_output"):
                             app.update_output.emit(log_message(f"[GPU] OpenCL device detection failed: {e}"))
@@ -6001,7 +5963,7 @@ def _check_intercepted_traffic(proxy_server):
                     "multiprocessor_count": 16,
                     "max_threads_per_block": 1024,
                     "framework": "Simulated",
-                    "status": "simulation"
+                    "status": "simulation",
                 }
                 detected_devices.append(virtual_gpu)
 
@@ -6023,7 +5985,7 @@ def _check_intercepted_traffic(proxy_server):
                         {"task_name": "entropy_calculation", "description": "Entropy analysis acceleration", "complexity": "medium"},
                         {"task_name": "hash_computation", "description": "Parallel hash computation", "complexity": "medium"},
                         {"task_name": "string_extraction", "description": "GPU string extraction", "complexity": "low"},
-                        {"task_name": "compression_analysis", "description": "Compression ratio analysis", "complexity": "high"}
+                        {"task_name": "compression_analysis", "description": "Compression ratio analysis", "complexity": "high"},
                     ]
 
                     # Execute real GPU tasks
@@ -6044,7 +6006,7 @@ def _check_intercepted_traffic(proxy_server):
                         task_result = {
                             "task_name": task["task_name"],
                             "description": task["description"],
-                            "complexity": task["complexity"]
+                            "complexity": task["complexity"],
                         }
 
                         # Execute real GPU computation based on framework
@@ -6074,7 +6036,7 @@ def _check_intercepted_traffic(proxy_server):
 
                                     # Parallel search kernel
                                     matches = cp.zeros(1, dtype=cp.int32)
-                                    kernel = cp.RawKernel(r'''
+                                    kernel = cp.RawKernel(r"""
                                     extern "C" __global__
                                     void pattern_search(const unsigned char* data, int data_size,
                                                       const unsigned char* pattern, int pattern_size,
@@ -6091,7 +6053,7 @@ def _check_intercepted_traffic(proxy_server):
                                             if (match) atomicAdd(matches, 1);
                                         }
                                     }
-                                    ''', "pattern_search")
+                                    """, "pattern_search")
 
                                     block = (256,)
                                     grid = ((len(data_gpu) + block[0] - 1) // block[0],)
@@ -6127,7 +6089,7 @@ def _check_intercepted_traffic(proxy_server):
                                 task_result["gpu_utilization"] = min(0.95, (cpu_time / gpu_time) / 10.0)  # Estimate
                                 task_result["status"] = "completed"
 
-                            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                                 # Fallback for GPU errors
                                 task_result["status"] = "failed"
@@ -6217,7 +6179,7 @@ def _check_intercepted_traffic(proxy_server):
                                     task_result["gpu_utilization"] = 0.8  # Estimate
                                     task_result["status"] = "completed"
 
-                                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                                     logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                                     task_result["status"] = "failed"
                                     task_result["error"] = str(e)
@@ -6277,7 +6239,7 @@ def _check_intercepted_traffic(proxy_server):
                             "total_memory_used_mb": total_memory_used,
                             "total_gpu_time": total_gpu_time,
                             "total_cpu_time": total_cpu_time,
-                            "energy_efficiency": total_speedup * 0.8  # Estimated energy efficiency
+                            "energy_efficiency": total_speedup * 0.8,  # Estimated energy efficiency
                         }
 
                         app.gpu_analysis_results["performance_comparison"] = performance_metrics
@@ -6305,16 +6267,15 @@ def _check_intercepted_traffic(proxy_server):
                                 "block_size": 256,
                                 "grid_size": (best_gpu["multiprocessor_count"] * 2),
                                 "shared_memory_kb": 48,
-                                "registers_per_thread": 32
-                            }
+                                "registers_per_thread": 32,
+                            },
                         }
 
                         if hasattr(app, "update_output"):
                             app.update_output.emit(log_message(f"[GPU] Completed {len(successful_tasks)} GPU tasks with {avg_speedup:.2f}x average speedup"))
                             app.update_output.emit(log_message(f"[GPU] Total speedup: {total_speedup:.2f}x, GPU utilization: {avg_gpu_utilization:.1%}"))
-                else:
-                    if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message("[GPU] No binary loaded - GPU ready for accelerated analysis"))
+                elif hasattr(app, "update_output"):
+                    app.update_output.emit(log_message("[GPU] No binary loaded - GPU ready for accelerated analysis"))
             else:
                 if hasattr(app, "update_output"):
                     app.update_output.emit(log_message("[GPU] No GPU devices detected - using CPU fallback"))
@@ -6325,7 +6286,7 @@ def _check_intercepted_traffic(proxy_server):
                     "compute_capability": "N/A",
                     "total_memory_mb": 8192,
                     "framework": "CPU",
-                    "status": "fallback"
+                    "status": "fallback",
                 }
 
             # Set up analysis results
@@ -6416,7 +6377,7 @@ def _check_intercepted_traffic(proxy_server):
                 "constraints": [],
                 "paths": [],
                 "vulnerabilities": [],
-                "inputs": []
+                "inputs": [],
             }
 
             try:
@@ -6467,7 +6428,7 @@ def _check_intercepted_traffic(proxy_server):
                                     "stash": stash,
                                     "address": hex(state.addr) if hasattr(state, "addr") else "unknown",
                                     "constraints": len(state.solver.constraints) if hasattr(state, "solver") else 0,
-                                    "satisfiable": state.solver.satisfiable() if hasattr(state, "solver") else False
+                                    "satisfiable": state.solver.satisfiable() if hasattr(state, "solver") else False,
                                 }
 
                                 # Extract path constraints
@@ -6481,7 +6442,7 @@ def _check_intercepted_traffic(proxy_server):
                                         "type": "crash",
                                         "address": path_info["address"],
                                         "severity": "high",
-                                        "description": "Symbolic execution found a crash path"
+                                        "description": "Symbolic execution found a crash path",
                                     }
                                     results["vulnerabilities"].append(vuln)
 
@@ -6500,13 +6461,13 @@ def _check_intercepted_traffic(proxy_server):
                             if isinstance(var, claripy.ast.BV):
                                 symbolic_vars.append({
                                     "name": str(var),
-                                    "size": var.size() if hasattr(var, "size") else 0
+                                    "size": var.size() if hasattr(var, "size") else 0,
                                 })
 
                     if symbolic_vars:
                         results["inputs"].append({
                             "path_address": hex(state.addr) if hasattr(state, "addr") else "unknown",
-                            "symbolic_variables": symbolic_vars
+                            "symbolic_variables": symbolic_vars,
                         })
 
                 results["summary"] = {
@@ -6514,7 +6475,7 @@ def _check_intercepted_traffic(proxy_server):
                     "active_paths": len(simgr.active),
                     "deadended_paths": len(simgr.deadended),
                     "errored_paths": len(simgr.errored) if hasattr(simgr, "errored") else 0,
-                    "steps_executed": steps
+                    "steps_executed": steps,
                 }
 
                 if hasattr(app, "update_output"):
@@ -6540,7 +6501,7 @@ def _check_intercepted_traffic(proxy_server):
                     (b"jz", "Jump if zero - conditional execution"),
                     (b"jnz", "Jump if not zero - conditional execution"),
                     (b"test", "Test instruction - flag setting"),
-                    (b"cmp", "Compare instruction - potential check")
+                    (b"cmp", "Compare instruction - potential check"),
                 ]
 
                 # Use common utility for pattern searching
@@ -6551,7 +6512,7 @@ def _check_intercepted_traffic(proxy_server):
                         results["paths"].append({
                             "stash": "potential",
                             "address": hex(pos),
-                            "description": description
+                            "description": description,
                         })
 
                         # Add as potential vulnerability if it's a comparison
@@ -6560,7 +6521,7 @@ def _check_intercepted_traffic(proxy_server):
                                 "type": "authentication_check",
                                 "address": hex(pos),
                                 "severity": "medium",
-                                "description": f"{description} - may be bypassable"
+                                "description": f"{description} - may be bypassable",
                             })
 
                         offset = pos + 1
@@ -6569,7 +6530,7 @@ def _check_intercepted_traffic(proxy_server):
                 results["summary"] = {
                     "total_paths": len(results["paths"]),
                     "analysis_type": "static_pattern_matching",
-                    "file_size": file_size
+                    "file_size": file_size,
                 }
 
                 if hasattr(app, "update_output"):
@@ -6597,9 +6558,9 @@ def _check_intercepted_traffic(proxy_server):
 
             return results
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-            error_msg = f"Error during symbolic execution: {str(e)}"
+            error_msg = f"Error during symbolic execution: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Symbolic] {error_msg}"))
             return {"success": False, "error": error_msg}
@@ -6648,18 +6609,17 @@ def _check_intercepted_traffic(proxy_server):
                     "changes_detected": False,
                     "changes": [],
                     "new_functions": [],
-                    "file_size": os.path.getsize(binary_path)
+                    "file_size": os.path.getsize(binary_path),
                 }
 
                 # Load previous analysis
                 previous_analysis = None
                 if os.path.exists(cache_file):
                     try:
-                        with open(cache_file, "r") as f:
+                        with open(cache_file) as f:
                             previous_analysis = json.load(f)
-                    except (IOError, json.JSONDecodeError, ValueError, KeyError) as e:
+                    except (OSError, json.JSONDecodeError, ValueError, KeyError) as e:
                         logger.error("(IOError, json.JSONDecodeError, ValueError, KeyError) in main_app.py: %s", e)
-                        pass
 
                 # Check for changes
                 if previous_analysis and previous_analysis.get("hash") == current_hash:
@@ -6673,7 +6633,7 @@ def _check_intercepted_traffic(proxy_server):
                             results["changes"].append({
                                 "type": "size_change",
                                 "offset": 0,
-                                "description": f"Size changed from {prev_size} to {results['file_size']} bytes"
+                                "description": f"Size changed from {prev_size} to {results['file_size']} bytes",
                             })
 
                 # Save current analysis
@@ -6681,10 +6641,9 @@ def _check_intercepted_traffic(proxy_server):
                 try:
                     with open(cache_file, "w") as f:
                         json.dump(cache_data, f)
-                except (IOError, OSError, ValueError) as e:
+                except (OSError, ValueError) as e:
                     logger.error("(IOError, OSError, ValueError) in main_app.py: %s", e)
                     # json.JSONEncodeError is a subclass of ValueError
-                    pass
 
             # Update UI
             if hasattr(app, "update_analysis_results"):
@@ -6702,9 +6661,9 @@ def _check_intercepted_traffic(proxy_server):
 
             return results
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-            error_msg = f"Error during incremental analysis: {str(e)}"
+            error_msg = f"Error during incremental analysis: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Incremental] {error_msg}"))
             return {"success": False, "error": error_msg}
@@ -6732,7 +6691,7 @@ def _check_intercepted_traffic(proxy_server):
                 "analysis_method": "memory_mapped" if file_size > 100*1024*1024 else "direct_load",
                 "patterns_found": [],
                 "entropy": 0.0,
-                "sections": []
+                "sections": [],
             }
 
             # Use memory mapping for large files
@@ -6763,7 +6722,7 @@ def _check_intercepted_traffic(proxy_server):
                             (b"registration", "Registration check"),
                             (b"serial", "Serial validation"),
                             (b"trial", "Trial check"),
-                            (b"expire", "Expiration check")
+                            (b"expire", "Expiration check"),
                         ]
 
                         window_size = 1024*1024  # 1MB window
@@ -6774,7 +6733,7 @@ def _check_intercepted_traffic(proxy_server):
                                     results["patterns_found"].append({
                                         "pattern": pattern.decode("ascii", errors="ignore"),
                                         "description": description,
-                                        "offset": i + window.find(pattern)
+                                        "offset": i + window.find(pattern),
                                     })
             else:
                 # Direct load for smaller files
@@ -6792,7 +6751,7 @@ def _check_intercepted_traffic(proxy_server):
                     patterns = [
                         (b"check_license", "License validation function"),
                         (b"is_registered", "Registration check function"),
-                        (b"validate_key", "Key validation function")
+                        (b"validate_key", "Key validation function"),
                     ]
 
                     for pattern, description in patterns:
@@ -6801,7 +6760,7 @@ def _check_intercepted_traffic(proxy_server):
                             results["patterns_found"].append({
                                 "pattern": pattern.decode("ascii", errors="ignore"),
                                 "description": description,
-                                "offset": offset
+                                "offset": offset,
                             })
 
             # Update UI
@@ -6822,9 +6781,9 @@ def _check_intercepted_traffic(proxy_server):
 
             return results
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-            error_msg = f"Error during memory-optimized analysis: {str(e)}"
+            error_msg = f"Error during memory-optimized analysis: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Memory Optimized] {error_msg}"))
             return {"success": False, "error": error_msg}
@@ -6871,7 +6830,7 @@ def _check_intercepted_traffic(proxy_server):
                     "instructions_executed": 142857,
                     "memory_accesses": [],
                     "system_calls": [],
-                    "behavioral_analysis": {}
+                    "behavioral_analysis": {},
                 }
 
                 # Simulate system call detection
@@ -6880,7 +6839,7 @@ def _check_intercepted_traffic(proxy_server):
                     {"syscall": "read", "count": 45, "purpose": "Data reading"},
                     {"syscall": "write", "count": 23, "purpose": "Data writing"},
                     {"syscall": "mmap", "count": 8, "purpose": "Memory mapping"},
-                    {"syscall": "connect", "count": 3, "purpose": "Network connection"}
+                    {"syscall": "connect", "count": 3, "purpose": "Network connection"},
                 ]
 
                 results["system_calls"] = common_syscalls
@@ -6889,7 +6848,7 @@ def _check_intercepted_traffic(proxy_server):
                 results["memory_accesses"] = [
                     {"address": "0x00401000", "type": "read", "size": 4, "description": "Code section read"},
                     {"address": "0x00402000", "type": "write", "size": 8, "description": "Data section write"},
-                    {"address": "0x7fff0000", "type": "read", "size": 64, "description": "Stack access"}
+                    {"address": "0x7fff0000", "type": "read", "size": 64, "description": "Stack access"},
                 ]
 
                 # Behavioral analysis
@@ -6897,7 +6856,7 @@ def _check_intercepted_traffic(proxy_server):
                     "anti_debugging": "Detected timing checks",
                     "network_activity": "Attempts to connect to license server",
                     "file_operations": "Creates temporary license file",
-                    "registry_access": "Reads software registration keys"
+                    "registry_access": "Reads software registration keys",
                 }
 
                 # Simulate execution
@@ -6927,9 +6886,9 @@ def _check_intercepted_traffic(proxy_server):
 
             return results
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-            error_msg = f"Error during QEMU analysis: {str(e)}"
+            error_msg = f"Error during QEMU analysis: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[QEMU] {error_msg}"))
             return {"success": False, "error": error_msg}
@@ -6955,7 +6914,7 @@ def _check_intercepted_traffic(proxy_server):
                 "advanced": lambda: {"type": "advanced", "result": "Advanced analysis with decompilation"},
                 "vulnerability": lambda: {"type": "vulnerability", "result": "Security vulnerability scan complete"},
                 "license": lambda: {"type": "license", "result": "License mechanism analysis complete"},
-                "protection": lambda: {"type": "protection", "result": "Protection scheme analysis complete"}
+                "protection": lambda: {"type": "protection", "result": "Protection scheme analysis complete"},
             }
 
             # Run selected analysis
@@ -6969,7 +6928,7 @@ def _check_intercepted_traffic(proxy_server):
                     "success": True,
                     "binary_path": binary_path,
                     "file_size": os.path.getsize(binary_path),
-                    "timestamp": time.time()
+                    "timestamp": time.time(),
                 })
 
                 # Update UI
@@ -6979,15 +6938,14 @@ def _check_intercepted_traffic(proxy_server):
                     app.update_analysis_results.emit(f"Result: {result['result']}\n")
 
                 return result
-            else:
-                error_msg = f"Unknown analysis type: {analysis_type}"
-                if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[Selected Analysis] {error_msg}"))
-                return {"success": False, "error": error_msg}
+            error_msg = f"Unknown analysis type: {analysis_type}"
+            if hasattr(app, "update_output"):
+                app.update_output.emit(log_message(f"[Selected Analysis] {error_msg}"))
+            return {"success": False, "error": error_msg}
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-            error_msg = f"Error during selected analysis: {str(e)}"
+            error_msg = f"Error during selected analysis: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Selected Analysis] {error_msg}"))
             return {"success": False, "error": error_msg}
@@ -7010,7 +6968,7 @@ def _check_intercepted_traffic(proxy_server):
                     "ssl_intercept": False,  # Disable SSL for now
                     "record_traffic": True,
                     "auto_respond": True,
-                    "response_delay": 0.1
+                    "response_delay": 0.1,
                 }
 
                 server = NetworkLicenseServerEmulator(config)
@@ -7024,7 +6982,7 @@ def _check_intercepted_traffic(proxy_server):
                     active_features = [
                         {"name": "premium_feature", "version": "2024.1", "count": 100},
                         {"name": "basic_feature", "version": "2024.1", "count": 1000},
-                        {"name": "advanced_tools", "version": "2024.1", "count": 50}
+                        {"name": "advanced_tools", "version": "2024.1", "count": 50},
                     ]
 
                     result = {
@@ -7035,7 +6993,7 @@ def _check_intercepted_traffic(proxy_server):
                         "features": active_features,
                         "clients": [],
                         "config": config,
-                        "server_instance": server
+                        "server_instance": server,
                     }
 
                     if hasattr(app, "update_output"):
@@ -7051,12 +7009,13 @@ def _check_intercepted_traffic(proxy_server):
                 logger.error("(ImportError, RuntimeError, AttributeError, ValueError, OSError) in main_app.py: %s", e)
                 # Robust fallback implementation - still functional
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[License Server] Primary server failed ({str(e)}), using fallback implementation..."))
+                    app.update_output.emit(log_message(f"[License Server] Primary server failed ({e!s}), using fallback implementation..."))
 
                 # Create a minimal license server using socket
 
                 class SimpleLicenseServer:
                     """Simple license server implementation for testing purposes."""
+
                     def __init__(self, port=27000):
                         self.logger = logging.getLogger("IntellicrackLogger.SimpleLicenseServer")
                         self.port = port
@@ -7067,7 +7026,7 @@ def _check_intercepted_traffic(proxy_server):
                         self.features = [
                             {"name": "premium_feature", "version": "2024.1", "count": 100},
                             {"name": "basic_feature", "version": "2024.1", "count": 1000},
-                            {"name": "advanced_tools", "version": "2024.1", "count": 50}
+                            {"name": "advanced_tools", "version": "2024.1", "count": 50},
                         ]
                         self.client_stats = {}
 
@@ -7085,10 +7044,10 @@ def _check_intercepted_traffic(proxy_server):
                             self.server_thread.start()
 
                             return True
-                        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                             self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                             if hasattr(app, "update_output"):
-                                app.update_output.emit(log_message(f"[License Server] Socket error: {str(e)}"))
+                                app.update_output.emit(log_message(f"[License Server] Socket error: {e!s}"))
                             return False
 
                     def _handle_connections(self):
@@ -7101,7 +7060,7 @@ def _check_intercepted_traffic(proxy_server):
                                 # Handle the connection in a new thread
                                 client_thread = threading.Thread(
                                     target=self._handle_client,
-                                    args=(client_socket, address)
+                                    args=(client_socket, address),
                                 )
                                 client_thread.daemon = True
                                 client_thread.start()
@@ -7137,7 +7096,7 @@ def _check_intercepted_traffic(proxy_server):
                                         "status": "OK",
                                         "license": "valid",
                                         "features": [f["name"] for f in self.features],
-                                        "expiration": "permanent"
+                                        "expiration": "permanent",
                                     }
                                     response = json.dumps(response_data).encode()
                                 else:
@@ -7148,10 +7107,10 @@ def _check_intercepted_traffic(proxy_server):
 
                                 if hasattr(app, "update_output"):
                                     app.update_output.emit(log_message(f"[License Server] Sent license response to {address}"))
-                        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                             if hasattr(app, "update_output"):
-                                app.update_output.emit(log_message(f"[License Server] Client error: {str(e)}"))
+                                app.update_output.emit(log_message(f"[License Server] Client error: {e!s}"))
                         finally:
                             client_socket.close()
 
@@ -7174,7 +7133,7 @@ def _check_intercepted_traffic(proxy_server):
                         "protocol": simple_server.protocol,
                         "features": simple_server.features,
                         "clients": [],
-                        "server_type": "fallback"
+                        "server_type": "fallback",
                     }
 
                     if hasattr(app, "update_output"):
@@ -7191,9 +7150,9 @@ def _check_intercepted_traffic(proxy_server):
                         "features": [
                             {"name": "premium_feature", "version": "2024.1", "count": 100},
                             {"name": "basic_feature", "version": "2024.1", "count": 1000},
-                            {"name": "advanced_tools", "version": "2024.1", "count": 50}
+                            {"name": "advanced_tools", "version": "2024.1", "count": 50},
                         ],
-                        "clients": []
+                        "clients": [],
                     }
 
                     if hasattr(app, "update_output"):
@@ -7218,9 +7177,9 @@ def _check_intercepted_traffic(proxy_server):
 
             return result
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-            error_msg = f"Error starting license server: {str(e)}"
+            error_msg = f"Error starting license server: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[License Server] {error_msg}"))
             return {"success": False, "error": error_msg}
@@ -7540,7 +7499,7 @@ def _check_intercepted_traffic(proxy_server):
                         data_info = {
                             "size": len(data),
                             "type": type(data).__name__,
-                            "preview": data[:16].hex() if isinstance(data, bytes) else str(data)[:50]
+                            "preview": data[:16].hex() if isinstance(data, bytes) else str(data)[:50],
                         }
                         messages.append({"type": "data", "info": data_info})
 
@@ -7616,7 +7575,7 @@ def _check_intercepted_traffic(proxy_server):
                         {"category": "Crypto Operations", "count": api_hooks.get("cryptoOps", 0), "purpose": "Key validation"},
                         {"category": "Network Operations", "count": api_hooks.get("networkOps", 0), "purpose": "Online activation"},
                     ],
-                    "process_info": messages[0]["payload"]["processInfo"] if messages else {}
+                    "process_info": messages[0]["payload"]["processInfo"] if messages else {},
                 }
 
                 # Clean up
@@ -7651,7 +7610,7 @@ def _check_intercepted_traffic(proxy_server):
                         b"register": "Registration checks",
                         b"GetSystemTime": "Time-based validation",
                         b"CryptHashData": "Cryptographic validation",
-                        b"RegQueryValueEx": "Registry-based activation"
+                        b"RegQueryValueEx": "Registry-based activation",
                     }
 
                     for pattern, behavior in patterns.items():
@@ -7662,7 +7621,7 @@ def _check_intercepted_traffic(proxy_server):
                             instrumentation_points.append({
                                 "offset": f"0x{offset:08x}",
                                 "pattern": pattern.decode("utf-8", errors="ignore"),
-                                "behavior": behavior
+                                "behavior": behavior,
                             })
 
                     # Try dynamic analysis with debugger if available
@@ -7680,7 +7639,7 @@ def _check_intercepted_traffic(proxy_server):
                             """
 
                             proc = subprocess.run(["gdb", "-batch", "-x", "-"],
-                                                input=gdb_script.encode(),
+                                                check=False, input=gdb_script.encode(),
                                                 capture_output=True,
                                                 timeout=5)
 
@@ -7694,15 +7653,15 @@ def _check_intercepted_traffic(proxy_server):
                                     if any(keyword in func.lower() for keyword in ["license", "check", "valid", "serial"]):
                                         instrumentation_points.append({
                                             "function": func,
-                                            "type": "license_related_function"
+                                            "type": "license_related_function",
                                         })
                     except Exception as e:
                         logger.debug(f"Failed to analyze license function: {e}")
 
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                     logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Frida] Fallback analysis error: {str(e)}"))
+                        app.update_output.emit(log_message(f"[Frida] Fallback analysis error: {e!s}"))
 
                 # Create comprehensive fallback result
                 result = {
@@ -7714,14 +7673,14 @@ def _check_intercepted_traffic(proxy_server):
                         {"function": "File operations", "calls": 8, "purpose": "License file access"},
                         {"function": "Registry operations", "calls": 12, "purpose": "Windows activation"},
                         {"function": "Crypto operations", "calls": 5, "purpose": "Key validation"},
-                        {"function": "Time checks", "calls": 3, "purpose": "Trial period"}
+                        {"function": "Time checks", "calls": 3, "purpose": "Trial period"},
                     ],
                     "detected_behaviors": detected_behaviors if detected_behaviors else [
                         "Static analysis: License validation routines detected",
                         "Pattern matching: Serial number checking found",
                         "Binary inspection: Trial period mechanisms identified",
-                        "Code analysis: Hardware fingerprinting present"
-                    ]
+                        "Code analysis: Hardware fingerprinting present",
+                    ],
                 }
 
             # Update UI
@@ -7751,9 +7710,9 @@ def _check_intercepted_traffic(proxy_server):
 
             return result
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-            error_msg = f"Error during Frida analysis: {str(e)}"
+            error_msg = f"Error during Frida analysis: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Frida] {error_msg}"))
             return {"success": False, "error": error_msg}
@@ -7777,7 +7736,7 @@ def _check_intercepted_traffic(proxy_server):
                 "instrumentation_points": [],
                 "runtime_behavior": {},
                 "api_calls": [],
-                "memory_operations": []
+                "memory_operations": [],
             }
 
             # Simulate instrumentation points
@@ -7785,7 +7744,7 @@ def _check_intercepted_traffic(proxy_server):
                 {"address": "0x00401234", "type": "function_entry", "name": "check_license", "hits": 1},
                 {"address": "0x00401567", "type": "comparison", "name": "license_valid_check", "hits": 1},
                 {"address": "0x00401890", "type": "function_call", "name": "decrypt_key", "hits": 3},
-                {"address": "0x00402000", "type": "memory_write", "name": "license_flag_set", "hits": 1}
+                {"address": "0x00402000", "type": "memory_write", "name": "license_flag_set", "hits": 1},
             ]
 
             results["instrumentation_points"] = instrumentation_points
@@ -7796,7 +7755,7 @@ def _check_intercepted_traffic(proxy_server):
                 "instructions_traced": 15789,
                 "branches_taken": 234,
                 "functions_called": 45,
-                "exceptions_caught": 0
+                "exceptions_caught": 0,
             }
 
             # Simulate API call tracking
@@ -7804,14 +7763,14 @@ def _check_intercepted_traffic(proxy_server):
                 {"api": "GetSystemInfo", "count": 1, "purpose": "Hardware detection"},
                 {"api": "CryptDecrypt", "count": 3, "purpose": "License decryption"},
                 {"api": "RegOpenKeyEx", "count": 5, "purpose": "Registry access"},
-                {"api": "InternetOpenUrl", "count": 2, "purpose": "License server communication"}
+                {"api": "InternetOpenUrl", "count": 2, "purpose": "License server communication"},
             ]
 
             # Simulate memory operations
             results["memory_operations"] = [
                 {"type": "allocation", "size": 4096, "address": "0x10000000", "purpose": "License data buffer"},
                 {"type": "write", "address": "0x10000100", "size": 256, "data_type": "encrypted_key"},
-                {"type": "read", "address": "0x00403000", "size": 64, "data_type": "hardware_id"}
+                {"type": "read", "address": "0x00403000", "size": 64, "data_type": "hardware_id"},
             ]
 
             # Update UI
@@ -7834,9 +7793,9 @@ def _check_intercepted_traffic(proxy_server):
 
             return results
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-            error_msg = f"Error during dynamic instrumentation: {str(e)}"
+            error_msg = f"Error during dynamic instrumentation: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Dynamic] {error_msg}"))
             return {"success": False, "error": error_msg}
@@ -7904,7 +7863,7 @@ def _check_intercepted_traffic(proxy_server):
                 script_type="frida",
                 script_content=script_content,
                 target_binary=binary_path,
-                options=kwargs
+                options=kwargs,
             )
 
             # Update UI based on results
@@ -7917,7 +7876,7 @@ def _check_intercepted_traffic(proxy_server):
                     if "stdout" in results:
                         app.update_analysis_results.emit("\nExecution Output:\n")
                         app.update_analysis_results.emit(results["stdout"])
-                    if "stderr" in results and results["stderr"]:
+                    if results.get("stderr"):
                         app.update_analysis_results.emit("\nErrors:\n")
                         app.update_analysis_results.emit(results["stderr"])
 
@@ -7939,9 +7898,9 @@ def _check_intercepted_traffic(proxy_server):
 
             return results
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-            error_msg = f"Error executing Frida script: {str(e)}"
+            error_msg = f"Error executing Frida script: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Frida Script] {error_msg}"))
             return {"success": False, "error": error_msg}
@@ -7977,7 +7936,7 @@ def _check_intercepted_traffic(proxy_server):
                     "edges": 0,
                     "loops": [],
                     "call_graph": {},
-                    "complexity_metrics": {}
+                    "complexity_metrics": {},
                 }
 
                 # Simulate function discovery
@@ -7985,7 +7944,7 @@ def _check_intercepted_traffic(proxy_server):
                     {"name": "main", "address": "0x00401000", "size": 245, "blocks": 8, "cyclomatic_complexity": 5},
                     {"name": "check_license", "address": "0x00401100", "size": 180, "blocks": 6, "cyclomatic_complexity": 4},
                     {"name": "validate_key", "address": "0x00401200", "size": 120, "blocks": 4, "cyclomatic_complexity": 3},
-                    {"name": "decrypt_data", "address": "0x00401300", "size": 200, "blocks": 7, "cyclomatic_complexity": 5}
+                    {"name": "decrypt_data", "address": "0x00401300", "size": 200, "blocks": 7, "cyclomatic_complexity": 5},
                 ]
 
                 results["functions"] = functions
@@ -7995,7 +7954,7 @@ def _check_intercepted_traffic(proxy_server):
                 # Simulate loop detection
                 results["loops"] = [
                     {"function": "decrypt_data", "start": "0x00401320", "end": "0x00401380", "iterations": "dynamic"},
-                    {"function": "validate_key", "start": "0x00401220", "end": "0x00401250", "iterations": "16"}
+                    {"function": "validate_key", "start": "0x00401220", "end": "0x00401250", "iterations": "16"},
                 ]
 
                 # Simulate call graph
@@ -8003,7 +7962,7 @@ def _check_intercepted_traffic(proxy_server):
                     "main": ["check_license", "decrypt_data"],
                     "check_license": ["validate_key", "decrypt_data"],
                     "validate_key": ["decrypt_data"],
-                    "decrypt_data": []
+                    "decrypt_data": [],
                 }
 
                 # Complexity metrics
@@ -8011,7 +7970,7 @@ def _check_intercepted_traffic(proxy_server):
                     "total_cyclomatic_complexity": sum(f["cyclomatic_complexity"] for f in functions),
                     "average_complexity": sum(f["cyclomatic_complexity"] for f in functions) / len(functions),
                     "max_complexity": max(f["cyclomatic_complexity"] for f in functions),
-                    "call_depth": 3
+                    "call_depth": 3,
                 }
 
             # Update UI
@@ -8040,9 +7999,9 @@ def _check_intercepted_traffic(proxy_server):
 
             return results
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-            error_msg = f"Error during deep CFG analysis: {str(e)}"
+            error_msg = f"Error during deep CFG analysis: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Deep CFG] {error_msg}"))
             return {"success": False, "error": error_msg}
@@ -8094,7 +8053,7 @@ def _check_intercepted_traffic(proxy_server):
                     b"WinRAR SFX": "WinRAR SFX",
                     b"MPRESS": "MPRESS",
                     b"Themida": "Themida",
-                    b"VMProtect": "VMProtect"
+                    b"VMProtect": "VMProtect",
                 }
 
                 for signature, packer_name in pe_signatures.items():
@@ -8134,7 +8093,6 @@ def _check_intercepted_traffic(proxy_server):
                                                 detected_packers.append(f"Suspicious section: {section_name.decode('ascii', errors='ignore')}")
                     except (struct.error, UnicodeDecodeError, IndexError) as e:
                         logger.error("(struct.error, UnicodeDecodeError, IndexError) in main_app.py: %s", e)
-                        pass
 
                 # Runtime packer detection heuristics
                 imports = []
@@ -8158,7 +8116,7 @@ def _check_intercepted_traffic(proxy_server):
 
         except (OSError, MemoryError) as e:
             logger.error("(OSError, MemoryError) in main_app.py: %s", e)
-            detected_packers.append(f"Analysis error: {str(e)}")
+            detected_packers.append(f"Analysis error: {e!s}")
 
         return detected_packers
     def decrypt_embedded_script(binary_path):
@@ -8190,7 +8148,7 @@ def _check_intercepted_traffic(proxy_server):
                     decoded = base64.b64decode(match)
                     if len(decoded) > 10 and any(char in decoded for char in [b"<script", b"function", b"var ", b"eval("]):
                         decryption_results.append(f"Base64 decoded script found: {decoded[:100]}...")
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                     logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                     continue
 
@@ -8204,7 +8162,7 @@ def _check_intercepted_traffic(proxy_server):
                     decoded_text = decoded.decode("utf-8", errors="ignore")
                     if any(keyword in decoded_text.lower() for keyword in ["script", "function", "eval", "document"]):
                         decryption_results.append(f"Hex decoded script: {decoded_text[:100]}...")
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                     logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                     continue
 
@@ -8241,7 +8199,7 @@ def _check_intercepted_traffic(proxy_server):
                     if any(indicator in shifted_text.lower() for indicator in ["script", "function", "eval"]):
                         decryption_results.append(f"Caesar cipher (shift {shift}) revealed: {shifted_text[:100]}...")
 
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                     logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                     continue
 
@@ -8251,7 +8209,7 @@ def _check_intercepted_traffic(proxy_server):
                 r"\$[a-zA-Z_][a-zA-Z0-9_]*\s*=",
                 r"Invoke-[A-Za-z]+",
                 r"IEX\s*\(",
-                r"iex\s*\("
+                r"iex\s*\(",
             ]
 
             for pattern in powershell_patterns:
@@ -8265,7 +8223,7 @@ def _check_intercepted_traffic(proxy_server):
                 r"eval\s*\([^)]{10,}\)",
                 r"document\.write\s*\([^)]{10,}\)",
                 r"WScript\.[A-Za-z]+",
-                r"CreateObject\s*\([^)]+\)"
+                r"CreateObject\s*\([^)]+\)",
             ]
 
             for pattern in script_patterns:
@@ -8278,7 +8236,7 @@ def _check_intercepted_traffic(proxy_server):
                 r"String\.fromCharCode\([^)]+\)",
                 r"chr\(\d+\)",
                 r"\\x[0-9a-fA-F]{2}",
-                r"\\u[0-9a-fA-F]{4}"
+                r"\\u[0-9a-fA-F]{4}",
             ]
 
             for pattern in string_patterns:
@@ -8298,7 +8256,7 @@ def _check_intercepted_traffic(proxy_server):
 
         except (OSError, MemoryError) as e:
             logger.error("(OSError, MemoryError) in main_app.py: %s", e)
-            decryption_results.append(f"Decryption analysis error: {str(e)}")
+            decryption_results.append(f"Decryption analysis error: {e!s}")
 
         return decryption_results
     def scan_for_bytecode_protectors(binary_path):
@@ -8313,7 +8271,7 @@ def _check_intercepted_traffic(proxy_server):
             "protectors_detected": [],
             "bytecode_formats": [],
             "protection_indicators": [],
-            "risk_level": "low"
+            "risk_level": "low",
         }
 
         try:
@@ -8335,7 +8293,7 @@ def _check_intercepted_traffic(proxy_server):
                 b"Skater": "Skater .NET Obfuscator",
                 b"SmartAssembly": "SmartAssembly",
                 b"Dotfuscator": "Dotfuscator",
-                b"Xenocode": "Xenocode"
+                b"Xenocode": "Xenocode",
             }
 
             # Check for Java bytecode protectors
@@ -8345,7 +8303,7 @@ def _check_intercepted_traffic(proxy_server):
                 b"yGuard": "yGuard",
                 b"DashO": "DashO",
                 b"Allatori": "Allatori",
-                b"Stringer": "Stringer Java Obfuscator"
+                b"Stringer": "Stringer Java Obfuscator",
             }
 
             # Check for Python bytecode protectors
@@ -8354,7 +8312,7 @@ def _check_intercepted_traffic(proxy_server):
                 b"pyinstaller": "PyInstaller",
                 b"nuitka": "Nuitka",
                 b"cx_Freeze": "cx_Freeze",
-                b"py2exe": "py2exe"
+                b"py2exe": "py2exe",
             }
 
             # Combine all signatures
@@ -8366,7 +8324,7 @@ def _check_intercepted_traffic(proxy_server):
                     scan_results["protectors_detected"].append({
                         "name": protector_name,
                         "type": "signature_match",
-                        "confidence": "high"
+                        "confidence": "high",
                     })
 
             # File format detection
@@ -8380,7 +8338,7 @@ def _check_intercepted_traffic(proxy_server):
                         (b"#~", "Metadata stream present"),
                         (b"#Strings", "String heap present"),
                         (b"#GUID", "GUID heap present"),
-                        (b"#Blob", "Blob heap present")
+                        (b"#Blob", "Blob heap present"),
                     ]
 
                     for indicator, description in dotnet_indicators:
@@ -8400,7 +8358,7 @@ def _check_intercepted_traffic(proxy_server):
                 java_indicators = [
                     (b"SourceFile", "Source file attribute present"),
                     (b"LineNumberTable", "Line number table present"),
-                    (b"LocalVariableTable", "Local variable table present")
+                    (b"LocalVariableTable", "Local variable table present"),
                 ]
 
                 debug_info_count = 0
@@ -8430,7 +8388,7 @@ def _check_intercepted_traffic(proxy_server):
                 (b"protect", "Protection strings present"),
                 (b"license", "License checking present"),
                 (b"trial", "Trial/evaluation code present"),
-                (b"key", "Key validation present")
+                (b"key", "Key validation present"),
             ]
 
             for pattern, description in protection_patterns:
@@ -8485,16 +8443,17 @@ def _check_intercepted_traffic(proxy_server):
                 "total_protectors": len(scan_results["protectors_detected"]),
                 "formats_detected": len(scan_results["bytecode_formats"]),
                 "indicators_found": len(scan_results["protection_indicators"]),
-                "assessment": f"Risk level: {scan_results['risk_level']}"
+                "assessment": f"Risk level: {scan_results['risk_level']}",
             }
 
         except (OSError, MemoryError, struct.error) as e:
             logger.error("(OSError, MemoryError, struct.error) in main_app.py: %s", e)
-            scan_results["error"] = f"Scan error: {str(e)}"
+            scan_results["error"] = f"Scan error: {e!s}"
 
         return scan_results
     class AdvancedVulnerabilityEngine:
         """Fallback class for vulnerability engine."""
+
         @staticmethod
         def scan_binary(binary_path):
             """Fallback method for binary scanning."""
@@ -8518,7 +8477,7 @@ def _check_intercepted_traffic(proxy_server):
                         "type": "buffer_overflow",
                         "severity": "high",
                         "message": "Potentially unsafe string functions detected",
-                        "offset": header.find(b"strcpy") if b"strcpy" in header else header.find(b"sprintf")
+                        "offset": header.find(b"strcpy") if b"strcpy" in header else header.find(b"sprintf"),
                     })
 
                 # Check for format string vulnerabilities
@@ -8527,7 +8486,7 @@ def _check_intercepted_traffic(proxy_server):
                         "type": "format_string",
                         "severity": "medium",
                         "message": "Potential format string vulnerability",
-                        "offset": header.find(b"printf")
+                        "offset": header.find(b"printf"),
                     })
 
                 # Check for hardcoded credentials
@@ -8538,7 +8497,7 @@ def _check_intercepted_traffic(proxy_server):
                             "type": "hardcoded_credential",
                             "severity": "high",
                             "message": f"Possible hardcoded credential: {pwd.decode('utf-8', errors='ignore')}",
-                            "offset": header.find(pwd)
+                            "offset": header.find(pwd),
                         })
 
                 # Add basic file info
@@ -8546,16 +8505,16 @@ def _check_intercepted_traffic(proxy_server):
                     "type": "info",
                     "severity": "info",
                     "message": f"File size: {file_size} bytes",
-                    "offset": 0
+                    "offset": 0,
                 })
 
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                 vulnerabilities.append({
                     "type": "error",
                     "severity": "error",
-                    "message": f"Scan error: {str(e)}",
-                    "offset": 0
+                    "message": f"Scan error: {e!s}",
+                    "offset": 0,
                 })
 
             return vulnerabilities
@@ -8574,7 +8533,7 @@ def _check_intercepted_traffic(proxy_server):
             "methods_applied": [],
             "errors": ["bypass_tpm_protection not available"],
             "target": str(target),
-            "options_provided": bool(options)
+            "options_provided": bool(options),
         }
     def bypass_vm_detection(app, *args, **kwargs):
         """Fallback function for VM detection bypass."""
@@ -8602,7 +8561,7 @@ def _check_intercepted_traffic(proxy_server):
             "errors": ["bypass_vm_detection module not available"],
             "target": str(target),
             "detection_type": detection_type,
-            "aggressive_mode": aggressive_mode
+            "aggressive_mode": aggressive_mode,
         }
 
 # Import plugin utilities
@@ -8640,7 +8599,7 @@ except ImportError as e:
                 return {"success": False, "error": "Plugin file not found"}
 
             # Read plugin content
-            with open(plugin_path, "r", encoding="utf-8") as f:
+            with open(plugin_path, encoding="utf-8") as f:
                 plugin_content = f.read()
 
             # Run the plugin as a Frida script
@@ -8648,42 +8607,41 @@ except ImportError as e:
             if binary_path:
                 # Use run_frida_script to execute the plugin
                 return run_frida_script(app, script=plugin_content)
-            else:
-                # Analyze plugin without execution
-                result = {
-                    "success": True,
-                    "plugin_path": plugin_path,
-                    "plugin_name": os.path.basename(plugin_path),
-                    "plugin_size": len(plugin_content),
-                    "analysis": {
-                        "hooks": plugin_content.count("Interceptor.attach"),
-                        "replacements": plugin_content.count("retval.replace"),
-                        "sends": plugin_content.count("send("),
-                        "functions_hooked": []
-                    }
-                }
+            # Analyze plugin without execution
+            result = {
+                "success": True,
+                "plugin_path": plugin_path,
+                "plugin_name": os.path.basename(plugin_path),
+                "plugin_size": len(plugin_content),
+                "analysis": {
+                    "hooks": plugin_content.count("Interceptor.attach"),
+                    "replacements": plugin_content.count("retval.replace"),
+                    "sends": plugin_content.count("send("),
+                    "functions_hooked": [],
+                },
+            }
 
-                # Extract hooked functions
-                hook_pattern = r"Module\.findExportByName\([^,]+,\s*['\"]([^'\"]+)['\"]\)"
-                matches = re.findall(hook_pattern, plugin_content)
-                result["analysis"]["functions_hooked"] = list(set(matches))
+            # Extract hooked functions
+            hook_pattern = r"Module\.findExportByName\([^,]+,\s*['\"]([^'\"]+)['\"]\)"
+            matches = re.findall(hook_pattern, plugin_content)
+            result["analysis"]["functions_hooked"] = list(set(matches))
 
-                # Update UI
-                if hasattr(app, "update_analysis_results"):
-                    app.update_analysis_results.emit("\n=== Frida Plugin Analysis ===\n")
-                    app.update_analysis_results.emit(f"Plugin: {result['plugin_name']}\n")
-                    app.update_analysis_results.emit(f"Size: {result['plugin_size']} bytes\n")
-                    app.update_analysis_results.emit(f"Hooks: {result['analysis']['hooks']}\n")
-                    app.update_analysis_results.emit(f"Functions Targeted: {', '.join(result['analysis']['functions_hooked'])}\n")
+            # Update UI
+            if hasattr(app, "update_analysis_results"):
+                app.update_analysis_results.emit("\n=== Frida Plugin Analysis ===\n")
+                app.update_analysis_results.emit(f"Plugin: {result['plugin_name']}\n")
+                app.update_analysis_results.emit(f"Size: {result['plugin_size']} bytes\n")
+                app.update_analysis_results.emit(f"Hooks: {result['analysis']['hooks']}\n")
+                app.update_analysis_results.emit(f"Functions Targeted: {', '.join(result['analysis']['functions_hooked'])}\n")
 
-                if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Frida Plugin] Plugin analyzed (no binary selected for execution)"))
+            if hasattr(app, "update_output"):
+                app.update_output.emit(log_message("[Frida Plugin] Plugin analyzed (no binary selected for execution)"))
 
-                return result
+            return result
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-            error_msg = f"Error loading Frida plugin: {str(e)}"
+            error_msg = f"Error loading Frida plugin: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Frida Plugin] {error_msg}"))
             return {"success": False, "error": error_msg}
@@ -8719,7 +8677,7 @@ except ImportError as e:
             plugin_name = os.path.basename(plugin_path)
 
             # Read plugin content
-            with open(plugin_path, "r", encoding="utf-8") as f:
+            with open(plugin_path, encoding="utf-8") as f:
                 plugin_content = f.read()
 
             # Get target binary (if available)
@@ -8736,8 +8694,8 @@ except ImportError as e:
                     "plugin_path": plugin_path,
                     "plugin_name": plugin_name,
                     "plugin_type": "Python" if plugin_ext == ".py" else "Java",
-                    **kwargs
-                }
+                    **kwargs,
+                },
             )
 
             # Update UI with result
@@ -8751,7 +8709,7 @@ except ImportError as e:
                     for line in result.get("output", []):
                         app.update_analysis_results.emit(f"{line}\n")
 
-                if "qemu_tested" in result and result["qemu_tested"]:
+                if result.get("qemu_tested"):
                     app.update_analysis_results.emit("\n[QEMU Test Completed Successfully]\n")
 
             if hasattr(app, "update_output"):
@@ -8762,9 +8720,9 @@ except ImportError as e:
 
             return result
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-            error_msg = f"Error loading Ghidra plugin: {str(e)}"
+            error_msg = f"Error loading Ghidra plugin: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Ghidra Plugin] {error_msg}"))
             return {"success": False, "error": error_msg}
@@ -8794,7 +8752,7 @@ except ImportError as e:
             "types_requested": plugin_types,
             "force_reload": force_reload,
             "success": False,
-            "reason": "Plugin system module not available"
+            "reason": "Plugin system module not available",
         }
     def create_sample_plugins(app, *args, **kwargs):
         """Create sample plugin files when plugin system not available."""
@@ -8808,7 +8766,7 @@ except ImportError as e:
             os.makedirs(plugins_dir, exist_ok=True)
 
             # Sample Frida plugin
-            frida_plugin = '''// Intellicrack Sample Frida Plugin - License Bypass
+            frida_plugin = """// Intellicrack Sample Frida Plugin - License Bypass
 // This plugin demonstrates basic license check bypassing
 
 console.log("[*] Intellicrack Frida Plugin Loaded");
@@ -8867,7 +8825,7 @@ Interceptor.attach(Module.findExportByName(null, "strcmp"), {
 });
 
 console.log("[*] License bypass hooks installed");
-'''
+"""
 
             # Sample Ghidra Python plugin
             ghidra_plugin = '''# Intellicrack Sample Ghidra Plugin - License Mechanism Analyzer
@@ -8975,14 +8933,14 @@ analyze_license_checks()
                     {
                         "name": "license_bypass.js",
                         "type": "frida",
-                        "description": "Basic license check bypass using Frida"
+                        "description": "Basic license check bypass using Frida",
                     },
                     {
                         "name": "license_analyzer.py",
                         "type": "ghidra",
-                        "description": "License mechanism analyzer for Ghidra"
-                    }
-                ]
+                        "description": "License mechanism analyzer for Ghidra",
+                    },
+                ],
             }
 
             # Write plugin files
@@ -9004,9 +8962,9 @@ analyze_license_checks()
                 "plugins_created": [
                     {"path": frida_path, "type": "frida", "size": len(frida_plugin)},
                     {"path": ghidra_path, "type": "ghidra", "size": len(ghidra_plugin)},
-                    {"path": meta_path, "type": "metadata", "size": len(json.dumps(plugin_meta))}
+                    {"path": meta_path, "type": "metadata", "size": len(json.dumps(plugin_meta))},
                 ],
-                "directory": plugins_dir
+                "directory": plugins_dir,
             }
 
             # Update UI
@@ -9017,9 +8975,9 @@ analyze_license_checks()
 
             return result
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-            error_msg = f"Error creating sample plugins: {str(e)}"
+            error_msg = f"Error creating sample plugins: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Plugins] {error_msg}"))
             return {"success": False, "error": error_msg}
@@ -9046,8 +9004,8 @@ analyze_license_checks()
                     "details": [
                         "IsDebuggerPresent: Patched",
                         "CheckRemoteDebuggerPresent: Hooked",
-                        "NtQueryInformationProcess: Intercepted"
-                    ]
+                        "NtQueryInformationProcess: Intercepted",
+                    ],
                 },
                 "license_patch": {
                     "name": "License Patcher",
@@ -9055,8 +9013,8 @@ analyze_license_checks()
                     "details": [
                         "Found license check at 0x00401234",
                         "Patched conditional jump at 0x00401240",
-                        "NOPed call to validate_license at 0x00401350"
-                    ]
+                        "NOPed call to validate_license at 0x00401350",
+                    ],
                 },
                 "string_decrypt": {
                     "name": "String Decryptor",
@@ -9064,8 +9022,8 @@ analyze_license_checks()
                     "details": [
                         "Encryption: XOR with rolling key",
                         "Key recovered: 0xDEADBEEF",
-                        "Strings saved to decrypted_strings.txt"
-                    ]
+                        "Strings saved to decrypted_strings.txt",
+                    ],
                 },
                 "api_monitor": {
                     "name": "API Monitor",
@@ -9073,9 +9031,9 @@ analyze_license_checks()
                     "details": [
                         "File APIs: CreateFile, ReadFile, WriteFile",
                         "Registry APIs: RegOpenKey, RegQueryValue",
-                        "Network APIs: connect, send, recv"
-                    ]
-                }
+                        "Network APIs: connect, send, recv",
+                    ],
+                },
             }
 
             # Check if it's a known plugin
@@ -9088,7 +9046,7 @@ analyze_license_checks()
                     "plugin_name": plugin_info["name"],
                     "result": plugin_info["result"],
                     "details": plugin_info["details"],
-                    "execution_time": 1.5
+                    "execution_time": 1.5,
                 }
 
                 # Update UI
@@ -9118,9 +9076,9 @@ analyze_license_checks()
                         binary_path = getattr(app, "binary_path", "")
                         proc = subprocess.run(
                             ["python", plugin_path, binary_path or ""],
-                            capture_output=True,
+                            check=False, capture_output=True,
                             text=True,
-                            timeout=30
+                            timeout=30,
                         )
 
                         execution_time = time.time() - start_time
@@ -9132,10 +9090,10 @@ analyze_license_checks()
                             "details": [
                                 f"Plugin loaded from: {plugin_path}",
                                 f"Exit code: {proc.returncode}",
-                                f"Output length: {len(proc.stdout)} chars" if proc.stdout else "No output"
+                                f"Output length: {len(proc.stdout)} chars" if proc.stdout else "No output",
                             ],
                             "execution_time": execution_time,
-                            "stderr": proc.stderr if proc.stderr else None
+                            "stderr": proc.stderr if proc.stderr else None,
                         }
 
                         # Update UI with real results
@@ -9159,15 +9117,15 @@ analyze_license_checks()
                             "result": f"Plugin '{plugin_name}' not found",
                             "details": [
                                 "Plugin file could not be located",
-                                "Check plugin directory and name"
+                                "Check plugin directory and name",
                             ],
-                            "execution_time": 0
+                            "execution_time": 0,
                         }
 
                         if hasattr(app, "update_output"):
                             app.update_output.emit(log_message(f"[Plugin] Error: Plugin '{plugin_name}' not found"))
 
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as plugin_error:
+                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as plugin_error:
                     logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", plugin_error)
                     # Plugin execution failed
                     result = {
@@ -9176,9 +9134,9 @@ analyze_license_checks()
                         "result": f"Plugin execution failed: {plugin_error}",
                         "details": [
                             f"Error type: {type(plugin_error).__name__}",
-                            f"Error message: {str(plugin_error)}"
+                            f"Error message: {plugin_error!s}",
                         ],
-                        "execution_time": 0
+                        "execution_time": 0,
                     }
 
                     if hasattr(app, "update_output"):
@@ -9186,9 +9144,9 @@ analyze_license_checks()
 
             return result
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-            error_msg = f"Error running plugin: {str(e)}"
+            error_msg = f"Error running plugin: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Plugin] {error_msg}"))
             return {"success": False, "error": error_msg}
@@ -9294,7 +9252,7 @@ def update_protocol_tool_description(app=None, **kwargs):
 
     # Extract tool name from kwargs
     tool_name = kwargs.get("tool", "unknown")
-    description = kwargs.get("description", None)
+    description = kwargs.get("description")
 
     # Use app to update UI if available
     if app:
@@ -9310,7 +9268,7 @@ def update_protocol_tool_description(app=None, **kwargs):
     return {
         "success": True,
         "tool": tool_name,
-        "description_provided": description is not None
+        "description_provided": description is not None,
     }
 
 def generate_report(app=None, **kwargs):
@@ -9377,16 +9335,12 @@ def get_file_icon(file_path):
 
         if file_info.exists():
             return icon_provider.icon(file_info)
-        else:
-            # Return appropriate icon based on extension
-            if file_info.suffix().lower() in ["exe", "dll", "so", "dylib"]:
-                return icon_provider.icon(QFileIconProvider.File)
-            elif file_info.suffix().lower() in ["txt", "log", "md"]:
-                return icon_provider.icon(QFileIconProvider.File)
-            elif file_info.isDir():
-                return icon_provider.icon(QFileIconProvider.Folder)
-            else:
-                return icon_provider.icon(QFileIconProvider.File)
+        # Return appropriate icon based on extension
+        if file_info.suffix().lower() in ["exe", "dll", "so", "dylib"] or file_info.suffix().lower() in ["txt", "log", "md"]:
+            return icon_provider.icon(QFileIconProvider.File)
+        if file_info.isDir():
+            return icon_provider.icon(QFileIconProvider.Folder)
+        return icon_provider.icon(QFileIconProvider.File)
 
     except ImportError as e:
         logger.error("Import error in main_app.py: %s", e)
@@ -9394,11 +9348,10 @@ def get_file_icon(file_path):
         import os
         if os.path.isdir(file_path):
             return "folder_icon"
-        elif file_path.endswith((".exe", ".dll", ".so")):
+        if file_path.endswith((".exe", ".dll", ".so")):
             return "binary_icon"
-        else:
-            return "file_icon"
-    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        return "file_icon"
+    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
         logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
         return None
 
@@ -9464,7 +9417,7 @@ def load_ai_model(model_path):
                 except ImportError:
                     logger.error("Import error in main_app.py: %s", e)
                     print("PyTorch not available for loading .pth/.pt models")
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                 print(f"Error loading PyTorch model: {e}")
 
@@ -9486,7 +9439,7 @@ def load_ai_model(model_path):
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
                 print("TensorFlow not available for loading .h5/.keras models")
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                 print(f"Error loading TensorFlow model: {e}")
 
@@ -9505,7 +9458,7 @@ def load_ai_model(model_path):
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
                 print("ONNX/ONNXRuntime not available for loading .onnx models")
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                 print(f"Error loading ONNX model: {e}")
 
@@ -9515,7 +9468,7 @@ def load_ai_model(model_path):
                 model = secure_pickle_load(model_path)
                 print(f"Loaded pickle model from {model_path}")
                 return model
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                 print(f"Error loading pickle model: {e}")
 
@@ -9529,8 +9482,7 @@ def load_ai_model(model_path):
                 return model
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
-            pass
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             print(f"Error loading via ModelManager: {e}")
 
@@ -9540,9 +9492,8 @@ def load_ai_model(model_path):
                 model = joblib.load(model_path)
                 print(f"Loaded model with joblib fallback from {model_path}")
                 return model
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-                pass
 
         print(f"Unable to load model from {model_path} - unsupported format or missing dependencies")
         return None
@@ -9566,7 +9517,7 @@ def apply_parsed_patch_instructions_with_validation(instructions, binary_path):
         return {
             "success": False,
             "message": f"Invalid binary path: {binary_path}",
-            "binary_path": binary_path
+            "binary_path": binary_path,
         }
 
     # Process instructions based on type
@@ -9603,7 +9554,7 @@ def apply_parsed_patch_instructions_with_validation(instructions, binary_path):
         "binary_path": binary_path,
         "applied_patches": applied_patches,
         "errors": errors,
-        "total_instructions": len(instructions) if isinstance(instructions, list) else 1
+        "total_instructions": len(instructions) if isinstance(instructions, list) else 1,
     }
 
 def parse_patch_instructions(instructions):
@@ -9617,7 +9568,7 @@ def simulate_patch_and_verify(patch_data, binary_path):
         return {
             "success": False,
             "verification": "failed",
-            "reason": f"Invalid binary path: {binary_path}"
+            "reason": f"Invalid binary path: {binary_path}",
         }
 
     # Analyze patch data
@@ -9625,7 +9576,7 @@ def simulate_patch_and_verify(patch_data, binary_path):
         "binary_path": binary_path,
         "patch_summary": {},
         "potential_issues": [],
-        "verification_steps": []
+        "verification_steps": [],
     }
 
     # Process patch data based on type
@@ -9650,7 +9601,7 @@ def simulate_patch_and_verify(patch_data, binary_path):
 
             # Add verification step
             simulation_results["verification_steps"].append(
-                f"Verify patch at offset 0x{offset:08x} ({size} bytes)"
+                f"Verify patch at offset 0x{offset:08x} ({size} bytes)",
             )
 
     # Simulate file size check
@@ -9658,9 +9609,9 @@ def simulate_patch_and_verify(patch_data, binary_path):
         file_size = os.path.getsize(binary_path)
         simulation_results["file_size"] = file_size
         simulation_results["verification_steps"].append(f"File size check: {file_size} bytes")
-    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
         logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-        simulation_results["potential_issues"].append(f"File access error: {str(e)}")
+        simulation_results["potential_issues"].append(f"File access error: {e!s}")
 
     # Determine success based on issues found
     success = len(simulation_results["potential_issues"]) == 0
@@ -9669,7 +9620,7 @@ def simulate_patch_and_verify(patch_data, binary_path):
         "success": success,
         "verification": "passed" if success else "failed",
         "simulation_results": simulation_results,
-        "issues_found": len(simulation_results["potential_issues"])
+        "issues_found": len(simulation_results["potential_issues"]),
     }
 
 # Removed local placeholder functions - using proper imports instead
@@ -9709,6 +9660,7 @@ def plugin_system_run_plugin(plugin_name, *args, **kwargs):
 # Missing dialog classes with fallbacks
 class WorkerThread(QThread):
     """Production-grade worker thread class."""
+
     finished = pyqtSignal()
     error = pyqtSignal(str)
     progress = pyqtSignal(int)
@@ -9728,7 +9680,7 @@ class WorkerThread(QThread):
             self.is_running = True
             result = self.func(*self.args, **self.kwargs)
             self.result.emit(result)
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.error.emit(str(e))
         finally:
@@ -9745,6 +9697,7 @@ class WorkerThread(QThread):
 
 class ModelFinetuningDialog(QDialog):
     """Production-grade model finetuning dialog."""
+
     def __init__(self, parent=None):
         """Initialize the model finetuning dialog with UI components."""
         super().__init__(parent)
@@ -9834,7 +9787,7 @@ class ModelFinetuningDialog(QDialog):
                 "optimizer": self.optimizer_combo.currentText(),
                 "loss_function": self.loss_function_combo.currentText(),
                 "patience": self.patience_spin.value(),
-                "status": TrainingStatus.PREPARING.value
+                "status": TrainingStatus.PREPARING.value,
             }
 
             # In a production implementation, this would start actual training
@@ -9844,9 +9797,9 @@ class ModelFinetuningDialog(QDialog):
                                   f"Model training would start with configuration:\n\n{config_str}\n\n"
                                   "This is a production-ready framework ready for ML backend integration.")
             self.accept()
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-            QMessageBox.critical(self, "Error", f"Training failed: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Training failed: {e!s}")
 
 # Try to import Llama from llama-cpp-python, fallback to production-grade placeholder
 try:
@@ -9857,6 +9810,7 @@ except ImportError:
 
     class Llama:
         """Production-grade Llama fallback class with logging and error handling."""
+
         def __init__(self, *args, **kwargs):
             """Initialize the Llama fallback implementation with logging and error handling."""
             _ = args  # Unused fallback class parameters
@@ -9871,10 +9825,10 @@ except ImportError:
             return {
                 "choices": [{
                     "text": f"LLM Backend Unavailable - Install llama-cpp-python for AI functionality\nPrompt was: {prompt[:100]}...",
-                    "finish_reason": "fallback_mode"
+                    "finish_reason": "fallback_mode",
                 }],
                 "usage": {"total_tokens": 0},
-                "model": "fallback"
+                "model": "fallback",
             }
 
         def create_completion(self, prompt="", **kwargs):
@@ -9890,7 +9844,7 @@ except ImportError:
             return {
                 "text": f"LLM functionality requires llama-cpp-python installation\nOriginal prompt: {prompt[:50]}...",
                 "model": "fallback",
-                "tokens_generated": 0
+                "tokens_generated": 0,
             }
 
         def tokenize(self, text):
@@ -9903,8 +9857,7 @@ except ImportError:
 
 
 class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
-    """
-    Main application window for Intellicrack - a comprehensive reverse engineering and security analysis framework.
+    """Main application window for Intellicrack - a comprehensive reverse engineering and security analysis framework.
 
     This class implements the primary user interface for the Intellicrack tool, providing access to various
     security analysis capabilities including binary analysis, memory forensics, network monitoring,
@@ -9923,6 +9876,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         - License verification bypass capabilities
         - Assistant integration
     """
+
     update_output = pyqtSignal(str)
     update_status = pyqtSignal(str)
     update_analysis_results = pyqtSignal(str)
@@ -9939,19 +9893,19 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
     # Thread-safe slot for handling confirmation dialogs
     def thread_safe_confirmation(self, callback):
-        """
-        Thread-safe slot for executing UI operations from background threads.
+        """Thread-safe slot for executing UI operations from background threads.
         This method is called via QMetaObject.invokeMethod from background threads.
 
         Args:
             callback: A callable function to execute in the main thread
+
         """
         try:
             # Execute the callback in the main thread
             callback()
         except (OSError, ValueError, RuntimeError) as e:
-            self.update_output.emit(log_message(f"[Thread-Safe UI] Error: {str(e)}"))
-            logger.error(f"Error in thread_safe_confirmation: {str(e)}")
+            self.update_output.emit(log_message(f"[Thread-Safe UI] Error: {e!s}"))
+            logger.error(f"Error in thread_safe_confirmation: {e!s}")
             logger.error(traceback.format_exc())
 
     def run_report_generation(self):
@@ -9974,8 +9928,8 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             else:
                 self.update_output.emit(f"Unknown tool: {tool_name}")
         except (OSError, ValueError, RuntimeError) as e:
-            self.update_output.emit(f"Error launching network tool: {str(e)}")
-            logger.error(f"Network tool error: {str(e)}")
+            self.update_output.emit(f"Error launching network tool: {e!s}")
+            logger.error(f"Network tool error: {e!s}")
 
     def start_packet_capture(self):
         """Start packet capture tool."""
@@ -10013,7 +9967,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.capture_thread = threading.Thread(
                 target=self._capture_packets_thread,
                 args=(interface, filter_text),
-                daemon=True
+                daemon=True,
             )
             self.traffic_analyzer.capturing = True
             self.capture_thread.start()
@@ -10029,7 +9983,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(f"[Network] Error starting capture: {str(e)}")
+            self.update_output.emit(f"[Network] Error starting capture: {e!s}")
 
     def stop_network_capture(self):
         """Stop capturing network traffic"""
@@ -10054,7 +10008,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(f"[Network] Error stopping capture: {str(e)}")
+            self.update_output.emit(f"[Network] Error stopping capture: {e!s}")
 
     def clear_network_capture(self):
         """Clear captured network data from UI"""
@@ -10073,7 +10027,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(f"[Network] Error clearing capture data: {str(e)}")
+            self.update_output.emit(f"[Network] Error clearing capture data: {e!s}")
 
     def analyze_captured_traffic(self):
         """Analyze captured network traffic for license-related patterns."""
@@ -10092,7 +10046,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                 "encrypted_connections": [],
                 "auth_attempts": [],
                 "suspicious_ports": [],
-                "potential_checks": []
+                "potential_checks": [],
             }
 
             # Common license server ports
@@ -10100,7 +10054,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                 27000: "FlexLM", 27001: "FlexLM",
                 1947: "HASP/Sentinel", 6001: "Sentinel",
                 22350: "CodeMeter", 2080: "Autodesk",
-                1688: "Microsoft KMS", 5093: "Sentinel RMS"
+                1688: "Microsoft KMS", 5093: "Sentinel RMS",
             }
 
             # Analyze each captured packet
@@ -10118,20 +10072,20 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                             license_patterns["license_servers"].append({
                                 "port": src_port,
                                 "type": license_ports[src_port],
-                                "direction": "response"
+                                "direction": "response",
                             })
                         if dst_port in license_ports:
                             license_patterns["license_servers"].append({
                                 "port": dst_port,
                                 "type": license_ports[dst_port],
-                                "direction": "request"
+                                "direction": "request",
                             })
 
                         # Check for encrypted traffic
                         if protocol in ["TLS", "SSL"] or dst_port in [443, 8443]:
                             license_patterns["encrypted_connections"].append({
                                 "port": dst_port,
-                                "protocol": protocol
+                                "protocol": protocol,
                             })
 
                         # Look for authentication patterns in payload
@@ -10142,11 +10096,11 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                                 if keyword in payload_str:
                                     license_patterns["auth_attempts"].append({
                                         "keyword": keyword,
-                                        "port": dst_port
+                                        "port": dst_port,
                                     })
                                     break
 
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                     logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                     continue
 
@@ -10158,21 +10112,21 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                 self.update_analysis_results.emit("\nLicense Server Communications:\n")
                 for server in license_patterns["license_servers"]:
                     self.update_analysis_results.emit(
-                        f"  • {server['type']} on port {server['port']} ({server['direction']})\n"
+                        f"  • {server['type']} on port {server['port']} ({server['direction']})\n",
                     )
 
             if license_patterns["encrypted_connections"]:
                 self.update_analysis_results.emit("\nEncrypted Connections:\n")
                 for conn in license_patterns["encrypted_connections"]:
                     self.update_analysis_results.emit(
-                        f"  • {conn['protocol']} on port {conn['port']}\n"
+                        f"  • {conn['protocol']} on port {conn['port']}\n",
                     )
 
             if license_patterns["auth_attempts"]:
                 self.update_analysis_results.emit("\nAuthentication Attempts:\n")
                 for auth in license_patterns["auth_attempts"]:
                     self.update_analysis_results.emit(
-                        f"  • '{auth['keyword']}' pattern on port {auth['port']}\n"
+                        f"  • '{auth['keyword']}' pattern on port {auth['port']}\n",
                     )
 
             # Store analysis results
@@ -10180,7 +10134,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
             self.update_output.emit(log_message("[Network] Traffic analysis complete"))
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Network] Analysis error: {e}"))
             self.update_analysis_results.emit(f"Traffic analysis failed: {e}\n")
@@ -10235,9 +10189,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                     self.update_output.emit("[Network] Using dpkt for fast packet parsing")
                     # dpkt is good for high-speed packet processing
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-            self.update_output.emit(f"[Network] Capture thread error: {str(e)}")
+            self.update_output.emit(f"[Network] Capture thread error: {e!s}")
             self.traffic_analyzer.capturing = False
 
     def _update_packet_display(self):
@@ -10316,8 +10270,8 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                 self.packet_update_timer.stop()
                 self.update_output.emit(f"[Network] Capture complete. Total packets: {len(packets)}")
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
-            self.logger.error(f"Error updating packet display: {str(e)}")
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
+            self.logger.error(f"Error updating packet display: {e!s}")
 
     def apply_performance_settings(self):
         """Apply performance optimization settings."""
@@ -10343,12 +10297,11 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.update_output.emit("Applied performance optimization settings")
             logger.info("Applied performance optimization settings")
         except (OSError, ValueError, RuntimeError) as e:
-            self.update_output.emit(f"Error applying performance settings: {str(e)}")
-            logger.error(f"Error in apply_performance_settings: {str(e)}")
+            self.update_output.emit(f"Error applying performance settings: {e!s}")
+            logger.error(f"Error in apply_performance_settings: {e!s}")
 
     def __init__(self):
-        """
-        Initialize the main Intellicrack application window.
+        """Initialize the main Intellicrack application window.
 
         Sets up the logger, model manager, and other core components.
         """
@@ -10427,7 +10380,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             from ..ai.coordination_layer import AICoordinationLayer
             self.ai_coordinator = AICoordinationLayer(
                 shared_context=self.ai_orchestrator.shared_context,
-                event_bus=self.ai_orchestrator.event_bus
+                event_bus=self.ai_orchestrator.event_bus,
             )
             self.logger.info("AI Coordination Layer initialized successfully")
 
@@ -10483,7 +10436,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         # Initialize important properties
         self.binary_path = None
-        self.selected_model_path = CONFIG.get("selected_model_path", None) # Initialize from config
+        self.selected_model_path = CONFIG.get("selected_model_path") # Initialize from config
         if self.selected_model_path is not None and os.path.exists(self.selected_model_path):
             # Update the label in settings if the path is valid
             if hasattr(self, "custom_model_path_label"):
@@ -10780,7 +10733,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             "main_window": self,
             "log_message": self.log_message,
             "app_context": self.app_context,
-            "task_manager": self.task_manager
+            "task_manager": self.task_manager,
         }
 
         # Create new modular tabs with lazy loading
@@ -10883,7 +10836,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         try:
             self.apply_comprehensive_tooltips()
             self.logger.info("Applied tooltips to UI elements")
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.warning(f"Could not apply tooltips: {e}")
 
         # Ensure window is properly configured
@@ -11017,7 +10970,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
     def select_binary(self):
         """Open a file dialog to select a binary for analysis."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Binary", "", "Executable Files (*.exe *.dll *.so);;All Files (*)"
+            self, "Select Binary", "", "Executable Files (*.exe *.dll *.so);;All Files (*)",
         )
 
         if file_path:
@@ -11043,7 +10996,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                 else:
                     # Use placeholder icon
                     self.file_icon_label.setPixmap(self._create_icon_pixmap())
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                 # Fallback to text icon
                 self.file_icon_label.setText("📄")
@@ -11088,7 +11041,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         self.analysis_type_history.append({
             "index": index,
             "type": analysis_type,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         })
 
         # Update status based on index
@@ -11538,7 +11491,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                 "create_snapshot": create_snapshot_btn,
                 "restore_snapshot": restore_snapshot_btn,
                 "execute_vm": execute_vm_btn,
-                "compare_snapshots": compare_snapshots_btn
+                "compare_snapshots": compare_snapshots_btn,
             }
             add_emulator_tooltips(emulator_widgets)
 
@@ -11784,7 +11737,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         self.payload_type_combo = QComboBox()
         self.payload_type_combo.addItems([
             "Reverse Shell", "Bind Shell", "Meterpreter", "Staged Payload",
-            "License Bypass", "Function Hijack", "Code Cave", "Custom Shellcode"
+            "License Bypass", "Function Hijack", "Code Cave", "Custom Shellcode",
         ])
         payload_config_layout.addWidget(self.payload_type_combo, 0, 1)
 
@@ -11921,7 +11874,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         research_layout.addWidget(QLabel("Campaign Type:"))
         self.research_type_combo = QComboBox()
         self.research_type_combo.addItems([
-            "Binary Analysis", "Fuzzing", "Patch Analysis", "Hybrid Research"
+            "Binary Analysis", "Fuzzing", "Patch Analysis", "Hybrid Research",
         ])
         research_layout.addWidget(self.research_type_combo)
         vuln_research_layout.addLayout(research_layout)
@@ -12491,7 +12444,7 @@ class Plugin:
                     <li><b>Time Bomb Defuser:</b> Remove time-based restrictions</li>
                     <li><b>Telemetry Blocker:</b> Prevent data collection</li>
                 </ul>
-            """
+            """,
         }
 
         return help_topics.get(topic, f"<h2>{topic}</h2><p>No help available for this topic yet.</p>")
@@ -12505,7 +12458,7 @@ class Plugin:
             process_name, ok = QInputDialog.getText(
                 self,
                 "Process Analysis",
-                "Enter process name or PID to analyze:"
+                "Enter process name or PID to analyze:",
             )
 
             if not ok or not process_name.strip():
@@ -12521,7 +12474,7 @@ class Plugin:
                 "• API calls and system interactions\n"
                 "• Network activity\n"
                 "• File system operations\n\n"
-                "Analysis results will appear in the output console."
+                "Analysis results will appear in the output console.",
             )
 
             # Log the analysis start
@@ -12535,10 +12488,10 @@ class Plugin:
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
             QMessageBox.warning(self, "Error", "PyQt6 components not available for process analysis dialog")
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error(f"Error in process behavior analysis: {e}")
             if hasattr(self, "update_output"):
-                self.update_output.emit(f"[Error] Process analysis failed: {str(e)}")
+                self.update_output.emit(f"[Error] Process analysis failed: {e!s}")
 
     def run_memory_keyword_scan(self):
         """Run dynamic memory keyword scan using Frida."""
@@ -12549,7 +12502,7 @@ class Plugin:
             keywords, ok = QInputDialog.getText(
                 self,
                 "Memory Keyword Scan",
-                "Enter keywords to search for in memory (comma-separated):"
+                "Enter keywords to search for in memory (comma-separated):",
             )
 
             if not ok or not keywords.strip():
@@ -12565,7 +12518,7 @@ class Plugin:
                 "• Binary data\n"
                 "• Runtime values\n"
                 "• Dynamic allocations\n\n"
-                "Scan results will appear in the output console."
+                "Scan results will appear in the output console.",
             )
 
             # Log the scan start
@@ -12582,19 +12535,19 @@ class Plugin:
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
             QMessageBox.warning(self, "Error", "PyQt6 components not available for memory scan dialog")
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error(f"Error in memory keyword scan: {e}")
             if hasattr(self, "update_output"):
-                self.update_output.emit(f"[Error] Memory scan failed: {str(e)}")
+                self.update_output.emit(f"[Error] Memory scan failed: {e!s}")
 
     def get_plugin_icon(self, plugin_type, plugin_name):
         """Get icon for plugin based on type and name"""
         # Plugin type icons
         if plugin_type == "frida":
             return "🔧"  # Wrench for runtime instrumentation
-        elif plugin_type == "ghidra":
+        if plugin_type == "ghidra":
             return "🔍"  # Magnifying glass for analysis
-        elif plugin_type == "custom":
+        if plugin_type == "custom":
             return "🐍"  # Snake for Python plugins
 
         # Special icons for specific plugins
@@ -12605,7 +12558,7 @@ class Plugin:
             "Telemetry Blocker": "📡",
             "License Finder": "🔑",
             "String Decryptor": "🔓",
-            "Binary Patcher": "🔨"
+            "Binary Patcher": "🔨",
         }
 
         return plugin_icons.get(plugin_name, "📦")  # Default package icon
@@ -12684,49 +12637,49 @@ class Plugin:
                     "version": "2.1",
                     "description": "Spoofs hardware identifiers to bypass hardware-based license checks",
                     "status": "Ready",
-                    "file": "hwid_spoofer.js"
+                    "file": "hwid_spoofer.js",
                 },
                 {
                     "name": "Anti-Debugger Bypass",
                     "version": "1.5",
                     "description": "Disables common anti-debugging techniques in target processes",
                     "status": "Ready",
-                    "file": "anti_debugger.js"
+                    "file": "anti_debugger.js",
                 },
                 {
                     "name": "Time Bomb Defuser",
                     "version": "1.2",
                     "description": "Removes time-based expiration checks from applications",
                     "status": "Ready",
-                    "file": "time_bomb_defuser.js"
-                }
+                    "file": "time_bomb_defuser.js",
+                },
             ]
-        elif plugin_type == "ghidra":
+        if plugin_type == "ghidra":
             return [
                 {
                     "name": "License Finder",
                     "version": "1.0",
                     "description": "Automatically identifies license checking functions in binaries",
                     "status": "Ready",
-                    "file": "license_finder.py"
+                    "file": "license_finder.py",
                 },
                 {
                     "name": "String Decryptor",
                     "version": "1.3",
                     "description": "Decrypts obfuscated strings in analyzed binaries",
                     "status": "Ready",
-                    "file": "string_decryptor.py"
-                }
+                    "file": "string_decryptor.py",
+                },
             ]
-        elif plugin_type == "custom":
+        if plugin_type == "custom":
             return [
                 {
                     "name": "Binary Patcher",
                     "version": "1.0",
                     "description": "Custom binary patching framework with GUI integration",
                     "status": "Ready",
-                    "file": "binary_patcher.py"
-                }
+                    "file": "binary_patcher.py",
+                },
             ]
         return []
 
@@ -12856,7 +12809,7 @@ class Plugin:
             get_resource_path("plugins/frida_scripts"),
             get_resource_path("intellicrack/plugins/ghidra_scripts"),
             "intellicrack/plugins",
-            "scripts"
+            "scripts",
         ]
 
         # Common extensions
@@ -13298,7 +13251,7 @@ class Plugin:
             "####-####-####-####",  # 16 char format
             "###-#######-###",      # 13 char format
             "#####-#####-#####",    # 15 char format
-            "Custom"
+            "Custom",
         ]
         self.key_format_dropdown.addItems(key_formats)
         key_format_layout.addWidget(self.key_format_dropdown)
@@ -13726,7 +13679,7 @@ class Plugin:
             [".text", "0x1000", "0x5000", "CODE,EXECUTE", "6.8"],
             [".data", "0x6000", "0x1000", "DATA,READ,WRITE", "4.2"],
             [".rdata", "0x7000", "0x3000", "DATA,READ", "5.7"],
-            [".rsrc", "0xA000", "0x2000", "DATA,READ", "3.9"]
+            [".rsrc", "0xA000", "0x2000", "DATA,READ", "3.9"],
         ]
 
         for i, section in enumerate(sections):
@@ -13798,7 +13751,7 @@ class Plugin:
             ["0x00400000", "0x00100000", "RX", "Image", "app.exe"],
             ["0x10000000", "0x00050000", "RW", "Private", ""],
             ["0x7FFE0000", "0x00010000", "RW", "Mapped", "ntdll.dll"],
-            ["0x7FFF0000", "0x00008000", "RW", "Stack", ""]
+            ["0x7FFF0000", "0x00008000", "RW", "Stack", ""],
         ]
 
         for i, region in enumerate(memory_regions):
@@ -13862,7 +13815,7 @@ class Plugin:
     def select_binary_tool_file(self):
         """Select a file for binary tools."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select File", "", "All Files (*)"
+            self, "Select File", "", "All Files (*)",
         )
 
         if file_path:
@@ -13973,7 +13926,7 @@ class Plugin:
             ["2", "0.025114", "93.184.216.34", "192.168.1.100", "TCP", "80 → 59102 [SYN, ACK] Seq=0 Ack=1 Win=65535 Len=0"],
             ["3", "0.025303", "192.168.1.100", "93.184.216.34", "TCP", "59102 → 80 [ACK] Seq=1 Ack=1 Win=64240 Len=0"],
             ["4", "0.034563", "192.168.1.100", "93.184.216.34", "HTTP", "GET / HTTP/1.1"],
-            ["5", "0.154387", "93.184.216.34", "192.168.1.100", "HTTP", "HTTP/1.1 200 OK"]
+            ["5", "0.154387", "93.184.216.34", "192.168.1.100", "HTTP", "HTTP/1.1 200 OK"],
         ]
 
         for i, packet in enumerate(packets):
@@ -14079,7 +14032,7 @@ class Plugin:
         features = [
             ["FEATURE1", "1.0", "31-dec-2099", "10"],
             ["FEATURE2", "2.0", "31-dec-2099", "5"],
-            ["SUITE", "3.0", "31-dec-2099", "20"]
+            ["SUITE", "3.0", "31-dec-2099", "20"],
         ]
 
         for i, feature in enumerate(features):
@@ -14202,7 +14155,7 @@ class Plugin:
         requests = [
             ["1", "example.com", "GET", "/index.html", "1.2 KB"],
             ["2", "api.example.com", "POST", "/login", "0.8 KB"],
-            ["3", "example.com", "200 OK", "text/html", "15.4 KB"]
+            ["3", "example.com", "200 OK", "text/html", "15.4 KB"],
         ]
 
         for i, req in enumerate(requests):
@@ -14382,7 +14335,7 @@ class Plugin:
             ["String Decryptor", "Available", "Automatically decrypts obfuscated strings"],
             ["Adobe CC Bypass", "Installed", "Sample Frida script for Adobe CC apps"],
             ["Binary Differ", "Installed", "Compares binaries and identifies differences"],
-            ["Demo Plugin", "Installed", "Demonstration of plugin functionality"]
+            ["Demo Plugin", "Installed", "Demonstration of plugin functionality"],
         ]
 
         for i, plugin in enumerate(sample_plugins):
@@ -14569,7 +14522,7 @@ class Plugin:
         self.chat_display.setHtml(
             "<div style='color:#666;'><i>Welcome to IntelliCrack Assistant. "
             "I can help you analyze binaries, generate patches, understand protection mechanisms, "
-            "and more. What would you like to do today?</i></div>"
+            "and more. What would you like to do today?</i></div>",
         )
 
         chat_layout.addWidget(self.chat_display)
@@ -14591,7 +14544,7 @@ class Plugin:
             "How does this protection work?",
             "Suggest memory locations to patch",
             "What APIs are used by this function?",
-            "Help me bypass this protection"
+            "Help me bypass this protection",
         ])
         preset_combo.currentIndexChanged.connect(self.handle_preset_query)
 
@@ -14754,7 +14707,7 @@ class Plugin:
                 # Fallback response when no LLM is available
                 response = self._get_fallback_response(user_message)
                 self.show_assistant_response(response)
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.warning("Failed to get LLM response: %s - using fallback", e)
             response = self._get_fallback_response(user_message)
             self.show_assistant_response(response)
@@ -14771,7 +14724,7 @@ class Plugin:
 
         # Scroll to bottom
         self.chat_display.verticalScrollBar().setValue(
-            self.chat_display.verticalScrollBar().maximum()
+            self.chat_display.verticalScrollBar().maximum(),
         )
 
         # Also add to logs
@@ -14821,7 +14774,7 @@ Please provide a helpful, technical response that assists with the binary analys
             # Send to LLM
             messages = [
                 LLMMessage(role="system", content=system_prompt),
-                LLMMessage(role="user", content=user_prompt)
+                LLMMessage(role="user", content=user_prompt),
             ]
 
             llm_response = llm_manager.chat(messages)
@@ -14845,14 +14798,14 @@ Please provide a helpful, technical response that assists with the binary analys
                 "role": "user",
                 "content": user_message,
                 "timestamp": datetime.datetime.now().isoformat(),
-                "qt_timestamp": qt_timestamp.toString(Qt.ISODate)
+                "qt_timestamp": qt_timestamp.toString(Qt.ISODate),
             })
 
             self.ai_conversation_history.append({
                 "role": "assistant",
                 "content": response,
                 "timestamp": datetime.datetime.now().isoformat(),
-                "qt_timestamp": qt_timestamp.addSecs(1).toString(Qt.ISODate)  # Add 1 second for response
+                "qt_timestamp": qt_timestamp.addSecs(1).toString(Qt.ISODate),  # Add 1 second for response
             })
 
             # Also update autonomous agent's conversation history if available
@@ -14861,17 +14814,17 @@ Please provide a helpful, technical response that assists with the binary analys
                     self.autonomous_agent.conversation_history.append({
                         "role": "user",
                         "content": user_message,
-                        "timestamp": datetime.datetime.now().isoformat()
+                        "timestamp": datetime.datetime.now().isoformat(),
                     })
                     self.autonomous_agent.conversation_history.append({
                         "role": "assistant",
                         "content": response,
-                        "timestamp": datetime.datetime.now().isoformat()
+                        "timestamp": datetime.datetime.now().isoformat(),
                     })
                 except Exception as e:
                     logger.debug(f"Could not update agent conversation history: {e}")
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("Error getting AI response: %s", e)
             response = self._get_fallback_response(user_message)
             self.show_assistant_response(response)
@@ -14891,7 +14844,7 @@ Please provide a helpful, technical response that assists with the binary analys
 
 Would you like me to help you identify specific license protection mechanisms in your binary?"""
 
-        elif any(word in user_lower for word in ["vulnerability", "exploit", "buffer", "overflow"]):
+        if any(word in user_lower for word in ["vulnerability", "exploit", "buffer", "overflow"]):
             return """I can assist with vulnerability analysis. Intellicrack provides several analysis engines:
 
 1. Symbolic Execution: Automatically discover vulnerabilities through path exploration
@@ -14901,7 +14854,7 @@ Would you like me to help you identify specific license protection mechanisms in
 
 Which type of vulnerability analysis would you like to perform on your target binary?"""
 
-        elif any(word in user_lower for word in ["patch", "modify", "edit", "change"]):
+        if any(word in user_lower for word in ["patch", "modify", "edit", "change"]):
             return """I can help you with binary patching and modification:
 
 1. Visual Patch Editor: GUI-based patching with live preview
@@ -14911,7 +14864,7 @@ Which type of vulnerability analysis would you like to perform on your target bi
 
 What specific modifications are you looking to make to your binary?"""
 
-        elif any(word in user_lower for word in ["analysis", "analyze", "reverse", "disassemble"]):
+        if any(word in user_lower for word in ["analysis", "analyze", "reverse", "disassemble"]):
             return """I can guide you through comprehensive binary analysis:
 
 1. File Format Analysis: PE, ELF, Mach-O structure examination
@@ -14921,8 +14874,7 @@ What specific modifications are you looking to make to your binary?"""
 
 What aspect of binary analysis would you like to focus on for your current target?"""
 
-        else:
-            return """I'm here to help with binary analysis and reverse engineering tasks. I can assist with:
+        return """I'm here to help with binary analysis and reverse engineering tasks. I can assist with:
 
 • License verification system analysis
 • Vulnerability discovery and exploitation
@@ -14992,7 +14944,7 @@ Description: {results.get('description', 'License bypass successful')}"""
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            error_msg = f"Failed to run concolic license bypass: {str(e)}"
+            error_msg = f"Failed to run concolic license bypass: {e!s}"
             QMessageBox.critical(self, "Error", error_msg)
             self.update_output.emit(f"[ERROR] {error_msg}")
 
@@ -15035,7 +14987,7 @@ Description: {results.get('description', 'License bypass successful')}"""
             ("AI Model", "Connected", "green"),
             ("License Server", "Running", "green"),
             ("Patch Engine", "Ready", "green"),
-            ("Network Monitor", "Inactive", "gray")
+            ("Network Monitor", "Inactive", "gray"),
         ]
 
         for row, (name, status, color) in enumerate(status_indicators):
@@ -15060,7 +15012,7 @@ Description: {results.get('description', 'License bypass successful')}"""
             ("Create Patch", "wrench", self.open_patching_tab),
             ("View Hex", "search", self.open_hex_viewer_tab),
             ("Network Capture", "wifi", self.open_network_tab),
-            ("Run Plugin", "extension", self.open_plugins_tab)
+            ("Run Plugin", "extension", self.open_plugins_tab),
         ]
 
         for name, icon, callback in quick_actions:
@@ -15118,7 +15070,7 @@ Description: {results.get('description', 'License bypass successful')}"""
             ("Size:", "3.4 MB"),
             ("Type:", "PE32+ executable (console) x86-64"),
             ("Entropy:", "7.2 (likely packed/encrypted)"),
-            ("MD5:", "d41d8cd98f00b204e9800998ecf8427e")
+            ("MD5:", "d41d8cd98f00b204e9800998ecf8427e"),
         ]
 
         for row, (label_text, value_text) in enumerate(binary_info):
@@ -15140,7 +15092,7 @@ Description: {results.get('description', 'License bypass successful')}"""
         notifications = [
             ("New plugin update available", "License Finder v1.3.0 has been released"),
             ("Analysis completed", "Analysis of Sample2.exe completed with 3 findings"),
-            ("System update", "Intellicrack core has been updated to v2.0.1")
+            ("System update", "Intellicrack core has been updated to v2.0.1"),
         ]
 
         for title, message in notifications:
@@ -15169,7 +15121,7 @@ Description: {results.get('description', 'License bypass successful')}"""
             ("Successful Patches:", "37"),
             ("Protection Schemes Identified:", "15"),
             ("License Types Bypassed:", "8"),
-            ("Most Used Tool:", "Hex Viewer (152 times)")
+            ("Most Used Tool:", "Hex Viewer (152 times)"),
         ]
 
         for row, (label_text, value_text) in enumerate(stats):
@@ -15222,7 +15174,7 @@ Description: {results.get('description', 'License bypass successful')}"""
             ("12:31:02", "Loaded binary: Sample1.exe"),
             ("12:32:15", "Analysis completed with 3 findings"),
             ("12:35:30", "Patch applied successfully"),
-            ("12:40:12", "Network capture started")
+            ("12:40:12", "Network capture started"),
         ]
 
         for timestamp, activity in activity_entries:
@@ -15311,7 +15263,7 @@ Description: {results.get('description', 'License bypass successful')}"""
             # Add text to the image
             try:
                 font = ImageFont.truetype("arial.ttf", 20)
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                 self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                 font = ImageFont.load_default()
 
@@ -15330,7 +15282,7 @@ Description: {results.get('description', 'License bypass successful')}"""
             return bytes.fromhex(
                 "89504e470d0a1a0a0000000d49484452000000100000001008060000001ff3ff61"
                 "000000017352474200aece1ce90000000467414d410000b18f0bfc61050000000a"
-                "49444154384f631800000500010155270ae10000000049454e44ae426082"
+                "49444154384f631800000500010155270ae10000000049454e44ae426082",
             )
 
     def _create_icon_pixmap(self, size=64):
@@ -15982,7 +15934,7 @@ Description: {results.get('description', 'License bypass successful')}"""
         tools = [
             ("Ghidra Path:", config_manager.get_tool_path("ghidra") or "Not found - click Browse"),
             ("Radare2 Path:", config_manager.get_tool_path("radare2") or "Not found - click Browse"),
-            ("Frida Path:", config_manager.get_tool_path("frida") or "Not found - click Browse")
+            ("Frida Path:", config_manager.get_tool_path("frida") or "Not found - click Browse"),
         ]
 
         for row, (label_text, path_value) in enumerate(tools):
@@ -16154,7 +16106,7 @@ Description: {results.get('description', 'License bypass successful')}"""
             self.update_output.emit(log_message("[Hex Viewer] Enhanced hex viewer functionality initialized"))
             logger.info("Enhanced hex viewer functionality fully integrated")
         except (OSError, ValueError, RuntimeError) as e:
-            self.update_output.emit(log_message(f"[Hex Viewer] Error initializing enhanced hex viewer: {str(e)}"))
+            self.update_output.emit(log_message(f"[Hex Viewer] Error initializing enhanced hex viewer: {e!s}"))
             logger.error("Error initializing enhanced hex viewer: %s", e)
             logger.error(traceback.format_exc())
 
@@ -16179,8 +16131,7 @@ Description: {results.get('description', 'License bypass successful')}"""
         except ImportError as e:
             self.logger.error("Import error in main_app.py: %s", e)
             # Fallback to simple creation
-            pass
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output(f"[Plugins] Error with wizard: {e}")
 
@@ -16271,7 +16222,7 @@ class CustomPlugin:
 
 def register():
     # Register the plugin
-    return CustomPlugin()"""
+    return CustomPlugin()""",
         }
 
         # Create plugin directory if it doesn't exist
@@ -16282,7 +16233,7 @@ def register():
         subdir_map = {
             "frida": "frida_scripts",
             "ghidra": "ghidra_scripts",
-            "custom": "custom_modules"
+            "custom": "custom_modules",
         }
 
         subdir = subdir_map.get(plugin_type)
@@ -16296,7 +16247,7 @@ def register():
 
         # Get plugin name from user
         plugin_name, ok = QInputDialog.getText(
-            self, f"New {plugin_type.title()} Plugin", "Enter plugin name:"
+            self, f"New {plugin_type.title()} Plugin", "Enter plugin name:",
         )
 
         if not ok or not plugin_name:
@@ -16309,7 +16260,7 @@ def register():
         extensions = {
             "frida": ".js",
             "ghidra": ".java",
-            "custom": ".py"
+            "custom": ".py",
         }
 
         file_path = os.path.join(subdir_path, plugin_name + extensions[plugin_type])
@@ -16320,7 +16271,7 @@ def register():
                 self,
                 "File Exists",
                 f"The file {file_path} already exists. Overwrite?",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
 
             if response != QMessageBox.Yes:
@@ -16361,8 +16312,7 @@ def register():
         except ImportError as e:
             self.logger.error("Import error in main_app.py: %s", e)
             # Fallback to simple editor
-            pass
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output(f"[Plugins] Error with enhanced editor: {e}")
 
@@ -16378,7 +16328,7 @@ def register():
             editor = QTextEdit()
 
             # Load file content
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 editor.setPlainText(f.read())
 
             layout.addWidget(editor)
@@ -16398,8 +16348,7 @@ def register():
 
             # Connect buttons
             def save_file():
-                """
-                Save the contents of the editor to the file.
+                """Save the contents of the editor to the file.
 
                 This function writes the current text from the editor to the specified file path,
                 emits a success message to the application log, and closes the editor dialog.
@@ -16413,6 +16362,7 @@ def register():
 
                 Raises:
                     No exceptions are propagated as they are caught and logged internally
+
                 """
                 try:
                     with open(path, "w", encoding="utf-8") as f:
@@ -16439,7 +16389,7 @@ def register():
         filters = {
             "frida": "JavaScript Files (*.js)",
             "ghidra": "Java Files (*.java)",
-            "custom": "Python Files (*.py)"
+            "custom": "Python Files (*.py)",
         }
 
         # Get file from user
@@ -16447,7 +16397,7 @@ def register():
             self,
             f"Import {plugin_type.title()} Plugin",
             "",
-            filters.get(plugin_type, "All Files (*)")
+            filters.get(plugin_type, "All Files (*)"),
         )
 
         if not file_path:
@@ -16462,7 +16412,7 @@ def register():
         subdir_map = {
             "frida": "frida_scripts",
             "ghidra": "ghidra_scripts",
-            "custom": "custom_modules"
+            "custom": "custom_modules",
         }
 
         subdir = subdir_map.get(plugin_type)
@@ -16483,7 +16433,7 @@ def register():
                 self,
                 "File Exists",
                 f"The file {dest_file} already exists. Overwrite?",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
 
             if response != QMessageBox.Yes:
@@ -16538,7 +16488,7 @@ def register():
                         return
 
                     try:
-                        with open(plugin_path, "r", encoding="utf-8") as f:
+                        with open(plugin_path, encoding="utf-8") as f:
                             plugin_content = f.read()
                     except Exception as e:
                         self.update_output.emit(log_message(f"[Plugin] Error reading plugin: {e}"))
@@ -16555,8 +16505,8 @@ def register():
                         options={
                             "plugin_info": plugin_info,
                             "plugin_name": plugin_name,
-                            "plugin_path": plugin_path
-                        }
+                            "plugin_path": plugin_path,
+                        },
                     )
 
                     if result.get("success"):
@@ -16684,9 +16634,7 @@ def register():
         try:
             from .dialogs.plugin_manager_dialog import PluginManagerDialog
             dialog = PluginManagerDialog(self)
-            if hasattr(dialog, "exec_"):
-                dialog.exec()
-            elif hasattr(dialog, "exec"):
+            if hasattr(dialog, "exec_") or hasattr(dialog, "exec"):
                 dialog.exec()
             else:
                 dialog.show()
@@ -16717,7 +16665,7 @@ def register():
             plugin_info = {
                 "name": "Demo Plugin",
                 "path": "intellicrack/plugins/custom_modules/demo_plugin.py",
-                "description": "Test plugin for remote execution"
+                "description": "Test plugin for remote execution",
             }
 
             if os.path.exists(plugin_info["path"]):
@@ -17089,24 +17037,23 @@ def register():
         logger.debug("Hex Viewer tab setup complete")
 
     def show_editable_hex_viewer(self):
-        """
-        Compatibility method to bridge with hexview integration.
+        """Compatibility method to bridge with hexview integration.
 
         This method ensures compatibility with the hexview module which expects
         a show_editable_hex_viewer method. It simply calls show_enhanced_hex_viewer
         with the current binary path and editable mode.
         """
         return self.show_enhanced_hex_viewer(
-            self.binary_path if self.binary_path is not None else None, False
+            self.binary_path if self.binary_path is not None else None, False,
         )
 
     def show_enhanced_hex_viewer(self, file_path=None, read_only=False):
-        """
-        Show the enhanced hex viewer/editor dialog.
+        """Show the enhanced hex viewer/editor dialog.
 
         Args:
             file_path: Path to the file to view/edit (defaults to current binary)
             read_only: Whether to open in read-only mode
+
         """
         # Use the function from hexview.integration to show the dialog
         try:
@@ -17118,7 +17065,7 @@ def register():
                     QMessageBox.warning(
                         self,
                         "No File Loaded",
-                        "Please load a binary file first or specify a file path."
+                        "Please load a binary file first or specify a file path.",
                     )
                     return
 
@@ -17137,7 +17084,7 @@ def register():
             QMessageBox.critical(
                 self,
                 "Error Opening Hex Viewer",
-                f"Failed to open the hex viewer: {str(e)}"
+                f"Failed to open the hex viewer: {e!s}",
             )
             logger.error("Error opening hex viewer: %s", e)
             logger.error(traceback.format_exc())
@@ -17208,8 +17155,7 @@ def register():
 
 
     def append_output(self, text):
-        """
-        Adds text to the output panel and scrolls to the bottom.
+        """Adds text to the output panel and scrolls to the bottom.
 
         This method appends the provided text to the output console and
         ensures that the view is scrolled to display the latest content.
@@ -17219,6 +17165,7 @@ def register():
 
         Returns:
             None
+
         """
         # Safety check to handle updates before UI is fully initialized
         if not hasattr(self, "output") or self.output is None:
@@ -17293,14 +17240,14 @@ def register():
         self.append_output(f"[Task Failed] {error_message}")
 
     def log_to_file(self, message):
-        """
-        Log a message to a file in the logs directory.
+        """Log a message to a file in the logs directory.
 
         This method writes important application messages to a dedicated log file,
         separate from the standard Python logging system.
 
         Args:
             message (str): The message to log to the file
+
         """
         try:
             # Ensure logs directory exists
@@ -17319,12 +17266,11 @@ def register():
 
         except (OSError, ValueError, RuntimeError) as e:
             # Log the error through standard logging since we can't use our own method
-            logger.error(f"Error writing to status log file: {str(e)}")
+            logger.error(f"Error writing to status log file: {e!s}")
             # Don't let logging errors interrupt the application flow
 
     def save_analysis_results(self):
-        """
-        Save analysis results to a file.
+        """Save analysis results to a file.
         """
         if not hasattr(self, "analyze_results") or not self.analyze_results:
             self.update_output.emit(log_message("No analysis results to save."))
@@ -17334,7 +17280,7 @@ def register():
             self,
             "Save Analysis Results",
             "",
-            "Text Files (*.txt);;HTML Files (*.html);;All Files (*)"
+            "Text Files (*.txt);;HTML Files (*.html);;All Files (*)",
         )
 
         if not filename:
@@ -17525,11 +17471,11 @@ def register():
         app.setStyleSheet("")
 
     def apply_theme(self, theme_name):
-        """
-        Apply a theme to the application
+        """Apply a theme to the application
 
         Args:
             theme_name: Name of the theme to apply
+
         """
         self.current_theme = theme_name
 
@@ -17552,7 +17498,7 @@ def register():
                         hwnd,
                         DWMWA_USE_IMMERSIVE_DARK_MODE,
                         byref(c_int(0)),  # 0 for light mode
-                        sizeof(c_int)
+                        sizeof(c_int),
                     )
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
@@ -17590,7 +17536,7 @@ def register():
                         hwnd,
                         DWMWA_USE_IMMERSIVE_DARK_MODE,
                         byref(c_int(1)),  # 1 for dark mode
-                        sizeof(c_int)
+                        sizeof(c_int),
                     )
 
                     # Also try the older attribute (Windows 10 before 1809)
@@ -17600,11 +17546,10 @@ def register():
                             hwnd,
                             DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1,
                             byref(c_int(1)),  # 1 for dark mode
-                            sizeof(c_int)
+                            sizeof(c_int),
                         )
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                         logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-                        pass
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                     # If it fails, just log and continue
@@ -17755,7 +17700,7 @@ def register():
             "Using the Visual Patch Editor",
             "Creating Custom Plugins",
             "Working with Emulation Layers",
-            "Network License Bypassing"
+            "Network License Bypassing",
         ]
 
         tutorial_list = "\n".join([f"• {t}" for t in tutorials])
@@ -17829,12 +17774,11 @@ def register():
 
     def show_about_dialog(self):
         """Show the about dialog"""
-
         QMessageBox.about(self, "About Intellicrack",
             "Intellicrack - Advanced Binary Analysis\n\n"
             "Version: 2.0\n"
             "© 2025 Intellicrack Team\n\n"
-            "An advanced binary analysis and patching tool with AI capabilities."
+            "An advanced binary analysis and patching tool with AI capabilities.",
         )
 
     def show_preferences_dialog(self):
@@ -17849,7 +17793,7 @@ def register():
                 self.update_output.emit(log_message("[Settings] Preferences updated"))
         except Exception as e:
             logger.error("Error showing preferences dialog: %s", e)
-            QMessageBox.critical(self, "Error", f"Failed to open preferences: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to open preferences: {e!s}")
 
     def on_preferences_changed(self):
         """Handle preferences changes."""
@@ -17980,7 +17924,7 @@ def register():
                     # Add to cleanup summary
                     cleanup_summary.append(f"Cleaned up Frida session: {session_name}")
                 except (OSError, ValueError, RuntimeError) as e:
-                    self.logger.error(f"Error cleaning up Frida session {session_name}: {str(e)}")
+                    self.logger.error(f"Error cleaning up Frida session {session_name}: {e!s}")
 
             # Log summary of closed sessions
             if cleanup_summary:
@@ -17991,8 +17935,8 @@ def register():
             session_state = {
                 "last_session": {
                     "closed_time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "sessions_closed": len(cleanup_summary)
-                }
+                    "sessions_closed": len(cleanup_summary),
+                },
             }
             self.config["session_history"] = session_state
             self.save_config()
@@ -18040,7 +17984,7 @@ def register():
                 "Searches for hidden or encrypted script content.\n"
                 "Many malware hide PowerShell/JavaScript inside.\n"
                 "Attempts automatic decryption of common schemes."
-            )
+            ),
         }
 
         checkboxes = self.findChildren(QCheckBox)
@@ -18054,14 +17998,14 @@ def register():
             self.interface_combo.setToolTip(
                 "Select network interface for packet capture.\n"
                 "Usually 'eth0' for wired, 'wlan0' for wireless.\n"
-                "Requires admin/root privileges."
+                "Requires admin/root privileges.",
             )
 
         if hasattr(self, "filter_input"):
             self.filter_input.setToolTip(
                 "BPF (Berkeley Packet Filter) syntax for filtering.\n"
                 "Examples: 'tcp port 80', 'host 192.168.1.1',\n"
-                "'tcp and (port 443 or port 8443)'"
+                "'tcp and (port 443 or port 8443)'",
             )
 
         # Slider tooltips
@@ -18072,13 +18016,13 @@ def register():
                     slider.setToolTip(
                         "Adjust memory usage vs performance.\n"
                         "Lower = Faster but more RAM usage.\n"
-                        "Higher = Slower but less RAM usage."
+                        "Higher = Slower but less RAM usage.",
                     )
                 elif "analysis_depth" in slider.objectName().lower():
                     slider.setToolTip(
                         "Control analysis thoroughness.\n"
                         "Lower = Quick scan, basic checks.\n"
-                        "Higher = Deep analysis, more time."
+                        "Higher = Deep analysis, more time.",
                     )
 
     def clear_output(self):
@@ -18152,8 +18096,7 @@ def register():
 # --- Thread-Safe GUI Update Slots ---
 
     def set_status_message(self, text):
-        """
-        Safely updates the status bar or analysis status label from any thread.
+        """Safely updates the status bar or analysis status label from any thread.
 
         Thread-safe method to update UI status elements.
 
@@ -18162,14 +18105,14 @@ def register():
 
         Returns:
             None
+
         """
         if hasattr(self, "analyze_status"):
             self.analyze_status.setText(text)
         self.statusBar().showMessage(text[:100])  # Keep status bar concise
 
     def append_analysis_results(self, text):
-        """
-        Safely appends text to the analysis results view from any thread.
+        """Safely appends text to the analysis results view from any thread.
 
         Thread-safe method to update analysis results, including automatic scrolling.
 
@@ -18178,6 +18121,7 @@ def register():
 
         Returns:
             None
+
         """
         if hasattr(self, "analyze_results_widget") and self.analyze_results_widget is not None:
             # Append to the UI widget
@@ -18195,8 +18139,7 @@ def register():
             self.analyze_results.append(text)
 
     def set_progress_value(self, value):
-        """
-        Safely sets the progress bar value from any thread.
+        """Safely sets the progress bar value from any thread.
 
         Thread-safe method to update progress bar UI element.
 
@@ -18205,6 +18148,7 @@ def register():
 
         Returns:
             None
+
         """
         if hasattr(self, "progress_bar"):
             self.progress_bar.setValue(value)
@@ -18215,8 +18159,7 @@ def register():
             self.assistant_status.setText(text)
 
     def append_chat_display(self, text):
-        """
-        Safely appends text to the chat display from any thread.
+        """Safely appends text to the chat display from any thread.
 
         Thread-safe method to update chat display with automatic scrolling.
 
@@ -18225,6 +18168,7 @@ def register():
 
         Returns:
             None
+
         """
         if self.chat_display is not None:
             self.chat_display.append(text)
@@ -18234,8 +18178,7 @@ def register():
             self.chat_display.setTextCursor(cursor)
 
     def replace_last_chat_message(self, old_text, new_text):
-        """
-        Safely replaces the last message in the chat display from any thread.
+        """Safely replaces the last message in the chat display from any thread.
 
         This method finds and replaces the last message matching old_text with new_text,
         typically used for updating status messages like "[thinking...]" with the
@@ -18247,6 +18190,7 @@ def register():
 
         Returns:
             None
+
         """
         if self.chat_display is not None:
             current_text = self.chat_display.toPlainText()
@@ -18264,8 +18208,7 @@ def register():
                 self.append_chat_display(new_text)
 
     def handle_log_user_question(self, title, message):
-        """
-        Handles logging user questions received via signal.
+        """Handles logging user questions received via signal.
 
         This method safely logs user interaction requests from worker threads
         instead of showing blocking dialogs.
@@ -18276,6 +18219,7 @@ def register():
 
         Returns:
             None
+
         """
         # Log the question instead of showing a blocking dialog from worker
         # thread
@@ -18284,8 +18228,7 @@ def register():
         # You could potentially show a non-modal notification here instead
 
     def handle_set_keygen_name(self, text):
-        """
-        Handles setting the keygen product name via signal.
+        """Handles setting the keygen product name via signal.
 
         Thread-safe method to update keygen product name.
 
@@ -18294,13 +18237,13 @@ def register():
 
         Returns:
             None
+
         """
         if hasattr(self, "keygen_input_name"):
             self.keygen_input_name.setPlainText(text)
 
     def handle_set_keygen_version(self, text):
-        """
-        Handles setting the keygen version via signal.
+        """Handles setting the keygen version via signal.
 
         Thread-safe method to update keygen version.
 
@@ -18309,6 +18252,7 @@ def register():
 
         Returns:
             None
+
         """
         if hasattr(self, "keygen_input_version"):
             self.keygen_input_version.setPlainText(text)
@@ -18382,14 +18326,14 @@ def register():
     # --- End AI Event Handlers ---
 
     def load_binary(self, path=None):
-        """
-        Load a binary file for analysis.
+        """Load a binary file for analysis.
 
         Args:
             path: Optional path to the binary file. If None, a file dialog will be shown.
 
         Returns:
             bool: True if binary was loaded successfully, False otherwise
+
         """
         # If no path provided, show file dialog
         if not path:
@@ -18397,7 +18341,7 @@ def register():
                 self,
                 "Select Binary File",
                 "",
-                "All Files (*)"
+                "All Files (*)",
             )
 
             if not path:
@@ -18447,8 +18391,7 @@ def register():
         return True
 
     def analyze_directory(self):
-        """
-        Analyze an entire program directory structure.
+        """Analyze an entire program directory structure.
         Uses AIFileTools to comprehensively analyze all components of a program.
         """
         # Show directory selection dialog
@@ -18456,7 +18399,7 @@ def register():
             self,
             "Select Program Directory to Analyze",
             "",
-            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
+            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks,
         )
 
         if not directory_path:
@@ -18480,7 +18423,7 @@ def register():
                     self,
                     "No Executable Found",
                     "No executable files found in the selected directory.\n"
-                    "Please select a directory containing the program executable."
+                    "Please select a directory containing the program executable.",
                 )
                 return
 
@@ -18493,7 +18436,7 @@ def register():
                     "Multiple executables found. Select the main program:",
                     [os.path.basename(exe) for exe in executables],
                     0,
-                    False
+                    False,
                 )
                 if ok and item:
                     main_executable = next(exe for exe in executables if os.path.basename(exe) == item)
@@ -18515,7 +18458,7 @@ def register():
                 if hasattr(self, "dashboard_manager"):
                     self.dashboard_manager.add_activity(
                         "analyze",
-                        f"Directory analysis completed: {os.path.basename(directory_path)}"
+                        f"Directory analysis completed: {os.path.basename(directory_path)}",
                     )
 
                 # Store results for later use
@@ -18524,14 +18467,14 @@ def register():
                 self.directory_analysis_results.append({
                     "timestamp": datetime.datetime.now().isoformat(),
                     "directory": directory_path,
-                    "results": analysis_results
+                    "results": analysis_results,
                 })
 
             else:
                 self.update_output.emit(log_message(f"[Directory Analysis] Error: {analysis_results.get('error', 'Unknown error')}"))
 
         except Exception as e:
-            self.update_output.emit(log_message(f"[Directory Analysis] Error: {str(e)}"))
+            self.update_output.emit(log_message(f"[Directory Analysis] Error: {e!s}"))
             logger.error(f"Directory analysis error: {e}", exc_info=True)
 
     def _display_directory_analysis_results(self, results):
@@ -18702,7 +18645,7 @@ def register():
             self.dashboard_manager.stats["patches"] = {
                 "count": 0,
                 "applied": 0,
-                "types": {}
+                "types": {},
             }
 
         patch_info = f"""
@@ -18730,7 +18673,7 @@ def register():
         if "license_server" not in self.dashboard_manager.stats:
             self.dashboard_manager.stats["license_server"] = {
                 "running": False,
-                "port": 0
+                "port": 0,
             }
 
         if self.dashboard_manager.stats["license_server"]["running"]:
@@ -18880,6 +18823,7 @@ def register():
 
         Args:
             text: Selected option text from dropdown
+
         """
         if text == "Auto Patch Agent":
             run_automated_patch_agent(self)
@@ -18897,6 +18841,7 @@ def register():
 
         Args:
             text: Selected option text from dropdown
+
         """
         if text == "License Logic":
             self.run_deep_license_analysis()
@@ -18934,6 +18879,7 @@ def register():
 
         Args:
             text: Selected option text from dropdown
+
         """
         if text == "Ghidra GUI Analysis":
             self.run_ghidra_analysis_gui()
@@ -18949,6 +18895,7 @@ def register():
 
         Args:
             text: Selected option text from dropdown
+
         """
         if text == "Export Analysis Results":
             self.export_analysis_results()
@@ -18990,7 +18937,7 @@ def register():
                     log_file.write(f"Script file: {js_file}\n")
                     log_file.write(f"Executable path: {exe_path}\n")
 
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as copy_error:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as copy_error:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", copy_error)
                 self.update_output.emit(f"❌ Failed to copy script file: {copy_error}")
                 return
@@ -19020,7 +18967,7 @@ def register():
             "--noconsole",
             "--name", "AdobeLicenseX",
             "--add-data", f"{js_file};.",
-            injector_py
+            injector_py,
         ]
 
         try:
@@ -19141,12 +19088,12 @@ def register():
                             os.startfile(log_path)
                     else:
                         import subprocess
-                        subprocess.run(["open", log_path])  # macOS/Linux alternative
+                        subprocess.run(["open", log_path], check=False)  # macOS/Linux alternative
                 except AttributeError as e:
                     logger.error("Attribute error in main_app.py: %s", e)
                     try:
                         subprocess.call(["open", log_path])  # macOS
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                         logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                         subprocess.call(["xdg-open", log_path])  # Linux
 
@@ -19156,7 +19103,7 @@ def register():
                 self.log_access_history.append({
                     "path": log_path,
                     "time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "size": os.path.getsize(log_path)
+                    "size": os.path.getsize(log_path),
                 })
             else:
                 self.update_output.emit("❌ No injection log found at new location.")
@@ -19167,7 +19114,7 @@ def register():
                     # Include original locations as fallbacks
                     r"C:\ProgramData\Microsoft\WindowsUpdate\adobe_injection.log",
                     os.path.join(os.environ.get("TEMP", ""), "adobe_injection.log"),
-                    os.path.join(os.environ.get("LOCALAPPDATA", ""), "adobe_injection.log")
+                    os.path.join(os.environ.get("LOCALAPPDATA", ""), "adobe_injection.log"),
                 ]
 
                 for alt_path in alternate_paths:
@@ -19186,7 +19133,7 @@ def register():
         activator_path = os.path.join(
             os.path.dirname(__file__),
             "Windows_Patch",
-            "WindowsActivator.cmd"
+            "WindowsActivator.cmd",
         )
         try:
             if os.path.exists(activator_path):
@@ -19207,7 +19154,7 @@ def register():
             self.update_output.emit("⚠️ Please select an Adobe action to execute")
             return
 
-        elif selected_action == "Deploy AdobeLicenseX":
+        if selected_action == "Deploy AdobeLicenseX":
             self.deploy_adobe_licensex()
 
         elif selected_action == "Run AdobeLicenseX Manually":
@@ -19288,7 +19235,7 @@ def register():
             "Analyze current binary",
             "Generate patch plan",
             "Bypass license check",
-            "Create key generator"
+            "Create key generator",
         ])
         preset_dropdown.currentIndexChanged.connect(self.handle_preset_query)
         buttons_layout.addWidget(preset_dropdown)
@@ -19319,7 +19266,7 @@ def register():
             "Analyze this binary": "Analyze the current binary and tell me what license protection mechanism it might be using. What should I look for?",
             "Find license checks": "Help me find license validation routines in this binary. What patterns should I search for and what tools should I use?",
             "Suggest patches": "Based on the license protection in this binary, suggest specific patching strategies. What bytes should I modify?",
-            "Help me understand this function": "I'm looking at a function that might be related to license validation. Can you help me understand what it does and how to bypass it?"
+            "Help me understand this function": "I'm looking at a function that might be related to license validation. Can you help me understand what it does and how to bypass it?",
         }
 
         if query_text in preset_queries:
@@ -19365,7 +19312,7 @@ def register():
             "Import Custom GGUF Model",
             "",  # Start directory (empty means default or last used)
             "GGUF Model Files (*.gguf);;All Files (*)",
-            options=options
+            options=options,
         )
 
         if file_path:
@@ -19422,7 +19369,7 @@ def register():
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                 # Error fallback
-                error_response = f"I apologize, but I encountered an error: {str(e)}. Please try again or check the AI model configuration."
+                error_response = f"I apologize, but I encountered an error: {e!s}. Please try again or check the AI model configuration."
                 self.chat_display.append(f"<b>AI Assistant:</b> {error_response}")
 
             # Update status
@@ -19453,10 +19400,10 @@ def register():
                     try:
                         response = llm_manager.active_backend.chat([
                             {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": full_prompt}
+                            {"role": "user", "content": full_prompt},
                         ])
                         return response
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                         self.logger.warning(f"LLM backend error: {e}, falling back to pattern response")
                         return self._generate_fallback_response(message)
                 else:
@@ -19465,7 +19412,7 @@ def register():
             else:
                 return self._generate_fallback_response(message)
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error(f"Error generating AI response: {e}")
             return self._generate_fallback_response(message)
 
@@ -19478,26 +19425,25 @@ def register():
                    "Look for license validation functions, string patterns, and import tables. "
                    "You can also run vulnerability scans and check for common protection mechanisms.")
 
-        elif "license" in message_lower and ("check" in message_lower or "bypass" in message_lower):
+        if "license" in message_lower and ("check" in message_lower or "bypass" in message_lower):
             return ("License checks typically involve validation routines that compare user input against expected values. "
                    "Look for functions that validate license keys, check expiration dates, or contact license servers. "
                    "Common patterns include string comparisons, date checks, and network validation calls.")
 
-        elif "patch" in message_lower or "crack" in message_lower:
+        if "patch" in message_lower or "crack" in message_lower:
             return ("For patching, identify the protection mechanism first. Common approaches include: "
                    "1) NOPing jump instructions that lead to failure paths, "
                    "2) Modifying comparison results to always succeed, "
                    "3) Bypassing network license checks. Use the Patch tab to apply modifications.")
 
-        elif "function" in message_lower:
+        if "function" in message_lower:
             return ("To understand a function, use the CFG Explorer to analyze its control flow, "
                    "check its disassembly for key instructions, and look at its inputs/outputs. "
                    "Pay attention to conditional jumps and function calls that might indicate protection logic.")
 
-        else:
-            return ("I'm here to help with binary analysis and reverse engineering. You can ask me about: "
-                   "analyzing binaries, finding license checks, creating patches, understanding functions, "
-                   "or general reverse engineering techniques. What would you like to know?")
+        return ("I'm here to help with binary analysis and reverse engineering. You can ask me about: "
+               "analyzing binaries, finding license checks, creating patches, understanding functions, "
+               "or general reverse engineering techniques. What would you like to know?")
 
     def _prepare_ai_context(self, message: str) -> str:
         """Prepare context information for the AI based on current state."""
@@ -19519,12 +19465,10 @@ def register():
                     try:
                         file_format = self.binary_analyzer.identify_format(self.binary_path)
                         context_parts.append(f"Detected format: {file_format}")
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                         self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-                        pass
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-                pass
         else:
             context_parts.append("No binary currently loaded")
 
@@ -19558,12 +19502,11 @@ def register():
                        f"I recommend starting with static analysis using the Analysis tab. "
                        f"Look for license validation functions, string patterns, and import tables. "
                        f"You can also run vulnerability scans and check for common protection mechanisms.")
-            else:
-                return ("First, load a binary file using File -> Open or the Browse button on the Dashboard. "
-                       "Then I can help you analyze it using static analysis, vulnerability scanning, "
-                       "and other reverse engineering techniques.")
+            return ("First, load a binary file using File -> Open or the Browse button on the Dashboard. "
+                   "Then I can help you analyze it using static analysis, vulnerability scanning, "
+                   "and other reverse engineering techniques.")
 
-        elif "license" in message_lower and ("check" in message_lower or "bypass" in message_lower):
+        if "license" in message_lower and ("check" in message_lower or "bypass" in message_lower):
             response = ("License checks typically involve validation routines that compare user input against expected values. "
                        "Look for functions that validate license keys, check expiration dates, or contact license servers. "
                        "Common patterns include string comparisons, date checks, and network validation calls.")
@@ -19572,7 +19515,7 @@ def register():
                 response += "or the String search to find license-related text."
             return response
 
-        elif "patch" in message_lower or "crack" in message_lower:
+        if "patch" in message_lower or "crack" in message_lower:
             response = ("For patching, identify the protection mechanism first. Common approaches include: "
                        "1) NOPing jump instructions that lead to failure paths, "
                        "2) Modifying comparison results to always succeed, "
@@ -19581,13 +19524,13 @@ def register():
                 response += "\n\nI can help you analyze your loaded binary to identify the best patching strategy."
             return response
 
-        elif "function" in message_lower:
+        if "function" in message_lower:
             return ("To understand a function, use the CFG Explorer to analyze its control flow, "
                    "check its disassembly for key instructions, and look at its inputs/outputs. "
                    "Pay attention to conditional jumps and function calls that might indicate protection logic. "
                    "The Hex Viewer can help you examine specific memory regions.")
 
-        elif "help" in message_lower or "what" in message_lower:
+        if "help" in message_lower or "what" in message_lower:
             capabilities = [
                 "🔍 Binary analysis and format detection",
                 "🛡️ License check identification and bypass strategies",
@@ -19595,16 +19538,15 @@ def register():
                 "📊 Vulnerability assessment and exploitation",
                 "🕸️ Network traffic analysis for license servers",
                 "📝 Assembly code explanation and CFG analysis",
-                "🔐 Protection mechanism detection"
+                "🔐 Protection mechanism detection",
             ]
             return ("I'm your binary analysis assistant! Here's what I can help with:\n\n" +
                    "\n".join(capabilities) +
                    "\n\nAsk me specific questions about any of these topics!")
-        else:
-            return ("I'm here to help with binary analysis and reverse engineering. You can ask me about: "
-                   "analyzing binaries, finding license checks, creating patches, understanding functions, "
-                   "vulnerability assessment, or general reverse engineering techniques. "
-                   "What specific challenge are you working on?")
+        return ("I'm here to help with binary analysis and reverse engineering. You can ask me about: "
+               "analyzing binaries, finding license checks, creating patches, understanding functions, "
+               "vulnerability assessment, or general reverse engineering techniques. "
+               "What specific challenge are you working on?")
 
     def _import_from_api(self, parent_dialog=None):
         """Imports a model from an API repository."""
@@ -19678,8 +19620,7 @@ def register():
 
         # Function to populate the model list
         def populate_model_list():
-            """
-            Populate the model list for the selected repository.
+            """Populate the model list for the selected repository.
 
             Clears the list and loads available models based on the selected repository.
             """
@@ -19711,8 +19652,7 @@ def register():
         refresh_button.clicked.connect(populate_model_list)
 
         def on_model_selected():
-            """
-            Handle selection changes in the model list.
+            """Handle selection changes in the model list.
 
             Updates the selected model ID and enables or disables the download button.
             """
@@ -19727,12 +19667,12 @@ def register():
 
         # Handle download progress
         def update_progress(bytes_downloaded, total_bytes):
-            """
-            Update the download progress bar.
+            """Update the download progress bar.
 
             Args:
                 bytes_downloaded: Number of bytes downloaded so far.
                 total_bytes: Total number of bytes to download.
+
             """
             if not progress_bar.isVisible():
                 progress_bar.setVisible(True)
@@ -19747,8 +19687,7 @@ def register():
                 status_label.setText(f"Downloading: {bytes_downloaded} bytes")
 
         def download_complete(success, message):
-            """
-            Handle completion of a model download.
+            """Handle completion of a model download.
 
             Updates the progress bar and status label based on success or failure.
             If successful, sets the selected model, updates the UI, saves config,
@@ -19783,8 +19722,7 @@ def register():
 
         # Handle download button click
         def start_download():
-            """
-            Handle the download button click event.
+            """Handle the download button click event.
 
             Prepares the UI and initiates the model download using the model manager.
             """
@@ -19798,7 +19736,7 @@ def register():
             api_config = {
                 "repository": selected_repo,
                 "model_id": selected_model_id,
-                "progress_callback": update_progress
+                "progress_callback": update_progress,
             }
 
             # Download in a separate thread to avoid blocking the UI
@@ -19806,6 +19744,7 @@ def register():
 
             class DownloadThread(QThread):
                 """Thread for downloading models without blocking the UI."""
+
                 progress = pyqtSignal(int, int)
                 finished = pyqtSignal(bool, str)
 
@@ -19833,7 +19772,7 @@ def register():
                         success = result is not None
                         message = "Model downloaded successfully" if success else "Download failed"
                         self.finished.emit(success, message)
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                         self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                         self.finished.emit(False, str(e))
 
@@ -19875,8 +19814,7 @@ def register():
 
         # Function to create a tab for a repository
         def create_repository_tab(repo_name, repo_config):
-            """
-            Create a new tab for a repository in the UI.
+            """Create a new tab for a repository in the UI.
 
             Sets up UI elements for enabling/disabling the repository and displaying its type.
             """
@@ -19963,8 +19901,7 @@ def register():
             test_btn = QPushButton("Test Connection")
 
             def test_connection():
-                """
-                Test connection to a model repository using current form settings.
+                """Test connection to a model repository using current form settings.
 
                 Creates a temporary repository configuration from the current form values,
                 initializes a repository instance, and attempts to authenticate with it.
@@ -19984,6 +19921,7 @@ def register():
                 Raises:
                     No exceptions are propagated as they are caught and displayed
                     to the user via dialog messages.
+
                 """
                 # Save current settings to a temporary config
                 temp_config = {
@@ -19996,8 +19934,8 @@ def register():
                     "proxy": proxy_edit.text(),
                     "rate_limit": {
                         "requests_per_minute": rpm_spin.value(),
-                        "requests_per_day": rpd_spin.value()
-                    }
+                        "requests_per_day": rpd_spin.value(),
+                    },
                 }
 
                 # Create a temporary repository
@@ -20017,7 +19955,6 @@ def register():
                             def create_repository(*args, **kwargs):
                                 """Create repository instance."""
                                 _ = args, kwargs  # Unused fallback method parameters
-                                return None
                     repo = RepositoryFactory.create_repository(temp_config)
                     if not repo:
                         QMessageBox.warning(dialog, "Repository Error", f"Failed to create repository {repo_name}")
@@ -20091,8 +20028,7 @@ def register():
         clear_cache_btn = QPushButton("Clear Cache")
 
         def clear_cache():
-            """
-            Clear the API response cache for all repositories.
+            """Clear the API response cache for all repositories.
 
             Invokes each repository's cache manager and shows a confirmation dialog.
             """
@@ -20118,8 +20054,7 @@ def register():
         cancel_btn = QPushButton("Cancel")
 
         def save_config():
-            """
-            Save the current repository configuration from the UI.
+            """Save the current repository configuration from the UI.
 
             Updates the repositories dictionary with values from the tab widgets.
             """
@@ -20132,14 +20067,14 @@ def register():
                 repositories[repo_name]["proxy"] = tab.proxy_edit.text()
                 repositories[repo_name]["rate_limit"] = {
                     "requests_per_minute": tab.rpm_spin.value(),
-                    "requests_per_day": tab.rpd_spin.value()
+                    "requests_per_day": tab.rpd_spin.value(),
                 }
 
             # Update cache configuration
             CONFIG["api_cache"] = {
                 "enabled": enable_cache_cb.isChecked(),
                 "ttl": ttl_spin.value(),
-                "max_size_mb": max_size_spin.value()
+                "max_size_mb": max_size_spin.value(),
             }
 
             # Save configuration
@@ -20208,8 +20143,7 @@ def register():
         try:
             # Use a thread to avoid blocking the UI during hashing
             def hash_thread_func():
-                """
-                Compute a file hash in a background thread and emit results to the UI.
+                """Compute a file hash in a background thread and emit results to the UI.
 
                 Uses the instance's compute_file_hash method and compares with the expected hash.
                 """
@@ -20232,7 +20166,7 @@ def register():
                         self.update_output.emit(log_message("[Verify Hash] Hash computation failed or returned None."))
                         QTimer.singleShot(0, lambda: QMessageBox.critical(self, "Hash Error", f"Failed to compute {algorithm} hash."))
 
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e_hash:
+                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_hash:
                     logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_hash)
                     error_msg = f"[Verify Hash] Error during hash computation: {e_hash}"
                     self.update_output.emit(log_message(error_msg))
@@ -20246,7 +20180,7 @@ def register():
             hash_thread = threading.Thread(target=hash_thread_func, daemon=True) # Use daemon thread
             hash_thread.start()
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e_thread:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_thread:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_thread)
             error_msg = f"[Verify Hash] Error starting hash thread: {e_thread}"
             self.update_output.emit(log_message(error_msg))
@@ -20290,8 +20224,8 @@ def register():
                 "overall_status": "valid" if all([
                     file_check.get("status") == "valid",
                     structure_check.get("status") == "valid",
-                    signatures_check.get("status") == "valid"
-                ]) else "invalid"
+                    signatures_check.get("status") == "valid",
+                ]) else "invalid",
             }
 
             # Report verification result
@@ -20452,7 +20386,7 @@ def register():
             "Suggest improvements",
             "Generate tests",
             "Convert to different language",
-            "Add comments"
+            "Add comments",
         ])
         preset_combo.currentTextChanged.connect(self.use_preset_prompt)
 
@@ -20511,7 +20445,7 @@ def register():
             self._populate_file_tree(project_dir, self.ai_file_tree.invisibleRootItem())
             self.ai_file_tree.expandAll()
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(f"[AI] Error refreshing files: {e}")
 
@@ -20533,12 +20467,11 @@ def register():
                     # Recursively add subdirectories (limit depth)
                     if item_path.count(os.sep) - directory.count(os.sep) < 3:
                         self._populate_file_tree(item_path, tree_item)
-                else:
-                    # File - add appropriate icon based on extension
-                    if item.endswith((".py", ".js", ".c", ".cpp", ".h", ".java")):
-                        tree_item.setIcon(0, self.style().standardIcon(QStyle.SP_FileIcon))
+                # File - add appropriate icon based on extension
+                elif item.endswith((".py", ".js", ".c", ".cpp", ".h", ".java")):
+                    tree_item.setIcon(0, self.style().standardIcon(QStyle.SP_FileIcon))
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(f"[AI] Error populating tree: {e}")
 
@@ -20550,7 +20483,7 @@ def register():
                 self.ai_project_folder = folder
                 self.refresh_project_files()
                 self.update_output.emit(f"[AI] Opened project folder: {folder}")
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(f"[AI] Error opening folder: {e}")
 
@@ -20559,14 +20492,14 @@ def register():
         try:
             file_path = item.data(0, Qt.UserRole)
             if file_path and os.path.isfile(file_path):
-                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                with open(file_path, encoding="utf-8", errors="ignore") as f:
                     content = f.read()
 
                 self.ai_code_editor.setPlainText(content)
                 self.current_ai_file = file_path
                 self.update_output.emit(f"[AI] Opened file: {os.path.basename(file_path)}")
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(f"[AI] Error opening file: {e}")
 
@@ -20583,7 +20516,7 @@ def register():
                 # Save as new file
                 file_path, _ = QFileDialog.getSaveFileName(
                     self, "Save File", "",
-                    "Python Files (*.py);;JavaScript Files (*.js);;All Files (*)"
+                    "Python Files (*.py);;JavaScript Files (*.js);;All Files (*)",
                 )
                 if not file_path:
                     return
@@ -20596,7 +20529,7 @@ def register():
             self.update_output.emit(f"[AI] Saved file: {os.path.basename(self.current_ai_file)}")
             self.refresh_project_files()
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(f"[AI] Error saving file: {e}")
 
@@ -20624,7 +20557,7 @@ def register():
                     self.ai_chat_display.append(f"{i}. {suggestion}")
                 self.ai_chat_display.append("")
 
-        except (ImportError, AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (ImportError, AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error("Error explaining code: %s", e)
             self.ai_chat_display.append(f"[AI] Error explaining code: {e}")
 
@@ -20670,7 +20603,7 @@ def register():
                 confidence = analysis_result.get("confidence", 0.0)
                 self.ai_chat_display.append(f"\nConfidence: {confidence:.0%}\n")
 
-        except (ImportError, AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (ImportError, AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(f"[AI] Error analyzing code: {e}")
 
@@ -20700,7 +20633,7 @@ def register():
                     task_type=AITaskType.REASONING,
                     complexity=AnalysisComplexity.MODERATE,
                     input_data={"prompt": full_prompt, "context": "coding_assistant"},
-                    priority=7
+                    priority=7,
                 )
 
                 self.ai_orchestrator.submit_task(task)
@@ -20711,7 +20644,7 @@ def register():
             # Clear input
             self.ai_chat_input.clear()
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(f"[AI] Error sending message: {e}")
 
@@ -20815,7 +20748,7 @@ Focus on:
             self.ai_chat_input.setPlainText(prompt)
             self.send_ai_chat_message()
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(f"[AI] Error generating script: {e}")
 
@@ -20831,7 +20764,7 @@ Focus on:
             self.ai_chat_input.setPlainText(prompt)
             self.send_ai_chat_message()
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(f"[AI] Error requesting modifications: {e}")
 
@@ -20847,7 +20780,7 @@ Focus on:
             self.ai_chat_input.setPlainText(prompt)
             self.send_ai_chat_message()
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(f"[AI] Error requesting comments: {e}")
 
@@ -20941,7 +20874,7 @@ Focus on:
             "qiling_emulation": self.qiling_checkbox.isChecked(),
             "create_backups": self.backup_checkbox.isChecked(),
             "deep_analysis_option": self.deep_analysis_combo.currentText(),
-            "analysis_depth": self.analysis_depth_slider.value() if hasattr(self, "analysis_depth_slider") else 50
+            "analysis_depth": self.analysis_depth_slider.value() if hasattr(self, "analysis_depth_slider") else 50,
         }
 
         path, _ = QFileDialog.getSaveFileName(
@@ -20976,7 +20909,7 @@ Focus on:
             return
 
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 config = json.load(f)
 
             # Apply the loaded configuration
@@ -21210,7 +21143,7 @@ Focus on:
         """Opens a file dialog to select an executable or shortcut. Initializes analyzers."""
         path, _ = QFileDialog.getOpenFileName(
             # Allow selecting any file for broader analysis
-            self, "Select Program", "", "Executables (*.exe *.lnk);;All Files (*.*)"
+            self, "Select Program", "", "Executables (*.exe *.lnk);;All Files (*.*)",
         )
         resolved_path = path  # Store original path or resolved path
 
@@ -21285,7 +21218,7 @@ Focus on:
             self.update_output.emit(log_message(
                 "[Analyzer Init] Failed: AdvancedDynamicAnalyzer class not found (Import missing?)."))
             self.dynamic_analyzer = None  # Ensure it's None if class isn't found
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e_dyn_init:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_dyn_init:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_dyn_init)
             self.update_output.emit(
                 log_message(
@@ -21343,14 +21276,14 @@ Focus on:
         self.update_output.emit(log_message("Program removed"))
 
     def extract_binary_info(self, binary_path):
-        """
-        Extract detailed information from a binary file.
+        """Extract detailed information from a binary file.
 
         Args:
             binary_path: Path to the binary file
 
         Returns:
             dict: Dictionary containing extracted binary information
+
         """
         # Initialize binary info dictionary
         binary_info = self._initialize_binary_info(binary_path)
@@ -21409,7 +21342,7 @@ Focus on:
             "is_debuggable": False,
             "has_protections": False,
             "protection_types": [],
-            "entry_point": 0
+            "entry_point": 0,
         }
 
     def _extract_pe_info(self, binary_path, binary_info):
@@ -21510,7 +21443,7 @@ Focus on:
             "upx": ("UPX Packing", True, False),
             "enigma": ("Enigma Protector", False, True),
             "themida": ("Themida/Winlicense", False, True),
-            "aspack": ("ASPack", True, False)
+            "aspack": ("ASPack", True, False),
         }
 
         for packer_name, (protection_name, sets_packed, sets_protected) in known_packers.items():
@@ -21553,7 +21486,7 @@ Focus on:
             "EM_X86_64": "x86_64",
             "EM_ARM": "ARM",
             "EM_AARCH64": "ARM64",
-            "EM_MIPS": "MIPS"
+            "EM_MIPS": "MIPS",
         }
         binary_info["architecture"] = arch_map.get(machine, machine)
 
@@ -21576,7 +21509,7 @@ Focus on:
             "ELFOSABI_LINUX": "Linux",
             "ELFOSABI_SOLARIS": "Solaris",
             "ELFOSABI_AIX": "AIX",
-            "ELFOSABI_FREEBSD": "FreeBSD"
+            "ELFOSABI_FREEBSD": "FreeBSD",
         }
         os_abi = elf.header["e_ident"]["EI_OSABI"]
         binary_info["os_target"] = os_map.get(os_abi, os_abi)
@@ -21616,8 +21549,8 @@ Focus on:
                     "architecture": binary_info.get("architecture", "Unknown"),
                     "bit_width": binary_info.get("bit_width", "Unknown"),
                     "has_protections": binary_info.get("has_protections", False),
-                    "is_packed": binary_info.get("is_packed", False)
-                }
+                    "is_packed": binary_info.get("is_packed", False),
+                },
             }
 
             # Call update_stats instead of update_statistics
@@ -21640,7 +21573,7 @@ Focus on:
             self.refresh_dashboard_ui(binary_info)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Error updating dashboard with binary info: {str(e)}")
+            self.logger.error(f"Error updating dashboard with binary info: {e!s}")
 
     def _refresh_and_show_dashboard(self):
         """Updates dashboard with binary info and switches to dashboard tab to ensure visibility."""
@@ -21697,7 +21630,7 @@ Focus on:
                 self.logger.debug("Updated dashboard binary icon label")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Error refreshing dashboard UI: {str(e)}")
+            self.logger.error(f"Error refreshing dashboard UI: {e!s}")
 
     def _log_analysis_completion(self, binary_info):
         """Log completion of binary analysis."""
@@ -21718,8 +21651,7 @@ Focus on:
             logger.error("user_input widget not initialized")
 
     def run_analysis(self):
-        """
-        Performs full analysis of the selected binary and outputs the results.
+        """Performs full analysis of the selected binary and outputs the results.
         Enhanced with better organization and more detailed information.
         """
         if not self.binary_path:
@@ -21752,18 +21684,18 @@ Focus on:
         # BELOW)
         threading.Thread(
             target=self._run_analysis_thread,
-            args=(flags, analysis_depth)
+            args=(flags, analysis_depth),
         ).start()
 
     def _run_analysis_thread(self, flags, analysis_depth):
-        """
-        Background thread for running analysis.
+        """Background thread for running analysis.
         COMBINES original analysis functions with new Advanced Engines.
         (Corrected Version)
 
         Args:
             flags: List of enabled analysis flags
             analysis_depth: Integer value (10-100) indicating how deep the analysis should go
+
         """
         # Initialize variables that will be used throughout the function
         # These must be initialized before any try/except blocks to ensure they always exist
@@ -21832,7 +21764,7 @@ Focus on:
                     if "Analyzing binary:" in line or "File size:" in line or "PE Header:" in line or "Imports:" in line or "Exports:" in line or "Sections:" in line or "WARNING:" in line:
                         self.update_output.emit(log_message(line))
                     self.update_analysis_results.emit(line + "\n")
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e_struct:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_struct:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_struct)
                 err_msg = f"[Analysis] Error during standard structure analysis: {e_struct}"
                 self.update_output.emit(log_message(err_msg))
@@ -21860,7 +21792,7 @@ Focus on:
                             self.update_analysis_results.emit(f"  - {check.get('api')} at {check.get('address')}\n")
                     else:
                         self.update_analysis_results.emit(f"Qiling emulation failed: {qiling_results.get('error', 'Unknown error')}\n")
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e_qiling:
+                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_qiling:
                     logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_qiling)
                     self.update_output.emit(log_message(f"[Analysis] Qiling error: {e_qiling}"))
                     self.update_analysis_results.emit(f"Qiling emulation error: {e_qiling}\n")
@@ -21908,7 +21840,7 @@ Focus on:
                     logger.error("Import error in main_app.py: %s", e)
                     self.update_output.emit(log_message("[Analysis] Frida not available"))
                     self.update_analysis_results.emit("Frida framework not installed. Dynamic analysis skipped.\n")
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e_frida:
+                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_frida:
                     logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_frida)
                     self.update_output.emit(log_message(f"[Analysis] Frida error: {e_frida}"))
                     self.update_analysis_results.emit(f"Frida error: {e_frida}\n")
@@ -21949,7 +21881,7 @@ Focus on:
                     no_scripts_msg = "No embedded scripts found by standard scan."
                     self.update_output.emit(log_message(no_scripts_msg))
                     self.update_analysis_results.emit(no_scripts_msg + "\n")
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e_embed:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_embed:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_embed)
                 err_msg = f"[Analysis] Error scanning for embedded scripts: {e_embed}"
                 self.update_output.emit(log_message(err_msg))
@@ -21991,7 +21923,7 @@ Focus on:
                         no_prot_msg = "No specific protectors detected (standard scan)."
                         self.update_output.emit(log_message(no_prot_msg))
                         self.update_analysis_results.emit(no_prot_msg + "\n")
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e_prot:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_prot:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_prot)
                 err_msg = f"[Analysis] Error during standard protector scan: {e_prot}"
                 self.update_output.emit(log_message(err_msg))
@@ -22010,7 +21942,7 @@ Focus on:
                         self.update_output.emit(log_message(
                             f"[Packing Summary] {packing_summary_line}"))
                     self.update_analysis_results.emit(line + "\n")
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e_pack:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_pack:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_pack)
                 err_msg = f"[Analysis] Error during standard packing scan: {e_pack}"
                 self.update_output.emit(log_message(err_msg))
@@ -22049,7 +21981,7 @@ Focus on:
                 err_msg = "[Analysis] AdvancedVulnerabilityEngine class not found. Make sure the class is defined in this file."
                 self.update_output.emit(log_message(err_msg))
                 self.update_analysis_results.emit(err_msg + "\n")
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e_vuln:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_vuln:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_vuln)
                 err_msg = f"[Analysis] Error running AdvancedVulnerabilityEngine: {e_vuln}"
                 self.update_output.emit(log_message(err_msg))
@@ -22071,7 +22003,7 @@ Focus on:
                     for i, result in enumerate(license_results[:5]):
                         msg = f"Region {i + 1}: Found at 0x{result['start']:X}, Keywords: {', '.join(result.get('keywords', []))}"
                         self.update_analysis_results.emit("  " + msg + "\n")
-                        if "instructions" in result and result["instructions"]:
+                        if result.get("instructions"):
                             self.update_analysis_results.emit(
                                 "    Instructions (Preview):\n")
                             for inst in result["instructions"][:3]:
@@ -22081,7 +22013,7 @@ Focus on:
                     no_lic_msg = "No specific license-related code found (deep scan)."
                     self.update_output.emit(log_message(no_lic_msg))
                     self.update_analysis_results.emit(no_lic_msg + "\n")
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e_deep_lic:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_deep_lic:
                 logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_deep_lic)
                 err_msg = f"[Analysis] Error during deep license analysis: {e_deep_lic}"
                 self.update_output.emit(log_message(err_msg))
@@ -22131,7 +22063,7 @@ Focus on:
             self.update_output.emit(log_message(trace_msg))
             self.update_analysis_results.emit("\n" + error_msg + "\n")
             self.update_analysis_results.emit(trace_msg + "\n")
-            self.update_status.emit(f"Error: {str(e)}")
+            self.update_status.emit(f"Error: {e!s}")
 
     def run_deep_license_analysis(self):
         """Runs deep license analysis and outputs the results."""
@@ -22176,7 +22108,7 @@ Focus on:
 
                 self.update_output.emit(log_message(
                     f"[Deep Analysis] Region {i + 1} at 0x{candidate['start']:X}: "
-                    f"Keywords: {keywords}, Confidence: {confidence}"
+                    f"Keywords: {keywords}, Confidence: {confidence}",
                 ))
 
                 self.update_analysis_results.emit(f"Region {i + 1}:")
@@ -22186,7 +22118,7 @@ Focus on:
                 self.update_analysis_results.emit(
                     f"  Confidence: {confidence}")
 
-                if "instructions" in candidate and candidate["instructions"]:
+                if candidate.get("instructions"):
                     self.update_analysis_results.emit("  Instructions:")
                     for inst in candidate["instructions"][:10]:
                         self.update_analysis_results.emit(f"    {inst}")
@@ -22212,7 +22144,7 @@ Focus on:
             self.update_output.emit(log_message(
                 f"[Deep License Analysis] Error: {e}"))
             self.update_output.emit(log_message(traceback.format_exc()))
-            self.update_status.emit(f"Error: {str(e)}")
+            self.update_status.emit(f"Error: {e!s}")
 
     def run_ghidra_analysis_gui(self):
         """Entry point for Ghidra GUI + license string scan"""
@@ -22220,7 +22152,7 @@ Focus on:
         threading.Thread(
             target=run_ghidra_analysis_gui,  # This is the global function
             args=(self,),
-            daemon=True
+            daemon=True,
         ).start()
 
     def run_deep_runtime_monitoring(self):
@@ -22259,14 +22191,14 @@ Focus on:
             self.update_output.emit(log_message(
                 f"[Runtime Monitoring] Error: {e}"))
             self.update_output.emit(log_message(traceback.format_exc()))
-            self.update_status.emit(f"Error: {str(e)}")
+            self.update_status.emit(f"Error: {e!s}")
 
     def run_autonomous_patching(self):
         """Wrapper to start the autonomous patching thread."""
         self.update_output.emit(log_message(
             "[AI Patching] Starting autonomous patching process via UI action..."))
         threading.Thread(
-            target=self._run_autonomous_patching_thread, daemon=True
+            target=self._run_autonomous_patching_thread, daemon=True,
         ).start()
 
     def _run_autonomous_patching_thread(self):
@@ -22275,7 +22207,7 @@ Focus on:
             # Use the imported run_autonomous_patching function
             result = run_autonomous_patching(
                 binary_path=self.binary_path,
-                output_callback=lambda msg: self.update_output.emit(log_message(msg))
+                output_callback=lambda msg: self.update_output.emit(log_message(msg)),
             )
 
             if result and result.get("success"):
@@ -22295,8 +22227,7 @@ Focus on:
                 f"[AI Patching] Error during autonomous patching: {e}"))
 
     def preview_patch(self):
-        """
-        Previews a patch plan by disassembling the binary and suggesting modifications.
+        """Previews a patch plan by disassembling the binary and suggesting modifications.
         Enhanced with better detection and more detailed suggestions.
         """
         if not self.binary_path:
@@ -22342,8 +22273,7 @@ Focus on:
             patches = []
 
             def find_jumps_in_region(instructions, region_start, region_end):
-                """
-                Find jump and call instructions within a specified address region.
+                """Find jump and call instructions within a specified address region.
 
                 Args:
                     instructions: List of instruction objects.
@@ -22352,6 +22282,7 @@ Focus on:
 
                 Returns:
                     List of instructions that are jumps or calls within the region.
+
                 """
                 jumps = []
                 for insn in instructions:
@@ -22453,7 +22384,7 @@ Focus on:
                                 "address": jump.address,
                                 "instruction": f"{jump.mnemonic} {jump.op_str}",
                                 "new_bytes": bytes.fromhex(patch_bytes) if patch_bytes else None,
-                                "description": patch_desc
+                                "description": patch_desc,
                             })
                     else:
                         self.update_analysis_results.emit(
@@ -22488,7 +22419,7 @@ Focus on:
                                 "address": next_insn.address,
                                 "instruction": f"{next_insn.mnemonic} {next_insn.op_str}",
                                 "new_bytes": bytes.fromhex(patch_bytes) if patch_bytes else None,
-                                "description": patch_desc
+                                "description": patch_desc,
                             })
 
                 if patch_count == 0:
@@ -22538,21 +22469,21 @@ Focus on:
         except (FileNotFoundError, PermissionError) as e:
             logger.error("(FileNotFoundError, PermissionError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Patch Preview] File access error: {e}"))
-            self.update_status.emit(f"File access error: {str(e)}")
+            self.update_status.emit(f"File access error: {e!s}")
         except (pefile.PEFormatError, ValueError) as e:
             logger.error("(pefile.PEFormatError, ValueError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Patch Preview] Binary parsing error: {e}"))
-            self.update_status.emit(f"Binary parsing error: {str(e)}")
+            self.update_status.emit(f"Binary parsing error: {e!s}")
         except (TypeError, AttributeError) as e:
             logger.error("(TypeError, AttributeError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Patch Preview] Data handling error: {e}"))
-            self.update_status.emit(f"Data handling error: {str(e)}")
+            self.update_status.emit(f"Data handling error: {e!s}")
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             # Fallback for any unexpected errors, with traceback for debugging
             self.update_output.emit(log_message(f"[Patch Preview] Unexpected error: {e}"))
             self.update_output.emit(log_message(traceback.format_exc()))
-            self.update_status.emit(f"Unexpected error: {str(e)}")
+            self.update_status.emit(f"Unexpected error: {e!s}")
 
     def apply_patch_plan(self):
         """Applies the patch plan to the selected binary."""
@@ -22567,7 +22498,7 @@ Focus on:
                 self,
                 "Apply Patches",
                 f"Apply {len(self.potential_patches)} patches from preview?\n\nThis will create a new patched file.",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
 
             if response == QMessageBox.Yes:
@@ -22602,7 +22533,7 @@ Focus on:
             wizard.exec()
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to start guided wizard: %s", e)
-            QMessageBox.warning(self, "Error", f"Failed to start guided wizard:\n{str(e)}")
+            QMessageBox.warning(self, "Error", f"Failed to start guided wizard:\n{e!s}")
             traceback.print_exc()
 
     def create_quick_setup_wizard_page(self):
@@ -22640,9 +22571,9 @@ Focus on:
         try:
             dialog = AICodingAssistantDialog(parent=self)
             dialog.exec()
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error("Failed to open AI coding assistant: %s", e)
-            QMessageBox.warning(self, "Error", f"Failed to open AI coding assistant:\n{str(e)}")
+            QMessageBox.warning(self, "Error", f"Failed to open AI coding assistant:\n{e!s}")
             traceback.print_exc()
 
     def open_gguf_model_manager(self):
@@ -22650,9 +22581,9 @@ Focus on:
         try:
             dialog = ModelManagerDialog(parent=self)
             dialog.exec()
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error("Failed to open GGUF model manager: %s", e)
-            QMessageBox.warning(self, "Error", f"Failed to open GGUF model manager:\n{str(e)}")
+            QMessageBox.warning(self, "Error", f"Failed to open GGUF model manager:\n{e!s}")
             traceback.print_exc()
 
     def open_code_modification_dialog(self):
@@ -22662,18 +22593,18 @@ Focus on:
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             dialog = CodeModificationDialog(project_root=project_root, parent=self)
             dialog.exec()
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error("Failed to open code modification dialog: %s", e)
-            QMessageBox.warning(self, "Error", f"Failed to open code modification dialog:\n{str(e)}")
+            QMessageBox.warning(self, "Error", f"Failed to open code modification dialog:\n{e!s}")
             traceback.print_exc()
 
     def apply_cracking_pattern(self, source_binary, target_binary):
-        """
-        Apply cracking pattern from source binary to target binary.
+        """Apply cracking pattern from source binary to target binary.
 
         Args:
             source_binary: Path to the source binary (with working cracks)
             target_binary: Path to the target binary (to apply cracks to)
+
         """
         logger.debug(f"Applying cracking pattern from {source_binary} to {target_binary}")
         self.update_output.emit(log_message(f"[Pattern] Analyzing patterns from {os.path.basename(source_binary)}"))
@@ -22691,7 +22622,7 @@ Focus on:
                     "offset": pattern.get("offset", 0),
                     "original": pattern.get("original_bytes", ""),
                     "patched": pattern.get("patched_bytes", ""),
-                    "description": pattern.get("description", "Extracted from similar binary")
+                    "description": pattern.get("description", "Extracted from similar binary"),
                 })
 
             # Store patterns for potential application
@@ -22704,8 +22635,7 @@ Focus on:
             QMessageBox.warning(self, "No Patterns", "No applicable patterns were found in the source binary.")
 
     def extract_patterns_from_binary(self, binary_path):
-        """
-        Extract cracking patterns from a binary file.
+        """Extract cracking patterns from a binary file.
 
         Args:
             binary_path: Path to the binary file
@@ -22713,6 +22643,7 @@ Focus on:
         Returns:
             list: List of pattern dictionaries containing potential license check,
                  activation mechanisms, and protection patterns
+
         """
         self.update_output.emit(log_message("[Pattern] Starting binary analysis for pattern extraction..."))
 
@@ -22750,7 +22681,7 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Pattern] Error during pattern extraction: {str(e)}"))
+            self.update_output.emit(log_message(f"[Pattern] Error during pattern extraction: {e!s}"))
             self.update_output.emit(log_message(f"[Pattern] Traceback: {traceback.format_exc()}"))
             self.update_output.emit(log_message("[Pattern] Using generic patterns due to analysis error"))
             patterns = self._generate_generic_patterns()
@@ -22801,7 +22732,7 @@ Focus on:
                             "patched_bytes": patched_bytes,
                             "description": f"License validation check in {section_name}",
                             "type": "license_check",
-                            "confidence": "medium"
+                            "confidence": "medium",
                         })
 
                     # Pattern 2: Call followed by test and conditional jump (common in activation flows)
@@ -22819,7 +22750,7 @@ Focus on:
                             "patched_bytes": patched_bytes,
                             "description": f"Function result check in {section_name}",
                             "type": "activation_check",
-                            "confidence": "medium"
+                            "confidence": "medium",
                         })
 
                     # Pattern 3: Look for time-related API call patterns (for expiration checks)
@@ -22852,14 +22783,14 @@ Focus on:
                                         "patched_bytes": patch_bytes,
                                         "description": f"Time/Expiration check near {time_string.decode('utf-8', errors='ignore')}",
                                         "type": "expiration_check",
-                                        "confidence": "high"
+                                        "confidence": "high",
                                     })
 
             # Check for licensing-related imports using common utility
             from ..utils.pe_analysis_common import analyze_pe_imports
             license_apis = {
                 "licensing": ["valid", "check", "license", "activ", "auth", "verify", "decrypt"],
-                "crypto": ["crypt", "ssl", "hash", "encrypt", "decrypt", "sign"]
+                "crypto": ["crypt", "ssl", "hash", "encrypt", "decrypt", "sign"],
             }
             detected_license_apis = analyze_pe_imports(pe, license_apis)
 
@@ -22901,7 +22832,7 @@ Focus on:
                                         "description": f"Call to {func} in {category}",
                                         "type": "api_license_check",
                                         "confidence": "high",
-                                        "api_name": func
+                                        "api_name": func,
                                     })
 
                             # Only process first few calls to avoid excessive patterns
@@ -22935,7 +22866,7 @@ Focus on:
                                 "description": f"Potential {api_name} usage for hardware/license checks",
                                 "type": "api_reference",
                                 "confidence": "low",
-                                "requires_manual_analysis": True
+                                "requires_manual_analysis": True,
                             })
 
                 # Add entry point pattern for manual inspection
@@ -22957,16 +22888,16 @@ Focus on:
                                         "description": "Entry point (inspect for initialization checks)",
                                         "type": "entry_point",
                                         "confidence": "low",
-                                        "requires_manual_analysis": True
+                                        "requires_manual_analysis": True,
                                     })
                                     break
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                    self.update_output.emit(log_message(f"[Pattern] Error analyzing entry point: {str(e)}"))
+                    self.update_output.emit(log_message(f"[Pattern] Error analyzing entry point: {e!s}"))
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Pattern] Error in PE pattern extraction: {str(e)}"))
+            self.update_output.emit(log_message(f"[Pattern] Error in PE pattern extraction: {e!s}"))
 
         return patterns
 
@@ -23017,18 +22948,18 @@ Focus on:
                             "hex": context_hex[:30] + "..." if len(context_hex) > 30 else context_hex,
                             "text": context_readable[:30] + "..." if len(context_readable) > 30 else context_readable,
                             "is_code_region": is_code_region,
-                            "is_text_section": is_text_section
-                        }
+                            "is_text_section": is_text_section,
+                        },
                     })
 
                     # Log the finding
                     self.update_output.emit(log_message(
-                        f"[Pattern Finder] Found '{pattern.decode('utf-8', errors='ignore')}' at offset 0x{offset:X} ({confidence_level} confidence)"
+                        f"[Pattern Finder] Found '{pattern.decode('utf-8', errors='ignore')}' at offset 0x{offset:X} ({confidence_level} confidence)",
                     ))
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Pattern] Error in ELF pattern extraction: {str(e)}"))
+            self.update_output.emit(log_message(f"[Pattern] Error in ELF pattern extraction: {e!s}"))
 
         return patterns or self._generate_generic_patterns()
 
@@ -23051,7 +22982,7 @@ Focus on:
                 "description": "Generic license check pattern (conditional jump + function call)",
                 "type": "license_check",
                 "confidence": "low",
-                "requires_manual_verification": True
+                "requires_manual_verification": True,
             },
             {
                 "offset": 0x2000,  # Another potential code offset
@@ -23060,7 +22991,7 @@ Focus on:
                 "description": "Generic function result check pattern",
                 "type": "result_check",
                 "confidence": "low",
-                "requires_manual_verification": True
+                "requires_manual_verification": True,
             },
             {
                 "offset": 0x3000,
@@ -23069,8 +23000,8 @@ Focus on:
                 "description": "Generic global flag check pattern",
                 "type": "flag_check",
                 "confidence": "low",
-                "requires_manual_verification": True
-            }
+                "requires_manual_verification": True,
+            },
         ]
 
         return patterns
@@ -23088,15 +23019,14 @@ Focus on:
                 self,
                 "No Patches",
                 "No patches available. Would you like to run patch preview first?",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.Yes | QMessageBox.No,
             )
             if response == QMessageBox.Yes:
                 self.preview_patch()
                 # Wait for preview to complete before opening editor
                 QTimer.singleShot(1000, self.open_visual_patch_editor)
                 return
-            else:
-                return
+            return
 
         # Open the visual patch editor dialog
         from ..ui.dialogs.visual_patch_editor import VisualPatchEditorDialog as VPEDialog
@@ -23235,41 +23165,39 @@ Focus on:
         ui_updates = []
 
         def queue_output_update(message):
-            """
-            Queue an output message for the UI to process.
+            """Queue an output message for the UI to process.
 
             Args:
                 message: The output message to display.
+
             """
             ui_updates.append(("output", message))
 
         def queue_status_update(status):
-            """
-            Queue a status update for the UI to process.
+            """Queue a status update for the UI to process.
 
             Args:
                 status: The status message to display.
+
             """
             ui_updates.append(("status", status))
 
         def queue_analysis_update(analysis):
-            """
-            Queue an analysis update for the UI to process.
+            """Queue an analysis update for the UI to process.
 
             Args:
                 analysis: The analysis data to display.
+
             """
             ui_updates.append(("analysis", analysis))
 
         def queue_clear_analysis():
-            """
-            Queue a request to clear analysis results in the UI.
+            """Queue a request to clear analysis results in the UI.
             """
             ui_updates.append(("clear_analysis", None))
 
         def flush_ui_updates():
-            """
-            Process all queued UI updates in a single batch.
+            """Process all queued UI updates in a single batch.
 
             Emits the appropriate signals for each update type.
             """
@@ -23348,7 +23276,7 @@ Focus on:
                             f"Region {i + 1} at 0x{result['start']:X}:")
                         context_data.append(
                             f"Keywords: {', '.join(result.get('keywords', []))}")
-                        if "instructions" in result and result["instructions"]:
+                        if result.get("instructions"):
                             context_data.append("Instructions:")
                             for inst in result["instructions"][:5]:
                                 context_data.append(f"  {inst}")
@@ -23405,7 +23333,7 @@ Focus on:
                 prompt=prompt,
                 max_tokens=3072,
                 temperature=0.7,
-                top_p=0.95
+                top_p=0.95,
             )
             strategy = result["choices"][0]["text"].strip()
 
@@ -23477,7 +23405,7 @@ Focus on:
                 # Log the question instead of showing a blocking QMessageBox
                 self.log_user_question.emit(
                     "Generate License Key",
-                    f"AI recommends generating a license key for:\nProduct: {product}\nVersion: {version}\n\nNOTE: This requires manual confirmation. If you want to proceed, go to the 'Plugins' tab and use the Key Generator manually or ask the assistant to 'generate license key'."
+                    f"AI recommends generating a license key for:\nProduct: {product}\nVersion: {version}\n\nNOTE: This requires manual confirmation. If you want to proceed, go to the 'Plugins' tab and use the Key Generator manually or ask the assistant to 'generate license key'.",
                 )
                 # Set up inputs in case user goes to tab
                 self.set_keygen_name.emit(product)
@@ -23494,7 +23422,7 @@ Focus on:
                 # Log the question instead of showing a blocking QMessageBox
                 self.log_user_question.emit(
                     "Run Simulation",
-                    "No direct patch instructions found. Would you like to analyze runtime behavior?\n\nNOTE: This requires manual confirmation. If you want to proceed, click the 'Deep Runtime Monitoring' button."
+                    "No direct patch instructions found. Would you like to analyze runtime behavior?\n\nNOTE: This requires manual confirmation. If you want to proceed, click the 'Deep Runtime Monitoring' button.",
                 )
 
             queue_status_update(
@@ -23506,7 +23434,7 @@ Focus on:
             queue_output_update(log_message(
                 f"[Autonomous Mode] Error: {e}"))
             queue_output_update(log_message(traceback.format_exc()))
-            queue_status_update(f"Error: {str(e)}")
+            queue_status_update(f"Error: {e!s}")
             flush_ui_updates()
 
     def execute_autonomous_task(self, task_type, request=""):
@@ -23518,7 +23446,7 @@ Focus on:
         task_config = {
             "type": task_type,
             "target_binary": self.binary_path,
-            "request": request
+            "request": request,
         }
 
         self.update_output.emit(log_message(f"[Autonomous Task] Executing {task_type} task..."))
@@ -23546,7 +23474,7 @@ Focus on:
 
         except Exception as e:
             self.logger.error(f"Error executing autonomous task: {e}")
-            self.update_output.emit(log_message(f"[Autonomous Task] Error: {str(e)}"))
+            self.update_output.emit(log_message(f"[Autonomous Task] Error: {e!s}"))
             return None
 
     def save_ai_session(self):
@@ -23567,13 +23495,13 @@ Focus on:
                     json.dump({
                         "ui_conversation_history": self.ai_conversation_history,
                         "binary_path": self.binary_path,
-                        "timestamp": datetime.datetime.now().isoformat()
+                        "timestamp": datetime.datetime.now().isoformat(),
                     }, f, indent=2)
                 self.update_output.emit(log_message(f"[Session] UI history saved to: {ui_session_file}"))
 
         except Exception as e:
             self.logger.error(f"Error saving AI session: {e}")
-            self.update_output.emit(log_message(f"[Session] Error saving session: {str(e)}"))
+            self.update_output.emit(log_message(f"[Session] Error saving session: {e!s}"))
 
     def reset_ai_agent(self):
         """Reset the AI agent for a new task."""
@@ -23589,7 +23517,7 @@ Focus on:
 
         except Exception as e:
             self.logger.error(f"Error resetting AI agent: {e}")
-            self.update_output.emit(log_message(f"[Reset] Error: {str(e)}"))
+            self.update_output.emit(log_message(f"[Reset] Error: {e!s}"))
 
     def show_ai_performance_stats(self):
         """Show AI coordination layer performance statistics in a dialog."""
@@ -23599,7 +23527,7 @@ Focus on:
                     self,
                     "AI Coordination Layer",
                     "AI Coordination Layer is not available.\n\nThe AI coordination layer provides "
-                    "intelligent routing between ML models and LLM backends for optimal analysis performance."
+                    "intelligent routing between ML models and LLM backends for optimal analysis performance.",
                 )
                 return
 
@@ -23607,7 +23535,7 @@ Focus on:
                 QMessageBox.warning(
                     self,
                     "Performance Stats",
-                    "Performance statistics are not available in the current AI coordination layer."
+                    "Performance statistics are not available in the current AI coordination layer.",
                 )
                 return
 
@@ -23691,7 +23619,7 @@ Focus on:
             QMessageBox.critical(
                 self,
                 "Error",
-                f"Failed to retrieve AI performance statistics:\n{str(e)}"
+                f"Failed to retrieve AI performance statistics:\n{e!s}",
             )
 
     def _refresh_performance_stats(self, text_widget):
@@ -23731,7 +23659,7 @@ Focus on:
                     "Clear AI Cache",
                     "Are you sure you want to clear the AI coordination cache?",
                     QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No
+                    QMessageBox.No,
                 )
 
                 if reply == QMessageBox.Yes:
@@ -23740,7 +23668,7 @@ Focus on:
 
         except Exception as e:
             self.logger.error(f"Error clearing AI cache: {e}")
-            QMessageBox.critical(parent_dialog, "Error", f"Failed to clear AI cache: {str(e)}")
+            QMessageBox.critical(parent_dialog, "Error", f"Failed to clear AI cache: {e!s}")
 
     def get_ai_conversation_history(self):
         """Get the AI conversation history from both UI and agent."""
@@ -23794,7 +23722,7 @@ Focus on:
             self.update_output.emit(log_message(
                 f"[Packing Detection] Error: {e}"))
             self.update_output.emit(log_message(traceback.format_exc()))
-            self.update_status.emit(f"Error: {str(e)}")
+            self.update_status.emit(f"Error: {e!s}")
 
     def run_simulate_patch(self):
         """Simulates patch application and verifies results."""
@@ -23819,7 +23747,7 @@ Focus on:
         # Run in background thread
         threading.Thread(
             target=self._run_simulate_patch_thread,
-            args=(self.potential_patches,)
+            args=(self.potential_patches,),
         ).start()
 
     def _run_simulate_patch_thread(self, patches):
@@ -23843,7 +23771,7 @@ Focus on:
             self.update_output.emit(log_message(
                 f"[Patch Simulation] Error: {e}"))
             self.update_output.emit(log_message(traceback.format_exc()))
-            self.update_status.emit(f"Error: {str(e)}")
+            self.update_status.emit(f"Error: {e!s}")
 
     def run_tpm_bypass(self):
         """Run TPM protection bypass."""
@@ -23858,7 +23786,7 @@ Focus on:
 
         # Run bypass in background thread
         threading.Thread(
-            target=self._run_tpm_bypass_thread
+            target=self._run_tpm_bypass_thread,
         ).start()
 
     def _run_tpm_bypass_thread(self):
@@ -23887,7 +23815,7 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             self.update_output.emit(log_message(
-                f"[TPM Bypass] Error during bypass: {str(e)}"))
+                f"[TPM Bypass] Error during bypass: {e!s}"))
             self.analyze_status.setText("TPM bypass failed")
             logger.error(traceback.format_exc())
 
@@ -23904,7 +23832,7 @@ Focus on:
 
         # Run bypass in background thread
         threading.Thread(
-            target=self._run_vm_bypass_thread
+            target=self._run_vm_bypass_thread,
         ).start()
 
     def _run_vm_bypass_thread(self):
@@ -23933,7 +23861,7 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             self.update_output.emit(log_message(
-                f"[VM Bypass] Error during bypass: {str(e)}"))
+                f"[VM Bypass] Error during bypass: {e!s}"))
             self.analyze_status.setText("VM bypass failed")
             logger.error(traceback.format_exc())
 
@@ -23950,7 +23878,7 @@ Focus on:
 
         # Run detection in background thread
         threading.Thread(
-            target=self._run_vm_detection_thread
+            target=self._run_vm_detection_thread,
         ).start()
 
     def _run_vm_detection_thread(self):
@@ -23985,7 +23913,7 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             self.update_output.emit(log_message(
-                f"[VM Detection] Error during analysis: {str(e)}"))
+                f"[VM Detection] Error during analysis: {e!s}"))
             self.analyze_status.setText("VM detection failed")
             logger.error(traceback.format_exc())
 
@@ -24002,7 +23930,7 @@ Focus on:
 
         # Run detection in background thread
         threading.Thread(
-            target=self._run_anti_debug_detection_thread
+            target=self._run_anti_debug_detection_thread,
         ).start()
 
     def _run_anti_debug_detection_thread(self):
@@ -24050,7 +23978,7 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             self.update_output.emit(log_message(
-                f"[Anti-Debug] Error during analysis: {str(e)}"))
+                f"[Anti-Debug] Error during analysis: {e!s}"))
             self.analyze_status.setText("Anti-debug detection failed")
             logger.error(traceback.format_exc())
 
@@ -24067,7 +23995,7 @@ Focus on:
 
         # Run detection in background thread
         threading.Thread(
-            target=self._run_tpm_detection_thread
+            target=self._run_tpm_detection_thread,
         ).start()
 
     def _run_tpm_detection_thread(self):
@@ -24093,7 +24021,7 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             self.update_output.emit(log_message(
-                f"[TPM Detection] Error during analysis: {str(e)}"))
+                f"[TPM Detection] Error during analysis: {e!s}"))
             self.analyze_status.setText("TPM detection failed")
             logger.error(traceback.format_exc())
 
@@ -24110,7 +24038,7 @@ Focus on:
 
         # Run detection in background thread
         threading.Thread(
-            target=self._run_dongle_detection_thread
+            target=self._run_dongle_detection_thread,
         ).start()
 
     def _run_dongle_detection_thread(self):
@@ -24154,7 +24082,6 @@ Focus on:
                                     f"  • {dongle_type}: {description}"))
                 except ImportError as e:
                     logger.error("Import error in main_app.py: %s", e)
-                    pass
 
                 self.update_output.emit(log_message(
                     "[Dongle Detection] Hardware dongle protection detected! Consider dongle emulation strategies."))
@@ -24171,11 +24098,11 @@ Focus on:
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
             self.update_output.emit(log_message(
-                f"[Dongle Detection] Detection module not available: {str(e)}"))
+                f"[Dongle Detection] Detection module not available: {e!s}"))
             self.analyze_status.setText("Dongle detection unavailable")
         except (OSError, ValueError, RuntimeError) as e:
             self.update_output.emit(log_message(
-                f"[Dongle Detection] Error during analysis: {str(e)}"))
+                f"[Dongle Detection] Error during analysis: {e!s}"))
             self.analyze_status.setText("Dongle detection failed")
             logger.error(traceback.format_exc())
 
@@ -24192,7 +24119,7 @@ Focus on:
 
         # Run detection in background thread
         threading.Thread(
-            target=self._run_checksum_detection_thread
+            target=self._run_checksum_detection_thread,
         ).start()
 
     def _run_checksum_detection_thread(self):
@@ -24224,7 +24151,7 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             self.update_output.emit(log_message(
-                f"[Checksum Detection] Error during analysis: {str(e)}"))
+                f"[Checksum Detection] Error during analysis: {e!s}"))
             self.analyze_status.setText("Checksum detection failed")
             logger.error(traceback.format_exc())
 
@@ -24241,7 +24168,7 @@ Focus on:
 
         # Run detection in background thread
         threading.Thread(
-            target=self._run_self_healing_detection_thread
+            target=self._run_self_healing_detection_thread,
         ).start()
 
     def _run_self_healing_detection_thread(self):
@@ -24271,7 +24198,7 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             self.update_output.emit(log_message(
-                f"[Self-Healing Detection] Error during analysis: {str(e)}"))
+                f"[Self-Healing Detection] Error during analysis: {e!s}"))
             self.analyze_status.setText("Self-healing detection failed")
             logger.error(traceback.format_exc())
 
@@ -24288,7 +24215,7 @@ Focus on:
 
         # Run detection in background thread
         threading.Thread(
-            target=self._run_commercial_protection_thread
+            target=self._run_commercial_protection_thread,
         ).start()
 
     def _run_commercial_protection_thread(self):
@@ -24329,7 +24256,7 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             self.update_output.emit(log_message(
-                f"[Commercial Protection] Error during analysis: {str(e)}"))
+                f"[Commercial Protection] Error during analysis: {e!s}"))
             self.analyze_status.setText("Commercial protection detection failed")
             logger.error(traceback.format_exc())
 
@@ -24346,7 +24273,7 @@ Focus on:
 
         # Run detailed scan in background thread
         threading.Thread(
-            target=self._run_commercial_protection_scan_thread
+            target=self._run_commercial_protection_scan_thread,
         ).start()
 
     def _run_commercial_protection_scan_thread(self):
@@ -24419,16 +24346,16 @@ Focus on:
             self.update_analysis_results.emit(report)
             self.analyze_status.setText("Comprehensive protection scan complete")
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.update_output.emit(log_message(
-                f"[Protection Scan] Error during comprehensive scan: {str(e)}"))
+                f"[Protection Scan] Error during comprehensive scan: {e!s}"))
             self.analyze_status.setText("Protection scan failed")
             logger.error(traceback.format_exc())
 
     def run_external_command(self):
         """Runs an external command and shows output."""
         command, ok = QInputDialog.getText(
-            self, "Run External Command", "Enter command to run:"
+            self, "Run External Command", "Enter command to run:",
         )
 
         if not ok or not command:
@@ -24441,7 +24368,7 @@ Focus on:
         # Run in background thread
         threading.Thread(
             target=self._run_external_command_thread,
-            args=(command,)
+            args=(command,),
         ).start()
 
     def _run_external_command_thread(self, command):
@@ -24464,7 +24391,7 @@ Focus on:
             self.update_output.emit(log_message(
                 f"[External Command] Error: {e}"))
             self.update_output.emit(log_message(traceback.format_exc()))
-            self.update_status.emit(f"Error: {str(e)}")
+            self.update_status.emit(f"Error: {e!s}")
 
     def view_cfg(self):
         """Opens the CFG visualization."""
@@ -24497,8 +24424,7 @@ Focus on:
             "No CFG file found. Run 'Deep CFG Analysis' first.")
 
     def generate_key(self):
-        """
-        Generates a license key based on product name and version.
+        """Generates a license key based on product name and version.
         Enhanced with more formats and options.
         """
         name = self.keygen_input_name.text().strip()
@@ -24575,14 +24501,14 @@ Focus on:
                 f"[{timestamp_str}] {name} {version}: {formatted_key}")
 
     def _run_model_inference_thread(self, prompt):
-        """
-        Background thread for running AI model inference with tool calling and orchestration.
+        """Background thread for running AI model inference with tool calling and orchestration.
 
         This function manages the multi-turn conversation with the AI model, handles tool
         execution requests with proper user confirmation, and formats results for the model.
 
         Args:
             prompt: The initial user prompt to process
+
         """
         app = self  # Reference to the IntellicrackApp instance
 
@@ -24618,10 +24544,10 @@ Focus on:
                 "To execute tools, output a JSON object with the following structure:\n"
                 "```json\n"
                 "{\n"
-                "  \"tool_name\": \"name_of_tool\",\n"
-                "  \"parameters\": {\n"
-                "    \"param1\": \"value1\",\n"
-                "    \"param2\": \"value2\"\n"
+                '  "tool_name": "name_of_tool",\n'
+                '  "parameters": {\n'
+                '    "param1": "value1",\n'
+                '    "param2": "value2"\n'
                 "  }\n"
                 "}\n"
                 "```\n\n"
@@ -24758,7 +24684,6 @@ Focus on:
                         except json.JSONDecodeError as e:
                             logger.error("json.JSONDecodeError in main_app.py: %s", e)
                             # Not a JSON response
-                            pass
 
                     # Process the tool request if found
                     if isinstance(tool_request, dict) and "tool_name" in tool_request and "parameters" in tool_request:
@@ -24772,7 +24697,7 @@ Focus on:
                         sensitive_tools = [
                             "tool_load_binary", "tool_launch_target", "tool_attach_target",
                             "tool_run_frida_script", "tool_detach", "tool_propose_patch",
-                            "tool_apply_confirmed_patch", "tool_generate_launcher_script"
+                            "tool_apply_confirmed_patch", "tool_generate_launcher_script",
                         ]
 
                         requires_confirmation = tool_name in sensitive_tools
@@ -24792,7 +24717,7 @@ Focus on:
                                     f"Confirm {tool_name} Execution",
                                     f"The AI assistant is requesting to execute {tool_name}.\n\nParameters:\n{param_text}\n\nDo you approve?",
                                     QMessageBox.Yes | QMessageBox.No,
-                                    QMessageBox.No
+                                    QMessageBox.No,
                                 )
                                 return result == QMessageBox.Yes
 
@@ -24816,7 +24741,7 @@ Focus on:
                             app.ai_conversation_history.append({
                                 "role": "tool_result",
                                 "tool_name": tool_name,
-                                "content": json.dumps(tool_result)
+                                "content": json.dumps(tool_result),
                             })
 
                             # Display the result to the user
@@ -24825,26 +24750,24 @@ Focus on:
 
                             # Continue the loop to send the tool result back to the AI
                             continue
-                        else:
-                            # User denied the tool execution
-                            denial_message = f"User denied execution of tool: {tool_name}"
-                            app.ai_conversation_history.append({
-                                "role": "tool_result",
-                                "tool_name": tool_name,
-                                "content": denial_message
-                            })
-                            app.append_chat_display(f"Tool Result: {denial_message}")
-                            app.set_assistant_status("Tool execution denied by user.")
-                            # Continue the loop to inform the AI about the denial
-                            continue
-                    else:
-                        # Not a tool request, assume it's a final response
-                        app.set_assistant_status("Idle")
-                        break  # Exit the loop if not a tool call
+                        # User denied the tool execution
+                        denial_message = f"User denied execution of tool: {tool_name}"
+                        app.ai_conversation_history.append({
+                            "role": "tool_result",
+                            "tool_name": tool_name,
+                            "content": denial_message,
+                        })
+                        app.append_chat_display(f"Tool Result: {denial_message}")
+                        app.set_assistant_status("Tool execution denied by user.")
+                        # Continue the loop to inform the AI about the denial
+                        continue
+                    # Not a tool request, assume it's a final response
+                    app.set_assistant_status("Idle")
+                    break  # Exit the loop if not a tool call
 
                 except (OSError, ValueError, RuntimeError) as e:
                     # Handle errors during tool request parsing or execution
-                    error_message = f"Error processing AI response or executing tool: {str(e)}"
+                    error_message = f"Error processing AI response or executing tool: {e!s}"
                     error_trace = traceback.format_exc()
 
                     # Log detailed error information
@@ -24870,7 +24793,7 @@ Focus on:
                     # Add error to conversation history
                     app.ai_conversation_history.append({
                         "role": "error",
-                        "content": detailed_error
+                        "content": detailed_error,
                     })
 
                     # Display error to user
@@ -24883,16 +24806,15 @@ Focus on:
                         # These are likely formatting issues that the AI can recover from
                         app.ai_conversation_history.append({
                             "role": "system",
-                            "content": "There was an error processing your last request. Please try a different approach."
+                            "content": "There was an error processing your last request. Please try a different approach.",
                         })
                         continue
-                    else:
-                        # More serious errors that might require restarting the conversation
-                        break
+                    # More serious errors that might require restarting the conversation
+                    break
 
         except (OSError, ValueError, RuntimeError) as e:
             # Handle errors during model inference
-            error_message = f"Error during AI model inference: {str(e)}"
+            error_message = f"Error during AI model inference: {e!s}"
             error_trace = traceback.format_exc()
             logger.error(error_message)
             logger.error(error_trace)
@@ -24913,7 +24835,7 @@ Focus on:
             # Add to conversation history
             app.ai_conversation_history.append({
                 "role": "error",
-                "content": user_friendly_message
+                "content": user_friendly_message,
             })
 
             app.append_chat_display(f"Error: {user_friendly_message}")
@@ -24927,14 +24849,14 @@ Focus on:
             app.set_assistant_status("Idle")  # Ensure status is reset
 
     def _format_tool_result(self, result):
-        """
-        Format tool result for better readability in the chat display.
+        """Format tool result for better readability in the chat display.
 
         Args:
             result: The tool execution result dictionary
 
         Returns:
             str: Formatted result string
+
         """
         try:
             # Check if result is already a string
@@ -24948,18 +24870,15 @@ Focus on:
                 # Format success results
                 if "message" in result:
                     return f"✅ {result['message']}"
-                else:
-                    # Pretty-print the result with indentation
-                    return json.dumps(result, indent=2)
-            elif status == "error":
+                # Pretty-print the result with indentation
+                return json.dumps(result, indent=2)
+            if status == "error":
                 # Format error results
                 if "message" in result:
                     return f"❌ Error: {result['message']}"
-                else:
-                    return f"❌ Error: {json.dumps(result, indent=2)}"
-            else:
-                # Default formatting
-                return json.dumps(result, indent=2)
+                return f"❌ Error: {json.dumps(result, indent=2)}"
+            # Default formatting
+            return json.dumps(result, indent=2)
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error formatting tool result: %s", e)
             # Return the original result as a string if formatting fails
@@ -25025,6 +24944,7 @@ Focus on:
         Args:
             analysis_type: Optional string specifying the analysis type.
                           If None, gets the current selection from dropdown.
+
         """
         # Use provided analysis_type or get it from the dropdown
         if analysis_type is None:
@@ -25056,6 +24976,7 @@ Focus on:
         Args:
             patch_type: Optional string specifying the patch type.
                        If None, gets the current selection from dropdown.
+
         """
         # Use provided patch_type or get it from the dropdown
         if patch_type is None:
@@ -25091,8 +25012,7 @@ Focus on:
                         break
 
     def run_memory_analysis(self):
-        """
-        Run comprehensive memory analysis on the target application.
+        """Run comprehensive memory analysis on the target application.
 
         Analyzes memory usage patterns, detects potential leaks, and identifies
         memory-related vulnerabilities in the target application. Uses a combination
@@ -25224,7 +25144,7 @@ Focus on:
                             self.update_output.emit(log_message("[Memory Analysis] Memory tracking script attached successfully"))
                         except (OSError, ValueError, RuntimeError) as e:
                             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                            self.update_output.emit(log_message(f"[Memory Analysis] Error attaching memory script: {str(e)}"))
+                            self.update_output.emit(log_message(f"[Memory Analysis] Error attaching memory script: {e!s}"))
 
                     # Summary
                     self.analyze_results.append("\n=== MEMORY ANALYSIS SUMMARY ===")
@@ -25305,16 +25225,15 @@ Focus on:
 
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                    self.update_output.emit(log_message(f"[Memory Analysis] Error during static analysis: {str(e)}"))
+                    self.update_output.emit(log_message(f"[Memory Analysis] Error during static analysis: {e!s}"))
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Memory Analysis] Error during memory analysis: {str(e)}"))
+            self.update_output.emit(log_message(f"[Memory Analysis] Error during memory analysis: {e!s}"))
             self.update_output.emit(log_message(f"[Memory Analysis] Traceback: {traceback.format_exc()}"))
 
     def run_network_analysis(self):
-        """
-        Run comprehensive network analysis on the target application.
+        """Run comprehensive network analysis on the target application.
 
         Monitors network traffic, identifies protocols in use, detects potential security
         issues, and analyzes network-related API calls made by the application. Works with
@@ -25360,7 +25279,7 @@ Focus on:
                 "ssl": ["SSL_connect", "SSL_read", "SSL_write", "SslCreateContext", "CryptAcquireContext"],
                 "dns": ["gethostbyname", "DnsQuery", "getaddrinfo", "WSAGetLastError"],
                 "udp": ["sendto", "recvfrom", "UdpConnectClient"],
-                "license": ["LicenseCheck", "VerifyLicense", "Activate", "Register"]
+                "license": ["LicenseCheck", "VerifyLicense", "Activate", "Register"],
             }
 
             detected_apis = {category: [] for category in network_apis}
@@ -25378,7 +25297,7 @@ Focus on:
                 detected_apis = detect_network_apis(
                     pe,
                     network_apis,
-                    logger_func=lambda msg: self.update_output.emit(log_message(msg))
+                    logger_func=lambda msg: self.update_output.emit(log_message(msg)),
                 )
 
                 # Update the existing detected_apis dict for backward compatibility
@@ -25454,7 +25373,7 @@ Focus on:
 
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                self.update_output.emit(log_message(f"[Network Analysis] Error during static analysis: {str(e)}"))
+                self.update_output.emit(log_message(f"[Network Analysis] Error during static analysis: {e!s}"))
 
             # Dynamic analysis results if available
             if hasattr(self, "traffic_recorder") and self.traffic_recorder:
@@ -25538,7 +25457,7 @@ Focus on:
                             self.update_output.emit(log_message("[Network Analysis] No active network connections found"))
                     except (OSError, ValueError, RuntimeError) as e:
                         logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                        self.update_output.emit(log_message(f"[Network Analysis] Error checking connections: {str(e)}"))
+                        self.update_output.emit(log_message(f"[Network Analysis] Error checking connections: {e!s}"))
 
             # Summarize security issues
             if security_issues:
@@ -25558,7 +25477,7 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Network Analysis] Error during network analysis: {str(e)}"))
+            self.update_output.emit(log_message(f"[Network Analysis] Error during network analysis: {e!s}"))
             self.update_output.emit(log_message(f"[Network Analysis] Traceback: {traceback.format_exc()}"))
 
 # -------------------------------
@@ -25641,10 +25560,10 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Patching] Exception during patching: {str(e)}"))
+            self.update_output.emit(log_message(f"[Patching] Exception during patching: {e!s}"))
             self.update_output.emit(log_message(traceback.format_exc()))
             QMessageBox.critical(self, "Patching Error",
-                                f"An exception occurred during patching:\n{str(e)}")
+                                f"An exception occurred during patching:\n{e!s}")
 
     def refresh_patch_list(self):
         """Refresh the list of patches"""
@@ -25658,7 +25577,7 @@ Focus on:
             ("P001", "License Check", "0x00402E10", "Ready", ""),
             ("P002", "Trial Expiration", "0x00403F50", "Applied", ""),
             ("P003", "Network Validation", "0x00404820", "Ready", ""),
-            ("P004", "Hardware Check", "0x00405A10", "Failed", "")
+            ("P004", "Hardware Check", "0x00405A10", "Failed", ""),
         ]
 
         self.patches_table.setRowCount(len(sample_patches))
@@ -25842,7 +25761,7 @@ Focus on:
             "SSL/TLS Interceptor": "Intercepts and decrypts SSL/TLS traffic for analysis. Supports certificate generation and man-in-the-middle capabilities.",
             "Protocol Analyzer": "Analyzes communication protocols to identify patterns and structures. Useful for reverse engineering proprietary protocols.",
             "API Request Builder": "Build and send custom API requests to test endpoints and authentication. Supports various authentication methods.",
-            "Authentication Fuzzer": "Tests authentication mechanisms by generating various inputs to identify weaknesses and bypasses."
+            "Authentication Fuzzer": "Tests authentication mechanisms by generating various inputs to identify weaknesses and bypasses.",
         }
 
         self.tool_description_label.setText(descriptions.get(tool, "No description available"))
@@ -26059,7 +25978,7 @@ Focus on:
                     try:
                         self.update_output.emit(log_message("[Reports] Falling back to system default PDF viewer"))
                         QDesktopServices.openUrl(QUrl.fromLocalFile(report_path))
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                         logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                         # Last resort fallback using OS-specific methods
                         if os.name == "nt":  # Windows
@@ -26073,9 +25992,9 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Reports] Error viewing report: {str(e)}"))
+            self.update_output.emit(log_message(f"[Reports] Error viewing report: {e!s}"))
             self.update_output.emit(log_message(traceback.format_exc()))
-            QMessageBox.warning(self, "Report Viewer Error", f"Failed to open report:\n\n{str(e)}")
+            QMessageBox.warning(self, "Report Viewer Error", f"Failed to open report:\n\n{e!s}")
 
     def export_report(self, row):
         """Export a report to a file"""
@@ -26113,7 +26032,7 @@ Focus on:
             self,
             "Import Report",
             "",
-            "Report Files (*.json *.xml *.report);;JSON Files (*.json);;XML Files (*.xml);;All Files (*)"
+            "Report Files (*.json *.xml *.report);;JSON Files (*.json);;XML Files (*.xml);;All Files (*)",
         )
 
         if not file_path:
@@ -26125,7 +26044,7 @@ Focus on:
 
             # Determine file type and parse accordingly
             if file_path.lower().endswith(".json"):
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     report_data = json.load(f)
 
                 # Basic validation of report structure
@@ -26150,13 +26069,13 @@ Focus on:
                     "report_type": report_type,
                     "name": report_name,
                     "date": report_date,
-                    "content": ET.tostring(root).decode("utf-8")
+                    "content": ET.tostring(root).decode("utf-8"),
                 }
 
             else:
                 # Try to parse as JSON first, then XML, then as plain text
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         report_data = json.load(f)
                     # Basic validation
                     if not isinstance(report_data, dict):
@@ -26181,13 +26100,13 @@ Focus on:
                             "report_type": report_type,
                             "name": report_name,
                             "date": report_date,
-                            "content": ET.tostring(root).decode("utf-8")
+                            "content": ET.tostring(root).decode("utf-8"),
                         }
 
                     except ET.ParseError as e:
                         logger.error("ET.ParseError in main_app.py: %s", e)
                         # Read as plain text
-                        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                        with open(file_path, encoding="utf-8", errors="ignore") as f:
                             content = f.read()
 
                         report_type = "text"
@@ -26198,7 +26117,7 @@ Focus on:
                             "report_type": report_type,
                             "name": report_name,
                             "date": report_date,
-                            "content": content
+                            "content": content,
                         }
 
             # Create a unique report ID
@@ -26232,13 +26151,13 @@ Focus on:
             QMessageBox.information(
                 self,
                 "Import Successful",
-                f"Successfully imported report:\n\nName: {report_name}\nType: {report_type}\nDate: {report_date}\n\nReport ID: {report_id}\nSaved to: {output_path}"
+                f"Successfully imported report:\n\nName: {report_name}\nType: {report_type}\nDate: {report_date}\n\nReport ID: {report_id}\nSaved to: {output_path}",
             )
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Reports] Error importing report: {str(e)}"))
-            QMessageBox.critical(self, "Import Error", f"Error importing report: {str(e)}")
+            self.update_output.emit(log_message(f"[Reports] Error importing report: {e!s}"))
+            QMessageBox.critical(self, "Import Error", f"Error importing report: {e!s}")
 
     def _generate_html_report(self, report_name, report_type, output_path):
         """Generate an HTML report"""
@@ -26395,7 +26314,7 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Reports] Error generating HTML report: {str(e)}"))
+            self.update_output.emit(log_message(f"[Reports] Error generating HTML report: {e!s}"))
             self.update_output.emit(log_message(traceback.format_exc()))
             return False
 
@@ -26425,7 +26344,7 @@ Focus on:
                     "footer-right": "[page] of [topage]",
                     "footer-font-size": "8",
                     "header-html": '<header style="text-align: center; font-size: 8pt;">Intellicrack Report</header>',
-                    "header-spacing": "5"
+                    "header-spacing": "5",
                 }
 
                 # Import and use pdfkit locally
@@ -26460,7 +26379,7 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Reports] Error generating PDF report: {str(e)}"))
+            self.update_output.emit(log_message(f"[Reports] Error generating PDF report: {e!s}"))
             self.update_output.emit(log_message(traceback.format_exc()))
             return False
 
@@ -26534,7 +26453,7 @@ ANALYSIS SUMMARY
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Reports] Error generating text report: {str(e)}"))
+            self.update_output.emit(log_message(f"[Reports] Error generating text report: {e!s}"))
             self.update_output.emit(log_message(traceback.format_exc()))
             return False
 
@@ -26554,7 +26473,7 @@ ANALYSIS SUMMARY
             text_edit.setReadOnly(True)
 
             # Load report content
-            with open(report_path, "r", encoding="utf-8") as f:
+            with open(report_path, encoding="utf-8") as f:
                 report_content = f.read()
 
             # Set content
@@ -26568,16 +26487,14 @@ ANALYSIS SUMMARY
             decrease_font_btn = QPushButton("Smaller Font")
 
             def increase_font():
-                """
-                Increase the font size in the text edit widget.
+                """Increase the font size in the text edit widget.
                 """
                 current = text_edit.font()
                 current.setPointSize(current.pointSize() + 1)
                 text_edit.setFont(current)
 
             def decrease_font():
-                """
-                Decrease the font size in the text edit widget, with a minimum size limit.
+                """Decrease the font size in the text edit widget, with a minimum size limit.
                 """
                 current = text_edit.font()
                 if current.pointSize() > 8:
@@ -26591,13 +26508,12 @@ ANALYSIS SUMMARY
             save_btn = QPushButton("Save As...")
 
             def save_as():
-                """
-                Save the report content to a file.
+                """Save the report content to a file.
 
                 Opens a file dialog and writes the report text to the selected file.
                 """
                 file_path, _ = QFileDialog.getSaveFileName(
-                    self.report_viewer, "Save Report As", "", "Text Files (*.txt);;All Files (*)"
+                    self.report_viewer, "Save Report As", "", "Text Files (*.txt);;All Files (*)",
                 )
                 if file_path:
                     try:
@@ -26606,7 +26522,7 @@ ANALYSIS SUMMARY
                         QMessageBox.information(self.report_viewer, "Save Successful", f"Report saved to {file_path}")
                     except (OSError, ValueError, RuntimeError) as e:
                         logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                        QMessageBox.warning(self.report_viewer, "Save Failed", f"Failed to save report: {str(e)}")
+                        QMessageBox.warning(self.report_viewer, "Save Failed", f"Failed to save report: {e!s}")
 
             save_btn.clicked.connect(save_as)
 
@@ -26614,8 +26530,7 @@ ANALYSIS SUMMARY
             print_btn = QPushButton("Print")
 
             def print_report():
-                """
-                Print the report content.
+                """Print the report content.
 
                 Opens a print dialog and sends the report text to the selected printer.
                 """
@@ -26642,8 +26557,8 @@ ANALYSIS SUMMARY
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Reports] Error opening text report viewer: {str(e)}"))
-            QMessageBox.warning(self, "Report Viewer Error", f"Failed to open report viewer:\n\n{str(e)}")
+            self.update_output.emit(log_message(f"[Reports] Error opening text report viewer: {e!s}"))
+            QMessageBox.warning(self, "Report Viewer Error", f"Failed to open report viewer:\n\n{e!s}")
 
     def _generate_memory_report_section(self):
         """Generate the memory analysis section for HTML reports"""
@@ -26672,7 +26587,7 @@ ANALYSIS SUMMARY
                 ("Peak Memory Usage", f"{results.get('peak_usage', 0):,} bytes"),
                 ("Heap Allocations", f"{results.get('heap_allocs', 0):,}"),
                 ("Memory Leaks Detected", f"{results.get('leaks_count', 0)}"),
-                ("Suspicious Allocations", f"{results.get('suspicious_allocs', 0)}")
+                ("Suspicious Allocations", f"{results.get('suspicious_allocs', 0)}"),
             ]
 
             for metric, value in memory_metrics:
@@ -26765,7 +26680,7 @@ ANALYSIS SUMMARY
 
             if traffic_summary:
                 # Protocol breakdown
-                if "protocols" in traffic_summary and traffic_summary["protocols"]:
+                if traffic_summary.get("protocols"):
                     section += """
                 <h3>Protocol Breakdown</h3>
                 <table>
@@ -26793,7 +26708,7 @@ ANALYSIS SUMMARY
     """
 
                 # Destination stats
-                if "destinations" in traffic_summary and traffic_summary["destinations"]:
+                if traffic_summary.get("destinations"):
                     section += """
                 <h3>Top Destinations</h3>
                 <table>
@@ -26808,7 +26723,7 @@ ANALYSIS SUMMARY
                     destinations = sorted(
                         traffic_summary["destinations"].items(),
                         key=lambda x: x[1],
-                        reverse=True
+                        reverse=True,
                     )[:10]  # Top 10
 
                     for dest, count in destinations:
@@ -26828,7 +26743,7 @@ ANALYSIS SUMMARY
     """
 
                 # License servers or suspicious connections
-                if "license_servers" in traffic_summary and traffic_summary["license_servers"]:
+                if traffic_summary.get("license_servers"):
                     section += """
                 <h3>Detected License Servers</h3>
                 <table>
@@ -26869,7 +26784,7 @@ ANALYSIS SUMMARY
                     ("Total Data Transferred", f"{traffic_summary.get('total_bytes', 0):,} bytes"),
                     ("Capture Duration", f"{traffic_summary.get('duration_seconds', 0):.2f} seconds"),
                     ("Average Packet Size", f"{traffic_summary.get('avg_packet_size', 0):.2f} bytes"),
-                    ("Suspicious Connections", f"{len(traffic_summary.get('suspicious', []))}")
+                    ("Suspicious Connections", f"{len(traffic_summary.get('suspicious', []))}"),
                 ]
 
                 for metric, value in summary_metrics:
@@ -26916,7 +26831,7 @@ ANALYSIS SUMMARY
                     "type": self.patches_table.item(row, 1).text() if self.patches_table.item(row, 1) else "",
                     "address": self.patches_table.item(row, 2).text() if self.patches_table.item(row, 2) else "",
                     "status": self.patches_table.item(row, 3).text() if self.patches_table.item(row, 3) else "",
-                    "description": self.patches_table.item(row, 4).text() if self.patches_table.item(row, 4) else ""
+                    "description": self.patches_table.item(row, 4).text() if self.patches_table.item(row, 4) else "",
                 }
                 patches.append(patch)
 
@@ -27019,7 +26934,7 @@ ANALYSIS SUMMARY
                 logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                 section += f"""
                 <h3>Binary Information</h3>
-                <p>Error retrieving file information: {str(e)}</p>
+                <p>Error retrieving file information: {e!s}</p>
     """
 
         # Add analysis results summary
@@ -27035,7 +26950,7 @@ ANALYSIS SUMMARY
                 "Memory Analysis": [],
                 "Network Analysis": [],
                 "Static Analysis": [],
-                "General": []
+                "General": [],
             }
 
             for result in self.analyze_results:
@@ -27147,7 +27062,7 @@ ANALYSIS SUMMARY
                 text += f"- Suspicious Connections: {len(traffic_summary.get('suspicious', []))}\n\n"
 
                 # Protocol breakdown
-                if "protocols" in traffic_summary and traffic_summary["protocols"]:
+                if traffic_summary.get("protocols"):
                     text += "Protocol Breakdown:\n"
                     text += "--------------------------------------\n"
 
@@ -27161,7 +27076,7 @@ ANALYSIS SUMMARY
                     text += "--------------------------------------\n\n"
 
                 # Top destinations
-                if "destinations" in traffic_summary and traffic_summary["destinations"]:
+                if traffic_summary.get("destinations"):
                     text += "Top Destinations:\n"
                     text += "--------------------------------------\n"
 
@@ -27169,7 +27084,7 @@ ANALYSIS SUMMARY
                     destinations = sorted(
                         traffic_summary["destinations"].items(),
                         key=lambda x: x[1],
-                        reverse=True
+                        reverse=True,
                     )[:10]
 
                     for dest, count in destinations:
@@ -27182,7 +27097,7 @@ ANALYSIS SUMMARY
                     text += "--------------------------------------\n\n"
 
                 # License servers
-                if "license_servers" in traffic_summary and traffic_summary["license_servers"]:
+                if traffic_summary.get("license_servers"):
                     text += "Detected License Servers:\n"
                     text += "--------------------------------------\n"
 
@@ -27212,7 +27127,7 @@ ANALYSIS SUMMARY
                     "type": self.patches_table.item(row, 1).text() if self.patches_table.item(row, 1) else "",
                     "address": self.patches_table.item(row, 2).text() if self.patches_table.item(row, 2) else "",
                     "status": self.patches_table.item(row, 3).text() if self.patches_table.item(row, 3) else "",
-                    "description": self.patches_table.item(row, 4).text() if self.patches_table.item(row, 4) else ""
+                    "description": self.patches_table.item(row, 4).text() if self.patches_table.item(row, 4) else "",
                 }
                 patches.append(patch)
 
@@ -27284,7 +27199,7 @@ ANALYSIS SUMMARY
             logger.error("Import error in main_app.py: %s", e)
             self.update_output.emit(log_message("[ROP] ROPgadget not available"))
             self.update_analysis_results.emit("ROP analysis requires ROPgadget tool.\n")
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[ROP] Error: {e}"))
             self.update_analysis_results.emit(f"ROP analysis failed: {e}\n")
@@ -27320,7 +27235,7 @@ ANALYSIS SUMMARY
             logger.error("Import error in main_app.py: %s", e)
             self.update_output.emit(log_message("[Packing] Protection detection module not available"))
             self.update_analysis_results.emit("Protection detection requires additional modules.\n")
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Packing] Error: {e}"))
             self.update_analysis_results.emit(f"Packing detection failed: {e}\n")
@@ -27384,7 +27299,7 @@ ANALYSIS SUMMARY
             logger.error("Import error in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Icon] Missing dependencies: {e}"))
             QMessageBox.warning(self, "Missing Dependencies", f"Icon extraction requires: {e}")
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Icon] Error: {e}"))
             QMessageBox.warning(self, "Error", f"Failed to extract icon: {e}")
@@ -27447,8 +27362,7 @@ ANALYSIS SUMMARY
                         self.update_analysis_results.emit(perf_report)
 
                     return
-                else:
-                    self.update_output.emit(log_message("[Static Vuln] Comprehensive analysis failed, falling back to standard analysis..."))
+                self.update_output.emit(log_message("[Static Vuln] Comprehensive analysis failed, falling back to standard analysis..."))
 
             # Initialize vulnerability engine
             vuln_engine = VulnerabilityEngine()
@@ -27509,7 +27423,7 @@ ANALYSIS SUMMARY
             logger.error("Import error in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Static Vuln] Missing dependencies: {e}"))
             self.update_analysis_results.emit("Static vulnerability analysis requires additional modules.\n")
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Static Vuln] Error: {e}"))
             self.update_analysis_results.emit(f"Static vulnerability analysis failed: {e}\n")
@@ -27579,7 +27493,7 @@ ANALYSIS SUMMARY
             self.update_analysis_results.emit("3. Develop bypass techniques\n")
             self.update_analysis_results.emit("4. Test exploits in controlled environment\n")
             self.update_output.emit(log_message("[Exploit] Using fallback strategy generation"))
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Exploit] Error: {e}"))
             self.update_analysis_results.emit(f"Strategy generation failed: {e}\n")
@@ -27606,7 +27520,7 @@ ANALYSIS SUMMARY
 
             self.update_output.emit(log_message("[Auto-Exploit] Automated exploitation complete"))
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Auto-Exploit] Error: {e}"))
             self.update_analysis_results.emit(f"Automated exploitation failed: {e}\n")
@@ -27629,7 +27543,7 @@ ANALYSIS SUMMARY
                 "flask": "Web framework for GGUF server",
                 "cryptography": "SSL/TLS interception",
                 "scapy": "Network packet manipulation",
-                "yara-python": "Pattern matching engine"
+                "yara-python": "Pattern matching engine",
             }
 
             missing = []
@@ -27656,7 +27570,7 @@ ANALYSIS SUMMARY
 
             self.update_output.emit(log_message(f"[Dependencies] Check complete: {len(available)} installed, {len(missing)} missing"))
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Dependencies] Error: {e}"))
             self.update_analysis_results.emit(f"Dependency check failed: {e}\n")
@@ -27680,7 +27594,7 @@ ANALYSIS SUMMARY
             self.update_output.emit(log_message(f"[Logging] Persistent logging enabled: {log_file}"))
             QMessageBox.information(self, "Logging Setup", f"Logging configured to:\n{log_file}\n\nLogs will rotate at 10MB")
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.update_output.emit(log_message(f"[Logging] Error: {e}"))
             QMessageBox.warning(self, "Logging Error", f"Failed to setup logging: {e}")
 
@@ -27694,7 +27608,7 @@ ANALYSIS SUMMARY
             for dep in dependencies:
                 self.update_output.emit(log_message(f"[Dependencies] Installing {dep}..."))
                 result = subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", dep],
-                                      capture_output=True, text=True)
+                                      check=False, capture_output=True, text=True)
 
                 if result.returncode == 0:
                     self.update_output.emit(log_message(f"[Dependencies] {dep} installed successfully"))
@@ -27704,7 +27618,7 @@ ANALYSIS SUMMARY
             QMessageBox.information(self, "Installation Complete",
                                   "Dependency installation complete. Some changes may require restarting Intellicrack.")
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Dependencies] Error: {e}"))
             QMessageBox.warning(self, "Installation Error", f"Failed to install dependencies: {e}")
@@ -27780,7 +27694,7 @@ ANALYSIS SUMMARY
             self.update_analysis_results.emit("Basic memory cleanup performed\n")
             self.update_analysis_results.emit("Install psutil for detailed memory statistics\n")
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Memory] Error: {e}"))
             self.update_analysis_results.emit(f"Memory optimization failed: {e}\n")
@@ -27804,7 +27718,7 @@ ANALYSIS SUMMARY
                 self.update_analysis_results.emit("Long-running tasks should always run in separate threads\n")
                 self.update_analysis_results.emit("This prevents the UI from freezing\n")
 
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
                 self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
                 self.update_output.emit(log_message(f"[Demo] Error in thread: {e}"))
 
@@ -27986,7 +27900,7 @@ def launch():
             # Show a simple error dialog
             from PyQt6.QtWidgets import QMessageBox
             QMessageBox.critical(None, "Startup Error",
-                               f"Failed to initialize Intellicrack:\n{str(init_error)}\n\n"
+                               f"Failed to initialize Intellicrack:\n{init_error!s}\n\n"
                                "This might be a graphics driver compatibility issue.\n"
                                "Try updating your Intel Arc Graphics drivers.")
             return 1

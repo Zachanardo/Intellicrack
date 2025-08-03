@@ -1,5 +1,4 @@
-"""
-Hardware Dongle Emulation Module
+"""Hardware Dongle Emulation Module
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,41 +21,40 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import platform
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ...utils.core.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
 
 
 class HardwareDongleEmulator:
-    """
-    Implements hardware dongle emulation for various protection systems.
+    """Implements hardware dongle emulation for various protection systems.
 
     This class provides methods to emulate hardware dongles by intercepting API calls,
     creating virtual dongle responses, and manipulating the software protection checks.
     """
 
-    def __init__(self, app: Optional[Any] = None):
-        """
-        Initialize the hardware dongle emulator.
+    def __init__(self, app: Any | None = None):
+        """Initialize the hardware dongle emulator.
 
         Args:
             app: Application instance that contains the binary_path attribute
+
         """
         self.app = app
         self.logger = logging.getLogger("IntellicrackLogger.DongleEmulator")
-        self.hooks: List[Dict[str, Any]] = []
-        self.patches: List[Dict[str, Any]] = []
-        self.virtual_dongles: Dict[str, Dict[str, Any]] = {}
+        self.hooks: list[dict[str, Any]] = []
+        self.patches: list[dict[str, Any]] = []
+        self.virtual_dongles: dict[str, dict[str, Any]] = {}
 
-    def activate_dongle_emulation(self, dongle_types: List[str] = None) -> Dict[str, Any]:
-        """
-        Main method to activate hardware dongle emulation.
+    def activate_dongle_emulation(self, dongle_types: list[str] = None) -> dict[str, Any]:
+        """Main method to activate hardware dongle emulation.
 
         Args:
             dongle_types: List of dongle types to emulate (None for all supported types)
 
         Returns:
             dict: Results of the emulation activation with success status and methods applied
+
         """
         if dongle_types is None:
             dongle_types = ["SafeNet", "HASP", "CodeMeter", "Rainbow", "ROCKEY", "Dinkey", "SuperPro", "eToken"]
@@ -65,7 +63,7 @@ class HardwareDongleEmulator:
             "success": False,
             "emulated_dongles": [],
             "methods_applied": [],
-            "errors": []
+            "errors": [],
         }
 
         # Strategy 1: Hook dongle API calls
@@ -74,7 +72,7 @@ class HardwareDongleEmulator:
             results["methods_applied"].append("API Hooking")
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in dongle_emulator: %s", e)
-            results["errors"].append(f"API hooking failed: {str(e)}")
+            results["errors"].append(f"API hooking failed: {e!s}")
 
         # Strategy 2: Create virtual dongle responses
         try:
@@ -82,7 +80,7 @@ class HardwareDongleEmulator:
             results["methods_applied"].append("Virtual Dongle Creation")
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in dongle_emulator: %s", e)
-            results["errors"].append(f"Virtual dongle creation failed: {str(e)}")
+            results["errors"].append(f"Virtual dongle creation failed: {e!s}")
 
         # Strategy 3: Patch dongle check instructions
         try:
@@ -91,7 +89,7 @@ class HardwareDongleEmulator:
                 results["methods_applied"].append("Binary Patching")
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in dongle_emulator: %s", e)
-            results["errors"].append(f"Binary patching failed: {str(e)}")
+            results["errors"].append(f"Binary patching failed: {e!s}")
 
         # Strategy 4: Install registry spoofing
         try:
@@ -99,15 +97,14 @@ class HardwareDongleEmulator:
             results["methods_applied"].append("Registry Spoofing")
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in dongle_emulator: %s", e)
-            results["errors"].append(f"Registry spoofing failed: {str(e)}")
+            results["errors"].append(f"Registry spoofing failed: {e!s}")
 
         results["emulated_dongles"] = list(self.virtual_dongles.keys())
         results["success"] = len(results["methods_applied"]) > 0
         return results
 
-    def _hook_dongle_apis(self, dongle_types: List[str]) -> None:
-        """
-        Hook Windows dongle APIs to return success values.
+    def _hook_dongle_apis(self, dongle_types: list[str]) -> None:
+        """Hook Windows dongle APIs to return success values.
         """
         if not FRIDA_AVAILABLE:
             self.logger.warning("Frida not available - skipping dongle API hooking")
@@ -265,13 +262,12 @@ class HardwareDongleEmulator:
         self.hooks.append({
             "type": "frida",
             "script": frida_script,
-            "target": f"Dongle APIs: {', '.join(dongle_types)}"
+            "target": f"Dongle APIs: {', '.join(dongle_types)}",
         })
         self.logger.info(f"Dongle API hooks installed for: {', '.join(dongle_types)}")
 
-    def _create_virtual_dongles(self, dongle_types: List[str]) -> None:
-        """
-        Create virtual dongle devices that respond to application queries.
+    def _create_virtual_dongles(self, dongle_types: list[str]) -> None:
+        """Create virtual dongle devices that respond to application queries.
         """
         for dongle_type in dongle_types:
             if dongle_type == "SafeNet":
@@ -282,7 +278,7 @@ class HardwareDongleEmulator:
                     "firmware_version": "1.0.0",
                     "serial_number": "SN123456789",
                     "memory_size": 1024,
-                    "algorithms": ["AES", "RSA", "DES"]
+                    "algorithms": ["AES", "RSA", "DES"],
                 }
 
             elif dongle_type == "HASP":
@@ -292,7 +288,7 @@ class HardwareDongleEmulator:
                     "feature_id": 0x0001,
                     "memory_size": 512,
                     "time_stamp": 0x12345678,
-                    "password": b"defaultpass"
+                    "password": b"defaultpass",
                 }
 
             elif dongle_type == "CodeMeter":
@@ -302,14 +298,13 @@ class HardwareDongleEmulator:
                     "feature_code": 1,
                     "version": "6.90",
                     "serial_number": 1000001,
-                    "user_data": b"\x00" * 32
+                    "user_data": b"\x00" * 32,
                 }
 
         self.logger.info(f"Created virtual dongles: {list(self.virtual_dongles.keys())}")
 
     def _patch_dongle_checks(self) -> None:
-        """
-        Patch binary instructions that check for dongle presence.
+        """Patch binary instructions that check for dongle presence.
         """
         if not self.app or not hasattr(self.app, "binary_path") or not self.app.binary_path:
             return
@@ -339,7 +334,7 @@ class HardwareDongleEmulator:
                         "offset": offset,
                         "original": pattern,
                         "patch": patch,
-                        "description": "Dongle check bypass"
+                        "description": "Dongle check bypass",
                     })
                     patches_applied += 1
                     offset = binary_data.find(pattern, offset + 1)
@@ -347,11 +342,10 @@ class HardwareDongleEmulator:
             self.logger.info("Found %s dongle check patterns to patch", patches_applied)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Error patching dongle checks: {str(e)}")
+            self.logger.error(f"Error patching dongle checks: {e!s}")
 
     def _spoof_dongle_registry(self) -> None:
-        """
-        Manipulate Windows registry to simulate dongle presence.
+        """Manipulate Windows registry to simulate dongle presence.
         """
         try:
             if platform.system() != "Windows":
@@ -388,20 +382,20 @@ class HardwareDongleEmulator:
                     winreg.CloseKey(key)
                     self.logger.info("Set registry entry %s\\%s = %s", path, name, value)
                 except (OSError, ValueError, RuntimeError) as e:
-                    self.logger.warning(f"Could not set registry entry {path}\\{name}: {str(e)}")
+                    self.logger.warning(f"Could not set registry entry {path}\\{name}: {e!s}")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Registry spoofing failed: {str(e)}")
+            self.logger.error(f"Registry spoofing failed: {e!s}")
 
-    def generate_emulation_script(self, dongle_types: List[str]) -> str:
-        """
-        Generate a Frida script for dongle emulation.
+    def generate_emulation_script(self, dongle_types: list[str]) -> str:
+        """Generate a Frida script for dongle emulation.
 
         Args:
             dongle_types: List of dongle types to emulate
 
         Returns:
             str: Complete Frida script for dongle emulation
+
         """
         base_script = ""
         for hook in self.hooks:
@@ -458,12 +452,12 @@ class HardwareDongleEmulator:
 
         return script
 
-    def get_emulation_status(self) -> Dict[str, Any]:
-        """
-        Get the current status of dongle emulation.
+    def get_emulation_status(self) -> dict[str, Any]:
+        """Get the current status of dongle emulation.
 
         Returns:
             dict: Status information about emulated dongles and hooks
+
         """
         return {
             "hooks_installed": len(self.hooks),
@@ -471,12 +465,11 @@ class HardwareDongleEmulator:
             "virtual_dongles_active": list(self.virtual_dongles.keys()),
             "emulated_dongle_count": len(self.virtual_dongles),
             "frida_available": FRIDA_AVAILABLE,
-            "winreg_available": WINREG_AVAILABLE
+            "winreg_available": WINREG_AVAILABLE,
         }
 
     def clear_emulation(self) -> None:
-        """
-        Clear all dongle emulation hooks and virtual devices.
+        """Clear all dongle emulation hooks and virtual devices.
         """
         self.hooks.clear()
         self.patches.clear()
@@ -484,9 +477,8 @@ class HardwareDongleEmulator:
         self.logger.info("Cleared all dongle emulation hooks and virtual devices")
 
 
-def activate_hardware_dongle_emulation(app: Any, dongle_types: List[str] = None) -> Dict[str, Any]:
-    """
-    Convenience function to activate hardware dongle emulation.
+def activate_hardware_dongle_emulation(app: Any, dongle_types: list[str] = None) -> dict[str, Any]:
+    """Convenience function to activate hardware dongle emulation.
 
     Args:
         app: Application instance with binary_path
@@ -494,6 +486,7 @@ def activate_hardware_dongle_emulation(app: Any, dongle_types: List[str] = None)
 
     Returns:
         dict: Results of the emulation activation
+
     """
     emulator = HardwareDongleEmulator(app)
     return emulator.activate_dongle_emulation(dongle_types)
@@ -502,5 +495,5 @@ def activate_hardware_dongle_emulation(app: Any, dongle_types: List[str] = None)
 # Export the main classes and functions
 __all__ = [
     "HardwareDongleEmulator",
-    "activate_hardware_dongle_emulation"
+    "activate_hardware_dongle_emulation",
 ]

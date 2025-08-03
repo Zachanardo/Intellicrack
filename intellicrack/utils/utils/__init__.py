@@ -1,5 +1,4 @@
-"""
-General utilities package.
+"""General utilities package.
 
 Copyright (C) 2025 Zachary Flint
 

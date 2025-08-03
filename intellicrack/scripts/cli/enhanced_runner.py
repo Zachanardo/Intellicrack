@@ -1,5 +1,4 @@
-"""
-Enhanced CLI Runner for Intellicrack Integrates progress visualization and improved user experience
+"""Enhanced CLI Runner for Intellicrack Integrates progress visualization and improved user experience
 
 Copyright (C) 2025 Zachary Flint
 
@@ -31,7 +30,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from rich import box
 from rich.console import Console
@@ -60,7 +59,7 @@ class EnhancedCLIRunner:
         self.results = {}
         self.logger = logging.getLogger(__name__)
 
-    def run_with_progress(self, binary_path: str, operations: List[str]) -> Dict[str, Any]:
+    def run_with_progress(self, binary_path: str, operations: list[str]) -> dict[str, Any]:
         """Run operations with progress visualization"""
         self.console.print(f"\n[bold cyan]Analyzing:[/bold cyan] {binary_path}")
 
@@ -102,7 +101,7 @@ class EnhancedCLIRunner:
 
         return self.results
 
-    def _run_static_analysis(self, binary_path: str) -> Dict[str, Any]:
+    def _run_static_analysis(self, binary_path: str) -> dict[str, Any]:
         """Run static analysis with progress updates"""
         steps = [
             ("Loading binary", 10),
@@ -111,7 +110,7 @@ class EnhancedCLIRunner:
             ("Analyzing imports", 50),
             ("Detecting patterns", 70),
             ("Generating report", 90),
-            ("Finalizing", 100)
+            ("Finalizing", 100),
         ]
 
         results = {}
@@ -125,7 +124,7 @@ class EnhancedCLIRunner:
                 "Static Analysis",
                 progress,
                 100,
-                speed=progress * 2
+                speed=progress * 2,
             )
 
             # Actual analysis on final step
@@ -137,7 +136,7 @@ class EnhancedCLIRunner:
 
         return results
 
-    def _run_vulnerability_scan(self, binary_path: str) -> Dict[str, Any]:
+    def _run_vulnerability_scan(self, binary_path: str) -> dict[str, Any]:
         """Run vulnerability scan with progress updates"""
         try:
             engine = VulnerabilityEngine()
@@ -149,7 +148,7 @@ class EnhancedCLIRunner:
                     "Vulnerability Scan",
                     i,
                     100,
-                    speed=50 + i
+                    speed=50 + i,
                 )
 
             # Actual scan
@@ -158,7 +157,7 @@ class EnhancedCLIRunner:
         except Exception as e:
             return {"error": str(e)}
 
-    def _run_protection_detection(self, binary_path: str) -> Dict[str, Any]:
+    def _run_protection_detection(self, binary_path: str) -> dict[str, Any]:
         """Run protection detection with progress updates"""
         try:
             # Progress simulation
@@ -168,7 +167,7 @@ class EnhancedCLIRunner:
                     "Protection Detection",
                     i,
                     100,
-                    speed=100 + i * 2
+                    speed=100 + i * 2,
                 )
 
             # Actual detection
@@ -177,7 +176,7 @@ class EnhancedCLIRunner:
         except Exception as e:
             return {"error": str(e)}
 
-    def _run_dynamic_analysis(self, binary_path: str) -> Dict[str, Any]:
+    def _run_dynamic_analysis(self, binary_path: str) -> dict[str, Any]:
         """Run dynamic analysis (simulated)"""
         # Simulate dynamic analysis
         steps = [
@@ -186,7 +185,7 @@ class EnhancedCLIRunner:
             "Monitoring system calls",
             "Tracking file operations",
             "Analyzing network activity",
-            "Collecting behavioral data"
+            "Collecting behavioral data",
         ]
 
         for i, _step in enumerate(steps):
@@ -196,16 +195,16 @@ class EnhancedCLIRunner:
                 "Dynamic Analysis",
                 progress,
                 100,
-                speed=30 + i * 10
+                speed=30 + i * 10,
             )
 
         return {
             "behavior": "Binary exhibits normal behavior",
             "syscalls": ["CreateFile", "ReadFile", "WriteFile"],
-            "network": "No suspicious network activity detected"
+            "network": "No suspicious network activity detected",
         }
 
-    def _run_network_analysis(self, binary_path: str) -> Dict[str, Any]:
+    def _run_network_analysis(self, binary_path: str) -> dict[str, Any]:
         """Run network analysis"""
         try:
             analyzer = NetworkTrafficAnalyzer()
@@ -225,7 +224,7 @@ class EnhancedCLIRunner:
                     "Network Analysis",
                     i,
                     100,
-                    speed=75 + i
+                    speed=75 + i,
                 )
 
             # Return analysis results (simulated)
@@ -233,7 +232,7 @@ class EnhancedCLIRunner:
                 "protocols": ["HTTP", "HTTPS"],
                 "endpoints": [os.environ.get("API_SERVER_URL", "api.internal"), os.environ.get("LICENSE_SERVER_URL", "license.internal")],
                 "suspicious": False,
-                "analyzer_info": f"Analysis by {type(analyzer).__name__}"
+                "analyzer_info": f"Analysis by {type(analyzer).__name__}",
             }
         except Exception as e:
             return {"error": str(e)}
@@ -262,7 +261,7 @@ class EnhancedCLIRunner:
 
             self.console.print(panel)
 
-    def _format_static_results(self, result: Dict) -> str:
+    def _format_static_results(self, result: dict) -> str:
         """Format static analysis results"""
         lines = []
         if "file_type" in result:
@@ -276,7 +275,7 @@ class EnhancedCLIRunner:
 
         return "\n".join(lines) if lines else "No static analysis data"
 
-    def _format_vulnerability_results(self, result: Dict) -> str:
+    def _format_vulnerability_results(self, result: dict) -> str:
         """Format vulnerability scan results"""
         vulns = result.get("vulnerabilities", [])
         if not vulns:
@@ -291,7 +290,7 @@ class EnhancedCLIRunner:
 
         return "\n".join(lines)
 
-    def _format_protection_results(self, result: Dict) -> str:
+    def _format_protection_results(self, result: dict) -> str:
         """Format protection detection results"""
         protections = result.get("protections", {})
         if not protections:
@@ -304,7 +303,7 @@ class EnhancedCLIRunner:
 
         return "\n".join(lines)
 
-    def _format_generic_results(self, result: Dict) -> str:
+    def _format_generic_results(self, result: dict) -> str:
         """Format generic results"""
         lines = []
         for key, value in result.items():
@@ -347,7 +346,7 @@ def main():
         "Vulnerability Scan",
         "Protection Detection",
         "Dynamic Analysis",
-        "Network Analysis"
+        "Network Analysis",
     ]
 
     for op in available_ops:

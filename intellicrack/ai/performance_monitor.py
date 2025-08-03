@@ -1,5 +1,4 @@
-"""
-Performance Monitoring and Optimization System
+"""Performance Monitoring and Optimization System
 
 Copyright (C) 2025 Zachary Flint
 
@@ -26,11 +25,12 @@ import logging
 import threading
 import time
 from collections import defaultdict, deque
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -46,25 +46,27 @@ except ImportError as e:
 @dataclass
 class PerformanceMetric:
     """Individual performance metric."""
+
     name: str
     value: float
     unit: str
     timestamp: datetime = field(default_factory=datetime.now)
     category: str = "general"
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class PerformanceProfile:
     """Performance profile for a specific operation."""
+
     operation_name: str
     execution_time: float
     memory_usage: int
     cpu_usage: float
     success: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
     timestamp: datetime = field(default_factory=datetime.now)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class PerformanceMonitor:
@@ -76,21 +78,22 @@ class PerformanceMonitor:
         Args:
             max_history: Maximum number of metrics and profiles to retain
                         in history
+
         """
         self.logger = logging.getLogger(__name__ + ".PerformanceMonitor")
         self.max_history = max_history
-        self.metrics: Dict[str, deque] = defaultdict(
+        self.metrics: dict[str, deque] = defaultdict(
             lambda: deque(maxlen=max_history))
         self.profiles: deque = deque(maxlen=max_history)
-        self.active_operations: Dict[str, Dict[str, Any]] = {}
-        self.optimization_rules: List[Callable] = []
+        self.active_operations: dict[str, dict[str, Any]] = {}
+        self.optimization_rules: list[Callable] = []
 
         # Performance thresholds
         self.thresholds = {
             "execution_time": {"warning": 5.0, "critical": 15.0},
             "memory_usage": {"warning": 500 * 1024 * 1024, "critical": 1024 * 1024 * 1024},
             "cpu_usage": {"warning": 80.0, "critical": 95.0},
-            "memory_growth": {"warning": 50 * 1024 * 1024, "critical": 100 * 1024 * 1024}
+            "memory_growth": {"warning": 50 * 1024 * 1024, "critical": 100 * 1024 * 1024},
         }
 
         # System monitoring
@@ -108,7 +111,7 @@ class PerformanceMonitor:
         self._monitor_thread = None
 
         # Performance cache
-        self.performance_cache: Dict[str, Any] = {}
+        self.performance_cache: dict[str, Any] = {}
         self.cache_ttl = 300  # 5 minutes
 
         logger.info("Performance monitor initialized")
@@ -122,7 +125,7 @@ class PerformanceMonitor:
         self._monitor_thread = threading.Thread(
             target=self._monitor_system,
             args=(interval,),
-            daemon=True
+            daemon=True,
         )
         self._monitor_thread.start()
         logger.info("Background performance monitoring started")
@@ -170,7 +173,7 @@ class PerformanceMonitor:
         checks = [
             ("cpu_usage", cpu_usage),
             ("memory_usage", memory_usage),
-            ("memory_growth", memory_growth)
+            ("memory_growth", memory_growth),
         ]
 
         for metric_name, value in checks:
@@ -197,20 +200,20 @@ class PerformanceMonitor:
                 logger.error(f"Error in optimization rule: {e}")
 
     def record_metric(self, name: str, value: float, unit: str,
-                      category: str = "general", context: Dict[str, Any] = None):
+                      category: str = "general", context: dict[str, Any] = None):
         """Record a performance metric."""
         metric = PerformanceMetric(
             name=name,
             value=value,
             unit=unit,
             category=category,
-            context=context or {}
+            context=context or {},
         )
 
         self.metrics[name].append(metric)
 
     @contextmanager
-    def profile_operation(self, operation_name: str, metadata: Dict[str, Any] = None):
+    def profile_operation(self, operation_name: str, metadata: dict[str, Any] = None):
         """Context manager for profiling operations."""
         start_time = time.time()
         start_memory = self.process.memory_info().rss if HAS_PSUTIL and self.process else 0
@@ -221,7 +224,7 @@ class PerformanceMonitor:
             "name": operation_name,
             "start_time": start_time,
             "start_memory": start_memory,
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
 
         success = True
@@ -250,7 +253,7 @@ class PerformanceMonitor:
                 cpu_usage=cpu_usage,
                 success=success,
                 error_message=error_message,
-                metadata=metadata or {}
+                metadata=metadata or {},
             )
 
             self.profiles.append(profile)
@@ -280,7 +283,7 @@ class PerformanceMonitor:
 
         return decorator
 
-    def get_metrics_summary(self, time_window: Optional[timedelta] = None) -> Dict[str, Any]:
+    def get_metrics_summary(self, time_window: timedelta | None = None) -> dict[str, Any]:
         """Get summary of metrics within time window."""
         cutoff_time = datetime.now() - (time_window or timedelta(hours=1))
 
@@ -288,7 +291,7 @@ class PerformanceMonitor:
             "timeframe": str(time_window or timedelta(hours=1)),
             "metrics": {},
             "operation_summary": {},
-            "system_health": self._assess_system_health()
+            "system_health": self._assess_system_health(),
         }
 
         # Metrics summary
@@ -306,7 +309,7 @@ class PerformanceMonitor:
                     "min": min(values),
                     "max": max(values),
                     "latest": values[-1],
-                    "unit": recent_metrics[-1].unit
+                    "unit": recent_metrics[-1].unit,
                 }
 
         # Operation summary
@@ -330,12 +333,12 @@ class PerformanceMonitor:
                 "avg_execution_time": sum(exec_times) / len(exec_times),
                 "max_execution_time": max(exec_times),
                 "avg_memory_usage": sum(memory_usage) / len(memory_usage),
-                "success_rate": success_rate
+                "success_rate": success_rate,
             }
 
         return summary
 
-    def _assess_system_health(self) -> Dict[str, Any]:
+    def _assess_system_health(self) -> dict[str, Any]:
         """Assess overall system health."""
         try:
             if HAS_PSUTIL and self.process:
@@ -385,7 +388,7 @@ class PerformanceMonitor:
                 "issues": issues,
                 "current_memory_mb": current_memory / 1024 / 1024,
                 "memory_growth_mb": memory_growth / 1024 / 1024,
-                "cpu_usage": cpu_usage
+                "cpu_usage": cpu_usage,
             }
 
         except Exception as e:
@@ -396,7 +399,7 @@ class PerformanceMonitor:
         """Add optimization rule."""
         self.optimization_rules.append(rule)
 
-    def get_performance_recommendations(self) -> List[str]:
+    def get_performance_recommendations(self) -> list[str]:
         """Get performance optimization recommendations."""
         recommendations = []
         summary = self.get_metrics_summary(timedelta(minutes=30))
@@ -457,14 +460,13 @@ class PerformanceMonitor:
         if expired_keys:
             logger.debug(f"Cleaned {len(expired_keys)} expired cache entries")
 
-    def get_cached_result(self, cache_key: str) -> Optional[Any]:
+    def get_cached_result(self, cache_key: str) -> Any | None:
         """Get cached performance result."""
         if cache_key in self.performance_cache:
             timestamp, result = self.performance_cache[cache_key]
             if time.time() - timestamp < self.cache_ttl:
                 return result
-            else:
-                del self.performance_cache[cache_key]
+            del self.performance_cache[cache_key]
         return None
 
     def cache_result(self, cache_key: str, result: Any):
@@ -538,7 +540,7 @@ def monitor_memory_usage(threshold_mb: float = 100.0):
         get_performance_monitor().record_metric(
             "memory.operation_increase",
             memory_increase,
-            "MB"
+            "MB",
         )
 
 
@@ -551,10 +553,11 @@ class AsyncPerformanceMonitor:
         Args:
             base_monitor: Base performance monitor to delegate synchronous
                          operations to
+
         """
         self.logger = logging.getLogger(__name__ + ".AsyncPerformanceMonitor")
         self.base_monitor = base_monitor
-        self.async_operations: Dict[str, Dict[str, Any]] = {}
+        self.async_operations: dict[str, dict[str, Any]] = {}
 
     async def profile_async_operation(self, operation_name: str, coro):
         """Profile an async operation."""
@@ -585,7 +588,7 @@ class AsyncPerformanceMonitor:
                 memory_usage=memory_usage,
                 cpu_usage=0.0,  # Difficult to measure for async
                 success=success,
-                error_message=error_message
+                error_message=error_message,
             )
 
             self.base_monitor.profiles.append(profile)

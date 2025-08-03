@@ -1,5 +1,4 @@
-"""
-Certificate Generation and Management Utilities
+"""Certificate Generation and Management Utilities
 
 Copyright (C) 2025 Zachary Flint
 
@@ -21,7 +20,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import datetime
 import logging
-from typing import Optional, Tuple
 
 from intellicrack.logger import logger
 
@@ -42,10 +40,9 @@ def generate_self_signed_cert(
     country: str = "US",
     state: str = "State",
     locality: str = "City",
-    valid_days: int = 365
-) -> Optional[Tuple[bytes, bytes]]:
-    """
-    Generate a self-signed certificate for SSL/TLS operations.
+    valid_days: int = 365,
+) -> tuple[bytes, bytes] | None:
+    """Generate a self-signed certificate for SSL/TLS operations.
 
     Args:
         common_name: Common name for the certificate
@@ -57,6 +54,7 @@ def generate_self_signed_cert(
 
     Returns:
         Tuple of (certificate_pem, private_key_pem) or None if generation fails
+
     """
     logger = logging.getLogger("IntellicrackLogger.CertUtils")
 
@@ -82,13 +80,13 @@ def generate_self_signed_cert(
 
         # Create certificate
         cert = x509.CertificateBuilder().subject_name(
-            subject
+            subject,
         ).issuer_name(
-            issuer
+            issuer,
         ).public_key(
-            private_key.public_key()
+            private_key.public_key(),
         ).serial_number(
-            x509.random_serial_number()
+            x509.random_serial_number(),
         )
 
         # Set validity dates
@@ -124,7 +122,7 @@ def generate_self_signed_cert(
         key_pem = private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption()
+            encryption_algorithm=serialization.NoEncryption(),
         )
 
         logger.info(f"Generated self-signed certificate for {common_name}")
@@ -135,15 +133,15 @@ def generate_self_signed_cert(
         return None
 
 
-def load_certificate_from_file(cert_path: str) -> Optional[x509.Certificate]:
-    """
-    Load certificate from PEM file.
+def load_certificate_from_file(cert_path: str) -> x509.Certificate | None:
+    """Load certificate from PEM file.
 
     Args:
         cert_path: Path to certificate file
 
     Returns:
         Certificate object or None if loading fails
+
     """
     logger = logging.getLogger("IntellicrackLogger.CertUtils")
 
@@ -165,14 +163,14 @@ def load_certificate_from_file(cert_path: str) -> Optional[x509.Certificate]:
 
 
 def verify_certificate_validity(cert: x509.Certificate) -> bool:
-    """
-    Verify if certificate is currently valid.
+    """Verify if certificate is currently valid.
 
     Args:
         cert: Certificate to verify
 
     Returns:
         True if certificate is valid, False otherwise
+
     """
     try:
         now = datetime.datetime.utcnow()
@@ -184,14 +182,14 @@ def verify_certificate_validity(cert: x509.Certificate) -> bool:
 
 
 def get_certificate_info(cert: x509.Certificate) -> dict:
-    """
-    Extract information from certificate.
+    """Extract information from certificate.
 
     Args:
         cert: Certificate to analyze
 
     Returns:
         Dictionary containing certificate information
+
     """
     try:
         info = {
@@ -202,7 +200,7 @@ def get_certificate_info(cert: x509.Certificate) -> dict:
             "not_valid_after": cert.not_valid_after.isoformat(),
             "is_valid": verify_certificate_validity(cert),
             "signature_algorithm": cert.signature_algorithm_oid._name,
-            "extensions": []
+            "extensions": [],
         }
 
         # Extract subject information
@@ -218,7 +216,7 @@ def get_certificate_info(cert: x509.Certificate) -> dict:
             ext_info = {
                 "oid": extension.oid._name,
                 "critical": extension.critical,
-                "value": str(extension.value)
+                "value": str(extension.value),
             }
             info["extensions"].append(ext_info)
 
@@ -231,7 +229,7 @@ def get_certificate_info(cert: x509.Certificate) -> dict:
 
 __all__ = [
     "generate_self_signed_cert",
+    "get_certificate_info",
     "load_certificate_from_file",
     "verify_certificate_validity",
-    "get_certificate_info"
 ]

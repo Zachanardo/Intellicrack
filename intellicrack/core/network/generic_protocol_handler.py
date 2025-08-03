@@ -2,7 +2,7 @@
 import socket
 import threading
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 from intellicrack.logger import logger
 
@@ -33,14 +33,13 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 class GenericProtocolHandler(LicenseProtocolHandler):
-    """
-    Generic implementation of the LicenseProtocolHandler abstract class.
+    """Generic implementation of the LicenseProtocolHandler abstract class.
 
     This provides a working implementation that can handle basic TCP/UDP
     protocol interactions for license verification systems.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize the generic protocol handler."""
         super().__init__(config)
         self.protocol = config.get("protocol", "tcp") if config else "tcp"
@@ -49,11 +48,11 @@ class GenericProtocolHandler(LicenseProtocolHandler):
         self.active_connections = {}
 
     def _run_proxy(self, port: int) -> None:
-        """
-        Run the proxy server implementation.
+        """Run the proxy server implementation.
 
         Args:
             port: Port number to bind to
+
         """
         if self.protocol.lower() == "udp":
             self._run_udp_proxy(port)
@@ -81,11 +80,11 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                     conn_thread = threading.Thread(
                         target=self._handle_tcp_connection,
                         args=(client_socket, client_addr),
-                        daemon=True
+                        daemon=True,
                     )
                     conn_thread.start()
 
-                except socket.timeout as e:
+                except TimeoutError as e:
                     logger.error("socket.timeout in generic_protocol_handler: %s", e)
                     continue
                 except Exception as e:
@@ -118,7 +117,7 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                         if response:
                             server_socket.sendto(response, client_addr)
 
-                except socket.timeout as e:
+                except TimeoutError as e:
                     logger.error("socket.timeout in generic_protocol_handler: %s", e)
                     continue
                 except Exception as e:
@@ -140,7 +139,7 @@ class GenericProtocolHandler(LicenseProtocolHandler):
             self.active_connections[conn_id] = {
                 "socket": client_socket,
                 "address": client_addr,
-                "start_time": time.time()
+                "start_time": time.time(),
             }
 
             # Receive initial data
@@ -155,7 +154,7 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                     if not more_data:
                         break
                     self.handle_connection(client_socket, more_data)
-                except socket.timeout as e:
+                except TimeoutError as e:
                     logger.error("socket.timeout in generic_protocol_handler: %s", e)
                     continue
                 except Exception as e:
@@ -171,12 +170,12 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                 del self.active_connections[conn_id]
 
     def handle_connection(self, client_socket: Any, initial_data: bytes) -> None:
-        """
-        Handle a client connection with generic protocol processing.
+        """Handle a client connection with generic protocol processing.
 
         Args:
             client_socket: Client socket connection
             initial_data: Initial data received from client
+
         """
         # Log the request
         self.log_request(initial_data, str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"))
@@ -186,7 +185,7 @@ class GenericProtocolHandler(LicenseProtocolHandler):
             "timestamp": time.time(),
             "data": initial_data,
             "hex": initial_data.hex(),
-            "source": str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown")
+            "source": str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"),
         })
 
         # Generate response
@@ -208,15 +207,14 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                     "timestamp": time.time(),
                     "data": response,
                     "hex": response.hex(),
-                    "destination": str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown")
+                    "destination": str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"),
                 })
 
             except Exception as e:
                 self.logger.error("Failed to send response: %s", e)
 
     def generate_response(self, request_data: bytes) -> bytes:
-        """
-        Generate a generic protocol response.
+        """Generate a generic protocol response.
 
         This implementation provides basic responses for common patterns.
         Subclasses should override for protocol-specific behavior.
@@ -226,6 +224,7 @@ class GenericProtocolHandler(LicenseProtocolHandler):
 
         Returns:
             Generic response data
+
         """
         # Try to detect request type
         request_str = request_data.decode("utf-8", errors="ignore").lower()
@@ -235,20 +234,20 @@ class GenericProtocolHandler(LicenseProtocolHandler):
             # Generic success response
             return b"OK\x00LICENSE_VALID\x00"
 
-        elif any(keyword in request_str for keyword in ["status", "ping", "heartbeat"]):
+        if any(keyword in request_str for keyword in ["status", "ping", "heartbeat"]):
             # Status/heartbeat response
             return b"OK\x00SERVER_ACTIVE\x00"
 
-        elif any(keyword in request_str for keyword in ["version", "info"]):
+        if any(keyword in request_str for keyword in ["version", "info"]):
             # Version information
             return b"GENERIC_LICENSE_SERVER_V1.0\x00"
 
-        elif len(request_data) >= 4:
+        if len(request_data) >= 4:
             # Binary protocol - check for common patterns
             if request_data[:4] == b"\x00\x00\x00\x01":  # Common init sequence
                 return b"\x00\x00\x00\x00\x00\x00\x00\x01"  # Success + handle
 
-            elif request_data[:2] == b"\x02\x00":  # Common query
+            if request_data[:2] == b"\x02\x00":  # Common query
                 return b"\x00\x00\xFF\xFF\xFF\xFF"  # Max licenses available
 
         # Default response for unknown requests

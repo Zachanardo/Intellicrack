@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -21,7 +20,7 @@ import logging
 import random
 import threading
 import time
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import psutil
 
@@ -34,8 +33,7 @@ and provides tools for analyzing timing characteristics.
 
 
 class TimingAttackDefense:
-    """
-    Defense against timing-based analysis and sleep acceleration.
+    """Defense against timing-based analysis and sleep acceleration.
     """
 
     def __init__(self):
@@ -45,12 +43,11 @@ class TimingAttackDefense:
         self.timing_checks = {
             "rdtsc_available": self._check_rdtsc_availability(),
             "performance_counter": True,
-            "tick_count": True
+            "tick_count": True,
         }
 
     def secure_sleep(self, duration: float, callback: Callable = None) -> bool:
-        """
-        Sleep with protection against acceleration.
+        """Sleep with protection against acceleration.
 
         Args:
             duration: Sleep duration in seconds
@@ -58,6 +55,7 @@ class TimingAttackDefense:
 
         Returns:
             True if sleep completed normally, False if accelerated
+
         """
         try:
             self.logger.debug(f"Starting secure sleep for {duration} seconds")
@@ -137,12 +135,12 @@ class TimingAttackDefense:
             return False
 
     def stalling_code(self, min_duration: float, max_duration: float) -> None:
-        """
-        Execute computationally intensive stalling code.
+        """Execute computationally intensive stalling code.
 
         Args:
             min_duration: Minimum stall duration
             max_duration: Maximum stall duration
+
         """
         try:
             target_duration = random.uniform(min_duration, max_duration)
@@ -177,8 +175,7 @@ class TimingAttackDefense:
             self.logger.error(f"Stalling code failed: {e}")
 
     def time_bomb(self, trigger_time: float, action: Callable) -> threading.Thread:
-        """
-        Create a time bomb that triggers after specific duration.
+        """Create a time bomb that triggers after specific duration.
 
         Args:
             trigger_time: Time in seconds until trigger
@@ -186,6 +183,7 @@ class TimingAttackDefense:
 
         Returns:
             Thread handle for the time bomb
+
         """
         def time_bomb_thread():
             try:
@@ -208,11 +206,11 @@ class TimingAttackDefense:
         return thread
 
     def execution_delay(self, check_environment: bool = True) -> None:
-        """
-        Delay execution to evade automated analysis.
+        """Delay execution to evade automated analysis.
 
         Args:
             check_environment: Perform environment checks during delay
+
         """
         try:
             self.logger.info("Starting execution delay")
@@ -247,11 +245,11 @@ class TimingAttackDefense:
             self.logger.error(f"Execution delay failed: {e}")
 
     def rdtsc_timing_check(self) -> bool:
-        """
-        Use RDTSC instruction for precise timing checks.
+        """Use RDTSC instruction for precise timing checks.
 
         Returns:
             True if timing is normal, False if anomaly detected
+
         """
         if not self.timing_checks["rdtsc_available"]:
             return True  # Can't check, assume normal
@@ -287,11 +285,11 @@ class TimingAttackDefense:
             return True
 
     def anti_acceleration_loop(self, duration: float) -> None:
-        """
-        Loop that resists sleep acceleration attempts.
+        """Loop that resists sleep acceleration attempts.
 
         Args:
             duration: Total duration to loop
+
         """
         try:
             self.logger.debug(f"Starting anti-acceleration loop for {duration}s")
@@ -330,7 +328,7 @@ class TimingAttackDefense:
         except:
             return False
 
-    def _get_tick_count(self) -> Optional[int]:
+    def _get_tick_count(self) -> int | None:
         """Get system tick count (Windows)."""
         try:
             import platform
@@ -348,12 +346,11 @@ class TimingAttackDefense:
             if platform.system() == "Windows":
                 kernel32 = ctypes.windll.kernel32
                 return bool(kernel32.IsDebuggerPresent())
-            else:
-                # Linux: check TracerPid
-                with open("/proc/self/status", "r") as f:
-                    for line in f:
-                        if line.startswith("TracerPid:"):
-                            return int(line.split()[1]) != 0
+            # Linux: check TracerPid
+            with open("/proc/self/status") as f:
+                for line in f:
+                    if line.startswith("TracerPid:"):
+                        return int(line.split()[1]) != 0
         except Exception as e:
             self.logger.debug(f"Error checking for debugger presence: {e}")
         return False

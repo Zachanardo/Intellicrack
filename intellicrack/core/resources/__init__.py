@@ -1,5 +1,4 @@
-"""
-Resource Management Package
+"""Resource Management Package
 
 Provides context managers and automatic cleanup for system resources.
 
@@ -19,12 +18,12 @@ from .resource_manager import (
 )
 
 __all__ = [
-    "ResourceManager",
-    "ResourceType",
-    "ResourceState",
+    "ContainerResource",
     "ManagedResource",
     "ProcessResource",
+    "ResourceManager",
+    "ResourceState",
+    "ResourceType",
     "VMResource",
-    "ContainerResource",
-    "get_resource_manager"
+    "get_resource_manager",
 ]
