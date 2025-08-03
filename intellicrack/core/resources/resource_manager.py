@@ -798,11 +798,6 @@ class AutoCleanupResource:
 resource_manager = ResourceManager()
 
 
-def get_resource_manager() -> ResourceManager:
-    """Get the global resource manager instance."""
-    return resource_manager
-
-
 def create_resource_context(owner: str = None) -> ResourceContext:
     """Create a new resource context."""
     return ResourceContext(resource_manager, owner)

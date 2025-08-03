@@ -2908,7 +2908,7 @@ __all__ = [
 
     # Model Conversion Helpers
     "_convert_to_gguf", "_manual_gguf_conversion", "_write_gguf_metadata",
-    "_write_gguf_tensor_info", "_write_dummy_tensor_data",
+    "_write_gguf_tensor_info",
 
     # Response Generation Helpers
     "_generate_error_response", "_generate_generic_response",
