@@ -225,6 +225,8 @@ class FirmwareAnalyzer:
             self.work_directory = Path(tempfile.mkdtemp(prefix="firmware_analysis_"))
 
         self.work_directory.mkdir(parents=True, exist_ok=True)
+        self.analyzed_files = set()  # Track analyzed files to prevent infinite recursion
+        self.extraction_depth_limit = 5  # Maximum extraction depth to prevent infinite recursion
         self.logger = logging.getLogger("IntellicrackLogger.FirmwareAnalyzer")
 
         # Storage for analysis results
@@ -733,7 +735,8 @@ class FirmwareAnalyzer:
 
             # Use subprocess to check for additional system tools
             try:
-                result = subprocess.run(['file', file_path], capture_output=True, text=True, timeout=5)
+                from ...utils.system.subprocess_utils import run_subprocess_check
+                result = run_subprocess_check(['file', file_path], timeout=5)
                 if result.returncode == 0 and 'executable' in result.stdout.lower():
                     findings.append(SecurityFinding(
                         finding_type=SecurityFindingType.BACKDOOR_BINARY,

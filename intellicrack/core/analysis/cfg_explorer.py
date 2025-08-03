@@ -158,15 +158,103 @@ class CFGExplorer:
             return
 
         try:
-            self.decompiler = R2DecompilationEngine(self.binary_path, self.radare2_path)
-            self.vulnerability_engine = R2VulnerabilityEngine(self.binary_path, self.radare2_path)
-            self.ai_engine = R2AIEngine(self.binary_path, self.radare2_path)
-            self.string_analyzer = R2StringAnalyzer(self.binary_path, self.radare2_path)
-            self.import_analyzer = R2ImportExportAnalyzer(self.binary_path, self.radare2_path)
-            self.scripting_engine = R2ScriptingEngine(self.binary_path, self.radare2_path)
-            self.logger.info("Initialized advanced analysis engines")
+            # Verify binary exists and is accessible
+            if not os.path.exists(self.binary_path):
+                self.logger.error(f"Binary path does not exist: {self.binary_path}")
+                return
+            
+            if not os.access(self.binary_path, os.R_OK):
+                self.logger.error(f"Cannot read binary file: {self.binary_path}")
+                return
+            
+            # Initialize each engine with error handling
+            initialization_results = {}
+            
+            # Initialize decompiler engine
+            try:
+                self.decompiler = R2DecompilationEngine(self.binary_path, self.radare2_path)
+                initialization_results['decompiler'] = True
+                self.logger.debug("Successfully initialized decompiler engine")
+            except Exception as e:
+                self.logger.warning(f"Failed to initialize decompiler: {e}")
+                initialization_results['decompiler'] = False
+                self.decompiler = None
+            
+            # Initialize vulnerability engine
+            try:
+                self.vulnerability_engine = R2VulnerabilityEngine(self.binary_path, self.radare2_path)
+                initialization_results['vulnerability_engine'] = True
+                self.logger.debug("Successfully initialized vulnerability engine")
+            except Exception as e:
+                self.logger.warning(f"Failed to initialize vulnerability engine: {e}")
+                initialization_results['vulnerability_engine'] = False
+                self.vulnerability_engine = None
+            
+            # Initialize AI engine
+            try:
+                self.ai_engine = R2AIEngine(self.binary_path, self.radare2_path)
+                initialization_results['ai_engine'] = True
+                self.logger.debug("Successfully initialized AI engine")
+            except Exception as e:
+                self.logger.warning(f"Failed to initialize AI engine: {e}")
+                initialization_results['ai_engine'] = False
+                self.ai_engine = None
+            
+            # Initialize string analyzer
+            try:
+                self.string_analyzer = R2StringAnalyzer(self.binary_path, self.radare2_path)
+                initialization_results['string_analyzer'] = True
+                self.logger.debug("Successfully initialized string analyzer")
+            except Exception as e:
+                self.logger.warning(f"Failed to initialize string analyzer: {e}")
+                initialization_results['string_analyzer'] = False
+                self.string_analyzer = None
+            
+            # Initialize import analyzer
+            try:
+                self.import_analyzer = R2ImportExportAnalyzer(self.binary_path, self.radare2_path)
+                initialization_results['import_analyzer'] = True
+                self.logger.debug("Successfully initialized import analyzer")
+            except Exception as e:
+                self.logger.warning(f"Failed to initialize import analyzer: {e}")
+                initialization_results['import_analyzer'] = False
+                self.import_analyzer = None
+            
+            # Initialize scripting engine
+            try:
+                self.scripting_engine = R2ScriptingEngine(self.binary_path, self.radare2_path)
+                initialization_results['scripting_engine'] = True
+                self.logger.debug("Successfully initialized scripting engine")
+            except Exception as e:
+                self.logger.warning(f"Failed to initialize scripting engine: {e}")
+                initialization_results['scripting_engine'] = False
+                self.scripting_engine = None
+            
+            # Log initialization summary
+            successful_engines = sum(1 for result in initialization_results.values() if result)
+            total_engines = len(initialization_results)
+            
+            if successful_engines == total_engines:
+                self.logger.info(f"Successfully initialized all {total_engines} analysis engines")
+            elif successful_engines > 0:
+                self.logger.info(f"Initialized {successful_engines}/{total_engines} analysis engines")
+                failed_engines = [name for name, result in initialization_results.items() if not result]
+                self.logger.warning(f"Failed engines: {', '.join(failed_engines)}")
+            else:
+                self.logger.error("Failed to initialize any analysis engines")
+                
+            # Store initialization results for later reference
+            self.analysis_cache['engine_initialization'] = initialization_results
+            
         except Exception as e:
-            self.logger.warning(f"Failed to initialize some analysis engines: {e}")
+            self.logger.error(f"Critical error during engine initialization: {e}")
+            # Set all engines to None to ensure clean state
+            self.decompiler = None
+            self.vulnerability_engine = None
+            self.ai_engine = None
+            self.string_analyzer = None
+            self.import_analyzer = None
+            self.scripting_engine = None
 
     def load_binary(self, binary_path: Optional[str] = None) -> bool:
         """Load a binary file and extract its enhanced CFG with advanced analysis"""
@@ -420,6 +508,684 @@ class CFGExplorer:
                 return func_name
 
         return None
+    
+    def find_loops(self, function_name: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Find all loops in the current function or a specified function.
+        
+        Implements real loop detection algorithms using graph cycle analysis.
+        Detects various loop types: while loops, for loops, do-while loops.
+        
+        Args:
+            function_name: Optional function name to analyze. If None, uses current function.
+            
+        Returns:
+            List of detected loops with detailed information
+        """
+        # Use specified function or current function
+        if function_name:
+            if not self.set_current_function(function_name):
+                self.logger.error(f"Function {function_name} not found")
+                return []
+        elif not self.current_function or not self.graph:
+            self.logger.error("No function loaded for loop analysis")
+            return []
+        
+        if not NETWORKX_AVAILABLE:
+            self.logger.error("NetworkX not available for loop detection")
+            return []
+        
+        loops = []
+        
+        try:
+            # Find strongly connected components (potential loops)
+            sccs = list(nx.strongly_connected_components(self.graph))
+            
+            # Filter out single-node SCCs (not loops)
+            loop_sccs = [scc for scc in sccs if len(scc) > 1]
+            
+            # Analyze each potential loop
+            for loop_idx, scc in enumerate(loop_sccs):
+                loop_info = {
+                    'loop_id': loop_idx,
+                    'nodes': list(scc),
+                    'entry_points': [],
+                    'exit_points': [],
+                    'back_edges': [],
+                    'loop_type': 'unknown',
+                    'complexity': len(scc),
+                    'nested_loops': [],
+                    'instructions': []
+                }
+                
+                # Find entry points (nodes with incoming edges from outside the loop)
+                for node in scc:
+                    predecessors = list(self.graph.predecessors(node))
+                    external_preds = [pred for pred in predecessors if pred not in scc]
+                    if external_preds:
+                        loop_info['entry_points'].append({
+                            'node': node,
+                            'external_predecessors': external_preds
+                        })
+                
+                # Find exit points (nodes with outgoing edges to outside the loop)
+                for node in scc:
+                    successors = list(self.graph.successors(node))
+                    external_succs = [succ for succ in successors if succ not in scc]
+                    if external_succs:
+                        loop_info['exit_points'].append({
+                            'node': node,
+                            'external_successors': external_succs
+                        })
+                
+                # Find back edges (edges that go from later to earlier nodes)
+                for node in scc:
+                    for successor in self.graph.successors(node):
+                        if successor in scc:
+                            # Check if this is a back edge using DFS numbering
+                            if self._is_back_edge(node, successor, scc):
+                                loop_info['back_edges'].append({
+                                    'from': node,
+                                    'to': successor,
+                                    'type': 'loop_back_edge'
+                                })
+                
+                # Determine loop type based on structure
+                loop_info['loop_type'] = self._classify_loop_type(loop_info)
+                
+                # Collect instructions from all nodes in the loop
+                func_data = self.functions.get(self.current_function, {})
+                blocks = func_data.get('blocks', [])
+                
+                for block in blocks:
+                    if block.get('offset', 0) in scc:
+                        for op in block.get('ops', []):
+                            loop_info['instructions'].append({
+                                'offset': op.get('offset', 0),
+                                'disasm': op.get('disasm', ''),
+                                'type': op.get('type', '')
+                            })
+                
+                loops.append(loop_info)
+            
+            # Detect nested loops
+            for i, loop1 in enumerate(loops):
+                for j, loop2 in enumerate(loops):
+                    if i != j:
+                        # Check if loop2 is nested inside loop1
+                        if set(loop2['nodes']).issubset(set(loop1['nodes'])):
+                            loop1['nested_loops'].append(loop2['loop_id'])
+            
+            # Find natural loops using dominance analysis
+            natural_loops = self._find_natural_loops()
+            
+            # Merge natural loop information
+            for natural_loop in natural_loops:
+                # Check if this natural loop corresponds to any detected SCC loop
+                matched = False
+                for loop in loops:
+                    if set(natural_loop['nodes']) == set(loop['nodes']):
+                        # Enhance existing loop info with natural loop data
+                        loop['loop_header'] = natural_loop.get('header')
+                        loop['is_natural_loop'] = True
+                        matched = True
+                        break
+                
+                if not matched:
+                    # Add as a new loop if not already detected
+                    loops.append(natural_loop)
+            
+            self.logger.info(f"Found {len(loops)} loops in function {self.current_function}")
+            
+        except Exception as e:
+            self.logger.error(f"Error during loop detection: {e}")
+            
+        return loops
+    
+    def _is_back_edge(self, source: int, target: int, scc: set) -> bool:
+        """Determine if an edge is a back edge using DFS ordering."""
+        try:
+            # Create a subgraph containing only the SCC nodes
+            subgraph = self.graph.subgraph(scc)
+            
+            # Perform DFS to get discovery times
+            discovery_times = {}
+            time_counter = [0]
+            
+            def dfs(node, visited, discovery_times, time_counter):
+                visited.add(node)
+                discovery_times[node] = time_counter[0]
+                time_counter[0] += 1
+                
+                for neighbor in subgraph.successors(node):
+                    if neighbor not in visited:
+                        dfs(neighbor, visited, discovery_times, time_counter)
+            
+            # Start DFS from any node in the SCC
+            visited = set()
+            start_node = next(iter(scc))
+            dfs(start_node, visited, discovery_times, time_counter)
+            
+            # An edge is a back edge if target has lower discovery time than source
+            return discovery_times.get(target, float('inf')) < discovery_times.get(source, float('inf'))
+            
+        except Exception as e:
+            self.logger.debug(f"Error checking back edge: {e}")
+            return False
+    
+    def _classify_loop_type(self, loop_info: Dict[str, Any]) -> str:
+        """Classify the type of loop based on its structure."""
+        entry_count = len(loop_info['entry_points'])
+        exit_count = len(loop_info['exit_points'])
+        back_edge_count = len(loop_info['back_edges'])
+        
+        # Simple while loop: single entry, single/multiple exits, single back edge
+        if entry_count == 1 and back_edge_count == 1:
+            if exit_count >= 1:
+                # Check if exit is at the beginning (while loop) or end (do-while)
+                if loop_info['entry_points'][0]['node'] in [be['to'] for be in loop_info['back_edges']]:
+                    return 'while_loop'
+                else:
+                    return 'do_while_loop'
+        
+        # For loop pattern: typically has initialization, condition check, and increment
+        if entry_count == 1 and back_edge_count == 1 and len(loop_info['nodes']) >= 3:
+            # Look for increment pattern in instructions
+            has_increment = False
+            for inst in loop_info['instructions']:
+                if any(op in inst['disasm'].lower() for op in ['inc', 'add', 'dec', 'sub']):
+                    has_increment = True
+                    break
+            
+            if has_increment:
+                return 'for_loop'
+        
+        # Complex loop with multiple entries or exits
+        if entry_count > 1 or exit_count > 1:
+            return 'complex_loop'
+        
+        # Infinite loop (no exits)
+        if exit_count == 0:
+            return 'infinite_loop'
+        
+        return 'generic_loop'
+    
+    def _find_natural_loops(self) -> List[Dict[str, Any]]:
+        """Find natural loops using dominance analysis."""
+        natural_loops = []
+        
+        try:
+            # Find dominator tree
+            if hasattr(nx, 'immediate_dominators'):
+                # Get entry point of the function
+                entry_nodes = [node for node in self.graph.nodes() if self.graph.in_degree(node) == 0]
+                if not entry_nodes:
+                    # If no clear entry, use the node with minimum address
+                    entry_nodes = [min(self.graph.nodes())]
+                
+                entry_node = entry_nodes[0]
+                
+                # Calculate immediate dominators
+                idom = nx.immediate_dominators(self.graph, entry_node)
+                
+                # Find back edges based on dominance
+                for edge in self.graph.edges():
+                    source, target = edge
+                    
+                    # A back edge is one where target dominates source
+                    if self._dominates(target, source, idom):
+                        # Found a back edge, construct the natural loop
+                        loop_nodes = self._get_natural_loop_nodes(source, target)
+                        
+                        natural_loop = {
+                            'loop_id': len(natural_loops),
+                            'nodes': list(loop_nodes),
+                            'header': target,
+                            'back_edge': {'from': source, 'to': target},
+                            'loop_type': 'natural_loop',
+                            'is_natural_loop': True,
+                            'complexity': len(loop_nodes)
+                        }
+                        
+                        natural_loops.append(natural_loop)
+            
+        except Exception as e:
+            self.logger.debug(f"Error finding natural loops: {e}")
+        
+        return natural_loops
+    
+    def _dominates(self, dominator: int, node: int, idom: Dict[int, int]) -> bool:
+        """Check if dominator dominates node using immediate dominator tree."""
+        current = node
+        while current in idom:
+            if current == dominator:
+                return True
+            current = idom[current]
+        return False
+    
+    def _get_natural_loop_nodes(self, tail: int, head: int) -> set:
+        """Get all nodes in a natural loop given a back edge (tail -> head)."""
+        loop_nodes = {head, tail}
+        
+        # Use BFS to find all nodes that can reach tail without going through head
+        queue = [tail]
+        visited = {tail}
+        
+        while queue:
+            current = queue.pop(0)
+            
+            for predecessor in self.graph.predecessors(current):
+                if predecessor != head and predecessor not in visited:
+                    visited.add(predecessor)
+                    loop_nodes.add(predecessor)
+                    queue.append(predecessor)
+        
+        return loop_nodes
+    
+    def analyze_basic_blocks(self, function_name: Optional[str] = None) -> Dict[str, Any]:
+        """Analyze basic blocks in the current or specified function.
+        
+        Performs comprehensive basic block analysis including:
+        - Block size and instruction count statistics
+        - Control flow patterns
+        - Suspicious instruction sequences
+        - Obfuscation detection
+        - License check identification
+        
+        Args:
+            function_name: Optional function name to analyze. If None, analyzes all functions.
+            
+        Returns:
+            Dictionary containing detailed basic block analysis
+        """
+        analysis = {
+            'total_functions': 0,
+            'total_blocks': 0,
+            'total_instructions': 0,
+            'average_block_size': 0,
+            'average_instructions_per_block': 0,
+            'block_size_distribution': {},
+            'control_flow_patterns': {
+                'linear_blocks': 0,
+                'conditional_blocks': 0,
+                'call_blocks': 0,
+                'return_blocks': 0,
+                'jump_blocks': 0
+            },
+            'suspicious_patterns': {
+                'obfuscated_blocks': [],
+                'anti_debug_blocks': [],
+                'crypto_blocks': [],
+                'license_blocks': [],
+                'packing_blocks': []
+            },
+            'complexity_metrics': {
+                'high_complexity_blocks': [],
+                'dead_code_blocks': [],
+                'unreachable_blocks': []
+            },
+            'function_analysis': {}
+        }
+        
+        try:
+            # Determine which functions to analyze
+            functions_to_analyze = []
+            
+            if function_name:
+                if function_name in self.functions:
+                    functions_to_analyze = [function_name]
+                else:
+                    self.logger.error(f"Function {function_name} not found")
+                    return analysis
+            else:
+                functions_to_analyze = list(self.functions.keys())
+            
+            analysis['total_functions'] = len(functions_to_analyze)
+            
+            # Analyze each function
+            for func_name in functions_to_analyze:
+                func_data = self.functions[func_name]
+                graph = func_data.get('graph')
+                blocks = func_data.get('blocks', [])
+                
+                if not graph:
+                    continue
+                
+                func_analysis = {
+                    'name': func_name,
+                    'address': func_data.get('addr', 0),
+                    'block_count': len(blocks),
+                    'instruction_count': 0,
+                    'complexity': func_data.get('complexity', 1),
+                    'suspicious_blocks': [],
+                    'control_flow_anomalies': []
+                }
+                
+                # Analyze each block in the function
+                for block in blocks:
+                    block_addr = block.get('offset', 0)
+                    block_size = block.get('size', 0)
+                    block_ops = block.get('ops', [])
+                    instruction_count = len(block_ops)
+                    
+                    analysis['total_blocks'] += 1
+                    analysis['total_instructions'] += instruction_count
+                    func_analysis['instruction_count'] += instruction_count
+                    
+                    # Update block size distribution
+                    size_category = self._categorize_block_size(instruction_count)
+                    analysis['block_size_distribution'][size_category] = \
+                        analysis['block_size_distribution'].get(size_category, 0) + 1
+                    
+                    # Analyze control flow pattern
+                    if graph.nodes.get(block_addr):
+                        node_data = graph.nodes[block_addr]
+                        block_type = node_data.get('block_type', 'unknown')
+                        
+                        if block_type == 'basic':
+                            analysis['control_flow_patterns']['linear_blocks'] += 1
+                        elif block_type == 'conditional':
+                            analysis['control_flow_patterns']['conditional_blocks'] += 1
+                        elif block_type == 'call':
+                            analysis['control_flow_patterns']['call_blocks'] += 1
+                        elif block_type == 'return':
+                            analysis['control_flow_patterns']['return_blocks'] += 1
+                        elif block_type == 'jump':
+                            analysis['control_flow_patterns']['jump_blocks'] += 1
+                    
+                    # Detect suspicious patterns
+                    suspicious_info = self._analyze_block_for_patterns(block, block_addr)
+                    
+                    if suspicious_info['is_obfuscated']:
+                        analysis['suspicious_patterns']['obfuscated_blocks'].append({
+                            'function': func_name,
+                            'address': hex(block_addr),
+                            'reason': suspicious_info['obfuscation_reason'],
+                            'confidence': suspicious_info['obfuscation_confidence']
+                        })
+                        func_analysis['suspicious_blocks'].append(block_addr)
+                    
+                    if suspicious_info['has_anti_debug']:
+                        analysis['suspicious_patterns']['anti_debug_blocks'].append({
+                            'function': func_name,
+                            'address': hex(block_addr),
+                            'techniques': suspicious_info['anti_debug_techniques']
+                        })
+                    
+                    if suspicious_info['has_crypto']:
+                        analysis['suspicious_patterns']['crypto_blocks'].append({
+                            'function': func_name,
+                            'address': hex(block_addr),
+                            'algorithms': suspicious_info['crypto_algorithms']
+                        })
+                    
+                    if suspicious_info['has_license_check']:
+                        analysis['suspicious_patterns']['license_blocks'].append({
+                            'function': func_name,
+                            'address': hex(block_addr),
+                            'keywords': suspicious_info['license_keywords'],
+                            'confidence': suspicious_info['license_confidence']
+                        })
+                    
+                    if suspicious_info['has_packing']:
+                        analysis['suspicious_patterns']['packing_blocks'].append({
+                            'function': func_name,
+                            'address': hex(block_addr),
+                            'indicators': suspicious_info['packing_indicators']
+                        })
+                    
+                    # Check for high complexity blocks
+                    if node_data and node_data.get('complexity_score', 0) > 20:
+                        analysis['complexity_metrics']['high_complexity_blocks'].append({
+                            'function': func_name,
+                            'address': hex(block_addr),
+                            'complexity': node_data.get('complexity_score', 0),
+                            'instruction_count': instruction_count
+                        })
+                
+                # Check for unreachable blocks
+                if graph and NETWORKX_AVAILABLE:
+                    reachable = set()
+                    entry_nodes = [n for n in graph.nodes() if graph.in_degree(n) == 0]
+                    
+                    if entry_nodes:
+                        # BFS from entry nodes
+                        queue = list(entry_nodes)
+                        reachable.update(entry_nodes)
+                        
+                        while queue:
+                            current = queue.pop(0)
+                            for successor in graph.successors(current):
+                                if successor not in reachable:
+                                    reachable.add(successor)
+                                    queue.append(successor)
+                        
+                        # Find unreachable blocks
+                        all_blocks = set(graph.nodes())
+                        unreachable = all_blocks - reachable
+                        
+                        if unreachable:
+                            for unreach_block in unreachable:
+                                analysis['complexity_metrics']['unreachable_blocks'].append({
+                                    'function': func_name,
+                                    'address': hex(unreach_block)
+                                })
+                                func_analysis['control_flow_anomalies'].append({
+                                    'type': 'unreachable_code',
+                                    'address': hex(unreach_block)
+                                })
+                    
+                    # Check for dead code (blocks with no successors except returns)
+                    for node in graph.nodes():
+                        if graph.out_degree(node) == 0:
+                            node_data = graph.nodes[node]
+                            if node_data.get('block_type') != 'return':
+                                analysis['complexity_metrics']['dead_code_blocks'].append({
+                                    'function': func_name,
+                                    'address': hex(node),
+                                    'reason': 'no_successors'
+                                })
+                
+                analysis['function_analysis'][func_name] = func_analysis
+            
+            # Calculate averages
+            if analysis['total_blocks'] > 0:
+                analysis['average_block_size'] = analysis['total_instructions'] / analysis['total_blocks']
+                analysis['average_instructions_per_block'] = analysis['total_instructions'] / analysis['total_blocks']
+            
+            # Generate summary
+            analysis['summary'] = self._generate_block_analysis_summary(analysis)
+            
+            self.logger.info(f"Basic block analysis complete: {analysis['total_blocks']} blocks analyzed")
+            
+        except Exception as e:
+            self.logger.error(f"Error during basic block analysis: {e}")
+            analysis['error'] = str(e)
+        
+        return analysis
+    
+    def _categorize_block_size(self, instruction_count: int) -> str:
+        """Categorize block size based on instruction count."""
+        if instruction_count == 0:
+            return 'empty'
+        elif instruction_count <= 5:
+            return 'tiny'
+        elif instruction_count <= 15:
+            return 'small'
+        elif instruction_count <= 50:
+            return 'medium'
+        elif instruction_count <= 100:
+            return 'large'
+        else:
+            return 'huge'
+    
+    def _analyze_block_for_patterns(self, block: Dict[str, Any], block_addr: int) -> Dict[str, Any]:
+        """Analyze a basic block for suspicious patterns."""
+        result = {
+            'is_obfuscated': False,
+            'obfuscation_reason': '',
+            'obfuscation_confidence': 0.0,
+            'has_anti_debug': False,
+            'anti_debug_techniques': [],
+            'has_crypto': False,
+            'crypto_algorithms': [],
+            'has_license_check': False,
+            'license_keywords': [],
+            'license_confidence': 0.0,
+            'has_packing': False,
+            'packing_indicators': []
+        }
+        
+        ops = block.get('ops', [])
+        if not ops:
+            return result
+        
+        # Count instruction types
+        instruction_types = {}
+        for op in ops:
+            mnemonic = op.get('disasm', '').split()[0].lower() if op.get('disasm') else ''
+            instruction_types[mnemonic] = instruction_types.get(mnemonic, 0) + 1
+        
+        # Obfuscation detection
+        total_instructions = len(ops)
+        if total_instructions > 10:
+            # Check for excessive jumps
+            jump_count = sum(count for mnem, count in instruction_types.items() 
+                           if mnem.startswith('j') and mnem != 'jmp')
+            if jump_count > total_instructions * 0.4:
+                result['is_obfuscated'] = True
+                result['obfuscation_reason'] = 'excessive_conditional_jumps'
+                result['obfuscation_confidence'] = min(jump_count / total_instructions, 1.0)
+            
+            # Check for junk instructions
+            junk_instructions = ['nop', 'push', 'pop', 'xchg', 'lea']
+            junk_count = sum(instruction_types.get(junk, 0) for junk in junk_instructions)
+            if junk_count > total_instructions * 0.3:
+                result['is_obfuscated'] = True
+                result['obfuscation_reason'] = 'junk_instructions'
+                result['obfuscation_confidence'] = min(junk_count / total_instructions, 1.0)
+        
+        # Anti-debugging detection
+        anti_debug_apis = [
+            'IsDebuggerPresent', 'CheckRemoteDebuggerPresent', 'NtQueryInformationProcess',
+            'GetTickCount', 'QueryPerformanceCounter', 'rdtsc', 'int3', 'int 2d'
+        ]
+        
+        for op in ops:
+            disasm = op.get('disasm', '').lower()
+            
+            # Check for anti-debug techniques
+            for anti_debug in anti_debug_apis:
+                if anti_debug.lower() in disasm:
+                    result['has_anti_debug'] = True
+                    if anti_debug not in result['anti_debug_techniques']:
+                        result['anti_debug_techniques'].append(anti_debug)
+            
+            # Check for timing checks
+            if 'rdtsc' in disasm or 'cpuid' in disasm:
+                result['has_anti_debug'] = True
+                if 'timing_check' not in result['anti_debug_techniques']:
+                    result['anti_debug_techniques'].append('timing_check')
+        
+        # Cryptographic operations detection
+        crypto_indicators = {
+            'aes': ['aesenc', 'aesdec', 'aesimc', 'aeskeygenassist'],
+            'sha': ['sha256rnds2', 'sha256msg1', 'sha256msg2'],
+            'general': ['xor', 'ror', 'rol', 'shl', 'shr']
+        }
+        
+        xor_count = instruction_types.get('xor', 0)
+        if xor_count > 3:  # Multiple XOR operations might indicate encryption
+            result['has_crypto'] = True
+            result['crypto_algorithms'].append('xor_cipher')
+        
+        for algo, indicators in crypto_indicators.items():
+            for indicator in indicators:
+                if instruction_types.get(indicator, 0) > 0:
+                    result['has_crypto'] = True
+                    if algo not in result['crypto_algorithms']:
+                        result['crypto_algorithms'].append(algo)
+        
+        # License check detection
+        license_keywords = [
+            'license', 'serial', 'key', 'activation', 'registration',
+            'trial', 'expire', 'valid', 'check', 'verify', 'auth'
+        ]
+        
+        license_score = 0
+        for op in ops:
+            disasm = op.get('disasm', '').lower()
+            for keyword in license_keywords:
+                if keyword in disasm:
+                    if keyword not in result['license_keywords']:
+                        result['license_keywords'].append(keyword)
+                    license_score += 1
+        
+        if license_score > 0:
+            result['has_license_check'] = True
+            result['license_confidence'] = min(license_score / 10.0, 1.0)
+        
+        # Packing/unpacking detection
+        packing_indicators = [
+            'VirtualAlloc', 'VirtualProtect', 'WriteProcessMemory',
+            'CreateRemoteThread', 'LoadLibrary', 'GetProcAddress'
+        ]
+        
+        for op in ops:
+            disasm = op.get('disasm', '')
+            for indicator in packing_indicators:
+                if indicator in disasm:
+                    result['has_packing'] = True
+                    if indicator not in result['packing_indicators']:
+                        result['packing_indicators'].append(indicator)
+        
+        # Check for self-modifying code patterns
+        if ('VirtualProtect' in str(result['packing_indicators']) and 
+            any(mnem in instruction_types for mnem in ['stosb', 'stosd', 'movsb', 'movsd'])):
+            result['has_packing'] = True
+            if 'self_modifying_code' not in result['packing_indicators']:
+                result['packing_indicators'].append('self_modifying_code')
+        
+        return result
+    
+    def _generate_block_analysis_summary(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate a summary of the basic block analysis."""
+        summary = {
+            'overview': f"Analyzed {analysis['total_functions']} functions containing {analysis['total_blocks']} basic blocks",
+            'statistics': {
+                'total_instructions': analysis['total_instructions'],
+                'average_block_size': round(analysis.get('average_block_size', 0), 2),
+                'most_common_block_size': max(analysis['block_size_distribution'].items(), 
+                                             key=lambda x: x[1])[0] if analysis['block_size_distribution'] else 'unknown'
+            },
+            'suspicious_activity': {
+                'obfuscated_blocks': len(analysis['suspicious_patterns']['obfuscated_blocks']),
+                'anti_debug_blocks': len(analysis['suspicious_patterns']['anti_debug_blocks']),
+                'crypto_blocks': len(analysis['suspicious_patterns']['crypto_blocks']),
+                'license_blocks': len(analysis['suspicious_patterns']['license_blocks']),
+                'packing_blocks': len(analysis['suspicious_patterns']['packing_blocks'])
+            },
+            'code_quality': {
+                'high_complexity_blocks': len(analysis['complexity_metrics']['high_complexity_blocks']),
+                'dead_code_blocks': len(analysis['complexity_metrics']['dead_code_blocks']),
+                'unreachable_blocks': len(analysis['complexity_metrics']['unreachable_blocks'])
+            },
+            'recommendations': []
+        }
+        
+        # Generate recommendations based on findings
+        if summary['suspicious_activity']['obfuscated_blocks'] > 5:
+            summary['recommendations'].append("High obfuscation detected - consider deobfuscation analysis")
+        
+        if summary['suspicious_activity']['anti_debug_blocks'] > 0:
+            summary['recommendations'].append("Anti-debugging techniques detected - use advanced debugging tools")
+        
+        if summary['suspicious_activity']['license_blocks'] > 0:
+            summary['recommendations'].append(f"Found {summary['suspicious_activity']['license_blocks']} potential license check locations")
+        
+        if summary['code_quality']['unreachable_blocks'] > 0:
+            summary['recommendations'].append("Unreachable code detected - possible obfuscation or dead code")
+        
+        return summary
 
     def _perform_advanced_analysis(self) -> None:
         """Perform advanced analysis using integrated engines"""
@@ -1534,7 +2300,7 @@ class CFGExplorer:
             return False
 
 
-def run_deep_cfg_analysis(app):
+async def run_deep_cfg_analysis(app):
     """Run deep CFG analysis."""
     if not app.binary_path:
         app.update_output.emit(
@@ -1703,8 +2469,13 @@ def run_deep_cfg_analysis(app):
             # Try to generate PDF or SVG if graphviz is available
             try:
                 if SUBPROCESS_AVAILABLE:
-                    subprocess.run(
-                        ["dot", "-Tsvg", "-o", "license_cfg.svg", "license_cfg.dot"], check=False)
+                    from ...utils.system.subprocess_utils import async_run_subprocess
+                    returncode, stdout, stderr = await async_run_subprocess(
+                        ["dot", "-Tsvg", "-o", "license_cfg.svg", "license_cfg.dot"],
+                        timeout=30,
+                        capture_output=True,
+                        text=True
+                    )
                     app.update_output.emit(
                         log_message("[CFG Analysis] Generated license_cfg.svg"))
             except (OSError, ValueError, RuntimeError) as e:

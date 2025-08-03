@@ -1,78 +1,64 @@
 import pytest
 import time
 import threading
+import socket
 import tempfile
 import os
 import psutil
-import socket
-from unittest.mock import patch, MagicMock
 
-from intellicrack.core.c2.c2_server import C2Server
-from intellicrack.core.c2.c2_client import C2Client
-from intellicrack.core.c2.communication_protocols import CommunicationProtocols
-from intellicrack.core.c2.encryption_manager import EncryptionManager
-from intellicrack.core.c2.session_manager import SessionManager
-from intellicrack.core.network.cloud_license_hooker import CloudLicenseHooker
-from intellicrack.core.network_capture import NetworkCapture
+from intellicrack.core.network.packet_parser import PacketParser
+from intellicrack.core.network.protocol_analyzer import ProtocolAnalyzer
+from intellicrack.core.network.license_server_emulator import LicenseServerEmulator
+from intellicrack.core.network.network_monitor import NetworkMonitor
+from intellicrack.core.network.packet_filter import PacketFilter
+from intellicrack.core.network.session_reassembly import SessionReassembly
+from tests.base_test import IntellicrackTestBase
 
 
-class TestNetworkPerformance:
-    """Performance benchmarks for network operations and C2 functionality."""
+class TestNetworkPerformance(IntellicrackTestBase):
+    """Performance benchmarks for network operations and protocol analysis."""
 
     @pytest.fixture
-    def sample_license_packet(self):
-        """Generate REAL license packet data for testing."""
-        flexlm_packet = b'\x00\x00\x00\x14'
-        flexlm_packet += b'\x00\x00\x00\x01'
-        flexlm_packet += b'\x00\x00\x00\x00'
-        flexlm_packet += b'\x46\x4c\x45\x58'
-        flexlm_packet += b'\x00\x00\x00\x00'
-        return flexlm_packet
+    def sample_packet_data(self):
+        """Generate REAL network packet data for testing."""
+        # Ethernet header (14 bytes)
+        ethernet = b'\x00\x11\x22\x33\x44\x55\xaa\xbb\xcc\xdd\xee\xff\x08\x00'
+        
+        # IP header (20 bytes)
+        ip_header = b'\x45\x00\x00\x3c\x1c\x46\x40\x00\x40\x06'
+        ip_header += b'\xb1\xe6\xc0\xa8\x00\x68\xc0\xa8\x00\x01'
+        
+        # TCP header (20 bytes)
+        tcp_header = b'\x00\x50\x08\xae\x00\x00\x00\x00\x00\x00\x00\x00'
+        tcp_header += b'\x50\x02\x20\x00\x91\x7c\x00\x00'
+        
+        # Payload
+        payload = b'LICENSE_REQUEST\x00\x01\x02\x03\x04\x05'
+        
+        return ethernet + ip_header + tcp_header + payload
 
     @pytest.fixture
-    def hasp_packet(self):
-        """Generate REAL HASP packet data for testing."""
-        hasp_packet = b'\x48\x41\x53\x50'
-        hasp_packet += b'\x00\x01\x00\x00'
-        hasp_packet += b'\x00\x00\x00\x10'
-        hasp_packet += b'\x01\x02\x03\x04'
-        hasp_packet += b'\x05\x06\x07\x08'
-        hasp_packet += b'\x09\x0a\x0b\x0c'
-        return hasp_packet
-
-    @pytest.fixture
-    def adobe_activation_packet(self):
-        """Generate REAL Adobe activation packet for testing."""
-        adobe_packet = b'\x41\x44\x4f\x42'
-        adobe_packet += b'\x45\x00\x00\x00'
-        adobe_packet += b'\x00\x00\x00\x20'
-        adobe_packet += b'\x01\x00\x00\x00'
-        adobe_packet += b'PHOTOSHOP2023\x00\x00\x00'
-        adobe_packet += b'\xff\xff\xff\xff'
-        return adobe_packet
-
-    @pytest.fixture
-    def network_capture_file(self):
-        """Create REAL network capture file for testing."""
+    def sample_pcap_file(self):
+        """Create REAL PCAP file for testing."""
         with tempfile.NamedTemporaryFile(suffix='.pcap', delete=False) as temp_file:
+            # PCAP global header
             pcap_header = b'\xd4\xc3\xb2\xa1\x02\x00\x04\x00'
             pcap_header += b'\x00\x00\x00\x00\x00\x00\x00\x00'
             pcap_header += b'\xff\xff\x00\x00\x01\x00\x00\x00'
             
-            packet_header = b'\x00\x00\x00\x00\x00\x00\x00\x00'
-            packet_header += b'\x2a\x00\x00\x00\x2a\x00\x00\x00'
+            temp_file.write(pcap_header)
             
-            ethernet_frame = b'\xff\xff\xff\xff\xff\xff'
-            ethernet_frame += b'\x00\x11\x22\x33\x44\x55'
-            ethernet_frame += b'\x08\x00'
+            # Add some packet records
+            for i in range(10):
+                # Packet header
+                packet_header = b'\x00\x00\x00\x00\x00\x00\x00\x00'
+                packet_header += b'\x4a\x00\x00\x00\x4a\x00\x00\x00'
+                
+                # Packet data
+                packet_data = b'\x00' * 74
+                
+                temp_file.write(packet_header + packet_data)
             
-            ip_packet = b'\x45\x00\x00\x1c\x00\x01\x00\x00'
-            ip_packet += b'\x40\x11\x00\x00\x7f\x00\x00\x01'
-            ip_packet += b'\x7f\x00\x00\x01'
-            
-            udp_packet = b'\x04\xd2\x04\xd2\x00\x08\x00\x00'
-            
-            temp_file.write(pcap_header + packet_header + ethernet_frame + ip_packet + udp_packet)
             temp_file.flush()
             yield temp_file.name
         
@@ -88,387 +74,340 @@ class TestNetworkPerformance:
         return process.memory_info()
 
     @pytest.mark.benchmark
-    def test_license_packet_parsing_performance(self, benchmark, sample_license_packet):
-        """Benchmark REAL license packet parsing speed."""
-        def parse_license_packet():
-            hooker = CloudLicenseHooker()
-            return hooker.parse_flexlm_packet(sample_license_packet)
+    def test_packet_parsing_performance(self, benchmark, sample_packet_data):
+        """Benchmark REAL packet parsing speed."""
+        def parse_packet():
+            parser = PacketParser()
+            return parser.parse_packet(sample_packet_data)
         
-        result = benchmark(parse_license_packet)
+        result = benchmark(parse_packet)
         
-        assert result is not None, "License packet parsing must return result"
-        assert 'packet_type' in result or 'data' in result, "Result must contain packet information"
-        assert benchmark.stats.mean < 0.01, "License packet parsing should be under 10ms"
+        self.assert_real_output(result)
+        assert 'ethernet' in result, "Result must contain ethernet layer"
+        assert 'ip' in result, "Result must contain IP layer"
+        assert 'tcp' in result, "Result must contain TCP layer"
+        assert benchmark.stats.mean < 0.001, "Packet parsing should be under 1ms"
+
+    @pytest.mark.benchmark  
+    def test_protocol_analysis_performance(self, benchmark, sample_packet_data):
+        """Benchmark REAL protocol analysis speed."""
+        def analyze_protocol():
+            analyzer = ProtocolAnalyzer()
+            return analyzer.analyze_packet(sample_packet_data)
+        
+        result = benchmark(analyze_protocol)
+        
+        self.assert_real_output(result)
+        assert 'protocol' in result, "Result must identify protocol"
+        assert 'layers' in result, "Result must contain layer analysis"
+        assert benchmark.stats.mean < 0.005, "Protocol analysis should be under 5ms"
 
     @pytest.mark.benchmark
-    def test_hasp_protocol_handling_performance(self, benchmark, hasp_packet):
-        """Benchmark REAL HASP protocol handling speed."""
-        def handle_hasp_protocol():
-            hooker = CloudLicenseHooker()
-            return hooker.handle_hasp_request(hasp_packet)
+    def test_license_server_startup_performance(self, benchmark):
+        """Benchmark REAL license server startup speed."""
+        def start_license_server():
+            server = LicenseServerEmulator()
+            server.start_server(port=0)  # Random port
+            time.sleep(0.1)  # Allow server to start
+            server.stop_server()
+            return True
         
-        result = benchmark(handle_hasp_protocol)
+        result = benchmark(start_license_server)
         
-        assert result is not None, "HASP handling must return result"
-        assert len(result) > 0, "HASP response must not be empty"
-        assert benchmark.stats.mean < 0.02, "HASP handling should be under 20ms"
+        assert result is True, "Server must start and stop successfully"
+        assert benchmark.stats.mean < 0.5, "Server startup should be under 500ms"
 
     @pytest.mark.benchmark
-    def test_adobe_activation_performance(self, benchmark, adobe_activation_packet):
-        """Benchmark REAL Adobe activation processing speed."""
-        def process_adobe_activation():
-            hooker = CloudLicenseHooker()
-            return hooker.process_adobe_activation(adobe_activation_packet)
+    def test_pcap_file_loading_performance(self, benchmark, sample_pcap_file):
+        """Benchmark REAL PCAP file loading speed."""
+        def load_pcap():
+            parser = PacketParser()
+            return parser.load_pcap_file(sample_pcap_file)
         
-        result = benchmark(process_adobe_activation)
+        result = benchmark(load_pcap)
         
-        assert result is not None, "Adobe activation must return result"
-        assert 'status' in result or 'response' in result, "Result must contain status information"
-        assert benchmark.stats.mean < 0.05, "Adobe activation should be under 50ms"
-
-    @pytest.mark.benchmark
-    def test_c2_server_startup_performance(self, benchmark):
-        """Benchmark REAL C2 server startup speed."""
-        def start_c2_server():
-            server = C2Server(host='127.0.0.1', port=0)
-            server.start_async()
-            time.sleep(0.1)
-            server.stop()
-            return server.is_running
-        
-        result = benchmark(start_c2_server)
-        
-        assert result is not None, "C2 server startup must return status"
-        assert benchmark.stats.mean < 0.5, "C2 server startup should be under 500ms"
-
-    @pytest.mark.benchmark
-    def test_c2_client_connection_performance(self, benchmark):
-        """Benchmark REAL C2 client connection speed."""
-        server = C2Server(host='127.0.0.1', port=0)
-        server.start_async()
-        server_port = server.get_port()
-        
-        def connect_c2_client():
-            client = C2Client()
-            result = client.connect('127.0.0.1', server_port, timeout=1.0)
-            if client.is_connected():
-                client.disconnect()
-            return result
-        
-        try:
-            result = benchmark(connect_c2_client)
-            
-            assert result is not None, "C2 client connection must return result"
-            assert benchmark.stats.mean < 0.2, "C2 client connection should be under 200ms"
-        finally:
-            server.stop()
-
-    @pytest.mark.benchmark
-    def test_encryption_performance(self, benchmark):
-        """Benchmark REAL encryption/decryption operations."""
-        def encrypt_decrypt_data():
-            manager = EncryptionManager()
-            key = manager.generate_key()
-            
-            test_data = b"This is test data for encryption performance testing" * 10
-            
-            encrypted = manager.encrypt(test_data, key)
-            decrypted = manager.decrypt(encrypted, key)
-            
-            return decrypted == test_data
-        
-        result = benchmark(encrypt_decrypt_data)
-        
-        assert result is True, "Encryption/decryption must be successful"
-        assert benchmark.stats.mean < 0.01, "Encryption/decryption should be under 10ms"
-
-    @pytest.mark.benchmark
-    def test_network_capture_parsing_performance(self, benchmark, network_capture_file):
-        """Benchmark REAL network capture parsing speed."""
-        def parse_network_capture():
-            capture = NetworkCapture()
-            return capture.parse_pcap_file(network_capture_file)
-        
-        result = benchmark(parse_network_capture)
-        
-        assert result is not None, "Network capture parsing must return result"
+        self.assert_real_output(result)
         assert 'packets' in result, "Result must contain packets"
-        assert len(result['packets']) > 0, "Must parse at least one packet"
-        assert benchmark.stats.mean < 0.1, "Network capture parsing should be under 100ms"
+        assert len(result['packets']) == 10, "Must load all 10 packets"
+        assert benchmark.stats.mean < 0.1, "PCAP loading should be under 100ms"
 
     @pytest.mark.benchmark
-    def test_session_management_performance(self, benchmark):
-        """Benchmark REAL session management operations."""
-        def manage_sessions():
-            manager = SessionManager()
+    def test_packet_filter_performance(self, benchmark, sample_packet_data):
+        """Benchmark REAL packet filtering speed."""
+        def filter_packets():
+            filter_engine = PacketFilter()
+            filter_engine.add_filter("tcp.port == 80")
             
-            session_ids = []
-            for i in range(10):
-                session_id = manager.create_session(f"client_{i}", f"127.0.0.{i+1}")
-                session_ids.append(session_id)
+            results = []
+            for i in range(1000):
+                result = filter_engine.match_packet(sample_packet_data)
+                results.append(result)
             
-            for session_id in session_ids:
-                manager.update_session_activity(session_id)
-            
-            active_sessions = manager.get_active_sessions()
-            
-            for session_id in session_ids:
-                manager.close_session(session_id)
-            
-            return len(active_sessions)
+            return results
         
-        result = benchmark(manage_sessions)
+        results = benchmark(filter_packets)
         
-        assert result == 10, "Must manage exactly 10 sessions"
-        assert benchmark.stats.mean < 0.05, "Session management should be under 50ms"
+        assert len(results) == 1000, "Must process all 1000 packets"
+        assert benchmark.stats.mean < 0.1, "Filtering 1000 packets should be under 100ms"
 
-    def test_concurrent_c2_connections(self):
-        """Test REAL concurrent C2 connection performance."""
-        server = C2Server(host='127.0.0.1', port=0)
-        server.start_async()
-        server_port = server.get_port()
+    @pytest.mark.benchmark
+    def test_session_reassembly_performance(self, benchmark):
+        """Benchmark REAL TCP session reassembly speed."""
+        def reassemble_session():
+            reassembler = SessionReassembly()
+            
+            # Simulate TCP stream
+            for seq_num in range(0, 10000, 1000):
+                packet = {
+                    'tcp': {
+                        'seq': seq_num,
+                        'ack': 0,
+                        'flags': {'PSH': True}
+                    },
+                    'payload': b'DATA' * 250  # 1KB chunks
+                }
+                reassembler.add_packet(packet)
+            
+            return reassembler.get_reassembled_stream()
         
+        result = benchmark(reassemble_session)
+        
+        self.assert_real_output(result)
+        assert len(result) == 10000, "Reassembled stream must be 10KB"
+        assert benchmark.stats.mean < 0.05, "Session reassembly should be under 50ms"
+
+    def test_concurrent_packet_processing(self, sample_packet_data):
+        """Test REAL concurrent packet processing performance."""
+        parser = PacketParser()
         results = []
         errors = []
         
-        def connect_client(client_id):
+        def process_packets(thread_id):
             try:
-                client = C2Client()
-                result = client.connect('127.0.0.1', server_port, timeout=2.0)
-                if client.is_connected():
-                    time.sleep(0.1)
-                    client.disconnect()
-                results.append((client_id, result))
+                thread_results = []
+                for i in range(100):
+                    result = parser.parse_packet(sample_packet_data)
+                    thread_results.append(result)
+                results.append((thread_id, len(thread_results)))
             except Exception as e:
-                errors.append((client_id, str(e)))
+                errors.append((thread_id, str(e)))
         
-        try:
-            threads = []
-            start_time = time.time()
-            
-            for i in range(5):
-                thread = threading.Thread(target=connect_client, args=(i,))
-                threads.append(thread)
-                thread.start()
-            
-            for thread in threads:
-                thread.join(timeout=5.0)
-            
-            end_time = time.time()
-            
-            assert len(errors) == 0, f"Concurrent connection errors: {errors}"
-            assert len(results) == 5, f"Expected 5 connections, got {len(results)}"
-            assert end_time - start_time < 3.0, "Concurrent connections should complete under 3 seconds"
+        threads = []
+        start_time = time.time()
         
-        finally:
-            server.stop()
+        for i in range(5):
+            thread = threading.Thread(target=process_packets, args=(i,))
+            threads.append(thread)
+            thread.start()
+        
+        for thread in threads:
+            thread.join(timeout=5.0)
+        
+        end_time = time.time()
+        
+        assert len(errors) == 0, f"Concurrent processing errors: {errors}"
+        assert len(results) == 5, f"Expected 5 results, got {len(results)}"
+        assert end_time - start_time < 1.0, "Concurrent processing should complete under 1 second"
 
-    def test_license_protocol_memory_usage(self, sample_license_packet, process_memory):
-        """Test REAL license protocol memory efficiency."""
-        initial_memory = process_memory.rss
+    def test_network_monitor_performance(self):
+        """Test REAL network monitoring performance."""
+        monitor = NetworkMonitor()
         
-        hooker = CloudLicenseHooker()
+        # Start monitoring
+        monitor.start_monitoring()
+        
+        # Simulate network activity
+        start_time = time.time()
         
         for i in range(100):
-            result = hooker.parse_flexlm_packet(sample_license_packet)
-            assert result is not None, f"License parsing {i} failed"
+            event = {
+                'timestamp': time.time(),
+                'type': 'packet',
+                'size': 1024 + i,
+                'protocol': 'TCP'
+            }
+            monitor.record_event(event)
+            time.sleep(0.001)  # 1ms between packets
+        
+        # Get statistics
+        stats = monitor.get_statistics()
+        monitor.stop_monitoring()
+        
+        end_time = time.time()
+        
+        self.assert_real_output(stats)
+        assert 'packet_count' in stats, "Stats must include packet count"
+        assert stats['packet_count'] == 100, "Must record all 100 packets"
+        assert end_time - start_time < 0.5, "Monitoring 100 packets should be under 500ms"
+
+    def test_license_protocol_emulation_performance(self):
+        """Test REAL license protocol emulation performance."""
+        server = LicenseServerEmulator()
+        
+        # Test various license protocols
+        protocols = ['flexlm', 'hasp', 'adobe', 'microsoft']
+        
+        start_time = time.time()
+        
+        for protocol in protocols:
+            request = {
+                'protocol': protocol,
+                'action': 'check_license',
+                'product': 'test_product',
+                'version': '1.0'
+            }
+            
+            response = server.handle_license_request(request)
+            self.assert_real_output(response)
+            assert 'status' in response, f"Response for {protocol} must contain status"
+        
+        end_time = time.time()
+        
+        assert end_time - start_time < 0.1, "Protocol emulation should be fast"
+
+    @pytest.mark.benchmark
+    def test_packet_capture_performance(self, benchmark):
+        """Benchmark REAL packet capture performance."""
+        def capture_packets():
+            monitor = NetworkMonitor()
+            captured = []
+            
+            # Simulate packet capture
+            for i in range(1000):
+                packet = {
+                    'id': i,
+                    'timestamp': time.time(),
+                    'size': 64 + (i % 1436),  # Varying sizes
+                    'data': b'\x00' * 64
+                }
+                captured.append(monitor.capture_packet(packet))
+            
+            return captured
+        
+        result = benchmark(capture_packets)
+        
+        assert len(result) == 1000, "Must capture all 1000 packets"
+        assert benchmark.stats.mean < 0.1, "Capturing 1000 packets should be under 100ms"
+
+    def test_protocol_decoder_performance(self, sample_packet_data):
+        """Test REAL protocol decoder performance."""
+        analyzer = ProtocolAnalyzer()
+        
+        # Test different protocol decoders
+        protocols = {
+            'http': b'GET /license HTTP/1.1\r\nHost: server\r\n\r\n',
+            'https': b'\x16\x03\x01\x00\xa5\x01\x00\x00\xa1\x03\x03',
+            'flexlm': b'FLEXLM\x00\x01\x00\x00\x00\x10LICENSE_REQUEST',
+            'custom': b'CUSTOM_PROTOCOL\x00\x01\x02\x03'
+        }
+        
+        start_time = time.time()
+        
+        for proto_name, proto_data in protocols.items():
+            result = analyzer.decode_protocol(proto_data)
+            self.assert_real_output(result)
+            assert 'protocol_type' in result, f"Must identify {proto_name}"
+        
+        end_time = time.time()
+        
+        assert end_time - start_time < 0.05, "Protocol decoding should be fast"
+
+    def test_network_buffer_performance(self, process_memory):
+        """Test REAL network buffer management performance."""
+        initial_memory = process_memory.rss
+        
+        monitor = NetworkMonitor()
+        
+        # Fill network buffers
+        for i in range(10000):
+            packet = b'\x00' * (100 + i % 900)  # 100-1000 byte packets
+            monitor.buffer_packet(packet)
+        
+        # Process buffered packets
+        processed = monitor.process_buffered_packets()
         
         current_process = psutil.Process()
         final_memory = current_process.memory_info().rss
         memory_increase = final_memory - initial_memory
         
-        assert memory_increase < 20 * 1024 * 1024, "Memory increase should be under 20MB for 100 parsings"
+        assert processed == 10000, "Must process all buffered packets"
+        assert memory_increase < 50 * 1024 * 1024, "Memory usage should be under 50MB"
 
     @pytest.mark.benchmark
-    def test_communication_protocol_switching_performance(self, benchmark):
-        """Benchmark REAL communication protocol switching speed."""
-        def switch_protocols():
-            protocols = CommunicationProtocols()
+    def test_connection_tracking_performance(self, benchmark):
+        """Benchmark REAL connection tracking performance."""
+        def track_connections():
+            tracker = NetworkMonitor()
             
-            protocols.switch_to_http()
-            http_status = protocols.get_current_protocol()
+            # Simulate many connections
+            for i in range(100):
+                conn = {
+                    'src_ip': f'192.168.1.{i % 256}',
+                    'dst_ip': f'10.0.0.{i % 256}',
+                    'src_port': 1024 + i,
+                    'dst_port': 80,
+                    'protocol': 'TCP',
+                    'state': 'ESTABLISHED'
+                }
+                tracker.track_connection(conn)
             
-            protocols.switch_to_dns()
-            dns_status = protocols.get_current_protocol()
-            
-            protocols.switch_to_tcp()
-            tcp_status = protocols.get_current_protocol()
-            
-            return [http_status, dns_status, tcp_status]
+            # Query connections
+            active = tracker.get_active_connections()
+            return len(active)
         
-        result = benchmark(switch_protocols)
+        result = benchmark(track_connections)
         
-        assert result is not None, "Protocol switching must return results"
-        assert len(result) == 3, "Must return status for all protocols"
-        assert benchmark.stats.mean < 0.01, "Protocol switching should be under 10ms"
+        assert result == 100, "Must track all 100 connections"
+        assert benchmark.stats.mean < 0.01, "Connection tracking should be under 10ms"
 
-    def test_network_stress_test(self, sample_license_packet, hasp_packet):
-        """Stress test REAL network operations under heavy load."""
-        hooker = CloudLicenseHooker()
+    def test_packet_injection_performance(self):
+        """Test REAL packet injection performance."""
+        injector = PacketParser()  # Assuming it has injection capability
         
         start_time = time.time()
         
-        packets = [sample_license_packet, hasp_packet] * 50
-        
-        for i, packet in enumerate(packets):
-            if i % 2 == 0:
-                result = hooker.parse_flexlm_packet(packet)
-            else:
-                result = hooker.handle_hasp_request(packet)
-            
-            assert result is not None, f"Stress test packet {i} failed"
-        
-        end_time = time.time()
-        
-        assert end_time - start_time < 5.0, "Network stress test should complete under 5 seconds"
-
-    def test_c2_message_throughput(self):
-        """Test REAL C2 message throughput performance."""
-        server = C2Server(host='127.0.0.1', port=0)
-        server.start_async()
-        server_port = server.get_port()
-        
-        client = C2Client()
-        
-        try:
-            connection_result = client.connect('127.0.0.1', server_port, timeout=2.0)
-            assert connection_result, "Client must connect successfully"
-            
-            start_time = time.time()
-            message_count = 100
-            
-            for i in range(message_count):
-                message = f"test_message_{i}".encode()
-                sent = client.send_message(message)
-                assert sent, f"Message {i} failed to send"
-            
-            end_time = time.time()
-            throughput = message_count / (end_time - start_time)
-            
-            assert throughput > 50, f"Throughput too low: {throughput} messages/second"
-            
-        finally:
-            if client.is_connected():
-                client.disconnect()
-            server.stop()
-
-    @pytest.mark.benchmark
-    def test_license_emulation_performance(self, benchmark, sample_license_packet):
-        """Benchmark REAL license server emulation performance."""
-        def emulate_license_server():
-            hooker = CloudLicenseHooker()
-            
-            parsed = hooker.parse_flexlm_packet(sample_license_packet)
-            response = hooker.generate_license_response(parsed)
-            
-            return response
-        
-        result = benchmark(emulate_license_server)
-        
-        assert result is not None, "License emulation must return response"
-        assert len(result) > 0, "License response must not be empty"
-        assert benchmark.stats.mean < 0.02, "License emulation should be under 20ms"
-
-    def test_network_error_handling_performance(self):
-        """Test REAL network error handling performance."""
-        hooker = CloudLicenseHooker()
-        
-        start_time = time.time()
-        
-        invalid_packets = [
-            b"",
-            b"\x00\x00\x00\x00",
-            b"INVALID_PACKET_DATA",
-            None,
-            b"\xff" * 1000
+        # Create various packet types
+        packet_types = [
+            b'\x00' * 64,   # Minimal packet
+            b'\xff' * 1500, # Maximum MTU
+            b'\xaa' * 576,  # Standard size
         ]
         
-        for packet in invalid_packets:
-            try:
-                result = hooker.parse_flexlm_packet(packet)
-                if result is not None:
-                    pass
-            except Exception:
-                pass
+        injected_count = 0
+        for packet_type in packet_types:
+            for i in range(100):
+                result = injector.validate_packet_format(packet_type)
+                if result:
+                    injected_count += 1
         
         end_time = time.time()
         
-        assert end_time - start_time < 0.1, "Network error handling should be fast (under 100ms)"
+        assert injected_count == 300, "Must validate all 300 packets"
+        assert end_time - start_time < 0.1, "Packet validation should be fast"
 
-    def test_c2_session_persistence(self):
-        """Test REAL C2 session persistence performance."""
-        manager = SessionManager()
+    def test_network_statistics_aggregation(self):
+        """Test REAL network statistics aggregation performance."""
+        monitor = NetworkMonitor()
         
+        # Generate lots of statistics
         start_time = time.time()
         
-        session_ids = []
-        for i in range(20):
-            session_id = manager.create_session(f"persistent_client_{i}", f"10.0.0.{i+1}")
-            session_ids.append(session_id)
+        for i in range(1000):
+            monitor.update_statistics({
+                'bytes_sent': 1000 + i,
+                'bytes_received': 2000 + i,
+                'packets_sent': 10 + i % 10,
+                'packets_received': 20 + i % 20,
+                'errors': i % 100 == 0
+            })
         
-        for _ in range(10):
-            for session_id in session_ids:
-                manager.update_session_activity(session_id)
-        
-        active_count = len(manager.get_active_sessions())
-        
-        for session_id in session_ids:
-            manager.close_session(session_id)
+        # Aggregate statistics
+        aggregated = monitor.aggregate_statistics()
         
         end_time = time.time()
         
-        assert active_count == 20, f"Expected 20 active sessions, got {active_count}"
-        assert end_time - start_time < 2.0, "Session persistence test should complete under 2 seconds"
-
-    @pytest.mark.benchmark
-    def test_network_protocol_detection_performance(self, benchmark, network_capture_file):
-        """Benchmark REAL network protocol detection speed."""
-        def detect_protocols():
-            capture = NetworkCapture()
-            parsed = capture.parse_pcap_file(network_capture_file)
-            return capture.detect_protocols(parsed['packets'])
-        
-        result = benchmark(detect_protocols)
-        
-        assert result is not None, "Protocol detection must return results"
-        assert 'protocols' in result, "Result must contain detected protocols"
-        assert len(result['protocols']) > 0, "Must detect at least one protocol"
-        assert benchmark.stats.mean < 0.05, "Protocol detection should be under 50ms"
-
-    def test_encryption_key_generation_performance(self):
-        """Test REAL encryption key generation performance."""
-        manager = EncryptionManager()
-        
-        start_time = time.time()
-        
-        keys = []
-        for i in range(50):
-            key = manager.generate_key()
-            keys.append(key)
-            
-            assert key is not None, f"Key generation {i} failed"
-            assert len(key) > 0, f"Key {i} is empty"
-        
-        end_time = time.time()
-        
-        unique_keys = set(keys)
-        assert len(unique_keys) == len(keys), "All generated keys must be unique"
-        assert end_time - start_time < 1.0, "Key generation should complete under 1 second"
-
-    def test_network_capture_real_time_performance(self):
-        """Test REAL real-time network capture performance."""
-        capture = NetworkCapture()
-        
-        packets_captured = []
-        
-        def packet_handler(packet):
-            packets_captured.append(packet)
-        
-        start_time = time.time()
-        
-        capture.start_real_time_capture('lo', packet_handler, duration=1.0)
-        
-        end_time = time.time()
-        
-        assert end_time - start_time >= 1.0, "Capture should run for at least 1 second"
-        assert end_time - start_time < 1.5, "Capture should not significantly exceed 1 second"
+        self.assert_real_output(aggregated)
+        assert 'total_bytes' in aggregated, "Must include total bytes"
+        assert 'total_packets' in aggregated, "Must include total packets"
+        assert 'error_rate' in aggregated, "Must include error rate"
+        assert end_time - start_time < 0.1, "Statistics aggregation should be under 100ms"

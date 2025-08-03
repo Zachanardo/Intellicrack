@@ -32,6 +32,7 @@ from typing import Dict, List, Optional, Tuple
 
 from ..core.path_discovery import PathDiscovery
 from .file_resolution import file_resolver
+from .installation_discovery import installation_discovery_engine
 
 logger = logging.getLogger(__name__)
 
@@ -223,9 +224,43 @@ class ProgramDiscoveryEngine:
 
             # Analyze installation folder for additional info
             folder_analysis = self._analyze_installation_folder(install_location)
+            
+            # Use enhanced installation discovery for better analysis
+            installation_candidates = installation_discovery_engine.discover_installation_roots(
+                str(install_location), include_subdirs=True
+            )
+            
+            # If we found installation candidates, enhance the analysis
+            if installation_candidates:
+                best_candidate = installation_candidates[0]
+                folder_analysis['installation_confidence'] = best_candidate.confidence_score
+                folder_analysis['installation_markers'] = [m.description for m in best_candidate.markers_found]
+                folder_analysis['key_directories'] = [d.name for d in best_candidate.directories_found]
+                
+                # Update has_licensing based on enhanced discovery
+                licensing_markers = [m for m in best_candidate.markers_found 
+                                   if m.marker_type in ['legal', 'licensing', 'protection']]
+                if licensing_markers:
+                    folder_analysis['has_licensing'] = True
+                    folder_analysis['licensing_confidence'] = sum(m.weight for m in licensing_markers)
 
             # Determine analysis priority
             priority = self._calculate_analysis_priority(display_name, str(install_location))
+
+            # Calculate enhanced confidence score
+            enhanced_confidence = 0.8
+            if 'installation_confidence' in folder_analysis:
+                # Blend the original confidence with installation discovery confidence
+                installation_conf = folder_analysis['installation_confidence'] / 100.0
+                enhanced_confidence = (0.6 * enhanced_confidence) + (0.4 * installation_conf)
+            
+            # Enhanced description with installation info
+            description_parts = [f"Program analyzed from path: {program_path}"]
+            if 'installation_confidence' in folder_analysis:
+                description_parts.append(f"Installation confidence: {folder_analysis['installation_confidence']:.1f}/100")
+            if 'installation_markers' in folder_analysis and folder_analysis['installation_markers']:
+                markers_text = ", ".join(folder_analysis['installation_markers'][:2])
+                description_parts.append(f"Found markers: {markers_text}")
 
             program_info = ProgramInfo(
                 name=display_name.lower(),
@@ -240,10 +275,10 @@ class ProgramDiscoveryEngine:
                 estimated_size=folder_analysis.get('total_size', 0),
                 architecture=folder_analysis.get('architecture', 'Unknown'),
                 file_types=folder_analysis.get('file_types', []),
-                description=f"Program analyzed from path: {program_path}",
+                description="; ".join(description_parts),
                 registry_key=None,
-                discovery_method="path_analysis",
-                confidence_score=0.8,
+                discovery_method="enhanced_path_analysis",
+                confidence_score=enhanced_confidence,
                 analysis_priority=priority
             )
 

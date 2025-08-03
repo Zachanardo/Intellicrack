@@ -4,7 +4,6 @@ import threading
 import tempfile
 import os
 import psutil
-from unittest.mock import patch, MagicMock
 
 from intellicrack.core.gpu_acceleration import GPUAcceleration
 from intellicrack.core.processing.gpu_accelerator import GPUAccelerator
@@ -12,9 +11,10 @@ from intellicrack.ai.gpu_integration import GPUIntegration
 from intellicrack.ai.model_performance_monitor import ModelPerformanceMonitor
 from intellicrack.ai.quantization_manager import QuantizationManager
 from intellicrack.ai.model_sharding import ModelSharding
+from tests.base_test import IntellicrackTestBase
 
 
-class TestGPUPerformance:
+class TestGPUPerformance(IntellicrackTestBase):
     """Performance benchmarks for GPU acceleration and AI operations."""
 
     @pytest.fixture
@@ -62,7 +62,7 @@ class TestGPUPerformance:
         
         result = benchmark(initialize_gpu)
         
-        assert result is not None, "GPU initialization must return result"
+        self.assert_real_output(result)
         assert result.get('initialized', False), "GPU must be initialized successfully"
         assert benchmark.stats.mean < 2.0, "GPU initialization should be under 2 seconds"
 
@@ -75,7 +75,7 @@ class TestGPUPerformance:
         
         result = benchmark(allocate_gpu_memory)
         
-        assert result is not None, "GPU memory allocation must return handle"
+        self.assert_real_output(result)
         assert result.get('allocated', False), "Memory must be allocated successfully"
         assert benchmark.stats.mean < 0.1, "GPU memory allocation should be under 100ms"
 
@@ -88,7 +88,7 @@ class TestGPUPerformance:
         
         result = benchmark(gpu_matrix_multiply)
         
-        assert result is not None, "GPU matrix multiplication must return result"
+        self.assert_real_output(result)
         assert result.shape == (1000, 1000), "Result must have correct dimensions"
         assert benchmark.stats.mean < 0.5, "GPU matrix multiplication should be under 500ms"
 
@@ -101,7 +101,7 @@ class TestGPUPerformance:
         
         result = benchmark(load_ai_model)
         
-        assert result is not None, "AI model loading must return model"
+        self.assert_real_output(result)
         assert result.get('loaded', False), "Model must be loaded successfully"
         assert benchmark.stats.mean < 5.0, "AI model loading should be under 5 seconds"
 
@@ -119,7 +119,7 @@ class TestGPUPerformance:
         
         result = benchmark(run_ai_inference)
         
-        assert result is not None, "AI inference must return result"
+        self.assert_real_output(result)
         assert 'predictions' in result or 'analysis' in result, "Result must contain predictions"
         assert benchmark.stats.mean < 1.0, "AI inference should be under 1 second"
 
@@ -132,7 +132,7 @@ class TestGPUPerformance:
         
         result = benchmark(quantize_model)
         
-        assert result is not None, "Model quantization must return result"
+        self.assert_real_output(result)
         assert result.get('quantized', False), "Model must be quantized successfully"
         assert benchmark.stats.mean < 3.0, "Model quantization should be under 3 seconds"
 
@@ -145,7 +145,7 @@ class TestGPUPerformance:
         
         result = benchmark(shard_model)
         
-        assert result is not None, "Model sharding must return result"
+        self.assert_real_output(result)
         assert len(result.get('shards', [])) == 4, "Must create exactly 4 shards"
         assert benchmark.stats.mean < 2.0, "Model sharding should be under 2 seconds"
 
@@ -159,7 +159,7 @@ class TestGPUPerformance:
         for i in range(10):
             handle = gpu.allocate_memory(sample_matrix_data)
             allocated_handles.append(handle)
-            assert handle is not None, f"Memory allocation {i} failed"
+            self.assert_real_output(handle)
         
         for handle in allocated_handles:
             gpu.free_memory(handle)
@@ -219,7 +219,7 @@ class TestGPUPerformance:
         
         result = benchmark(monitor_performance)
         
-        assert result is not None, "Performance monitoring must return stats"
+        self.assert_real_output(result)
         assert 'inference_times' in result, "Stats must contain inference times"
         assert 'memory_usage' in result, "Stats must contain memory usage"
         assert benchmark.stats.mean < 0.01, "Performance monitoring overhead should be under 10ms"
@@ -239,7 +239,7 @@ class TestGPUPerformance:
         
         end_time = time.time()
         
-        assert result is not None, "CPU fallback must return result"
+        self.assert_real_output(result)
         assert len(result) == 2, "Result must have correct dimensions"
         assert end_time - start_time < 0.1, "CPU fallback should be fast for small matrices"
         
@@ -263,7 +263,7 @@ class TestGPUPerformance:
         
         result = benchmark(cache_operations)
         
-        assert result is not None, "Model cache must return cached data"
+        self.assert_real_output(result)
         assert 'weights' in result, "Cached model must contain weights"
         assert 'config' in result, "Cached model must contain config"
         assert benchmark.stats.mean < 0.001, "Model cache operations should be under 1ms"
@@ -281,7 +281,7 @@ class TestGPUPerformance:
             
             if temp_info and temp_info.get('temperature', 0) > 80:
                 throttling = gpu.detect_thermal_throttling()
-                assert throttling is not None, "Thermal throttling detection must return result"
+                self.assert_real_output(throttling)
             
             time.sleep(0.1)
         
@@ -306,7 +306,7 @@ class TestGPUPerformance:
         
         result = benchmark(batch_process)
         
-        assert result is not None, "Batch processing must return results"
+        self.assert_real_output(result)
         assert len(result) == 5, "Must process all 5 items in batch"
         assert benchmark.stats.mean < 2.0, "Batch processing should be under 2 seconds"
 
@@ -329,7 +329,7 @@ class TestGPUPerformance:
         for remaining_handle in handles:
             gpu.free_memory(remaining_handle)
         
-        assert fragmentation_info is not None, "Must return fragmentation information"
+        self.assert_real_output(fragmentation_info)
         assert 'fragmentation_ratio' in fragmentation_info, "Must include fragmentation ratio"
 
     def test_ai_model_switching_performance(self):
@@ -343,7 +343,7 @@ class TestGPUPerformance:
         for i in range(6):
             model_name = models[i % len(models)]
             result = integration.switch_to_model(model_name)
-            assert result is not None, f"Model switching to {model_name} failed"
+            self.assert_real_output(result)
             
             current_model = integration.get_current_model()
             assert current_model == model_name, f"Current model should be {model_name}"
@@ -381,7 +381,7 @@ class TestGPUPerformance:
         
         result = benchmark(measure_bandwidth)
         
-        assert result is not None, "Bandwidth test must return timing results"
+        self.assert_real_output(result)
         assert result['total_time'] > 0, "Total time must be positive"
         assert benchmark.stats.mean < 1.0, "GPU bandwidth test should be under 1 second"
 
@@ -421,7 +421,7 @@ class TestGPUPerformance:
         for i in range(stream_count):
             stream = gpu.create_stream(f"stream_{i}")
             streams.append(stream)
-            assert stream is not None, f"Stream {i} creation failed"
+            self.assert_real_output(stream)
         
         start_time = time.time()
         
@@ -445,4 +445,4 @@ class TestGPUPerformance:
         assert end_time - start_time < 1.0, "Multi-stream operations should complete under 1 second"
         
         for result in results:
-            assert result is not None, "All stream operations must succeed"
+            self.assert_real_output(result)

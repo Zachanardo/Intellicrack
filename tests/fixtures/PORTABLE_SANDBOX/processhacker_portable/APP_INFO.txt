@@ -1,0 +1,10 @@
+
+processhacker_portable - PORTABLE VERSION
+===================================
+Description: Process Hacker PORTABLE - System monitor
+Protection: Open source tool
+Main EXE: peview.exe
+
+This is a PORTABLE application.
+NO installation required.
+All data stays in this folder.

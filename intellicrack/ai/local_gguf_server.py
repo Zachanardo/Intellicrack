@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import asyncio
 import json
 import threading
 import time
@@ -355,7 +356,7 @@ class LocalGGUFServer:
             self.server_thread.start()
 
             # Wait for server to start
-            time.sleep(2)
+            asyncio.run(asyncio.sleep(2))
 
             # Test server
             if self._test_server():

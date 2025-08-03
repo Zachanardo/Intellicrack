@@ -21,6 +21,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import asyncio
 from typing import Any, Dict
 
 from .c2_server import C2Server
@@ -82,7 +83,7 @@ class C2Manager:
             } for session in active_sessions]
         }
 
-    def wait_for_callback(self, session_id: str = None, timeout: int = 300) -> Dict[str, Any]:
+    async def wait_for_callback(self, session_id: str = None, timeout: int = 300) -> Dict[str, Any]:
         """Wait for a callback from an agent."""
         try:
             import time
@@ -114,7 +115,7 @@ class C2Manager:
                             'wait_time': time.time() - start_time
                         }
 
-                time.sleep(1)  # Check every second
+                await asyncio.sleep(1)  # Check every second
 
             return {
                 'success': False,

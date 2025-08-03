@@ -8,6 +8,7 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
+import asyncio
 import atexit
 import contextlib
 import socket
@@ -309,13 +310,32 @@ class ResourceManager:
 
     def _cleanup_loop(self):
         """Background cleanup thread."""
-        while True:
-            try:
-                time.sleep(self.cleanup_interval)
-                self._check_resource_limits()
-                self._cleanup_stale_resources()
-            except Exception as e:
-                logger.error(f"Error in cleanup loop: {e}")
+        import asyncio
+        
+        async def async_cleanup_loop():
+            while True:
+                try:
+                    await asyncio.sleep(self.cleanup_interval)
+                    self._check_resource_limits()
+                    self._cleanup_stale_resources()
+                except Exception as e:
+                    logger.error(f"Error in cleanup loop: {e}")
+
+        # Run async cleanup loop
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(async_cleanup_loop())
+        except Exception as e:
+            logger.error(f"Error in async cleanup loop: {e}")
+            # Fallback to sync version
+            while True:
+                try:
+                    asyncio.run(asyncio.sleep(self.cleanup_interval))
+                    self._check_resource_limits()
+                    self._cleanup_stale_resources()
+                except Exception as e:
+                    logger.error(f"Error in cleanup loop: {e}")
 
     def _check_resource_limits(self):
         """Check and enforce resource limits."""
@@ -553,7 +573,7 @@ class ResourceManager:
             # Count by status
             status_counts = {}
             for resource in self._resources.values():
-                status = resource.status.value
+                status = resource.state.value
                 status_counts[status] = status_counts.get(status, 0) + 1
             stats["by_status"] = status_counts
 
@@ -597,7 +617,7 @@ class ResourceManager:
             resource_ids = list(self._resources.keys())
             for resource_id in resource_ids:
                 resource = self._resources.get(resource_id)
-                if resource and (current_time - resource.created_at) > max_age_seconds:
+                if resource and (current_time - resource.created_at.timestamp()) > max_age_seconds:
                     if self._cleanup_resource(resource_id):
                         cleaned_count += 1
 
@@ -678,7 +698,7 @@ class ResourceManager:
             stuck_resources = []
             for resource in self._resources.values():
                 if (
-                    resource.status == ResourceState.CLEANING and (current_time - resource.created_at) > 300
+                    resource.state == ResourceState.CLEANING and (current_time - resource.created_at.timestamp()) > 300
                 ):  # 5 minutes
                     stuck_resources.append(resource.resource_id)
 
@@ -702,6 +722,34 @@ class ResourceManager:
             health["status"] = "degraded"
 
         return health
+
+    def _cleanup_resource(self, resource_id: str) -> bool:
+        """Internal method to cleanup a specific resource.
+        
+        Args:
+            resource_id: ID of the resource to cleanup
+            
+        Returns:
+            True if resource was successfully cleaned up, False otherwise
+        """
+        with self._lock:
+            resource = self._resources.get(resource_id)
+            if not resource:
+                return False
+                
+            try:
+                resource.cleanup()
+                
+                # Remove from tracking
+                del self._resources[resource_id]
+                self._resources_by_type[resource.resource_type].discard(resource_id)
+                
+                logger.debug(f"Successfully cleaned up resource {resource_id}")
+                return True
+                
+            except Exception as e:
+                logger.error(f"Failed to cleanup resource {resource_id}: {e}")
+                return False
 
 
 class ResourceContext:
@@ -800,69 +848,7 @@ def auto_cleanup(resource_type: ResourceType):
     """Decorator for automatic resource cleanup."""
     return AutoCleanupResource(resource_manager, resource_type)
 
-    def get_usage_stats(self) -> Dict[str, Any]:
-        """Get resource usage statistics.
 
-        Returns:
-            Dictionary with usage statistics
-        """
-        with self._lock:
-            stats = {
-                "total_resources": len(self._resources),
-                "by_type": {},
-                "total_memory_mb": 0,
-                "total_cpu_percent": 0,
-            }
-
-            for resource_type in ResourceType:
-                count = len(self._resources_by_type.get(resource_type, set()))
-                if count > 0:
-                    stats["by_type"][resource_type.value] = count
-
-            # Calculate totals
-            for resource in self._resources.values():
-                if isinstance(resource, ProcessResource):
-                    resource.update_usage()
-                    stats["total_memory_mb"] += resource.usage.memory_mb
-                    stats["total_cpu_percent"] += resource.usage.cpu_percent
-
-            return stats
-
-    def list_resources(self, resource_type: Optional[ResourceType] = None) -> List[Dict[str, Any]]:
-        """List managed resources.
-
-        Args:
-            resource_type: Optional filter by resource type
-
-        Returns:
-            List of resource information dictionaries
-        """
-        with self._lock:
-            resources = []
-
-            for resource_id, resource in self._resources.items():
-                if resource_type and resource.resource_type != resource_type:
-                    continue
-
-                info = {
-                    "resource_id": resource_id,
-                    "type": resource.resource_type.value,
-                    "state": resource.state.value,
-                    "created_at": resource.created_at.isoformat(),
-                    "metadata": resource.metadata,
-                }
-
-                if isinstance(resource, ProcessResource):
-                    resource.update_usage()
-                    info["usage"] = {
-                        "cpu_percent": resource.usage.cpu_percent,
-                        "memory_mb": resource.usage.memory_mb,
-                        "duration": str(resource.usage.get_duration()),
-                    }
-
-                resources.append(info)
-
-            return resources
 
 
 class FallbackHandler:
@@ -1334,16 +1320,19 @@ def setup_resource_monitoring():
     # Start monitoring thread
     import threading
 
-    def monitoring_loop():
+    async def monitoring_loop():
         while True:
             try:
-                time.sleep(300)  # Log every 5 minutes
+                await asyncio.sleep(300)  # Log every 5 minutes
                 log_resource_stats()
             except Exception as e:
                 logger.error(f"Resource monitoring error: {e}")
-                time.sleep(60)  # Wait before retrying
+                await asyncio.sleep(60)  # Wait before retrying
 
-    monitoring_thread = threading.Thread(target=monitoring_loop, daemon=True)
+    def run_monitoring_loop():
+        asyncio.run(monitoring_loop())
+    
+    monitoring_thread = threading.Thread(target=run_monitoring_loop, daemon=True)
     monitoring_thread.start()
     logger.info("Resource monitoring started")
 

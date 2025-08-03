@@ -1,0 +1,12 @@
+{
+  "patterns": [
+    "THEMIDA_PACKED_SECTION",
+    "ANTI_DEBUGGER_CHECKS",
+    "STOLEN_BYTES_TECHNIQUE"
+  ],
+  "characteristics": [
+    "advanced_packing",
+    "anti_analysis_techniques",
+    "vm_detection"
+  ]
+}

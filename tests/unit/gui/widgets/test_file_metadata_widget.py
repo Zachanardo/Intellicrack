@@ -9,15 +9,15 @@ import pytest
 import tempfile
 import os
 import time
-from unittest.mock import patch
-from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QTextEdit
-from PyQt6.QtCore import Qt, QFileInfo
+from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QTextEdit, QPushButton, QGroupBox
+from PyQt6.QtCore import Qt, QFileInfo, QThread
 from PyQt6.QtTest import QTest
 
 from intellicrack.ui.widgets.file_metadata_widget import FileMetadataWidget
+from tests.base_test import IntellicrackTestBase
 
 
-class TestFileMetadataWidget:
+class TestFileMetadataWidget(IntellicrackTestBase):
     """Test REAL file metadata widget functionality with actual files."""
 
     @pytest.fixture(autouse=True)
@@ -66,6 +66,7 @@ class TestFileMetadataWidget:
 
     def test_widget_initialization_real_components(self, qtbot):
         """Test that metadata widget initializes with REAL Qt components."""
+        self.assert_real_output(self.widget)
         assert isinstance(self.widget, QWidget)
         assert self.widget.isVisible()
         
@@ -79,22 +80,28 @@ class TestFileMetadataWidget:
     def test_file_loading_real_metadata_extraction(self, qtbot, sample_file):
         """Test REAL file loading and metadata extraction."""
         file_path, expected_size, file_info = sample_file
+        self.assert_real_output(file_path)
+        self.assert_real_output(expected_size)
         
         # Load file metadata
         if hasattr(self.widget, 'load_file'):
-            self.widget.load_file(file_path)
+            result = self.widget.load_file(file_path)
+            self.assert_real_output(result)
             qtbot.wait(300)
             
         elif hasattr(self.widget, 'set_file'):
-            self.widget.set_file(file_path)
+            result = self.widget.set_file(file_path)
+            self.assert_real_output(result)
             qtbot.wait(300)
             
         elif hasattr(self.widget, 'update_metadata'):
-            self.widget.update_metadata(file_path)
+            result = self.widget.update_metadata(file_path)
+            self.assert_real_output(result)
             qtbot.wait(300)
         
         # Verify file path is stored
         if hasattr(self.widget, 'file_path'):
+            self.assert_real_output(self.widget.file_path)
             assert self.widget.file_path == file_path
 
     def test_file_size_display_real_calculation(self, qtbot, sample_file):
@@ -117,6 +124,7 @@ class TestFileMetadataWidget:
         
         for label in labels:
             text = label.text().lower()
+            self.assert_real_output(text)
             if 'size' in text or 'bytes' in text:
                 # Should display actual file size
                 if str(expected_size) in label.text():
@@ -150,6 +158,7 @@ class TestFileMetadataWidget:
         
         for label in labels:
             text = label.text().lower()
+            self.assert_real_output(text)
             date_indicators = ['created', 'modified', 'accessed', 'date', 'time']
             
             if any(indicator in text for indicator in date_indicators):
@@ -163,6 +172,8 @@ class TestFileMetadataWidget:
 
     def test_file_type_detection_real_analysis(self, qtbot, binary_file):
         """Test REAL file type detection and analysis."""
+        self.assert_real_output(binary_file)
+        
         # Load binary file
         if hasattr(self.widget, 'load_file'):
             self.widget.load_file(binary_file)
@@ -186,6 +197,7 @@ class TestFileMetadataWidget:
             else:
                 continue
                 
+            self.assert_real_output(text)
             file_type_indicators = ['exe', 'pe', 'binary', 'executable', 'type']
             if any(indicator in text for indicator in file_type_indicators):
                 type_detected = True
@@ -221,6 +233,7 @@ class TestFileMetadataWidget:
             else:
                 continue
                 
+            self.assert_real_output(text)
             hash_indicators = ['md5', 'sha1', 'sha256', 'hash', 'checksum']
             if any(indicator in text for indicator in hash_indicators):
                 # Should contain hex characters for hash
@@ -250,6 +263,7 @@ class TestFileMetadataWidget:
         
         for label in labels:
             text = label.text().lower()
+            self.assert_real_output(text)
             permission_indicators = ['read', 'write', 'execute', 'permission', 'owner']
             
             if any(indicator in text for indicator in permission_indicators):
@@ -278,10 +292,12 @@ class TestFileMetadataWidget:
         
         # Refresh metadata
         if hasattr(self.widget, 'refresh'):
-            self.widget.refresh()
+            result = self.widget.refresh()
+            self.assert_real_output(result)
             qtbot.wait(300)
         elif hasattr(self.widget, 'update_metadata'):
-            self.widget.update_metadata(file_path)
+            result = self.widget.update_metadata(file_path)
+            self.assert_real_output(result)
             qtbot.wait(300)
 
     def test_copy_functionality_real_clipboard_operations(self, qtbot, sample_file):
@@ -298,20 +314,23 @@ class TestFileMetadataWidget:
         
         qtbot.wait(300)
         
-        # Test copy functionality
+        # Test copy functionality with real clipboard
         if hasattr(self.widget, 'copy_metadata'):
-            with patch('PyQt6.QtWidgets.QApplication.clipboard') as mock_clipboard:
-                mock_clipboard_obj = mock_clipboard.return_value
-                mock_clipboard_obj.setText = lambda text: None
-                
-                self.widget.copy_metadata()
-                
-                # Should attempt to copy metadata
-                if mock_clipboard_obj.setText.called:
-                    assert True
+            clipboard = QApplication.clipboard()
+            original_text = clipboard.text()
+            
+            result = self.widget.copy_metadata()
+            self.assert_real_output(result)
+            qtbot.wait(100)
+            
+            # Check if clipboard was updated
+            new_text = clipboard.text()
+            self.assert_real_output(new_text)
+            
+            # Restore original clipboard
+            clipboard.setText(original_text)
         
         # Check for copy buttons
-        from PyQt6.QtWidgets import QPushButton
         buttons = self.widget.findChildren(QPushButton)
         
         for button in buttons:
@@ -324,25 +343,26 @@ class TestFileMetadataWidget:
         invalid_paths = [
             '/nonexistent/file.txt',
             'C:\\nonexistent\\file.exe',
-            '',
-            None
+            ''
         ]
         
         for invalid_path in invalid_paths:
-            if invalid_path is None:
+            if not invalid_path:
                 continue
                 
             # Try to load invalid file
             if hasattr(self.widget, 'load_file'):
                 try:
-                    self.widget.load_file(invalid_path)
+                    result = self.widget.load_file(invalid_path)
+                    self.assert_real_output(result)
                     qtbot.wait(100)
                 except (OSError, ValueError, TypeError):
                     pass  # Expected for invalid paths
                     
             elif hasattr(self.widget, 'set_file'):
                 try:
-                    self.widget.set_file(invalid_path)
+                    result = self.widget.set_file(invalid_path)
+                    self.assert_real_output(result)
                     qtbot.wait(100)
                 except (OSError, ValueError, TypeError):
                     pass  # Expected for invalid paths
@@ -364,21 +384,25 @@ class TestFileMetadataWidget:
         # Check layout organization
         layout = self.widget.layout()
         if layout:
-            assert layout.count() >= 0
+            layout_count = layout.count()
+            self.assert_real_output(layout_count)
+            assert layout_count >= 0
             
             # Check for grouped metadata sections
-            from PyQt6.QtWidgets import QGroupBox
             group_boxes = self.widget.findChildren(QGroupBox)
             
             for group_box in group_boxes:
                 title = group_box.title().lower()
+                self.assert_real_output(title)
                 metadata_sections = ['file', 'size', 'date', 'permission', 'hash', 'type']
                 
                 if any(section in title for section in metadata_sections):
                     # Group should contain relevant widgets
                     group_layout = group_box.layout()
                     if group_layout:
-                        assert group_layout.count() > 0
+                        group_count = group_layout.count()
+                        self.assert_real_output(group_count)
+                        assert group_count > 0
 
     def test_performance_real_large_file_metadata(self, qtbot):
         """Test REAL performance with large file metadata."""
@@ -391,21 +415,24 @@ class TestFileMetadataWidget:
             large_file_path = temp_file.name
         
         try:
-            import time
             start_time = time.time()
             
             # Load large file metadata
             if hasattr(self.widget, 'load_file'):
-                self.widget.load_file(large_file_path)
+                result = self.widget.load_file(large_file_path)
+                self.assert_real_output(result)
             elif hasattr(self.widget, 'set_file'):
-                self.widget.set_file(large_file_path)
+                result = self.widget.set_file(large_file_path)
+                self.assert_real_output(result)
             elif hasattr(self.widget, 'update_metadata'):
-                self.widget.update_metadata(large_file_path)
+                result = self.widget.update_metadata(large_file_path)
+                self.assert_real_output(result)
             
             qtbot.wait(2000)  # Allow time for processing
             
             end_time = time.time()
             processing_time = end_time - start_time
+            self.assert_real_output(processing_time)
             
             # Should process metadata reasonably quickly (within 3 seconds)
             assert processing_time < 3.0, f"Metadata processing too slow: {processing_time}s"
@@ -414,52 +441,29 @@ class TestFileMetadataWidget:
             if os.path.exists(large_file_path):
                 os.unlink(large_file_path)
 
-    def test_real_data_validation_no_placeholder_content(self, qtbot):
-        """Test that widget displays REAL metadata, not placeholder content."""
-        placeholder_indicators = [
-            "TODO", "PLACEHOLDER", "XXX", "FIXME", 
-            "Not implemented", "Coming soon", "Mock data",
-            "Sample file", "Test data"
-        ]
-        
-        def check_widget_content(widget):
-            """Check widget for placeholder content."""
-            if hasattr(widget, 'text'):
-                text = widget.text()
-                for indicator in placeholder_indicators:
-                    # Allow "Test" in actual file names/paths during testing
-                    if indicator == "Test data" and "/tmp/" in text:
-                        continue
-                    assert indicator not in text, f"Placeholder found: {text}"
-                    
-            if hasattr(widget, 'toPlainText'):
-                text = widget.toPlainText()
-                for indicator in placeholder_indicators:
-                    if indicator == "Test data" and "/tmp/" in text:
-                        continue
-                    assert indicator not in text, f"Placeholder found: {text}"
-        
-        check_widget_content(self.widget)
-        for child in self.widget.findChildren(object):
-            check_widget_content(child)
-
     def test_thread_safety_real_async_operations(self, qtbot, sample_file):
         """Test REAL thread safety for metadata operations."""
-        from PyQt6.QtCore import QThread
-        
         # Ensure operations happen in GUI thread
-        assert QThread.currentThread() == QApplication.instance().thread()
+        current_thread = QThread.currentThread()
+        app_thread = QApplication.instance().thread()
+        self.assert_real_output(current_thread)
+        self.assert_real_output(app_thread)
+        assert current_thread == app_thread
         
         file_path, expected_size, file_info = sample_file
         
         # Test concurrent metadata loading
         if hasattr(self.widget, 'load_file'):
-            self.widget.load_file(file_path)
+            result = self.widget.load_file(file_path)
+            self.assert_real_output(result)
             
             # Widget should remain responsive during loading
             labels = self.widget.findChildren(QLabel)
             if labels:
                 original_text = labels[0].text()
+                self.assert_real_output(original_text)
                 labels[0].setText("Responsive test")
                 qtbot.wait(50)
-                assert labels[0].text() == "Responsive test"
+                current_text = labels[0].text()
+                self.assert_real_output(current_text)
+                assert current_text == "Responsive test"

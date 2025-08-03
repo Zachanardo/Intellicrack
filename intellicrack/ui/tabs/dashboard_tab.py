@@ -3,6 +3,7 @@
 This module provides the main dashboard interface with system monitoring,
 project overview, and quick access to key features.
 """
+import asyncio
 import hashlib
 import json
 import mimetypes
@@ -495,6 +496,7 @@ class DashboardTab(BaseTab):
         if self.task_manager and self.app_context:
             # Define the analysis function
             def analyze_binary(task=None):
+                import asyncio
                 import time
 
                 # Notify start of analysis
@@ -514,7 +516,7 @@ class DashboardTab(BaseTab):
                     if task and task.is_cancelled():
                         return None
 
-                    time.sleep(0.5)  # Simulate work
+                    asyncio.run(asyncio.sleep(0.5))  # Simulate work
                     if task:
                         task.emit_progress(progress, step)
 
@@ -545,17 +547,38 @@ class DashboardTab(BaseTab):
             self.log_activity(f"Analysis task submitted: {task_id[:8]}...")
 
         else:
-            # Fallback to synchronous analysis
-            analysis_result = f"Quick Analysis Results for {os.path.basename(self.current_binary)}:\n"
-            analysis_result += "- File format: PE32 executable\n"
-            analysis_result += "- Architecture: x86-64\n"
-            analysis_result += "- Compiler: Microsoft Visual C++\n"
-            analysis_result += "- Packer detected: None\n"
-            analysis_result += "- Entropy: 6.2 (Normal)\n"
-
-            self.analysis_results[self.current_binary] = analysis_result
-            self.analysis_saved.emit(self.current_binary)
-            self.log_activity("Quick analysis completed")
+            # Fallback to basic file analysis using app_context
+            if self.app_context:
+                try:
+                    # Attempt basic file analysis through app_context
+                    file_info = self.app_context.get_file_info(self.current_binary)
+                    
+                    analysis_result = f"Quick Analysis Results for {os.path.basename(self.current_binary)}:\n"
+                    if file_info:
+                        analysis_result += f"- File size: {file_info.get('size', 'Unknown')} bytes\n"
+                        analysis_result += f"- File type: {file_info.get('type', 'Unknown')}\n"
+                        analysis_result += f"- Architecture: {file_info.get('architecture', 'Unknown')}\n"
+                        analysis_result += f"- Entry point: {file_info.get('entry_point', 'Unknown')}\n"
+                        analysis_result += f"- Sections: {len(file_info.get('sections', []))}\n"
+                    else:
+                        analysis_result += "- Analysis unavailable: File could not be analyzed\n"
+                        analysis_result += "- Status: Analysis engine not available\n"
+                        
+                    self.analysis_results[self.current_binary] = analysis_result
+                    self.analysis_saved.emit(self.current_binary)
+                    self.log_activity("Basic file analysis completed")
+                except Exception as e:
+                    analysis_result = f"Quick Analysis for {os.path.basename(self.current_binary)}:\n"
+                    analysis_result += f"- Error: {str(e)}\n"
+                    analysis_result += "- Status: Analysis failed\n"
+                    self.analysis_results[self.current_binary] = analysis_result
+                    self.log_activity(f"Analysis failed: {e}")
+            else:
+                analysis_result = f"Quick Analysis for {os.path.basename(self.current_binary)}:\n"
+                analysis_result += "- Error: Analysis system not initialized\n"
+                analysis_result += "- Status: No analysis available\n"
+                self.analysis_results[self.current_binary] = analysis_result
+                self.log_activity("Analysis unavailable: No app context")
 
     def load_in_ghidra(self):
         """Load the current binary in Ghidra"""
@@ -577,21 +600,30 @@ class DashboardTab(BaseTab):
 
     def populate_recent_files(self):
         """Populate the recent files list"""
-        # Simulated recent files - in real implementation, this would load from settings
-        recent_files = [
-            "C:\\samples\\malware1.exe",
-            "C:\\samples\\target_app.exe",
-            "/home/user/binaries/test.so",
-            "C:\\analysis\\crackme.exe"
-        ]
-
         self.recent_files_list.clear()
-        for file_path in recent_files:
-            if os.path.exists(file_path):
-                item = QListWidgetItem(os.path.basename(file_path))
-                item.setData(Qt.ItemDataRole.UserRole, file_path)
-                item.setToolTip(file_path)
-                self.recent_files_list.addItem(item)
+        
+        if self.app_context:
+            recent_files = self.app_context.get_recent_files()
+            for file_path in recent_files:
+                if os.path.exists(file_path):
+                    item = QListWidgetItem(os.path.basename(file_path))
+                    item.setData(Qt.ItemDataRole.UserRole, file_path)
+                    item.setToolTip(file_path)
+                    self.recent_files_list.addItem(item)
+                else:
+                    # Show missing files in a different style
+                    item = QListWidgetItem(f"{os.path.basename(file_path)} (missing)")
+                    item.setData(Qt.ItemDataRole.UserRole, file_path)
+                    item.setToolTip(f"File not found: {file_path}")
+                    item.setForeground(Qt.GlobalColor.gray)
+                    self.recent_files_list.addItem(item)
+        
+        if self.recent_files_list.count() == 0:
+            # Show placeholder when no recent files
+            item = QListWidgetItem("No recent files")
+            item.setForeground(Qt.GlobalColor.gray)
+            item.setFlags(Qt.ItemFlag.NoItemFlags)  # Make it non-selectable
+            self.recent_files_list.addItem(item)
 
     def load_recent_file(self, item):
         """Load a file from the recent files list"""
@@ -605,26 +637,39 @@ class DashboardTab(BaseTab):
 
     def add_to_recent_files(self, file_path):
         """Add a file to the recent files list"""
-        # Check if already in list
-        for i in range(self.recent_files_list.count()):
-            item = self.recent_files_list.item(i)
-            if item.data(Qt.ItemDataRole.UserRole) == file_path:
-                self.recent_files_list.takeItem(i)
-                break
+        if self.app_context:
+            # Add to app context recent files
+            self.app_context._add_to_recent_files(file_path)
+            
+            # Update the UI to reflect the change
+            self.populate_recent_files()
+        else:
+            # Fallback to local list management if no app_context
+            # Check if already in list
+            for i in range(self.recent_files_list.count()):
+                item = self.recent_files_list.item(i)
+                if item.data(Qt.ItemDataRole.UserRole) == file_path:
+                    self.recent_files_list.takeItem(i)
+                    break
 
-        # Add to top of list
-        item = QListWidgetItem(os.path.basename(file_path))
-        item.setData(Qt.ItemDataRole.UserRole, file_path)
-        item.setToolTip(file_path)
-        self.recent_files_list.insertItem(0, item)
+            # Add to top of list
+            item = QListWidgetItem(os.path.basename(file_path))
+            item.setData(Qt.ItemDataRole.UserRole, file_path)
+            item.setToolTip(file_path)
+            self.recent_files_list.insertItem(0, item)
 
-        # Keep only last 10 files
-        while self.recent_files_list.count() > 10:
-            self.recent_files_list.takeItem(self.recent_files_list.count() - 1)
+            # Keep only last 10 files
+            while self.recent_files_list.count() > 10:
+                self.recent_files_list.takeItem(self.recent_files_list.count() - 1)
 
     def clear_recent_files(self):
         """Clear the recent files list"""
-        self.recent_files_list.clear()
+        if self.app_context:
+            # Clear the recent files from app context
+            self.app_context._state['recent_files'].clear()
+        
+        # Update the UI
+        self.populate_recent_files()
         self.log_activity("Recent files list cleared")
 
     def log_activity(self, message):

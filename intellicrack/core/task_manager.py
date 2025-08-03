@@ -13,9 +13,20 @@ from typing import Any, Callable, Dict, List, Optional
 
 from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
 
-from intellicrack.logger import get_logger
-
-logger = get_logger(__name__)
+# Initialize structured logger
+try:
+    from ..utils.logger import get_logger
+    logger = get_logger(__name__)
+    STRUCTURED_LOGGING = True
+except ImportError:
+    # Fallback to traditional logging
+    logger = logging.getLogger(__name__)
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('[%(levelname)s] %(name)s: %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    STRUCTURED_LOGGING = False
 
 
 class TaskStatus(Enum):
@@ -67,24 +78,54 @@ class BaseTask(QRunnable, ABC, metaclass=TaskMeta):
         try:
             self._started_at = datetime.now()
             self.signals.started.emit(self.task_id)
-            logger.info(f"Task started: {self.task_id} - {self.description}")
+            
+            if STRUCTURED_LOGGING:
+                logger.info("Task started",
+                           task_id=self.task_id,
+                           description=self.description,
+                           start_time=self._started_at.isoformat(),
+                           category="task_execution")
+            else:
+                logger.info(f"Task started: {self.task_id} - {self.description}")
 
             # Execute the actual task
             result = self.execute()
 
             if not self._is_cancelled:
                 self.signals.result.emit(self.task_id, result)
-                logger.info(f"Task completed: {self.task_id}")
+                if STRUCTURED_LOGGING:
+                    logger.info("Task completed successfully",
+                               task_id=self.task_id,
+                               description=self.description,
+                               duration=str(datetime.now() - self._started_at),
+                               category="task_execution")
+                else:
+                    logger.info(f"Task completed: {self.task_id}")
             else:
-                logger.info(f"Task cancelled: {self.task_id}")
+                if STRUCTURED_LOGGING:
+                    logger.info("Task cancelled",
+                               task_id=self.task_id,
+                               description=self.description,
+                               category="task_execution")
+                else:
+                    logger.info(f"Task cancelled: {self.task_id}")
 
         except Exception as e:
             error_type = type(e).__name__
             error_msg = str(e)
             error_traceback = traceback.format_exc()
 
-            logger.error(f"Task failed: {self.task_id} - {error_type}: {error_msg}")
-            logger.debug(f"Traceback: {error_traceback}")
+            if STRUCTURED_LOGGING:
+                logger.error("Task execution failed",
+                           task_id=self.task_id,
+                           description=self.description,
+                           error_type=error_type,
+                           error_message=error_msg,
+                           traceback=error_traceback,
+                           category="task_execution")
+            else:
+                logger.error(f"Task failed: {self.task_id} - {error_type}: {error_msg}")
+                logger.debug(f"Traceback: {error_traceback}")
 
             self.signals.error.emit(self.task_id, error_type, error_msg)
 
@@ -100,7 +141,13 @@ class BaseTask(QRunnable, ABC, metaclass=TaskMeta):
     def cancel(self):
         """Cancel the task."""
         self._is_cancelled = True
-        logger.info(f"Task cancellation requested: {self.task_id}")
+        if STRUCTURED_LOGGING:
+            logger.info("Task cancellation requested",
+                       task_id=self.task_id,
+                       description=self.description,
+                       category="task_execution")
+        else:
+            logger.info(f"Task cancellation requested: {self.task_id}")
 
     def is_cancelled(self) -> bool:
         """Check if the task has been cancelled."""
@@ -170,7 +217,12 @@ class TaskManager(QObject):
         self._task_history: List[Dict] = []
         self._task_results: Dict[str, Any] = {}
 
-        logger.info(f"TaskManager initialized with {self.thread_pool.maxThreadCount()} threads")
+        if STRUCTURED_LOGGING:
+            logger.info("TaskManager initialized",
+                       max_threads=self.thread_pool.maxThreadCount(),
+                       category="task_manager")
+        else:
+            logger.info(f"TaskManager initialized with {self.thread_pool.maxThreadCount()} threads")
 
     def submit_task(self, task: BaseTask) -> str:
         """Submit a task for execution."""
@@ -191,7 +243,14 @@ class TaskManager(QObject):
         self.task_submitted.emit(task.task_id, task.description)
         self.active_task_count_changed.emit(len(self._active_tasks))
 
-        logger.info(f"Task submitted: {task.task_id} - {task.description}")
+        if STRUCTURED_LOGGING:
+            logger.info("Task submitted",
+                       task_id=task.task_id,
+                       description=task.description,
+                       active_tasks=len(self._active_tasks),
+                       category="task_manager")
+        else:
+            logger.info(f"Task submitted: {task.task_id} - {task.description}")
         return task.task_id
 
     def submit_callable(self, func: Callable, args: tuple = (), kwargs: dict = None,
@@ -205,7 +264,13 @@ class TaskManager(QObject):
         if task_id in self._active_tasks:
             task = self._active_tasks[task_id]
             task.cancel()
-            logger.info(f"Task cancelled: {task_id}")
+            if STRUCTURED_LOGGING:
+                logger.info("Task cancelled by manager",
+                           task_id=task_id,
+                           description=task.description,
+                           category="task_manager")
+            else:
+                logger.info(f"Task cancelled: {task_id}")
             return True
         return False
 
@@ -237,29 +302,59 @@ class TaskManager(QObject):
     def set_thread_count(self, count: int):
         """Set the maximum thread count."""
         self.thread_pool.setMaxThreadCount(count)
-        logger.info(f"Thread count set to {count}")
+        if STRUCTURED_LOGGING:
+            logger.info("Thread count updated",
+                       new_thread_count=count,
+                       category="task_manager")
+        else:
+            logger.info(f"Thread count set to {count}")
 
     # Private slot methods
     @pyqtSlot(str)
     def _on_task_started(self, task_id: str):
         """Handle task start."""
-        logger.debug(f"Task started signal received: {task_id}")
+        if STRUCTURED_LOGGING:
+            logger.debug("Task started signal received",
+                        task_id=task_id,
+                        category="task_manager")
+        else:
+            logger.debug(f"Task started signal received: {task_id}")
 
     @pyqtSlot(str, int, str)
     def _on_task_progress(self, task_id: str, percentage: int, message: str):
         """Handle task progress update."""
-        logger.debug(f"Task progress: {task_id} - {percentage}% - {message}")
+        if STRUCTURED_LOGGING:
+            logger.debug("Task progress update",
+                        task_id=task_id,
+                        percentage=percentage,
+                        message=message,
+                        category="task_manager")
+        else:
+            logger.debug(f"Task progress: {task_id} - {percentage}% - {message}")
 
     @pyqtSlot(str, object)
     def _on_task_result(self, task_id: str, result: Any):
         """Handle task result."""
         self._task_results[task_id] = result
-        logger.debug(f"Task result received: {task_id}")
+        if STRUCTURED_LOGGING:
+            logger.debug("Task result received",
+                        task_id=task_id,
+                        result_type=type(result).__name__,
+                        category="task_manager")
+        else:
+            logger.debug(f"Task result received: {task_id}")
 
     @pyqtSlot(str, str, str)
     def _on_task_error(self, task_id: str, error_type: str, error_message: str):
         """Handle task error."""
-        logger.error(f"Task error: {task_id} - {error_type}: {error_message}")
+        if STRUCTURED_LOGGING:
+            logger.error("Task error received",
+                        task_id=task_id,
+                        error_type=error_type,
+                        error_message=error_message,
+                        category="task_manager")
+        else:
+            logger.error(f"Task error: {task_id} - {error_type}: {error_message}")
 
     @pyqtSlot(str)
     def _on_task_finished(self, task_id: str):
@@ -288,7 +383,13 @@ class TaskManager(QObject):
             if not self._active_tasks:
                 self.all_tasks_completed.emit()
 
-        logger.debug(f"Task finished: {task_id}")
+        if STRUCTURED_LOGGING:
+            logger.debug("Task finished",
+                        task_id=task_id,
+                        remaining_tasks=len(self._active_tasks),
+                        category="task_manager")
+        else:
+            logger.debug(f"Task finished: {task_id}")
 
 
 class LongRunningTask(BaseTask):
@@ -306,17 +407,28 @@ class LongRunningTask(BaseTask):
 
     def execute(self) -> str:
         """Simulate a long-running operation."""
-        import time
+        import asyncio
+        import threading
 
-        for i in range(self.duration):
-            if self.is_cancelled():
-                return "Task cancelled"
+        async def async_execute():
+            for i in range(self.duration):
+                if self.is_cancelled():
+                    return "Task cancelled"
 
-            time.sleep(1)
-            progress = int((i + 1) / self.duration * 100)
-            self.emit_progress(progress, f"Processing step {i + 1}/{self.duration}")
+                await asyncio.sleep(1)
+                progress = int((i + 1) / self.duration * 100)
+                self.emit_progress(progress, f"Processing step {i + 1}/{self.duration}")
 
-        return f"Task completed after {self.duration} seconds"
+            return f"Task completed after {self.duration} seconds"
+
+        # Run async code in synchronous context
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        return loop.run_until_complete(async_execute())
 
 
 # Global instance

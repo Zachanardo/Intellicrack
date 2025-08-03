@@ -842,13 +842,32 @@ class TelemetryCollector:
 
     def _export_loop(self):
         """Main export loop."""
-        while self._running:
-            try:
-                self._collect_and_export()
-                time.sleep(self.export_interval)
-            except Exception as e:
-                logger.error(f"Telemetry export error: {e}")
-                time.sleep(60)  # Wait before retrying
+        import asyncio
+        
+        async def async_export_loop():
+            while self._running:
+                try:
+                    self._collect_and_export()
+                    await asyncio.sleep(self.export_interval)
+                except Exception as e:
+                    logger.error(f"Telemetry export error: {e}")
+                    await asyncio.sleep(60)  # Wait before retrying
+
+        # Run async export loop
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(async_export_loop())
+        except Exception as e:
+            logger.error(f"Error in async export loop: {e}")
+            # Fallback to sync version
+            while self._running:
+                try:
+                    self._collect_and_export()
+                    asyncio.run(asyncio.sleep(self.export_interval))
+                except Exception as e:
+                    logger.error(f"Telemetry export error: {e}")
+                    asyncio.run(asyncio.sleep(60))
 
     def _collect_and_export(self):
         """Collect and export telemetry data."""
@@ -1109,3 +1128,25 @@ def log_credential_access(credential_type: str, purpose: str, **kwargs):
 def log_tool_execution(tool_name: str, command: str, **kwargs):
     """Convenience function to log tool execution."""
     get_audit_logger().log_tool_execution(tool_name, command, **kwargs)
+
+
+# Global audit logger instance
+_audit_logger = None
+
+
+# Export public interface
+__all__ = [
+    'AuditEventType',
+    'AuditSeverity',
+    'AuditEvent',
+    'AuditLogger',
+    'PerformanceMonitor',
+    'TelemetryCollector',
+    'ContextualLogger',
+    'get_audit_logger',
+    'log_exploit_attempt',
+    'log_binary_analysis',
+    'log_vm_operation',
+    'log_credential_access',
+    'log_tool_execution',
+]

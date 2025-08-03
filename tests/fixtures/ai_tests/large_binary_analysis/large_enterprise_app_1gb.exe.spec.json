@@ -1,0 +1,7 @@
+{
+  "name": "large_enterprise_app_1gb.exe",
+  "size": 1073741824,
+  "type": "enterprise_software",
+  "complexity": "high",
+  "protection": "multiple_layers"
+}

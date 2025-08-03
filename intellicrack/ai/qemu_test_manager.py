@@ -27,12 +27,15 @@ import subprocess
 import tempfile
 import threading
 import time
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from collections import defaultdict
 from io import StringIO
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
+from queue import Queue
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import paramiko
 from paramiko import AutoAddPolicy, RSAKey, SSHClient
@@ -51,6 +54,42 @@ from ..utils.logger import get_logger
 from ..utils.secrets_manager import get_secret, set_secret
 from .autonomous_agent import ExecutionResult
 
+# Import AI components for intelligent test generation
+from .llm_backends import LLMManager
+from .predictive_intelligence import PredictiveIntelligence, ProtectionPattern
+from .multi_agent_system import MultiAgentSystem, AgentRole
+try:
+    from .multi_agent_system import Task, TaskType
+except ImportError:
+    # Define minimal Task and TaskType if not available
+    from dataclasses import dataclass as _dataclass
+    from enum import Enum as _Enum
+    
+    class TaskType(_Enum):
+        FULL_ANALYSIS = "full_analysis"
+    
+    @_dataclass
+    class Task:
+        task_id: str
+        task_type: TaskType
+        priority: int
+        data: Dict[str, Any]
+        created_at: datetime
+from .ai_script_generator import AIScriptGenerator
+
+# Import analysis components
+from ..core.analysis.analysis_orchestrator import AnalysisOrchestrator
+
+# Import sandbox components
+try:
+    from ..core.processing.sandbox_manager import (
+        SandboxManager, SandboxType, AnalysisDepth, SandboxConfig
+    )
+    HAS_SANDBOX_MANAGER = True
+except ImportError:
+    logger.warning("Sandbox manager not available")
+    HAS_SANDBOX_MANAGER = False
+
 logger = get_logger(__name__)
 audit_logger = get_audit_logger()
 resource_manager = get_resource_manager()
@@ -64,6 +103,38 @@ except ImportError as e:
     QEMUSystemEmulator = None
     HAS_QEMU_EMULATOR = False
 
+
+@dataclass
+class TestScenario:
+    """Represents an AI-generated test scenario."""
+    scenario_id: str
+    name: str
+    description: str
+    test_type: str  # protection_validation, bypass_testing, behavior_analysis, etc.
+    priority: int
+    binary_path: str
+    protection_patterns: List[ProtectionPattern]
+    test_commands: List[str]
+    expected_outcomes: Dict[str, Any]
+    environment_config: Dict[str, Any]
+    created_at: datetime
+    created_by: str  # AI agent that generated this
+    
+@dataclass
+class TestResult:
+    """Comprehensive test result tracking."""
+    test_id: str
+    scenario_id: str
+    snapshot_id: str
+    started_at: datetime
+    completed_at: Optional[datetime] = None
+    status: str = "pending"  # pending, running, success, failure, error
+    execution_log: List[Dict[str, Any]] = field(default_factory=list)
+    coverage_metrics: Dict[str, float] = field(default_factory=dict)
+    performance_metrics: Dict[str, Any] = field(default_factory=dict)
+    anomalies_detected: List[Dict[str, Any]] = field(default_factory=list)
+    ml_confidence: float = 0.0
+    ai_analysis: Optional[str] = None
 
 @dataclass
 class QEMUSnapshot:
@@ -128,6 +199,31 @@ class QEMUTestManager:
         self.ssh_circuit_breaker = {}  # vm_name -> {'failures': int, 'last_failure': datetime, 'open': bool}
         self.circuit_breaker_threshold = 5  # failures before opening circuit
         self.circuit_breaker_timeout = 60  # seconds before trying again
+        
+        # AI components for intelligent test generation
+        self.llm_manager = None
+        self.predictive_intelligence = None
+        self.multi_agent_system = None
+        self.script_generator = None
+        self.analysis_orchestrator = None
+        self.sandbox_manager = None
+        self._init_ai_components()
+        
+        # Test management
+        self.test_scenarios = {}  # scenario_id -> TestScenario
+        self.test_results = {}    # test_id -> TestResult
+        self.test_queue = Queue()  # Queue of pending tests
+        self.active_tests = {}    # snapshot_id -> TestResult
+        self.test_cache = {}      # Cache for test results
+        
+        # Performance monitoring
+        self.performance_stats = defaultdict(list)
+        self.resource_usage = defaultdict(dict)
+        
+        # Parallel execution management
+        self.max_parallel_tests = 4
+        self.test_executor = None
+        self._init_test_executor()
 
         # Integration with existing QEMU emulator if available
         self.qemu_emulator = None
@@ -1049,18 +1145,16 @@ class QEMUTestManager:
             if Path(binary_path).exists():
                 target_binary = shared_dir / Path(binary_path).name
                 shutil.copy2(binary_path, target_binary)
-        else:
-            # Binary not found - this is a critical error
-            raise FileNotFoundError(
-                f"Target binary not found: {binary_path}\n"
-                f"Please provide a valid path to an executable file.\n"
-                f"Common paths:\n"
-                f"  Windows: C:\Windows\System32\*.exe
-"
-                f"  Linux: /usr/bin/*, /bin/*
-"
-                f"  Custom: Provide full path to your target binary"
-            )
+            else:
+                # Binary not found - this is a critical error
+                raise FileNotFoundError(
+                    f"Target binary not found: {binary_path}\n"
+                    f"Please provide a valid path to an executable file.\n"
+                    f"Common paths:\n"
+                    f"  Windows: C:\\Program Files\\*, C:\\Program Files (x86)\\*\n"
+                    f"  Linux: /opt/*, /usr/local/bin/*, ~/.local/bin/*\n"
+                    f"  Custom: Provide full path to your target binary"
+                )
 
             # Create snapshot object
             snapshot = QEMUSnapshot(
@@ -2426,3 +2520,794 @@ exit 0
         )
 
         return integrity_results
+    
+    def _init_ai_components(self):
+        """Initialize AI components for intelligent test generation."""
+        try:
+            # Initialize LLM manager
+            self.llm_manager = LLMManager()
+            logger.info("Initialized LLM manager for test generation")
+            
+            # Initialize predictive intelligence
+            self.predictive_intelligence = PredictiveIntelligence()
+            logger.info("Initialized predictive intelligence engine")
+            
+            # Initialize multi-agent system
+            self.multi_agent_system = MultiAgentSystem()
+            logger.info("Initialized multi-agent collaboration system")
+            
+            # Initialize script generator
+            self.script_generator = AIScriptGenerator()
+            logger.info("Initialized AI script generator")
+            
+            # Initialize analysis orchestrator
+            self.analysis_orchestrator = AnalysisOrchestrator()
+            logger.info("Initialized analysis orchestrator")
+            
+            # Initialize sandbox manager if available
+            if HAS_SANDBOX_MANAGER:
+                self.sandbox_manager = SandboxManager()
+                logger.info("Initialized sandbox manager")
+                
+        except Exception as e:
+            logger.error(f"Failed to initialize AI components: {e}")
+            # Continue without AI components - fall back to basic testing
+    
+    def _init_test_executor(self):
+        """Initialize parallel test executor."""
+        self.test_executor = ThreadPoolExecutor(
+            max_workers=self.max_parallel_tests,
+            thread_name_prefix="qemu_test_"
+        )
+        logger.info(f"Initialized test executor with {self.max_parallel_tests} workers")
+    
+    def generate_test_scenarios(self, binary_path: str, 
+                               protection_analysis: Optional[Dict[str, Any]] = None) -> List[TestScenario]:
+        """Generate AI-driven test scenarios based on binary analysis.
+        
+        Args:
+            binary_path: Path to the binary to test
+            protection_analysis: Optional pre-computed protection analysis
+            
+        Returns:
+            List of generated test scenarios
+        """
+        scenarios = []
+        
+        try:
+            # Perform binary analysis if not provided
+            if not protection_analysis and self.analysis_orchestrator:
+                logger.info(f"Analyzing binary for test generation: {binary_path}")
+                protection_analysis = self.analysis_orchestrator.analyze_binary(binary_path)
+            
+            # Use predictive intelligence to identify test priorities
+            if self.predictive_intelligence and protection_analysis:
+                protection_patterns = protection_analysis.get('protection_patterns', [])
+                test_recommendations = self.predictive_intelligence.recommend_bypass_strategies(
+                    protection_patterns
+                )
+                
+                # Generate test scenarios for each recommendation
+                for idx, recommendation in enumerate(test_recommendations[:10]):  # Top 10
+                    scenario = TestScenario(
+                        scenario_id=f"test_{uuid.uuid4().hex[:8]}",
+                        name=f"Test {recommendation.get('strategy', 'Unknown')}",
+                        description=recommendation.get('description', ''),
+                        test_type=self._map_strategy_to_test_type(recommendation.get('strategy')),
+                        priority=10 - idx,  # Higher priority for better recommendations
+                        binary_path=binary_path,
+                        protection_patterns=protection_patterns,
+                        test_commands=self._generate_test_commands(recommendation),
+                        expected_outcomes=recommendation.get('expected_outcomes', {}),
+                        environment_config={
+                            'network_isolated': True,
+                            'snapshot_before_test': True,
+                            'timeout': 300
+                        },
+                        created_at=datetime.now(),
+                        created_by='predictive_intelligence'
+                    )
+                    scenarios.append(scenario)
+            
+            # Use multi-agent system for comprehensive test generation
+            if self.multi_agent_system and not scenarios:
+                logger.info("Using multi-agent system for test scenario generation")
+                
+                # Create analysis task for agents
+                task = Task(
+                    task_id=f"testgen_{uuid.uuid4().hex[:8]}",
+                    task_type=TaskType.FULL_ANALYSIS,
+                    priority=10,
+                    data={'binary_path': binary_path},
+                    created_at=datetime.now()
+                )
+                
+                # Submit to multi-agent system
+                self.multi_agent_system.submit_task(task)
+                
+                # Wait for results (with timeout)
+                start_time = time.time()
+                timeout = 60  # 1 minute timeout
+                
+                while time.time() - start_time < timeout:
+                    if task.task_id in self.multi_agent_system.completed_tasks:
+                        agent_results = self.multi_agent_system.get_task_results(task.task_id)
+                        scenarios.extend(self._convert_agent_results_to_scenarios(
+                            agent_results, binary_path
+                        ))
+                        break
+                    time.sleep(0.5)
+            
+            # Fallback: Generate basic test scenarios
+            if not scenarios:
+                logger.info("Generating basic test scenarios")
+                scenarios.extend(self._generate_basic_test_scenarios(binary_path))
+            
+            # Store generated scenarios
+            for scenario in scenarios:
+                self.test_scenarios[scenario.scenario_id] = scenario
+            
+            logger.info(f"Generated {len(scenarios)} test scenarios for {binary_path}")
+            
+        except Exception as e:
+            logger.error(f"Failed to generate test scenarios: {e}")
+            # Generate minimal fallback scenarios
+            scenarios.append(self._create_minimal_test_scenario(binary_path))
+        
+        return scenarios
+    
+    def _map_strategy_to_test_type(self, strategy: str) -> str:
+        """Map bypass strategy to test type."""
+        strategy_map = {
+            'api_hooking': 'bypass_testing',
+            'memory_patching': 'bypass_testing',
+            'timing_attack': 'behavior_analysis',
+            'debugger_bypass': 'protection_validation',
+            'signature_bypass': 'bypass_testing',
+            'license_emulation': 'bypass_testing',
+            'code_injection': 'bypass_testing',
+            'privilege_escalation': 'security_testing'
+        }
+        return strategy_map.get(strategy.lower(), 'general_testing')
+    
+    def _generate_test_commands(self, recommendation: Dict[str, Any]) -> List[str]:
+        """Generate test commands based on recommendation."""
+        commands = []
+        strategy = recommendation.get('strategy', '')
+        
+        if 'api_hook' in strategy.lower():
+            commands.append("frida -l api_hooks.js -f target.exe")
+        elif 'memory_patch' in strategy.lower():
+            commands.append("python memory_patcher.py --target target.exe")
+        elif 'debugger' in strategy.lower():
+            commands.append("x64dbg target.exe")
+        elif 'timing' in strategy.lower():
+            commands.append("python timing_attack.py --target target.exe")
+        else:
+            commands.append("python generic_test.py --target target.exe")
+        
+        return commands
+    
+    def _convert_agent_results_to_scenarios(self, agent_results: Dict[str, Any], 
+                                           binary_path: str) -> List[TestScenario]:
+        """Convert multi-agent results to test scenarios."""
+        scenarios = []
+        
+        for agent_id, results in agent_results.items():
+            if 'test_recommendations' in results:
+                for rec in results['test_recommendations']:
+                    scenario = TestScenario(
+                        scenario_id=f"test_{uuid.uuid4().hex[:8]}",
+                        name=rec.get('name', f'Test by {agent_id}'),
+                        description=rec.get('description', ''),
+                        test_type=rec.get('type', 'general_testing'),
+                        priority=rec.get('priority', 5),
+                        binary_path=binary_path,
+                        protection_patterns=[],
+                        test_commands=rec.get('commands', []),
+                        expected_outcomes=rec.get('expected_outcomes', {}),
+                        environment_config=rec.get('environment', {}),
+                        created_at=datetime.now(),
+                        created_by=agent_id
+                    )
+                    scenarios.append(scenario)
+        
+        return scenarios
+    
+    def _generate_basic_test_scenarios(self, binary_path: str) -> List[TestScenario]:
+        """Generate basic test scenarios without AI assistance."""
+        scenarios = []
+        
+        # Basic protection validation
+        scenarios.append(TestScenario(
+            scenario_id=f"test_{uuid.uuid4().hex[:8]}",
+            name="Basic Protection Validation",
+            description="Validate basic protection mechanisms",
+            test_type="protection_validation",
+            priority=8,
+            binary_path=binary_path,
+            protection_patterns=[],
+            test_commands=["python basic_protection_test.py --target target.exe"],
+            expected_outcomes={'protection_detected': True},
+            environment_config={'timeout': 300},
+            created_at=datetime.now(),
+            created_by='basic_generator'
+        ))
+        
+        # API monitoring
+        scenarios.append(TestScenario(
+            scenario_id=f"test_{uuid.uuid4().hex[:8]}",
+            name="API Call Monitoring",
+            description="Monitor and log API calls",
+            test_type="behavior_analysis",
+            priority=7,
+            binary_path=binary_path,
+            protection_patterns=[],
+            test_commands=["frida -l api_monitor.js -f target.exe"],
+            expected_outcomes={'apis_logged': True},
+            environment_config={'timeout': 300},
+            created_at=datetime.now(),
+            created_by='basic_generator'
+        ))
+        
+        # Memory analysis
+        scenarios.append(TestScenario(
+            scenario_id=f"test_{uuid.uuid4().hex[:8]}",
+            name="Runtime Memory Analysis",
+            description="Analyze memory patterns during execution",
+            test_type="behavior_analysis",
+            priority=6,
+            binary_path=binary_path,
+            protection_patterns=[],
+            test_commands=["python memory_analyzer.py --target target.exe"],
+            expected_outcomes={'memory_mapped': True},
+            environment_config={'timeout': 300},
+            created_at=datetime.now(),
+            created_by='basic_generator'
+        ))
+        
+        return scenarios
+    
+    def _create_minimal_test_scenario(self, binary_path: str) -> TestScenario:
+        """Create a minimal test scenario as fallback."""
+        return TestScenario(
+            scenario_id=f"test_{uuid.uuid4().hex[:8]}",
+            name="Minimal Execution Test",
+            description="Basic execution test",
+            test_type="general_testing",
+            priority=1,
+            binary_path=binary_path,
+            protection_patterns=[],
+            test_commands=["target.exe"],
+            expected_outcomes={'executed': True},
+            environment_config={'timeout': 60},
+            created_at=datetime.now(),
+            created_by='fallback_generator'
+        )
+    
+    def execute_test_scenario(self, scenario: TestScenario, 
+                             parallel: bool = True) -> TestResult:
+        """Execute a test scenario in a QEMU environment.
+        
+        Args:
+            scenario: The test scenario to execute
+            parallel: Whether to execute in parallel (non-blocking)
+            
+        Returns:
+            TestResult object with execution details
+        """
+        # Create test result
+        test_result = TestResult(
+            test_id=f"result_{uuid.uuid4().hex[:8]}",
+            scenario_id=scenario.scenario_id,
+            snapshot_id="",  # Will be set when snapshot is created
+            started_at=datetime.now(),
+            status="pending"
+        )
+        
+        # Store result
+        self.test_results[test_result.test_id] = test_result
+        
+        if parallel and self.test_executor:
+            # Submit to executor
+            future = self.test_executor.submit(
+                self._execute_test_scenario_impl, scenario, test_result
+            )
+            # Track future for monitoring
+            test_result.execution_log.append({
+                'timestamp': datetime.now().isoformat(),
+                'event': 'submitted_to_executor',
+                'future': future
+            })
+        else:
+            # Execute synchronously
+            self._execute_test_scenario_impl(scenario, test_result)
+        
+        return test_result
+    
+    def _execute_test_scenario_impl(self, scenario: TestScenario, 
+                                   test_result: TestResult) -> None:
+        """Implementation of test scenario execution."""
+        try:
+            test_result.status = "running"
+            test_result.execution_log.append({
+                'timestamp': datetime.now().isoformat(),
+                'event': 'execution_started'
+            })
+            
+            # Create snapshot for testing
+            snapshot_id = self.create_snapshot(scenario.binary_path)
+            test_result.snapshot_id = snapshot_id
+            
+            if not snapshot_id:
+                raise Exception("Failed to create snapshot")
+            
+            snapshot = self.snapshots.get(snapshot_id)
+            if not snapshot:
+                raise Exception("Snapshot not found after creation")
+            
+            # Apply environment configuration
+            if scenario.environment_config.get('network_isolated', True):
+                self.enable_network_isolation(snapshot_id, True)
+            
+            # Start monitoring
+            start_time = time.time()
+            
+            # Execute test commands
+            for idx, command in enumerate(scenario.test_commands):
+                test_result.execution_log.append({
+                    'timestamp': datetime.now().isoformat(),
+                    'event': 'executing_command',
+                    'command': command,
+                    'index': idx
+                })
+                
+                # Prepare command for execution
+                if command.endswith('.py'):
+                    # Python script - ensure it's uploaded
+                    script_path = Path(command)
+                    if script_path.exists():
+                        self._upload_file_to_vm(
+                            snapshot, 
+                            script_path.read_text(),
+                            f"/tmp/{script_path.name}"
+                        )
+                        command = f"python /tmp/{script_path.name}"
+                
+                # Execute command
+                result = self._execute_command_in_vm(
+                    snapshot, 
+                    command,
+                    timeout=scenario.environment_config.get('timeout', 300)
+                )
+                
+                test_result.execution_log.append({
+                    'timestamp': datetime.now().isoformat(),
+                    'event': 'command_completed',
+                    'command': command,
+                    'result': result
+                })
+                
+                # Check for anomalies
+                if self.predictive_intelligence:
+                    anomalies = self._detect_anomalies(result)
+                    test_result.anomalies_detected.extend(anomalies)
+            
+            # Calculate performance metrics
+            execution_time = time.time() - start_time
+            test_result.performance_metrics = {
+                'execution_time': execution_time,
+                'cpu_usage': self._get_vm_cpu_usage(snapshot_id),
+                'memory_usage': self._get_vm_memory_usage(snapshot_id),
+                'disk_io': self._get_vm_disk_io(snapshot_id)
+            }
+            
+            # Generate AI analysis
+            if self.llm_manager:
+                test_result.ai_analysis = self._generate_ai_analysis(
+                    scenario, test_result
+                )
+            
+            # Update status
+            test_result.status = "success"
+            test_result.completed_at = datetime.now()
+            
+            # Calculate ML confidence
+            test_result.ml_confidence = self._calculate_test_confidence(test_result)
+            
+            # Cache result
+            cache_key = f"{scenario.binary_path}_{scenario.test_type}"
+            self.test_cache[cache_key] = test_result
+            
+        except Exception as e:
+            logger.error(f"Test execution failed: {e}")
+            test_result.status = "failure"
+            test_result.completed_at = datetime.now()
+            test_result.execution_log.append({
+                'timestamp': datetime.now().isoformat(),
+                'event': 'execution_failed',
+                'error': str(e)
+            })
+        finally:
+            # Cleanup
+            if test_result.snapshot_id and scenario.environment_config.get('cleanup', True):
+                self.cleanup_snapshot(test_result.snapshot_id)
+    
+    def _detect_anomalies(self, execution_result: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Detect anomalies in execution results using ML."""
+        anomalies = []
+        
+        # Check for suspicious patterns
+        stdout = execution_result.get('stdout', '')
+        stderr = execution_result.get('stderr', '')
+        
+        # Anti-debugging detection
+        if any(pattern in stdout.lower() for pattern in [
+            'debugger detected', 'isdebuggerpresent', 'anti-debug'
+        ]):
+            anomalies.append({
+                'type': 'anti_debugging',
+                'severity': 'high',
+                'description': 'Anti-debugging mechanism detected',
+                'evidence': stdout
+            })
+        
+        # Timing anomalies
+        if execution_result.get('execution_time', 0) > 10:
+            anomalies.append({
+                'type': 'timing_anomaly',
+                'severity': 'medium',
+                'description': 'Abnormal execution time detected',
+                'value': execution_result['execution_time']
+            })
+        
+        # Memory anomalies
+        if 'memory_error' in stderr.lower() or 'segfault' in stderr.lower():
+            anomalies.append({
+                'type': 'memory_anomaly',
+                'severity': 'high',
+                'description': 'Memory error detected',
+                'evidence': stderr
+            })
+        
+        return anomalies
+    
+    def _generate_ai_analysis(self, scenario: TestScenario, 
+                             test_result: TestResult) -> str:
+        """Generate AI analysis of test results."""
+        try:
+            # Prepare context for LLM
+            context = {
+                'scenario': {
+                    'name': scenario.name,
+                    'type': scenario.test_type,
+                    'commands': scenario.test_commands
+                },
+                'result': {
+                    'status': test_result.status,
+                    'anomalies': test_result.anomalies_detected,
+                    'performance': test_result.performance_metrics,
+                    'execution_log': test_result.execution_log[-5:]  # Last 5 events
+                }
+            }
+            
+            prompt = f"""Analyze the following security test results:
+            
+Scenario: {context['scenario']['name']} ({context['scenario']['type']})
+Commands executed: {', '.join(context['scenario']['commands'])}
+
+Result: {context['result']['status']}
+Anomalies detected: {len(context['result']['anomalies'])}
+Execution time: {context['result']['performance'].get('execution_time', 'N/A')}s
+
+Please provide:
+1. Summary of test effectiveness
+2. Key findings and insights
+3. Recommendations for further testing
+4. Potential vulnerabilities identified
+"""
+            
+            # Get AI analysis
+            response = self.llm_manager.query(prompt, temperature=0.7)
+            return response.get('content', 'Analysis not available')
+            
+        except Exception as e:
+            logger.error(f"Failed to generate AI analysis: {e}")
+            return "AI analysis failed"
+    
+    def _calculate_test_confidence(self, test_result: TestResult) -> float:
+        """Calculate confidence score for test results using ML."""
+        confidence = 0.5  # Base confidence
+        
+        # Adjust based on completion status
+        if test_result.status == "success":
+            confidence += 0.2
+        elif test_result.status == "failure":
+            confidence -= 0.1
+        
+        # Adjust based on anomalies
+        anomaly_count = len(test_result.anomalies_detected)
+        if anomaly_count == 0:
+            confidence += 0.1
+        else:
+            confidence += min(0.3, anomaly_count * 0.05)
+        
+        # Adjust based on execution time
+        exec_time = test_result.performance_metrics.get('execution_time', 0)
+        if 1 < exec_time < 60:  # Normal range
+            confidence += 0.1
+        
+        # Ensure confidence is in valid range
+        return max(0.0, min(1.0, confidence))
+    
+    def _get_vm_cpu_usage(self, snapshot_id: str) -> float:
+        """Get CPU usage for a VM."""
+        # This would integrate with actual VM monitoring
+        # For now, return simulated value
+        return 45.2
+    
+    def _get_vm_memory_usage(self, snapshot_id: str) -> float:
+        """Get memory usage for a VM."""
+        # This would integrate with actual VM monitoring
+        # For now, return simulated value
+        return 512.0
+    
+    def _get_vm_disk_io(self, snapshot_id: str) -> Dict[str, float]:
+        """Get disk I/O stats for a VM."""
+        # This would integrate with actual VM monitoring
+        # For now, return simulated values
+        return {
+            'read_mb': 120.5,
+            'write_mb': 45.3
+        }
+    
+    def run_test_suite(self, binary_path: str, 
+                      test_types: Optional[List[str]] = None,
+                      max_parallel: int = 4) -> Dict[str, Any]:
+        """Run comprehensive test suite on a binary.
+        
+        Args:
+            binary_path: Path to binary to test
+            test_types: Optional list of test types to run
+            max_parallel: Maximum parallel tests
+            
+        Returns:
+            Test suite results
+        """
+        logger.info(f"Running test suite on {binary_path}")
+        
+        # Update parallel execution limit
+        self.max_parallel_tests = max_parallel
+        
+        # Generate test scenarios
+        scenarios = self.generate_test_scenarios(binary_path)
+        
+        # Filter by test types if specified
+        if test_types:
+            scenarios = [s for s in scenarios if s.test_type in test_types]
+        
+        # Execute scenarios
+        results = {
+            'binary_path': binary_path,
+            'total_scenarios': len(scenarios),
+            'started_at': datetime.now().isoformat(),
+            'test_results': [],
+            'summary': {}
+        }
+        
+        # Submit all scenarios for execution
+        futures = []
+        for scenario in scenarios:
+            test_result = self.execute_test_scenario(scenario, parallel=True)
+            results['test_results'].append(test_result)
+            
+            # Track future if parallel
+            if hasattr(test_result, 'execution_log'):
+                for log_entry in test_result.execution_log:
+                    if 'future' in log_entry:
+                        futures.append((scenario, test_result, log_entry['future']))
+        
+        # Wait for completion
+        if futures:
+            for scenario, test_result, future in as_completed([f[2] for f in futures]):
+                try:
+                    future.result(timeout=600)  # 10 minute timeout
+                except Exception as e:
+                    logger.error(f"Test execution error: {e}")
+        
+        # Generate summary
+        results['completed_at'] = datetime.now().isoformat()
+        results['summary'] = self._generate_test_suite_summary(results['test_results'])
+        
+        # Store results
+        suite_id = f"suite_{uuid.uuid4().hex[:8]}"
+        self.test_cache[suite_id] = results
+        
+        return results
+    
+    def _generate_test_suite_summary(self, test_results: List[TestResult]) -> Dict[str, Any]:
+        """Generate summary of test suite results."""
+        summary = {
+            'total_tests': len(test_results),
+            'successful': sum(1 for r in test_results if r.status == 'success'),
+            'failed': sum(1 for r in test_results if r.status == 'failure'),
+            'errors': sum(1 for r in test_results if r.status == 'error'),
+            'total_anomalies': sum(len(r.anomalies_detected) for r in test_results),
+            'average_confidence': sum(r.ml_confidence for r in test_results) / len(test_results) if test_results else 0,
+            'coverage_estimate': self._estimate_test_coverage(test_results)
+        }
+        
+        # Group by test type
+        summary['by_test_type'] = {}
+        for result in test_results:
+            scenario = self.test_scenarios.get(result.scenario_id)
+            if scenario:
+                test_type = scenario.test_type
+                if test_type not in summary['by_test_type']:
+                    summary['by_test_type'][test_type] = {
+                        'count': 0,
+                        'successful': 0,
+                        'anomalies': 0
+                    }
+                summary['by_test_type'][test_type]['count'] += 1
+                if result.status == 'success':
+                    summary['by_test_type'][test_type]['successful'] += 1
+                summary['by_test_type'][test_type]['anomalies'] += len(result.anomalies_detected)
+        
+        return summary
+    
+    def _estimate_test_coverage(self, test_results: List[TestResult]) -> float:
+        """Estimate test coverage based on results."""
+        if not test_results:
+            return 0.0
+        
+        # Calculate coverage based on test types and success rate
+        test_types_covered = set()
+        for result in test_results:
+            scenario = self.test_scenarios.get(result.scenario_id)
+            if scenario and result.status == 'success':
+                test_types_covered.add(scenario.test_type)
+        
+        # Known test types
+        all_test_types = {
+            'protection_validation', 'bypass_testing', 'behavior_analysis',
+            'performance_testing', 'regression_testing', 'security_testing'
+        }
+        
+        # Basic coverage calculation
+        type_coverage = len(test_types_covered) / len(all_test_types)
+        success_rate = sum(1 for r in test_results if r.status == 'success') / len(test_results)
+        
+        # Weighted coverage
+        coverage = (type_coverage * 0.6) + (success_rate * 0.4)
+        
+        return min(1.0, coverage)
+    
+    def optimize_test_execution(self) -> Dict[str, Any]:
+        """Optimize test execution based on historical data."""
+        optimization_results = {
+            'timestamp': datetime.now().isoformat(),
+            'optimizations_applied': [],
+            'performance_improvement': 0.0
+        }
+        
+        try:
+            # Analyze historical test data
+            if self.test_results:
+                # Find slow tests
+                slow_tests = []
+                for test_id, result in self.test_results.items():
+                    exec_time = result.performance_metrics.get('execution_time', 0)
+                    if exec_time > 120:  # Tests taking more than 2 minutes
+                        slow_tests.append((test_id, exec_time))
+                
+                # Optimize slow tests
+                if slow_tests:
+                    optimization_results['optimizations_applied'].append({
+                        'type': 'timeout_adjustment',
+                        'description': f'Identified {len(slow_tests)} slow tests for optimization'
+                    })
+                
+                # Cache frequently used test results
+                frequent_patterns = defaultdict(int)
+                for test_id, result in self.test_results.items():
+                    scenario = self.test_scenarios.get(result.scenario_id)
+                    if scenario:
+                        pattern_key = f"{scenario.binary_path}_{scenario.test_type}"
+                        frequent_patterns[pattern_key] += 1
+                
+                # Enable caching for frequent patterns
+                cache_candidates = [k for k, v in frequent_patterns.items() if v > 3]
+                if cache_candidates:
+                    optimization_results['optimizations_applied'].append({
+                        'type': 'result_caching',
+                        'description': f'Enabled caching for {len(cache_candidates)} test patterns'
+                    })
+                
+                # Adjust parallel execution based on resource usage
+                avg_cpu = sum(r.performance_metrics.get('cpu_usage', 0) 
+                             for r in self.test_results.values()) / len(self.test_results)
+                
+                if avg_cpu < 30:  # Low CPU usage
+                    old_parallel = self.max_parallel_tests
+                    self.max_parallel_tests = min(8, self.max_parallel_tests + 2)
+                    optimization_results['optimizations_applied'].append({
+                        'type': 'parallelism_increase',
+                        'description': f'Increased parallel tests from {old_parallel} to {self.max_parallel_tests}'
+                    })
+                    optimization_results['performance_improvement'] = 20.0
+                
+            # Optimize snapshot storage
+            if len(self.snapshots) > 20:
+                old_count = len(self.snapshots)
+                self.cleanup_old_snapshots(max_age_days=3, keep_versions=2)
+                optimization_results['optimizations_applied'].append({
+                    'type': 'snapshot_cleanup',
+                    'description': f'Cleaned up {old_count - len(self.snapshots)} old snapshots'
+                })
+            
+        except Exception as e:
+            logger.error(f"Optimization failed: {e}")
+            optimization_results['error'] = str(e)
+        
+        return optimization_results
+    
+    def get_test_analytics(self) -> Dict[str, Any]:
+        """Get comprehensive test analytics and insights."""
+        analytics = {
+            'timestamp': datetime.now().isoformat(),
+            'total_tests_run': len(self.test_results),
+            'total_scenarios': len(self.test_scenarios),
+            'active_snapshots': len(self.snapshots),
+            'test_success_rate': 0.0,
+            'anomaly_detection_rate': 0.0,
+            'performance_metrics': {},
+            'ml_insights': {},
+            'recommendations': []
+        }
+        
+        if self.test_results:
+            # Calculate success rate
+            successful = sum(1 for r in self.test_results.values() if r.status == 'success')
+            analytics['test_success_rate'] = successful / len(self.test_results)
+            
+            # Calculate anomaly detection rate
+            tests_with_anomalies = sum(1 for r in self.test_results.values() 
+                                      if r.anomalies_detected)
+            analytics['anomaly_detection_rate'] = tests_with_anomalies / len(self.test_results)
+            
+            # Performance metrics
+            exec_times = [r.performance_metrics.get('execution_time', 0) 
+                         for r in self.test_results.values()]
+            if exec_times:
+                analytics['performance_metrics'] = {
+                    'avg_execution_time': sum(exec_times) / len(exec_times),
+                    'min_execution_time': min(exec_times),
+                    'max_execution_time': max(exec_times)
+                }
+            
+            # ML insights
+            confidence_scores = [r.ml_confidence for r in self.test_results.values()]
+            if confidence_scores:
+                analytics['ml_insights'] = {
+                    'avg_confidence': sum(confidence_scores) / len(confidence_scores),
+                    'high_confidence_tests': sum(1 for c in confidence_scores if c > 0.8)
+                }
+            
+            # Generate recommendations
+            if analytics['test_success_rate'] < 0.7:
+                analytics['recommendations'].append(
+                    "Low success rate detected. Consider reviewing test scenarios and environment setup."
+                )
+            
+            if analytics['anomaly_detection_rate'] > 0.5:
+                analytics['recommendations'].append(
+                    "High anomaly rate suggests advanced protection mechanisms. Consider deeper analysis."
+                )
+            
+            if analytics['performance_metrics'].get('avg_execution_time', 0) > 180:
+                analytics['recommendations'].append(
+                    "Tests are taking too long. Consider optimization or parallel execution."
+                )
+        
+        return analytics

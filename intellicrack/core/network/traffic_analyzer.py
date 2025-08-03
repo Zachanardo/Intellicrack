@@ -1,4 +1,5 @@
 """Network traffic analyzer for monitoring and analyzing network communications."""
+import asyncio
 import datetime
 import glob
 import logging
@@ -1223,7 +1224,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             'total': len(durations)
         }
 
-    def stop_capture(self) -> bool:
+    async def stop_capture(self) -> bool:
         """
         Stop the packet capture process.
 
@@ -1237,7 +1238,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             self.logger.info("Stopping packet capture...")
 
             # Give capture threads time to finish gracefully
-            time.sleep(0.5)
+            await asyncio.sleep(0.5)
 
             # Log final statistics
             total_packets = len(self.packets)

@@ -25,6 +25,7 @@ import logging
 import os
 import re
 import threading
+import time
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
@@ -33,7 +34,20 @@ from ..utils.secrets_manager import get_secret
 from .background_loader import LoadingTask, QueuedProgressCallback, get_background_loader
 from .llm_types import LoadingState, ProgressCallback
 
-logger = logging.getLogger(__name__)
+# Initialize structured logger
+try:
+    from ..utils.logger import get_logger
+    logger = get_logger(__name__)
+    STRUCTURED_LOGGING = True
+except ImportError:
+    # Fallback to traditional logging
+    logger = logging.getLogger(__name__)
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('[%(levelname)s] %(name)s: %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    STRUCTURED_LOGGING = False
 
 # Optional imports for ML libraries
 HAS_TORCH = False
@@ -52,7 +66,13 @@ try:
         GPU_AUTOLOADER_AVAILABLE = False
 
 except ImportError as e:
-    logger.error("Import error in llm_backends: %s", e)
+    if STRUCTURED_LOGGING:
+        logger.error("Failed to import PyTorch dependencies",
+                   error=str(e),
+                   module="torch",
+                   category="import_error")
+    else:
+        logger.error("Import error in llm_backends: %s", e)
     torch = None
     GPU_AUTOLOADER_AVAILABLE = False
 
@@ -64,14 +84,26 @@ try:
     import tensorflow as tf
     HAS_TENSORFLOW = True
 except ImportError as e:
-    logger.error("Import error in llm_backends: %s", e)
+    if STRUCTURED_LOGGING:
+        logger.error("Failed to import TensorFlow",
+                   error=str(e),
+                   module="tensorflow",
+                   category="import_error")
+    else:
+        logger.error("Import error in llm_backends: %s", e)
     tf = None
 
 try:
     import numpy as np
     HAS_NUMPY = True
 except ImportError as e:
-    logger.error("Import error in llm_backends: %s", e)
+    if STRUCTURED_LOGGING:
+        logger.error("Failed to import NumPy",
+                   error=str(e),
+                   module="numpy",
+                   category="import_error")
+    else:
+        logger.error("Import error in llm_backends: %s", e)
     np = None
 
 
@@ -80,6 +112,9 @@ class LLMProvider(Enum):
 
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
+    GOOGLE = "google"
+    AZURE_OPENAI = "azure_openai"
+    HUGGINGFACE_API = "huggingface_api"
     LLAMACPP = "llamacpp"
     OLLAMA = "ollama"
     HUGGINGFACE = "huggingface"
@@ -379,6 +414,330 @@ class AnthropicBackend(LLMBackend):
         self.client = None
 
 
+class GoogleBackend(LLMBackend):
+    """Google Gemini API backend."""
+
+    def __init__(self, config: LLMConfig):
+        """Initialize Google backend with configuration.
+
+        Args:
+            config: LLM configuration object
+        """
+        super().__init__(config)
+        self.client = None
+
+    def initialize(self) -> bool:
+        """Initialize Google client."""
+        try:
+            import google.generativeai as genai
+
+            if not self.config.api_key:
+                api_key = get_secret('GOOGLE_API_KEY')
+                if not api_key:
+                    logger.error("Google API key not provided")
+                    return False
+            else:
+                api_key = self.config.api_key
+
+            genai.configure(api_key=api_key)
+            
+            # Initialize the model
+            model_name = self.config.model_name or "gemini-1.5-pro"
+            
+            generation_config = {
+                "temperature": self.config.temperature,
+                "max_output_tokens": self.config.max_tokens,
+            }
+            
+            self.client = genai.GenerativeModel(
+                model_name=model_name,
+                generation_config=generation_config
+            )
+
+            self.is_initialized = True
+            logger.info("Google backend initialized with model: %s", model_name)
+            return True
+
+        except ImportError:
+            logger.error("google-generativeai package not installed. Install with: pip install google-generativeai")
+            return False
+        except Exception as e:
+            logger.error("Failed to initialize Google backend: %s", e)
+            return False
+
+    def chat(self, messages: List[LLMMessage], tools: Optional[List[Dict]] = None) -> LLMResponse:
+        """Send chat to Google Gemini API."""
+        if not self.is_initialized:
+            raise RuntimeError("Backend not initialized")
+
+        try:
+            # Convert messages to Gemini format
+            chat_history = []
+            current_message = ""
+            
+            for msg in messages:
+                if msg.role == "system":
+                    # Gemini doesn't have explicit system messages, prepend to first user message
+                    current_message = f"System: {msg.content}\n\n" + current_message
+                elif msg.role == "user":
+                    current_message += msg.content
+                elif msg.role == "assistant":
+                    if current_message:
+                        chat_history.append({"role": "user", "parts": [current_message]})
+                        current_message = ""
+                    chat_history.append({"role": "model", "parts": [msg.content]})
+
+            # Add final user message if exists
+            if not current_message:
+                current_message = "Please continue."
+
+            # Start chat session if we have history
+            if chat_history:
+                chat = self.client.start_chat(history=chat_history)
+                response = chat.send_message(current_message)
+            else:
+                response = self.client.generate_content(current_message)
+
+            # Extract response content
+            content = response.text if hasattr(response, 'text') else str(response)
+            
+            # Calculate usage if available
+            usage = None
+            if hasattr(response, 'usage_metadata'):
+                usage = {
+                    "prompt_tokens": getattr(response.usage_metadata, 'prompt_token_count', 0),
+                    "completion_tokens": getattr(response.usage_metadata, 'candidates_token_count', 0),
+                    "total_tokens": getattr(response.usage_metadata, 'total_token_count', 0)
+                }
+
+            return LLMResponse(
+                content=content,
+                usage=usage,
+                finish_reason="stop",
+                model=self.config.model_name
+            )
+
+        except Exception as e:
+            logger.error("Google API error: %s", e)
+            raise
+
+    def shutdown(self):
+        """Shutdown Google backend."""
+        super().shutdown()
+        self.client = None
+
+
+class AzureOpenAIBackend(LLMBackend):
+    """Azure OpenAI API backend."""
+
+    def __init__(self, config: LLMConfig):
+        """Initialize Azure OpenAI backend with configuration.
+
+        Args:
+            config: LLM configuration object
+        """
+        super().__init__(config)
+        self.client = None
+
+    def initialize(self) -> bool:
+        """Initialize Azure OpenAI client."""
+        try:
+            from openai import AzureOpenAI
+
+            if not self.config.api_key:
+                api_key = get_secret('AZURE_OPENAI_API_KEY')
+                if not api_key:
+                    logger.error("Azure OpenAI API key not provided")
+                    return False
+            else:
+                api_key = self.config.api_key
+
+            if not self.config.api_base:
+                api_base = get_secret('AZURE_OPENAI_ENDPOINT')
+                if not api_base:
+                    logger.error("Azure OpenAI endpoint not provided")
+                    return False
+            else:
+                api_base = self.config.api_base
+
+            # Get API version from config or environment
+            api_version = (self.config.custom_params or {}).get('api_version') or get_secret('AZURE_OPENAI_API_VERSION', '2024-02-15-preview')
+
+            self.client = AzureOpenAI(
+                api_key=api_key,
+                azure_endpoint=api_base,
+                api_version=api_version
+            )
+
+            # Test connection
+            self.client.models.list()
+            self.is_initialized = True
+            logger.info("Azure OpenAI backend initialized with model: %s", self.config.model_name)
+            return True
+
+        except ImportError:
+            logger.error("OpenAI package not installed. Install with: pip install openai")
+            return False
+        except Exception as e:
+            logger.error("Failed to initialize Azure OpenAI backend: %s", e)
+            return False
+
+    def chat(self, messages: List[LLMMessage], tools: Optional[List[Dict]] = None) -> LLMResponse:
+        """Send chat to Azure OpenAI API."""
+        if not self.is_initialized:
+            raise RuntimeError("Backend not initialized")
+
+        # Convert messages to OpenAI format
+        openai_messages = []
+        for msg in messages:
+            openai_msg = {"role": msg.role, "content": msg.content}
+            if msg.tool_calls:
+                openai_msg["tool_calls"] = msg.tool_calls
+            if msg.tool_call_id:
+                openai_msg["tool_call_id"] = msg.tool_call_id
+            openai_messages.append(openai_msg)
+
+        # Prepare request parameters
+        request_params = {
+            "model": self.config.model_name,
+            "messages": openai_messages,
+            "temperature": self.config.temperature,
+            "max_tokens": self.config.max_tokens
+        }
+
+        # Add tools if provided and enabled
+        if tools and self.config.tools_enabled:
+            request_params["tools"] = [
+                {"type": "function", "function": tool} for tool in tools]
+            request_params["tool_choice"] = "auto"
+
+        try:
+            response = self.client.chat.completions.create(**request_params)
+
+            choice = response.choices[0]
+            return LLMResponse(
+                content=choice.message.content or "",
+                tool_calls=choice.message.tool_calls,
+                usage=response.usage.dict() if response.usage else None,
+                finish_reason=choice.finish_reason,
+                model=response.model
+            )
+
+        except Exception as e:
+            logger.error("Azure OpenAI API error: %s", e)
+            raise
+
+    def shutdown(self):
+        """Shutdown Azure OpenAI backend."""
+        super().shutdown()
+        self.client = None
+
+
+class HuggingFaceAPIBackend(LLMBackend):
+    """Hugging Face Inference API backend."""
+
+    def __init__(self, config: LLMConfig):
+        """Initialize Hugging Face API backend with configuration.
+
+        Args:
+            config: LLM configuration object
+        """
+        super().__init__(config)
+        self.client = None
+
+    def initialize(self) -> bool:
+        """Initialize Hugging Face API client."""
+        try:
+            from huggingface_hub import InferenceClient
+
+            if not self.config.api_key:
+                api_key = get_secret('HUGGINGFACE_API_TOKEN')
+                if not api_key:
+                    logger.error("Hugging Face API token not provided")
+                    return False
+            else:
+                api_key = self.config.api_key
+
+            # Initialize client with model
+            model_name = self.config.model_name or "mistralai/Mistral-7B-Instruct-v0.1"
+            self.client = InferenceClient(
+                model=model_name,
+                token=api_key
+            )
+
+            self.is_initialized = True
+            logger.info("Hugging Face API backend initialized with model: %s", model_name)
+            return True
+
+        except ImportError:
+            logger.error("huggingface_hub package not installed. Install with: pip install huggingface_hub")
+            return False
+        except Exception as e:
+            logger.error("Failed to initialize Hugging Face API backend: %s", e)
+            return False
+
+    def chat(self, messages: List[LLMMessage], tools: Optional[List[Dict]] = None) -> LLMResponse:
+        """Send chat to Hugging Face Inference API."""
+        if not self.is_initialized:
+            raise RuntimeError("Backend not initialized")
+
+        try:
+            # Convert messages to prompt format
+            prompt = self._messages_to_prompt(messages)
+
+            # Prepare generation parameters
+            generation_params = {
+                "max_new_tokens": self.config.max_tokens,
+                "temperature": self.config.temperature,
+                "do_sample": True if self.config.temperature > 0 else False,
+                "return_full_text": False
+            }
+
+            # Generate response
+            response = self.client.text_generation(
+                prompt=prompt,
+                **generation_params
+            )
+
+            # Handle response format
+            if isinstance(response, str):
+                content = response
+            elif hasattr(response, 'generated_text'):
+                content = response.generated_text
+            else:
+                content = str(response)
+
+            return LLMResponse(
+                content=content.strip(),
+                finish_reason="stop",
+                model=self.config.model_name
+            )
+
+        except Exception as e:
+            logger.error("Hugging Face API error: %s", e)
+            raise
+
+    def _messages_to_prompt(self, messages: List[LLMMessage]) -> str:
+        """Convert messages to prompt format."""
+        prompt_parts = []
+
+        for msg in messages:
+            if msg.role == "system":
+                prompt_parts.append(f"System: {msg.content}")
+            elif msg.role == "user":
+                prompt_parts.append(f"User: {msg.content}")
+            elif msg.role == "assistant":
+                prompt_parts.append(f"Assistant: {msg.content}")
+
+        prompt_parts.append("Assistant:")
+        return "\n\n".join(prompt_parts)
+
+    def shutdown(self):
+        """Shutdown Hugging Face API backend."""
+        super().shutdown()
+        self.client = None
+
+
 class LlamaCppBackend(LLMBackend):
     """llama.cpp backend for GGUF models."""
 
@@ -390,6 +749,17 @@ class LlamaCppBackend(LLMBackend):
         """
         super().__init__(config)
         self.llama = None
+
+    def _get_optimal_thread_count(self) -> int:
+        """Determine optimal thread count based on system capabilities."""
+        try:
+            import os
+            cpu_count = os.cpu_count() or 4
+            # Use 75% of available cores, minimum 2, maximum 16
+            optimal_threads = max(2, min(int(cpu_count * 0.75), 16))
+            return optimal_threads
+        except Exception:
+            return 4  # Safe fallback
 
     def initialize(self) -> bool:
         """Initialize llama.cpp."""
@@ -406,7 +776,7 @@ class LlamaCppBackend(LLMBackend):
                 model_path=self.config.model_path,
                 n_ctx=self.config.context_length,
                 verbose=False,
-                n_threads=4  # Adjust based on system
+                n_threads=self._get_optimal_thread_count()
             )
 
             self.is_initialized = True
@@ -478,33 +848,67 @@ class LlamaCppBackend(LLMBackend):
 
     def _extract_tool_calls(self, content: str, tools: List[Dict]) -> Optional[List[Dict]]:
         """Extract tool calls from generated content (basic implementation)."""
-        # This is a simplified implementation
-        # In practice, you'd want more sophisticated parsing
+        # Enhanced tool call extraction with multiple patterns
         tool_calls = []
 
         # Look for function call patterns
         for _tool in tools:
             tool_name = _tool['name']
-            pattern = rf'{tool_name}\((.*?)\)'
-            matches = re.finditer(pattern, content, re.DOTALL)
+            # Multiple pattern matching for robustness
+            patterns = [
+                rf'{tool_name}\((.*?)\)',  # Standard function call
+                rf'`{tool_name}\((.*?)\)`',  # Markdown code block
+                rf'"{tool_name}"\s*:\s*\{{(.*?)\}}',  # JSON-like format
+                rf'{tool_name}:\s*\{{(.*?)\}}'  # YAML-like format
+            ]
+            
+            for pattern in patterns:
+                matches = re.finditer(pattern, content, re.DOTALL | re.IGNORECASE)
+                
+                for _match in matches:
+                    try:
+                        args_str = _match.group(1).strip()
+                        
+                        # Enhanced argument parsing
+                        if not args_str:
+                            args = {}
+                        elif args_str.startswith('{') and args_str.endswith('}'):
+                            # JSON object
+                            args = json.loads(args_str)
+                        elif '=' in args_str:
+                            # Key-value pairs
+                            args = {}
+                            for pair in args_str.split(','):
+                                if '=' in pair:
+                                    key, value = pair.split('=', 1)
+                                    key = key.strip().strip('"\'')
+                                    value = value.strip().strip('"\'')
+                                    try:
+                                        # Try to parse as JSON value
+                                        args[key] = json.loads(value)
+                                    except json.JSONDecodeError:
+                                        args[key] = value
+                        else:
+                            # Try direct JSON parsing
+                            args = json.loads(args_str)
 
-            for _match in matches:
-                try:
-                    args_str = _match.group(1).strip()
-                    # Try to parse as JSON
-                    args = json.loads(args_str) if args_str else {}
-
-                    tool_calls.append({
-                        "id": f"call_{hashlib.sha256(_match.group(0).encode()).hexdigest()[:8]}",
-                        "type": "function",
-                        "function": {
-                            "name": tool_name,
-                            "arguments": json.dumps(args)
-                        }
-                    })
-                except (json.JSONDecodeError, KeyError, ValueError) as e:
-                    logger.error("Error in llm_backends: %s", e)
-                    continue
+                        tool_calls.append({
+                            "id": f"call_{hashlib.sha256(_match.group(0).encode()).hexdigest()[:8]}",
+                            "type": "function",
+                            "function": {
+                                "name": tool_name,
+                                "arguments": json.dumps(args)
+                            }
+                        })
+                    except (json.JSONDecodeError, KeyError, ValueError) as e:
+                        if STRUCTURED_LOGGING:
+                            logger.error("Tool call parsing failed",
+                                       error=str(e),
+                                       tool_name=tool_name,
+                                       category="tool_call_parsing")
+                        else:
+                            logger.error("Error in llm_backends: %s", e)
+                        continue
 
         return tool_calls if tool_calls else None
 
@@ -532,20 +936,30 @@ class OllamaBackend(LLMBackend):
 
     def initialize(self) -> bool:
         """Initialize Ollama connection."""
-        try:
+        import asyncio
+        
+        async def async_initialize():
+            import aiohttp
+            
+            # Test connection to Ollama using async HTTP
             try:
-                import requests
-            except ImportError:
-                logger.error(
-                    "requests library not available for Ollama backend")
+                async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=5)) as session:
+                    async with session.get(f"{self.base_url}/api/tags") as response:
+                        return response.status == 200
+            except Exception:
                 return False
 
-            # Test connection to Ollama
-            response = requests.get(f"{self.base_url}/api/tags", timeout=5)
-            if response.status_code == 200:
+        try:
+            # Run async code in sync context
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            if loop.run_until_complete(async_initialize()):
                 self.is_initialized = True
-                logger.info(
-                    "Ollama backend initialized with model: %s", self.config.model_name)
+                logger.info("Ollama backend initialized with model: %s", self.config.model_name)
                 return True
             else:
                 logger.error("Ollama not accessible at %s", self.base_url)
@@ -560,14 +974,24 @@ class OllamaBackend(LLMBackend):
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
-        try:
-            import requests
-        except ImportError as e:
-            self.logger.error("Import error in llm_backends: %s", e)
-            return LLMResponse(
-                content="Ollama backend requires 'requests' library",
-                finish_reason="error"
-            )
+        import asyncio
+
+        async def async_chat():
+            import aiohttp
+            
+            # Use async HTTP with aiohttp
+            try:
+                timeout = aiohttp.ClientTimeout(total=60)
+                async with aiohttp.ClientSession(timeout=timeout) as session:
+                    async with session.post(
+                        f"{self.base_url}/api/chat",
+                        json=request_data
+                    ) as response:
+                        response.raise_for_status()
+                        return await response.json()
+            except Exception as e:
+                logger.error(f"Async HTTP request failed: {e}")
+                return {"error": str(e)}
 
         # Convert messages to Ollama format
         ollama_messages = []
@@ -591,14 +1015,17 @@ class OllamaBackend(LLMBackend):
             logger.debug(f"Adding {len(tools)} tools to Ollama request")
 
         try:
-            response = requests.post(
-                f"{self.base_url}/api/chat",
-                json=request_data,
-                timeout=60
-            )
-            response.raise_for_status()
+            # Run async code in sync context
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(async_chat())
 
-            result = response.json()
+            if "error" in result:
+                raise RuntimeError(f"Ollama error: {result['error']}")
 
             return LLMResponse(
                 content=result.get("message", {}).get("content", ""),
@@ -673,14 +1100,29 @@ class LocalGGUFBackend(LLMBackend):
                         return False
 
             # Test server connection
+            import asyncio
+            
+            async def async_health_check():
+                import aiohttp
+                
+                # Use async HTTP with aiohttp
+                try:
+                    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=5)) as session:
+                        async with session.get(f"{self.server_url}/health") as response:
+                            return response.status == 200
+                except Exception as e:
+                    logger.error(f"Health check failed: {e}")
+                    return False
+            
             try:
-                import requests
-            except ImportError:
-                logger.error("requests module required for GGUF backend")
-                return False
-            try:
-                response = requests.get(f"{self.server_url}/health", timeout=5)
-                if response.status_code == 200:
+                # Run async code in sync context
+                try:
+                    loop = asyncio.get_event_loop()
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                
+                if loop.run_until_complete(async_health_check()):
                     self.is_initialized = True
                     logger.info("Local GGUF backend initialized")
                     return True
@@ -700,14 +1142,24 @@ class LocalGGUFBackend(LLMBackend):
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
-        try:
-            import requests
-        except ImportError as e:
-            self.logger.error("Import error in llm_backends: %s", e)
-            return LLMResponse(
-                content="GGUF backend requires 'requests' library",
-                finish_reason="error"
-            )
+        import asyncio
+
+        async def async_chat():
+            import aiohttp
+            
+            # Use async HTTP with aiohttp
+            try:
+                timeout = aiohttp.ClientTimeout(total=120)
+                async with aiohttp.ClientSession(timeout=timeout) as session:
+                    async with session.post(
+                        f"{self.server_url}/v1/chat/completions",
+                        json=request_data
+                    ) as response:
+                        response.raise_for_status()
+                        return await response.json()
+            except Exception as e:
+                logger.error(f"Async HTTP request failed: {e}")
+                return {"error": str(e)}
 
         # Convert messages to OpenAI-compatible format
         openai_messages = []
@@ -728,17 +1180,17 @@ class LocalGGUFBackend(LLMBackend):
         # Add tools if supported (future enhancement)
         if tools and self.config.tools_enabled:
             # Tools support could be added here in the future
-            pass
+            logger.debug("Tools support not yet implemented for this LLM backend")
 
         try:
-            response = requests.post(
-                f"{self.server_url}/v1/chat/completions",
-                json=request_data,
-                timeout=120  # Longer timeout for local inference
-            )
-            response.raise_for_status()
-
-            result = response.json()
+            # Run async code in sync context
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(async_chat())
 
             if "error" in result:
                 raise RuntimeError(f"GGUF server error: {result['error']}")
@@ -1824,15 +2276,540 @@ class HuggingFaceLocalBackend(LLMBackend):
             logger.debug(f"Could not clear GPU cache: {e}")
 
 
+class CostTracker:
+    """Tracks API usage costs and token consumption across LLM providers."""
+
+    def __init__(self):
+        """Initialize cost tracker."""
+        self.usage_stats = {}
+        self.cost_models = {
+            LLMProvider.OPENAI: {
+                "gpt-4": {"input": 0.03, "output": 0.06},
+                "gpt-4-turbo": {"input": 0.01, "output": 0.03},
+                "gpt-3.5-turbo": {"input": 0.0015, "output": 0.002},
+                "gpt-4o": {"input": 0.005, "output": 0.015},
+                "gpt-4o-mini": {"input": 0.00015, "output": 0.0006},
+            },
+            LLMProvider.ANTHROPIC: {
+                "claude-3-5-sonnet": {"input": 0.003, "output": 0.015},
+                "claude-3-opus": {"input": 0.015, "output": 0.075},
+                "claude-3-haiku": {"input": 0.00025, "output": 0.00125},
+            },
+            LLMProvider.GOOGLE: {
+                "gemini-1.5-pro": {"input": 0.0035, "output": 0.0105},
+                "gemini-1.5-flash": {"input": 0.00035, "output": 0.00105},
+            },
+            LLMProvider.AZURE_OPENAI: {
+                "gpt-4": {"input": 0.03, "output": 0.06},
+                "gpt-35-turbo": {"input": 0.0015, "output": 0.002},
+            }
+        }
+        self.lock = threading.RLock()
+
+    def track_usage(self, provider: LLMProvider, model: str, usage: Dict[str, int]) -> float:
+        """Track usage and calculate cost.
+
+        Args:
+            provider: LLM provider
+            model: Model name
+            usage: Usage stats with prompt_tokens, completion_tokens, etc.
+
+        Returns:
+            Cost for this request
+        """
+        with self.lock:
+            provider_key = provider.value
+            if provider_key not in self.usage_stats:
+                self.usage_stats[provider_key] = {}
+            if model not in self.usage_stats[provider_key]:
+                self.usage_stats[provider_key][model] = {
+                    "requests": 0,
+                    "prompt_tokens": 0,
+                    "completion_tokens": 0,
+                    "total_tokens": 0,
+                    "total_cost": 0.0
+                }
+
+            stats = self.usage_stats[provider_key][model]
+            stats["requests"] += 1
+            stats["prompt_tokens"] += usage.get("prompt_tokens", 0)
+            stats["completion_tokens"] += usage.get("completion_tokens", 0)
+            stats["total_tokens"] += usage.get("total_tokens", 0)
+
+            # Calculate cost
+            cost = self._calculate_cost(provider, model, usage)
+            stats["total_cost"] += cost
+
+            return cost
+
+    def _calculate_cost(self, provider: LLMProvider, model: str, usage: Dict[str, int]) -> float:
+        """Calculate cost for usage."""
+        if provider not in self.cost_models:
+            return 0.0
+
+        provider_costs = self.cost_models[provider]
+        
+        # Find matching model (handle variations)
+        model_costs = None
+        for cost_model in provider_costs:
+            if cost_model in model.lower() or model.lower() in cost_model:
+                model_costs = provider_costs[cost_model]
+                break
+        
+        if not model_costs:
+            return 0.0
+
+        prompt_tokens = usage.get("prompt_tokens", 0)
+        completion_tokens = usage.get("completion_tokens", 0)
+
+        # Cost is per 1K tokens
+        input_cost = (prompt_tokens / 1000) * model_costs["input"]
+        output_cost = (completion_tokens / 1000) * model_costs["output"]
+        
+        return input_cost + output_cost
+
+    def get_usage_stats(self, provider: Optional[str] = None) -> Dict[str, Any]:
+        """Get usage statistics."""
+        with self.lock:
+            if provider:
+                return self.usage_stats.get(provider, {})
+            return self.usage_stats.copy()
+
+    def get_total_cost(self, provider: Optional[str] = None) -> float:
+        """Get total cost."""
+        with self.lock:
+            total = 0.0
+            stats_to_check = [self.usage_stats[provider]] if provider and provider in self.usage_stats else self.usage_stats.values()
+            
+            for provider_stats in stats_to_check:
+                for model_stats in provider_stats.values():
+                    total += model_stats["total_cost"]
+            
+            return total
+
+    def reset_stats(self, provider: Optional[str] = None):
+        """Reset usage statistics."""
+        with self.lock:
+            if provider:
+                self.usage_stats.pop(provider, None)
+            else:
+                self.usage_stats.clear()
+
+
+class ResponseCache:
+    """Caches LLM responses to reduce costs and improve performance."""
+
+    def __init__(self, max_size: int = 1000, ttl_seconds: int = 3600):
+        """Initialize response cache.
+
+        Args:
+            max_size: Maximum number of cached responses
+            ttl_seconds: Time to live for cached responses
+        """
+        self.cache = {}
+        self.access_times = {}
+        self.max_size = max_size
+        self.ttl_seconds = ttl_seconds
+        self.lock = threading.RLock()
+
+    def _generate_key(self, messages: List[LLMMessage], model: str, temperature: float) -> str:
+        """Generate cache key from messages and parameters."""
+        import hashlib
+        
+        # Create deterministic key from messages and parameters
+        content = ""
+        for msg in messages:
+            content += f"{msg.role}:{msg.content}|"
+        content += f"model:{model}|temp:{temperature}"
+        
+        return hashlib.sha256(content.encode()).hexdigest()
+
+    def get(self, messages: List[LLMMessage], model: str, temperature: float) -> Optional[LLMResponse]:
+        """Get cached response if available and not expired."""
+        with self.lock:
+            key = self._generate_key(messages, model, temperature)
+            
+            if key not in self.cache:
+                return None
+            
+            entry = self.cache[key]
+            current_time = time.time()
+            
+            # Check if expired
+            if current_time - entry["timestamp"] > self.ttl_seconds:
+                del self.cache[key]
+                self.access_times.pop(key, None)
+                return None
+            
+            # Update access time
+            self.access_times[key] = current_time
+            
+            logger.debug("Cache hit for key: %s", key[:16] + "...")
+            return entry["response"]
+
+    def put(self, messages: List[LLMMessage], model: str, temperature: float, response: LLMResponse):
+        """Cache a response."""
+        with self.lock:
+            key = self._generate_key(messages, model, temperature)
+            current_time = time.time()
+            
+            # Evict oldest entries if at capacity
+            if len(self.cache) >= self.max_size:
+                self._evict_oldest()
+            
+            self.cache[key] = {
+                "response": response,
+                "timestamp": current_time
+            }
+            self.access_times[key] = current_time
+            
+            logger.debug("Cached response for key: %s", key[:16] + "...")
+
+    def _evict_oldest(self):
+        """Evict oldest cached entry."""
+        if not self.access_times:
+            return
+        
+        oldest_key = min(self.access_times.items(), key=lambda x: x[1])[0]
+        self.cache.pop(oldest_key, None)
+        self.access_times.pop(oldest_key, None)
+
+    def clear(self):
+        """Clear all cached responses."""
+        with self.lock:
+            self.cache.clear()
+            self.access_times.clear()
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Get cache statistics."""
+        with self.lock:
+            current_time = time.time()
+            expired_count = sum(1 for entry in self.cache.values() 
+                              if current_time - entry["timestamp"] > self.ttl_seconds)
+            
+            return {
+                "size": len(self.cache),
+                "max_size": self.max_size,
+                "expired_entries": expired_count,
+                "ttl_seconds": self.ttl_seconds
+            }
+
+
+class RateLimiter:
+    """Implements rate limiting with exponential backoff for LLM APIs."""
+
+    def __init__(self):
+        """Initialize rate limiter."""
+        self.request_history = {}
+        self.backoff_state = {}
+        self.limits = {
+            LLMProvider.OPENAI: {"rpm": 3500, "tpm": 40000},
+            LLMProvider.ANTHROPIC: {"rpm": 5000, "tpm": 400000},
+            LLMProvider.GOOGLE: {"rpm": 1500, "tpm": 32000},
+            LLMProvider.AZURE_OPENAI: {"rpm": 300, "tpm": 40000},
+            LLMProvider.HUGGINGFACE_API: {"rpm": 100, "tpm": 10000},
+        }
+        self.lock = threading.RLock()
+
+    def wait_if_needed(self, provider: LLMProvider, estimated_tokens: int = 1000):
+        """Wait if rate limit would be exceeded."""
+        with self.lock:
+            provider_key = provider.value
+            current_time = time.time()
+            
+            # Initialize tracking for provider
+            if provider_key not in self.request_history:
+                self.request_history[provider_key] = {"requests": [], "tokens": []}
+            if provider_key not in self.backoff_state:
+                self.backoff_state[provider_key] = {"failures": 0, "last_failure": 0}
+
+            history = self.request_history[provider_key]
+            
+            # Clean old entries (older than 1 minute)
+            cutoff_time = current_time - 60
+            history["requests"] = [t for t in history["requests"] if t > cutoff_time]
+            history["tokens"] = [t for t in history["tokens"] if t[0] > cutoff_time]
+
+            # Check limits
+            if provider not in self.limits:
+                return  # No limits defined for this provider
+
+            limits = self.limits[provider]
+            current_rpm = len(history["requests"])
+            current_tpm = sum(tokens for _, tokens in history["tokens"])
+
+            # Calculate wait time
+            wait_time = 0
+            
+            if current_rpm >= limits["rpm"]:
+                # Wait until oldest request is more than 1 minute old
+                oldest_request = min(history["requests"])
+                wait_time = max(wait_time, 61 - (current_time - oldest_request))
+            
+            if current_tpm + estimated_tokens >= limits["tpm"]:
+                # Wait until we're under token limit
+                if history["tokens"]:
+                    oldest_token_time = min(t[0] for t in history["tokens"])
+                    wait_time = max(wait_time, 61 - (current_time - oldest_token_time))
+
+            # Apply exponential backoff if there were recent failures
+            backoff = self.backoff_state[provider_key]
+            if backoff["failures"] > 0 and current_time - backoff["last_failure"] < 300:  # 5 minutes
+                backoff_wait = min(2 ** backoff["failures"], 60)  # Max 60 seconds
+                wait_time = max(wait_time, backoff_wait)
+
+            if wait_time > 0:
+                logger.info("Rate limiting: waiting %.2f seconds for %s", wait_time, provider_key)
+                time.sleep(wait_time)
+
+            # Record this request
+            history["requests"].append(current_time)
+            history["tokens"].append((current_time, estimated_tokens))
+
+    def record_success(self, provider: LLMProvider):
+        """Record successful request to reduce backoff."""
+        with self.lock:
+            provider_key = provider.value
+            if provider_key in self.backoff_state:
+                backoff = self.backoff_state[provider_key]
+                backoff["failures"] = max(0, backoff["failures"] - 1)
+
+    def record_failure(self, provider: LLMProvider):
+        """Record failed request to increase backoff."""
+        with self.lock:
+            provider_key = provider.value
+            if provider_key not in self.backoff_state:
+                self.backoff_state[provider_key] = {"failures": 0, "last_failure": 0}
+            
+            backoff = self.backoff_state[provider_key]
+            backoff["failures"] += 1
+            backoff["last_failure"] = time.time()
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Get rate limiting statistics."""
+        with self.lock:
+            current_time = time.time()
+            stats = {}
+            
+            for provider_key, history in self.request_history.items():
+                cutoff_time = current_time - 60
+                recent_requests = [t for t in history["requests"] if t > cutoff_time]
+                recent_tokens = [tokens for t, tokens in history["tokens"] if t > cutoff_time]
+                
+                stats[provider_key] = {
+                    "requests_last_minute": len(recent_requests),
+                    "tokens_last_minute": sum(recent_tokens),
+                    "backoff_failures": self.backoff_state.get(provider_key, {}).get("failures", 0)
+                }
+            
+            return stats
+
+
+class QualityAssessor:
+    """Assesses and ranks LLM response quality."""
+
+    def __init__(self):
+        """Initialize quality assessor."""
+        self.quality_history = {}
+        self.lock = threading.RLock()
+
+    def assess_response(self, response: LLMResponse, task_type: str) -> float:
+        """Assess response quality (0.0 to 1.0).
+
+        Args:
+            response: LLM response to assess
+            task_type: Type of task (code_generation, analysis, etc.)
+
+        Returns:
+            Quality score from 0.0 to 1.0
+        """
+        if not response.content:
+            return 0.0
+
+        score = 0.0
+        content = response.content.strip()
+        
+        # Base quality metrics
+        if len(content) > 10:  # Non-trivial response
+            score += 0.2
+        
+        # Task-specific quality assessment
+        if task_type == "code_generation":
+            score += self._assess_code_quality(content)
+        elif task_type == "analysis":
+            score += self._assess_analysis_quality(content)
+        elif task_type == "script_generation":
+            score += self._assess_script_quality(content)
+        else:
+            score += self._assess_general_quality(content)
+
+        # Penalize obvious errors
+        error_indicators = ["error", "failed", "cannot", "unable", "sorry"]
+        if any(indicator in content.lower() for indicator in error_indicators):
+            score -= 0.2
+
+        # Bonus for structured output
+        if any(marker in content for marker in ["```", "1.", "- ", "* "]):
+            score += 0.1
+
+        return max(0.0, min(1.0, score))
+
+    def _assess_code_quality(self, content: str) -> float:
+        """Assess code generation quality."""
+        score = 0.0
+        
+        # Look for code blocks
+        if "```" in content:
+            score += 0.3
+        
+        # Check for common programming constructs
+        code_indicators = ["function", "def ", "class ", "if ", "for ", "while ", "{", "}"]
+        if any(indicator in content for indicator in code_indicators):
+            score += 0.3
+        
+        # Penalize placeholders
+        placeholders = ["TODO", "FIXME", "placeholder", "...", "pass"]
+        if any(placeholder in content for placeholder in placeholders):
+            score -= 0.2
+        
+        return score
+
+    def _assess_script_quality(self, content: str) -> float:
+        """Assess script generation quality."""
+        score = 0.0
+        
+        # Check for script markers
+        script_indicators = ["frida", "ghidra", "radare2", "function", "api", "memory"]
+        if any(indicator in content.lower() for indicator in script_indicators):
+            score += 0.4
+        
+        # Look for proper structure
+        if any(marker in content for marker in ["(", ")", "{", "}", ";"]):
+            score += 0.2
+        
+        # Penalize incomplete implementations
+        if "..." in content or "TODO" in content:
+            score -= 0.3
+        
+        return score
+
+    def _assess_analysis_quality(self, content: str) -> float:
+        """Assess analysis quality."""
+        score = 0.0
+        
+        # Check for analytical structure
+        if len(content) > 100:  # Substantial analysis
+            score += 0.3
+        
+        # Look for technical terms
+        tech_terms = ["binary", "memory", "function", "register", "address", "protection"]
+        if any(term in content.lower() for term in tech_terms):
+            score += 0.3
+        
+        # Check for conclusions or recommendations
+        conclusion_markers = ["conclusion", "recommendation", "suggests", "indicates"]
+        if any(marker in content.lower() for marker in conclusion_markers):
+            score += 0.2
+        
+        return score
+
+    def _assess_general_quality(self, content: str) -> float:
+        """Assess general response quality."""
+        score = 0.0
+        
+        # Length-based scoring
+        if len(content) > 50:
+            score += 0.3
+        if len(content) > 200:
+            score += 0.2
+        
+        # Check for coherence indicators
+        if any(word in content.lower() for word in ["because", "therefore", "however", "additionally"]):
+            score += 0.2
+        
+        return score
+
+    def record_quality(self, provider: LLMProvider, model: str, task_type: str, quality: float):
+        """Record quality score for provider/model/task combination."""
+        with self.lock:
+            key = f"{provider.value}:{model}:{task_type}"
+            if key not in self.quality_history:
+                self.quality_history[key] = []
+            
+            self.quality_history[key].append(quality)
+            
+            # Keep only last 100 scores per combination
+            if len(self.quality_history[key]) > 100:
+                self.quality_history[key] = self.quality_history[key][-100:]
+
+    def get_average_quality(self, provider: LLMProvider, model: str, task_type: str) -> float:
+        """Get average quality score for provider/model/task combination."""
+        with self.lock:
+            key = f"{provider.value}:{model}:{task_type}"
+            scores = self.quality_history.get(key, [])
+            return sum(scores) / len(scores) if scores else 0.5  # Default neutral score
+
+    def get_best_provider(self, task_type: str, available_providers: List[str]) -> Optional[str]:
+        """Get best provider for a task type based on quality history."""
+        with self.lock:
+            best_provider = None
+            best_score = 0.0
+            
+            for provider_key in available_providers:
+                # Find all quality scores for this provider and task type
+                matching_keys = [k for k in self.quality_history.keys() 
+                               if k.startswith(f"{provider_key}:") and k.endswith(f":{task_type}")]
+                
+                if matching_keys:
+                    total_score = 0.0
+                    total_count = 0
+                    
+                    for key in matching_keys:
+                        scores = self.quality_history[key]
+                        total_score += sum(scores)
+                        total_count += len(scores)
+                    
+                    avg_score = total_score / total_count if total_count > 0 else 0.5
+                    
+                    if avg_score > best_score:
+                        best_score = avg_score
+                        best_provider = provider_key
+            
+            return best_provider
+
+    def get_quality_stats(self) -> Dict[str, Any]:
+        """Get quality assessment statistics."""
+        with self.lock:
+            stats = {}
+            for key, scores in self.quality_history.items():
+                provider, model, task_type = key.split(":", 2)
+                if provider not in stats:
+                    stats[provider] = {}
+                if model not in stats[provider]:
+                    stats[provider][model] = {}
+                
+                stats[provider][model][task_type] = {
+                    "count": len(scores),
+                    "average": sum(scores) / len(scores),
+                    "min": min(scores),
+                    "max": max(scores)
+                }
+            
+            return stats
+
+
 class LLMManager:
     """Manager for LLM backends and configurations with lazy loading support."""
 
-    def __init__(self, enable_lazy_loading: bool = True, enable_background_loading: bool = True):
-        """Initialize LLM Manager with lazy and background loading options.
+    def __init__(self, enable_lazy_loading: bool = True, enable_background_loading: bool = True,
+                 enable_caching: bool = True, enable_cost_tracking: bool = True):
+        """Initialize LLM Manager with enhanced features.
 
         Args:
             enable_lazy_loading: Whether to enable lazy loading of models
             enable_background_loading: Whether to enable background loading
+            enable_caching: Whether to enable response caching
+            enable_cost_tracking: Whether to enable cost tracking
         """
         self.backends = {}
         self.configs = {}
@@ -1840,6 +2817,24 @@ class LLMManager:
         self.lock = threading.RLock()
         self.enable_lazy_loading = enable_lazy_loading
         self.enable_background_loading = enable_background_loading
+        self.enable_caching = enable_caching
+        self.enable_cost_tracking = enable_cost_tracking
+
+        # Initialize enhanced infrastructure
+        self.cost_tracker = CostTracker() if enable_cost_tracking else None
+        self.response_cache = ResponseCache() if enable_caching else None
+        self.rate_limiter = RateLimiter()
+        self.quality_assessor = QualityAssessor()
+
+        # Model selection preferences for different task types
+        self.task_preferences = {
+            "code_generation": [LLMProvider.OPENAI, LLMProvider.ANTHROPIC, LLMProvider.GOOGLE],
+            "script_generation": [LLMProvider.OPENAI, LLMProvider.ANTHROPIC, LLMProvider.GOOGLE],
+            "analysis": [LLMProvider.ANTHROPIC, LLMProvider.OPENAI, LLMProvider.GOOGLE],
+            "reasoning": [LLMProvider.ANTHROPIC, LLMProvider.OPENAI, LLMProvider.GOOGLE],
+            "conversation": [LLMProvider.ANTHROPIC, LLMProvider.OPENAI, LLMProvider.GOOGLE],
+            "general": [LLMProvider.OPENAI, LLMProvider.ANTHROPIC, LLMProvider.GOOGLE]
+        }
 
         # Lazy loading support
         if enable_lazy_loading:
@@ -1932,6 +2927,9 @@ class LLMManager:
         backend_classes = {
             LLMProvider.OPENAI: OpenAIBackend,
             LLMProvider.ANTHROPIC: AnthropicBackend,
+            LLMProvider.GOOGLE: GoogleBackend,
+            LLMProvider.AZURE_OPENAI: AzureOpenAIBackend,
+            LLMProvider.HUGGINGFACE_API: HuggingFaceAPIBackend,
             LLMProvider.LLAMACPP: LlamaCppBackend,
             LLMProvider.OLLAMA: OllamaBackend,
             LLMProvider.LOCAL_GGUF: LocalGGUFBackend,
@@ -1956,8 +2954,21 @@ class LLMManager:
             return True
 
     def chat(self, messages: List[LLMMessage], llm_id: Optional[str] = None,
-             tools: Optional[List[Dict]] = None) -> Optional[LLMResponse]:
-        """Send chat messages to LLM."""
+             tools: Optional[List[Dict]] = None, task_type: str = "general",
+             use_cache: bool = True, bypass_rate_limit: bool = False) -> Optional[LLMResponse]:
+        """Send chat messages to LLM with enhanced features.
+
+        Args:
+            messages: List of messages to send
+            llm_id: Optional specific LLM to use
+            tools: Optional tools for function calling
+            task_type: Type of task for quality assessment and model selection
+            use_cache: Whether to use response caching
+            bypass_rate_limit: Whether to bypass rate limiting (use carefully)
+
+        Returns:
+            LLM response or None if failed
+        """
         with self.lock:
             backend_id = llm_id or self.active_backend
 
@@ -1965,28 +2976,74 @@ class LLMManager:
                 logger.error("No active LLM backend available")
                 return None
 
-            # Try to get backend from lazy loading first
+            # Get backend and config
             backend = None
+            config = None
+            
             if backend_id in self.lazy_wrappers:
                 if self.lazy_manager:
                     backend = self.lazy_manager.get_model(backend_id)
                     if backend is None:
-                        logger.error(
-                            "Failed to load lazy LLM backend: %s", backend_id)
+                        logger.error("Failed to load lazy LLM backend: %s", backend_id)
                         return None
+                config = self.configs.get(backend_id)
             elif backend_id in self.backends:
                 backend = self.backends[backend_id]
+                config = self.configs.get(backend_id)
             else:
                 logger.error("LLM backend not found: %s", backend_id)
                 return None
 
-            try:
-                response = backend.chat(messages, tools)
-                logger.debug("LLM response from %s: %d chars",
-                             backend_id, len(response.content))
-                return response
+            if not config:
+                logger.error("No config found for backend: %s", backend_id)
+                return None
 
-            except (OSError, ValueError, RuntimeError) as e:
+            # Check cache first if enabled
+            if use_cache and self.response_cache:
+                cached_response = self.response_cache.get(
+                    messages, config.model_name, config.temperature)
+                if cached_response:
+                    logger.debug("Using cached response for %s", backend_id)
+                    return cached_response
+
+            # Apply rate limiting
+            if not bypass_rate_limit:
+                estimated_tokens = sum(len(msg.content.split()) * 1.3 for msg in messages)
+                self.rate_limiter.wait_if_needed(config.provider, int(estimated_tokens))
+
+            try:
+                # Make API call
+                response = backend.chat(messages, tools)
+                
+                if response:
+                    # Record successful request
+                    self.rate_limiter.record_success(config.provider)
+                    
+                    # Track cost if enabled
+                    if self.cost_tracker and response.usage:
+                        cost = self.cost_tracker.track_usage(
+                            config.provider, config.model_name, response.usage)
+                        logger.debug("Request cost: $%.6f", cost)
+                    
+                    # Assess quality
+                    quality = self.quality_assessor.assess_response(response, task_type)
+                    self.quality_assessor.record_quality(
+                        config.provider, config.model_name, task_type, quality)
+                    
+                    # Cache response if enabled
+                    if use_cache and self.response_cache:
+                        self.response_cache.put(
+                            messages, config.model_name, config.temperature, response)
+                    
+                    logger.debug("LLM response from %s: %d chars, quality: %.2f", 
+                               backend_id, len(response.content), quality)
+                    return response
+                else:
+                    self.rate_limiter.record_failure(config.provider)
+                    return None
+
+            except Exception as e:
+                self.rate_limiter.record_failure(config.provider)
                 logger.error("LLM chat error: %s", e)
                 return None
 
@@ -2039,6 +3096,210 @@ class LLMManager:
         if llm_id in self.backends:
             self.backends[llm_id].register_tools(tools)
             logger.info("Registered %d tools for LLM: %s", len(tools), llm_id)
+
+    def select_best_model(self, task_type: str = "general", 
+                         exclude_providers: Optional[List[LLMProvider]] = None,
+                         prefer_cost_effective: bool = False) -> Optional[str]:
+        """Select the best model for a given task type.
+
+        Args:
+            task_type: Type of task (code_generation, analysis, etc.)
+            exclude_providers: Providers to exclude from selection
+            prefer_cost_effective: Whether to prefer lower-cost models
+
+        Returns:
+            Best LLM ID for the task or None
+        """
+        available_llms = self.get_available_llms()
+        if not available_llms:
+            return None
+
+        exclude_providers = exclude_providers or []
+        exclude_provider_values = [p.value for p in exclude_providers]
+
+        # Filter by excluded providers
+        filtered_llms = []
+        for llm_id in available_llms:
+            config = self.configs.get(llm_id)
+            if config and config.provider.value not in exclude_provider_values:
+                filtered_llms.append(llm_id)
+
+        if not filtered_llms:
+            return filtered_llms[0] if available_llms else None
+
+        # Get preferred providers for task type
+        preferred_providers = self.task_preferences.get(task_type, self.task_preferences["general"])
+
+        # Find best match based on quality history
+        best_llm = None
+        best_score = 0.0
+
+        for llm_id in filtered_llms:
+            config = self.configs.get(llm_id)
+            if not config:
+                continue
+
+            score = 0.0
+
+            # Provider preference score
+            try:
+                provider_rank = preferred_providers.index(config.provider)
+                score += (len(preferred_providers) - provider_rank) * 0.3
+            except ValueError:
+                score += 0.1  # Not in preferred list
+
+            # Quality score
+            quality = self.quality_assessor.get_average_quality(
+                config.provider, config.model_name, task_type)
+            score += quality * 0.5
+
+            # Cost effectiveness (if preferred)
+            if prefer_cost_effective and self.cost_tracker:
+                usage_stats = self.cost_tracker.get_usage_stats(config.provider.value)
+                model_stats = usage_stats.get(config.model_name, {})
+                if model_stats.get("total_cost", 0) > 0:
+                    # Lower cost per token = higher score
+                    total_tokens = model_stats.get("total_tokens", 1)
+                    cost_per_token = model_stats["total_cost"] / total_tokens
+                    score += (1.0 / (cost_per_token * 1000 + 1)) * 0.2
+
+            # Backend availability score
+            if llm_id in self.backends:
+                score += 0.1  # Immediate backend ready
+            elif llm_id in self.lazy_wrappers:
+                wrapper = self.lazy_wrappers[llm_id]
+                if wrapper and hasattr(wrapper, 'get_info'):
+                    info = wrapper.get_info()
+                    if info.get("is_loaded"):
+                        score += 0.05  # Lazy but loaded
+                    # Small penalty for not loaded
+                    else:
+                        score -= 0.05
+
+            if score > best_score:
+                best_score = score
+                best_llm = llm_id
+
+        return best_llm
+
+    def chat_with_fallback(self, messages: List[LLMMessage], task_type: str = "general",
+                          tools: Optional[List[Dict]] = None, 
+                          max_retries: int = 3) -> Optional[LLMResponse]:
+        """Chat with automatic fallback to alternative models on failure.
+
+        Args:
+            messages: Messages to send
+            task_type: Task type for model selection
+            tools: Optional tools for function calling
+            max_retries: Maximum number of fallback attempts
+
+        Returns:
+            LLM response or None if all attempts failed
+        """
+        tried_providers = []
+        
+        for attempt in range(max_retries):
+            # Select best available model
+            selected_llm = self.select_best_model(
+                task_type=task_type, 
+                exclude_providers=tried_providers
+            )
+            
+            if not selected_llm:
+                logger.warning("No more LLM backends available for fallback")
+                break
+            
+            config = self.configs.get(selected_llm)
+            if config:
+                tried_providers.append(config.provider)
+            
+            try:
+                response = self.chat(
+                    messages=messages,
+                    llm_id=selected_llm,
+                    tools=tools,
+                    task_type=task_type
+                )
+                
+                if response and response.content:
+                    if attempt > 0:
+                        logger.info("Successful fallback to %s after %d attempts", 
+                                  selected_llm, attempt + 1)
+                    return response
+                    
+            except Exception as e:
+                logger.warning("Attempt %d failed with %s: %s", 
+                             attempt + 1, selected_llm, e)
+                continue
+        
+        logger.error("All fallback attempts failed")
+        return None
+
+    def get_cost_summary(self) -> Dict[str, Any]:
+        """Get comprehensive cost summary."""
+        if not self.cost_tracker:
+            return {"error": "Cost tracking not enabled"}
+        
+        total_cost = self.cost_tracker.get_total_cost()
+        usage_stats = self.cost_tracker.get_usage_stats()
+        
+        summary = {
+            "total_cost": total_cost,
+            "providers": {},
+            "top_models": [],
+            "cost_breakdown": {}
+        }
+        
+        # Provider breakdown
+        for provider, models in usage_stats.items():
+            provider_cost = sum(stats["total_cost"] for stats in models.values())
+            provider_requests = sum(stats["requests"] for stats in models.values())
+            
+            summary["providers"][provider] = {
+                "cost": provider_cost,
+                "requests": provider_requests,
+                "models": len(models)
+            }
+        
+        # Top models by cost
+        model_costs = []
+        for provider, models in usage_stats.items():
+            for model, stats in models.items():
+                model_costs.append({
+                    "provider": provider,
+                    "model": model,
+                    "cost": stats["total_cost"],
+                    "requests": stats["requests"]
+                })
+        
+        summary["top_models"] = sorted(model_costs, key=lambda x: x["cost"], reverse=True)[:10]
+        
+        return summary
+
+    def optimize_for_cost(self, task_type: str = "general") -> str:
+        """Get recommendation for most cost-effective model for task type."""
+        available_llms = self.get_available_llms()
+        
+        if not available_llms or not self.cost_tracker:
+            return "No data available for cost optimization"
+        
+        best_llm = self.select_best_model(task_type=task_type, prefer_cost_effective=True)
+        
+        if best_llm:
+            config = self.configs.get(best_llm)
+            provider = config.provider.value if config else "unknown"
+            model = config.model_name if config else "unknown"
+            
+            usage_stats = self.cost_tracker.get_usage_stats(provider)
+            model_stats = usage_stats.get(model, {})
+            
+            if model_stats:
+                cost_per_request = model_stats["total_cost"] / max(model_stats["requests"], 1)
+                return f"Recommended: {provider}:{model} (${cost_per_request:.4f} per request)"
+            else:
+                return f"Recommended: {provider}:{model} (no usage data yet)"
+        
+        return "No suitable model found"
 
     def generate_script_content(self, prompt: str, script_type: str, context_data: Dict[str, Any] = None,
                                 max_tokens: int = 4000, llm_id: Optional[str] = None) -> Optional[str]:
@@ -2520,6 +3781,43 @@ def create_anthropic_config(model_name: str = "claude-3-5-sonnet-20241022", api_
     """Create Anthropic configuration."""
     return LLMConfig(
         provider=LLMProvider.ANTHROPIC,
+        model_name=model_name,
+        api_key=api_key,
+        **kwargs
+    )
+
+
+def create_google_config(model_name: str = "gemini-1.5-pro", api_key: str = None, **kwargs) -> LLMConfig:
+    """Create Google Gemini configuration."""
+    return LLMConfig(
+        provider=LLMProvider.GOOGLE,
+        model_name=model_name,
+        api_key=api_key,
+        **kwargs
+    )
+
+
+def create_azure_openai_config(model_name: str = "gpt-4", api_key: str = None, 
+                              api_base: str = None, api_version: str = "2024-02-15-preview", **kwargs) -> LLMConfig:
+    """Create Azure OpenAI configuration."""
+    custom_params = kwargs.pop('custom_params', {})
+    custom_params['api_version'] = api_version
+    
+    return LLMConfig(
+        provider=LLMProvider.AZURE_OPENAI,
+        model_name=model_name,
+        api_key=api_key,
+        api_base=api_base,
+        custom_params=custom_params,
+        **kwargs
+    )
+
+
+def create_huggingface_api_config(model_name: str = "mistralai/Mistral-7B-Instruct-v0.1", 
+                                 api_key: str = None, **kwargs) -> LLMConfig:
+    """Create Hugging Face API configuration."""
+    return LLMConfig(
+        provider=LLMProvider.HUGGINGFACE_API,
         model_name=model_name,
         api_key=api_key,
         **kwargs

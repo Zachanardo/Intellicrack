@@ -22,8 +22,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import os
 import sys
+import tempfile
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -32,15 +33,15 @@ IS_WINDOWS = sys.platform.startswith('win')
 IS_LINUX = sys.platform.startswith('linux')
 IS_MACOS = sys.platform.startswith('darwin')
 
-# Windows COM interface imports
+# Windows COM interface imports (for fallback only)
 if IS_WINDOWS:
     try:
         import pythoncom
         import win32com.client
         from win32com.shell import shell, shellcon
         HAS_WIN32 = True
-    except ImportError as e:
-        logger.error("Import error in file_resolution: %s", e)
+    except ImportError:
+        # Windows COM libraries not available - use pure Python parser only
         HAS_WIN32 = False
         pythoncom = win32com = shell = shellcon = None
 else:
@@ -133,6 +134,8 @@ class FileResolver:
     def __init__(self):
         """Initialize the file resolver."""
         self.logger = logger
+        self._msi_extractor = None
+        self._extracted_msi_cache = {}
 
     def resolve_file_path(self, file_path: Union[str, Path]) -> Tuple[str, Dict[str, any]]:
         """
@@ -188,6 +191,20 @@ class FileResolver:
             metadata["resolution_method"] = "symlink"
             metadata["target_path"] = resolved_path
             return resolved_path, metadata
+
+        # Handle MSI files - extract and resolve to main executable
+        if file_path.suffix.lower() in ['.msi', '.msp', '.msm']:
+            self.logger.info(f"Detected MSI installer: {file_path}")
+            exe_path, msi_info = self.resolve_msi_executable(file_path)
+            if exe_path:
+                metadata.update(msi_info)
+                metadata["is_installer"] = True
+                metadata["resolution_method"] = "msi_extraction"
+                return exe_path, metadata
+            else:
+                # Return the MSI itself if extraction failed
+                metadata["msi_extraction_failed"] = True
+                metadata["extraction_error"] = msi_info.get('error', 'Unknown error')
 
         return str(file_path), metadata
 
@@ -251,7 +268,89 @@ class FileResolver:
         return ";;".join(filters)
 
     def _resolve_windows_shortcut(self, lnk_path: Path) -> Tuple[Optional[str], Dict[str, any]]:
-        """Resolve Windows .lnk shortcut file."""
+        """Resolve Windows .lnk shortcut file using pure Python parser."""
+        try:
+            # Import pure Python .lnk parser
+            from intellicrack.utils.system.lnk_parser import LnkParser, LnkParseError
+
+            parser = LnkParser()
+            lnk_info = parser.parse_lnk_file(lnk_path)
+
+            # Convert to dictionary for easier handling
+            shortcut_data = lnk_info.to_dict()
+
+            # Determine the target path
+            target_path = lnk_info.target_path
+
+            # If no absolute target path, try to resolve using relative path and working directory
+            if not target_path and lnk_info.relative_path:
+                if lnk_info.working_directory:
+                    target_path = os.path.join(lnk_info.working_directory, lnk_info.relative_path)
+                else:
+                    # Try relative to shortcut location
+                    target_path = os.path.join(str(lnk_path.parent), lnk_info.relative_path)
+
+            # Expand environment variables if present
+            if target_path:
+                target_path = os.path.expandvars(target_path)
+
+            # Check if target exists
+            if target_path and os.path.exists(target_path):
+                return target_path, {
+                    "target_path": target_path,
+                    "working_directory": lnk_info.working_directory,
+                    "arguments": lnk_info.command_line_arguments,
+                    "description": lnk_info.name or lnk_info.description,
+                    "icon_location": lnk_info.icon_location,
+                    "shortcut_type": "windows_lnk",
+                    "parser_type": "pure_python",
+                    "relative_path": lnk_info.relative_path,
+                    "creation_time": shortcut_data.get("creation_time"),
+                    "write_time": shortcut_data.get("write_time"),
+                    "access_time": shortcut_data.get("access_time"),
+                    "file_size": lnk_info.file_size,
+                    "icon_index": lnk_info.icon_index,
+                    "show_command": lnk_info.show_command,
+                    "hotkey": lnk_info.hotkey,
+                    "file_attributes": parser.get_file_attributes_description(lnk_info.file_attributes),
+                    "show_command_desc": parser.get_show_command_description(lnk_info.show_command),
+                    "is_unicode": lnk_info.is_unicode,
+                    "parse_errors": lnk_info.parse_errors
+                }
+            else:
+                # Fallback to Windows COM if pure Python parsing fails and COM is available
+                if IS_WINDOWS and HAS_WIN32:
+                    self.logger.info(f"Pure Python parser found target {target_path} but file doesn't exist, trying COM fallback")
+                    return self._resolve_windows_shortcut_com(lnk_path)
+                else:
+                    return None, {
+                        "error": f"Shortcut target not found: {target_path}",
+                        "parser_type": "pure_python",
+                        "parsed_data": shortcut_data
+                    }
+
+        except LnkParseError as e:
+            self.logger.error(f"Error parsing .lnk file {lnk_path}: {e}")
+            
+            # Fallback to Windows COM if pure Python parsing fails and COM is available
+            if IS_WINDOWS and HAS_WIN32:
+                self.logger.info(f"Pure Python .lnk parser failed, trying COM fallback")
+                return self._resolve_windows_shortcut_com(lnk_path)
+            else:
+                return None, {"error": f"Failed to parse .lnk file: {str(e)}"}
+
+        except Exception as e:
+            self.logger.error(f"Unexpected error resolving Windows shortcut {lnk_path}: {e}")
+            
+            # Fallback to Windows COM if pure Python parsing fails and COM is available
+            if IS_WINDOWS and HAS_WIN32:
+                self.logger.info(f"Pure Python .lnk parser had unexpected error, trying COM fallback")
+                return self._resolve_windows_shortcut_com(lnk_path)
+            else:
+                return None, {"error": f"Failed to resolve shortcut: {str(e)}"}
+
+    def _resolve_windows_shortcut_com(self, lnk_path: Path) -> Tuple[Optional[str], Dict[str, any]]:
+        """Resolve Windows .lnk shortcut file using Windows COM interface (fallback)."""
         if not IS_WINDOWS or not HAS_WIN32:
             return None, {"error": "Windows COM not available for shortcut resolution"}
 
@@ -280,14 +379,15 @@ class FileResolver:
                     "arguments": arguments,
                     "description": description,
                     "icon_location": icon_location,
-                    "shortcut_type": "windows_lnk"
+                    "shortcut_type": "windows_lnk",
+                    "parser_type": "windows_com"
                 }
             else:
                 return None, {"error": f"Shortcut target not found: {target_path}"}
 
         except Exception as e:
-            self.logger.error(f"Error resolving Windows shortcut {lnk_path}: {e}")
-            return None, {"error": f"Failed to resolve shortcut: {str(e)}"}
+            self.logger.error(f"Error resolving Windows shortcut with COM {lnk_path}: {e}")
+            return None, {"error": f"Failed to resolve shortcut with COM: {str(e)}"}
 
     def _resolve_url_shortcut(self, url_path: Path) -> Tuple[Optional[str], Dict[str, any]]:
         """Resolve Windows .url internet shortcut file."""
@@ -501,6 +601,115 @@ class FileResolver:
             self.logger.debug(f"Error getting macOS metadata: {e}")
 
         return metadata
+
+    def extract_msi_contents(self, msi_path: Union[str, Path], target_dir: Optional[Union[str, Path]] = None) -> Dict[str, any]:
+        """
+        Extract contents from an MSI installer file.
+
+        Args:
+            msi_path: Path to the MSI file
+            target_dir: Optional target directory for extraction
+
+        Returns:
+            Dictionary with extraction results and file information
+        """
+        msi_path = Path(msi_path)
+        
+        # Check if we've already extracted this MSI
+        cache_key = str(msi_path.absolute())
+        if cache_key in self._extracted_msi_cache and not target_dir:
+            cached_result = self._extracted_msi_cache[cache_key]
+            # Verify the extraction directory still exists
+            if Path(cached_result['output_dir']).exists():
+                self.logger.debug(f"Using cached MSI extraction for {msi_path}")
+                return cached_result
+
+        # Lazy import MSI extractor
+        if self._msi_extractor is None:
+            try:
+                from intellicrack.utils.extraction import MSIExtractor
+                self._msi_extractor = MSIExtractor()
+            except ImportError as e:
+                self.logger.error(f"Failed to import MSI extractor: {e}")
+                return {
+                    'success': False,
+                    'error': 'MSI extraction module not available',
+                    'msi_path': str(msi_path)
+                }
+
+        # Extract the MSI
+        result = self._msi_extractor.extract(msi_path, target_dir)
+        
+        if result['success'] and not target_dir:
+            # Cache successful extractions to temp directories
+            self._extracted_msi_cache[cache_key] = result
+        
+        return result
+
+    def resolve_msi_executable(self, msi_path: Union[str, Path]) -> Tuple[Optional[str], Dict[str, any]]:
+        """
+        Extract MSI and resolve to the main executable.
+
+        Args:
+            msi_path: Path to the MSI file
+
+        Returns:
+            Tuple of (executable_path, metadata)
+        """
+        # Extract MSI contents
+        extraction_result = self.extract_msi_contents(msi_path)
+        
+        if not extraction_result['success']:
+            return None, extraction_result
+
+        # Find main executable
+        if self._msi_extractor:
+            main_exe = self._msi_extractor.find_main_executable(
+                extraction_result['extracted_files']
+            )
+            
+            if main_exe:
+                exe_path = main_exe['full_path']
+                metadata = {
+                    'original_msi': str(msi_path),
+                    'extraction_dir': extraction_result['output_dir'],
+                    'executable_info': main_exe,
+                    'total_files': extraction_result['file_count'],
+                    'msi_metadata': extraction_result.get('metadata', {})
+                }
+                return exe_path, metadata
+
+        return None, {
+            'error': 'No main executable found in MSI',
+            'extraction_result': extraction_result
+        }
+
+    def cleanup_extracted_msi(self, msi_path: Union[str, Path]):
+        """Clean up extracted MSI contents for a specific MSI file."""
+        cache_key = str(Path(msi_path).absolute())
+        
+        if cache_key in self._extracted_msi_cache:
+            cached_result = self._extracted_msi_cache[cache_key]
+            output_dir = cached_result.get('output_dir')
+            
+            if output_dir and Path(output_dir).exists():
+                try:
+                    import shutil
+                    shutil.rmtree(output_dir)
+                    self.logger.debug(f"Cleaned up extracted MSI directory: {output_dir}")
+                except Exception as e:
+                    self.logger.warning(f"Failed to cleanup MSI extraction: {e}")
+            
+            del self._extracted_msi_cache[cache_key]
+
+    def cleanup_all_extracted_msi(self):
+        """Clean up all cached MSI extractions."""
+        if self._msi_extractor:
+            self._msi_extractor.cleanup()
+        
+        # Clean up any cached extractions
+        for msi_path in list(self._extracted_msi_cache.keys()):
+            self.cleanup_extracted_msi(msi_path)
 
 
 # Create singleton instance

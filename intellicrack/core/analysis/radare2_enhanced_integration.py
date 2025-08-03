@@ -19,12 +19,15 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import asyncio
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from ...utils.logger import get_logger
+from ..logging.audit_logger import get_audit_logger, AuditEvent, AuditEventType, AuditSeverity
 from .radare2_ai_integration import R2AIEngine
 from .radare2_binary_diff import R2BinaryDiff
 from .radare2_bypass_generator import R2BypassGenerator
@@ -49,7 +52,7 @@ except ImportError as e:
 error_handler = get_error_handler()
 
 
-class EnhancedR2Integration:
+class Radare2EnhancedIntegration:
     """
     Enhanced radare2 integration with comprehensive error handling, recovery,
     performance optimization, and real-time capabilities.
@@ -63,11 +66,11 @@ class EnhancedR2Integration:
     - Circuit breaker pattern implementation
     """
 
-    def __init__(self, binary_path: str, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, binary_path: Optional[str] = None, config: Optional[Dict[str, Any]] = None):
         """Initialize the enhanced Radare2 integration.
 
         Args:
-            binary_path: Path to the binary file to analyze.
+            binary_path: Optional path to the binary file to analyze.
             config: Optional configuration dictionary for customizing behavior.
         """
         self.binary_path = binary_path
@@ -96,7 +99,8 @@ class EnhancedR2Integration:
 
         # Analysis components with error handling
         self.components = {}
-        self._initialize_components()
+        if binary_path:
+            self._initialize_components()
 
         # Results cache with TTL
         self.results_cache = {}
@@ -106,7 +110,7 @@ class EnhancedR2Integration:
         self.monitoring_enabled = self.config.get('real_time_monitoring', False)
         self.monitoring_thread = None
 
-        self.logger.info(f"EnhancedR2Integration initialized for {binary_path}")
+        self.logger.info(f"Radare2EnhancedIntegration initialized{' for ' + binary_path if binary_path else ''}")
 
     def _initialize_components(self):
         """Initialize all analysis components with error handling"""
@@ -152,6 +156,21 @@ class EnhancedR2Integration:
         """
         if analysis_types is None:
             analysis_types = list(self.components.keys())
+            
+        # Audit log Radare2 analysis attempt
+        audit_logger = get_audit_logger()
+        audit_logger.log_event(AuditEvent(
+            event_type=AuditEventType.TOOL_EXECUTION,
+            severity=AuditSeverity.INFO,
+            description=f"Radare2 comprehensive analysis: {Path(self.binary_path).name}",
+            target=self.binary_path,
+            details={
+                "tool": "radare2",
+                "operation": "comprehensive_analysis",
+                "analysis_types": analysis_types,
+                "components_available": list(self.components.keys())
+            }
+        ))
 
         results = {
             'metadata': {
@@ -524,6 +543,195 @@ class EnhancedR2Integration:
 
         except Exception as e:
             self.logger.error(f"Cleanup failed: {e}")
+
+    # Compatibility methods for AnalysisOrchestrator
+    def open_binary(self, binary_path: str) -> bool:
+        """
+        Open a binary for analysis. Compatibility method for orchestrator.
+        
+        Args:
+            binary_path: Path to the binary file
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # If this is a different binary, reinitialize
+            if binary_path != self.binary_path:
+                self.binary_path = binary_path
+                self._initialize_components()
+                self.clear_cache()
+                self.logger.info(f"Opened new binary: {binary_path}")
+            
+            # Check if we have r2pipe available
+            return self.r2pipe_available
+            
+        except Exception as e:
+            self.logger.error(f"Failed to open binary {binary_path}: {e}")
+            return False
+    
+    def get_imports(self) -> List[Dict[str, Any]]:
+        """
+        Get imports from the binary. Compatibility method for orchestrator.
+        
+        Returns:
+            List of import dictionaries with address, name, and library info
+        """
+        try:
+            # Use the imports component to analyze
+            if 'imports' in self.components and self.components['imports']:
+                result = self.components['imports'].analyze_imports_exports()
+                if result and 'imports' in result:
+                    return result['imports']
+            
+            # Fallback to empty list
+            return []
+            
+        except Exception as e:
+            self.logger.error(f"Failed to get imports: {e}")
+            return []
+    
+    def get_exports(self) -> List[Dict[str, Any]]:
+        """
+        Get exports from the binary. Compatibility method for orchestrator.
+        
+        Returns:
+            List of export dictionaries with address, name, and type info
+        """
+        try:
+            # Use the imports component to analyze (it handles both imports and exports)
+            if 'imports' in self.components and self.components['imports']:
+                result = self.components['imports'].analyze_imports_exports()
+                if result and 'exports' in result:
+                    return result['exports']
+            
+            # Fallback to empty list
+            return []
+            
+        except Exception as e:
+            self.logger.error(f"Failed to get exports: {e}")
+            return []
+    
+    def get_sections(self) -> List[Dict[str, Any]]:
+        """
+        Get sections from the binary. Compatibility method for orchestrator.
+        
+        Returns:
+            List of section dictionaries with name, address, size, and permissions
+        """
+        try:
+            # Run comprehensive analysis if needed
+            cache_key = f"sections_{self.binary_path}"
+            cached_result = self._get_cached_result(cache_key)
+            if cached_result:
+                return cached_result
+                
+            # Get sections from comprehensive analysis
+            analysis_result = self.run_comprehensive_analysis(['imports'])
+            
+            sections = []
+            if 'components' in analysis_result and 'imports' in analysis_result['components']:
+                imports_data = analysis_result['components']['imports']
+                if 'sections' in imports_data:
+                    sections = imports_data['sections']
+            
+            self._cache_result(cache_key, sections)
+            return sections
+            
+        except Exception as e:
+            self.logger.error(f"Failed to get sections: {e}")
+            return []
+    
+    def get_strings(self, min_length: int = 5) -> List[Dict[str, Any]]:
+        """
+        Get strings from the binary. Compatibility method for orchestrator.
+        
+        Args:
+            min_length: Minimum string length to include
+            
+        Returns:
+            List of string dictionaries with address, value, and encoding info
+        """
+        try:
+            # Use the strings component to analyze
+            if 'strings' in self.components and self.components['strings']:
+                # Configure minimum length
+                if hasattr(self.components['strings'], 'min_string_length'):
+                    self.components['strings'].min_string_length = min_length
+                    
+                result = self.components['strings'].analyze_strings()
+                if result and 'strings' in result:
+                    # Filter by minimum length
+                    return [
+                        s for s in result['strings'] 
+                        if len(s.get('value', '')) >= min_length
+                    ]
+            
+            # Fallback to empty list
+            return []
+            
+        except Exception as e:
+            self.logger.error(f"Failed to get strings: {e}")
+            return []
+    
+    def get_functions(self) -> List[Dict[str, Any]]:
+        """
+        Get functions from the binary. Compatibility method for orchestrator.
+        
+        Returns:
+            List of function dictionaries with address, name, and size info
+        """
+        try:
+            # Use the decompiler component to get functions
+            if 'decompiler' in self.components and self.components['decompiler']:
+                # The decompiler analyzes license functions, but we need all functions
+                # Try to get function list from the analysis
+                cache_key = f"functions_{self.binary_path}"
+                cached_result = self._get_cached_result(cache_key)
+                if cached_result:
+                    return cached_result
+                
+                # Run analysis to get functions
+                result = self.components['decompiler'].analyze_license_functions()
+                
+                functions = []
+                if result and 'all_functions' in result:
+                    functions = result['all_functions']
+                elif result and 'license_functions' in result:
+                    # At least return license-related functions
+                    functions = result['license_functions']
+                
+                self._cache_result(cache_key, functions)
+                return functions
+            
+            # Fallback to empty list
+            return []
+            
+        except Exception as e:
+            self.logger.error(f"Failed to get functions: {e}")
+            return []
+    
+    def close(self):
+        """
+        Close the radare2 session. Compatibility method for orchestrator.
+        """
+        try:
+            # Clear cache and stop monitoring
+            self.clear_cache()
+            self.stop_real_time_monitoring()
+            
+            # Close all components that have close methods
+            for name, component in self.components.items():
+                if component and hasattr(component, 'close'):
+                    try:
+                        component.close()
+                    except Exception as e:
+                        self.logger.error(f"Failed to close component {name}: {e}")
+            
+            self.logger.info("Radare2 session closed")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to close radare2 session: {e}")
 
 
 def create_enhanced_r2_integration(binary_path: str, **config) -> EnhancedR2Integration:

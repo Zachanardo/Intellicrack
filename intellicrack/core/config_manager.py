@@ -31,7 +31,31 @@ import threading
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-logger = logging.getLogger(__name__)
+from pydantic import ValidationError
+
+from .config_models import IntellicrackSettings, create_default_directories_config
+from .config_env import EnvironmentConfigLoader, load_dotenv_file, get_env_loader
+from .config_validators import (
+    ConfigurationValidator, 
+    validate_pydantic_errors, 
+    create_validation_summary,
+    ValidationResult
+)
+
+# Initialize structured logger
+try:
+    from ..utils.logger import get_logger
+    logger = get_logger(__name__)
+    STRUCTURED_LOGGING = True
+except ImportError:
+    # Fallback to traditional logging
+    logger = logging.getLogger(__name__)
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('[%(levelname)s] %(name)s: %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    STRUCTURED_LOGGING = False
 
 
 class IntellicrackConfig:
@@ -97,6 +121,10 @@ class IntellicrackConfig:
         self.logger = logging.getLogger(__name__ + ".IntellicrackConfig")
         self._config = {}
         self._config_lock = threading.RLock()
+        
+        # Initialize environment support
+        load_dotenv_file()  # Load .env file if it exists
+        self._env_loader = get_env_loader()
 
         # Set up directories
         self.config_dir = self._get_user_config_dir()
@@ -105,9 +133,71 @@ class IntellicrackConfig:
         self.logs_dir = self.config_dir / 'logs'
         self.output_dir = self.config_dir / 'output'
 
+        # Initialize Pydantic settings and validators
+        self._settings = None
+        self._validator = ConfigurationValidator()
+        self._validation_errors = []
+
         # Initialize configuration
         self._ensure_directories_exist()
         self._load_or_create_config()
+
+    def validate_external_tools(self) -> bool:
+        """
+        Validate all external tools required by Intellicrack.
+        
+        Returns:
+            bool: True if all critical tools are available
+        """
+        from .tool_validator import ExternalToolValidator
+        
+        validator = ExternalToolValidator(self)
+        results = validator.validate_all_tools()
+        
+        # Store validation results in config
+        with self._config_lock:
+            self._config['tool_validation'] = {
+                'last_check': self._get_current_timestamp(),
+                'results': {
+                    name: {
+                        'valid': result.is_valid,
+                        'path': result.path,
+                        'version': result.version,
+                        'error': result.error_message,
+                        'warnings': result.warnings
+                    }
+                    for name, result in results.items()
+                }
+            }
+        
+        is_ready = validator.is_ready_for_operation()
+        
+        if not is_ready:
+            missing_tools = validator.get_missing_critical_tools()
+            if STRUCTURED_LOGGING:
+                logger.error("Critical tools missing",
+                           missing_tools=missing_tools,
+                           category="tool_validation")
+                setup_instructions = validator.generate_setup_instructions()
+                logger.error("Setup instructions needed",
+                           setup_instructions=setup_instructions,
+                           category="tool_validation")
+            else:
+                logger.error(f"Critical tools missing: {', '.join(missing_tools)}")
+                setup_instructions = validator.generate_setup_instructions()
+                logger.error(f"Setup instructions:\n{setup_instructions}")
+        
+        self._save_config()
+        return is_ready
+    
+    def get_tool_validation_results(self) -> dict:
+        """Get the last tool validation results."""
+        return self._config.get('tool_validation', {})
+    
+    def _get_current_timestamp(self) -> str:
+        """Get current timestamp string."""
+        from datetime import datetime
+        return datetime.now().isoformat()
 
     def _get_user_config_dir(self) -> Path:
         """Get platform-appropriate user config directory.
@@ -159,34 +249,97 @@ class IntellicrackConfig:
         for directory in [self.config_dir, self.cache_dir, self.logs_dir, self.output_dir]:
             try:
                 directory.mkdir(parents=True, exist_ok=True)
-                logger.debug(f"Ensured directory exists: {directory}")
+                if STRUCTURED_LOGGING:
+                    logger.debug("Directory ensured",
+                               directory=str(directory),
+                               category="filesystem")
+                else:
+                    logger.debug(f"Ensured directory exists: {directory}")
             except Exception as e:
                 # Continue even if directory creation fails
-                logger.warning(f"Could not create directory {directory}: {e}")
+                if STRUCTURED_LOGGING:
+                    logger.warning("Directory creation failed",
+                                 directory=str(directory),
+                                 error=str(e),
+                                 category="filesystem")
+                else:
+                    logger.warning(f"Could not create directory {directory}: {e}")
 
     def _load_or_create_config(self):
-        """Load existing config or create default one."""
+        """Load existing config or create default one with Pydantic validation."""
         try:
             if self.config_file.exists():
                 self._load_config()
                 self._upgrade_config_if_needed()
             else:
-                logger.info(
-                    "First run detected - creating default configuration")
+                if STRUCTURED_LOGGING:
+                    logger.info("First run detected - creating default configuration",
+                               config_file=str(self.config_file),
+                               category="config_initialization")
+                else:
+                    logger.info("First run detected - creating default configuration")
                 self._create_default_config()
+            
+            # Validate configuration with Pydantic
+            self._validate_with_pydantic()
+            
+        except ValidationError as e:
+            # Handle Pydantic validation errors
+            error_messages = validate_pydantic_errors(e)
+            self._validation_errors.extend(error_messages)
+            
+            if STRUCTURED_LOGGING:
+                logger.error("Configuration validation failed",
+                           errors=error_messages,
+                           category="config_validation")
+            else:
+                logger.error(f"Configuration validation failed: {'; '.join(error_messages)}")
+            
+            # Try to create emergency config
+            self._create_emergency_config()
+            
         except Exception as e:
-            logger.error(f"Configuration initialization failed: {e}")
+            if STRUCTURED_LOGGING:
+                logger.error("Configuration initialization failed",
+                           error=str(e),
+                           config_file=str(self.config_file),
+                           category="config_initialization")
+            else:
+                logger.error(f"Configuration initialization failed: {e}")
             self._create_emergency_config()
 
     def _load_config(self):
-        """Load configuration from file."""
+        """Load configuration from file with environment variable overrides."""
         try:
             with open(self.config_file, 'r', encoding='utf-8') as f:
-                with self._config_lock:
-                    self._config = json.load(f)
-            logger.info(f"Configuration loaded from {self.config_file}")
+                config_data = json.load(f)
+            
+            # Apply environment variable overrides
+            config_data = self._env_loader.apply_env_overrides(config_data)
+            
+            # Apply environment-specific configuration
+            config_data = self._env_loader.load_environment_specific_config(config_data)
+            
+            with self._config_lock:
+                self._config = config_data
+                
+            if STRUCTURED_LOGGING:
+                logger.info("Configuration loaded from file",
+                           config_file=str(self.config_file),
+                           config_version=self._config.get('version', 'unknown'),
+                           environment=self._env_loader.get_environment_profile(),
+                           category="config_initialization")
+            else:
+                logger.info(f"Configuration loaded from {self.config_file}")
+                
         except Exception as e:
-            logger.error(f"Failed to load config: {e}")
+            if STRUCTURED_LOGGING:
+                logger.error("Failed to load configuration file",
+                           config_file=str(self.config_file),
+                           error=str(e),
+                           category="config_initialization")
+            else:
+                logger.error(f"Failed to load config: {e}")
             self._create_default_config()
 
     def _create_default_config(self):
@@ -280,6 +433,10 @@ class IntellicrackConfig:
                 'background_loading': True
             }
         }
+
+        # Apply environment overrides to default config
+        default_config = self._env_loader.apply_env_overrides(default_config)
+        default_config = self._env_loader.load_environment_specific_config(default_config)
 
         with self._config_lock:
             self._config = default_config
@@ -594,6 +751,102 @@ class IntellicrackConfig:
                     'log_level': 'WARNING'
                 }
             }
+    
+    def _validate_with_pydantic(self):
+        """Validate configuration using Pydantic models."""
+        try:
+            # Create default directories config if not present
+            if 'directories' not in self._config:
+                directories_config = create_default_directories_config()
+                self._config['directories'] = directories_config.model_dump()
+            
+            # Create Pydantic settings from config
+            self._settings = IntellicrackSettings.from_dict(self._config)
+            
+            # Update config with validated data
+            with self._config_lock:
+                self._config = self._settings.to_dict()
+            
+            # Run additional validation checks
+            validation_results = self._validator.validate_configuration(self._config)
+            
+            # Log validation results
+            summary = create_validation_summary(validation_results)
+            if summary['failed'] > 0:
+                if STRUCTURED_LOGGING:
+                    logger.warning("Configuration validation issues found",
+                                 **summary,
+                                 category="config_validation")
+                else:
+                    logger.warning(f"Configuration validation: {summary['failed']} issues found")
+            
+            if STRUCTURED_LOGGING:
+                logger.info("Configuration validation completed",
+                           **summary,
+                           category="config_validation")
+            else:
+                logger.info(f"Configuration validated: {summary['passed']}/{summary['total_checks']} checks passed")
+                
+        except ValidationError as e:
+            # Re-raise for handling by caller
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error during Pydantic validation: {e}")
+            raise
+    
+    def get_validation_errors(self) -> List[str]:
+        """Get list of configuration validation errors."""
+        return self._validation_errors.copy()
+    
+    def get_pydantic_settings(self) -> Optional[IntellicrackSettings]:
+        """Get Pydantic settings object for type-safe access."""
+        return self._settings
+    
+    def validate_configuration(self) -> Dict[str, Any]:
+        """
+        Perform comprehensive configuration validation.
+        
+        Returns:
+            Dictionary with validation results and summary
+        """
+        try:
+            # Re-validate with current configuration
+            self._validate_with_pydantic()
+            
+            # Run system validation checks
+            validation_results = self._validator.validate_configuration(self._config)
+            summary = create_validation_summary(validation_results)
+            
+            return {
+                'valid': summary['failed'] == 0,
+                'summary': summary,
+                'errors': self._validation_errors,
+                'results': [
+                    {
+                        'check': f"Validation {i+1}",
+                        'passed': result.is_valid,
+                        'message': result.message,
+                        'warnings': result.warnings
+                    }
+                    for i, result in enumerate(validation_results)
+                ]
+            }
+            
+        except ValidationError as e:
+            error_messages = validate_pydantic_errors(e)
+            return {
+                'valid': False,
+                'summary': {'total_checks': 0, 'passed': 0, 'failed': len(error_messages)},
+                'errors': error_messages,
+                'results': []
+            }
+        except Exception as e:
+            return {
+                'valid': False,
+                'summary': {'total_checks': 0, 'passed': 0, 'failed': 1},
+                'errors': [f"Validation failed: {e}"],
+                'results': []
+            }
 
     def _save_config(self):
         """Save configuration to file."""
@@ -643,9 +896,9 @@ class IntellicrackConfig:
                 self.logger.error("Error in config_manager: %s", e)
                 return default
 
-    def set(self, key: str, value: Any, save: bool = True):
+    def set(self, key: str, value: Any, save: bool = True, validate: bool = True):
         """
-        Set configuration value with dot notation support.
+        Set configuration value with dot notation support and validation.
 
         Updates nested configuration values using dot-separated keys.
         Creates intermediate dictionaries as needed. Thread-safe.
@@ -654,11 +907,13 @@ class IntellicrackConfig:
             key: Dot-separated configuration key (e.g., 'tools.ghidra.path')
             value: Value to set
             save: Whether to save config to disk immediately
+            validate: Whether to validate with Pydantic after setting
 
         Side Effects:
             - Modifies internal configuration dictionary
             - Saves to disk if save=True
             - Creates intermediate dictionaries if needed
+            - Re-validates configuration if validate=True
 
         Example:
             >>> config.set('tools.ghidra.path', '/usr/local/ghidra')
@@ -681,6 +936,15 @@ class IntellicrackConfig:
 
             # Set the final value at the last key
             config[keys[-1]] = value
+
+        # Validate configuration after change if requested
+        if validate:
+            try:
+                self._validate_with_pydantic()
+            except ValidationError as e:
+                # Log validation error but don't revert change
+                error_messages = validate_pydantic_errors(e)
+                logger.warning(f"Configuration validation failed after setting {key}: {'; '.join(error_messages)}")
 
         if save:
             self._save_config()
@@ -859,10 +1123,71 @@ class IntellicrackConfig:
             with self._config_lock:
                 self._config.update(imported_config)
 
+            # Re-validate after import
+            self._validate_with_pydantic()
             self._save_config()
             return True
         except Exception as e:
             logger.error(f"Failed to import config: {e}")
+            return False
+    
+    def get_environment_overrides(self) -> Dict[str, str]:
+        """
+        Get all environment variable overrides currently applied.
+        
+        Returns:
+            Dictionary of environment variable overrides
+        """
+        return self._env_loader.get_all_env_overrides()
+    
+    def get_environment_profile(self) -> str:
+        """
+        Get current environment profile.
+        
+        Returns:
+            Current environment (development, staging, production)
+        """
+        return self._env_loader.get_environment_profile()
+    
+    def export_env_template(self, file_path: Union[str, Path] = ".env.template") -> bool:
+        """
+        Export environment variable template file.
+        
+        Args:
+            file_path: Path to write template file
+            
+        Returns:
+            True if export succeeded, False otherwise
+        """
+        try:
+            self._env_loader.export_env_template(file_path)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to export environment template: {e}")
+            return False
+    
+    def reload_with_env_changes(self) -> bool:
+        """
+        Reload configuration with current environment variables.
+        
+        Returns:
+            True if reload succeeded, False otherwise
+        """
+        try:
+            # Reload environment loader to pick up new env vars
+            self._env_loader = get_env_loader()
+            
+            # Reload configuration from file with new env overrides
+            if self.config_file.exists():
+                self._load_config()
+                self._validate_with_pydantic()
+                return True
+            else:
+                logger.warning("Configuration file does not exist for reload")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Failed to reload configuration with environment changes: {e}")
             return False
 
 

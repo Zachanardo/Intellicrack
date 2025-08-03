@@ -1,0 +1,10 @@
+
+exeinfope_portable - PORTABLE VERSION
+===================================
+Description: ExeinfoPE PORTABLE - Packer/protector detector
+Protection: Freeware
+Main EXE: exeinfope.exe
+
+This is a PORTABLE application.
+NO installation required.
+All data stays in this folder.

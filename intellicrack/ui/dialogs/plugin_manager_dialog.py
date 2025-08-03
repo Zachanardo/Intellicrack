@@ -814,10 +814,10 @@ class {plugin_name.replace(' ', '')}Plugin:
         \"\"\"
         try:
             self.app = app_instance
-            logger.info(f"{{self.name}} plugin initialized")
+            logger.info(f"{self.name} plugin initialized")
             return True
         except Exception as e:
-            logger.error(f"Failed to initialize {{self.name}} plugin: {{e}}")
+            logger.error(f"Failed to initialize {self.name} plugin: {e}")
             return False
 
     def validate_binary(self, binary_path: str) -> tuple[bool, str]:
@@ -834,23 +834,23 @@ class {plugin_name.replace(' ', '')}Plugin:
             return False, "No binary path provided"
 
         if not os.path.exists(binary_path):
-            return False, f"File does not exist: {{binary_path}}"
+            return False, f"File does not exist: {binary_path}"
 
         if not os.path.isfile(binary_path):
-            return False, f"Path is not a file: {{binary_path}}"
+            return False, f"Path is not a file: {binary_path}"
 
         if not os.access(binary_path, os.R_OK):
-            return False, f"File is not readable: {{binary_path}}"
+            return False, f"File is not readable: {binary_path}"
 
         # Check file size (100MB limit by default)
         max_size = 100 * 1024 * 1024
         try:
             file_size = os.path.getsize(binary_path)
             if file_size > max_size:
-                return False, f"File too large: {{file_size}} bytes (max: {{max_size}})"
+                return False, f"File too large: {file_size} bytes (max: {max_size})"
         except OSError as e:
             logger.error("OS error in plugin_manager_dialog: %s", e)
-            return False, f"Could not get file size: {{str(e)}}"
+            return False, f"Could not get file size: {str(e)}"
 
         return True, "Valid"
 
@@ -874,11 +874,11 @@ class {plugin_name.replace(' ', '')}Plugin:
             cached_result['from_cache'] = True
             return cached_result
 
-        results = {{
+        results = {
             'plugin_type': '{plugin_type.lower()}',
             'analysis_timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
             'findings': []
-        }}
+        }
 
         try:
             if binary_path:
@@ -899,11 +899,11 @@ class {plugin_name.replace(' ', '')}Plugin:
                     # Generic analysis
                     with open(binary_path, 'rb') as f:
                         header = f.read(1024)
-                    results['header_analysis'] = {{
+                    results['header_analysis'] = {
                         'first_bytes': header[:16].hex(),
                         'contains_pe_header': b'MZ' in header[:2],
                         'contains_elf_header': header[:4] == b'\\x7fELF'
-                    }}
+                    }
 
                 # Update cache
                 if binary_path:
@@ -918,7 +918,7 @@ class {plugin_name.replace(' ', '')}Plugin:
         except Exception as e:
             results['error'] = str(e)
             results['traceback'] = traceback.format_exc()
-            logger.error(f"Analysis failed: {{e}}")
+            logger.error(f"Analysis failed: {e}")
 
         # Calculate execution time
         execution_time = time.time() - start_time
@@ -941,12 +941,12 @@ class {plugin_name.replace(' ', '')}Plugin:
             for chunk in iter(lambda: f.read(8192), b''):
                 sha256_hash.update(chunk)
 
-        return {{
+        return {
             'name': path.name,
             'size': stat.st_size,
             'modified': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(stat.st_mtime)),
             'sha256': sha256_hash.hexdigest()
-        }}
+        }
 
     def _perform_binary_analysis(self, binary_path: str) -> Dict[str, Any]:
         \"\"\"Perform binary analysis.\"\"\"
@@ -957,15 +957,15 @@ class {plugin_name.replace(' ', '')}Plugin:
 
         try:
             if not os.path.exists(binary_path):
-                return {{
+                return {
                     'type': 'binary_analysis',
                     'status': 'error',
-                    'findings': [f'File not found: {{binary_path}}']
-                }}
+                    'findings': [f'File not found: {binary_path}']
+                }
 
             # Basic file analysis
             file_size = os.path.getsize(binary_path)
-            findings.append(f'File size: {{file_size:,}} bytes')
+            findings.append(f'File size: {file_size:,} bytes')
 
             # File hash calculation
             with open(binary_path, 'rb') as f:
@@ -973,8 +973,8 @@ class {plugin_name.replace(' ', '')}Plugin:
                 md5_hash = hashlib.md5(file_data).hexdigest()
                 sha256_hash = hashlib.sha256(file_data).hexdigest()
 
-            findings.append(f'MD5: {{md5_hash}}')
-            findings.append(f'SHA256: {{sha256_hash}}')
+            findings.append(f'MD5: {md5_hash}')
+            findings.append(f'SHA256: {sha256_hash}')
 
             # File type detection
             if file_data.startswith(b'MZ'):
@@ -1001,7 +1001,7 @@ class {plugin_name.replace(' ', '')}Plugin:
                         p = count / 1024
                         entropy -= p * (p.bit_length() - 1) if p > 0 else 0
 
-            findings.append(f'Entropy (sample): {{entropy:.2f}}')
+            findings.append(f'Entropy (sample): {entropy:.2f}')
             if entropy > 7.5:
                 findings.append('High entropy detected - possibly packed/encrypted')
             elif entropy < 1.0:
@@ -1018,31 +1018,31 @@ class {plugin_name.replace(' ', '')}Plugin:
                         strings.append(current_string)
                     current_string = ''
 
-            findings.append(f'Printable strings found: {{len(strings)}}')
+            findings.append(f'Printable strings found: {len(strings)}')
 
             # Suspicious indicators
             suspicious_strings = ['debug', 'test', 'password', 'admin', 'license', 'trial']
             found_suspicious = [s for s in strings if any(sus in s.lower() for sus in suspicious_strings)]
             if found_suspicious:
-                findings.append(f'Suspicious strings detected: {{len(found_suspicious)}}')
+                findings.append(f'Suspicious strings detected: {len(found_suspicious)}')
 
         except Exception as e:
-            findings.append(f'Analysis error: {{str(e)}}')
+            findings.append(f'Analysis error: {str(e)}')
 
-        return {{
+        return {
             'type': 'binary_analysis',
             'status': 'completed',
             'findings': findings
-        }}
+        }
 
     def _detect_packers(self, binary_path: str) -> Dict[str, Any]:
         \"\"\"Detect packers and protectors.\"\"\"
-        packer_signatures = {{
+        packer_signatures = {
             b'UPX!': 'UPX',
             b'ASPack': 'ASPack',
             b'PECompact': 'PECompact',
             b'Themida': 'Themida'
-        }}
+        }
 
         detected = []
         with open(binary_path, 'rb') as f:
@@ -1051,28 +1051,135 @@ class {plugin_name.replace(' ', '')}Plugin:
                 if sig in header:
                     detected.append(name)
 
-        return {{
+        return {
             'detected': len(detected) > 0,
             'packers': detected
-        }}
+        }
 
     def _analyze_network_behavior(self, binary_path: str) -> Dict[str, Any]:
-        \"\"\"Analyze potential network behavior.\"\"\"
-        # Placeholder for network analysis
-        return {{
+        \"\"\"Analyze potential network behavior using static and dynamic analysis.\"\"\"
+        network_findings = []
+        
+        try:
+            # Static analysis - Check imports for network functions
+            network_imports = []
+            network_apis = [
+                # Windows networking
+                'WSAStartup', 'socket', 'connect', 'send', 'recv', 'bind', 'listen',
+                'accept', 'getaddrinfo', 'gethostbyname', 'InternetOpen', 'InternetConnect',
+                'HttpOpenRequest', 'HttpSendRequest', 'URLDownloadToFile',
+                # SSL/TLS
+                'SSL_connect', 'SSL_read', 'SSL_write', 'CertVerifyCertificateChainPolicy',
+                # WinHTTP/WinINet
+                'WinHttpOpen', 'WinHttpConnect', 'WinHttpOpenRequest',
+                # DNS
+                'DnsQuery', 'getaddrinfo', 'gethostbyname'
+            ]
+            
+            # Use radare2 to analyze imports
+            try:
+                import r2pipe
+                r2 = r2pipe.open(binary_path)
+                r2.cmd('aaa')  # Analyze
+                imports = r2.cmd('ii~[6]').split('\n')
+                
+                for imp in imports:
+                    if any(api in imp for api in network_apis):
+                        network_imports.append(imp.strip())
+                
+                r2.quit()
+                
+                if network_imports:
+                    network_findings.append(f"Found {len(network_imports)} network-related imports")
+                    
+            except Exception as e:
+                logger.debug(f"Radare2 analysis failed: {e}")
+            
+            # Check for hardcoded IPs and domains
+            ip_pattern = re.compile(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b')
+            domain_pattern = re.compile(r'\b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}\b')
+            
+            with open(binary_path, 'rb') as f:
+                content = f.read()
+                
+                # Search for IPs
+                ips = ip_pattern.findall(content.decode('utf-8', errors='ignore'))
+                valid_ips = [ip for ip in ips if not ip.startswith('0.0.') and not ip.startswith('255.')]
+                if valid_ips:
+                    network_findings.append(f"Found {len(valid_ips)} hardcoded IP addresses")
+                
+                # Search for domains
+                text_content = content.decode('utf-8', errors='ignore')
+                domains = domain_pattern.findall(text_content)
+                # Filter out common false positives
+                domains = [d for d in domains if len(d) > 4 and not d.endswith('.dll') and not d.endswith('.exe')]
+                if domains:
+                    network_findings.append(f"Found {len(domains)} potential domain names")
+            
+            # Check for common network ports
+            common_ports = [80, 443, 8080, 8443, 21, 22, 23, 25, 110, 143, 3389]
+            port_refs = []
+            
+            for port in common_ports:
+                # Check both hex and decimal representations
+                if content.find(struct.pack('<H', port)) != -1 or content.find(struct.pack('>H', port)) != -1:
+                    port_refs.append(port)
+            
+            if port_refs:
+                network_findings.append(f"References to network ports: {', '.join(map(str, port_refs))}")
+            
+            # Check for license server indicators
+            license_indicators = [
+                b'license', b'LICENSE', b'activation', b'ACTIVATION',
+                b'validate', b'VALIDATE', b'auth', b'AUTH',
+                b'serial', b'SERIAL', b'key', b'KEY'
+            ]
+            
+            license_related = False
+            for indicator in license_indicators:
+                if indicator in content:
+                    license_related = True
+                    break
+            
+            if license_related:
+                network_findings.append("Contains license/activation related strings")
+            
+            # Analyze for specific protocols
+            if b'HTTP/1.' in content or b'GET /' in content or b'POST /' in content:
+                network_findings.append("HTTP protocol signatures detected")
+            
+            if b'<?xml' in content or b'<soap' in content.lower():
+                network_findings.append("XML/SOAP communication possible")
+            
+            if b'"json' in content.lower() or b'application/json' in content:
+                network_findings.append("JSON API communication likely")
+            
+        except Exception as e:
+            logger.error(f"Network behavior analysis error: {e}")
+            network_findings.append(f"Analysis error: {str(e)}")
+        
+        return {
             'type': 'network_analysis',
             'status': 'completed',
-            'findings': ['Network analysis placeholder']
-        }}
+            'findings': network_findings if network_findings else ['No significant network behavior detected'],
+            'has_network_capability': len(network_findings) > 0,
+            'imports': network_imports if 'network_imports' in locals() else [],
+            'indicators': {
+                'has_network_imports': len(network_imports) > 0 if 'network_imports' in locals() else False,
+                'has_hardcoded_ips': any('IP' in f for f in network_findings),
+                'has_domains': any('domain' in f for f in network_findings),
+                'is_license_related': any('license' in f.lower() for f in network_findings)
+            }
+        }
 
     def _scan_vulnerabilities(self, binary_path: str) -> List[Dict[str, Any]]:
         \"\"\"Scan for potential vulnerabilities.\"\"\"
         # Placeholder for vulnerability scanning
-        return [{{
+        return [{
             'type': 'placeholder',
             'severity': 'info',
             'description': 'Vulnerability scanning placeholder'
-        }}]
+        }]
 
     def execute(self, *args, **kwargs) -> Dict[str, Any]:
         \"\"\"
@@ -1081,7 +1188,7 @@ class {plugin_name.replace(' ', '')}Plugin:
         Returns:
             dict: Execution results
         \"\"\"
-        logger.debug(f"Plugin {{self.name}} execute called with args: {{args}}, kwargs: {{kwargs}}")
+        logger.debug(f"Plugin {self.name} execute called with args: {args}, kwargs: {kwargs}")
 
         try:
             # Extract binary path from args or kwargs
@@ -1097,34 +1204,34 @@ class {plugin_name.replace(' ', '')}Plugin:
             if binary_path:
                 is_valid, error_msg = self.validate_binary(binary_path)
                 if not is_valid:
-                    return {{
+                    return {
                         'status': 'error',
-                        'message': f'Binary validation failed: {{error_msg}}',
+                        'message': f'Binary validation failed: {error_msg}',
                         'data': {{}}
-                    }}
+                    }
 
             # Perform actual analysis
             analysis_results = self._perform_analysis(binary_path, *args, **kwargs)
 
-            result = {{
+            result = {
                 'status': 'success',
-                'message': f'{{self.name}} executed successfully',
+                'message': f'{self.name} executed successfully',
                 'data': analysis_results,
                 'execution_time': analysis_results.get('execution_time', 0),
                 'binary_analyzed': binary_path
-            }}
+            }
 
-            logger.info(f"{{self.name}} plugin executed successfully")
+            logger.info(f"{self.name} plugin executed successfully")
             return result
 
         except Exception as e:
-            logger.error(f"{{self.name}} plugin execution failed: {{e}}")
-            return {{
+            logger.error(f"{self.name} plugin execution failed: {e}")
+            return {
                 'status': 'error',
                 'message': str(e),
                 'data': {{}},
                 'traceback': traceback.format_exc()
-            }}
+            }
 
     def analyze(self, binary_path: str) -> List[str]:
         \"\"\"
@@ -1139,24 +1246,24 @@ class {plugin_name.replace(' ', '')}Plugin:
         result = self.execute(binary_path)
 
         if result['status'] == 'success':
-            output = [f"Analysis completed for: {{binary_path}}"]
+            output = [f"Analysis completed for: {binary_path}"]
             data = result.get('data', {{}})
 
             # Format file info
             if 'file_info' in data:
                 info = data['file_info']
-                output.append(f"File: {{info['name']}} ({{info['size']}} bytes)")
-                output.append(f"SHA256: {{info['sha256']}}")
+                output.append(f"File: {info['name']} ({info['size']} bytes)")
+                output.append(f"SHA256: {info['sha256']}")
 
             # Format analysis results
             for key, value in data.items():
                 if key not in ['file_info', 'execution_time', 'analysis_timestamp']:
-                    output.append(f"{{key}}: {{value}}")
+                    output.append(f"{key}: {value}")
 
-            output.append(f"Execution time: {{data.get('execution_time', 0):.2f}}s")
+            output.append(f"Execution time: {data.get('execution_time', 0):.2f}s")
             return output
         else:
-            return [f"Analysis failed: {{result['message']}}"]
+            return [f"Analysis failed: {result['message']}"]
 
     def cleanup(self) -> bool:
         \"\"\"
@@ -1171,14 +1278,14 @@ class {plugin_name.replace(' ', '')}Plugin:
                 try:
                     if os.path.exists(temp_file):
                         os.remove(temp_file)
-                        logger.debug(f"Removed temporary file: {{temp_file}}")
+                        logger.debug(f"Removed temporary file: {temp_file}")
                         self.temp_files.remove(temp_file)
                 except Exception as e:
-                    logger.warning(f"Failed to remove temp file {{temp_file}}: {{e}}")
+                    logger.warning(f"Failed to remove temp file {temp_file}: {e}")
 
             # Clear cache
             self.cache.clear()
-            logger.debug(f"Cleared {{self.name}} plugin cache")
+            logger.debug(f"Cleared {self.name} plugin cache")
 
             # Close any open handles
             for handle in self.open_handles[:]:
@@ -1186,16 +1293,16 @@ class {plugin_name.replace(' ', '')}Plugin:
                     handle.close()
                     self.open_handles.remove(handle)
                 except Exception as e:
-                    logger.warning(f"Failed to close handle: {{e}}")
+                    logger.warning(f"Failed to close handle: {e}")
 
             # Reset statistics
             self.analysis_count = 0
             self.last_analysis = None
 
-            logger.info(f"{{self.name}} plugin cleaned up successfully")
+            logger.info(f"{self.name} plugin cleaned up successfully")
             return True
         except Exception as e:
-            logger.error(f"{{self.name}} plugin cleanup failed: {{e}}")
+            logger.error(f"{self.name} plugin cleanup failed: {e}")
             return False
 
 # Plugin entry point
@@ -1222,9 +1329,9 @@ PLUGIN_INFO = {{
 if __name__ == '__main__':
     # Test the plugin
     plugin = create_plugin()
-    print(f"Plugin: {{plugin.name}} v{{plugin.version}}")
-    print(f"Description: {{plugin.description}}")
-    print(f"Author: {{plugin.author}}")
+    print(f"Plugin: {plugin.name} v{plugin.version}")
+    print(f"Description: {plugin.description}")
+    print(f"Author: {plugin.author}")
     print(f"\\nTesting plugin functionality...")
 
     # Test with a dummy file
@@ -1235,17 +1342,17 @@ if __name__ == '__main__':
 
     # Test validation
     is_valid, msg = plugin.validate_binary(test_file)
-    print(f"Validation: {{is_valid}} - {{msg}}")
+    print(f"Validation: {is_valid} - {msg}")
 
     # Test execution
     result = plugin.execute(test_file)
-    print(f"Execution status: {{result['status']}}")
-    print(f"Message: {{result['message']}}")
+    print(f"Execution status: {result['status']}")
+    print(f"Message: {result['message']}")
 
     # Test analyze method
     analysis = plugin.analyze(test_file)
     for line in analysis:
-        print(f"  {{line}}")
+        print(f"  {line}")
 
     # Cleanup
     plugin.cleanup()

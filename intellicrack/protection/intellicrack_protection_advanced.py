@@ -553,15 +553,64 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             return None
 
     def _calculate_similarity_hash(self, file_path: str) -> Optional[str]:
-        """Calculate similarity hash (ssdeep or similar)"""
+        """Calculate similarity hash using fuzzy hashing (ssdeep or fallback)"""
         try:
-            # This would use ssdeep or similar fuzzy hashing
-            # Placeholder implementation using SHA256
-            with open(file_path, 'rb') as f:
-                return hashlib.sha256(f.read()).hexdigest()
+            # Try to use ssdeep for fuzzy hashing
+            try:
+                import ssdeep
+                with open(file_path, 'rb') as f:
+                    file_data = f.read()
+                return ssdeep.hash(file_data)
+            except ImportError:
+                # Fallback to rolling hash for similarity detection
+                with open(file_path, 'rb') as f:
+                    file_data = f.read()
+                return self._calculate_rolling_hash(file_data)
         except Exception as e:
             logger.error(f"Error calculating similarity hash: {e}")
             return None
+
+    def _calculate_rolling_hash(self, data: bytes) -> str:
+        """Calculate rolling hash for similarity detection when ssdeep unavailable"""
+        if len(data) == 0:
+            return "0::"
+        
+        # Rolling hash parameters
+        window_size = 7
+        block_size = 3
+        hash_mask = 0xFFFFFF  # 24-bit mask
+        
+        # Calculate rolling hash with multiple window sizes
+        hashes = []
+        
+        for window in [window_size, window_size * 2, window_size * 4]:
+            if len(data) < window:
+                continue
+                
+            rolling_hash = 0
+            block_hashes = []
+            
+            # Initialize rolling hash
+            for i in range(min(window, len(data))):
+                rolling_hash = (rolling_hash * 31 + data[i]) & hash_mask
+            
+            block_hashes.append(rolling_hash)
+            
+            # Continue rolling hash
+            for i in range(window, len(data)):
+                # Remove leftmost character, add rightmost
+                rolling_hash = (rolling_hash - data[i - window] * (31 ** (window - 1))) & hash_mask
+                rolling_hash = (rolling_hash * 31 + data[i]) & hash_mask
+                
+                if (i - window + 1) % block_size == 0:
+                    block_hashes.append(rolling_hash)
+            
+            # Convert to compact representation
+            hash_str = ':'.join(f'{h:06x}' for h in block_hashes[:64])  # Limit to 64 blocks
+            hashes.append(hash_str)
+        
+        # Combine multi-scale hashes
+        return f"{len(data)}:{':'.join(hashes)}"
 
     def _calculate_file_hash(self, file_path: str) -> str:
         """Calculate file hash for caching"""

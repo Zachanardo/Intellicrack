@@ -1,0 +1,119 @@
+{
+  "timestamp": "2025-07-25 21:42:35",
+  "categories": {
+    "elf\\simple_x64": {
+      "count": 1,
+      "size": 512
+    },
+    "elf\\legitimate\\busybox": {
+      "count": 1,
+      "size": 1131168
+    },
+    "pe\\simple_hello_world.exe": {
+      "count": 1,
+      "size": 1024
+    },
+    "pe\\legitimate\\7zip.exe": {
+      "count": 1,
+      "size": 1589510
+    },
+    "pe\\legitimate\\firefox.exe": {
+      "count": 1,
+      "size": 383600
+    },
+    "pe\\legitimate\\notepadpp.exe": {
+      "count": 1,
+      "size": 5866013
+    },
+    "pe\\legitimate\\vlc.exe": {
+      "count": 1,
+      "size": 44283624
+    },
+    "pe\\protected\\xor_firefox.exe": {
+      "count": 1,
+      "size": 383605
+    },
+    "protected\\aspack_packed.exe": {
+      "count": 1,
+      "size": 16384
+    },
+    "protected\\dotnet_assembly_0.exe": {
+      "count": 1,
+      "size": 16384
+    },
+    "protected\\dotnet_assembly_1.exe": {
+      "count": 1,
+      "size": 16384
+    },
+    "protected\\elf_x64_0": {
+      "count": 1,
+      "size": 4103
+    },
+    "protected\\elf_x64_1": {
+      "count": 1,
+      "size": 4103
+    },
+    "protected\\elf_x86_0": {
+      "count": 1,
+      "size": 4095
+    },
+    "protected\\elf_x86_1": {
+      "count": 1,
+      "size": 4095
+    },
+    "protected\\enigma_packed.exe": {
+      "count": 1,
+      "size": 16384
+    },
+    "protected\\obsidium_packed.exe": {
+      "count": 1,
+      "size": 16384
+    },
+    "protected\\pecompact_packed.exe": {
+      "count": 1,
+      "size": 16384
+    },
+    "protected\\simple_pe_0.exe": {
+      "count": 1,
+      "size": 4096
+    },
+    "protected\\simple_pe_1.exe": {
+      "count": 1,
+      "size": 5120
+    },
+    "protected\\simple_pe_2.exe": {
+      "count": 1,
+      "size": 6144
+    },
+    "protected\\themida_protected.exe": {
+      "count": 1,
+      "size": 32767
+    },
+    "protected\\upx_packed_0.exe": {
+      "count": 1,
+      "size": 8193
+    },
+    "protected\\upx_packed_1.exe": {
+      "count": 1,
+      "size": 8193
+    },
+    "protected\\vmprotect_protected.exe": {
+      "count": 1,
+      "size": 65536
+    },
+    "size_categories\\medium_100mb\\medium_padded.exe": {
+      "count": 1,
+      "size": 104857600
+    },
+    "size_categories\\small_1mb\\small_padded.exe": {
+      "count": 1,
+      "size": 1048576
+    },
+    "size_categories\\tiny_4kb\\tiny_hello.exe": {
+      "count": 1,
+      "size": 4096
+    }
+  },
+  "total_binaries": 28,
+  "total_size": 159794077
+}

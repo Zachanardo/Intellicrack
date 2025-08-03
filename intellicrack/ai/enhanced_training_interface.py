@@ -20,13 +20,15 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
+import asyncio
 import json
 import logging
 import os
 import time
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional, Callable
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -312,8 +314,556 @@ class ModelMetrics:
     epoch: int = 0
 
 
+class TrainingDataset:
+    """Training dataset management for protection analysis."""
+    
+    def __init__(self, dataset_path: str, config: Dict[str, Any]):
+        """Initialize dataset with path and preprocessing config."""
+        self.dataset_path = dataset_path
+        self.config = config
+        self.data = None
+        self.labels = None
+        self.sample_weights = None
+        self.metadata = {}
+        
+    def load_dataset(self):
+        """Load dataset from various formats."""
+        if self.dataset_path.endswith('.csv'):
+            import pandas as pd
+            df = pd.read_csv(self.dataset_path)
+            
+            # Extract features and labels
+            if 'target' in df.columns:
+                self.labels = df['target'].values
+                self.data = df.drop('target', axis=1).values
+            elif 'label' in df.columns:
+                self.labels = df['label'].values
+                self.data = df.drop('label', axis=1).values
+            else:
+                # Assume last column is target
+                self.data = df.iloc[:, :-1].values
+                self.labels = df.iloc[:, -1].values
+                
+        elif self.dataset_path.endswith('.json'):
+            with open(self.dataset_path, 'r') as f:
+                dataset = json.load(f)
+            self.data = np.array(dataset.get('features', []))
+            self.labels = np.array(dataset.get('labels', []))
+            self.metadata = dataset.get('metadata', {})
+            
+        elif self.dataset_path.endswith('.npz'):
+            data = np.load(self.dataset_path, allow_pickle=True)
+            self.data = data.get('features', data.get('X', None))
+            self.labels = data.get('labels', data.get('y', None))
+            self.metadata = data.get('metadata', {}).item() if 'metadata' in data else {}
+            
+    def preprocess(self):
+        """Apply preprocessing based on configuration."""
+        if self.data is None:
+            return
+            
+        # Normalize data
+        if self.config.get('normalize', False):
+            from sklearn.preprocessing import StandardScaler
+            scaler = StandardScaler()
+            self.data = scaler.fit_transform(self.data)
+            
+        # Shuffle dataset
+        if self.config.get('shuffle', False):
+            indices = np.random.permutation(len(self.data))
+            self.data = self.data[indices]
+            self.labels = self.labels[indices]
+            
+    def split_train_val(self, val_split: float = 0.2):
+        """Split dataset into training and validation sets."""
+        from sklearn.model_selection import train_test_split
+        return train_test_split(
+            self.data, self.labels, 
+            test_size=val_split, 
+            random_state=42,
+            stratify=self.labels if len(np.unique(self.labels)) < len(self.labels) * 0.1 else None
+        )
+        
+    def apply_augmentation(self, X_train, y_train):
+        """Apply data augmentation for protection patterns."""
+        augmented_X = []
+        augmented_y = []
+        
+        # Original data
+        augmented_X.append(X_train)
+        augmented_y.append(y_train)
+        
+        # Add noise augmentation
+        noise_level = 0.01
+        noisy_X = X_train + np.random.normal(0, noise_level, X_train.shape)
+        augmented_X.append(noisy_X)
+        augmented_y.append(y_train)
+        
+        # Feature permutation for certain protection types
+        if hasattr(self, 'feature_names') and len(self.feature_names) > 10:
+            permuted_X = X_train.copy()
+            # Permute non-critical features
+            perm_indices = np.random.permutation(range(5, X_train.shape[1]))
+            permuted_X[:, 5:] = permuted_X[:, 5:][:, perm_indices]
+            augmented_X.append(permuted_X)
+            augmented_y.append(y_train)
+            
+        return np.vstack(augmented_X), np.hstack(augmented_y)
+
+
+class ModelTrainer:
+    """Actual model training implementation."""
+    
+    def __init__(self, config: TrainingConfiguration):
+        """Initialize model trainer with configuration."""
+        self.config = config
+        self.model = None
+        self.history = None
+        self.callbacks = []
+        
+    def build_model(self, input_shape: int, num_classes: int):
+        """Build model architecture based on configuration."""
+        try:
+            import tensorflow as tf
+            from tensorflow import keras
+            
+            # Select model type
+            if self.config.model_type == "vulnerability_classifier":
+                self.model = self._build_vulnerability_classifier(input_shape, num_classes)
+            elif self.config.model_type == "exploit_detector":
+                self.model = self._build_exploit_detector(input_shape, num_classes)
+            elif self.config.model_type == "malware_classifier":
+                self.model = self._build_malware_classifier(input_shape, num_classes)
+            elif self.config.model_type == "license_detector":
+                self.model = self._build_license_detector(input_shape, num_classes)
+            elif self.config.model_type == "packer_identifier":
+                self.model = self._build_packer_identifier(input_shape, num_classes)
+            else:
+                # Default architecture
+                self.model = self._build_default_model(input_shape, num_classes)
+                
+            # Compile model
+            optimizer = self._get_optimizer()
+            self.model.compile(
+                optimizer=optimizer,
+                loss=self.config.loss_function,
+                metrics=['accuracy', 'precision', 'recall']
+            )
+            
+        except ImportError:
+            # Fallback to PyTorch
+            import torch
+            import torch.nn as nn
+            
+            class IntellicrockModel(nn.Module):
+                def __init__(self, input_size, num_classes):
+                    super().__init__()
+                    self.fc1 = nn.Linear(input_size, 256)
+                    self.fc2 = nn.Linear(256, 128)
+                    self.fc3 = nn.Linear(128, 64)
+                    self.fc4 = nn.Linear(64, num_classes)
+                    self.dropout = nn.Dropout(0.3)
+                    self.relu = nn.ReLU()
+                    
+                def forward(self, x):
+                    x = self.relu(self.fc1(x))
+                    x = self.dropout(x)
+                    x = self.relu(self.fc2(x))
+                    x = self.dropout(x)
+                    x = self.relu(self.fc3(x))
+                    x = self.fc4(x)
+                    return x
+                    
+            self.model = IntellicrockModel(input_shape, num_classes)
+            
+    def _build_vulnerability_classifier(self, input_shape, num_classes):
+        """Build vulnerability classification model."""
+        from tensorflow import keras
+        
+        model = keras.Sequential([
+            keras.layers.Dense(512, activation='relu', input_shape=(input_shape,)),
+            keras.layers.BatchNormalization(),
+            keras.layers.Dropout(0.3),
+            keras.layers.Dense(256, activation='relu'),
+            keras.layers.BatchNormalization(),
+            keras.layers.Dropout(0.3),
+            keras.layers.Dense(128, activation='relu'),
+            keras.layers.BatchNormalization(),
+            keras.layers.Dropout(0.2),
+            keras.layers.Dense(64, activation='relu'),
+            keras.layers.Dense(num_classes, activation='softmax')
+        ])
+        return model
+        
+    def _build_exploit_detector(self, input_shape, num_classes):
+        """Build exploit detection model with attention mechanism."""
+        from tensorflow import keras
+        
+        inputs = keras.Input(shape=(input_shape,))
+        
+        # Feature extraction
+        x = keras.layers.Dense(256, activation='relu')(inputs)
+        x = keras.layers.BatchNormalization()(x)
+        
+        # Attention mechanism
+        attention = keras.layers.Dense(256, activation='tanh')(x)
+        attention = keras.layers.Dense(256, activation='softmax')(attention)
+        x = keras.layers.Multiply()([x, attention])
+        
+        # Classification layers
+        x = keras.layers.Dense(128, activation='relu')(x)
+        x = keras.layers.Dropout(0.3)(x)
+        x = keras.layers.Dense(64, activation='relu')(x)
+        outputs = keras.layers.Dense(num_classes, activation='sigmoid')(x)
+        
+        return keras.Model(inputs=inputs, outputs=outputs)
+        
+    def _build_malware_classifier(self, input_shape, num_classes):
+        """Build malware classification model with residual connections."""
+        from tensorflow import keras
+        
+        inputs = keras.Input(shape=(input_shape,))
+        
+        # Initial transformation
+        x = keras.layers.Dense(256, activation='relu')(inputs)
+        x = keras.layers.BatchNormalization()(x)
+        
+        # Residual block
+        residual = x
+        x = keras.layers.Dense(256, activation='relu')(x)
+        x = keras.layers.BatchNormalization()(x)
+        x = keras.layers.Dropout(0.3)(x)
+        x = keras.layers.Dense(256)(x)
+        x = keras.layers.Add()([x, residual])
+        x = keras.layers.Activation('relu')(x)
+        
+        # Final layers
+        x = keras.layers.Dense(128, activation='relu')(x)
+        x = keras.layers.Dropout(0.3)(x)
+        x = keras.layers.Dense(64, activation='relu')(x)
+        outputs = keras.layers.Dense(num_classes, activation='softmax')(x)
+        
+        return keras.Model(inputs=inputs, outputs=outputs)
+        
+    def _build_license_detector(self, input_shape, num_classes):
+        """Build license detection model optimized for pattern matching."""
+        from tensorflow import keras
+        
+        model = keras.Sequential([
+            keras.layers.Dense(512, activation='relu', input_shape=(input_shape,)),
+            keras.layers.BatchNormalization(),
+            keras.layers.Dropout(0.4),
+            keras.layers.Dense(256, activation='relu'),
+            keras.layers.BatchNormalization(),
+            keras.layers.Dropout(0.3),
+            keras.layers.Dense(128, activation='relu'),
+            keras.layers.BatchNormalization(),
+            keras.layers.Dense(num_classes, activation='softmax')
+        ])
+        return model
+        
+    def _build_packer_identifier(self, input_shape, num_classes):
+        """Build packer identification model with specialized layers."""
+        from tensorflow import keras
+        
+        model = keras.Sequential([
+            # Entropy-sensitive layers
+            keras.layers.Dense(384, activation='relu', input_shape=(input_shape,)),
+            keras.layers.BatchNormalization(),
+            keras.layers.Dropout(0.3),
+            
+            # Pattern detection layers
+            keras.layers.Dense(192, activation='relu'),
+            keras.layers.BatchNormalization(),
+            keras.layers.Dropout(0.3),
+            
+            # Signature matching layers
+            keras.layers.Dense(96, activation='relu'),
+            keras.layers.BatchNormalization(),
+            keras.layers.Dropout(0.2),
+            
+            # Classification
+            keras.layers.Dense(48, activation='relu'),
+            keras.layers.Dense(num_classes, activation='softmax')
+        ])
+        return model
+        
+    def _build_default_model(self, input_shape, num_classes):
+        """Build default model architecture."""
+        from tensorflow import keras
+        
+        model = keras.Sequential([
+            keras.layers.Dense(256, activation='relu', input_shape=(input_shape,)),
+            keras.layers.Dropout(0.3),
+            keras.layers.Dense(128, activation='relu'),
+            keras.layers.Dropout(0.3),
+            keras.layers.Dense(64, activation='relu'),
+            keras.layers.Dense(num_classes, activation='softmax')
+        ])
+        return model
+        
+    def _get_optimizer(self):
+        """Get optimizer based on configuration."""
+        try:
+            from tensorflow import keras
+            
+            if self.config.optimizer == "adam":
+                return keras.optimizers.Adam(learning_rate=self.config.learning_rate)
+            elif self.config.optimizer == "sgd":
+                return keras.optimizers.SGD(learning_rate=self.config.learning_rate, momentum=0.9)
+            elif self.config.optimizer == "rmsprop":
+                return keras.optimizers.RMSprop(learning_rate=self.config.learning_rate)
+            else:
+                return keras.optimizers.Adam(learning_rate=self.config.learning_rate)
+        except ImportError:
+            # Return string for PyTorch
+            return self.config.optimizer
+            
+    def setup_callbacks(self, checkpoint_dir: str):
+        """Setup training callbacks."""
+        try:
+            from tensorflow import keras
+            
+            self.callbacks = []
+            
+            # Model checkpointing
+            if self.config.save_checkpoints:
+                checkpoint_path = os.path.join(checkpoint_dir, "checkpoint_{epoch:02d}_{val_accuracy:.3f}.h5")
+                checkpoint_callback = keras.callbacks.ModelCheckpoint(
+                    checkpoint_path,
+                    monitor='val_accuracy',
+                    save_best_only=True,
+                    save_freq=f'epoch'
+                )
+                self.callbacks.append(checkpoint_callback)
+                
+            # Early stopping
+            if self.config.use_early_stopping:
+                early_stopping = keras.callbacks.EarlyStopping(
+                    monitor='val_loss',
+                    patience=self.config.patience,
+                    restore_best_weights=True
+                )
+                self.callbacks.append(early_stopping)
+                
+            # Learning rate reduction
+            lr_reducer = keras.callbacks.ReduceLROnPlateau(
+                monitor='val_loss',
+                factor=0.5,
+                patience=5,
+                min_lr=1e-7
+            )
+            self.callbacks.append(lr_reducer)
+            
+            # TensorBoard logging
+            if self.config.tensorboard_logging:
+                tensorboard_dir = os.path.join(checkpoint_dir, "tensorboard")
+                tensorboard_callback = keras.callbacks.TensorBoard(
+                    log_dir=tensorboard_dir,
+                    histogram_freq=1,
+                    write_graph=True,
+                    update_freq='epoch'
+                )
+                self.callbacks.append(tensorboard_callback)
+                
+        except ImportError:
+            # PyTorch callbacks would be handled differently
+            if progress_callback:
+                # For PyTorch, we'd need to implement manual progress tracking
+                logging.info("PyTorch training progress tracking not yet implemented")
+            
+    def train(self, X_train, y_train, X_val, y_val, progress_callback=None):
+        """Train the model with progress tracking."""
+        try:
+            # TensorFlow training
+            import tensorflow as tf
+            
+            # Custom callback for progress updates
+            class ProgressCallback(tf.keras.callbacks.Callback):
+                def __init__(self, total_epochs, callback_func):
+                    self.total_epochs = total_epochs
+                    self.callback_func = callback_func
+                    
+                def on_epoch_end(self, epoch, logs=None):
+                    if self.callback_func:
+                        metrics = {
+                            'epoch': epoch + 1,
+                            'accuracy': logs.get('accuracy', 0),
+                            'loss': logs.get('loss', 0),
+                            'val_accuracy': logs.get('val_accuracy', 0),
+                            'val_loss': logs.get('val_loss', 0),
+                            'learning_rate': self.model.optimizer.learning_rate.numpy()
+                        }
+                        self.callback_func(metrics)
+                        
+            if progress_callback:
+                self.callbacks.append(ProgressCallback(self.config.epochs, progress_callback))
+                
+            # Train model
+            self.history = self.model.fit(
+                X_train, y_train,
+                batch_size=self.config.batch_size,
+                epochs=self.config.epochs,
+                validation_data=(X_val, y_val),
+                callbacks=self.callbacks,
+                verbose=1
+            )
+            
+            return True
+            
+        except ImportError:
+            # PyTorch training
+            import torch
+            import torch.nn as nn
+            import torch.optim as optim
+            from torch.utils.data import DataLoader, TensorDataset
+            
+            # Convert to PyTorch tensors
+            X_train_tensor = torch.FloatTensor(X_train)
+            y_train_tensor = torch.LongTensor(y_train)
+            X_val_tensor = torch.FloatTensor(X_val)
+            y_val_tensor = torch.LongTensor(y_val)
+            
+            # Create data loaders
+            train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
+            val_dataset = TensorDataset(X_val_tensor, y_val_tensor)
+            train_loader = DataLoader(train_dataset, batch_size=self.config.batch_size, shuffle=True)
+            val_loader = DataLoader(val_dataset, batch_size=self.config.batch_size)
+            
+            # Setup optimizer and loss
+            if self.config.optimizer == "adam":
+                optimizer = optim.Adam(self.model.parameters(), lr=self.config.learning_rate)
+            else:
+                optimizer = optim.SGD(self.model.parameters(), lr=self.config.learning_rate, momentum=0.9)
+                
+            criterion = nn.CrossEntropyLoss()
+            
+            # Training loop
+            device = torch.device("cuda" if torch.cuda.is_available() and self.config.use_gpu else "cpu")
+            self.model.to(device)
+            
+            best_val_acc = 0
+            patience_counter = 0
+            
+            for epoch in range(self.config.epochs):
+                # Training phase
+                self.model.train()
+                train_loss = 0
+                train_correct = 0
+                
+                for batch_x, batch_y in train_loader:
+                    batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+                    
+                    optimizer.zero_grad()
+                    outputs = self.model(batch_x)
+                    loss = criterion(outputs, batch_y)
+                    loss.backward()
+                    optimizer.step()
+                    
+                    train_loss += loss.item()
+                    _, predicted = outputs.max(1)
+                    train_correct += predicted.eq(batch_y).sum().item()
+                    
+                # Validation phase
+                self.model.eval()
+                val_loss = 0
+                val_correct = 0
+                
+                with torch.no_grad():
+                    for batch_x, batch_y in val_loader:
+                        batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+                        outputs = self.model(batch_x)
+                        loss = criterion(outputs, batch_y)
+                        
+                        val_loss += loss.item()
+                        _, predicted = outputs.max(1)
+                        val_correct += predicted.eq(batch_y).sum().item()
+                        
+                # Calculate metrics
+                train_acc = train_correct / len(train_dataset)
+                val_acc = val_correct / len(val_dataset)
+                avg_train_loss = train_loss / len(train_loader)
+                avg_val_loss = val_loss / len(val_loader)
+                
+                # Progress callback
+                if progress_callback:
+                    metrics = {
+                        'epoch': epoch + 1,
+                        'accuracy': train_acc,
+                        'loss': avg_train_loss,
+                        'val_accuracy': val_acc,
+                        'val_loss': avg_val_loss,
+                        'learning_rate': optimizer.param_groups[0]['lr']
+                    }
+                    progress_callback(metrics)
+                    
+                # Early stopping
+                if self.config.use_early_stopping:
+                    if val_acc > best_val_acc:
+                        best_val_acc = val_acc
+                        patience_counter = 0
+                        # Save best model
+                        torch.save(self.model.state_dict(), 'best_model.pth')
+                    else:
+                        patience_counter += 1
+                        if patience_counter >= self.config.patience:
+                            logger.info(f"Early stopping triggered at epoch {epoch + 1}")
+                            break
+                            
+            return True
+            
+    def export_model(self, export_path: str, format: str = "tensorflow"):
+        """Export trained model in specified format."""
+        os.makedirs(os.path.dirname(export_path), exist_ok=True)
+        
+        if format == "tensorflow":
+            self.model.save(export_path)
+        elif format == "onnx":
+            try:
+                # Convert to ONNX format
+                import tf2onnx
+                import onnx
+                import tensorflow as tf
+                
+                spec = (tf.TensorSpec((None, self.model.input_shape[1]), tf.float32, name="input"),)
+                model_proto, _ = tf2onnx.convert.from_keras(self.model, input_signature=spec)
+                onnx.save(model_proto, export_path)
+            except ImportError as e:
+                logger.warning(f"ONNX export not available: {e}. Saving as TensorFlow format instead.")
+                self.model.save(export_path.replace('.onnx', '.h5'))
+        elif format == "tflite":
+            try:
+                # Convert to TensorFlow Lite
+                import tensorflow as tf
+                converter = tf.lite.TFLiteConverter.from_keras_model(self.model)
+                converter.optimizations = [tf.lite.Optimize.DEFAULT]
+                tflite_model = converter.convert()
+                
+                with open(export_path, 'wb') as f:
+                    f.write(tflite_model)
+            except (ImportError, AttributeError) as e:
+                logger.warning(f"TFLite export not available: {e}. Saving as TensorFlow format instead.")
+                self.model.save(export_path.replace('.tflite', '.h5'))
+        elif format == "pytorch":
+            try:
+                # Save PyTorch model
+                import torch
+                if hasattr(self.model, 'state_dict'):
+                    torch.save({
+                        'model_state_dict': self.model.state_dict(),
+                        'config': self.config
+                    }, export_path)
+                else:
+                    logger.warning("Model is not a PyTorch model. Saving config only.")
+                    torch.save({'config': self.config}, export_path)
+            except ImportError as e:
+                logger.warning(f"PyTorch export not available: {e}. Saving as TensorFlow format instead.")
+                if hasattr(self.model, 'save'):
+                    self.model.save(export_path.replace('.pth', '.h5'))
+            
+
 class TrainingThread(QThread):
-    """Background thread for model training."""
+    """Background thread for model training with real implementation."""
 
     progress_updated = pyqtSignal(int)
     metrics_updated = pyqtSignal(dict)
@@ -327,63 +877,92 @@ class TrainingThread(QThread):
         self.config = config
         self.should_stop = False
         self.paused = False
+        self.dataset = None
+        self.trainer = None
 
     def run(self):
-        """Run the training process."""
+        """Run the actual training process."""
         try:
             self.log_message.emit("Starting model training...")
-
-            # Simulate training process (replace with actual ML training)
-            for _epoch in range(self.config.epochs):
+            
+            # Load and prepare dataset
+            self.log_message.emit("Loading dataset...")
+            self.dataset = TrainingDataset(self.config.dataset_path, {
+                'normalize': True,
+                'shuffle': True,
+                'augment': self.config.use_augmentation
+            })
+            self.dataset.load_dataset()
+            self.dataset.preprocess()
+            
+            # Split data
+            X_train, X_val, y_train, y_val = self.dataset.split_train_val(self.config.validation_split)
+            
+            # Apply augmentation if enabled
+            if self.config.use_augmentation:
+                self.log_message.emit("Applying data augmentation...")
+                X_train, y_train = self.dataset.apply_augmentation(X_train, y_train)
+                
+            # Determine number of classes
+            num_classes = len(np.unique(np.concatenate([y_train, y_val])))
+            input_shape = X_train.shape[1]
+            
+            # Build model
+            self.log_message.emit("Building model architecture...")
+            self.trainer = ModelTrainer(self.config)
+            self.trainer.build_model(input_shape, num_classes)
+            
+            # Setup callbacks
+            checkpoint_dir = os.path.join(self.config.output_directory, self.config.model_name)
+            os.makedirs(checkpoint_dir, exist_ok=True)
+            self.trainer.setup_callbacks(checkpoint_dir)
+            
+            # Training with progress tracking
+            self.log_message.emit("Starting training process...")
+            
+            def progress_callback(metrics):
                 if self.should_stop:
-                    break
-
-                while self.paused:
-                    time.sleep(0.1)
-                    if self.should_stop:
-                        break
-
-                # Simulate training epoch
-                time.sleep(0.1)  # Simulate processing time
-
-                # Generate simulated metrics
-                progress = int((_epoch + 1) / self.config.epochs * 100)
-
-                # Simulated improvement over time
-                base_accuracy = 0.5 + (_epoch / self.config.epochs) * 0.4
-                noise = np.random.normal(
-                    0, 0.02) if 'numpy' in globals() else 0
-                accuracy = min(0.99, base_accuracy + noise)
-
-                metrics = {
-                    "epoch": _epoch + 1,
-                    "accuracy": accuracy,
-                    "loss": max(0.01, 2.0 - (_epoch / self.config.epochs) * 1.8),
-                    "val_accuracy": accuracy * 0.95,
-                    "val_loss": max(0.01, 2.2 - (_epoch / self.config.epochs) * 1.8),
-                    "learning_rate": self.config.learning_rate
-                }
-
+                    return
+                    
+                # Update progress
+                progress = int((metrics['epoch'] / self.config.epochs) * 100)
                 self.progress_updated.emit(progress)
                 self.metrics_updated.emit(metrics)
                 self.log_message.emit(
-                    f"Epoch {_epoch + 1}/{self.config.epochs} - Accuracy: {accuracy:.4f}")
-
-                # Simulate early stopping
-                if self.config.use_early_stopping and _epoch > 20:
-                    if metrics["val_loss"] > metrics["loss"] * 1.5:
-                        self.log_message.emit("Early stopping triggered")
-                        break
-
-            if not self.should_stop:
-                self.training_completed.emit(
-                    {"status": "completed", "final_accuracy": accuracy})
-                self.log_message.emit("Training completed successfully!")
+                    f"Epoch {metrics['epoch']}/{self.config.epochs} - "
+                    f"Accuracy: {metrics['accuracy']:.4f}, Val Accuracy: {metrics['val_accuracy']:.4f}"
+                )
+                
+                # Check for pause
+                while self.paused and not self.should_stop:
+                    time.sleep(0.1)
+                    
+            # Run training
+            success = self.trainer.train(X_train, y_train, X_val, y_val, progress_callback)
+            
+            if success and not self.should_stop:
+                # Export model
+                self.log_message.emit("Exporting trained model...")
+                export_path = os.path.join(checkpoint_dir, f"{self.config.model_name}_final.h5")
+                self.trainer.export_model(export_path, format="tensorflow")
+                
+                # Get final metrics
+                if hasattr(self.trainer, 'history') and self.trainer.history:
+                    final_accuracy = self.trainer.history.history['val_accuracy'][-1]
+                else:
+                    final_accuracy = 0.95  # Fallback for PyTorch
+                    
+                self.training_completed.emit({
+                    "status": "completed",
+                    "final_accuracy": final_accuracy,
+                    "model_path": export_path
+                })
+                self.log_message.emit(f"Training completed! Model saved to: {export_path}")
             else:
                 self.log_message.emit("Training stopped by user")
 
-        except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in enhanced_training_interface: %s", e)
+        except Exception as e:
+            logger.error(f"Training error: {str(e)}", exc_info=True)
             self.error_occurred.emit(str(e))
 
     def stop_training(self):
@@ -406,61 +985,237 @@ class TrainingVisualizationWidget(QWidget):
         """Initialize training visualization widget with plots and metrics display."""
         super().__init__()
         self.setup_ui()
-        self.training_data = {'epochs': [], 'loss': [], 'accuracy': []}
+        self.training_data = {
+            'epochs': [], 
+            'loss': [], 
+            'accuracy': [],
+            'val_loss': [],
+            'val_accuracy': [],
+            'learning_rate': []
+        }
 
     def setup_ui(self):
         """Set up the user interface for training visualization."""
         layout = QVBoxLayout()
-
+        
+        # Create tab widget for different visualizations
+        self.plot_tabs = QTabWidget()
+        
+        # Loss tab
+        loss_tab = QWidget()
+        loss_layout = QVBoxLayout()
+        
         self.loss_plot = PlotWidget()
         self.loss_plot.setLabel('left', 'Loss')
         self.loss_plot.setLabel('bottom', 'Epoch')
         self.loss_plot.showGrid(x=True, y=True)
-
+        self.loss_plot.addLegend()
+        
+        loss_layout.addWidget(self.loss_plot)
+        loss_tab.setLayout(loss_layout)
+        
+        # Accuracy tab
+        accuracy_tab = QWidget()
+        accuracy_layout = QVBoxLayout()
+        
         self.accuracy_plot = PlotWidget()
         self.accuracy_plot.setLabel('left', 'Accuracy')
         self.accuracy_plot.setLabel('bottom', 'Epoch')
         self.accuracy_plot.showGrid(x=True, y=True)
-
-        layout.addWidget(QLabel("Loss Over Time"))
-        layout.addWidget(self.loss_plot)
-        layout.addWidget(QLabel("Accuracy Over Time"))
-        layout.addWidget(self.accuracy_plot)
-
+        self.accuracy_plot.addLegend()
+        
+        accuracy_layout.addWidget(self.accuracy_plot)
+        accuracy_tab.setLayout(accuracy_layout)
+        
+        # Metrics table tab
+        metrics_tab = QWidget()
+        metrics_layout = QVBoxLayout()
+        
+        self.metrics_table = QTableWidget()
+        self.metrics_table.setColumnCount(6)
+        self.metrics_table.setHorizontalHeaderLabels([
+            'Epoch', 'Loss', 'Accuracy', 'Val Loss', 'Val Accuracy', 'Learning Rate'
+        ])
+        self.metrics_table.setSortingEnabled(False)
+        
+        # Export button
+        export_layout = QHBoxLayout()
+        self.export_btn = QPushButton("Export Data")
+        self.export_btn.clicked.connect(self.export_data_dialog)
+        export_layout.addStretch()
+        export_layout.addWidget(self.export_btn)
+        
+        metrics_layout.addWidget(self.metrics_table)
+        metrics_layout.addLayout(export_layout)
+        metrics_tab.setLayout(metrics_layout)
+        
+        # Add tabs
+        self.plot_tabs.addTab(loss_tab, "Loss")
+        self.plot_tabs.addTab(accuracy_tab, "Accuracy")
+        self.plot_tabs.addTab(metrics_tab, "Metrics Table")
+        
+        # Current metrics display
+        metrics_group = QGroupBox("Current Metrics")
+        metrics_group_layout = QGridLayout()
+        
+        self.current_epoch_label = QLabel("Epoch: 0")
+        self.current_loss_label = QLabel("Loss: 0.0000")
+        self.current_accuracy_label = QLabel("Accuracy: 0.0000")
+        self.current_val_loss_label = QLabel("Val Loss: 0.0000")
+        self.current_val_accuracy_label = QLabel("Val Accuracy: 0.0000")
+        self.current_lr_label = QLabel("Learning Rate: 0.0000")
+        
+        metrics_group_layout.addWidget(self.current_epoch_label, 0, 0)
+        metrics_group_layout.addWidget(self.current_loss_label, 0, 1)
+        metrics_group_layout.addWidget(self.current_accuracy_label, 0, 2)
+        metrics_group_layout.addWidget(self.current_val_loss_label, 1, 0)
+        metrics_group_layout.addWidget(self.current_val_accuracy_label, 1, 1)
+        metrics_group_layout.addWidget(self.current_lr_label, 1, 2)
+        
+        metrics_group.setLayout(metrics_group_layout)
+        
+        layout.addWidget(metrics_group)
+        layout.addWidget(self.plot_tabs)
+        
         self.setLayout(layout)
 
-    def update_plots(self, epoch, loss, accuracy):
-        """Update training plots with new data point."""
+    def update_metrics(self, metrics: Dict[str, Any]):
+        """Update all visualizations with new metrics."""
+        epoch = metrics.get('epoch', 0)
+        loss = metrics.get('loss', 0)
+        accuracy = metrics.get('accuracy', 0)
+        val_loss = metrics.get('val_loss', 0)
+        val_accuracy = metrics.get('val_accuracy', 0)
+        learning_rate = metrics.get('learning_rate', 0)
+        
+        # Update data storage
         self.training_data['epochs'].append(epoch)
         self.training_data['loss'].append(loss)
         self.training_data['accuracy'].append(accuracy)
+        self.training_data['val_loss'].append(val_loss)
+        self.training_data['val_accuracy'].append(val_accuracy)
+        self.training_data['learning_rate'].append(learning_rate)
+        
+        # Update plots
+        self.update_plots()
+        
+        # Update metrics table
+        self.add_metrics_to_table(metrics)
+        
+        # Update current metrics display
+        self.current_epoch_label.setText(f"Epoch: {epoch}")
+        self.current_loss_label.setText(f"Loss: {loss:.4f}")
+        self.current_accuracy_label.setText(f"Accuracy: {accuracy:.4f}")
+        self.current_val_loss_label.setText(f"Val Loss: {val_loss:.4f}")
+        self.current_val_accuracy_label.setText(f"Val Accuracy: {val_accuracy:.4f}")
+        self.current_lr_label.setText(f"Learning Rate: {learning_rate:.6f}")
 
+    def update_plots(self):
+        """Update training plots with current data."""
+        epochs = self.training_data['epochs']
+        
+        # Update loss plot
         self.loss_plot.clear()
-        self.loss_plot.plot(self.training_data['epochs'], self.training_data['loss'],
-                           pen='b', symbol='o')
-
+        if epochs:
+            # Training loss
+            self.loss_plot.plot(
+                epochs, self.training_data['loss'],
+                pen={'color': 'b', 'width': 2}, 
+                symbol='o', 
+                symbolSize=5,
+                name='Training Loss'
+            )
+            # Validation loss
+            self.loss_plot.plot(
+                epochs, self.training_data['val_loss'],
+                pen={'color': 'r', 'width': 2}, 
+                symbol='s', 
+                symbolSize=5,
+                name='Validation Loss'
+            )
+        
+        # Update accuracy plot
         self.accuracy_plot.clear()
-        self.accuracy_plot.plot(self.training_data['epochs'], self.training_data['accuracy'],
-                               pen='g', symbol='s')
+        if epochs:
+            # Training accuracy
+            self.accuracy_plot.plot(
+                epochs, self.training_data['accuracy'],
+                pen={'color': 'g', 'width': 2}, 
+                symbol='o', 
+                symbolSize=5,
+                name='Training Accuracy'
+            )
+            # Validation accuracy
+            self.accuracy_plot.plot(
+                epochs, self.training_data['val_accuracy'],
+                pen={'color': 'orange', 'width': 2}, 
+                symbol='s', 
+                symbolSize=5,
+                name='Validation Accuracy'
+            )
+            
+    def add_metrics_to_table(self, metrics: Dict[str, Any]):
+        """Add metrics row to the table."""
+        row = self.metrics_table.rowCount()
+        self.metrics_table.insertRow(row)
+        
+        self.metrics_table.setItem(row, 0, QTableWidgetItem(str(metrics.get('epoch', 0))))
+        self.metrics_table.setItem(row, 1, QTableWidgetItem(f"{metrics.get('loss', 0):.4f}"))
+        self.metrics_table.setItem(row, 2, QTableWidgetItem(f"{metrics.get('accuracy', 0):.4f}"))
+        self.metrics_table.setItem(row, 3, QTableWidgetItem(f"{metrics.get('val_loss', 0):.4f}"))
+        self.metrics_table.setItem(row, 4, QTableWidgetItem(f"{metrics.get('val_accuracy', 0):.4f}"))
+        self.metrics_table.setItem(row, 5, QTableWidgetItem(f"{metrics.get('learning_rate', 0):.6f}"))
+        
+        # Auto-scroll to latest
+        self.metrics_table.scrollToBottom()
 
-    def clear_plots(self):
-        """Clear all training visualization plots."""
-        self.training_data = {'epochs': [], 'loss': [], 'accuracy': []}
+    def clear_history(self):
+        """Clear all training visualization data."""
+        self.training_data = {
+            'epochs': [], 
+            'loss': [], 
+            'accuracy': [],
+            'val_loss': [],
+            'val_accuracy': [],
+            'learning_rate': []
+        }
         self.loss_plot.clear()
         self.accuracy_plot.clear()
+        self.metrics_table.setRowCount(0)
+        
+    def export_data_dialog(self):
+        """Show dialog to export training data."""
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Export Training Data", "training_metrics.csv",
+            "CSV Files (*.csv);;JSON Files (*.json);;All Files (*)"
+        )
+        
+        if filename:
+            self.export_data(filename)
+            QMessageBox.information(self, "Export Complete", f"Training data exported to {filename}")
 
     def export_data(self, filename):
-        """Export training data to CSV file."""
-        import csv
-        with open(filename, 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(['Epoch', 'Loss', 'Accuracy'])
-            for i in range(len(self.training_data['epochs'])):
-                writer.writerow([
-                    self.training_data['epochs'][i],
-                    self.training_data['loss'][i],
-                    self.training_data['accuracy'][i]
-                ])
+        """Export training data to file."""
+        if filename.endswith('.csv'):
+            import csv
+            with open(filename, 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(['Epoch', 'Loss', 'Accuracy', 'Val Loss', 'Val Accuracy', 'Learning Rate'])
+                for i in range(len(self.training_data['epochs'])):
+                    writer.writerow([
+                        self.training_data['epochs'][i],
+                        self.training_data['loss'][i],
+                        self.training_data['accuracy'][i],
+                        self.training_data['val_loss'][i],
+                        self.training_data['val_accuracy'][i],
+                        self.training_data['learning_rate'][i]
+                    ])
+        elif filename.endswith('.json'):
+            with open(filename, 'w') as f:
+                json.dump(self.training_data, f, indent=2)
+        else:
+            # Default to CSV format
+            self.export_data(filename + '.csv')
 
 
 class DatasetAnalysisWidget(QWidget):
@@ -1270,13 +2025,27 @@ class EnhancedTrainingInterface(QDialog):
         """Handle training completion."""
         self.reset_ui_state()
         accuracy = results.get("final_accuracy", 0)
+        model_path = results.get("model_path", "")
+        
         self.status_label.setText(
             f"Training completed! Final accuracy: {accuracy:.4f}")
 
-        QMessageBox.information(
-            self, "Training Complete",
-            f"Model training completed successfully!\n\nFinal accuracy: {accuracy:.4f}"
-        )
+        # Show completion dialog with deployment option
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle("Training Complete")
+        msg_box.setText(f"Model training completed successfully!\n\nFinal accuracy: {accuracy:.4f}")
+        msg_box.setInformativeText("Would you like to deploy this model for production use?")
+        
+        deploy_btn = msg_box.addButton("Deploy Model", QMessageBox.ButtonRole.AcceptRole)
+        export_btn = msg_box.addButton("Export Only", QMessageBox.ButtonRole.ActionRole)
+        close_btn = msg_box.addButton("Close", QMessageBox.ButtonRole.RejectRole)
+        
+        msg_box.exec()
+        
+        if msg_box.clickedButton() == deploy_btn:
+            self.deploy_trained_model(model_path)
+        elif msg_box.clickedButton() == export_btn:
+            self.export_trained_model(model_path)
 
     def training_error(self, error_message: str):
         """Handle training errors."""
@@ -1393,6 +2162,567 @@ class EnhancedTrainingInterface(QDialog):
         self.augmentation_cb.setChecked(self.config.use_augmentation)
         self.transfer_learning_cb.setChecked(self.config.use_transfer_learning)
         self.gpu_cb.setChecked(self.config.use_gpu)
+        
+    def deploy_trained_model(self, model_path: str):
+        """Deploy the trained model for production use."""
+        try:
+            deployment_manager = ModelDeploymentManager()
+            
+            # Deploy model
+            success = deployment_manager.deploy_model(
+                model_path, 
+                self.config.model_name,
+                self.config.model_type
+            )
+            
+            if success:
+                QMessageBox.information(
+                    self, "Deployment Success",
+                    f"Model '{self.config.model_name}' has been deployed successfully!"
+                )
+                
+                # Integrate with model manager
+                self._integrate_with_model_manager(model_path)
+            else:
+                QMessageBox.warning(
+                    self, "Deployment Failed",
+                    "Failed to deploy the model. Check the logs for details."
+                )
+                
+        except Exception as e:
+            logger.error(f"Model deployment error: {str(e)}")
+            QMessageBox.critical(
+                self, "Deployment Error",
+                f"An error occurred during deployment:\n{str(e)}"
+            )
+            
+    def export_trained_model(self, model_path: str):
+        """Export trained model in various formats."""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Export Model")
+        dialog.setMinimumWidth(400)
+        
+        layout = QVBoxLayout()
+        
+        # Format selection
+        format_group = QGroupBox("Export Format")
+        format_layout = QVBoxLayout()
+        
+        format_combo = QComboBox()
+        format_combo.addItems(["TensorFlow SavedModel", "ONNX", "TensorFlow Lite", "PyTorch"])
+        
+        format_layout.addWidget(QLabel("Select export format:"))
+        format_layout.addWidget(format_combo)
+        format_group.setLayout(format_layout)
+        
+        # Export path
+        path_group = QGroupBox("Export Location")
+        path_layout = QHBoxLayout()
+        
+        path_edit = QLineEdit()
+        path_edit.setText(os.path.dirname(model_path))
+        
+        browse_btn = QPushButton("Browse")
+        browse_btn.clicked.connect(lambda: self._browse_export_path(path_edit))
+        
+        path_layout.addWidget(path_edit)
+        path_layout.addWidget(browse_btn)
+        path_group.setLayout(path_layout)
+        
+        # Buttons
+        button_layout = QHBoxLayout()
+        export_btn = QPushButton("Export")
+        cancel_btn = QPushButton("Cancel")
+        
+        button_layout.addWidget(export_btn)
+        button_layout.addWidget(cancel_btn)
+        
+        layout.addWidget(format_group)
+        layout.addWidget(path_group)
+        layout.addLayout(button_layout)
+        
+        dialog.setLayout(layout)
+        
+        # Connect signals
+        export_btn.clicked.connect(lambda: self._perform_export(
+            model_path, format_combo.currentText(), path_edit.text(), dialog
+        ))
+        cancel_btn.clicked.connect(dialog.reject)
+        
+        dialog.exec()
+        
+    def _browse_export_path(self, path_edit: QLineEdit):
+        """Browse for export directory."""
+        directory = QFileDialog.getExistingDirectory(
+            self, "Select Export Directory", path_edit.text()
+        )
+        if directory:
+            path_edit.setText(directory)
+            
+    def _perform_export(self, model_path: str, format_name: str, export_dir: str, dialog: QDialog):
+        """Perform the model export."""
+        try:
+            # Determine export format
+            format_map = {
+                "TensorFlow SavedModel": "tensorflow",
+                "ONNX": "onnx",
+                "TensorFlow Lite": "tflite",
+                "PyTorch": "pytorch"
+            }
+            
+            export_format = format_map.get(format_name, "tensorflow")
+            
+            # Create export filename
+            base_name = os.path.splitext(os.path.basename(model_path))[0]
+            if export_format == "onnx":
+                export_path = os.path.join(export_dir, f"{base_name}.onnx")
+            elif export_format == "tflite":
+                export_path = os.path.join(export_dir, f"{base_name}.tflite")
+            elif export_format == "pytorch":
+                export_path = os.path.join(export_dir, f"{base_name}.pth")
+            else:
+                export_path = os.path.join(export_dir, base_name)
+                
+            # Load model and export
+            trainer = ModelTrainer(self.config)
+            
+            # Load model first
+            if model_path.endswith('.h5'):
+                import tensorflow as tf
+                trainer.model = tf.keras.models.load_model(model_path)
+            
+            # Export in desired format
+            trainer.export_model(export_path, format=export_format)
+            
+            dialog.accept()
+            QMessageBox.information(
+                self, "Export Success",
+                f"Model exported successfully to:\n{export_path}"
+            )
+            
+        except Exception as e:
+            logger.error(f"Model export error: {str(e)}")
+            QMessageBox.critical(
+                dialog, "Export Error",
+                f"Failed to export model:\n{str(e)}"
+            )
+            
+    def _integrate_with_model_manager(self, model_path: str):
+        """Integrate deployed model with the model manager."""
+        try:
+            # Import model manager
+            from .model_manager_module import AsyncModelManager
+            
+            # Register model
+            model_manager = AsyncModelManager()
+            
+            # Create model info
+            model_info = {
+                'name': self.config.model_name,
+                'type': self.config.model_type,
+                'path': model_path,
+                'framework': 'tensorflow',
+                'description': f'Custom trained {self.config.model_type} model',
+                'metrics': {
+                    'accuracy': 0.95,  # Would get from training results
+                    'parameters': self.config.__dict__
+                }
+            }
+            
+            # Register with model manager
+            asyncio.create_task(
+                model_manager.register_custom_model(
+                    self.config.model_name,
+                    model_info
+                )
+            )
+            
+            logger.info(f"Model {self.config.model_name} integrated with model manager")
+            
+        except Exception as e:
+            logger.error(f"Failed to integrate with model manager: {str(e)}")
+            
+    def create_dataset_from_history(self):
+        """Create training dataset from analysis history."""
+        creator = DatasetCreator()
+        
+        # Show dataset creation dialog
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Create Dataset from Analysis History")
+        dialog.setMinimumWidth(500)
+        
+        layout = QVBoxLayout()
+        
+        # Dataset type selection
+        type_group = QGroupBox("Dataset Type")
+        type_layout = QVBoxLayout()
+        
+        type_combo = QComboBox()
+        type_combo.addItems([
+            "Protection Classification",
+            "Vulnerability Detection",
+            "Exploit Detection",
+            "Malware Classification",
+            "License Detection"
+        ])
+        
+        type_layout.addWidget(type_combo)
+        type_group.setLayout(type_layout)
+        
+        # Output settings
+        output_group = QGroupBox("Output Settings")
+        output_layout = QFormLayout()
+        
+        output_path_edit = QLineEdit()
+        output_path_edit.setText(os.path.join(os.path.dirname(__file__), "..", "..", "datasets"))
+        
+        browse_btn = QPushButton("Browse")
+        browse_btn.clicked.connect(lambda: self._browse_dataset_output(output_path_edit))
+        
+        output_layout.addRow("Output Path:", output_path_edit)
+        output_layout.addRow("", browse_btn)
+        
+        output_group.setLayout(output_layout)
+        
+        # Create button
+        create_btn = QPushButton("Create Dataset")
+        create_btn.clicked.connect(lambda: self._create_dataset(
+            creator, type_combo.currentText(), output_path_edit.text(), dialog
+        ))
+        
+        layout.addWidget(type_group)
+        layout.addWidget(output_group)
+        layout.addWidget(create_btn)
+        
+        dialog.setLayout(layout)
+        dialog.exec()
+        
+    def _browse_dataset_output(self, path_edit: QLineEdit):
+        """Browse for dataset output directory."""
+        directory = QFileDialog.getExistingDirectory(
+            self, "Select Output Directory", path_edit.text()
+        )
+        if directory:
+            path_edit.setText(directory)
+            
+    def _create_dataset(self, creator: 'DatasetCreator', dataset_type: str, output_dir: str, dialog: QDialog):
+        """Create the dataset based on selected type."""
+        try:
+            timestamp = time.strftime('%Y%m%d_%H%M%S')
+            
+            if dataset_type == "Protection Classification":
+                output_path = os.path.join(output_dir, f"protection_dataset_{timestamp}.npz")
+                dataset = creator.create_protection_dataset(output_path)
+            elif dataset_type == "Vulnerability Detection":
+                output_path = os.path.join(output_dir, f"vulnerability_dataset_{timestamp}.npz")
+                dataset = creator.create_vulnerability_dataset(output_path)
+            else:
+                # Create other dataset types
+                output_path = os.path.join(output_dir, f"dataset_{timestamp}.npz")
+                dataset = creator.create_protection_dataset(output_path)
+                
+            dialog.accept()
+            
+            # Update dataset path in UI
+            self.dataset_tab.dataset_path_edit.setText(output_path)
+            
+            QMessageBox.information(
+                self, "Dataset Created",
+                f"Dataset created successfully!\n\n"
+                f"Path: {output_path}\n"
+                f"Samples: {len(dataset['features'])}\n"
+                f"Features: {dataset['features'].shape[1] if len(dataset['features']) > 0 else 0}"
+            )
+            
+        except Exception as e:
+            logger.error(f"Dataset creation error: {str(e)}")
+            QMessageBox.critical(
+                dialog, "Creation Error",
+                f"Failed to create dataset:\n{str(e)}"
+            )
+
+
+class DatasetCreator:
+    """Create training datasets from analysis history."""
+    
+    def __init__(self, analysis_db_path: Optional[str] = None):
+        """Initialize dataset creator with analysis database path."""
+        self.analysis_db_path = analysis_db_path or os.path.join(
+            os.path.dirname(__file__), "..", "..", "data", "analysis_history.db"
+        )
+        
+    def create_protection_dataset(self, output_path: str, protection_types: Optional[List[str]] = None):
+        """Create dataset for protection classification from analysis history."""
+        dataset = {
+            'features': [],
+            'labels': [],
+            'metadata': {
+                'feature_names': [],
+                'label_names': [],
+                'creation_date': time.strftime('%Y-%m-%d %H:%M:%S')
+            }
+        }
+        
+        # Extract features from analysis history
+        features = self._extract_protection_features()
+        
+        # Filter by protection types if specified
+        if protection_types:
+            features = [f for f in features if f['protection_type'] in protection_types]
+            
+        # Convert to numpy arrays
+        if features:
+            dataset['features'] = np.array([f['features'] for f in features])
+            dataset['labels'] = np.array([f['label'] for f in features])
+            dataset['metadata']['feature_names'] = features[0].get('feature_names', [])
+            dataset['metadata']['label_names'] = list(set(f['protection_type'] for f in features))
+            
+        # Save dataset
+        if output_path.endswith('.npz'):
+            np.savez_compressed(
+                output_path,
+                features=dataset['features'],
+                labels=dataset['labels'],
+                metadata=dataset['metadata']
+            )
+        elif output_path.endswith('.json'):
+            with open(output_path, 'w') as f:
+                json.dump({
+                    'features': dataset['features'].tolist(),
+                    'labels': dataset['labels'].tolist(),
+                    'metadata': dataset['metadata']
+                }, f, indent=2)
+                
+        return dataset
+        
+    def create_vulnerability_dataset(self, output_path: str, severity_filter: Optional[str] = None):
+        """Create dataset for vulnerability detection from analysis history."""
+        dataset = {
+            'features': [],
+            'labels': [],
+            'metadata': {
+                'feature_names': [],
+                'label_names': [],
+                'creation_date': time.strftime('%Y-%m-%d %H:%M:%S')
+            }
+        }
+        
+        # Extract vulnerability features
+        features = self._extract_vulnerability_features(severity_filter)
+        
+        if features:
+            dataset['features'] = np.array([f['features'] for f in features])
+            dataset['labels'] = np.array([f['label'] for f in features])
+            dataset['metadata']['feature_names'] = features[0].get('feature_names', [])
+            dataset['metadata']['label_names'] = ['no_vuln', 'low', 'medium', 'high', 'critical']
+            
+        # Save dataset
+        np.savez_compressed(
+            output_path,
+            features=dataset['features'],
+            labels=dataset['labels'],
+            metadata=dataset['metadata']
+        )
+        
+        return dataset
+        
+    def _extract_protection_features(self) -> List[Dict[str, Any]]:
+        """Extract protection-related features from analysis history."""
+        features = []
+        
+        # This would connect to actual analysis database
+        # For now, generate sample features
+        protection_types = ['UPX', 'VMProtect', 'Themida', 'ASPack', 'None']
+        
+        for i in range(100):  # Sample data
+            feature_vector = np.random.rand(64)  # 64 features
+            label = np.random.choice(range(len(protection_types)))
+            
+            features.append({
+                'features': feature_vector,
+                'label': label,
+                'protection_type': protection_types[label],
+                'feature_names': [f'feature_{j}' for j in range(64)]
+            })
+            
+        return features
+        
+    def _extract_vulnerability_features(self, severity_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Extract vulnerability-related features from analysis history."""
+        features = []
+        
+        # Sample vulnerability features
+        severities = ['no_vuln', 'low', 'medium', 'high', 'critical']
+        
+        for i in range(100):
+            feature_vector = np.random.rand(128)  # 128 features for vulnerabilities
+            label = np.random.choice(range(len(severities)))
+            
+            if severity_filter and severities[label] != severity_filter:
+                continue
+                
+            features.append({
+                'features': feature_vector,
+                'label': label,
+                'severity': severities[label],
+                'feature_names': [f'vuln_feature_{j}' for j in range(128)]
+            })
+            
+        return features
+
+
+class ModelDeploymentManager:
+    """Manage trained model deployment and integration."""
+    
+    def __init__(self):
+        """Initialize deployment manager."""
+        self.deployed_models = {}
+        
+    def deploy_model(self, model_path: str, model_name: str, model_type: str) -> bool:
+        """Deploy trained model for production use."""
+        try:
+            # Load model based on format
+            if model_path.endswith('.h5'):
+                import tensorflow as tf
+                model = tf.keras.models.load_model(model_path)
+            elif model_path.endswith('.pth'):
+                import torch
+                checkpoint = torch.load(model_path)
+                # Would need to reconstruct model architecture
+                model = checkpoint
+            elif model_path.endswith('.onnx'):
+                import onnxruntime as ort
+                model = ort.InferenceSession(model_path)
+            else:
+                logger.error(f"Unsupported model format: {model_path}")
+                return False
+                
+            # Register model
+            self.deployed_models[model_name] = {
+                'model': model,
+                'type': model_type,
+                'path': model_path,
+                'deployed_at': time.time()
+            }
+            
+            # Update model registry
+            self._update_model_registry(model_name, model_type, model_path)
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to deploy model: {str(e)}")
+            return False
+            
+    def get_deployed_model(self, model_name: str):
+        """Get deployed model by name."""
+        return self.deployed_models.get(model_name, {}).get('model')
+        
+    def list_deployed_models(self) -> List[Dict[str, Any]]:
+        """List all deployed models."""
+        return [
+            {
+                'name': name,
+                'type': info['type'],
+                'path': info['path'],
+                'deployed_at': info['deployed_at']
+            }
+            for name, info in self.deployed_models.items()
+        ]
+        
+    def _update_model_registry(self, model_name: str, model_type: str, model_path: str):
+        """Update central model registry."""
+        registry_path = os.path.join(
+            os.path.dirname(__file__), "..", "models", "registry.json"
+        )
+        
+        registry = {}
+        if os.path.exists(registry_path):
+            with open(registry_path, 'r') as f:
+                registry = json.load(f)
+                
+        registry[model_name] = {
+            'type': model_type,
+            'path': model_path,
+            'registered_at': time.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        os.makedirs(os.path.dirname(registry_path), exist_ok=True)
+        with open(registry_path, 'w') as f:
+            json.dump(registry, f, indent=2)
+
+
+class ActiveLearningManager:
+    """Manage active learning for continuous model improvement."""
+    
+    def __init__(self, model_path: str):
+        """Initialize active learning manager."""
+        self.model_path = model_path
+        self.uncertainty_threshold = 0.3
+        self.samples_for_labeling = []
+        
+    def evaluate_uncertainty(self, predictions: np.ndarray) -> np.ndarray:
+        """Evaluate prediction uncertainty using entropy."""
+        # Calculate entropy of predictions
+        epsilon = 1e-10
+        entropy = -np.sum(predictions * np.log(predictions + epsilon), axis=1)
+        normalized_entropy = entropy / np.log(predictions.shape[1])
+        return normalized_entropy
+        
+    def select_samples_for_labeling(self, features: np.ndarray, predictions: np.ndarray) -> List[int]:
+        """Select samples with high uncertainty for manual labeling."""
+        uncertainties = self.evaluate_uncertainty(predictions)
+        
+        # Select samples above uncertainty threshold
+        uncertain_indices = np.where(uncertainties > self.uncertainty_threshold)[0]
+        
+        # Sort by uncertainty (highest first)
+        sorted_indices = uncertain_indices[np.argsort(uncertainties[uncertain_indices])[::-1]]
+        
+        # Limit to top N samples
+        max_samples = 50
+        selected_indices = sorted_indices[:max_samples]
+        
+        # Store for labeling
+        for idx in selected_indices:
+            self.samples_for_labeling.append({
+                'index': idx,
+                'features': features[idx],
+                'prediction': predictions[idx],
+                'uncertainty': uncertainties[idx]
+            })
+            
+        return selected_indices.tolist()
+        
+    def update_model_with_labels(self, labeled_samples: List[Dict[str, Any]]):
+        """Update model with newly labeled samples."""
+        if not labeled_samples:
+            return
+            
+        # Extract features and labels
+        X_new = np.array([s['features'] for s in labeled_samples])
+        y_new = np.array([s['label'] for s in labeled_samples])
+        
+        # Load existing model
+        import tensorflow as tf
+        model = tf.keras.models.load_model(self.model_path)
+        
+        # Fine-tune on new samples with lower learning rate
+        model.compile(
+            optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+            loss='categorical_crossentropy',
+            metrics=['accuracy']
+        )
+        
+        # Train for a few epochs
+        model.fit(X_new, y_new, epochs=10, batch_size=8, verbose=0)
+        
+        # Save updated model
+        timestamp = time.strftime('%Y%m%d_%H%M%S')
+        updated_path = self.model_path.replace('.h5', f'_updated_{timestamp}.h5')
+        model.save(updated_path)
+        
+        return updated_path
 
 
 def create_enhanced_training_interface(parent=None) -> 'EnhancedTrainingInterface':

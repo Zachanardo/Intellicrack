@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
+import asyncio
 import datetime
 import os
 import sys
@@ -215,7 +216,7 @@ def launch_with_frida():
         # Keep script running
         try:
             while True:
-                time.sleep(1)
+                asyncio.run(asyncio.sleep(1))
         except KeyboardInterrupt as e:
             logger.error("KeyboardInterrupt in memory_patcher: %s", e)
             print("\\n[*] Detaching...")

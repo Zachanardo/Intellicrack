@@ -21,8 +21,12 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 import logging
+import platform
 import random
+import struct
+import subprocess
 import traceback
+import uuid
 from typing import Any, Dict, Optional
 
 from ...utils.logger import get_logger
@@ -38,6 +42,164 @@ except ImportError as e:
     KEYSTONE_AVAILABLE = False
     keystone = None
 
+
+class HardwareIdentifier:
+    """Real hardware identification system for generating authentic hardware data."""
+
+    def __init__(self):
+        """Initialize hardware identifier with system detection."""
+        self.logger = get_logger(__name__ + ".HardwareIdentifier")
+        self._cached_data = {}
+
+    def get_cpu_signature(self) -> bytes:
+        """Get real CPU signature from the system."""
+        if 'cpu_signature' in self._cached_data:
+            return self._cached_data['cpu_signature']
+
+        try:
+            # Get CPU information from platform
+            cpu_info = platform.processor()
+
+            if not cpu_info:
+                # Fallback to system information
+                import os
+                if os.name == 'nt':
+                    try:
+                        result = subprocess.run(['wmic', 'cpu', 'get', 'name', '/value'],
+                                              capture_output=True, text=True, timeout=5)
+                        if result.returncode == 0:
+                            for line in result.stdout.split('\n'):
+                                if line.startswith('Name='):
+                                    cpu_info = line.split('=', 1)[1].strip()
+                                    break
+                    except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+                        cpu_info = "Unknown CPU"
+                else:
+                    try:
+                        with open('/proc/cpuinfo', 'r') as f:
+                            for line in f:
+                                if line.startswith('model name'):
+                                    cpu_info = line.split(':', 1)[1].strip()
+                                    break
+                    except (OSError, IOError):
+                        cpu_info = "Unknown CPU"
+
+            # Convert CPU string to signature-like bytes
+            cpu_bytes = cpu_info.encode('utf-8')[:8]
+            if len(cpu_bytes) < 8:
+                cpu_bytes = cpu_bytes.ljust(8, b'\x00')
+
+            self._cached_data['cpu_signature'] = cpu_bytes
+            return cpu_bytes
+
+        except Exception as e:
+            self.logger.warning(f"Failed to get CPU signature: {e}")
+            # Return generic Intel-like signature as fallback
+            return b'GenuineI'
+
+    def get_mac_address(self) -> bytes:
+        """Get real MAC address from the system."""
+        if 'mac_address' in self._cached_data:
+            return self._cached_data['mac_address']
+
+        try:
+            # Get the MAC address of the first network interface
+            mac = uuid.getnode()
+            mac_bytes = struct.pack('>Q', mac)[-6:]  # Take last 6 bytes
+
+            self._cached_data['mac_address'] = mac_bytes
+            return mac_bytes
+
+        except Exception as e:
+            self.logger.warning(f"Failed to get MAC address: {e}")
+            # Return a valid but generic MAC address as fallback
+            return b'\x00\x1b\x21\x12\x34\x56'
+
+    def get_machine_guid(self) -> bytes:
+        """Get real machine GUID from the system."""
+        if 'machine_guid' in self._cached_data:
+            return self._cached_data['machine_guid']
+
+        try:
+            import os
+            if os.name == 'nt':
+                # Windows: Try to get machine GUID from registry
+                try:
+                    result = subprocess.run([
+                        'reg', 'query',
+                        'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Cryptography',
+                        '/v', 'MachineGuid'
+                    ], capture_output=True, text=True, timeout=5)
+
+                    if result.returncode == 0:
+                        for line in result.stdout.split('\n'):
+                            if 'MachineGuid' in line and 'REG_SZ' in line:
+                                guid_str = line.split()[-1]
+                                # Convert GUID string to bytes
+                                guid_bytes = uuid.UUID(guid_str).bytes
+                                self._cached_data['machine_guid'] = guid_bytes
+                                return guid_bytes
+                except (subprocess.TimeoutExpired, subprocess.SubprocessError, ValueError):
+                    pass
+            else:
+                # Linux: Try to get machine-id
+                try:
+                    with open('/etc/machine-id', 'r') as f:
+                        machine_id = f.read().strip()
+                        # Convert hex string to bytes
+                        guid_bytes = bytes.fromhex(machine_id)[:16]
+                        if len(guid_bytes) < 16:
+                            guid_bytes = guid_bytes.ljust(16, b'\x00')
+                        self._cached_data['machine_guid'] = guid_bytes
+                        return guid_bytes
+                except (OSError, IOError, ValueError):
+                    pass
+
+            # Fallback: generate a consistent GUID based on hostname and MAC
+            hostname = platform.node().encode('utf-8')
+            mac = self.get_mac_address()
+            combined = hostname + mac
+
+            # Create a UUID5 from the combined data
+            namespace = uuid.UUID('6ba7b810-9dad-11d1-80b4-00c04fd430c8')  # Standard namespace
+            generated_uuid = uuid.uuid5(namespace, combined.decode('utf-8', errors='ignore'))
+
+            guid_bytes = generated_uuid.bytes
+            self._cached_data['machine_guid'] = guid_bytes
+            return guid_bytes
+
+        except Exception as e:
+            self.logger.warning(f"Failed to get machine GUID: {e}")
+            # Return a fallback GUID
+            return b'\x12\x34\x56\x78\x9a\xbc\xde\xf0\x11\x22\x33\x44\x55\x66\x77\x88'
+
+    def get_hwid_value(self, hwid_type: str) -> int:
+        """Get hardware ID value as integer for assembly generation."""
+        try:
+            if hwid_type == 'cpu':
+                signature = self.get_cpu_signature()
+                return struct.unpack('<Q', signature)[0] & 0xFFFFFFFF
+            elif hwid_type == 'mac':
+                mac = self.get_mac_address()
+                # Use first 4 bytes of MAC address
+                return struct.unpack('<I', mac[:4])[0]
+            elif hwid_type == 'guid':
+                guid = self.get_machine_guid()
+                # Use first 4 bytes of GUID
+                return struct.unpack('<I', guid[:4])[0]
+            else:
+                # Generic: combine multiple hardware identifiers
+                cpu = self.get_cpu_signature()[:4]
+                mac = self.get_mac_address()[:4]
+                combined = bytes(a ^ b for a, b in zip(cpu, mac))
+                return struct.unpack('<I', combined)[0]
+
+        except Exception as e:
+            self.logger.warning(f"Failed to get HWID value for {hwid_type}: {e}")
+            # Return a consistent fallback based on hostname hash
+            hostname_hash = hash(platform.node()) & 0xFFFFFFFF
+            return hostname_hash if hostname_hash > 0 else 0x12345678
+
 class PayloadGenerator:
     """
     Basic payload generator for creating patches and shellcode.
@@ -51,6 +213,7 @@ class PayloadGenerator:
         NOP sleds, and bypass techniques for exploitation scenarios.
         """
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        self.hardware_identifier = HardwareIdentifier()
 
     def generate_nop_sled(self, length: int) -> bytes:
         """
@@ -361,7 +524,7 @@ class PayloadGenerator:
                     return b'\xb8\xff\xff\xff\x7f\xc3'  # mov eax, 0x7fffffff; ret
 
     def _generate_hwid_removal(self, **kwargs) -> bytes:
-        """Generate hardware ID check removal payload."""
+        """Generate hardware ID check removal payload using real hardware data."""
         # Extract configuration from kwargs
         target_arch = kwargs.get('architecture', 'x86')
         bypass_method = kwargs.get('method', 'success')
@@ -369,9 +532,11 @@ class PayloadGenerator:
         preserve_stack = kwargs.get('preserve_stack', False)
 
         if target_arch == 'x64':
-            if bypass_method == 'fake_hwid':
-                # Return fake but valid-looking HWID (x64)
-                return b'\x48\xb8\x12\x34\x56\x78\x9a\xbc\xde\xf0\xc3'  # mov rax, 0xf0debc9a78563412; ret
+            if bypass_method == 'real_hwid':
+                # Get real hardware ID value and generate assembly
+                hwid_value = self.hardware_identifier.get_hwid_value(hwid_type)
+                # mov rax, hwid_value; ret
+                return b'\x48\xb8' + struct.pack('<Q', hwid_value & 0xFFFFFFFFFFFFFFFF) + b'\xc3'
             elif bypass_method == 'null_hwid':
                 # Return null HWID (x64)
                 return b'\x48\x31\xc0\xc3'  # xor rax, rax; ret
@@ -382,21 +547,20 @@ class PayloadGenerator:
             # x86 implementation
             if preserve_stack:
                 # Preserve stack with proper alignment
-                if bypass_method == 'fake_hwid':
-                    return b'\x50\xb8\x12\x34\x56\x78\x58\xc3'  # push eax; mov eax, 0x78563412; pop eax; ret
+                if bypass_method == 'real_hwid':
+                    hwid_value = self.hardware_identifier.get_hwid_value(hwid_type)
+                    # push eax; mov eax, hwid_value; pop ecx; ret (preserve original eax in ecx)
+                    return b'\x50\xb8' + struct.pack('<I', hwid_value & 0xFFFFFFFF) + b'\x59\xc3'
                 elif bypass_method == 'null_hwid':
                     return b'\x50\x31\xc0\x58\xc3'  # push eax; xor eax, eax; pop eax; ret
                 else:
                     return b'\x50\x31\xc0\x40\x58\xc3'  # push eax; xor eax, eax; inc eax; pop eax; ret
             else:
-                if bypass_method == 'fake_hwid':
-                    # Return predictable fake HWID based on type
-                    if hwid_type == 'cpu':
-                        return b'\xb8\x68\x69\x6e\x74\xc3'  # mov eax, "hint"; ret (Intel signature)
-                    elif hwid_type == 'mac':
-                        return b'\xb8\x00\x1b\x21\x12\xc3'  # mov eax, fake MAC; ret
-                    else:
-                        return b'\xb8\x12\x34\x56\x78\xc3'  # mov eax, 0x78563412; ret
+                if bypass_method == 'real_hwid':
+                    # Get real hardware ID and generate appropriate assembly
+                    hwid_value = self.hardware_identifier.get_hwid_value(hwid_type)
+                    # mov eax, hwid_value; ret
+                    return b'\xb8' + struct.pack('<I', hwid_value & 0xFFFFFFFF) + b'\xc3'
                 elif bypass_method == 'null_hwid':
                     return b'\x31\xc0\xc3'  # xor eax, eax; ret
                 else:
@@ -459,6 +623,7 @@ class AdvancedPayloadGenerator:
     def __init__(self):
         """Initialize the advanced payload generator with sophisticated exploit capabilities."""
         self.logger = get_logger(f"{__name__}.{self.__class__.__name__}")
+        self.hardware_identifier = HardwareIdentifier()
 
     def generate(self, payload_type: str, **kwargs) -> bytes:
         """

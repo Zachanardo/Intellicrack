@@ -3,8 +3,17 @@ import logging
 import os
 import sys
 
-# Initialize logger before it's used
-logger = logging.getLogger(__name__)
+# Initialize centralized logging system early
+try:
+    from intellicrack.core.logging import setup_logging, get_logger
+    setup_logging()
+    logger = get_logger(__name__)
+    logger.info("Centralized logging system initialized")
+except ImportError as e:
+    # Fallback to basic logging if centralized logging unavailable
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Centralized logging not available, using basic logging: {e}")
 
 # Import security enforcement early to apply patches
 try:
@@ -72,8 +81,15 @@ if os.name == 'nt':
         os.environ['QT_QUICK_BACKEND'] = 'software'
         os.environ['QT_ANGLE_PLATFORM'] = 'warp'
 
-# Comprehensive logging disabled for Qt compatibility
-# The comprehensive logging system interferes with Qt's window display mechanisms
+# Centralized logging system is now compatible with Qt
+# Log system startup information
+try:
+    from intellicrack.core.logging import get_system_status, log_security
+    status = get_system_status()
+    logger.info(f"Logging system status: {status}")
+    log_security("application_start", "info", "Intellicrack application starting")
+except Exception as e:
+    logger.debug(f"Could not log system status: {e}")
 
 
 def main() -> int:
@@ -81,9 +97,10 @@ def main() -> int:
     Main entry point for the Intellicrack application.
 
     This function performs the following operations:
-    1. Executes startup checks and auto-configuration
-    2. Imports and launches the GUI application
-    3. Handles import errors and other exceptions gracefully
+    1. Installs global exception handler
+    2. Executes startup checks and auto-configuration
+    3. Imports and launches the GUI application
+    4. Handles import errors and other exceptions gracefully
 
     The function includes verbose logging for debugging startup issues
     and provides helpful error messages for missing dependencies.
@@ -101,6 +118,21 @@ def main() -> int:
         >>> sys.exit(main())
     """
     try:
+        # Install global exception handler first
+        try:
+            from intellicrack.utils.core.exception_utils import handle_exception
+            sys.excepthook = handle_exception
+            logger.info("Global exception handler installed")
+        except ImportError as e:
+            logger.warning("Failed to install global exception handler: %s", e)
+
+        # Log application startup
+        try:
+            from intellicrack.core.logging import log_security
+            log_security("application_startup", "info", "Intellicrack main application starting")
+        except ImportError:
+            pass
+
         # Initialize security enforcement if available
         try:
             security_enforcement.initialize_security()
@@ -126,9 +158,25 @@ def main() -> int:
 
         print("Calling launch()...")
         sys.stdout.flush()  # Force output to display
-        result = launch()
+        
+        # Log application launch with performance tracking
+        try:
+            from intellicrack.core.logging import PerformanceLogger
+            with PerformanceLogger("application_launch"):
+                result = launch()
+        except ImportError:
+            result = launch()
+        
         print(f"Launch() returned: {result}")
         sys.stdout.flush()
+        
+        # Log successful application completion
+        try:
+            from intellicrack.core.logging import log_security
+            log_security("application_shutdown", "info", "Intellicrack application completed successfully")
+        except ImportError:
+            pass
+        
         return result
 
     except ImportError as e:
@@ -136,6 +184,14 @@ def main() -> int:
         print(f"Error: Failed to import Intellicrack components: {e}")
         print("\nPlease ensure all dependencies are installed:")
         print("  pip install -r requirements.txt")
+        
+        # Log error
+        try:
+            from intellicrack.core.logging import log_security
+            log_security("application_error", "error", f"Import error: {e}")
+        except ImportError:
+            pass
+        
         import traceback
         traceback.print_exc()
         return 1
@@ -143,9 +199,25 @@ def main() -> int:
     except (OSError, ValueError, RuntimeError) as e:  # pylint: disable=broad-exception-caught
         logger.error("Error launching Intellicrack: %s", e)
         print(f"Error launching Intellicrack: {e}")
+        
+        # Log error
+        try:
+            from intellicrack.core.logging import log_security
+            log_security("application_error", "error", f"Runtime error: {e}")
+        except ImportError:
+            pass
+        
         import traceback
         traceback.print_exc()
         return 1
+
+    finally:
+        # Shutdown centralized logging system
+        try:
+            from intellicrack.core.logging import shutdown_integrated_logging
+            shutdown_integrated_logging()
+        except ImportError:
+            pass
 
 
 # Command line entry point

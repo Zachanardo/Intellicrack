@@ -1,0 +1,182 @@
+[
+  {
+    "architecture": "x86",
+    "script_type": "frida_hook",
+    "generation_success": true,
+    "quality_score": 0.7400000000000001,
+    "arch_specific_features": [
+      "x86_specific_registers",
+      "x86_calling_convention",
+      "x86_instruction_set"
+    ],
+    "compilation_success": false
+  },
+  {
+    "architecture": "x86",
+    "script_type": "ghidra_analysis",
+    "generation_success": true,
+    "quality_score": 0.8200000000000001,
+    "arch_specific_features": [
+      "x86_specific_registers",
+      "x86_calling_convention",
+      "x86_instruction_set"
+    ],
+    "compilation_success": true
+  },
+  {
+    "architecture": "x86",
+    "script_type": "exploitation_script",
+    "generation_success": true,
+    "quality_score": 0.86,
+    "arch_specific_features": [
+      "x86_specific_registers",
+      "x86_calling_convention",
+      "x86_instruction_set"
+    ],
+    "compilation_success": true
+  },
+  {
+    "architecture": "x64",
+    "script_type": "frida_hook",
+    "generation_success": true,
+    "quality_score": 0.8200000000000001,
+    "arch_specific_features": [
+      "x64_specific_registers",
+      "x64_calling_convention",
+      "x64_instruction_set"
+    ],
+    "compilation_success": true
+  },
+  {
+    "architecture": "x64",
+    "script_type": "ghidra_analysis",
+    "generation_success": true,
+    "quality_score": 0.91,
+    "arch_specific_features": [
+      "x64_specific_registers",
+      "x64_calling_convention",
+      "x64_instruction_set"
+    ],
+    "compilation_success": true
+  },
+  {
+    "architecture": "x64",
+    "script_type": "exploitation_script",
+    "generation_success": true,
+    "quality_score": 0.95,
+    "arch_specific_features": [
+      "x64_specific_registers",
+      "x64_calling_convention",
+      "x64_instruction_set"
+    ],
+    "compilation_success": true
+  },
+  {
+    "architecture": "arm32",
+    "script_type": "frida_hook",
+    "generation_success": false,
+    "quality_score": 0.6599999999999999,
+    "arch_specific_features": [
+      "arm32_specific_registers",
+      "arm32_calling_convention",
+      "arm32_instruction_set"
+    ],
+    "compilation_success": false
+  },
+  {
+    "architecture": "arm32",
+    "script_type": "ghidra_analysis",
+    "generation_success": true,
+    "quality_score": 0.73,
+    "arch_specific_features": [
+      "arm32_specific_registers",
+      "arm32_calling_convention",
+      "arm32_instruction_set"
+    ],
+    "compilation_success": false
+  },
+  {
+    "architecture": "arm32",
+    "script_type": "exploitation_script",
+    "generation_success": true,
+    "quality_score": 0.7649999999999999,
+    "arch_specific_features": [
+      "arm32_specific_registers",
+      "arm32_calling_convention",
+      "arm32_instruction_set"
+    ],
+    "compilation_success": false
+  },
+  {
+    "architecture": "arm64",
+    "script_type": "frida_hook",
+    "generation_success": true,
+    "quality_score": 0.78,
+    "arch_specific_features": [
+      "arm64_specific_registers",
+      "arm64_calling_convention",
+      "arm64_instruction_set"
+    ],
+    "compilation_success": false
+  },
+  {
+    "architecture": "arm64",
+    "script_type": "ghidra_analysis",
+    "generation_success": true,
+    "quality_score": 0.865,
+    "arch_specific_features": [
+      "arm64_specific_registers",
+      "arm64_calling_convention",
+      "arm64_instruction_set"
+    ],
+    "compilation_success": true
+  },
+  {
+    "architecture": "arm64",
+    "script_type": "exploitation_script",
+    "generation_success": true,
+    "quality_score": 0.9075,
+    "arch_specific_features": [
+      "arm64_specific_registers",
+      "arm64_calling_convention",
+      "arm64_instruction_set"
+    ],
+    "compilation_success": true
+  },
+  {
+    "architecture": "mips",
+    "script_type": "frida_hook",
+    "generation_success": false,
+    "quality_score": 0.58,
+    "arch_specific_features": [
+      "mips_specific_registers",
+      "mips_calling_convention",
+      "mips_instruction_set"
+    ],
+    "compilation_success": false
+  },
+  {
+    "architecture": "mips",
+    "script_type": "ghidra_analysis",
+    "generation_success": false,
+    "quality_score": 0.64,
+    "arch_specific_features": [
+      "mips_specific_registers",
+      "mips_calling_convention",
+      "mips_instruction_set"
+    ],
+    "compilation_success": false
+  },
+  {
+    "architecture": "mips",
+    "script_type": "exploitation_script",
+    "generation_success": false,
+    "quality_score": 0.6699999999999999,
+    "arch_specific_features": [
+      "mips_specific_registers",
+      "mips_calling_convention",
+      "mips_instruction_set"
+    ],
+    "compilation_success": false
+  }
+]

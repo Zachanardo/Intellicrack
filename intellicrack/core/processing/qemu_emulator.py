@@ -1,4 +1,5 @@
 """QEMU emulator interface for running binaries in virtual environments."""
+import asyncio
 import base64
 import os
 import subprocess
@@ -357,23 +358,35 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         Returns:
             True if system booted, False if timeout
         """
-        start_time = time.time()
+        import asyncio
+        
+        async def async_wait_for_boot():
+            start_time = time.time()
 
-        while time.time() - start_time < timeout:
-            if self.qemu_process and self.qemu_process.poll() is not None:
-                self.logger.error("QEMU process terminated during boot")
-                return False
+            while time.time() - start_time < timeout:
+                if self.qemu_process and self.qemu_process.poll() is not None:
+                    self.logger.error("QEMU process terminated during boot")
+                    return False
 
-            # Try to connect to monitor
-            if self._test_monitor_connection():
-                # Additional boot detection logic could go here
-                time.sleep(5)  # Allow additional boot time
-                return True
+                # Try to connect to monitor
+                if self._test_monitor_connection():
+                    # Additional boot detection logic could go here
+                    await asyncio.sleep(5)  # Allow additional boot time
+                    return True
 
-            time.sleep(2)
+                await asyncio.sleep(2)
 
-        self.logger.error("System boot timeout after %s seconds", timeout)
-        return False
+            self.logger.error("System boot timeout after %s seconds", timeout)
+            return False
+
+        # Run async code in sync context
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        return loop.run_until_complete(async_wait_for_boot())
 
     def _test_monitor_connection(self) -> bool:
         """Test if monitor socket is accessible."""
@@ -1692,7 +1705,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             self.logger.error("Failed to copy binary to Linux guest: %s", e)
             return None
 
-    def _execute_in_windows_guest(self, guest_path: str, app=None) -> Dict[str, Any]:
+    async def _execute_in_windows_guest(self, guest_path: str, app=None) -> Dict[str, Any]:
         """Execute binary in Windows guest and capture results."""
         try:
             if app:
@@ -1730,7 +1743,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                 'stderr': base64.b64decode(result.get('err-data', '')).decode('utf-8', errors='ignore')
                             }
 
-                        time.sleep(1)
+                        await asyncio.sleep(1)
 
                     # Timeout reached
                     return {
@@ -2454,7 +2467,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             self.logger.error("Failed to copy binary via guest agent: %s", e)
             return None
 
-    def _execute_via_guest_agent(self, guest_path: str) -> Dict[str, Any]:
+    async def _execute_via_guest_agent(self, guest_path: str) -> Dict[str, Any]:
         """Execute binary using QEMU guest agent."""
         try:
             # Use QEMU guest agent to execute command
@@ -2489,7 +2502,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                             'stderr': base64.b64decode(result.get('err-data', '')).decode('utf-8', errors='ignore')
                         }
 
-                    time.sleep(1)
+                    await asyncio.sleep(1)
 
                 # Timeout reached
                 return {

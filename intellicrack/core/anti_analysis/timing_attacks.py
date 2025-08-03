@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import asyncio
 import ctypes
 import logging
 import random
@@ -48,7 +49,7 @@ class TimingAttackDefense:
             'tick_count': True
         }
 
-    def secure_sleep(self, duration: float, callback: Callable = None) -> bool:
+    async def secure_sleep(self, duration: float, callback: Callable = None) -> bool:
         """
         Sleep with protection against acceleration.
 
@@ -86,7 +87,7 @@ class TimingAttackDefense:
                 sleep_time = min(chunk_size, remaining)
 
                 # Actual sleep
-                time.sleep(sleep_time)
+                await asyncio.sleep(sleep_time)
 
                 # Execute callback if provided
                 if callback:
@@ -136,7 +137,7 @@ class TimingAttackDefense:
             self.logger.error(f"Secure sleep failed: {e}")
             return False
 
-    def stalling_code(self, min_duration: float, max_duration: float) -> None:
+    async def stalling_code(self, min_duration: float, max_duration: float) -> None:
         """
         Execute computationally intensive stalling code.
 
@@ -166,9 +167,9 @@ class TimingAttackDefense:
                 # Add timing variations based on actual CPU load
                 current_cpu = psutil.cpu_percent(interval=0)
                 if current_cpu > 80:  # High CPU load
-                    time.sleep(0.001)  # Brief pause when CPU is busy
+                    await asyncio.sleep(0.001)  # Brief pause when CPU is busy
                 elif iterations % 1000 == 0:  # Periodic pause
-                    time.sleep(0.0001)  # Micro-pause for realistic behavior
+                    await asyncio.sleep(0.0001)  # Micro-pause for realistic behavior
 
             elapsed = time.perf_counter() - start_time
             self.logger.debug(f"Stalling completed: {elapsed:.2f}s, {iterations} iterations")
@@ -286,7 +287,7 @@ class TimingAttackDefense:
             self.logger.debug(f"RDTSC check failed: {e}")
             return True
 
-    def anti_acceleration_loop(self, duration: float) -> None:
+    async def anti_acceleration_loop(self, duration: float) -> None:
         """
         Loop that resists sleep acceleration attempts.
 
@@ -303,10 +304,10 @@ class TimingAttackDefense:
                 # Mix of sleep and computation
                 if loops % 2 == 0:
                     # Short sleep
-                    time.sleep(0.1)
+                    await asyncio.sleep(0.1)
                 else:
                     # Computation
-                    self.stalling_code(0.05, 0.15)
+                    await self.stalling_code(0.05, 0.15)
 
                 loops += 1
 
@@ -314,7 +315,7 @@ class TimingAttackDefense:
                 if not self.rdtsc_timing_check():
                     self.logger.warning("Timing acceleration detected in loop")
                     # Increase computational load
-                    self.stalling_code(1, 2)
+                    await self.stalling_code(1, 2)
 
         except Exception as e:
             self.logger.error(f"Anti-acceleration loop failed: {e}")

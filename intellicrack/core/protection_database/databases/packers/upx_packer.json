@@ -1,0 +1,85 @@
+{
+  "id": "upx_packer",
+  "name": "UPX Packer",
+  "version": null,
+  "protection_type": "packer",
+  "architecture": "any",
+  "confidence": 0.9,
+  "description": "Ultimate Packer for eXecutables (UPX) - popular executable packer",
+  "references": [
+    "https://upx.github.io/"
+  ],
+  "metadata": {
+    "vendor": "UPX Team",
+    "type": "open_source_packer",
+    "detection_difficulty": "easy",
+    "unpacking_difficulty": "easy"
+  },
+  "created_date": "2025-01-01T00:00:00",
+  "updated_date": "2025-01-01T00:00:00",
+  "binary_signatures": [
+    {
+      "name": "UPX Magic",
+      "pattern": "55505821",
+      "description": "UPX packer magic bytes (UPX!)"
+    },
+    {
+      "name": "UPX Entry Point",
+      "pattern": "60BE00??40008DBE00??FEFF",
+      "mask": "FFFF00FFFFFFFFFF00FFFF",
+      "description": "UPX entry point pattern"
+    },
+    {
+      "name": "UPX Unpacker Stub",
+      "pattern": "83EC??8B??24??53565783??FC",
+      "mask": "FFFF00FF00FF00FFFFFF00FF",
+      "description": "UPX unpacker stub pattern"
+    }
+  ],
+  "string_signatures": [
+    {
+      "name": "UPX Version String",
+      "pattern": "UPX \\d+\\.\\d+",
+      "match_type": "regex",
+      "case_sensitive": false,
+      "encoding": "utf-8",
+      "description": "UPX version identifier"
+    },
+    {
+      "name": "UPX Copyright",
+      "pattern": "$Id: UPX",
+      "match_type": "exact",
+      "case_sensitive": false,
+      "encoding": "utf-8",
+      "description": "UPX copyright string"
+    },
+    {
+      "name": "UPX Error Message",
+      "pattern": "This file is packed with the UPX executable packer",
+      "match_type": "exact",
+      "case_sensitive": false,
+      "encoding": "utf-8",
+      "description": "UPX identification message"
+    }
+  ],
+  "import_signatures": [],
+  "section_signatures": [
+    {
+      "name": "UPX0 Section",
+      "section_name": "UPX0",
+      "min_entropy": 7.0,
+      "description": "UPX packed section with high entropy"
+    },
+    {
+      "name": "UPX1 Section",
+      "section_name": "UPX1",
+      "max_entropy": 1.0,
+      "description": "UPX unpacker section with low entropy"
+    },
+    {
+      "name": "UPX2 Section",
+      "section_name": "UPX2",
+      "description": "UPX additional section"
+    }
+  ]
+}

@@ -9,12 +9,15 @@ Licensed under GNU General Public License v3.0
 
 import asyncio
 import os
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..utils.logger import get_logger
+from ..core.analysis.die_json_wrapper import DIEJSONWrapper, DIEScanMode, DIEAnalysisResult
+from ..core.analysis.die_structured_logger import get_die_structured_logger
 
 logger = get_logger(__name__)
 
@@ -178,78 +181,105 @@ class ICPScanResult:
         return obj
 
     @classmethod
-    def from_die_text(cls, file_path: str, die_text: str) -> 'ICPScanResult':
-        """Create from die-python text output
+    def from_die_json_result(cls, die_result: DIEAnalysisResult) -> 'ICPScanResult':
+        """Create from structured DIE JSON analysis result
 
         Args:
-            file_path: Path to the analyzed file
-            die_text: Text output from die.scan_file()
-                     Format: "PE64\n    Unknown: Unknown\n    Packer: UPX"
+            die_result: Structured DIE analysis result with validated JSON data
 
         Returns:
             ICPScanResult with parsed detections
         """
-        obj = cls(file_path=file_path)
+        obj = cls(
+            file_path=die_result.file_path,
+            analysis_time=die_result.analysis_time,
+            error=die_result.error
+        )
 
-        if not die_text or not die_text.strip():
-            # Create a basic file info with no detections
+        if die_result.error:
+            # Create minimal file info for error cases
+            file_info = ICPFileInfo(
+                filetype=die_result.file_type or "Unknown",
+                size=str(die_result.file_size)
+            )
+            obj.file_infos.append(file_info)
+            return obj
+
+        # Create file info from structured data
+        file_info = ICPFileInfo(
+            filetype=die_result.file_type,
+            size=str(die_result.file_size)
+        )
+
+        # Convert structured detections
+        for die_detection in die_result.detections:
+            detection = ICPDetection(
+                name=die_detection.name,
+                type=die_detection.type,
+                version=die_detection.version,
+                info=die_detection.info,
+                string=f"{die_detection.type}: {die_detection.name}",
+                confidence=die_detection.confidence
+            )
+            file_info.detections.append(detection)
+
+        obj.file_infos.append(file_info)
+
+        # Add supplemental data from structured analysis
+        obj.supplemental_data = {
+            'architecture': die_result.architecture,
+            'entropy': die_result.entropy,
+            'sections': die_result.sections,
+            'imports': die_result.imports[:100],  # Limit for performance
+            'exports': die_result.exports[:100],  # Limit for performance 
+            'strings': die_result.strings[:50],   # Limit for performance
+            'overlay_detected': die_result.overlay_detected,
+            'overlay_size': die_result.overlay_size,
+            'entry_point': die_result.entry_point,
+            'version_info': die_result.version_info,
+            'warnings': die_result.warnings
+        }
+
+        return obj
+
+    @classmethod
+    def from_die_text(cls, file_path: str, die_text: str) -> 'ICPScanResult':
+        """Legacy method - Create from die-python text output
+        
+        DEPRECATED: This method uses fragile string parsing and should be avoided.
+        Use from_die_json_result() with DIE JSON wrapper instead.
+
+        Args:
+            file_path: Path to the analyzed file
+            die_text: Text output from die.scan_file()
+
+        Returns:
+            ICPScanResult with parsed detections
+        """
+        logger.warning("Using deprecated from_die_text method with fragile string parsing. "
+                      "Consider upgrading to JSON-based DIE analysis.")
+
+        # Use the DIE JSON wrapper to convert text to structured format
+        try:
+            die_wrapper = DIEJSONWrapper()
+            # Parse the text through the JSON wrapper's text parser
+            from pathlib import Path
+            file_size = Path(file_path).stat().st_size if Path(file_path).exists() else 0
+            die_result = die_wrapper._parse_die_text_to_json(file_path, die_text, file_size)
+            
+            # Convert to ICP format using the new JSON method
+            return cls.from_die_json_result(die_result)
+            
+        except Exception as e:
+            logger.error(f"Failed to parse DIE text through JSON wrapper: {e}")
+            # Fallback to basic result
+            obj = cls(file_path=file_path, error=f"DIE text parsing failed: {e}")
             file_info = ICPFileInfo(
                 filetype="Binary",
                 size=str(Path(file_path).stat().st_size if Path(file_path).exists() else 0)
             )
             obj.file_infos.append(file_info)
             return obj
-
-        lines = die_text.strip().split('\n')
-        if not lines:
-            return obj
-
-        # First line is the file type (e.g., "PE64", "ELF64")
-        filetype = lines[0].strip() if lines else "Binary"
-
-        # Create file info
-        file_info = ICPFileInfo(
-            filetype=filetype,
-            size=str(Path(file_path).stat().st_size if Path(file_path).exists() else 0)
-        )
-
-        # Parse detection lines (indented lines after the first)
-        for line in lines[1:]:
-            line = line.strip()
-            if not line:
-                continue
-
-            # Parse "Type: Name" format
-            if ':' in line:
-                type_part, name_part = line.split(':', 1)
-                detection_type = type_part.strip()
-                detection_name = name_part.strip()
-
-                # Create detection with parsed info
-                detection = ICPDetection(
-                    name=detection_name,
-                    type=detection_type,
-                    version="",  # die-python text format doesn't include version
-                    info="",     # die-python text format doesn't include detailed info
-                    string=line, # Store original line
-                    confidence=1.0  # Default confidence
-                )
-
-                file_info.detections.append(detection)
-            else:
-                # Handle lines without colons (unusual case)
-                detection = ICPDetection(
-                    name=line,
-                    type="Unknown",
-                    version="",
-                    info="",
-                    string=line,
-                    confidence=1.0
-                )
-                file_info.detections.append(detection)
-
-        obj.file_infos.append(file_info)
-        return obj
 
 
 class ICPEngineError(Exception):
@@ -291,32 +321,64 @@ class ICPBackend:
     """
 
     def __init__(self, engine_path: Optional[str] = None):
-        """Initialize ICP backend
+        """Initialize ICP backend with robust DIE JSON wrapper
 
         Args:
-            engine_path: Legacy parameter for compatibility, ignored in die-python implementation
+            engine_path: Legacy parameter for compatibility, used for DIE executable path
         """
-        self.engine_path = engine_path  # Keep for compatibility
+        self.engine_path = engine_path
 
-        # Import die-python
+        # Initialize DIE JSON wrapper for robust analysis
+        try:
+            self.die_wrapper = DIEJSONWrapper(
+                die_executable_path=engine_path,
+                use_die_python=True
+            )
+            self.die_logger = get_die_structured_logger()
+            
+            # Get version info for logging
+            version_info = self.die_wrapper.get_version_info()
+            logger.info(f"ICP Backend initialized with DIE JSON wrapper")
+            for component, version in version_info.items():
+                logger.info(f"  {component}: {version}")
+                
+        except Exception as e:
+            raise ICPEngineError(f"DIE JSON wrapper initialization failed: {e}")
+
+        # Legacy die-python reference for compatibility
+        self.die = None
         try:
             import die
             self.die = die
-            logger.info(f"ICP Backend initialized with die-python v{die.__version__}")
-            logger.info(f"DIE engine version: {die.die_version}")
-        except ImportError as e:
-            raise ICPEngineError(f"die-python library not available: {e}")
+        except ImportError:
+            logger.warning("die-python not available, using DIE executable only")
+
+    def _convert_scan_mode_to_die(self, scan_mode: ScanMode) -> DIEScanMode:
+        """Convert ICP scan mode to DIE JSON wrapper scan mode"""
+        mode_map = {
+            ScanMode.NORMAL: DIEScanMode.NORMAL,
+            ScanMode.DEEP: DIEScanMode.DEEP,
+            ScanMode.HEURISTIC: DIEScanMode.HEURISTIC,
+            ScanMode.AGGRESSIVE: DIEScanMode.ALL,
+            ScanMode.ALL: DIEScanMode.ALL
+        }
+        return mode_map.get(scan_mode, DIEScanMode.NORMAL)
 
     def _get_die_scan_flags(self, scan_mode: ScanMode) -> int:
-        """Convert scan mode to die-python scan flags"""
+        """Legacy method: Convert scan mode to die-python scan flags
+        
+        DEPRECATED: This method is for backward compatibility only.
+        Use _convert_scan_mode_to_die() with DIE JSON wrapper instead.
+        """
+        if not self.die:
+            return 0
+            
         flag_map = {
             ScanMode.NORMAL: 0,  # Default scanning
-            ScanMode.DEEP: self.die.ScanFlags.DEEP_SCAN,
-            ScanMode.HEURISTIC: self.die.ScanFlags.HEURISTIC_SCAN,
-            ScanMode.AGGRESSIVE: self.die.ScanFlags.DEEP_SCAN | self.die.ScanFlags.HEURISTIC_SCAN,
-            ScanMode.ALL: (self.die.ScanFlags.DEEP_SCAN |
-                          self.die.ScanFlags.HEURISTIC_SCAN |
-                          self.die.ScanFlags.ALL_TYPES_SCAN)
+            ScanMode.DEEP: getattr(self.die.ScanFlags, 'DEEP_SCAN', 0x0001),
+            ScanMode.HEURISTIC: getattr(self.die.ScanFlags, 'HEURISTIC_SCAN', 0x0002),
+            ScanMode.AGGRESSIVE: 0x0003,  # DEEP | HEURISTIC
+            ScanMode.ALL: 0x0007  # All flags
         }
         return flag_map.get(scan_mode, 0)
 
@@ -349,102 +411,83 @@ class ICPBackend:
                 error=f"File not found: {file_path}"
             )
 
-        # Get scan flags
-        scan_flags = self._get_die_scan_flags(scan_mode)
-
-        # Apply additional flags based on parameters
-        if show_entropy:
-            # Add entropy calculation flag if available
-            scan_flags |= 0x0100  # DIE_SHOWERRORS flag can include entropy info
-
-        if not show_info:
-            # If info is not requested, use a faster scan mode
-            scan_flags &= ~0x0002  # Remove DIE_SHOWVERSION flag
+        # Convert scan mode to DIE JSON wrapper format
+        die_scan_mode = self._convert_scan_mode_to_die(scan_mode)
 
         try:
-            # Run die-python analysis in thread pool to avoid blocking
-            def _scan_file():
+            # Use DIE JSON wrapper for robust structured analysis
+            def _analyze_with_json_wrapper():
                 try:
-                    # die.scan_file returns a string, not a list
-                    result_text = self.die.scan_file(str(file_path), scan_flags)
-                    return result_text
+                    with self.die_logger.analysis_session(
+                        str(file_path), die_scan_mode.value, int(timeout)
+                    ) as session_id:
+                        
+                        # Perform structured analysis
+                        die_result = self.die_wrapper.analyze_file(
+                            file_path, 
+                            die_scan_mode, 
+                            timeout=int(timeout)
+                        )
+                        
+                        # Log completion
+                        self.die_logger.log_analysis_complete(session_id, die_result)
+                        
+                        # Validate JSON schema
+                        is_valid = self.die_wrapper.validate_json_schema(die_result)
+                        self.die_logger.log_validation_result(
+                            session_id, str(file_path), is_valid
+                        )
+                        
+                        if not is_valid:
+                            logger.warning(f"DIE JSON validation failed for {file_path}")
+                        
+                        return die_result
+                        
                 except Exception as e:
-                    logger.error(f"die-python scan error: {e}")
+                    logger.error(f"DIE JSON wrapper analysis error: {e}")
                     raise
 
             # Run in executor with timeout
             loop = asyncio.get_event_loop()
             try:
-                results = await asyncio.wait_for(
-                    loop.run_in_executor(None, _scan_file),
+                die_result = await asyncio.wait_for(
+                    loop.run_in_executor(None, _analyze_with_json_wrapper),
                     timeout=timeout
                 )
             except asyncio.TimeoutError:
-                logger.error(f"Analysis timed out after {timeout} seconds")
+                logger.error(f"DIE analysis timed out after {timeout} seconds")
                 return ICPScanResult(
                     file_path=str(file_path),
-                    error=f"Analysis timed out after {timeout} seconds"
+                    error=f"DIE analysis timed out after {timeout} seconds"
                 )
 
-            # Convert results to our format
-            scan_result = ICPScanResult.from_die_text(str(file_path), results)
+            # Convert structured DIE result to ICP format
+            scan_result = ICPScanResult.from_die_json_result(die_result)
 
             # Run supplemental analysis if requested
             if include_supplemental and SUPPLEMENTAL_ENGINES_AVAILABLE:
                 try:
                     supplemental_data = await self._run_supplemental_analysis(str(file_path))
-                    scan_result.supplemental_data = supplemental_data
+                    # Merge with existing supplemental data from DIE
+                    if scan_result.supplemental_data:
+                        scan_result.supplemental_data.update(supplemental_data)
+                    else:
+                        scan_result.supplemental_data = supplemental_data
                 except Exception as e:
                     logger.warning(f"Supplemental analysis failed: {e}")
 
-            # Add entropy information if requested
-            if show_entropy and os.path.exists(file_path):
-                try:
-                    # Calculate file entropy
-                    import math
-                    with open(file_path, 'rb') as f:
-                        data = f.read(1024 * 1024)  # Read first MB for entropy
-                        if data:
-                            # Calculate entropy
-                            byte_counts = [0] * 256
-                            for byte in data:
-                                byte_counts[byte] += 1
+            # Entropy and file info are now provided by DIE JSON wrapper
+            # Legacy parameters show_entropy and show_info are ignored
 
-                            entropy = 0.0
-                            data_len = len(data)
-                            for count in byte_counts:
-                                if count > 0:
-                                    probability = count / data_len
-                                    entropy -= probability * math.log2(probability)
-
-                            # Add entropy to scan result
-                            if not hasattr(scan_result, 'metadata'):
-                                scan_result.metadata = {}
-                            scan_result.metadata['entropy'] = round(entropy, 4)
-                            scan_result.metadata['entropy_high'] = entropy > 7.5  # High entropy indicates encryption/compression
-                except Exception as e:
-                    logger.debug(f"Could not calculate entropy: {e}")
-
-            # Add file info if requested
-            if show_info and os.path.exists(file_path):
-                try:
-                    stat_info = os.stat(file_path)
-                    if not hasattr(scan_result, 'file_info'):
-                        scan_result.file_info = {}
-                    scan_result.file_info.update({
-                        'size': stat_info.st_size,
-                        'modified': stat_info.st_mtime,
-                        'created': getattr(stat_info, 'st_birthtime', stat_info.st_ctime),
-                        'permissions': oct(stat_info.st_mode),
-                    })
-                except Exception as e:
-                    logger.debug(f"Could not get file info: {e}")
-
-            logger.info(f"Analysis complete: {len(scan_result.all_detections)} detections found")
+            logger.info(f"DIE JSON analysis complete: {len(scan_result.all_detections)} detections found")
             return scan_result
 
         except Exception as e:
-            logger.error(f"ICP analysis error: {e}")
+            logger.error(f"DIE JSON analysis error: {e}")
+            # Log error through structured logger
+            session_id = f"error_{int(time.time() * 1000)}"
+            self.die_logger.log_analysis_error(session_id, str(file_path), e, die_scan_mode.value)
+            
             return ICPScanResult(
                 file_path=str(file_path),
                 error=str(e)

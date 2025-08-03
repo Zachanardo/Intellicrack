@@ -36,7 +36,11 @@ import unittest
 import os
 import sys
 import tempfile
-from unittest.mock import Mock, patch, MagicMock
+import struct
+import json
+import sqlite3
+import socket
+from contextlib import contextmanager
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -59,6 +63,15 @@ class Test{class_name}(unittest.TestCase):
         """Clean up after tests"""
         if hasattr(self, 'test_binary') and os.path.exists(self.test_binary):
             os.remove(self.test_binary)
+        if hasattr(self, '_temp_files'):
+            for f in self._temp_files:
+                if os.path.exists(f):
+                    os.remove(f)
+        if hasattr(self, '_temp_dirs'):
+            for d in self._temp_dirs:
+                if os.path.exists(d):
+                    import shutil
+                    shutil.rmtree(d)
 
     def _create_test_binary(self):
         """Create a test binary file"""
@@ -69,6 +82,115 @@ class Test{class_name}(unittest.TestCase):
         with tempfile.NamedTemporaryFile(delete=False, suffix='.exe') as f:
             f.write(pe_data)
             return f.name
+
+    def create_test_frida_session(self):
+        """Create a test Frida session object"""
+        class TestFridaSession:
+            def __init__(self):
+                self.pid = os.getpid()
+                self.detached = False
+                self._scripts = []
+                
+            def create_script(self, source):
+                class TestScript:
+                    def __init__(self, source):
+                        self.source = source
+                        self._message_handlers = []
+                        self._destroyed = False
+                        
+                    def on(self, event, handler):
+                        self._message_handlers.append((event, handler))
+                        
+                    def load(self):
+                        pass
+                        
+                    def unload(self):
+                        pass
+                        
+                    def post(self, message):
+                        pass
+                        
+                    def destroy(self):
+                        self._destroyed = True
+                        
+                script = TestScript(source)
+                self._scripts.append(script)
+                return script
+                
+            def detach(self):
+                self.detached = True
+                
+            def resume(self):
+                pass
+                
+            def enumerate_modules(self):
+                return [
+                    {'name': 'kernel32.dll', 'base': 0x77000000, 'size': 0x100000},
+                    {'name': 'ntdll.dll', 'base': 0x77200000, 'size': 0x150000}
+                ]
+                
+        return TestFridaSession()
+    
+    def create_test_ghidra_project(self):
+        """Create a test Ghidra project object"""
+        class TestGhidraProject:
+            def __init__(self):
+                self.name = "TestProject"
+                self.program = TestGhidraProgram()
+                
+        class TestGhidraProgram:
+            def __init__(self):
+                self.name = "test.exe"
+                self.language = "x86:LE:32:default"
+                self.compiler = "windows"
+                self.memory = TestMemory()
+                self.listing = TestListing()
+                self.symbol_table = TestSymbolTable()
+                
+        class TestMemory:
+            def getBlocks(self):
+                return [
+                    TestMemoryBlock(".text", 0x401000, 0x1000),
+                    TestMemoryBlock(".data", 0x402000, 0x1000)
+                ]
+                
+        class TestMemoryBlock:
+            def __init__(self, name, start, size):
+                self.name = name
+                self.start = start
+                self.size = size
+                self.end = start + size
+                
+        class TestListing:
+            def getFunctions(self, forward):
+                return [
+                    TestFunction("main", 0x401000),
+                    TestFunction("sub_401100", 0x401100)
+                ]
+                
+        class TestFunction:
+            def __init__(self, name, entry):
+                self.name = name
+                self.entry_point = entry
+                self.body = TestAddressSet(entry, entry + 0x50)
+                
+        class TestAddressSet:
+            def __init__(self, start, end):
+                self.min_address = start
+                self.max_address = end
+                
+        class TestSymbolTable:
+            def getSymbols(self, name):
+                if name == "main":
+                    return [TestSymbol("main", 0x401000)]
+                return []
+                
+        class TestSymbol:
+            def __init__(self, name, address):
+                self.name = name
+                self.address = address
+                
+        return TestGhidraProject()
 
 {test_methods}
 
@@ -446,9 +568,9 @@ if __name__ == '__main__':
         
         # Module/plugin specific
         elif 'frida' in imports or 'frida' in param_lower:
-            return 'self.mock_frida_session'
+            return 'self.create_test_frida_session()'
         elif 'ghidra' in imports or 'ghidra' in param_lower:
-            return 'self.mock_ghidra_project'
+            return 'self.create_test_ghidra_project()'
         
         # Default
         else:

@@ -80,10 +80,12 @@ class DebuggerOutputThread(QThread):
 class DebuggerDialog(QDialog):
     """Advanced debugger dialog with breakpoint support"""
 
-    def __init__(self, parent=None, plugin_path=None):
+    def __init__(self, parent=None, plugin_path=None, binary_path=None, app_context=None):
         """Initialize the DebuggerDialog with default values."""
         super().__init__(parent)
         self.plugin_path = plugin_path
+        self.binary_path = binary_path
+        self.app_context = app_context
         self.debugger = PluginDebugger()
         self.debugger_thread = None
         self.output_thread = None
@@ -447,7 +449,7 @@ class DebuggerDialog(QDialog):
         self.debugger_thread = DebuggerThread(
             self.debugger,
             self.plugin_path,
-            binary_path="test.exe",  # Mock binary
+            binary_path=self.binary_path or self._get_fallback_binary_path(),
             options={}
         )
         self.debugger_thread.start()
@@ -650,6 +652,32 @@ class DebuggerDialog(QDialog):
 
         # Clear input
         self.repl_input.clear()
+
+    def _get_fallback_binary_path(self):
+        """Get fallback binary path from app context or parent if no binary_path is set."""
+        try:
+            # Try to get binary path from app_context
+            if self.app_context and hasattr(self.app_context, 'current_binary_path'):
+                binary_path = getattr(self.app_context, 'current_binary_path', None)
+                if binary_path:
+                    return binary_path
+            
+            # Try to get binary path from parent application
+            if self.parent() and hasattr(self.parent(), 'binary_path'):
+                binary_path = getattr(self.parent(), 'binary_path', None)
+                if binary_path:
+                    return binary_path
+            
+            # Try to get from parent's current_file
+            if self.parent() and hasattr(self.parent(), 'current_file'):
+                current_file = getattr(self.parent(), 'current_file', None)
+                if current_file:
+                    return current_file
+                    
+            # Final fallback to a more descriptive placeholder
+            return "no_binary_selected.exe"
+        except Exception:
+            return "no_binary_selected.exe"
 
     def closeEvent(self, event):
         """Handle dialog close"""

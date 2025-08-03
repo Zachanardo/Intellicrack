@@ -1,0 +1,7 @@
+{
+  "name": "medium_cad_software_500mb.exe",
+  "size": 524288000,
+  "type": "cad_software",
+  "complexity": "medium",
+  "protection": "licensing_checks"
+}

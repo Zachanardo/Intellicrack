@@ -216,7 +216,7 @@ class LicenseProtocolHandler(ABC):
         Args:
             port: Port number to bind the proxy server to
         """
-        raise NotImplementedError("Subclasses must implement _run_proxy")
+        pass
 
     @abstractmethod
     def handle_connection(self, socket: Any, initial_data: bytes) -> None:
@@ -230,7 +230,7 @@ class LicenseProtocolHandler(ABC):
             socket: Client socket connection
             initial_data: Initial data received from the client
         """
-        raise NotImplementedError("Subclasses must implement handle_connection")
+        pass
 
     @abstractmethod
     def generate_response(self, request_data: bytes) -> bytes:
@@ -246,7 +246,7 @@ class LicenseProtocolHandler(ABC):
         Returns:
             Protocol-specific response data
         """
-        raise NotImplementedError("Subclasses must implement generate_response")
+        pass
 
     def log_request(self, request_data: bytes, source: str = "unknown") -> None:
         """

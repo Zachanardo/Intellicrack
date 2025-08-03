@@ -1,0 +1,9 @@
+Test execution error: 'charmap' codec can't decode byte 0x9d in position 5742: character maps to <undefined>
+Traceback (most recent call last):
+  File "C:\Intellicrack\run_logging_tests.py", line 7, in <module>
+    exec(open("test_centralized_logging_complete.py").read())
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python311\Lib\encodings\cp1252.py", line 23, in decode
+    return codecs.charmap_decode(input,self.errors,decoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 5742: character maps to <undefined>

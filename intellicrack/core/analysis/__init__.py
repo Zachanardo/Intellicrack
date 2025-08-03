@@ -104,6 +104,51 @@ except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     SimilaritySearcher = None
 
+# Import behavioral analysis components
+try:
+    from .behavior_based_protection_detector import (
+        BehaviorBasedProtectionDetector,
+        DetectionResult,
+        ProtectionFamily,
+        BehaviorEvent,
+        BehaviorType
+    )
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
+    BehaviorBasedProtectionDetector = None
+    DetectionResult = None
+    ProtectionFamily = None
+    BehaviorEvent = None
+    BehaviorType = None
+
+try:
+    from .behavioral_integration_manager import (
+        BehavioralIntegrationManager,
+        IntegrationStatus,
+        ComponentStatus
+    )
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
+    BehavioralIntegrationManager = None
+    IntegrationStatus = None
+    ComponentStatus = None
+
+try:
+    from .behavioral_protection_system import (
+        BehavioralProtectionSystem,
+        get_behavioral_protection_system,
+        shutdown_behavioral_protection_system,
+        AnalysisMode,
+        SystemState
+    )
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
+    BehavioralProtectionSystem = None
+    get_behavioral_protection_system = None
+    shutdown_behavioral_protection_system = None
+    AnalysisMode = None
+    SystemState = None
+
 __all__ = [
     # Core analysis functions
     'calculate_entropy',
@@ -122,5 +167,19 @@ __all__ = [
     'MultiFormatBinaryAnalyzer',
     'CFGExplorer',
     'IncrementalAnalysisManager',
-    'SimilaritySearcher'
+    'SimilaritySearcher',
+    # Behavioral analysis components
+    'BehaviorBasedProtectionDetector',
+    'DetectionResult',
+    'ProtectionFamily',
+    'BehaviorEvent',
+    'BehaviorType',
+    'BehavioralIntegrationManager',
+    'IntegrationStatus',
+    'ComponentStatus',
+    'BehavioralProtectionSystem',
+    'get_behavioral_protection_system',
+    'shutdown_behavioral_protection_system',
+    'AnalysisMode',
+    'SystemState'
 ]

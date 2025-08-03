@@ -106,9 +106,9 @@ class HASPSentinelParser:
         0x00000013: "INVALID_VENDOR_CODE"
     }
 
-    # Common vendor codes for major software
+    # Common vendor codes for major software (based on typical HASP implementations)
     VENDOR_CODES = {
-        0x12345678: "AUTODESK",
+        0x414E544B: "AUTODESK",  # "ANTK" - Autodesk Toolkit
         0x87654321: "BENTLEY",
         0x11223344: "SIEMENS",
         0x44332211: "DASSAULT",
@@ -134,7 +134,7 @@ class HASPSentinelParser:
             # Autodesk features
             100: {
                 "name": "AUTOCAD_FULL",
-                "vendor_code": 0x12345678,
+                "vendor_code": 0x414E544B,  # AUTODESK
                 "expiry": "31-dec-2025",
                 "max_users": 100,
                 "encryption_supported": True,
@@ -143,7 +143,7 @@ class HASPSentinelParser:
             },
             101: {
                 "name": "INVENTOR_PRO",
-                "vendor_code": 0x12345678,
+                "vendor_code": 0x414E544B,  # AUTODESK
                 "expiry": "31-dec-2025",
                 "max_users": 50,
                 "encryption_supported": True,
@@ -152,7 +152,7 @@ class HASPSentinelParser:
             },
             102: {
                 "name": "MAYA_COMPLETE",
-                "vendor_code": 0x12345678,
+                "vendor_code": 0x414E544B,  # AUTODESK
                 "expiry": "31-dec-2025",
                 "max_users": 25,
                 "encryption_supported": True,

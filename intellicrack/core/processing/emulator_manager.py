@@ -4,6 +4,7 @@ import os
 from typing import Any, Callable, Dict, Optional
 
 from intellicrack.logger import logger
+from ..logging.audit_logger import get_audit_logger, AuditEvent, AuditEventType, AuditSeverity
 
 """
 Emulator Manager for automatic emulator lifecycle management.
@@ -101,6 +102,20 @@ class EmulatorManager(QObject):
 
         # Log the binary being emulated
         self.logger.info(f"Ensuring QEMU is running for binary: {binary_path}")
+        
+        # Audit log VM start attempt
+        audit_logger = get_audit_logger()
+        audit_logger.log_event(AuditEvent(
+            event_type=AuditEventType.VM_START,
+            severity=AuditSeverity.INFO,
+            description=f"QEMU emulator start: {os.path.basename(binary_path)}",
+            target=binary_path,
+            details={
+                "emulator": "qemu",
+                "config": config or {},
+                "operation": "ensure_running"
+            }
+        ))
 
         with self.lock:
             # Check if already running
@@ -193,6 +208,20 @@ class EmulatorManager(QObject):
     def stop_qemu(self):
         """Stop QEMU emulator if running."""
         if self.qemu_instance and self.qemu_running:
+            # Audit log VM stop
+            audit_logger = get_audit_logger()
+            binary_path = getattr(self.qemu_instance, 'binary_path', 'unknown')
+            audit_logger.log_event(AuditEvent(
+                event_type=AuditEventType.VM_STOP,
+                severity=AuditSeverity.INFO,
+                description=f"QEMU emulator stop: {os.path.basename(binary_path)}",
+                target=binary_path,
+                details={
+                    "emulator": "qemu",
+                    "operation": "stop"
+                }
+            ))
+            
             try:
                 self.qemu_instance.stop_system()
                 with self.lock:

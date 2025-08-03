@@ -635,8 +635,8 @@ class R2JSONStandardizer:
     def _get_radare2_version(self) -> str:
         """Get radare2 version"""
         try:
-            import subprocess
-            result = subprocess.run(['radare2', '-v'], capture_output=True, text=True, timeout=5)
+            from ...utils.system.subprocess_utils import run_subprocess_check
+            result = run_subprocess_check(['radare2', '-v'], timeout=5)
             if result.returncode == 0:
                 return result.stdout.split('\n')[0].strip()
         except Exception as e:

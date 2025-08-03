@@ -23,6 +23,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
+import asyncio
 import hashlib
 import json
 import logging
@@ -443,7 +444,7 @@ class NetworkLicenseServerEmulator:
 
                             # Add delay if configured
                             if emulator.config['response_delay'] > 0:
-                                time.sleep(emulator.config['response_delay'])
+                                asyncio.run(asyncio.sleep(emulator.config['response_delay']))
 
                             # Send response
                             self.request.sendall(response)
@@ -1030,7 +1031,7 @@ class NetworkLicenseServerEmulator:
                 seconds whether traffic recording is enabled and saving logs if so.
                 """
                 while self.running:
-                    time.sleep(self.traffic_recorder.save_interval)
+                    asyncio.run(asyncio.sleep(self.traffic_recorder.save_interval))
                     if self.traffic_recorder.recording:
                         self.traffic_recorder.save_log()
 

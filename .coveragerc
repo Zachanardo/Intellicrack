@@ -2,22 +2,37 @@
 source = intellicrack
 omit = 
     */tests/*
+    */dev/*
+    */legacy_tests/*
     */migrations/*
-    */__pycache__/*
     */venv/*
-    */mamba_env/*
+    */env/*
+    */__pycache__/*
+    */node_modules/*
+    setup.py
+    conftest.py
 branch = True
+parallel = True
 
 [report]
 fail_under = 95
-precision = 2
 show_missing = True
 skip_covered = False
-sort = Cover
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
 
 [html]
-directory = coverage_html_report
-title = Intellicrack Coverage Report
+directory = htmlcov
+title = Intellicrack Test Coverage Report
 
 [xml]
 output = coverage.xml

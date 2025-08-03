@@ -1,0 +1,165 @@
+# Centralized Logging Configuration for Intellicrack
+# This file defines the default logging configuration for all environments
+
+# Global logging settings
+global:
+  level: INFO
+  console_enabled: true
+  file_enabled: true
+  json_format: true
+  enable_structured: true
+  max_file_size: 52428800  # 50MB
+  backup_count: 10
+  retention_days: 30
+
+# Environment-specific configurations
+environments:
+  development:
+    global_level: DEBUG
+    console_enabled: true
+    json_format: false
+    enable_performance_logging: true
+    performance_threshold_ms: 500
+    
+  testing:
+    global_level: WARNING
+    console_enabled: false
+    json_format: true
+    enable_performance_logging: false
+    performance_threshold_ms: 2000
+    
+  production:
+    global_level: INFO
+    console_enabled: false
+    json_format: true
+    enable_performance_logging: true
+    performance_threshold_ms: 1000
+
+# Module-specific logging levels
+module_levels:
+  intellicrack.ai: INFO
+  intellicrack.core.analysis: INFO
+  intellicrack.core.exploitation: WARNING
+  intellicrack.core.network: INFO
+  intellicrack.ui: WARNING
+  intellicrack.utils: WARNING
+  intellicrack.hexview: WARNING
+  intellicrack.plugins: INFO
+  intellicrack.core.frida_manager: WARNING
+  intellicrack.core.patching: INFO
+  intellicrack.core.processing: INFO
+  intellicrack.core.protection_bypass: WARNING
+  intellicrack.core.c2: INFO
+  intellicrack.cli: INFO
+
+# Log aggregation settings
+aggregation:
+  enabled: true
+  interval: 300  # 5 minutes
+  external_endpoint: null  # Set to external log service URL if needed
+  external_api_key: null   # Set to API key for external service
+
+# Performance logging settings
+performance:
+  enabled: true
+  threshold_ms: 1000      # Log operations slower than 1 second
+  track_memory: true
+  track_cpu: true
+
+# Security logging settings
+security:
+  enabled: true
+  log_sensitive_operations: true
+  audit_encryption: true
+  
+# Monitoring and alerting settings
+monitoring:
+  enabled: true
+  patterns:
+    critical_error:
+      pattern: "CRITICAL|FATAL|EMERGENCY"
+      severity: critical
+      description: "Critical error detected in logs"
+      
+    security_violation:
+      pattern: "security|breach|unauthorized|forbidden|access.denied"
+      severity: high
+      description: "Security-related event detected"
+      
+    memory_error:
+      pattern: "out.of.memory|memory.error|allocation.failed"
+      severity: high
+      description: "Memory-related error detected"
+      
+    connection_error:
+      pattern: "connection.refused|timeout|network.error|connection.lost"
+      severity: medium
+      description: "Network connectivity issue detected"
+      
+    performance_warning:
+      pattern: "slow|timeout|performance|latency|bottleneck"
+      severity: medium
+      description: "Performance issue detected"
+      
+    exploit_attempt:
+      pattern: "exploit|payload|shellcode|injection|bypass"
+      severity: high
+      description: "Exploitation activity detected"
+
+  thresholds:
+    error_rate: 0.1      # 10% error rate triggers alert
+    log_rate: 100        # 100 logs per second triggers alert
+    performance: 5.0     # 5 seconds triggers alert
+
+# Alert handling configuration
+alerts:
+  handlers:
+    - type: log
+      enabled: true
+      
+    - type: file
+      enabled: true
+      file_path: "alerts.jsonl"
+      
+    - type: email
+      enabled: false
+      smtp_server: "smtp.example.com"
+      smtp_port: 587
+      username: "alerts@example.com"
+      password: "password"
+      sender: "intellicrack@example.com"
+      recipients:
+        - "admin@example.com"
+      min_severity: high
+
+# Log rotation and cleanup
+rotation:
+  enabled: true
+  check_interval: 86400  # Daily cleanup
+  compress_old_logs: true
+
+# External integrations
+integrations:
+  elasticsearch:
+    enabled: false
+    host: "localhost"
+    port: 9200
+    index_prefix: "intellicrack-logs"
+    
+  syslog:
+    enabled: false
+    host: "localhost"
+    port: 514
+    facility: 16  # local0
+    
+  splunk:
+    enabled: false
+    host: "localhost"
+    port: 8088
+    token: "your-hec-token"
+
+# Debug settings (for logging system itself)
+debug:
+  log_configuration_loading: false
+  log_handler_errors: true
+  trace_log_flow: false

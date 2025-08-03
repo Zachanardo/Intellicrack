@@ -1,4 +1,7 @@
-"""Predictive Analysis & Intelligence Engine.
+"""Predictive Intelligence Engine for Advanced Binary Protection Analysis.
+
+This module implements machine learning-based predictive analysis for proactive
+protection detection, vulnerability discovery, and bypass strategy recommendation.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -18,54 +21,82 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import hashlib
 import json
-import logging
 import math
+import pickle
+import time
 import uuid
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
-
-from intellicrack.logger import logger
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from ..utils.logger import get_logger
-from .learning_engine_simple import get_learning_engine
-from .performance_monitor import profile_ai_operation
+
+logger = get_logger(__name__)
 
 try:
     import numpy as np
     NUMPY_AVAILABLE = True
-except ImportError as e:
-    logger.error("Import error in predictive_intelligence: %s", e)
+except ImportError:
+    logger.error("NumPy not available - predictive intelligence will use fallback methods")
     np = None
     NUMPY_AVAILABLE = False
 
 try:
+    from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+    from sklearn.linear_model import LogisticRegression, LinearRegression
+    from sklearn.neural_network import MLPClassifier, MLPRegressor
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import accuracy_score, mean_squared_error
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    logger.error("Scikit-learn not available - using basic linear models only")
+    SKLEARN_AVAILABLE = False
+
+try:
     import psutil
     PSUTIL_AVAILABLE = True
-except ImportError as e:
-    logger.error("Import error in predictive_intelligence: %s", e)
+except ImportError:
+    logger.error("psutil not available - system monitoring will be limited")
     psutil = None
     PSUTIL_AVAILABLE = False
 
+try:
+    import requests
+    REQUESTS_AVAILABLE = True
+except ImportError:
+    logger.error("requests not available - threat intelligence feeds disabled")
+    requests = None
+    REQUESTS_AVAILABLE = False
 
-logger = get_logger(__name__)
+try:
+    from .learning_engine_simple import get_learning_engine
+    from .performance_monitor import profile_ai_operation
+    from .llm_backends import get_llm_manager
+except ImportError as e:
+    logger.warning(f"Failed to import AI components: {e}")
+    get_learning_engine = None
+    profile_ai_operation = lambda name: lambda func: func
+    get_llm_manager = None
 
 
 class PredictionType(Enum):
     """Types of predictions the system can make."""
+    PROTECTION_TYPE = "protection_type"
+    VULNERABILITY_DISCOVERY = "vulnerability_discovery"
+    BYPASS_STRATEGY = "bypass_strategy"
+    PROTECTION_EVOLUTION = "protection_evolution"
+    THREAT_INTELLIGENCE = "threat_intelligence"
     SUCCESS_PROBABILITY = "success_probability"
     EXECUTION_TIME = "execution_time"
     RESOURCE_USAGE = "resource_usage"
-    VULNERABILITY_DISCOVERY = "vulnerability_discovery"
     EXPLOIT_SUCCESS = "exploit_success"
-    PERFORMANCE_DEGRADATION = "performance_degradation"
-    ERROR_LIKELIHOOD = "error_likelihood"
-    OPTIMAL_STRATEGY = "optimal_strategy"
-    LEARNING_CONVERGENCE = "learning_convergence"
-    SYSTEM_LOAD = "system_load"
+    ANOMALY_DETECTION = "anomaly_detection"
 
 
 class PredictionConfidence(Enum):
@@ -77,1094 +108,1895 @@ class PredictionConfidence(Enum):
     VERY_HIGH = "very_high"
 
 
+class ProtectionFamily(Enum):
+    """Known protection families for classification."""
+    VMPROTECT = "vmprotect"
+    THEMIDA = "themida"
+    DENUVO = "denuvo"
+    SAFENET = "safenet"
+    ARXAN = "arxan"
+    UPX = "upx"
+    ASPROTECT = "asprotect"
+    ARMADILLO = "armadillo"
+    ENIGMA = "enigma"
+    UNKNOWN = "unknown"
+
+
+class VulnerabilityClass(Enum):
+    """Vulnerability classes for prediction."""
+    BUFFER_OVERFLOW = "buffer_overflow"
+    USE_AFTER_FREE = "use_after_free"
+    INTEGER_OVERFLOW = "integer_overflow"
+    FORMAT_STRING = "format_string"
+    CODE_INJECTION = "code_injection"
+    MEMORY_CORRUPTION = "memory_corruption"
+    RACE_CONDITION = "race_condition"
+    LOGIC_FLAW = "logic_flaw"
+    CRYPTO_WEAKNESS = "crypto_weakness"
+
+
+class BypassStrategy(Enum):
+    """Bypass strategy recommendations."""
+    MEMORY_PATCHING = "memory_patching"
+    API_HOOKING = "api_hooking"
+    DEBUGGER_EVASION = "debugger_evasion"
+    VIRTUALIZATION_BYPASS = "virtualization_bypass"
+    TIMING_ATTACK = "timing_attack"
+    SIDE_CHANNEL = "side_channel"
+    EMULATION = "emulation"
+    STATIC_ANALYSIS = "static_analysis"
+    DYNAMIC_ANALYSIS = "dynamic_analysis"
+    HYBRID_APPROACH = "hybrid_approach"
+
+
 @dataclass
-class PredictionInput:
-    """Input data for making predictions."""
-    operation_type: str
-    context: Dict[str, Any]
-    historical_data: List[Dict[str, Any]] = field(default_factory=list)
-    features: Dict[str, float] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+class BinaryFeatures:
+    """Features extracted from binary analysis."""
+    file_size: int = 0
+    entropy: float = 0.0
+    section_count: int = 0
+    import_count: int = 0
+    export_count: int = 0
+    string_count: int = 0
+    packed: bool = False
+    signed: bool = False
+    architecture: str = "unknown"
+    compiler: str = "unknown"
+    protection_indicators: List[str] = field(default_factory=list)
+    api_calls: List[str] = field(default_factory=list)
+    suspicious_strings: List[str] = field(default_factory=list)
+    control_flow_complexity: float = 0.0
+    code_obfuscation_level: float = 0.0
 
 
 @dataclass
 class PredictionResult:
-    """Result of a prediction."""
+    """Result of a prediction analysis."""
     prediction_id: str
     prediction_type: PredictionType
-    predicted_value: float
+    predicted_value: Union[float, str, List[str]]
     confidence: PredictionConfidence
-    confidence_score: float  # 0.0 to 1.0
-    factors: Dict[str, float]  # Contributing factors
+    confidence_score: float
+    factors: Dict[str, float]
     reasoning: str
     timestamp: datetime = field(default_factory=datetime.now)
-    model_version: str = "1.0"
+    model_version: str = "2.0"
     error_bounds: Tuple[float, float] = (0.0, 0.0)
+    recommendations: List[str] = field(default_factory=list)
+    threat_level: str = "medium"
 
 
 @dataclass
-class TimeSeriesData:
-    """Time series data for predictions."""
-    timestamps: List[datetime]
-    values: List[float]
-    metadata: List[Dict[str, Any]] = field(default_factory=list)
+class ThreatIntelligence:
+    """Threat intelligence data structure."""
+    source: str
+    threat_type: str
+    protection_family: str
+    indicators: List[str]
+    severity: str
+    timestamp: datetime
+    confidence_score: float
+    attribution: str = "unknown"
+    ttps: List[str] = field(default_factory=list)
 
 
-class FeatureExtractor:
-    """Extracts features for predictive modeling."""
+class BinaryClassifier:
+    """Machine learning classifier for binary protection types."""
 
     def __init__(self):
-        """Initialize the feature extractor for predictive modeling.
+        """Initialize the binary classifier with multiple ML models."""
+        self.models = {}
+        self.scalers = {}
+        self.training_data = []
+        self.feature_names = [
+            'file_size_normalized', 'entropy', 'section_count', 'import_count',
+            'export_count', 'string_count', 'packed', 'signed', 'x86_arch',
+            'x64_arch', 'control_flow_complexity', 'obfuscation_level',
+            'suspicious_string_count', 'api_call_count'
+        ]
+        
+        if SKLEARN_AVAILABLE:
+            self.models['random_forest'] = RandomForestClassifier(
+                n_estimators=100, max_depth=10, random_state=42
+            )
+            self.models['neural_network'] = MLPClassifier(
+                hidden_layer_sizes=(100, 50), max_iter=500, random_state=42
+            )
+            self.models['logistic'] = LogisticRegression(random_state=42, max_iter=1000)
+            
+            for model_name in self.models:
+                self.scalers[model_name] = StandardScaler()
+        else:
+            logger.warning("Scikit-learn not available - using basic classification")
+            
+        self.protection_signatures = self._load_protection_signatures()
+        self._initialize_training_data()
+        
+        logger.info("Binary classifier initialized with ML models")
 
-        Sets up feature caching, importance tracking, and connects to the learning engine
-        for intelligent feature extraction from binary analysis data.
-        """
-        self.logger = logging.getLogger(__name__ + ".FeatureExtractor")
-        self.feature_cache: Dict[str, Any] = {}
-        self.feature_importance: Dict[str, float] = {}
-        self.learning_engine = get_learning_engine()
-
-        logger.info("Feature extractor initialized")
-
-    def extract_operation_features(self, operation_type: str, context: Dict[str, Any]) -> Dict[str, float]:
-        """Extract features for operation prediction."""
-        features = {}
-
-        # Basic operation features
-        features["operation_complexity"] = self._calculate_operation_complexity(
-            operation_type, context)
-        features["input_size"] = self._calculate_input_size(context)
-        features["context_richness"] = len(context)
-
-        # Historical performance features
-        historical_performance = self._get_historical_performance(
-            operation_type)
-        features.update(historical_performance)
-
-        # System state features
-        system_features = self._extract_system_features()
-        features.update(system_features)
-
-        # Time-based features
-        time_features = self._extract_time_features()
-        features.update(time_features)
-
-        return features
-
-    def _calculate_operation_complexity(self, operation_type: str, context: Dict[str, Any]) -> float:
-        """Calculate complexity score for operation."""
-        complexity_map = {
-            "binary_analysis": 0.7,
-            "vulnerability_analysis": 0.8,
-            "exploit_generation": 0.9,
-            "code_modification": 0.6,
-            "semantic_analysis": 0.7,
-            "script_generation": 0.5
+    def _load_protection_signatures(self) -> Dict[str, Dict[str, Any]]:
+        """Load protection signatures and patterns."""
+        signatures = {
+            'vmprotect': {
+                'strings': ['VMProtect', '.vmp0', '.vmp1', '.vmp2'],
+                'entropy_range': (7.5, 8.0),
+                'section_patterns': ['.vmp', '.UPX'],
+                'imports': ['VirtualProtect', 'VirtualAlloc'],
+                'complexity_threshold': 0.8
+            },
+            'themida': {
+                'strings': ['Themida', 'WinLicense', '.themida'],
+                'entropy_range': (7.2, 7.9),
+                'section_patterns': ['.themida', '.winlice'],
+                'imports': ['CreateMutex', 'GetTickCount'],
+                'complexity_threshold': 0.7
+            },
+            'denuvo': {
+                'strings': ['Denuvo', 'Anti-Tamper', 'FEEB8C81'],
+                'entropy_range': (7.0, 7.8),
+                'section_patterns': ['.denuvo', '.antitamp'],
+                'imports': ['QueryPerformanceCounter', 'GetSystemTimeAsFileTime'],
+                'complexity_threshold': 0.9
+            },
+            'upx': {
+                'strings': ['UPX!', '$Id: UPX'],
+                'entropy_range': (6.5, 7.5),
+                'section_patterns': ['UPX0', 'UPX1', 'UPX2'],
+                'imports': ['LoadLibrary', 'GetProcAddress'],
+                'complexity_threshold': 0.4
+            }
         }
+        return signatures
 
-        base_complexity = complexity_map.get(operation_type, 0.5)
-
-        # Adjust based on context
-        if "file_size" in context:
-            size_factor = min(context["file_size"] /
-                              1000000, 2.0)  # Normalize to MB
-            base_complexity += size_factor * 0.2
-
-        if "analysis_depth" in context:
-            depth_map = {"shallow": 0.0, "medium": 0.2,
-                         "deep": 0.4, "comprehensive": 0.6}
-            base_complexity += depth_map.get(context["analysis_depth"], 0.2)
-
-        return min(base_complexity, 2.0)
-
-    def _calculate_input_size(self, context: Dict[str, Any]) -> float:
-        """Calculate normalized input size."""
-        size_indicators = ["file_size", "data_size",
-                           "input_length", "code_lines"]
-
-        for indicator in size_indicators:
-            if indicator in context:
-                # Normalize to a 0-1 scale with log scaling for large values
-                raw_size = context[indicator]
-                if raw_size > 0:
-                    # log10(1M) ≈ 6
-                    return min(math.log10(raw_size + 1) / 6.0, 1.0)
-
-        return 0.1  # Default small size
-
-    def _get_historical_performance(self, operation_type: str) -> Dict[str, float]:
-        """Get historical performance features."""
-        try:
-            insights = self.learning_engine.get_learning_insights()
-
-            # Use operation_type to filter relevant insights
-            if operation_type in insights.get('operation_types', {}):
-                type_specific_insights = insights['operation_types'][operation_type]
-                logger.debug(
-                    f"Found type-specific insights for {operation_type}")
-            else:
-                type_specific_insights = {}
-                logger.debug(
-                    f"No specific insights for operation type: {operation_type}")
-
-            features = {
-                "historical_success_rate": type_specific_insights.get("success_rate", insights.get("success_rate", 0.8)),
-                "avg_execution_time": type_specific_insights.get("avg_execution_time", insights.get("avg_execution_time", 5.0)),
-                "historical_confidence": type_specific_insights.get("avg_confidence", insights.get("avg_confidence", 0.7))
-            }
-
-            # Normalize execution time
-            features["normalized_exec_time"] = min(
-                features["avg_execution_time"] / 60.0, 1.0)
-
-            return features
-
-        except Exception as e:
-            logger.error(f"Error getting historical performance: {e}")
-            return {
-                "historical_success_rate": 0.8,
-                "avg_execution_time": 5.0,
-                "historical_confidence": 0.7,
-                "normalized_exec_time": 0.08
-            }
-
-    def _extract_system_features(self) -> Dict[str, float]:
-        """Extract current system state features."""
-        if not PSUTIL_AVAILABLE:
-            return {
-                "cpu_usage": 0.5,
-                "memory_usage": 0.5,
-                "system_load": 0.5,
-                "disk_activity": 0.3
-            }
-
-        try:
-            # CPU and memory
-            cpu_percent = psutil.cpu_percent() / 100.0
-            memory_percent = psutil.virtual_memory().percent / 100.0
-
-            # Load average (Unix-like systems)
-            try:
-                load_avg = psutil.getloadavg()[0] / psutil.cpu_count()
-            except (AttributeError, OSError) as e:
-                self.logger.error("Error in predictive_intelligence: %s", e)
-                load_avg = cpu_percent  # Fallback for Windows
-
-            features = {
-                "cpu_usage": cpu_percent,
-                "memory_usage": memory_percent,
-                "system_load": min(load_avg, 2.0)
-            }
-
-            # Disk I/O if available
-            try:
-                disk_io = psutil.disk_io_counters()
-                if disk_io:
-                    features["disk_activity"] = min(
-                        (disk_io.read_bytes + disk_io.write_bytes) / (1024**3), 1.0
-                    )
-            except (AttributeError, OSError):
-                features["disk_activity"] = 0.1
-
-            return features
-
-        except Exception as e:
-            logger.error(f"Error extracting system features: {e}")
-            return {
-                "cpu_usage": 0.3,
-                "memory_usage": 0.5,
-                "system_load": 0.4,
-                "disk_activity": 0.1
-            }
-
-    def _extract_time_features(self) -> Dict[str, float]:
-        """Extract time-based features."""
-        now = datetime.now()
-
-        # Hour of day (0-23 normalized to 0-1)
-        hour_normalized = now.hour / 23.0
-
-        # Day of week (0-6 normalized to 0-1)
-        weekday_normalized = now.weekday() / 6.0
-
-        # Business hours indicator
-        is_business_hours = 1.0 if 9 <= now.hour <= 17 and now.weekday() < 5 else 0.0
-
-        return {
-            "hour_of_day": hour_normalized,
-            "day_of_week": weekday_normalized,
-            "is_business_hours": is_business_hours
-        }
-
-    def extract_vulnerability_features(self, vulnerability_context: Dict[str, Any]) -> Dict[str, float]:
-        """Extract features for vulnerability prediction."""
-        features = {}
-
-        # File type features
-        file_extension = vulnerability_context.get(
-            "file_extension", "").lower()
-        extension_risk = {
-            ".exe": 0.9, ".dll": 0.8, ".sys": 0.95, ".bat": 0.7,
-            ".ps1": 0.8, ".vbs": 0.7, ".js": 0.6, ".py": 0.5,
-            ".c": 0.4, ".cpp": 0.4, ".java": 0.3
-        }
-        features["file_type_risk"] = extension_risk.get(file_extension, 0.5)
-
-        # Size-based features
-        file_size = vulnerability_context.get("file_size", 0)
-        features["size_risk"] = min(
-            file_size / (10 * 1024 * 1024), 1.0)  # 10MB baseline
-
-        # Complexity features
-        functions_count = vulnerability_context.get("functions_count", 0)
-        features["function_complexity"] = min(functions_count / 100.0, 1.0)
-
-        # Compiler and platform features
-        compiler = vulnerability_context.get("compiler", "unknown").lower()
-        compiler_risk = {"gcc": 0.3, "msvc": 0.5, "clang": 0.3, "unknown": 0.7}
-        features["compiler_risk"] = compiler_risk.get(compiler, 0.7)
-
-        # Age and entropy features
-        if "entropy" in vulnerability_context:
-            features["entropy"] = min(
-                vulnerability_context["entropy"] / 8.0, 1.0)  # Normalize
-
-        return features
-
-    def extract_exploit_features(self, exploit_context: Dict[str, Any]) -> Dict[str, float]:
-        """Extract features for exploit success prediction."""
-        features = {}
-
-        # Vulnerability type features
-        vuln_type = exploit_context.get("vulnerability_type", "unknown")
-        type_success_rates = {
-            "buffer_overflow": 0.8,
-            "use_after_free": 0.6,
-            "format_string": 0.7,
-            "integer_overflow": 0.5,
-            "code_injection": 0.9
-        }
-        features["vuln_type_baseline"] = type_success_rates.get(vuln_type, 0.5)
-
-        # Target system features
-        target_os = exploit_context.get("target_os", "unknown").lower()
-        os_difficulty = {"windows": 0.6, "linux": 0.7,
-                         "macos": 0.8, "unknown": 0.8}
-        features["target_difficulty"] = os_difficulty.get(target_os, 0.8)
-
-        # Protection features
-        protections = exploit_context.get("protections", [])
-        protection_penalty = len(protections) * 0.1
-        features["protection_difficulty"] = min(protection_penalty, 0.8)
-
-        # Exploit complexity
-        chain_length = exploit_context.get("chain_length", 1)
-        features["chain_complexity"] = min(chain_length / 5.0, 1.0)
-
-        return features
-
-
-class PredictiveModel:
-    """Base class for predictive models."""
-
-    def __init__(self, model_name: str):
-        """Initialize the base predictive model.
-
-        Args:
-            model_name: Name identifier for the predictive model.
-        """
-        self.model_name = model_name
-        self.model_version = "1.0"
-        self.training_data: List[Dict[str, Any]] = []
-        self.model_parameters: Dict[str, Any] = {}
-        self.feature_importance: Dict[str, float] = {}
-        self.last_training: Optional[datetime] = None
-
-    def train(self, training_data: List[Dict[str, Any]]):
-        """Train the model with provided data."""
-        self.training_data = training_data
-        self.last_training = datetime.now()
-        logger.info(
-            f"Model {self.model_name} trained with {len(training_data)} samples")
-
-    def predict(self, features: Dict[str, float]) -> Tuple[float, float]:
-        """Make prediction. Returns (prediction, confidence)."""
-        # Implementation should use features to make actual predictions
-        if not features:
-            return 0.0, 0.0
-
-        # Basic fallback prediction based on feature analysis
-        feature_count = len(features)
-        avg_value = sum(features.values()) / \
-            feature_count if feature_count > 0 else 0.0
-        # More features = higher confidence
-        confidence = min(1.0, feature_count / 10.0)
-
-        logger.debug(
-            f"Fallback prediction using {feature_count} features: {avg_value:.3f} (confidence: {confidence:.3f})")
-        raise NotImplementedError(
-            f"Subclasses must implement predict method. Fallback for {feature_count} features would return {avg_value:.3f}")
-
-    def update_model(self, new_data: Dict[str, Any]):
-        """Update model with new data point."""
-        self.training_data.append(new_data)
-
-        # Retrain if we have enough new data
-        if len(self.training_data) % 100 == 0:
-            self.train(self.training_data)
-
-
-class LinearRegressionModel(PredictiveModel):
-    """Simple linear regression model for predictions."""
-
-    def __init__(self, model_name: str):
-        """Initialize the linear regression model.
-
-        Args:
-            model_name: Name identifier for the model.
-        """
-        super().__init__(model_name)
-        self.weights: Dict[str, float] = {}
-        self.bias: float = 0.0
-        self.learning_rate = 0.01
-
-    def train(self, training_data: List[Dict[str, Any]]):
-        """Train linear regression model."""
-        super().train(training_data)
-
-        if not training_data:
+    def _initialize_training_data(self):
+        """Initialize with synthetic training data based on known protection patterns."""
+        if not NUMPY_AVAILABLE:
+            logger.warning("NumPy not available - using basic training data")
             return
+            
+        training_samples = []
+        labels = []
+        
+        for protection, signature in self.protection_signatures.items():
+            for _ in range(100):  # Generate 100 samples per protection type
+                features = self._generate_synthetic_features(protection, signature)
+                training_samples.append(features)
+                labels.append(protection)
+        
+        # Add unknown/unprotected samples
+        for _ in range(200):
+            features = self._generate_unprotected_features()
+            training_samples.append(features)
+            labels.append('unknown')
+            
+        self.training_data = (training_samples, labels)
+        self._train_models()
 
-        # Extract features and targets
-        feature_names = set()
-        for sample in training_data:
-            if "features" in sample:
-                feature_names.update(sample["features"].keys())
+    def _generate_synthetic_features(self, protection: str, signature: Dict[str, Any]) -> List[float]:
+        """Generate synthetic features for a protection type."""
+        entropy_min, entropy_max = signature['entropy_range']
+        complexity = signature['complexity_threshold']
+        
+        features = [
+            np.random.uniform(0.1, 1.0),  # file_size_normalized
+            np.random.uniform(entropy_min, entropy_max),  # entropy
+            np.random.randint(3, 15),  # section_count
+            np.random.randint(10, 200),  # import_count
+            np.random.randint(0, 50),  # export_count
+            np.random.randint(50, 1000),  # string_count
+            1.0 if protection != 'unknown' else 0.0,  # packed
+            np.random.choice([0.0, 1.0], p=[0.7, 0.3]),  # signed
+            np.random.choice([0.0, 1.0], p=[0.4, 0.6]),  # x86_arch
+            np.random.choice([0.0, 1.0], p=[0.6, 0.4]),  # x64_arch
+            np.random.uniform(complexity * 0.8, min(complexity * 1.2, 1.0)),  # control_flow_complexity
+            np.random.uniform(complexity * 0.9, min(complexity * 1.1, 1.0)),  # obfuscation_level
+            len(signature['strings']) + np.random.randint(0, 5),  # suspicious_string_count
+            len(signature['imports']) + np.random.randint(10, 50)  # api_call_count
+        ]
+        return features
 
-        feature_names = list(feature_names)
+    def _generate_unprotected_features(self) -> List[float]:
+        """Generate features for unprotected binaries."""
+        features = [
+            np.random.uniform(0.1, 0.8),  # file_size_normalized
+            np.random.uniform(5.0, 7.0),  # entropy (lower for unprotected)
+            np.random.randint(3, 8),  # section_count
+            np.random.randint(20, 100),  # import_count
+            np.random.randint(0, 20),  # export_count
+            np.random.randint(100, 500),  # string_count
+            0.0,  # packed
+            np.random.choice([0.0, 1.0], p=[0.3, 0.7]),  # signed
+            np.random.choice([0.0, 1.0], p=[0.5, 0.5]),  # x86_arch
+            np.random.choice([0.0, 1.0], p=[0.5, 0.5]),  # x64_arch
+            np.random.uniform(0.1, 0.4),  # control_flow_complexity
+            np.random.uniform(0.1, 0.3),  # obfuscation_level
+            np.random.randint(0, 3),  # suspicious_string_count
+            np.random.randint(20, 80)  # api_call_count
+        ]
+        return features
 
-        # Initialize weights if needed
-        if not self.weights:
-            self.weights = {name: 0.1 for name in feature_names}
-
-        # Simple gradient descent training
-        for epoch in range(50):  # Limited epochs for real-time training
-            total_error = 0.0
-
-            if epoch % 10 == 0:
-                logger.debug(f"Training epoch {epoch}/50")
-
-            for sample in training_data:
-                features = sample.get("features", {})
-                target = sample.get("target", 0.0)
-
-                # Forward pass
-                prediction = self.bias
-                for feature_name, value in features.items():
-                    if feature_name in self.weights:
-                        prediction += self.weights[feature_name] * value
-
-                # Calculate error
-                error = target - prediction
-                total_error += error ** 2
-
-                # Backward pass (gradient descent)
-                self.bias += self.learning_rate * error
-                for feature_name, value in features.items():
-                    if feature_name in self.weights:
-                        self.weights[feature_name] += self.learning_rate * \
-                            error * value
-
-            # Early stopping if converged
-            if total_error < 0.001:
-                break
-
-        # Calculate feature importance
-        total_weight = sum(abs(w) for w in self.weights.values())
-        if total_weight > 0:
-            self.feature_importance = {
-                name: abs(weight) / total_weight
-                for name, weight in self.weights.items()
-            }
-
-        logger.info(f"Linear model {self.model_name} training completed")
-
-    def predict(self, features: Dict[str, float]) -> Tuple[float, float]:
-        """Make prediction using linear model."""
-        if not self.weights:
-            # No training data - return default prediction
-            return 0.5, 0.3
-
-        # Calculate prediction
-        prediction = self.bias
-        for feature_name, value in features.items():
-            if feature_name in self.weights:
-                prediction += self.weights[feature_name] * value
-
-        # Calculate confidence based on feature coverage
-        covered_features = sum(1 for name in features if name in self.weights)
-        total_features = len(self.weights)
-        coverage = covered_features / max(total_features, 1)
-
-        # Base confidence on training data size and feature coverage
-        base_confidence = min(len(self.training_data) / 100.0, 0.9)
-        confidence = base_confidence * coverage
-
-        return max(0.0, min(prediction, 1.0)), max(0.1, min(confidence, 1.0))
-
-
-class SuccessProbabilityPredictor:
-    """Predicts success probability for operations."""
-
-    def __init__(self):
-        """Initialize the success probability predictor.
-
-        Sets up a linear regression model and feature extractor for predicting
-        the likelihood of successful exploitation operations.
-        """
-        self.model = LinearRegressionModel("success_probability")
-        self.feature_extractor = FeatureExtractor()
-        self._initialize_model()
-
-        logger.info("Success probability predictor initialized")
-
-    def _initialize_model(self):
-        """Initialize model with synthetic training data."""
-        # Create synthetic training data based on typical patterns
-        training_data = []
-
-        for sample_idx in range(200):
-            # Generate synthetic features with some variation based on index
-            complexity_base = 0.2 + (sample_idx % 10) * \
-                0.1  # Varies based on index
-
-            if NUMPY_AVAILABLE:
-                features = {
-                    "operation_complexity": np.random.uniform(complexity_base, 1.5),  # noqa: S311
-                    "system_load": np.random.uniform(0.1, 0.9),  # noqa: S311
-                    "historical_success_rate": np.random.uniform(0.6, 0.95),  # noqa: S311
-                    "input_size": np.random.uniform(0.1, 1.0),  # noqa: S311
-                    "cpu_usage": np.random.uniform(0.2, 0.8),  # noqa: S311
-                    "memory_usage": np.random.uniform(0.3, 0.9)  # noqa: S311
-                }
-            else:
-                # Fallback random values when numpy is not available
-                import random
-                features = {
-                    "operation_complexity": random.uniform(complexity_base, 1.5),  # noqa: S311
-                    "system_load": random.uniform(0.1, 0.9),  # noqa: S311
-                    "historical_success_rate": random.uniform(0.6, 0.95),  # noqa: S311
-                    "input_size": random.uniform(0.1, 1.0),  # noqa: S311
-                    "cpu_usage": random.uniform(0.2, 0.8),  # noqa: S311
-                    "memory_usage": random.uniform(0.3, 0.9)  # noqa: S311
-                }
-
-            # Calculate synthetic target based on realistic relationships
-            target = (
-                0.8 * features["historical_success_rate"] +
-                0.1 * (1.0 - features["operation_complexity"]) +
-                0.05 * (1.0 - features["system_load"]) +
-                0.05 * (1.0 - features["cpu_usage"])
-            )
-
-            # Add some noise
-            if NUMPY_AVAILABLE:
-                target += np.random.normal(0, 0.1)
-            else:
-                import random
-                target += random.gauss(0, 0.1)
-            target = max(0.0, min(target, 1.0))
-
-            training_data.append({
-                "features": features,
-                "target": target
-            })
-
-        self.model.train(training_data)
-
-    @profile_ai_operation("success_prediction")
-    def predict_success_probability(self, operation_type: str, context: Dict[str, Any]) -> PredictionResult:
-        """Predict success probability for operation."""
-        # Extract features
-        features = self.feature_extractor.extract_operation_features(
-            operation_type, context)
-
-        # Make prediction
-        predicted_value, confidence_score = self.model.predict(features)
-
-        # Determine confidence level
-        if confidence_score >= 0.8:
-            confidence = PredictionConfidence.VERY_HIGH
-        elif confidence_score >= 0.6:
-            confidence = PredictionConfidence.HIGH
-        elif confidence_score >= 0.4:
-            confidence = PredictionConfidence.MEDIUM
-        elif confidence_score >= 0.2:
-            confidence = PredictionConfidence.LOW
-        else:
-            confidence = PredictionConfidence.VERY_LOW
-
-        # Generate reasoning
-        reasoning = self._generate_success_reasoning(features, predicted_value)
-
-        # Calculate error bounds
-        error_margin = (1.0 - confidence_score) * 0.2
-        error_bounds = (
-            max(0.0, predicted_value - error_margin),
-            min(1.0, predicted_value + error_margin)
+    def _train_models(self):
+        """Train all available ML models."""
+        if not self.training_data or not SKLEARN_AVAILABLE:
+            logger.warning("Cannot train models - missing data or scikit-learn")
+            return
+            
+        X, y = self.training_data
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
         )
+        
+        for model_name, model in self.models.items():
+            try:
+                # Scale features
+                X_train_scaled = self.scalers[model_name].fit_transform(X_train)
+                X_test_scaled = self.scalers[model_name].transform(X_test)
+                
+                # Train model
+                model.fit(X_train_scaled, y_train)
+                
+                # Evaluate
+                predictions = model.predict(X_test_scaled)
+                accuracy = accuracy_score(y_test, predictions)
+                
+                logger.info(f"Model {model_name} trained with accuracy: {accuracy:.3f}")
+                
+            except Exception as e:
+                logger.error(f"Error training model {model_name}: {e}")
 
+    def extract_features(self, binary_features: BinaryFeatures) -> List[float]:
+        """Extract numerical features from binary analysis."""
+        features = [
+            min(binary_features.file_size / (10 * 1024 * 1024), 1.0),  # Normalize to 10MB
+            binary_features.entropy,
+            binary_features.section_count,
+            binary_features.import_count,
+            binary_features.export_count,
+            binary_features.string_count,
+            1.0 if binary_features.packed else 0.0,
+            1.0 if binary_features.signed else 0.0,
+            1.0 if 'x86' in binary_features.architecture.lower() else 0.0,
+            1.0 if 'x64' in binary_features.architecture.lower() else 0.0,
+            binary_features.control_flow_complexity,
+            binary_features.code_obfuscation_level,
+            len(binary_features.suspicious_strings),
+            len(binary_features.api_calls)
+        ]
+        return features
+
+    def predict_protection(self, binary_features: BinaryFeatures) -> PredictionResult:
+        """Predict protection type for a binary."""
+        features = self.extract_features(binary_features)
+        
+        if SKLEARN_AVAILABLE and self.models:
+            predictions = {}
+            confidences = {}
+            
+            for model_name, model in self.models.items():
+                try:
+                    # Scale features
+                    features_scaled = self.scalers[model_name].transform([features])
+                    
+                    # Get prediction and confidence
+                    prediction = model.predict(features_scaled)[0]
+                    if hasattr(model, 'predict_proba'):
+                        confidence = np.max(model.predict_proba(features_scaled)[0])
+                    else:
+                        confidence = 0.7  # Default confidence for models without probability
+                        
+                    predictions[model_name] = prediction
+                    confidences[model_name] = confidence
+                    
+                except Exception as e:
+                    logger.error(f"Error predicting with model {model_name}: {e}")
+            
+            # Ensemble prediction (majority vote)
+            if predictions:
+                prediction_counts = defaultdict(int)
+                weighted_confidence = 0.0
+                
+                for model_name, pred in predictions.items():
+                    prediction_counts[pred] += 1
+                    weighted_confidence += confidences[model_name]
+                
+                final_prediction = max(prediction_counts.items(), key=lambda x: x[1])[0]
+                avg_confidence = weighted_confidence / len(predictions)
+            else:
+                final_prediction = 'unknown'
+                avg_confidence = 0.3
+        else:
+            # Fallback signature-based detection
+            final_prediction = self._signature_based_prediction(binary_features)
+            avg_confidence = 0.6 if final_prediction != 'unknown' else 0.3
+        
+        # Determine confidence level
+        if avg_confidence >= 0.8:
+            confidence_level = PredictionConfidence.VERY_HIGH
+        elif avg_confidence >= 0.6:
+            confidence_level = PredictionConfidence.HIGH
+        elif avg_confidence >= 0.4:
+            confidence_level = PredictionConfidence.MEDIUM
+        else:
+            confidence_level = PredictionConfidence.LOW
+            
         return PredictionResult(
             prediction_id=str(uuid.uuid4()),
-            prediction_type=PredictionType.SUCCESS_PROBABILITY,
-            predicted_value=predicted_value,
-            confidence=confidence,
-            confidence_score=confidence_score,
-            factors=self._get_important_factors(features),
-            reasoning=reasoning,
-            error_bounds=error_bounds
+            prediction_type=PredictionType.PROTECTION_TYPE,
+            predicted_value=final_prediction,
+            confidence=confidence_level,
+            confidence_score=avg_confidence,
+            factors=dict(zip(self.feature_names, features)),
+            reasoning=f"Predicted protection: {final_prediction} based on binary analysis",
+            recommendations=self._get_protection_recommendations(final_prediction)
         )
 
-    def _generate_success_reasoning(self, features: Dict[str, float], predicted_value: float) -> str:
-        """Generate reasoning for success prediction."""
-        factors = []
+    def _signature_based_prediction(self, binary_features: BinaryFeatures) -> str:
+        """Fallback signature-based protection detection."""
+        for protection, signature in self.protection_signatures.items():
+            score = 0
+            
+            # Check for signature strings
+            for sig_string in signature['strings']:
+                if any(sig_string.lower() in s.lower() for s in binary_features.suspicious_strings):
+                    score += 2
+            
+            # Check entropy range
+            entropy_min, entropy_max = signature['entropy_range']
+            if entropy_min <= binary_features.entropy <= entropy_max:
+                score += 1
+            
+            # Check complexity threshold
+            if binary_features.control_flow_complexity >= signature['complexity_threshold']:
+                score += 1
+                
+            # Check for protection indicators
+            for indicator in binary_features.protection_indicators:
+                if any(pattern in indicator for pattern in signature['section_patterns']):
+                    score += 1
+            
+            if score >= 3:  # Threshold for positive detection
+                return protection
+                
+        return 'unknown'
 
-        if features.get("historical_success_rate", 0.8) > 0.9:
-            factors.append("strong historical performance")
-        elif features.get("historical_success_rate", 0.8) < 0.7:
-            factors.append("concerning historical performance")
-
-        if features.get("operation_complexity", 0.5) > 1.0:
-            factors.append("high operation complexity")
-        elif features.get("operation_complexity", 0.5) < 0.3:
-            factors.append("low operation complexity")
-
-        if features.get("system_load", 0.5) > 0.8:
-            factors.append("high system load")
-
-        if predicted_value > 0.8:
-            outcome = "high success probability"
-        elif predicted_value > 0.6:
-            outcome = "moderate success probability"
-        else:
-            outcome = "low success probability"
-
-        if factors:
-            return f"Predicted {outcome} based on {', '.join(factors)}"
-        else:
-            return f"Predicted {outcome} based on overall system analysis"
-
-    def _get_important_factors(self, features: Dict[str, float]) -> Dict[str, float]:
-        """Get most important contributing factors."""
-        factor_weights = self.model.feature_importance
-
-        if not factor_weights:
-            # Default importance if no training
-            factor_weights = {name: 1.0 / len(features) for name in features}
-
-        # Return top contributing factors
-        sorted_factors = sorted(
-            factor_weights.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
-
-        return dict(sorted_factors[:5])  # Top 5 factors
-
-
-class ExecutionTimePredictor:
-    """Predicts execution time for operations."""
-
-    def __init__(self):
-        """Initialize the execution time predictor.
-
-        Sets up a linear regression model and feature extractor for predicting
-        operation execution times based on binary characteristics.
-        """
-        self.model = LinearRegressionModel("execution_time")
-        self.feature_extractor = FeatureExtractor()
-        self._initialize_model()
-
-        logger.info("Execution time predictor initialized")
-
-    def _initialize_model(self):
-        """Initialize model with synthetic training data."""
-        training_data = []
-
-        for time_sample_idx in range(150):
-            # Vary complexity based on sample index for diversity
-            complexity_factor = 0.2 + (time_sample_idx % 15) * 0.1
-
-            if NUMPY_AVAILABLE:
-                features = {
-                    "operation_complexity": np.random.uniform(complexity_factor, 2.0),  # noqa: S311
-                    "input_size": np.random.uniform(0.1, 1.0),  # noqa: S311
-                    "system_load": np.random.uniform(0.1, 0.9),  # noqa: S311
-                    "cpu_usage": np.random.uniform(0.2, 0.8),  # noqa: S311
-                    "historical_success_rate": np.random.uniform(0.6, 0.95)  # noqa: S311
-                }
-            else:
-                import random
-                features = {
-                    "operation_complexity": random.uniform(complexity_factor, 2.0),  # noqa: S311
-                    "input_size": random.uniform(0.1, 1.0),  # noqa: S311
-                    "system_load": random.uniform(0.1, 0.9),  # noqa: S311
-                    "cpu_usage": random.uniform(0.2, 0.8),  # noqa: S311
-                    "historical_success_rate": random.uniform(0.6, 0.95)  # noqa: S311
-                }
-
-            # Execution time correlates with complexity and system load
-            base_time = (
-                features["operation_complexity"] * 10.0 +
-                features["input_size"] * 5.0 +
-                features["system_load"] * 8.0 +
-                features["cpu_usage"] * 3.0
-            )
-
-            # Add noise and ensure positive
-            if NUMPY_AVAILABLE:
-                noise = np.random.normal(0, 2.0)
-            else:
-                import random
-                noise = random.gauss(0, 2.0)
-            target = max(0.5, base_time + noise)
-
-            training_data.append({
-                "features": features,
-                "target": target
-            })
-
-        self.model.train(training_data)
-
-    @profile_ai_operation("time_prediction")
-    def predict_execution_time(self, operation_type: str, context: Dict[str, Any]) -> PredictionResult:
-        """Predict execution time for operation."""
-        features = self.feature_extractor.extract_operation_features(
-            operation_type, context)
-
-        predicted_time, confidence_score = self.model.predict(features)
-
-        # Ensure reasonable time bounds
-        predicted_time = max(0.1, min(predicted_time, 3600.0))  # 1 hour max
-
-        # Determine confidence level
-        if confidence_score >= 0.8:
-            confidence = PredictionConfidence.VERY_HIGH
-        elif confidence_score >= 0.6:
-            confidence = PredictionConfidence.HIGH
-        elif confidence_score >= 0.4:
-            confidence = PredictionConfidence.MEDIUM
-        else:
-            confidence = PredictionConfidence.LOW
-
-        # Generate reasoning
-        reasoning = f"Estimated execution time of {predicted_time:.1f} seconds based on operation complexity and system state"
-
-        # Error bounds (±20% for time predictions)
-        error_margin = predicted_time * 0.2 * (1.0 - confidence_score)
-        error_bounds = (
-            max(0.1, predicted_time - error_margin),
-            predicted_time + error_margin
-        )
-
-        return PredictionResult(
-            prediction_id=str(uuid.uuid4()),
-            prediction_type=PredictionType.EXECUTION_TIME,
-            predicted_value=predicted_time,
-            confidence=confidence,
-            confidence_score=confidence_score,
-            factors=self._get_time_factors(features),
-            reasoning=reasoning,
-            error_bounds=error_bounds
-        )
-
-    def _get_time_factors(self, features: Dict[str, float]) -> Dict[str, float]:
-        """Get factors affecting execution time."""
-        return {
-            "complexity_impact": features.get("operation_complexity", 0.5),
-            "size_impact": features.get("input_size", 0.5),
-            "system_load_impact": features.get("system_load", 0.5),
-            "cpu_impact": features.get("cpu_usage", 0.5)
+    def _get_protection_recommendations(self, protection: str) -> List[str]:
+        """Get recommendations based on detected protection."""
+        recommendations = {
+            'vmprotect': [
+                "Use dynamic analysis with VM-aware tools",
+                "Apply unpacking techniques specific to VMProtect",
+                "Consider memory dumping at runtime"
+            ],
+            'themida': [
+                "Use anti-anti-debugging techniques",
+                "Apply code virtualization analysis",
+                "Consider timing attack countermeasures"
+            ],
+            'denuvo': [
+                "Focus on license validation bypass",
+                "Use hardware fingerprinting evasion",
+                "Apply anti-tamper analysis techniques"
+            ],
+            'upx': [
+                "Use standard UPX unpacker",
+                "Apply static analysis after unpacking",
+                "Verify unpacked code integrity"
+            ],
+            'unknown': [
+                "Perform comprehensive static analysis",
+                "Apply multiple detection techniques",
+                "Consider hybrid analysis approach"
+            ]
         }
+        return recommendations.get(protection, recommendations['unknown'])
 
 
 class VulnerabilityPredictor:
-    """Predicts vulnerability discovery likelihood."""
+    """Advanced ML-based vulnerability prediction system."""
 
     def __init__(self):
-        """Initialize the vulnerability discovery predictor.
-
-        Sets up the predictor for estimating vulnerability discovery likelihood
-        in target binaries based on code patterns and historical data.
-        """
-        self.model = LinearRegressionModel("vulnerability_discovery")
-        self.feature_extractor = FeatureExtractor()
-        self.vulnerability_patterns = []
-        self.pattern_weights = {}
-        self.discovery_history = []
-        self._initialize_model()
-
+        """Initialize the vulnerability predictor with specialized models."""
+        self.models = {}
+        self.vulnerability_patterns = {}
+        self.historical_data = []
+        
+        if SKLEARN_AVAILABLE:
+            self.models['vulnerability_classifier'] = RandomForestClassifier(
+                n_estimators=200, max_depth=15, random_state=42
+            )
+            self.models['severity_predictor'] = RandomForestRegressor(
+                n_estimators=100, max_depth=10, random_state=42
+            )
+            self.scaler = StandardScaler()
+        
+        self._initialize_vulnerability_patterns()
+        self._generate_training_data()
+        
         logger.info("Vulnerability predictor initialized")
 
-    def _initialize_model(self):
-        """Initialize with vulnerability-specific training data."""
-        training_data = []
-
-        for vuln_sample_idx in range(300):
-            # File characteristics with variation based on sample index
-            if NUMPY_AVAILABLE:
-                file_type_risk = np.random.choice(  # noqa: S311
-                    [0.3, 0.5, 0.7, 0.9], p=[0.3, 0.3, 0.3, 0.1])
-                size_risk = np.random.uniform(0.1, 1.0)  # noqa: S311
-                complexity = np.random.uniform(0.2, 1.0)  # noqa: S311
-                entropy = np.random.uniform(0.3, 1.0)  # noqa: S311
-            else:
-                import random
-                file_type_risk = random.choices(  # noqa: S311
-                    [0.3, 0.5, 0.7, 0.9], weights=[0.3, 0.3, 0.3, 0.1])[0]
-                size_risk = random.uniform(0.1, 1.0)  # noqa: S311
-                complexity = random.uniform(0.2, 1.0)  # noqa: S311
-                entropy = random.uniform(0.3, 1.0)  # noqa: S311
-
-            # Add some pattern based on index for model diversity
-            if vuln_sample_idx % 20 == 0:
-                entropy *= 1.2  # Increase entropy for every 20th sample
-
-            if NUMPY_AVAILABLE:
-                compiler_risk = np.random.uniform(0.2, 0.8)  # noqa: S311
-            else:
-                import random
-                compiler_risk = random.uniform(0.2, 0.8)  # noqa: S311
-
-            features = {
-                "file_type_risk": file_type_risk,
-                "size_risk": size_risk,
-                "function_complexity": complexity,
-                "entropy": entropy,
-                "compiler_risk": compiler_risk
+    def _initialize_vulnerability_patterns(self):
+        """Initialize vulnerability patterns and signatures."""
+        self.vulnerability_patterns = {
+            VulnerabilityClass.BUFFER_OVERFLOW: {
+                'api_indicators': ['strcpy', 'strcat', 'sprintf', 'gets'],
+                'code_patterns': ['memcpy', 'memmove', 'strncpy'],
+                'risk_factors': ['user_input', 'network_data', 'file_processing'],
+                'severity_base': 8.5
+            },
+            VulnerabilityClass.USE_AFTER_FREE: {
+                'api_indicators': ['free', 'delete', 'HeapFree'],
+                'code_patterns': ['malloc', 'new', 'HeapAlloc'],
+                'risk_factors': ['multi_threading', 'callback_functions'],
+                'severity_base': 8.0
+            },
+            VulnerabilityClass.INTEGER_OVERFLOW: {
+                'api_indicators': ['malloc', 'calloc', 'realloc'],
+                'code_patterns': ['arithmetic_operations', 'array_indexing'],
+                'risk_factors': ['size_calculations', 'user_controlled_size'],
+                'severity_base': 7.0
+            },
+            VulnerabilityClass.FORMAT_STRING: {
+                'api_indicators': ['printf', 'sprintf', 'fprintf'],
+                'code_patterns': ['user_format_string', 'uncontrolled_format'],
+                'risk_factors': ['user_input', 'logging_functions'],
+                'severity_base': 7.5
+            },
+            VulnerabilityClass.CODE_INJECTION: {
+                'api_indicators': ['system', 'exec', 'CreateProcess'],
+                'code_patterns': ['dynamic_code_generation', 'script_execution'],
+                'risk_factors': ['user_input', 'remote_commands'],
+                'severity_base': 9.0
             }
+        }
 
-            # Vulnerability probability
-            vuln_prob = (
-                0.3 * file_type_risk +
-                0.2 * size_risk +
-                0.25 * complexity +
-                0.15 * entropy +
-                0.1 * features["compiler_risk"]
+    def _generate_training_data(self):
+        """Generate training data for vulnerability prediction."""
+        if not NUMPY_AVAILABLE:
+            return
+            
+        training_features = []
+        training_labels = []
+        
+        for vuln_class, patterns in self.vulnerability_patterns.items():
+            for _ in range(150):  # Generate samples for each vulnerability class
+                features = self._generate_vuln_features(vuln_class, patterns)
+                training_features.append(features)
+                training_labels.append(vuln_class.value)
+        
+        # Add non-vulnerable samples
+        for _ in range(300):
+            features = self._generate_safe_features()
+            training_features.append(features)
+            training_labels.append('safe')
+        
+        if SKLEARN_AVAILABLE and training_features:
+            X = np.array(training_features)
+            y = np.array(training_labels)
+            
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.2, random_state=42
             )
+            
+            # Train classifier
+            X_train_scaled = self.scaler.fit_transform(X_train)
+            X_test_scaled = self.scaler.transform(X_test)
+            
+            self.models['vulnerability_classifier'].fit(X_train_scaled, y_train)
+            
+            # Evaluate
+            predictions = self.models['vulnerability_classifier'].predict(X_test_scaled)
+            accuracy = accuracy_score(y_test, predictions)
+            logger.info(f"Vulnerability classifier trained with accuracy: {accuracy:.3f}")
 
-            # Add noise and normalize
-            if NUMPY_AVAILABLE:
-                noise = np.random.normal(0, 0.1)
-            else:
-                import random
-                noise = random.gauss(0, 0.1)
-            target = max(0.0, min(vuln_prob + noise, 1.0))
+    def _generate_vuln_features(self, vuln_class: VulnerabilityClass, patterns: Dict) -> List[float]:
+        """Generate features for a specific vulnerability class."""
+        features = [
+            len(patterns['api_indicators']) + np.random.randint(0, 5),  # vulnerable_api_count
+            len(patterns['code_patterns']) + np.random.randint(0, 3),  # risky_pattern_count
+            len(patterns['risk_factors']),  # risk_factor_count
+            np.random.uniform(0.6, 1.0),  # code_complexity
+            np.random.uniform(0.7, 1.0),  # user_input_exposure
+            np.random.uniform(0.5, 0.9),  # memory_operations_density
+            np.random.uniform(0.4, 0.8),  # error_handling_coverage
+            patterns['severity_base'] / 10.0,  # normalized_severity_base
+            np.random.uniform(0.6, 1.0),  # function_complexity
+            np.random.uniform(0.3, 0.9)   # control_flow_anomalies
+        ]
+        return features
 
-            training_data.append({
-                "features": features,
-                "target": target
-            })
+    def _generate_safe_features(self) -> List[float]:
+        """Generate features for safe/non-vulnerable code."""
+        features = [
+            np.random.randint(0, 2),  # vulnerable_api_count
+            np.random.randint(0, 1),  # risky_pattern_count
+            np.random.randint(0, 1),  # risk_factor_count
+            np.random.uniform(0.1, 0.4),  # code_complexity
+            np.random.uniform(0.1, 0.3),  # user_input_exposure
+            np.random.uniform(0.1, 0.4),  # memory_operations_density
+            np.random.uniform(0.7, 1.0),  # error_handling_coverage
+            np.random.uniform(0.1, 0.3),  # normalized_severity_base
+            np.random.uniform(0.1, 0.4),  # function_complexity
+            np.random.uniform(0.1, 0.3)   # control_flow_anomalies
+        ]
+        return features
 
-        self.model.train(training_data)
-
-    @profile_ai_operation("vulnerability_prediction")
-    def predict_vulnerability_likelihood(self, file_context: Dict[str, Any]) -> PredictionResult:
-        """Predict likelihood of finding vulnerabilities."""
-        features = self.feature_extractor.extract_vulnerability_features(
-            file_context)
-
-        predicted_likelihood, confidence_score = self.model.predict(features)
-
-        # Determine confidence
-        if confidence_score >= 0.7:
-            confidence = PredictionConfidence.HIGH
-        elif confidence_score >= 0.5:
-            confidence = PredictionConfidence.MEDIUM
+    def predict_vulnerabilities(self, binary_features: BinaryFeatures, 
+                               code_analysis: Dict[str, Any] = None) -> PredictionResult:
+        """Predict vulnerability likelihood and types."""
+        features = self._extract_vulnerability_features(binary_features, code_analysis or {})
+        
+        if SKLEARN_AVAILABLE and 'vulnerability_classifier' in self.models:
+            try:
+                features_scaled = self.scaler.transform([features])
+                
+                # Get vulnerability prediction
+                prediction = self.models['vulnerability_classifier'].predict(features_scaled)[0]
+                probabilities = self.models['vulnerability_classifier'].predict_proba(features_scaled)[0]
+                confidence = np.max(probabilities)
+                
+                # Get all class probabilities
+                classes = self.models['vulnerability_classifier'].classes_
+                vulnerability_scores = dict(zip(classes, probabilities))
+                
+            except Exception as e:
+                logger.error(f"Error in ML vulnerability prediction: {e}")
+                prediction = 'safe'
+                confidence = 0.3
+                vulnerability_scores = {}
         else:
-            confidence = PredictionConfidence.LOW
-
-        # Generate reasoning
-        reasoning = self._generate_vuln_reasoning(
-            features, predicted_likelihood)
-
-        error_bounds = (
-            max(0.0, predicted_likelihood - 0.15),
-            min(1.0, predicted_likelihood + 0.15)
-        )
-
+            # Fallback heuristic analysis
+            prediction, confidence, vulnerability_scores = self._heuristic_vulnerability_analysis(
+                binary_features, code_analysis or {}
+            )
+        
+        # Determine confidence level
+        if confidence >= 0.8:
+            confidence_level = PredictionConfidence.VERY_HIGH
+        elif confidence >= 0.6:
+            confidence_level = PredictionConfidence.HIGH
+        elif confidence >= 0.4:
+            confidence_level = PredictionConfidence.MEDIUM
+        else:
+            confidence_level = PredictionConfidence.LOW
+        
         return PredictionResult(
             prediction_id=str(uuid.uuid4()),
             prediction_type=PredictionType.VULNERABILITY_DISCOVERY,
-            predicted_value=predicted_likelihood,
-            confidence=confidence,
-            confidence_score=confidence_score,
-            factors=features,
-            reasoning=reasoning,
-            error_bounds=error_bounds
+            predicted_value=prediction,
+            confidence=confidence_level,
+            confidence_score=confidence,
+            factors=vulnerability_scores,
+            reasoning=f"Vulnerability analysis indicates: {prediction}",
+            recommendations=self._get_vulnerability_recommendations(prediction, vulnerability_scores)
         )
 
-    def _generate_vuln_reasoning(self, features: Dict[str, float], likelihood: float) -> str:
-        """Generate reasoning for vulnerability prediction."""
-        risk_factors = []
+    def _extract_vulnerability_features(self, binary_features: BinaryFeatures, 
+                                       code_analysis: Dict[str, Any]) -> List[float]:
+        """Extract features for vulnerability prediction."""
+        # Count vulnerable API calls
+        vulnerable_apis = ['strcpy', 'sprintf', 'gets', 'system', 'exec']
+        vulnerable_api_count = sum(1 for api in binary_features.api_calls 
+                                  if any(vuln_api in api.lower() for vuln_api in vulnerable_apis))
+        
+        # Analyze suspicious strings
+        risky_patterns = ['malloc', 'free', 'printf', 'scanf']
+        risky_pattern_count = sum(1 for string in binary_features.suspicious_strings
+                                 if any(pattern in string.lower() for pattern in risky_patterns))
+        
+        features = [
+            vulnerable_api_count,
+            risky_pattern_count,
+            len(binary_features.protection_indicators),  # risk_factor_count
+            binary_features.control_flow_complexity,
+            min(binary_features.string_count / 1000.0, 1.0),  # user_input_exposure proxy
+            min(binary_features.import_count / 200.0, 1.0),  # memory_operations_density proxy
+            1.0 - binary_features.code_obfuscation_level,  # error_handling_coverage proxy
+            binary_features.entropy / 8.0,  # normalized_entropy
+            binary_features.control_flow_complexity,  # function_complexity
+            binary_features.code_obfuscation_level  # control_flow_anomalies
+        ]
+        return features
 
-        if features.get("file_type_risk", 0.5) > 0.7:
-            risk_factors.append("high-risk file type")
+    def _heuristic_vulnerability_analysis(self, binary_features: BinaryFeatures,
+                                         code_analysis: Dict[str, Any]) -> Tuple[str, float, Dict[str, float]]:
+        """Fallback heuristic vulnerability analysis."""
+        vulnerability_scores = {}
+        
+        for vuln_class, patterns in self.vulnerability_patterns.items():
+            score = 0.0
+            
+            # Check API indicators
+            api_matches = sum(1 for api in binary_features.api_calls
+                            if any(indicator in api.lower() for indicator in patterns['api_indicators']))
+            score += min(api_matches / len(patterns['api_indicators']), 1.0) * 0.4
+            
+            # Check string patterns
+            string_matches = sum(1 for string in binary_features.suspicious_strings
+                               if any(pattern in string.lower() for pattern in patterns['code_patterns']))
+            score += min(string_matches / len(patterns['code_patterns']), 1.0) * 0.3
+            
+            # Add complexity factor
+            score += binary_features.control_flow_complexity * 0.3
+            
+            vulnerability_scores[vuln_class.value] = score
+        
+        # Find highest scoring vulnerability
+        if vulnerability_scores:
+            max_vuln = max(vulnerability_scores.items(), key=lambda x: x[1])
+            if max_vuln[1] > 0.6:
+                return max_vuln[0], max_vuln[1], vulnerability_scores
+        
+        return 'safe', 0.3, vulnerability_scores
 
-        if features.get("function_complexity", 0.5) > 0.7:
-            risk_factors.append("high code complexity")
+    def _get_vulnerability_recommendations(self, prediction: str, 
+                                         vulnerability_scores: Dict[str, float]) -> List[str]:
+        """Get recommendations based on vulnerability prediction."""
+        if prediction == 'safe':
+            return ["Binary appears to have low vulnerability risk"]
+        
+        recommendations = [
+            f"High priority: Focus on {prediction} vulnerability class",
+            "Perform detailed static analysis on identified risk areas",
+            "Consider dynamic testing with crafted inputs"
+        ]
+        
+        # Add specific recommendations based on vulnerability type
+        specific_recs = {
+            'buffer_overflow': ["Test input validation boundaries", "Check buffer size calculations"],
+            'use_after_free': ["Analyze memory management patterns", "Check for dangling pointers"],
+            'integer_overflow': ["Test arithmetic operations with edge values", "Validate size calculations"],
+            'format_string': ["Audit format string usage", "Check user-controlled format strings"],
+            'code_injection': ["Validate command execution paths", "Check for user input sanitization"]
+        }
+        
+        recommendations.extend(specific_recs.get(prediction, []))
+        return recommendations
 
-        if features.get("entropy", 0.5) > 0.8:
-            risk_factors.append("high entropy (possible obfuscation)")
 
-        if likelihood > 0.7:
-            level = "High"
-        elif likelihood > 0.4:
-            level = "Moderate"
-        else:
-            level = "Low"
+class BypassStrategyRecommender:
+    """ML-based bypass strategy recommendation system."""
 
-        if risk_factors:
-            return f"{level} vulnerability likelihood due to {', '.join(risk_factors)}"
-        else:
-            return f"{level} vulnerability likelihood based on file analysis"
+    def __init__(self):
+        """Initialize the bypass strategy recommender."""
+        self.strategy_patterns = self._initialize_strategy_patterns()
+        self.success_rates = self._load_historical_success_rates()
+        
+        if SKLEARN_AVAILABLE:
+            self.model = RandomForestClassifier(n_estimators=150, random_state=42)
+            self.scaler = StandardScaler()
+            self._train_strategy_model()
+        
+        logger.info("Bypass strategy recommender initialized")
 
-    def predict(self, binary_path: str) -> List[Dict[str, Any]]:
-        """Predict vulnerabilities for a binary file."""
-        try:
-            import os
-            if not os.path.exists(binary_path):
-                logger.warning("Binary file not found: %s", binary_path)
-                return []
-
-            file_context = {
-                "file_extension": os.path.splitext(binary_path)[1],
-                "file_size": os.path.getsize(binary_path),
-                "binary_path": binary_path
+    def _initialize_strategy_patterns(self) -> Dict[str, Dict[str, Any]]:
+        """Initialize bypass strategy patterns."""
+        return {
+            BypassStrategy.MEMORY_PATCHING.value: {
+                'protection_targets': ['vmprotect', 'themida', 'unknown'],
+                'complexity_range': (0.3, 0.8),
+                'success_rate': 0.75,
+                'prerequisites': ['memory_access', 'runtime_analysis'],
+                'tools': ['debugger', 'hex_editor', 'memory_scanner']
+            },
+            BypassStrategy.API_HOOKING.value: {
+                'protection_targets': ['safenet', 'arxan', 'unknown'],
+                'complexity_range': (0.4, 0.9),
+                'success_rate': 0.70,
+                'prerequisites': ['api_analysis', 'hooking_framework'],
+                'tools': ['frida', 'detours', 'easyhook']
+            },
+            BypassStrategy.DEBUGGER_EVASION.value: {
+                'protection_targets': ['themida', 'vmprotect', 'enigma'],
+                'complexity_range': (0.6, 1.0),
+                'success_rate': 0.65,
+                'prerequisites': ['anti_debug_knowledge', 'low_level_debugging'],
+                'tools': ['specialized_debugger', 'anti_anti_debug']
+            },
+            BypassStrategy.VIRTUALIZATION_BYPASS.value: {
+                'protection_targets': ['vmprotect', 'denuvo'],
+                'complexity_range': (0.8, 1.0),
+                'success_rate': 0.60,
+                'prerequisites': ['vm_analysis', 'code_virtualization_understanding'],
+                'tools': ['vm_analyzer', 'devirtualization_tools']
+            },
+            BypassStrategy.STATIC_ANALYSIS.value: {
+                'protection_targets': ['upx', 'asprotect', 'unknown'],
+                'complexity_range': (0.2, 0.6),
+                'success_rate': 0.80,
+                'prerequisites': ['reverse_engineering', 'disassembly'],
+                'tools': ['ida_pro', 'ghidra', 'radare2']
             }
+        }
 
-            result = self.predict_vulnerability_likelihood(file_context)
+    def _load_historical_success_rates(self) -> Dict[str, float]:
+        """Load or generate historical success rates for strategies."""
+        # This would normally load from a database or file
+        return {
+            strategy: pattern['success_rate']
+            for strategy, pattern in self.strategy_patterns.items()
+        }
 
-            return [{
-                "type": "vulnerability_prediction",
-                "likelihood": result.predicted_value,
-                "confidence": result.confidence_score,
-                "reasoning": result.reasoning,
-                "factors": result.factors
-            }]
+    def _train_strategy_model(self):
+        """Train the strategy recommendation model."""
+        if not SKLEARN_AVAILABLE:
+            return
+            
+        training_features = []
+        training_labels = []
+        
+        # Generate training data for each strategy
+        for strategy, pattern in self.strategy_patterns.items():
+            for _ in range(100):
+                features = self._generate_strategy_features(strategy, pattern)
+                training_features.append(features)
+                training_labels.append(strategy)
+        
+        if training_features:
+            X = np.array(training_features)
+            y = np.array(training_labels)
+            
+            X_scaled = self.scaler.fit_transform(X)
+            self.model.fit(X_scaled, y)
+            
+            logger.info("Bypass strategy model trained successfully")
 
-        except Exception as e:
-            logger.error(
-                "Error predicting vulnerabilities for %s: %s", binary_path, e)
-            return []
+    def _generate_strategy_features(self, strategy: str, pattern: Dict[str, Any]) -> List[float]:
+        """Generate features for strategy training."""
+        if not NUMPY_AVAILABLE:
+            return [0.5] * 8
+            
+        complexity_min, complexity_max = pattern['complexity_range']
+        
+        features = [
+            np.random.uniform(complexity_min, complexity_max),  # target_complexity
+            pattern['success_rate'] + np.random.normal(0, 0.1),  # historical_success
+            len(pattern['protection_targets']) / 10.0,  # target_coverage
+            len(pattern['prerequisites']) / 5.0,  # prerequisite_count
+            np.random.uniform(0.3, 0.9),  # tool_availability
+            np.random.uniform(0.4, 0.8),  # analyst_skill_required
+            np.random.uniform(0.2, 0.8),  # time_investment
+            np.random.uniform(0.1, 0.9)   # risk_level
+        ]
+        return features
 
-    def get_confidence_score(self, binary_path: str) -> float:
-        """Get confidence score for vulnerability predictions."""
-        try:
-            import os
-            if not os.path.exists(binary_path):
-                logger.warning("Binary file not found: %s", binary_path)
-                return 0.0
+    def recommend_bypass_strategy(self, protection_type: str, 
+                                binary_features: BinaryFeatures,
+                                analyst_profile: Dict[str, Any] = None) -> PredictionResult:
+        """Recommend optimal bypass strategy."""
+        analyst_profile = analyst_profile or {}
+        
+        # Extract features for strategy recommendation
+        features = self._extract_strategy_features(protection_type, binary_features, analyst_profile)
+        
+        if SKLEARN_AVAILABLE and hasattr(self, 'model'):
+            try:
+                features_scaled = self.scaler.transform([features])
+                
+                # Get strategy prediction
+                predicted_strategy = self.model.predict(features_scaled)[0]
+                probabilities = self.model.predict_proba(features_scaled)[0]
+                confidence = np.max(probabilities)
+                
+                # Get all strategy scores
+                classes = self.model.classes_
+                strategy_scores = dict(zip(classes, probabilities))
+                
+            except Exception as e:
+                logger.error(f"Error in ML strategy recommendation: {e}")
+                predicted_strategy, confidence, strategy_scores = self._heuristic_strategy_selection(
+                    protection_type, binary_features, analyst_profile
+                )
+        else:
+            # Fallback heuristic selection
+            predicted_strategy, confidence, strategy_scores = self._heuristic_strategy_selection(
+                protection_type, binary_features, analyst_profile
+            )
+        
+        # Determine confidence level
+        if confidence >= 0.8:
+            confidence_level = PredictionConfidence.VERY_HIGH
+        elif confidence >= 0.6:
+            confidence_level = PredictionConfidence.HIGH
+        elif confidence >= 0.4:
+            confidence_level = PredictionConfidence.MEDIUM
+        else:
+            confidence_level = PredictionConfidence.LOW
+        
+        return PredictionResult(
+            prediction_id=str(uuid.uuid4()),
+            prediction_type=PredictionType.BYPASS_STRATEGY,
+            predicted_value=predicted_strategy,
+            confidence=confidence_level,
+            confidence_score=confidence,
+            factors=strategy_scores,
+            reasoning=f"Recommended strategy: {predicted_strategy} for {protection_type}",
+            recommendations=self._get_strategy_implementation_steps(predicted_strategy)
+        )
 
-            file_context = {
-                "file_extension": os.path.splitext(binary_path)[1],
-                "file_size": os.path.getsize(binary_path),
-                "binary_path": binary_path
+    def _extract_strategy_features(self, protection_type: str, 
+                                  binary_features: BinaryFeatures,
+                                  analyst_profile: Dict[str, Any]) -> List[float]:
+        """Extract features for strategy recommendation."""
+        features = [
+            binary_features.control_flow_complexity,  # target_complexity
+            self.success_rates.get(protection_type, 0.5),  # historical_success
+            len([s for s in self.strategy_patterns.keys() 
+                if protection_type in self.strategy_patterns[s]['protection_targets']]) / 10.0,  # target_coverage
+            analyst_profile.get('skill_level', 0.5),  # prerequisite_count
+            analyst_profile.get('tool_access', 0.7),  # tool_availability
+            analyst_profile.get('experience', 0.5),  # analyst_skill_required
+            analyst_profile.get('time_available', 0.6),  # time_investment
+            binary_features.code_obfuscation_level  # risk_level
+        ]
+        return features
+
+    def _heuristic_strategy_selection(self, protection_type: str,
+                                    binary_features: BinaryFeatures,
+                                    analyst_profile: Dict[str, Any]) -> Tuple[str, float, Dict[str, float]]:
+        """Fallback heuristic strategy selection."""
+        strategy_scores = {}
+        
+        for strategy, pattern in self.strategy_patterns.items():
+            score = 0.0
+            
+            # Check if strategy applies to protection type
+            if protection_type in pattern['protection_targets']:
+                score += 0.4
+            elif 'unknown' in pattern['protection_targets']:
+                score += 0.2
+            
+            # Check complexity compatibility
+            complexity_min, complexity_max = pattern['complexity_range']
+            target_complexity = binary_features.control_flow_complexity
+            if complexity_min <= target_complexity <= complexity_max:
+                score += 0.3
+            
+            # Factor in success rate
+            score += pattern['success_rate'] * 0.3
+            
+            strategy_scores[strategy] = score
+        
+        # Select best strategy
+        if strategy_scores:
+            best_strategy = max(strategy_scores.items(), key=lambda x: x[1])
+            return best_strategy[0], best_strategy[1], strategy_scores
+        
+        return BypassStrategy.STATIC_ANALYSIS.value, 0.5, strategy_scores
+
+    def _get_strategy_implementation_steps(self, strategy: str) -> List[str]:
+        """Get implementation steps for a strategy."""
+        implementation_steps = {
+            BypassStrategy.MEMORY_PATCHING.value: [
+                "Identify target memory regions for patching",
+                "Set up runtime debugging environment",
+                "Locate protection validation routines",
+                "Develop memory patches for key checks",
+                "Test patch effectiveness and stability"
+            ],
+            BypassStrategy.API_HOOKING.value: [
+                "Map API call flows in target binary",
+                "Set up hooking framework (Frida/Detours)",
+                "Identify critical API calls to intercept",
+                "Develop hook implementations",
+                "Test and validate hook effectiveness"
+            ],
+            BypassStrategy.STATIC_ANALYSIS.value: [
+                "Perform comprehensive disassembly",
+                "Identify protection mechanisms statically",
+                "Analyze control flow and data flow",
+                "Locate and patch protection checks",
+                "Verify patched binary functionality"
+            ],
+            BypassStrategy.DEBUGGER_EVASION.value: [
+                "Research target's anti-debug techniques",
+                "Set up specialized debugging environment",
+                "Implement anti-anti-debug countermeasures",
+                "Bypass timing and detection checks",
+                "Maintain stealth during analysis"
+            ],
+            BypassStrategy.VIRTUALIZATION_BYPASS.value: [
+                "Analyze virtual machine architecture",
+                "Identify virtualized code segments",
+                "Develop devirtualization approach",
+                "Extract and reconstruct original code",
+                "Validate devirtualized functionality"
+            ]
+        }
+        
+        return implementation_steps.get(strategy, [
+            "Analyze target binary thoroughly",
+            "Develop appropriate bypass technique",
+            "Test and validate approach"
+        ])
+
+
+class AnomalyDetector:
+    """ML-based anomaly detection for new protection mechanisms."""
+
+    def __init__(self):
+        """Initialize the anomaly detector."""
+        self.baseline_features = []
+        self.anomaly_threshold = 0.7
+        
+        if SKLEARN_AVAILABLE:
+            from sklearn.ensemble import IsolationForest
+            self.model = IsolationForest(contamination=0.1, random_state=42)
+            self.is_trained = False
+        
+        self._initialize_baseline()
+        logger.info("Anomaly detector initialized")
+
+    def _initialize_baseline(self):
+        """Initialize baseline with known protection patterns."""
+        if not NUMPY_AVAILABLE:
+            return
+            
+        # Generate baseline features for known protections
+        known_patterns = [
+            [0.8, 7.5, 8, 150, 20, 500, 1, 0, 1, 0, 0.7, 0.8],  # VMProtect-like
+            [0.6, 7.2, 6, 100, 15, 300, 1, 1, 0, 1, 0.6, 0.7],  # Themida-like
+            [0.4, 6.8, 4, 80, 10, 200, 1, 1, 1, 0, 0.4, 0.3],   # UPX-like
+            [0.2, 5.5, 3, 50, 5, 100, 0, 1, 1, 0, 0.2, 0.1],    # Unprotected
+        ]
+        
+        # Add variations
+        for pattern in known_patterns:
+            for _ in range(50):
+                variation = [
+                    feature + np.random.normal(0, 0.1) for feature in pattern
+                ]
+                self.baseline_features.append(variation)
+        
+        if SKLEARN_AVAILABLE and self.baseline_features:
+            self.model.fit(self.baseline_features)
+            self.is_trained = True
+            logger.info("Anomaly detector trained on baseline patterns")
+
+    def detect_anomaly(self, binary_features: BinaryFeatures) -> PredictionResult:
+        """Detect if binary shows anomalous protection patterns."""
+        features = self._extract_anomaly_features(binary_features)
+        
+        if SKLEARN_AVAILABLE and self.is_trained:
+            try:
+                # Get anomaly score
+                anomaly_score = self.model.decision_function([features])[0]
+                is_anomaly = self.model.predict([features])[0] == -1
+                
+                # Convert to confidence (more negative = more anomalous)
+                confidence = min(abs(anomaly_score), 1.0)
+                
+            except Exception as e:
+                logger.error(f"Error in ML anomaly detection: {e}")
+                is_anomaly, confidence = self._heuristic_anomaly_detection(binary_features)
+        else:
+            # Fallback heuristic detection
+            is_anomaly, confidence = self._heuristic_anomaly_detection(binary_features)
+        
+        # Determine confidence level
+        if confidence >= 0.8:
+            confidence_level = PredictionConfidence.VERY_HIGH
+        elif confidence >= 0.6:
+            confidence_level = PredictionConfidence.HIGH
+        elif confidence >= 0.4:
+            confidence_level = PredictionConfidence.MEDIUM
+        else:
+            confidence_level = PredictionConfidence.LOW
+        
+        return PredictionResult(
+            prediction_id=str(uuid.uuid4()),
+            prediction_type=PredictionType.ANOMALY_DETECTION,
+            predicted_value="anomalous" if is_anomaly else "normal",
+            confidence=confidence_level,
+            confidence_score=confidence,
+            factors=dict(zip([
+                'entropy', 'complexity', 'obfuscation', 'api_diversity',
+                'section_anomaly', 'string_patterns'
+            ], features[:6])),
+            reasoning=f"Binary shows {'anomalous' if is_anomaly else 'normal'} protection patterns",
+            recommendations=self._get_anomaly_recommendations(is_anomaly),
+            threat_level="high" if is_anomaly else "medium"
+        )
+
+    def _extract_anomaly_features(self, binary_features: BinaryFeatures) -> List[float]:
+        """Extract features for anomaly detection."""
+        features = [
+            binary_features.entropy,
+            binary_features.control_flow_complexity,
+            binary_features.code_obfuscation_level,
+            len(set(binary_features.api_calls)) / max(len(binary_features.api_calls), 1),  # API diversity
+            binary_features.section_count / 10.0,  # Normalized section count
+            len(binary_features.suspicious_strings) / max(binary_features.string_count, 1),  # Suspicious string ratio
+            1.0 if binary_features.packed else 0.0,
+            binary_features.file_size / (10 * 1024 * 1024),  # Normalized file size
+            binary_features.import_count / 200.0,  # Normalized import count
+            binary_features.export_count / 50.0,   # Normalized export count
+            len(binary_features.protection_indicators) / 10.0,  # Protection indicator density
+            1.0 if binary_features.signed else 0.0
+        ]
+        return features
+
+    def _heuristic_anomaly_detection(self, binary_features: BinaryFeatures) -> Tuple[bool, float]:
+        """Fallback heuristic anomaly detection."""
+        anomaly_score = 0.0
+        
+        # Check for unusual entropy
+        if binary_features.entropy > 7.8 or binary_features.entropy < 4.0:
+            anomaly_score += 0.2
+        
+        # Check for extreme complexity
+        if binary_features.control_flow_complexity > 0.9:
+            anomaly_score += 0.3
+        
+        # Check for unusual section count
+        if binary_features.section_count > 20 or binary_features.section_count < 2:
+            anomaly_score += 0.2
+        
+        # Check for suspicious string patterns
+        if len(binary_features.suspicious_strings) > binary_features.string_count * 0.5:
+            anomaly_score += 0.2
+        
+        # Check for unusual protection indicators
+        if len(binary_features.protection_indicators) > 10:
+            anomaly_score += 0.1
+        
+        is_anomaly = anomaly_score > self.anomaly_threshold
+        confidence = min(anomaly_score, 1.0)
+        
+        return is_anomaly, confidence
+
+    def _get_anomaly_recommendations(self, is_anomaly: bool) -> List[str]:
+        """Get recommendations for anomaly handling."""
+        if is_anomaly:
+            return [
+                "Binary shows unusual protection patterns - proceed with caution",
+                "Consider advanced analysis techniques for novel protections",
+                "Document new patterns for future reference",
+                "Use multiple analysis approaches to verify findings",
+                "Consider manual expert review for unknown protection mechanisms"
+            ]
+        else:
+            return [
+                "Binary shows normal protection patterns",
+                "Apply standard analysis techniques",
+                "Use existing bypass strategies as starting point"
+            ]
+
+
+class ThreatIntelligenceManager:
+    """Manages threat intelligence feeds and integration."""
+
+    def __init__(self):
+        """Initialize the threat intelligence manager."""
+        self.threat_feeds = {}
+        self.intelligence_cache = {}
+        self.update_interval = timedelta(hours=6)
+        self.last_update = {}
+        
+        self._initialize_threat_feeds()
+        logger.info("Threat intelligence manager initialized")
+
+    def _initialize_threat_feeds(self):
+        """Initialize threat intelligence feed configurations."""
+        self.threat_feeds = {
+            'cve_database': {
+                'url': 'https://cve.mitre.org/data/downloads/allitems.csv',
+                'type': 'vulnerability',
+                'enabled': False,  # Disabled by default to avoid external calls
+                'parser': self._parse_cve_feed
+            },
+            'malware_signatures': {
+                'url': 'https://www.malware-traffic-analysis.net/about.html',
+                'type': 'protection_signatures',
+                'enabled': False,
+                'parser': self._parse_signature_feed
+            },
+            'exploit_database': {
+                'url': 'https://www.exploit-db.com/',
+                'type': 'exploit_techniques',
+                'enabled': False,
+                'parser': self._parse_exploit_feed
             }
+        }
 
-            result = self.predict_vulnerability_likelihood(file_context)
-            return result.confidence_score
+    def get_threat_intelligence(self, protection_type: str, 
+                              binary_features: BinaryFeatures) -> PredictionResult:
+        """Get threat intelligence for a protection type."""
+        # Check cache first
+        cache_key = f"{protection_type}_{hash(str(binary_features))}"
+        
+        if cache_key in self.intelligence_cache:
+            cached_intel = self.intelligence_cache[cache_key]
+            if datetime.now() - cached_intel.timestamp < self.update_interval:
+                return cached_intel
+        
+        # Generate threat intelligence analysis
+        threat_intel = self._analyze_threat_landscape(protection_type, binary_features)
+        
+        # Cache result
+        self.intelligence_cache[cache_key] = threat_intel
+        
+        return threat_intel
 
-        except Exception as e:
-            logger.error(
-                "Error getting confidence score for %s: %s", binary_path, e)
-            return 0.0
+    def _analyze_threat_landscape(self, protection_type: str, 
+                                binary_features: BinaryFeatures) -> PredictionResult:
+        """Analyze current threat landscape for protection type."""
+        # Simulate threat intelligence analysis (would normally query real feeds)
+        threat_data = self._generate_threat_analysis(protection_type, binary_features)
+        
+        confidence_score = 0.7  # Moderate confidence for simulated data
+        
+        return PredictionResult(
+            prediction_id=str(uuid.uuid4()),
+            prediction_type=PredictionType.THREAT_INTELLIGENCE,
+            predicted_value=threat_data['threat_level'],
+            confidence=PredictionConfidence.MEDIUM,
+            confidence_score=confidence_score,
+            factors=threat_data['factors'],
+            reasoning=threat_data['reasoning'],
+            recommendations=threat_data['recommendations'],
+            threat_level=threat_data['threat_level']
+        )
+
+    def _generate_threat_analysis(self, protection_type: str, 
+                                binary_features: BinaryFeatures) -> Dict[str, Any]:
+        """Generate threat analysis based on protection characteristics."""
+        # Threat level assessment
+        threat_factors = {
+            'protection_sophistication': binary_features.control_flow_complexity,
+            'obfuscation_level': binary_features.code_obfuscation_level,
+            'entropy_anomaly': abs(binary_features.entropy - 6.5) / 2.0,
+            'size_factor': min(binary_features.file_size / (50 * 1024 * 1024), 1.0),
+            'api_complexity': min(len(binary_features.api_calls) / 500.0, 1.0)
+        }
+        
+        # Calculate overall threat level
+        threat_score = sum(threat_factors.values()) / len(threat_factors)
+        
+        if threat_score > 0.8:
+            threat_level = "critical"
+        elif threat_score > 0.6:
+            threat_level = "high"
+        elif threat_score > 0.4:
+            threat_level = "medium"
+        else:
+            threat_level = "low"
+        
+        # Generate reasoning
+        reasoning = f"Threat assessment for {protection_type}: {threat_level} risk based on protection complexity and evasion techniques"
+        
+        # Generate recommendations
+        recommendations = [
+            f"Threat level: {threat_level} - adjust analysis approach accordingly",
+            "Monitor for new bypass techniques in threat intelligence feeds",
+            "Consider protection evolution trends for long-term strategy"
+        ]
+        
+        if threat_level in ['critical', 'high']:
+            recommendations.extend([
+                "Use advanced analysis techniques and specialized tools",
+                "Consider collaboration with security research community",
+                "Implement additional safety measures during analysis"
+            ])
+        
+        return {
+            'threat_level': threat_level,
+            'factors': threat_factors,
+            'reasoning': reasoning,
+            'recommendations': recommendations
+        }
+
+    def _parse_cve_feed(self, feed_data: str) -> List[ThreatIntelligence]:
+        """Parse CVE feed data with real implementation."""
+        threats = []
+        
+        try:
+            # Handle both CSV and JSON CVE feeds
+            if feed_data.strip().startswith('[') or feed_data.strip().startswith('{'):
+                # JSON format (NVD API)
+                import json
+                cve_data = json.loads(feed_data)
+                
+                # Handle different JSON structures
+                vulnerabilities = []
+                if 'CVE_Items' in cve_data:
+                    vulnerabilities = cve_data['CVE_Items']
+                elif 'vulnerabilities' in cve_data:
+                    vulnerabilities = cve_data['vulnerabilities']
+                elif isinstance(cve_data, list):
+                    vulnerabilities = cve_data
+                
+                for vuln in vulnerabilities[:100]:  # Limit processing
+                    try:
+                        # Extract CVE ID
+                        cve_id = ""
+                        if 'cve' in vuln:
+                            if 'CVE_data_meta' in vuln['cve']:
+                                cve_id = vuln['cve']['CVE_data_meta'].get('ID', '')
+                            elif 'id' in vuln['cve']:
+                                cve_id = vuln['cve']['id']
+                        elif 'id' in vuln:
+                            cve_id = vuln['id']
+                        
+                        # Extract description
+                        description = ""
+                        if 'cve' in vuln and 'description' in vuln['cve']:
+                            desc_data = vuln['cve']['description']
+                            if 'description_data' in desc_data and desc_data['description_data']:
+                                description = desc_data['description_data'][0].get('value', '')
+                        
+                        # Extract CVSS score for severity
+                        severity = "unknown"
+                        if 'impact' in vuln:
+                            if 'baseMetricV3' in vuln['impact']:
+                                cvss_score = vuln['impact']['baseMetricV3'].get('cvssV3', {}).get('baseScore', 0)
+                            elif 'baseMetricV2' in vuln['impact']:
+                                cvss_score = vuln['impact']['baseMetricV2'].get('cvssV2', {}).get('baseScore', 0)
+                            else:
+                                cvss_score = 0
+                            
+                            if cvss_score >= 9.0:
+                                severity = "critical"
+                            elif cvss_score >= 7.0:
+                                severity = "high"
+                            elif cvss_score >= 4.0:
+                                severity = "medium"
+                            elif cvss_score > 0:
+                                severity = "low"
+                        
+                        # Extract affected software/protection indicators
+                        indicators = [cve_id]
+                        protection_family = "unknown"
+                        
+                        # Check description for protection software mentions
+                        desc_lower = description.lower()
+                        if any(prot in desc_lower for prot in ['vmprotect', 'themida', 'upx', 'aspack']):
+                            protection_family = "packer"
+                        elif any(prot in desc_lower for prot in ['denuvo', 'securom', 'starforce']):
+                            protection_family = "drm"
+                        elif any(prot in desc_lower for prot in ['antidebug', 'antivm', 'antidump']):
+                            protection_family = "anti_analysis"
+                        
+                        # Create threat intelligence entry
+                        threat = ThreatIntelligence(
+                            source="cve_database",
+                            threat_type="vulnerability",
+                            protection_family=protection_family,
+                            indicators=indicators,
+                            severity=severity,
+                            timestamp=datetime.now(),
+                            confidence_score=0.9 if severity in ['critical', 'high'] else 0.7,
+                            attribution="cve_mitre",
+                            ttps=[f"vulnerability_{severity}"]
+                        )
+                        threats.append(threat)
+                        
+                    except (KeyError, ValueError, TypeError) as e:
+                        logger.warning(f"Error parsing CVE entry: {e}")
+                        continue
+            
+            else:
+                # CSV format
+                import csv
+                import io
+                
+                csv_reader = csv.DictReader(io.StringIO(feed_data))
+                for row in csv_reader:
+                    try:
+                        # Extract CVE information from CSV
+                        cve_id = row.get('CVE', row.get('ID', ''))
+                        description = row.get('Description', row.get('Summary', ''))
+                        
+                        # Determine severity from description or score
+                        severity = "medium"
+                        desc_lower = description.lower()
+                        if any(keyword in desc_lower for keyword in ['critical', 'remote code execution', 'privilege escalation']):
+                            severity = "high"
+                        elif any(keyword in desc_lower for keyword in ['denial of service', 'information disclosure']):
+                            severity = "medium"
+                        else:
+                            severity = "low"
+                        
+                        # Extract protection family
+                        protection_family = "unknown"
+                        if any(prot in desc_lower for prot in ['protection', 'license', 'drm']):
+                            protection_family = "protection_software"
+                        
+                        threat = ThreatIntelligence(
+                            source="cve_database",
+                            threat_type="vulnerability",
+                            protection_family=protection_family,
+                            indicators=[cve_id],
+                            severity=severity,
+                            timestamp=datetime.now(),
+                            confidence_score=0.8,
+                            attribution="cve_csv",
+                            ttps=[f"cve_{severity}"]
+                        )
+                        threats.append(threat)
+                        
+                    except (KeyError, ValueError) as e:
+                        logger.warning(f"Error parsing CSV CVE entry: {e}")
+                        continue
+        
+        except (json.JSONDecodeError, ValueError, ImportError) as e:
+            logger.error(f"Error parsing CVE feed data: {e}")
+        
+        logger.info(f"Parsed {len(threats)} CVE threat intelligence entries")
+        return threats
+
+    def _parse_signature_feed(self, feed_data: str) -> List[ThreatIntelligence]:
+        """Parse malware signature feed with real implementation."""
+        threats = []
+        
+        try:
+            # Handle various signature feed formats
+            if feed_data.strip().startswith('[') or feed_data.strip().startswith('{'):
+                # JSON format
+                import json
+                sig_data = json.loads(feed_data)
+                
+                # Handle different JSON structures
+                signatures = []
+                if isinstance(sig_data, list):
+                    signatures = sig_data
+                elif 'signatures' in sig_data:
+                    signatures = sig_data['signatures']
+                elif 'malware' in sig_data:
+                    signatures = sig_data['malware']
+                
+                for sig in signatures[:50]:  # Limit processing
+                    try:
+                        # Extract signature information
+                        name = sig.get('name', sig.get('malware_name', 'Unknown'))
+                        family = sig.get('family', sig.get('type', 'unknown'))
+                        
+                        # Extract indicators (hashes, patterns, etc.)
+                        indicators = []
+                        if 'md5' in sig and sig['md5']:
+                            indicators.append(f"md5:{sig['md5']}")
+                        if 'sha1' in sig and sig['sha1']:
+                            indicators.append(f"sha1:{sig['sha1']}")
+                        if 'sha256' in sig and sig['sha256']:
+                            indicators.append(f"sha256:{sig['sha256']}")
+                        if 'yara_rule' in sig and sig['yara_rule']:
+                            indicators.append(f"yara:{sig['yara_rule'][:100]}")
+                        if 'pattern' in sig and sig['pattern']:
+                            indicators.append(f"pattern:{sig['pattern']}")
+                        
+                        # Determine severity
+                        severity = "medium"
+                        threat_type = sig.get('threat_type', '').lower()
+                        if any(keyword in threat_type for keyword in ['trojan', 'ransomware', 'rootkit']):
+                            severity = "high"
+                        elif any(keyword in threat_type for keyword in ['adware', 'pup']):
+                            severity = "low"
+                        
+                        # Map family to protection type
+                        protection_family = "malware"
+                        family_lower = family.lower()
+                        if any(prot in family_lower for prot in ['packer', 'protector', 'crypter']):
+                            protection_family = "packer"
+                        elif any(prot in family_lower for prot in ['license', 'drm', 'activation']):
+                            protection_family = "licensing"
+                        
+                        threat = ThreatIntelligence(
+                            source="signature_database",
+                            threat_type="malware_signature",
+                            protection_family=protection_family,
+                            indicators=indicators,
+                            severity=severity,
+                            timestamp=datetime.now(),
+                            confidence_score=0.85,
+                            attribution=sig.get('source', 'signature_feed'),
+                            ttps=[f"malware_{family_lower}"]
+                        )
+                        threats.append(threat)
+                        
+                    except (KeyError, ValueError, TypeError) as e:
+                        logger.warning(f"Error parsing signature entry: {e}")
+                        continue
+            
+            else:
+                # Plain text or YARA format
+                lines = feed_data.strip().split('\n')
+                current_rule = {}
+                in_rule = False
+                
+                for line in lines:
+                    line = line.strip()
+                    
+                    # YARA rule parsing
+                    if line.startswith('rule '):
+                        if in_rule and current_rule:
+                            # Process previous rule
+                            try:
+                                threat = ThreatIntelligence(
+                                    source="yara_signatures",
+                                    threat_type="detection_rule",
+                                    protection_family=current_rule.get('family', 'unknown'),
+                                    indicators=[f"yara:{current_rule.get('name', 'unnamed')}"],
+                                    severity=current_rule.get('severity', 'medium'),
+                                    timestamp=datetime.now(),
+                                    confidence_score=0.8,
+                                    attribution="yara_rule",
+                                    ttps=[f"detection_{current_rule.get('family', 'unknown')}"]
+                                )
+                                threats.append(threat)
+                            except Exception as e:
+                                logger.warning(f"Error creating threat from YARA rule: {e}")
+                        
+                        # Start new rule
+                        rule_name = line.replace('rule ', '').split('{')[0].strip()
+                        current_rule = {'name': rule_name, 'severity': 'medium', 'family': 'unknown'}
+                        in_rule = True
+                    
+                    elif in_rule:
+                        # Parse rule metadata
+                        if 'family =' in line or 'family:' in line:
+                            family = line.split('=')[-1].split(':')[-1].strip().strip('"\'')
+                            current_rule['family'] = family
+                        
+                        if 'severity =' in line or 'severity:' in line:
+                            severity = line.split('=')[-1].split(':')[-1].strip().strip('"\'')
+                            current_rule['severity'] = severity
+                        
+                        if line == '}':
+                            in_rule = False
+                    
+                    # Simple hash list format
+                    elif len(line) in [32, 40, 64] and all(c in '0123456789abcdefABCDEF' for c in line):
+                        hash_type = "md5" if len(line) == 32 else "sha1" if len(line) == 40 else "sha256"
+                        threat = ThreatIntelligence(
+                            source="hash_database",
+                            threat_type="malware_hash",
+                            protection_family="malware",
+                            indicators=[f"{hash_type}:{line.lower()}"],
+                            severity="medium",
+                            timestamp=datetime.now(),
+                            confidence_score=0.9,
+                            attribution="hash_feed",
+                            ttps=[f"malware_{hash_type}"]
+                        )
+                        threats.append(threat)
+                
+                # Process final rule if exists
+                if in_rule and current_rule:
+                    try:
+                        threat = ThreatIntelligence(
+                            source="yara_signatures",
+                            threat_type="detection_rule",
+                            protection_family=current_rule.get('family', 'unknown'),
+                            indicators=[f"yara:{current_rule.get('name', 'unnamed')}"],
+                            severity=current_rule.get('severity', 'medium'),
+                            timestamp=datetime.now(),
+                            confidence_score=0.8,
+                            attribution="yara_rule",
+                            ttps=[f"detection_{current_rule.get('family', 'unknown')}"]
+                        )
+                        threats.append(threat)
+                    except Exception as e:
+                        logger.warning(f"Error creating final threat from YARA rule: {e}")
+        
+        except (json.JSONDecodeError, ValueError, ImportError) as e:
+            logger.error(f"Error parsing signature feed data: {e}")
+        
+        logger.info(f"Parsed {len(threats)} signature threat intelligence entries")
+        return threats
+
+    def _parse_exploit_feed(self, feed_data: str) -> List[ThreatIntelligence]:
+        """Parse exploit database feed with real implementation."""
+        threats = []
+        
+        try:
+            # Handle various exploit feed formats
+            if feed_data.strip().startswith('[') or feed_data.strip().startswith('{'):
+                # JSON format (ExploitDB, Metasploit, etc.)
+                import json
+                exploit_data = json.loads(feed_data)
+                
+                # Handle different JSON structures
+                exploits = []
+                if isinstance(exploit_data, list):
+                    exploits = exploit_data
+                elif 'exploits' in exploit_data:
+                    exploits = exploit_data['exploits']
+                elif 'modules' in exploit_data:
+                    exploits = exploit_data['modules']
+                
+                for exploit in exploits[:30]:  # Limit processing
+                    try:
+                        # Extract exploit information
+                        name = exploit.get('name', exploit.get('title', 'Unknown'))
+                        description = exploit.get('description', exploit.get('desc', ''))
+                        
+                        # Extract CVE references
+                        cve_refs = []
+                        refs = exploit.get('references', exploit.get('refs', []))
+                        if isinstance(refs, list):
+                            for ref in refs:
+                                if isinstance(ref, str) and 'CVE-' in ref:
+                                    cve_refs.append(ref)
+                                elif isinstance(ref, dict) and 'CVE-' in str(ref):
+                                    cve_refs.extend([v for v in ref.values() if isinstance(v, str) and 'CVE-' in v])
+                        
+                        # Extract indicators
+                        indicators = [name] + cve_refs
+                        if 'edb_id' in exploit:
+                            indicators.append(f"edb:{exploit['edb_id']}")
+                        if 'msf_module' in exploit:
+                            indicators.append(f"msf:{exploit['msf_module']}")
+                        
+                        # Determine severity and protection family
+                        severity = "medium"
+                        protection_family = "unknown"
+                        
+                        # Analyze description for context
+                        desc_lower = description.lower()
+                        name_lower = name.lower()
+                        
+                        # Severity based on exploit type
+                        if any(keyword in desc_lower or keyword in name_lower 
+                               for keyword in ['remote code execution', 'rce', 'privilege escalation']):
+                            severity = "critical"
+                        elif any(keyword in desc_lower or keyword in name_lower 
+                                for keyword in ['buffer overflow', 'stack overflow', 'heap overflow']):
+                            severity = "high"
+                        elif any(keyword in desc_lower or keyword in name_lower 
+                                for keyword in ['bypass', 'authentication', 'authorization']):
+                            severity = "high"
+                        elif any(keyword in desc_lower or keyword in name_lower 
+                                for keyword in ['denial of service', 'dos']):
+                            severity = "medium"
+                        
+                        # Protection family classification
+                        if any(keyword in desc_lower or keyword in name_lower 
+                               for keyword in ['license', 'activation', 'registration', 'trial']):
+                            protection_family = "licensing"
+                        elif any(keyword in desc_lower or keyword in name_lower 
+                                for keyword in ['drm', 'copy protection', 'anti-piracy']):
+                            protection_family = "drm"
+                        elif any(keyword in desc_lower or keyword in name_lower 
+                                for keyword in ['antidebug', 'anti-debug', 'debugger detection']):
+                            protection_family = "anti_analysis"
+                        elif any(keyword in desc_lower or keyword in name_lower 
+                                for keyword in ['packer', 'unpacker', 'protector']):
+                            protection_family = "packer"
+                        elif any(keyword in desc_lower or keyword in name_lower 
+                                for keyword in ['virtualization', 'vm detection', 'sandbox']):
+                            protection_family = "anti_vm"
+                        
+                        # Extract TTPs
+                        ttps = []
+                        if 'technique' in exploit:
+                            ttps.append(f"technique_{exploit['technique']}")
+                        if any(keyword in desc_lower for keyword in ['shellcode', 'payload']):
+                            ttps.append("shellcode_execution")
+                        if any(keyword in desc_lower for keyword in ['rop', 'return oriented']):
+                            ttps.append("rop_chains")
+                        if any(keyword in desc_lower for keyword in ['format string']):
+                            ttps.append("format_string")
+                        
+                        threat = ThreatIntelligence(
+                            source="exploit_database",
+                            threat_type="exploit",
+                            protection_family=protection_family,
+                            indicators=indicators,
+                            severity=severity,
+                            timestamp=datetime.now(),
+                            confidence_score=0.9 if severity == "critical" else 0.8,
+                            attribution=exploit.get('author', 'exploit_db'),
+                            ttps=ttps if ttps else [f"exploit_{severity}"]
+                        )
+                        threats.append(threat)
+                        
+                    except (KeyError, ValueError, TypeError) as e:
+                        logger.warning(f"Error parsing exploit entry: {e}")
+                        continue
+            
+            else:
+                # CSV or plain text format
+                import csv
+                import io
+                
+                try:
+                    # Try CSV format first
+                    csv_reader = csv.DictReader(io.StringIO(feed_data))
+                    for row in csv_reader:
+                        try:
+                            name = row.get('Title', row.get('Name', row.get('Description', 'Unknown')))
+                            platform = row.get('Platform', 'Unknown')
+                            exploit_type = row.get('Type', 'Unknown')
+                            
+                            # Determine severity from type
+                            severity = "medium"
+                            type_lower = exploit_type.lower()
+                            if 'remote' in type_lower or 'rce' in type_lower:
+                                severity = "critical"
+                            elif 'local' in type_lower or 'privilege' in type_lower:
+                                severity = "high"
+                            elif 'dos' in type_lower:
+                                severity = "medium"
+                            
+                            # Basic protection family mapping
+                            protection_family = "software_exploit"
+                            if any(keyword in name.lower() for keyword in ['license', 'trial', 'activation']):
+                                protection_family = "licensing"
+                            
+                            indicators = [name]
+                            if 'CVE' in row:
+                                indicators.append(row['CVE'])
+                            
+                            threat = ThreatIntelligence(
+                                source="exploit_csv",
+                                threat_type="exploit",
+                                protection_family=protection_family,
+                                indicators=indicators,
+                                severity=severity,
+                                timestamp=datetime.now(),
+                                confidence_score=0.75,
+                                attribution="exploit_csv",
+                                ttps=[f"exploit_{platform.lower()}"]
+                            )
+                            threats.append(threat)
+                            
+                        except (KeyError, ValueError) as e:
+                            logger.warning(f"Error parsing CSV exploit entry: {e}")
+                            continue
+                            
+                except (csv.Error, ValueError):
+                    # Fallback to line-by-line parsing
+                    lines = feed_data.strip().split('\n')
+                    for line in lines:
+                        line = line.strip()
+                        if line and not line.startswith('#'):
+                            # Simple line format: "exploit_name | severity | description"
+                            parts = line.split('|')
+                            if len(parts) >= 2:
+                                name = parts[0].strip()
+                                severity = parts[1].strip().lower() if parts[1].strip().lower() in ['low', 'medium', 'high', 'critical'] else 'medium'
+                                
+                                threat = ThreatIntelligence(
+                                    source="exploit_list",
+                                    threat_type="exploit",
+                                    protection_family="unknown",
+                                    indicators=[name],
+                                    severity=severity,
+                                    timestamp=datetime.now(),
+                                    confidence_score=0.6,
+                                    attribution="exploit_list",
+                                    ttps=[f"exploit_{severity}"]
+                                )
+                                threats.append(threat)
+        
+        except (json.JSONDecodeError, ValueError, ImportError) as e:
+            logger.error(f"Error parsing exploit feed data: {e}")
+        
+        logger.info(f"Parsed {len(threats)} exploit threat intelligence entries")
+        return threats
+
+    def update_threat_feeds(self):
+        """Update threat intelligence feeds."""
+        if not REQUESTS_AVAILABLE:
+            logger.warning("Requests not available - cannot update threat feeds")
+            return
+        
+        for feed_name, feed_config in self.threat_feeds.items():
+            if not feed_config['enabled']:
+                continue
+                
+            try:
+                # Check if update is needed
+                if feed_name in self.last_update:
+                    if datetime.now() - self.last_update[feed_name] < self.update_interval:
+                        continue
+                
+                # This would normally fetch real data
+                logger.info(f"Would update threat feed: {feed_name}")
+                self.last_update[feed_name] = datetime.now()
+                
+            except Exception as e:
+                logger.error(f"Error updating threat feed {feed_name}: {e}")
 
 
 class PredictiveIntelligenceEngine:
-    """Main predictive intelligence engine."""
+    """Main predictive intelligence engine coordinating all predictive components."""
 
     def __init__(self):
-        """Initialize the predictive intelligence engine with specialized predictors."""
-        self.success_predictor = SuccessProbabilityPredictor()
-        self.time_predictor = ExecutionTimePredictor()
+        """Initialize the comprehensive predictive intelligence engine."""
+        self.binary_classifier = BinaryClassifier()
         self.vulnerability_predictor = VulnerabilityPredictor()
+        self.bypass_recommender = BypassStrategyRecommender()
+        self.anomaly_detector = AnomalyDetector()
+        self.threat_intelligence = ThreatIntelligenceManager()
+        
+        # Prediction cache and history
+        self.prediction_cache = {}
+        self.prediction_history = deque(maxlen=2000)
+        self.performance_metrics = defaultdict(list)
+        
+        # Integration with other AI systems
+        self.learning_engine = get_learning_engine() if get_learning_engine else None
+        self.llm_manager = None
+        
+        logger.info("Predictive intelligence engine fully initialized")
 
-        self.prediction_cache: Dict[str, PredictionResult] = {}
-        self.prediction_history: deque = deque(maxlen=1000)
+    @profile_ai_operation("comprehensive_prediction")
+    def analyze_binary_comprehensive(self, binary_path: str, 
+                                   binary_features: BinaryFeatures,
+                                   analyst_profile: Dict[str, Any] = None) -> Dict[str, PredictionResult]:
+        """Perform comprehensive predictive analysis on a binary."""
+        start_time = time.time()
+        results = {}
+        
+        try:
+            # 1. Protection Type Prediction
+            protection_result = self.binary_classifier.predict_protection(binary_features)
+            results['protection_type'] = protection_result
+            
+            # 2. Vulnerability Prediction
+            vulnerability_result = self.vulnerability_predictor.predict_vulnerabilities(binary_features)
+            results['vulnerabilities'] = vulnerability_result
+            
+            # 3. Bypass Strategy Recommendation
+            protection_type = protection_result.predicted_value
+            bypass_result = self.bypass_recommender.recommend_bypass_strategy(
+                protection_type, binary_features, analyst_profile
+            )
+            results['bypass_strategy'] = bypass_result
+            
+            # 4. Anomaly Detection
+            anomaly_result = self.anomaly_detector.detect_anomaly(binary_features)
+            results['anomaly_detection'] = anomaly_result
+            
+            # 5. Threat Intelligence
+            threat_result = self.threat_intelligence.get_threat_intelligence(
+                protection_type, binary_features
+            )
+            results['threat_intelligence'] = threat_result
+            
+            # Store results in history
+            for result in results.values():
+                self.prediction_history.append(result)
+            
+            # Record performance metrics
+            analysis_time = time.time() - start_time
+            self.performance_metrics['analysis_time'].append(analysis_time)
+            
+            logger.info(f"Comprehensive binary analysis completed in {analysis_time:.2f}s")
+            
+        except Exception as e:
+            logger.error(f"Error in comprehensive binary analysis: {e}")
+            # Return partial results if available
+            if not results:
+                results['error'] = PredictionResult(
+                    prediction_id=str(uuid.uuid4()),
+                    prediction_type=PredictionType.PROTECTION_TYPE,
+                    predicted_value="error",
+                    confidence=PredictionConfidence.VERY_LOW,
+                    confidence_score=0.0,
+                    factors={},
+                    reasoning=f"Analysis failed: {str(e)}"
+                )
+        
+        return results
 
-        # Performance tracking
-        self.prediction_stats = {
-            "total_predictions": 0,
-            "cache_hits": 0,
-            "accuracy_tracking": defaultdict(list)
+    def predict_protection_evolution(self, protection_type: str, 
+                                   historical_data: List[Dict[str, Any]]) -> PredictionResult:
+        """Predict how a protection mechanism might evolve."""
+        # Analyze historical trends
+        evolution_trends = self._analyze_protection_trends(protection_type, historical_data)
+        
+        # Predict future evolution
+        predicted_changes = self._predict_evolution_changes(protection_type, evolution_trends)
+        
+        confidence_score = min(len(historical_data) / 50.0, 0.9)  # More data = higher confidence
+        
+        return PredictionResult(
+            prediction_id=str(uuid.uuid4()),
+            prediction_type=PredictionType.PROTECTION_EVOLUTION,
+            predicted_value=predicted_changes,
+            confidence=PredictionConfidence.MEDIUM if confidence_score > 0.5 else PredictionConfidence.LOW,
+            confidence_score=confidence_score,
+            factors=evolution_trends,
+            reasoning=f"Protection evolution prediction for {protection_type}",
+            recommendations=self._get_evolution_recommendations(protection_type, predicted_changes)
+        )
+
+    def _analyze_protection_trends(self, protection_type: str, 
+                                 historical_data: List[Dict[str, Any]]) -> Dict[str, float]:
+        """Analyze historical trends in protection evolution."""
+        trends = {
+            'complexity_increase': 0.0,
+            'obfuscation_advancement': 0.0,
+            'anti_analysis_enhancement': 0.0,
+            'virtualization_adoption': 0.0,
+            'cloud_integration': 0.0
         }
+        
+        if not historical_data or len(historical_data) < 2:
+            return trends
+        
+        # Analyze trends over time (simplified analysis)
+        recent_data = historical_data[-10:] if len(historical_data) > 10 else historical_data
+        older_data = historical_data[:len(historical_data)//2] if len(historical_data) > 5 else historical_data[:1]
+        
+        # Calculate trend indicators
+        for trend_name in trends:
+            recent_avg = sum(item.get(trend_name, 0.5) for item in recent_data) / len(recent_data)
+            older_avg = sum(item.get(trend_name, 0.5) for item in older_data) / len(older_data)
+            trends[trend_name] = recent_avg - older_avg
+        
+        return trends
 
-        logger.info("Predictive intelligence engine initialized")
+    def _predict_evolution_changes(self, protection_type: str, 
+                                 trends: Dict[str, float]) -> str:
+        """Predict specific evolutionary changes."""
+        predictions = []
+        
+        if trends['complexity_increase'] > 0.2:
+            predictions.append("increased code complexity and layered protections")
+        
+        if trends['obfuscation_advancement'] > 0.3:
+            predictions.append("advanced obfuscation techniques")
+        
+        if trends['anti_analysis_enhancement'] > 0.2:
+            predictions.append("enhanced anti-analysis measures")
+        
+        if trends['virtualization_adoption'] > 0.3:
+            predictions.append("broader adoption of code virtualization")
+        
+        if trends['cloud_integration'] > 0.2:
+            predictions.append("integration with cloud-based validation")
+        
+        if not predictions:
+            predictions.append("gradual incremental improvements")
+        
+        return f"{protection_type} likely to evolve with: {', '.join(predictions)}"
 
-    @profile_ai_operation("make_prediction")
-    def make_prediction(self, prediction_type: PredictionType,
-                        context: Dict[str, Any]) -> PredictionResult:
-        """Make a prediction of specified type."""
-        # Check cache first
-        cache_key = self._generate_cache_key(prediction_type, context)
-
-        if cache_key in self.prediction_cache:
-            cached_result = self.prediction_cache[cache_key]
-            # Check if cache is still fresh (< 5 minutes)
-            if (datetime.now() - cached_result.timestamp).seconds < 300:
-                self.prediction_stats["cache_hits"] += 1
-                return cached_result
-
-        # Make new prediction
-        if prediction_type == PredictionType.SUCCESS_PROBABILITY:
-            result = self.success_predictor.predict_success_probability(
-                context.get("operation_type", "unknown"), context
-            )
-        elif prediction_type == PredictionType.EXECUTION_TIME:
-            result = self.time_predictor.predict_execution_time(
-                context.get("operation_type", "unknown"), context
-            )
-        elif prediction_type == PredictionType.VULNERABILITY_DISCOVERY:
-            result = self.vulnerability_predictor.predict_vulnerability_likelihood(
-                context)
-        else:
-            # Default prediction for unsupported types
-            result = PredictionResult(
-                prediction_id=str(uuid.uuid4()),
-                prediction_type=prediction_type,
-                predicted_value=0.5,
-                confidence=PredictionConfidence.LOW,
-                confidence_score=0.3,
-                factors={},
-                reasoning="Prediction type not yet supported"
-            )
-
-        # Cache and track
-        self.prediction_cache[cache_key] = result
-        self.prediction_history.append(result)
-        self.prediction_stats["total_predictions"] += 1
-
-        return result
-
-    def _generate_cache_key(self, prediction_type: PredictionType, context: Dict[str, Any]) -> str:
-        """Generate cache key for prediction."""
-        import hashlib
-        key_data = f"{prediction_type.value}_{json.dumps(context, sort_keys=True)}"
-        return hashlib.md5(key_data.encode(), usedforsecurity=False).hexdigest()
-
-    def verify_prediction_accuracy(self, prediction_id: str, actual_value: float):
-        """Record actual outcome to improve accuracy tracking."""
-        # Find prediction
-        prediction = None
-        for pred in self.prediction_history:
-            if pred.prediction_id == prediction_id:
-                prediction = pred
-                break
-
-        if not prediction:
-            logger.warning(
-                f"Prediction {prediction_id} not found for accuracy tracking")
-            return
-
-        # Calculate accuracy
-        error = abs(prediction.predicted_value - actual_value)
-        accuracy = max(0.0, 1.0 - error)
-
-        # Track accuracy by prediction type
-        self.prediction_stats["accuracy_tracking"][prediction.prediction_type.value].append(
-            accuracy)
-
-        # Update model with actual result
-        if prediction.prediction_type == PredictionType.SUCCESS_PROBABILITY:
-            self.success_predictor.model.update_model({
-                "features": prediction.factors,
-                "target": actual_value
-            })
-        elif prediction.prediction_type == PredictionType.EXECUTION_TIME:
-            self.time_predictor.model.update_model({
-                "features": prediction.factors,
-                "target": actual_value
-            })
-
-        logger.info(
-            f"Updated prediction accuracy for {prediction.prediction_type.value}: {accuracy:.3f}")
+    def _get_evolution_recommendations(self, protection_type: str, 
+                                     predicted_changes: str) -> List[str]:
+        """Get recommendations for handling predicted evolution."""
+        return [
+            f"Monitor {protection_type} evolution trends closely",
+            "Adapt analysis techniques for predicted enhancements",
+            "Develop countermeasures for emerging protection features",
+            "Collaborate with research community on new challenges",
+            "Update detection signatures for evolved variants"
+        ]
 
     def get_prediction_analytics(self) -> Dict[str, Any]:
-        """Get analytics about prediction performance."""
+        """Get comprehensive analytics about prediction performance."""
         analytics = {
-            "total_predictions": self.prediction_stats["total_predictions"],
-            "cache_hit_rate": self.prediction_stats["cache_hits"] / max(1, self.prediction_stats["total_predictions"]),
-            "recent_predictions": len(self.prediction_history),
-            "accuracy_by_type": {}
+            'total_predictions': len(self.prediction_history),
+            'prediction_types': self._get_prediction_type_distribution(),
+            'confidence_distribution': self._get_confidence_distribution(),
+            'performance_metrics': {
+                'avg_analysis_time': np.mean(self.performance_metrics['analysis_time']) if self.performance_metrics['analysis_time'] else 0,
+                'cache_efficiency': len(self.prediction_cache) / max(len(self.prediction_history), 1)
+            },
+            'recent_trends': self._analyze_recent_prediction_trends()
         }
-
-        # Calculate average accuracy by prediction type
-        for pred_type, accuracies in self.prediction_stats["accuracy_tracking"].items():
-            if accuracies:
-                analytics["accuracy_by_type"][pred_type] = {
-                    "avg_accuracy": sum(accuracies) / len(accuracies),
-                    "sample_count": len(accuracies),
-                    "recent_accuracy": sum(accuracies[-10:]) / min(10, len(accuracies))
-                }
-
         return analytics
-
-    def get_prediction_insights(self) -> Dict[str, Any]:
-        """Get insights from prediction patterns."""
-        insights = []
-
-        # Analyze recent predictions
-        if len(self.prediction_history) > 10:
-            recent_predictions = list(self.prediction_history)[-10:]
-
-            # Success rate trends
-            success_predictions = [p for p in recent_predictions
-                                   if p.prediction_type == PredictionType.SUCCESS_PROBABILITY]
-            if success_predictions:
-                avg_success = sum(
-                    p.predicted_value for p in success_predictions) / len(success_predictions)
-                if avg_success > 0.8:
-                    insights.append(
-                        "Recent predictions show high success probability")
-                elif avg_success < 0.6:
-                    insights.append(
-                        "Recent predictions show concerning success rates")
-
-            # Time predictions
-            time_predictions = [p for p in recent_predictions
-                                if p.prediction_type == PredictionType.EXECUTION_TIME]
-            if time_predictions:
-                avg_time = sum(
-                    p.predicted_value for p in time_predictions) / len(time_predictions)
-                if avg_time > 30:
-                    insights.append(
-                        "Recent operations predicted to be time-consuming")
-
-        # Confidence analysis
-        high_confidence_predictions = [p for p in self.prediction_history
-                                       if p.confidence_score > 0.8]
-        confidence_rate = len(high_confidence_predictions) / \
-            max(1, len(self.prediction_history))
-
-        if confidence_rate > 0.7:
-            insights.append("High confidence in most predictions")
-        elif confidence_rate < 0.3:
-            insights.append(
-                "Low confidence in predictions - may need more training data")
-
-        return {
-            "insights": insights,
-            "confidence_distribution": self._get_confidence_distribution(),
-            "prediction_type_distribution": self._get_prediction_type_distribution()
-        }
-
-    def _get_confidence_distribution(self) -> Dict[str, int]:
-        """Get distribution of confidence levels."""
-        distribution = defaultdict(int)
-        for prediction in self.prediction_history:
-            distribution[prediction.confidence.value] += 1
-        return dict(distribution)
 
     def _get_prediction_type_distribution(self) -> Dict[str, int]:
         """Get distribution of prediction types."""
@@ -1173,6 +2005,133 @@ class PredictiveIntelligenceEngine:
             distribution[prediction.prediction_type.value] += 1
         return dict(distribution)
 
+    def _get_confidence_distribution(self) -> Dict[str, int]:
+        """Get distribution of confidence levels."""
+        distribution = defaultdict(int)
+        for prediction in self.prediction_history:
+            distribution[prediction.confidence.value] += 1
+        return dict(distribution)
 
-# Global predictive intelligence engine instance
+    def _analyze_recent_prediction_trends(self) -> Dict[str, Any]:
+        """Analyze recent prediction trends."""
+        if len(self.prediction_history) < 10:
+            return {"insufficient_data": True}
+        
+        recent_predictions = list(self.prediction_history)[-50:]
+        
+        trends = {
+            'avg_confidence': np.mean([p.confidence_score for p in recent_predictions]),
+            'anomaly_rate': len([p for p in recent_predictions 
+                               if p.prediction_type == PredictionType.ANOMALY_DETECTION 
+                               and p.predicted_value == "anomalous"]) / len(recent_predictions),
+            'threat_level_distribution': defaultdict(int)
+        }
+        
+        for prediction in recent_predictions:
+            if hasattr(prediction, 'threat_level'):
+                trends['threat_level_distribution'][prediction.threat_level] += 1
+        
+        return trends
+
+    def update_models_with_feedback(self, prediction_id: str, 
+                                  actual_outcome: Dict[str, Any]):
+        """Update models with feedback from actual outcomes."""
+        # Find the prediction
+        target_prediction = None
+        for prediction in self.prediction_history:
+            if prediction.prediction_id == prediction_id:
+                target_prediction = prediction
+                break
+        
+        if not target_prediction:
+            logger.warning(f"Prediction {prediction_id} not found for feedback")
+            return
+        
+        # Update appropriate model based on prediction type
+        try:
+            if target_prediction.prediction_type == PredictionType.PROTECTION_TYPE:
+                self._update_classification_model(target_prediction, actual_outcome)
+            elif target_prediction.prediction_type == PredictionType.VULNERABILITY_DISCOVERY:
+                self._update_vulnerability_model(target_prediction, actual_outcome)
+            elif target_prediction.prediction_type == PredictionType.BYPASS_STRATEGY:
+                self._update_strategy_model(target_prediction, actual_outcome)
+            
+            logger.info(f"Updated models with feedback for prediction {prediction_id}")
+            
+        except Exception as e:
+            logger.error(f"Error updating models with feedback: {e}")
+
+    def _update_classification_model(self, prediction: PredictionResult, 
+                                   outcome: Dict[str, Any]):
+        """Update classification model with feedback."""
+        # This would update the binary classifier with actual results
+        if self.learning_engine:
+            self.learning_engine.record_feedback(
+                prediction.prediction_id,
+                prediction.predicted_value,
+                outcome.get('actual_protection', 'unknown'),
+                prediction.confidence_score
+            )
+
+    def _update_vulnerability_model(self, prediction: PredictionResult, 
+                                  outcome: Dict[str, Any]):
+        """Update vulnerability prediction model with feedback."""
+        # This would update the vulnerability predictor with actual findings
+        if self.learning_engine:
+            self.learning_engine.record_feedback(
+                prediction.prediction_id,
+                prediction.predicted_value,
+                outcome.get('vulnerabilities_found', []),
+                prediction.confidence_score
+            )
+
+    def _update_strategy_model(self, prediction: PredictionResult, 
+                             outcome: Dict[str, Any]):
+        """Update strategy recommendation model with feedback."""
+        # This would update the bypass strategy recommender with success/failure data
+        if self.learning_engine:
+            self.learning_engine.record_feedback(
+                prediction.prediction_id,
+                prediction.predicted_value,
+                outcome.get('strategy_success', False),
+                prediction.confidence_score
+            )
+
+
+# Global singleton instance
 predictive_intelligence = PredictiveIntelligenceEngine()
+
+
+# Public API functions for easy integration
+def predict_protection_type(binary_features: BinaryFeatures) -> PredictionResult:
+    """Predict protection type for a binary."""
+    return predictive_intelligence.binary_classifier.predict_protection(binary_features)
+
+
+def predict_vulnerabilities(binary_features: BinaryFeatures) -> PredictionResult:
+    """Predict vulnerabilities in a binary."""
+    return predictive_intelligence.vulnerability_predictor.predict_vulnerabilities(binary_features)
+
+
+def recommend_bypass_strategy(protection_type: str, binary_features: BinaryFeatures) -> PredictionResult:
+    """Recommend bypass strategy for a protection type."""
+    return predictive_intelligence.bypass_recommender.recommend_bypass_strategy(
+        protection_type, binary_features
+    )
+
+
+def detect_anomalies(binary_features: BinaryFeatures) -> PredictionResult:
+    """Detect anomalous protection patterns."""
+    return predictive_intelligence.anomaly_detector.detect_anomaly(binary_features)
+
+
+def get_threat_intelligence(protection_type: str, binary_features: BinaryFeatures) -> PredictionResult:
+    """Get threat intelligence for a protection type."""
+    return predictive_intelligence.threat_intelligence.get_threat_intelligence(
+        protection_type, binary_features
+    )
+
+
+def analyze_binary_comprehensive(binary_path: str, binary_features: BinaryFeatures) -> Dict[str, PredictionResult]:
+    """Perform comprehensive predictive analysis on a binary."""
+    return predictive_intelligence.analyze_binary_comprehensive(binary_path, binary_features)

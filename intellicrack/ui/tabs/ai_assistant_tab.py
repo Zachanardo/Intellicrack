@@ -23,6 +23,7 @@ QSlider,
 QSpinBox,
 QSplitter,
 QTableWidget,
+QTableWidgetItem,
 QTabWidget,
 QTextEdit,
 QVBoxLayout,
@@ -316,6 +317,7 @@ class AIAssistantTab(BaseTab):
                 "Debugging Script",
             ]
         )
+        self.script_type_combo.currentTextChanged.connect(self.on_script_type_changed)
         type_layout.addWidget(self.script_type_combo)
 
         # Target specification
@@ -323,6 +325,7 @@ class AIAssistantTab(BaseTab):
         target_spec_layout.addWidget(QLabel("Target:"))
         self.script_target_edit = QLineEdit()
         self.script_target_edit.setPlaceholderText("Function name, API, or description")
+        self.script_target_edit.textChanged.connect(self.on_script_target_changed)
         target_spec_layout.addWidget(self.script_target_edit)
 
         script_type_layout.addLayout(type_layout)
@@ -366,6 +369,7 @@ class AIAssistantTab(BaseTab):
             "Describe specific requirements for the script:\n- Hook specific functions\n- Bypass certain protections\n- Extract specific data\n- Custom behavior requirements"
         )
         self.requirements_edit.setMaximumHeight(100)
+        self.requirements_edit.textChanged.connect(self.on_requirements_changed)
         requirements_layout.addWidget(self.requirements_edit)
 
         # Generation Controls
@@ -489,6 +493,193 @@ class AIAssistantTab(BaseTab):
 
         return tab
 
+    def create_live_preview_tab(self):
+        """Create live script preview tab with real-time generation"""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        
+        # Preview controls
+        controls_group = QGroupBox("Live Preview Controls")
+        controls_layout = QHBoxLayout(controls_group)
+        
+        # Auto-preview toggle
+        self.auto_preview_cb = QCheckBox("Auto Preview")
+        self.auto_preview_cb.setChecked(True)
+        self.auto_preview_cb.toggled.connect(self.toggle_auto_preview)
+        
+        # Refresh preview button
+        self.refresh_preview_btn = QPushButton("Refresh Preview")
+        self.refresh_preview_btn.clicked.connect(self.refresh_live_preview)
+        self.refresh_preview_btn.setStyleSheet("font-weight: bold; color: blue;")
+        
+        # Preview mode selector
+        preview_mode_label = QLabel("Preview Mode:")
+        self.preview_mode_combo = QComboBox()
+        self.preview_mode_combo.addItems(["Syntax Highlighted", "Raw Code", "Execution Flow"])
+        self.preview_mode_combo.currentTextChanged.connect(self.update_preview_mode)
+        
+        controls_layout.addWidget(self.auto_preview_cb)
+        controls_layout.addWidget(self.refresh_preview_btn)
+        controls_layout.addStretch()
+        controls_layout.addWidget(preview_mode_label)
+        controls_layout.addWidget(self.preview_mode_combo)
+        
+        # Live preview editor
+        preview_group = QGroupBox("Live Script Preview")
+        preview_layout = QVBoxLayout(preview_group)
+        
+        # Preview status
+        self.preview_status_label = QLabel("Ready for preview")
+        self.preview_status_label.setStyleSheet("color: #666; font-style: italic;")
+        
+        # Preview text editor with syntax highlighting
+        self.live_preview_editor = QTextEdit()
+        self.live_preview_editor.setReadOnly(True)
+        self.live_preview_editor.setFont(QFont("Consolas", 10))
+        self.live_preview_editor.setStyleSheet("""
+            QTextEdit {
+                background-color: #1e1e1e;
+                color: #d4d4d4;
+                border: 1px solid #3c3c3c;
+                border-radius: 4px;
+            }
+        """)
+        
+        # Preview metrics
+        metrics_layout = QHBoxLayout()
+        self.preview_lines_label = QLabel("Lines: 0")
+        self.preview_size_label = QLabel("Size: 0 bytes")
+        self.preview_lang_label = QLabel("Language: Unknown")
+        
+        metrics_layout.addWidget(self.preview_lines_label)
+        metrics_layout.addWidget(self.preview_size_label)
+        metrics_layout.addWidget(self.preview_lang_label)
+        metrics_layout.addStretch()
+        
+        preview_layout.addWidget(self.preview_status_label)
+        preview_layout.addWidget(self.live_preview_editor)
+        preview_layout.addLayout(metrics_layout)
+        
+        # Generation progress
+        self.preview_progress = QProgressBar()
+        self.preview_progress.setVisible(False)
+        
+        layout.addWidget(controls_group)
+        layout.addWidget(preview_group)
+        layout.addWidget(self.preview_progress)
+        
+        # Initialize preview timer for auto-refresh
+        self.preview_timer = QTimer()
+        self.preview_timer.setSingleShot(True)
+        self.preview_timer.timeout.connect(self.auto_refresh_preview)
+        
+        return widget
+
+    def create_model_comparison_tab(self):
+        """Create multi-model comparison tab"""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        
+        # Comparison controls
+        controls_group = QGroupBox("Multi-Model Comparison")
+        controls_layout = QVBoxLayout(controls_group)
+        
+        # Model selection for comparison
+        models_selection_layout = QHBoxLayout()
+        
+        models_selection_layout.addWidget(QLabel("Select Models to Compare:"))
+        
+        # Available models checkboxes
+        self.comparison_models_layout = QHBoxLayout()
+        self.comparison_model_checkboxes = {}
+        
+        # Add default model options
+        default_models = ["GPT-4", "GPT-3.5", "Claude-3", "Gemini", "Local Model"]
+        for model in default_models:
+            checkbox = QCheckBox(model)
+            self.comparison_model_checkboxes[model] = checkbox
+            self.comparison_models_layout.addWidget(checkbox)
+        
+        models_selection_layout.addLayout(self.comparison_models_layout)
+        
+        # Comparison controls
+        comparison_controls_layout = QHBoxLayout()
+        
+        self.compare_generate_btn = QPushButton("Generate with Selected Models")
+        self.compare_generate_btn.clicked.connect(self.generate_with_multiple_models)
+        self.compare_generate_btn.setStyleSheet("font-weight: bold; color: green;")
+        
+        self.clear_comparison_btn = QPushButton("Clear Comparison")
+        self.clear_comparison_btn.clicked.connect(self.clear_model_comparison)
+        
+        comparison_controls_layout.addWidget(self.compare_generate_btn)
+        comparison_controls_layout.addWidget(self.clear_comparison_btn)
+        comparison_controls_layout.addStretch()
+        
+        controls_layout.addLayout(models_selection_layout)
+        controls_layout.addLayout(comparison_controls_layout)
+        
+        # Comparison results
+        results_group = QGroupBox("Comparison Results")
+        results_layout = QVBoxLayout(results_group)
+        
+        # Model results tabs
+        self.comparison_results_tabs = QTabWidget()
+        self.comparison_results_tabs.setTabPosition(QTabWidget.TabPosition.North)
+        
+        # Analysis summary tab
+        self.comparison_summary_widget = QWidget()
+        summary_layout = QVBoxLayout(self.comparison_summary_widget)
+        
+        # Summary table
+        self.comparison_summary_table = QTableWidget()
+        self.comparison_summary_table.setColumnCount(5)
+        self.comparison_summary_table.setHorizontalHeaderLabels([
+            "Model", "Generation Time", "Code Quality", "Lines", "Score"
+        ])
+        self.comparison_summary_table.horizontalHeader().setStretchLastSection(True)
+        
+        summary_layout.addWidget(self.comparison_summary_table)
+        
+        self.comparison_results_tabs.addTab(self.comparison_summary_widget, "Summary")
+        
+        results_layout.addWidget(self.comparison_results_tabs)
+        
+        # Comparison metrics
+        metrics_group = QGroupBox("Comparison Metrics")
+        metrics_layout = QVBoxLayout(metrics_group)
+        
+        # Metrics display
+        metrics_display_layout = QHBoxLayout()
+        
+        self.best_model_label = QLabel("Best Model: None")
+        self.best_model_label.setStyleSheet("font-weight: bold; color: green;")
+        
+        self.avg_time_label = QLabel("Avg Generation Time: 0s")
+        self.total_comparisons_label = QLabel("Total Comparisons: 0")
+        
+        metrics_display_layout.addWidget(self.best_model_label)
+        metrics_display_layout.addWidget(self.avg_time_label)
+        metrics_display_layout.addWidget(self.total_comparisons_label)
+        metrics_display_layout.addStretch()
+        
+        metrics_layout.addLayout(metrics_display_layout)
+        
+        layout.addWidget(controls_group)
+        layout.addWidget(results_group)
+        layout.addWidget(metrics_group)
+        
+        # Initialize comparison data
+        self.comparison_results = {}
+        self.comparison_metrics = {
+            'total_comparisons': 0,
+            'generation_times': [],
+            'best_model': None,
+            'best_score': 0.0
+        }
+        
+        return widget
+
     def create_results_panel(self):
         """Create the AI results and chat panel"""
         panel = QWidget()
@@ -568,6 +759,14 @@ class AIAssistantTab(BaseTab):
         scripts_layout.addLayout(script_controls_layout)
 
         self.results_tabs.addTab(self.generated_scripts_widget, "Generated Scripts")
+
+        # Live Script Preview Tab
+        self.live_preview_widget = self.create_live_preview_tab()
+        self.results_tabs.addTab(self.live_preview_widget, "Live Preview")
+
+        # Multi-Model Comparison Tab
+        self.model_comparison_widget = self.create_model_comparison_tab()
+        self.results_tabs.addTab(self.model_comparison_widget, "Model Comparison")
 
         # Model Performance
         self.performance_widget = QWidget()
@@ -2439,6 +2638,342 @@ function performAnalysis() {{
 main();
 """
         return script_template
+
+    # Live Preview Methods
+    def toggle_auto_preview(self, enabled):
+        """Toggle auto preview functionality"""
+        if enabled:
+            self.preview_status_label.setText("Auto preview enabled")
+            self.preview_status_label.setStyleSheet("color: green; font-style: italic;")
+            # Start preview if we have data
+            if hasattr(self, 'script_target_edit') and self.script_target_edit.text().strip():
+                self.start_live_preview()
+        else:
+            self.preview_status_label.setText("Auto preview disabled")
+            self.preview_status_label.setStyleSheet("color: #666; font-style: italic;")
+            self.preview_timer.stop()
+
+    def refresh_live_preview(self):
+        """Manually refresh the live preview"""
+        self.start_live_preview()
+
+    def start_live_preview(self):
+        """Start live preview generation"""
+        if not hasattr(self, 'script_target_edit'):
+            return
+            
+        target = self.script_target_edit.text().strip()
+        if not target:
+            self.live_preview_editor.setPlainText("// Enter a target to see live preview")
+            self.update_preview_metrics("", "Unknown")
+            return
+
+        script_type = self.script_type_combo.currentText() if hasattr(self, 'script_type_combo') else "Frida Hook Script"
+        requirements = self.requirements_edit.toPlainText().strip() if hasattr(self, 'requirements_edit') else ""
+
+        self.preview_status_label.setText("Generating preview...")
+        self.preview_status_label.setStyleSheet("color: orange; font-style: italic;")
+        self.preview_progress.setVisible(True)
+        self.preview_progress.setValue(0)
+
+        try:
+            # Generate preview content
+            preview_content = self._generate_preview_content(script_type, target, requirements)
+            
+            # Update preview editor
+            self.live_preview_editor.setPlainText(preview_content)
+            
+            # Update metrics
+            self.update_preview_metrics(preview_content, self._detect_language(script_type))
+            
+            # Update status
+            self.preview_status_label.setText("Preview updated successfully")
+            self.preview_status_label.setStyleSheet("color: green; font-style: italic;")
+            self.preview_progress.setValue(100)
+            
+            # Hide progress after delay
+            QTimer.singleShot(1000, lambda: self.preview_progress.setVisible(False))
+            
+        except Exception as e:
+            self.preview_status_label.setText(f"Preview failed: {str(e)}")
+            self.preview_status_label.setStyleSheet("color: red; font-style: italic;")
+            self.preview_progress.setVisible(False)
+
+    def _generate_preview_content(self, script_type, target, requirements):
+        """Generate preview content for live preview"""
+        # Use the same generation logic as the main script generator
+        return self._generate_script_content(script_type, target, requirements)
+
+    def update_preview_mode(self, mode):
+        """Update preview display mode"""
+        current_content = self.live_preview_editor.toPlainText()
+        
+        if mode == "Syntax Highlighted":
+            # Apply syntax highlighting (basic implementation)
+            self.live_preview_editor.setStyleSheet("""
+                QTextEdit {
+                    background-color: #1e1e1e;
+                    color: #d4d4d4;
+                    border: 1px solid #3c3c3c;
+                    border-radius: 4px;
+                }
+            """)
+        elif mode == "Raw Code":
+            # Plain text mode
+            self.live_preview_editor.setStyleSheet("""
+                QTextEdit {
+                    background-color: #ffffff;
+                    color: #000000;
+                    border: 1px solid #cccccc;
+                    border-radius: 4px;
+                }
+            """)
+        elif mode == "Execution Flow":
+            # Add execution flow comments
+            if current_content and not current_content.startswith("// EXECUTION FLOW"):
+                flow_content = "// EXECUTION FLOW ANALYSIS\n// This preview shows the logical flow of execution\n\n" + current_content
+                self.live_preview_editor.setPlainText(flow_content)
+
+    def update_preview_metrics(self, content, language):
+        """Update preview metrics display"""
+        lines = len(content.split('\n')) if content else 0
+        size = len(content.encode('utf-8')) if content else 0
+        
+        self.preview_lines_label.setText(f"Lines: {lines}")
+        self.preview_size_label.setText(f"Size: {size} bytes")
+        self.preview_lang_label.setText(f"Language: {language}")
+
+    def _detect_language(self, script_type):
+        """Detect programming language from script type"""
+        language_map = {
+            "Frida Hook Script": "JavaScript",
+            "Ghidra Analysis Script": "Java",
+            "Python Automation": "Python",
+            "API Hook Script": "C/C++",
+            "Memory Scanner": "JavaScript",
+            "Debugging Script": "JavaScript"
+        }
+        return language_map.get(script_type, "Unknown")
+
+    def auto_refresh_preview(self):
+        """Auto refresh preview after timer delay"""
+        if self.auto_preview_cb.isChecked():
+            self.start_live_preview()
+
+    def on_script_target_changed(self, text):
+        """Handle script target text changes for live preview"""
+        if hasattr(self, 'auto_preview_cb') and self.auto_preview_cb.isChecked():
+            # Delay the preview update to avoid too frequent updates
+            self.preview_timer.stop()
+            self.preview_timer.start(500)  # 500ms delay
+
+    def on_script_type_changed(self, script_type):
+        """Handle script type changes for live preview"""
+        if hasattr(self, 'auto_preview_cb') and self.auto_preview_cb.isChecked():
+            self.start_live_preview()
+
+    def on_requirements_changed(self):
+        """Handle requirements text changes for live preview"""
+        if hasattr(self, 'auto_preview_cb') and self.auto_preview_cb.isChecked():
+            # Delay the preview update to avoid too frequent updates while typing
+            self.preview_timer.stop()
+            self.preview_timer.start(1000)  # 1 second delay for text area
+
+    # Multi-Model Comparison Methods
+    def generate_with_multiple_models(self):
+        """Generate scripts with multiple selected models"""
+        # Get selected models
+        selected_models = []
+        for model_name, checkbox in self.comparison_model_checkboxes.items():
+            if checkbox.isChecked():
+                selected_models.append(model_name)
+
+        if not selected_models:
+            QMessageBox.warning(self, "No Models Selected", "Please select at least one model for comparison.")
+            return
+
+        if not hasattr(self, 'script_target_edit') or not self.script_target_edit.text().strip():
+            QMessageBox.warning(self, "No Target", "Please specify a target for script generation.")
+            return
+
+        target = self.script_target_edit.text().strip()
+        script_type = self.script_type_combo.currentText() if hasattr(self, 'script_type_combo') else "Frida Hook Script"
+        requirements = self.requirements_edit.toPlainText().strip() if hasattr(self, 'requirements_edit') else ""
+
+        # Clear existing comparison results tabs (except summary)
+        while self.comparison_results_tabs.count() > 1:
+            self.comparison_results_tabs.removeTab(1)
+
+        self.comparison_results = {}
+        generation_times = []
+
+        # Generate with each selected model
+        for model_name in selected_models:
+            try:
+                start_time = datetime.now()
+                
+                # Generate script with current model (simulate different models)
+                script_content = self._generate_script_with_model(model_name, script_type, target, requirements)
+                
+                end_time = datetime.now()
+                generation_time = (end_time - start_time).total_seconds()
+                generation_times.append(generation_time)
+
+                # Analyze script quality
+                quality_score = self._analyze_script_quality(script_content)
+                
+                # Store results
+                self.comparison_results[model_name] = {
+                    'content': script_content,
+                    'generation_time': generation_time,
+                    'quality_score': quality_score,
+                    'lines': len(script_content.split('\n')),
+                    'target': target,
+                    'type': script_type
+                }
+
+                # Add result tab
+                self._add_comparison_result_tab(model_name, script_content, generation_time, quality_score)
+
+            except Exception as e:
+                self.comparison_results[model_name] = {
+                    'error': str(e),
+                    'generation_time': 0,
+                    'quality_score': 0,
+                    'lines': 0
+                }
+
+        # Update summary table
+        self._update_comparison_summary()
+        
+        # Update metrics
+        self._update_comparison_metrics(generation_times)
+
+    def _generate_script_with_model(self, model_name, script_type, target, requirements):
+        """Generate script simulating different AI models"""
+        # This is a simulation - in practice, you'd use different model APIs
+        base_content = self._generate_script_content(script_type, target, requirements)
+        
+        # Add model-specific variations
+        model_variations = {
+            "GPT-4": "// Generated with GPT-4 - Enhanced reasoning and optimization\n",
+            "GPT-3.5": "// Generated with GPT-3.5 - Fast and efficient generation\n",
+            "Claude-3": "// Generated with Claude-3 - Thoughtful and detailed approach\n",
+            "Gemini": "// Generated with Gemini - Multi-modal analysis capabilities\n",
+            "Local Model": "// Generated with Local Model - Privacy-focused generation\n"
+        }
+        
+        variation = model_variations.get(model_name, f"// Generated with {model_name}\n")
+        return variation + base_content
+
+    def _analyze_script_quality(self, script_content):
+        """Analyze script quality and return a score"""
+        score = 50.0  # Base score
+        
+        # Check for comments
+        if "///" in script_content or "/*" in script_content:
+            score += 10
+            
+        # Check for error handling
+        if "try" in script_content and "catch" in script_content:
+            score += 15
+            
+        # Check for logging
+        if "console.log" in script_content or "printf" in script_content:
+            score += 10
+            
+        # Check script length (not too short, not too long)
+        lines = len(script_content.split('\n'))
+        if 20 <= lines <= 100:
+            score += 15
+        elif lines > 10:
+            score += 5
+            
+        # Check for function structure
+        if "function" in script_content or "def " in script_content:
+            score += 10
+            
+        return min(score, 100.0)
+
+    def _add_comparison_result_tab(self, model_name, content, generation_time, quality_score):
+        """Add a tab for comparison result"""
+        tab_widget = QWidget()
+        tab_layout = QVBoxLayout(tab_widget)
+        
+        # Model info
+        info_layout = QHBoxLayout()
+        info_layout.addWidget(QLabel(f"Model: {model_name}"))
+        info_layout.addWidget(QLabel(f"Time: {generation_time:.2f}s"))
+        info_layout.addWidget(QLabel(f"Quality: {quality_score:.1f}/100"))
+        info_layout.addStretch()
+        
+        # Script content
+        content_editor = QTextEdit()
+        content_editor.setReadOnly(True)
+        content_editor.setPlainText(content)
+        content_editor.setFont(QFont("Consolas", 9))
+        
+        tab_layout.addLayout(info_layout)
+        tab_layout.addWidget(content_editor)
+        
+        self.comparison_results_tabs.addTab(tab_widget, model_name)
+
+    def _update_comparison_summary(self):
+        """Update the comparison summary table"""
+        self.comparison_summary_table.setRowCount(len(self.comparison_results))
+        
+        for row, (model_name, result) in enumerate(self.comparison_results.items()):
+            if 'error' in result:
+                self.comparison_summary_table.setItem(row, 0, QTableWidgetItem(model_name))
+                self.comparison_summary_table.setItem(row, 1, QTableWidgetItem("Error"))
+                self.comparison_summary_table.setItem(row, 2, QTableWidgetItem("Failed"))
+                self.comparison_summary_table.setItem(row, 3, QTableWidgetItem("0"))
+                self.comparison_summary_table.setItem(row, 4, QTableWidgetItem("0.0"))
+            else:
+                self.comparison_summary_table.setItem(row, 0, QTableWidgetItem(model_name))
+                self.comparison_summary_table.setItem(row, 1, QTableWidgetItem(f"{result['generation_time']:.2f}s"))
+                self.comparison_summary_table.setItem(row, 2, QTableWidgetItem(f"{result['quality_score']:.1f}/100"))
+                self.comparison_summary_table.setItem(row, 3, QTableWidgetItem(str(result['lines'])))
+                self.comparison_summary_table.setItem(row, 4, QTableWidgetItem(f"{result['quality_score']:.1f}"))
+
+    def _update_comparison_metrics(self, generation_times):
+        """Update comparison metrics display"""
+        if generation_times:
+            avg_time = sum(generation_times) / len(generation_times)
+            self.avg_time_label.setText(f"Avg Generation Time: {avg_time:.2f}s")
+        
+        # Find best model
+        best_model = None
+        best_score = 0
+        
+        for model_name, result in self.comparison_results.items():
+            if 'quality_score' in result and result['quality_score'] > best_score:
+                best_score = result['quality_score']
+                best_model = model_name
+        
+        if best_model:
+            self.best_model_label.setText(f"Best Model: {best_model} ({best_score:.1f})")
+            self.comparison_metrics['best_model'] = best_model
+            self.comparison_metrics['best_score'] = best_score
+        
+        self.comparison_metrics['total_comparisons'] += 1
+        self.total_comparisons_label.setText(f"Total Comparisons: {self.comparison_metrics['total_comparisons']}")
+
+    def clear_model_comparison(self):
+        """Clear all comparison results"""
+        # Clear result tabs (except summary)
+        while self.comparison_results_tabs.count() > 1:
+            self.comparison_results_tabs.removeTab(1)
+        
+        # Clear summary table
+        self.comparison_summary_table.setRowCount(0)
+        
+        # Reset metrics
+        self.best_model_label.setText("Best Model: None")
+        self.avg_time_label.setText("Avg Generation Time: 0s")
+        
+        # Clear results data
+        self.comparison_results = {}
 
     def send_chat_message(self):
         """Send chat message to AI assistant"""

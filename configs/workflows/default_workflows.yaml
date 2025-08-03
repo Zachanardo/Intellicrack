@@ -1,0 +1,434 @@
+workflows:
+  - workflow_id: "vmprotect_ultimate_bypass"
+    name: "VMProtect Ultimate Bypass"
+    description: "Complete bypass workflow for VMProtect 3.x protected binaries"
+    version: "1.0"
+    created_by: "Intellicrack"
+    protection_types: ["vmprotect", "virtualization", "anti_debug"]
+    rollback_enabled: true
+    max_execution_time: 3600
+    global_config:
+      analysis_depth: "deep"
+      stealth_mode: true
+      preserve_functionality: true
+    
+    tasks:
+      - task_id: "memory_analysis"
+        task_type: "memory_analysis"
+        name: "Memory Structure Analysis"
+        description: "Analyze binary memory layout and protection mechanisms"
+        priority: "HIGH"
+        dependencies: []
+        timeout: 120
+        retry_count: 2
+        required: true
+        parameters:
+          analysis_type: "comprehensive"
+          detect_packers: true
+      
+      - task_id: "anti_analysis_bypass"
+        task_type: "anti_analysis_bypass"
+        name: "Anti-Analysis Bypass"
+        description: "Bypass anti-debugging and analysis detection"
+        priority: "CRITICAL"
+        dependencies: ["memory_analysis"]
+        timeout: 60
+        retry_count: 3
+        required: true
+        parameters:
+          bypass_techniques: ["titan_hide", "peb_masking", "heap_flags"]
+      
+      - task_id: "stealth_setup"
+        task_type: "stealth_setup"
+        name: "Stealth Environment Setup"
+        description: "Configure stealth techniques for evasion"
+        priority: "HIGH"
+        dependencies: ["anti_analysis_bypass"]
+        timeout: 90
+        retry_count: 2
+        required: false
+        parameters:
+          stealth_config:
+            spoof_hardware: true
+            ssl_interception: true
+            wmi_spoofing: true
+      
+      - task_id: "unpacking"
+        task_type: "unpacking"
+        name: "VMProtect Unpacking"
+        description: "Dynamic unpacking of VMProtect protected binary"
+        priority: "CRITICAL"
+        dependencies: ["stealth_setup"]
+        timeout: 300
+        retry_count: 2
+        required: true
+        parameters:
+          unpacking_method: "dynamic_first"
+          use_frida: true
+          detect_vm_handlers: true
+      
+      - task_id: "vm_devirtualization"
+        task_type: "vm_devirtualization"
+        name: "VM Code Translation"
+        description: "Translate virtualized code back to native x86"
+        priority: "HIGH"
+        dependencies: ["unpacking"]
+        timeout: 600
+        retry_count: 1
+        required: false
+        parameters:
+          vm_entry: 0x401000
+          translation_depth: "complete"
+          output_format: "assembly"
+      
+      - task_id: "import_reconstruction"
+        task_type: "import_reconstruction"
+        name: "Import Table Reconstruction"
+        description: "Rebuild damaged import table using Scylla algorithm"
+        priority: "MEDIUM"
+        dependencies: ["unpacking"]
+        timeout: 180
+        retry_count: 2
+        required: false
+        parameters:
+          use_scylla: true
+          resolve_dynamically: true
+      
+      - task_id: "license_bypass"
+        task_type: "license_bypass"
+        name: "License Protection Bypass"
+        description: "Bypass license validation mechanisms"
+        priority: "MEDIUM"
+        dependencies: ["import_reconstruction"]
+        timeout: 240
+        retry_count: 3
+        required: false
+        conditional: "target_has_license == true"
+        parameters:
+          use_taint_tracking: true
+          license_keys: []
+
+  - workflow_id: "themida_complete_crack"
+    name: "Themida Complete Crack"
+    description: "Full crack workflow for Themida 3.x protected applications"
+    version: "1.0"
+    created_by: "Intellicrack"
+    protection_types: ["themida", "fish_vm", "anti_debug", "licensing"]
+    rollback_enabled: true
+    max_execution_time: 2400
+    global_config:
+      target_platform: "windows_x64"
+      preserve_resources: true
+      create_backup: true
+    
+    tasks:
+      - task_id: "initial_analysis"
+        task_type: "memory_analysis"
+        name: "Themida Analysis"
+        description: "Analyze Themida protection layers"
+        priority: "HIGH"
+        dependencies: []
+        timeout: 150
+        retry_count: 2
+        required: true
+        parameters:
+          detect_fish_vm: true
+          analyze_mutations: true
+      
+      - task_id: "stealth_environment"
+        task_type: "stealth_setup"
+        name: "Advanced Stealth Setup"
+        description: "Configure comprehensive stealth environment"
+        priority: "CRITICAL"
+        dependencies: ["initial_analysis"]
+        timeout: 120
+        retry_count: 1
+        required: true
+        parameters:
+          stealth_config:
+            process_hollowing: true
+            api_emulation: true
+            network_bypass: true
+            registry_virtualization: true
+      
+      - task_id: "anti_debug_bypass"
+        task_type: "anti_analysis_bypass"
+        name: "Themida Anti-Debug Bypass"
+        description: "Bypass Themida's sophisticated anti-debugging"
+        priority: "CRITICAL"
+        dependencies: ["stealth_environment"]
+        timeout: 180
+        retry_count: 3
+        required: true
+        parameters:
+          themida_specific: true
+          bypass_kernel_checks: true
+      
+      - task_id: "fish_vm_unpacking"
+        task_type: "unpacking"
+        name: "Fish VM Unpacking"
+        description: "Unpack Themida's Fish virtual machine"
+        priority: "CRITICAL"
+        dependencies: ["anti_debug_bypass"]
+        timeout: 450
+        retry_count: 2
+        required: true
+        parameters:
+          vm_type: "themida_fish"
+          extract_handlers: true
+      
+      - task_id: "fish_devirtualization"
+        task_type: "vm_devirtualization"
+        name: "Fish VM Translation"
+        description: "Translate Fish VM code to native instructions"
+        priority: "HIGH"
+        dependencies: ["fish_vm_unpacking"]
+        timeout: 600
+        retry_count: 1
+        required: false
+        parameters:
+          vm_type: "themida_fish"
+          pattern_matching: true
+      
+      - task_id: "mutation_reversal"
+        task_type: "file_patching"
+        name: "Code Mutation Reversal"
+        description: "Reverse Themida's code mutations"
+        priority: "MEDIUM"
+        dependencies: ["fish_devirtualization"]
+        timeout: 300
+        retry_count: 2
+        required: false
+        parameters:
+          mutation_types: ["arithmetic", "boolean", "control_flow"]
+      
+      - task_id: "license_crack"
+        task_type: "license_bypass"
+        name: "License System Crack"
+        description: "Crack Themida-protected license system"
+        priority: "HIGH"
+        dependencies: ["mutation_reversal"]
+        timeout: 360
+        retry_count: 3
+        required: false
+        parameters:
+          advanced_taint_tracking: true
+          certificate_bypass: true
+      
+      - task_id: "import_fixing"
+        task_type: "import_reconstruction"
+        name: "Import Table Fixing"
+        description: "Fix corrupted import table"
+        priority: "MEDIUM"
+        dependencies: ["license_crack"]
+        timeout: 120
+        retry_count: 2
+        required: false
+        parameters:
+          themida_specific: true
+
+  - workflow_id: "denuvo_ultimate_crack"
+    name: "Denuvo Ultimate Crack"
+    description: "Advanced crack workflow for Denuvo protected games"
+    version: "1.0"
+    created_by: "Intellicrack"
+    protection_types: ["denuvo", "anti_tamper", "licensing", "online_activation"]
+    rollback_enabled: true
+    max_execution_time: 4800
+    global_config:
+      game_engine: "auto_detect"
+      preserve_achievements: true
+      offline_mode: true
+    
+    tasks:
+      - task_id: "denuvo_analysis"
+        task_type: "memory_analysis"
+        name: "Denuvo Protection Analysis"
+        description: "Deep analysis of Denuvo protection mechanisms"
+        priority: "CRITICAL"
+        dependencies: []
+        timeout: 240
+        retry_count: 2
+        required: true
+        parameters:
+          analyze_triggers: true
+          map_activation_flow: true
+          detect_obfuscation: true
+      
+      - task_id: "network_interception"
+        task_type: "network_bypass"
+        name: "Denuvo Server Bypass"
+        description: "Intercept and bypass Denuvo server communication"
+        priority: "CRITICAL"
+        dependencies: ["denuvo_analysis"]
+        timeout: 180
+        retry_count: 3
+        required: true
+        parameters:
+          license_servers: ["denuvo.com", "codefusion.technology"]
+          ssl_bypass: true
+      
+      - task_id: "advanced_stealth"
+        task_type: "stealth_setup"
+        name: "Denuvo Evasion Setup"
+        description: "Configure advanced evasion for Denuvo detection"
+        priority: "CRITICAL"
+        dependencies: ["network_interception"]
+        timeout: 150
+        retry_count: 2
+        required: true
+        parameters:
+          stealth_config:
+            hardware_spoofing: true
+            process_hiding: true
+            dll_injection: true
+            api_emulation: true
+      
+      - task_id: "trigger_bypass"
+        task_type: "api_hooking"
+        name: "Denuvo Trigger Bypass"
+        description: "Hook and bypass Denuvo activation triggers"
+        priority: "CRITICAL"
+        dependencies: ["advanced_stealth"]
+        timeout: 300
+        retry_count: 3
+        required: true
+        parameters:
+          hooks:
+            - dll_name: "denuvo64.dll"
+              api_name: "CheckActivation"
+            - dll_name: "kernel32.dll"
+              api_name: "GetVolumeInformationW"
+            - dll_name: "advapi32.dll"
+              api_name: "RegQueryValueExW"
+      
+      - task_id: "license_emulation"
+        task_type: "license_bypass"
+        name: "License Emulation"
+        description: "Emulate valid Denuvo license"
+        priority: "HIGH"
+        dependencies: ["trigger_bypass"]
+        timeout: 420
+        retry_count: 2
+        required: true
+        parameters:
+          emulation_mode: "full"
+          generate_tickets: true
+          machine_fingerprint: "spoofed"
+      
+      - task_id: "unpacking_denuvo"
+        task_type: "unpacking"
+        name: "Denuvo Binary Unpacking"
+        description: "Unpack Denuvo protected executable"
+        priority: "HIGH"
+        dependencies: ["license_emulation"]
+        timeout: 600
+        retry_count: 2
+        required: true
+        parameters:
+          use_dumps: true
+          preserve_resources: true
+      
+      - task_id: "remove_protection"
+        task_type: "file_patching"
+        name: "Protection Removal"
+        description: "Remove Denuvo protection from binary"
+        priority: "MEDIUM"
+        dependencies: ["unpacking_denuvo"]
+        timeout: 240
+        retry_count: 2
+        required: false
+        parameters:
+          patches:
+            - description: "NOP Denuvo initialization"
+              offset: "auto_detect"
+              data: "90909090"
+            - description: "Skip activation check"
+              offset: "auto_detect"
+              data: "B801000000C3"
+
+  - workflow_id: "generic_software_crack"
+    name: "Generic Software Crack"
+    description: "General purpose software cracking workflow"
+    version: "1.0"
+    created_by: "Intellicrack"
+    protection_types: ["unknown"]
+    rollback_enabled: true
+    max_execution_time: 1800
+    global_config:
+      adaptation_mode: true
+      auto_detect_protection: true
+    
+    tasks:
+      - task_id: "protection_detection"
+        task_type: "memory_analysis"
+        name: "Protection Detection"
+        description: "Automatically detect protection mechanisms"
+        priority: "HIGH"
+        dependencies: []
+        timeout: 90
+        retry_count: 1
+        required: true
+        parameters:
+          detection_mode: "comprehensive"
+          signature_database: "latest"
+      
+      - task_id: "basic_stealth"
+        task_type: "stealth_setup"
+        name: "Basic Stealth Setup"
+        description: "Configure basic stealth techniques"
+        priority: "MEDIUM"
+        dependencies: ["protection_detection"]
+        timeout: 60
+        retry_count: 1
+        required: false
+        parameters:
+          stealth_config:
+            basic_anti_debug: true
+            simple_api_hooks: true
+      
+      - task_id: "standard_unpacking"
+        task_type: "unpacking"
+        name: "Standard Unpacking"
+        description: "Attempt standard unpacking techniques"
+        priority: "HIGH"
+        dependencies: ["basic_stealth"]
+        timeout: 180
+        retry_count: 2
+        required: false
+        parameters:
+          method: "adaptive"
+          fallback_enabled: true
+      
+      - task_id: "license_analysis"
+        task_type: "license_bypass"
+        name: "License System Analysis"
+        description: "Analyze and bypass license protection"
+        priority: "MEDIUM"
+        dependencies: ["standard_unpacking"]
+        timeout: 240
+        retry_count: 2
+        required: false
+        parameters:
+          analysis_only: false
+          common_bypasses: true
+      
+      - task_id: "registry_patches"
+        task_type: "registry_modification"
+        name: "Registry Modifications"
+        description: "Apply common registry-based cracks"
+        priority: "LOW"
+        dependencies: ["license_analysis"]
+        timeout: 30
+        retry_count: 1
+        required: false
+        parameters:
+          registry_operations:
+            - type: "set_value"
+              key_path: "HKEY_CURRENT_USER\\Software\\[TARGET]"
+              value_name: "Licensed"
+              value_data: "1"
+            - type: "set_value"
+              key_path: "HKEY_CURRENT_USER\\Software\\[TARGET]"
+              value_name: "Trial"
+              value_data: "0"

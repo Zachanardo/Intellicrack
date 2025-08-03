@@ -1,0 +1,97 @@
+{
+  "id": "themida_protection",
+  "name": "Themida",
+  "version": null,
+  "protection_type": "code_protection",
+  "architecture": "any",
+  "confidence": 0.85,
+  "description": "Themida - Advanced Windows software protection system by Oreans Technologies",
+  "references": [
+    "https://www.oreans.com/themida.php"
+  ],
+  "metadata": {
+    "vendor": "Oreans Technologies",
+    "type": "commercial_protection",
+    "detection_difficulty": "medium",
+    "unpacking_difficulty": "very_hard",
+    "features": ["virtualization", "code_mutation", "anti_debug", "anti_vm"]
+  },
+  "created_date": "2025-01-01T00:00:00",
+  "updated_date": "2025-01-01T00:00:00",
+  "binary_signatures": [
+    {
+      "name": "Themida VM Entry",
+      "pattern": "68????????E8????????83C404C3",
+      "mask": "FF000000000000000000FFFFFF",
+      "description": "Themida virtual machine entry pattern"
+    },
+    {
+      "name": "Themida String Encryption",
+      "pattern": "8B??24??33??33??33??8B??24",
+      "mask": "FF00FF00FF00FF00FF00FF00FF",
+      "description": "Themida string encryption routine"
+    },
+    {
+      "name": "Themida Code Mutation",
+      "pattern": "FF??FF??FF??8B??FF??C3",
+      "mask": "FF00FF00FF00FF00FF00FF",
+      "description": "Themida code mutation pattern"
+    }
+  ],
+  "string_signatures": [
+    {
+      "name": "Themida Error Message",
+      "pattern": "THEMIDA",
+      "match_type": "exact",
+      "case_sensitive": false,
+      "encoding": "utf-8",
+      "description": "Themida identification string"
+    },
+    {
+      "name": "Oreans Technologies",
+      "pattern": "Oreans Technologies",
+      "match_type": "exact",
+      "case_sensitive": false,
+      "encoding": "utf-8",
+      "description": "Themida vendor string"
+    },
+    {
+      "name": "Themida Error Dialog",
+      "pattern": "The application has failed to start",
+      "match_type": "exact",
+      "case_sensitive": false,
+      "encoding": "utf-8",
+      "description": "Themida error dialog text"
+    }
+  ],
+  "import_signatures": [
+    {
+      "name": "Themida System APIs",
+      "function_names": [
+        "VirtualAlloc",
+        "VirtualProtect", 
+        "VirtualQuery",
+        "GetCurrentProcess",
+        "NtQueryInformationProcess",
+        "CreateThread",
+        "GetModuleHandle"
+      ],
+      "min_functions": 4,
+      "description": "APIs commonly used by Themida protection"
+    }
+  ],
+  "section_signatures": [
+    {
+      "name": "Themida Code Section",
+      "section_name": ".themida",
+      "min_entropy": 7.5,
+      "description": "Themida protected code section"
+    },
+    {
+      "name": "High Entropy Section",
+      "min_entropy": 7.8,
+      "min_size": 10240,
+      "description": "Section with very high entropy typical of Themida"
+    }
+  ]
+}
