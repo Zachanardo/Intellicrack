@@ -70,7 +70,7 @@ EXCLUDE_DIRS = [
 
 def find_mock_usage(file_path: Path) -> list[tuple[int, str, str]]:
     """Find all mock usage in a file.
-    
+
     Returns list of (line_number, line_content, pattern_matched)
     """
     violations = []
@@ -92,7 +92,7 @@ def find_mock_usage(file_path: Path) -> list[tuple[int, str, str]]:
 
 def scan_test_directory(test_dir: Path) -> dict:
     """Scan entire test directory for mock usage.
-    
+
     Returns dict of {file_path: [(line_num, line, pattern), ...]}
     """
     all_violations = {}
@@ -135,7 +135,7 @@ def print_report(violations: dict) -> int:
         print(f"\n📄 {file_path}")
         print(f"   Found {len(file_violations)} violations:")
 
-        for line_num, line, pattern in file_violations[:5]:  # Show first 5
+        for line_num, line, _pattern in file_violations[:5]:  # Show first 5
             print(f"   Line {line_num}: {line}")
 
         if len(file_violations) > 5:

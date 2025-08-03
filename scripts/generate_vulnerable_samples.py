@@ -32,10 +32,10 @@ int main(int argc, char *argv[]) {
         printf("Usage: %s <input>\\n", argv[0]);
         return 1;
     }
-    
+
     printf("Win function is at: %p\\n", win_function);
     vulnerable_function(argv[1]);
-    
+
     return 0;
 }
 """
@@ -89,16 +89,16 @@ int main(int argc, char *argv[]) {
         printf("Usage: %s <format_string>\\n", argv[0]);
         return 1;
     }
-    
+
     printf("Secret value address: %p\\n", &secret_value);
     printf("Enter format string: ");
     vulnerable_printf(argv[1]);
     printf("\\nSecret value is now: 0x%08x\\n", secret_value);
-    
+
     if (secret_value == 0x42424242) {
         printf("Exploit successful! Secret value modified.\\n");
     }
-    
+
     return 0;
 }
 """
@@ -139,21 +139,21 @@ def create_integer_overflow_binary(output_path: Path) -> None:
 
 void process_data(unsigned int size, char *data) {
     unsigned int buffer_size = size + 100;  // Integer overflow possible!
-    
+
     if (buffer_size > 1000) {
         printf("Size too large!\\n");
         return;
     }
-    
+
     char *buffer = (char *)malloc(buffer_size);
     if (!buffer) {
         printf("Allocation failed\\n");
         return;
     }
-    
+
     // Vulnerable copy
     memcpy(buffer, data, size);  // If size overflowed, this is bad!
-    
+
     printf("Processed %u bytes\\n", size);
     free(buffer);
 }
@@ -163,13 +163,13 @@ int main(int argc, char *argv[]) {
         printf("Usage: %s <size>\\n", argv[0]);
         return 1;
     }
-    
+
     unsigned int size = (unsigned int)atoi(argv[1]);
     char data[1024] = "A";
-    
+
     printf("Processing with size: %u\\n", size);
     process_data(size, data);
-    
+
     return 0;
 }
 """
@@ -228,31 +228,31 @@ int main(int argc, char *argv[]) {
         printf("Usage: %s <name>\\n", argv[0]);
         return 1;
     }
-    
+
     struct user_data *user1 = (struct user_data *)malloc(sizeof(struct user_data));
     struct user_data *user2 = (struct user_data *)malloc(sizeof(struct user_data));
-    
+
     // Initialize users
     user1->is_admin = 0;
     user1->print_function = normal_print;
-    
+
     user2->is_admin = 1;
     user2->print_function = admin_print;
-    
+
     printf("User1 at: %p, User2 at: %p\\n", user1, user2);
-    
+
     // Vulnerable strcpy - can overflow into user2!
     strcpy(user1->name, argv[1]);
-    
+
     printf("User1 name: %s\\n", user1->name);
     printf("User1 admin status: %d\\n", user1->is_admin);
-    
+
     // Call the function pointer
     user1->print_function();
-    
+
     free(user1);
     free(user2);
-    
+
     return 0;
 }
 """
@@ -297,23 +297,23 @@ void check_and_use_file(const char *filename) {
     // TOCTOU vulnerability - Time of Check to Time of Use
     if (access(filename, F_OK) == 0) {
         printf("File exists, checking permissions...\\n");
-        
+
         // Artificial delay to make race condition easier
         sleep(1);
-        
+
         // Now use the file - but it might have changed!
         FILE *fp = fopen(filename, "r");
         if (fp) {
             char buffer[256];
             fgets(buffer, sizeof(buffer), fp);
             printf("File content: %s\\n", buffer);
-            
+
             // Dangerous - execute content as command
             if (strncmp(buffer, "EXEC:", 5) == 0) {
                 printf("Executing command...\\n");
                 system(buffer + 5);
             }
-            
+
             fclose(fp);
         }
     } else {
@@ -326,10 +326,10 @@ int main(int argc, char *argv[]) {
         printf("Usage: %s <filename>\\n", argv[0]);
         return 1;
     }
-    
+
     printf("Checking file: %s\\n", argv[1]);
     check_and_use_file(argv[1]);
-    
+
     return 0;
 }
 """

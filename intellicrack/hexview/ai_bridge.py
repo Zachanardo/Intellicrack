@@ -2215,7 +2215,7 @@ class AIBinaryBridge:
         """Calculate search coverage percentage based on matched regions."""
         if not matches or not context:
             return 0.0
-        
+
         # Get total data size from context
         total_size = context.get("total_size", 0)
         if total_size == 0:
@@ -2225,14 +2225,14 @@ class AIBinaryBridge:
                 total_size = len(hex_data.replace(" ", "")) // 2
             else:
                 return 0.0
-        
+
         # Calculate total bytes covered by matches
         covered_bytes = 0
         for match in matches:
             start = match.get("start_offset", 0)
             end = match.get("end_offset", start)
             covered_bytes += max(0, end - start)
-        
+
         # Return coverage percentage
         return min(1.0, covered_bytes / total_size) if total_size > 0 else 0.0
 

@@ -478,8 +478,8 @@ class PatternStorage:
             metadata_json = json.dumps(pattern.metadata)
 
             cursor.execute("""
-                INSERT OR REPLACE INTO patterns 
-                (id, type, pattern_data, fitness, generation, parent_ids, 
+                INSERT OR REPLACE INTO patterns
+                (id, type, pattern_data, fitness, generation, parent_ids,
                  mutation_history, metadata, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """, (
@@ -507,7 +507,7 @@ class PatternStorage:
             cursor = self.conn.cursor()
 
             cursor.execute("""
-                SELECT type, pattern_data, fitness, generation, parent_ids, 
+                SELECT type, pattern_data, fitness, generation, parent_ids,
                        mutation_history, metadata
                 FROM patterns WHERE id = ?
             """, (pattern_id,))
@@ -539,15 +539,15 @@ class PatternStorage:
 
             if pattern_type:
                 cursor.execute("""
-                    SELECT id FROM patterns 
-                    WHERE type = ? 
-                    ORDER BY fitness DESC 
+                    SELECT id FROM patterns
+                    WHERE type = ?
+                    ORDER BY fitness DESC
                     LIMIT ?
                 """, (pattern_type.value, limit))
             else:
                 cursor.execute("""
-                    SELECT id FROM patterns 
-                    ORDER BY fitness DESC 
+                    SELECT id FROM patterns
+                    ORDER BY fitness DESC
                     LIMIT ?
                 """, (limit,))
 
@@ -562,8 +562,8 @@ class PatternStorage:
             cursor = self.conn.cursor()
 
             cursor.execute("""
-                INSERT INTO pattern_metrics 
-                (pattern_id, true_positives, false_positives, true_negatives, 
+                INSERT INTO pattern_metrics
+                (pattern_id, true_positives, false_positives, true_negatives,
                  false_negatives, detection_time_ms)
                 VALUES (?, ?, ?, ?, ?, ?)
             """, (pattern_id, tp, fp, tn, fn, detection_time_ms))
@@ -579,7 +579,7 @@ class PatternStorage:
             fitness = f1_score * 0.8 + speed_factor * 0.2
 
             cursor.execute("""
-                UPDATE patterns SET fitness = ?, updated_at = CURRENT_TIMESTAMP 
+                UPDATE patterns SET fitness = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
             """, (fitness, pattern_id))
 
@@ -754,11 +754,11 @@ class PatternEvolutionTracker:
                  mutation_rate: float = 0.1,
                  crossover_rate: float = 0.7):
         """Initialize the pattern evolution tracker.
-        
-        Sets up the evolutionary machine learning system for tracking and 
+
+        Sets up the evolutionary machine learning system for tracking and
         evolving binary analysis patterns. Configures genetic algorithm
         parameters, Q-learning agent, and pattern storage backend.
-        
+
         Args:
             db_path: Path to the pattern database.
             population_size: Size of pattern population for evolution.

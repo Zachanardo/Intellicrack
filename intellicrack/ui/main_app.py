@@ -2763,7 +2763,7 @@ def _check_intercepted_traffic(proxy_server):
                         # Draw edges with different styles for different types
                         edge_colors = []
                         edge_styles = []
-                        for u, v, data in app.cfg_graph.edges(data=True):
+                        for _u, _v, data in app.cfg_graph.edges(data=True):
                             edge_type = data.get("type", "call")
                             if edge_type == "jump":
                                 edge_colors.append("blue")
@@ -3372,7 +3372,7 @@ def _check_intercepted_traffic(proxy_server):
                         solver.add(x + y == 100)
 
                         # Add custom constraints
-                        for constraint in constraints:
+                        for _constraint in constraints:
                             # Parse and add constraint
                             pass
 
@@ -12828,7 +12828,7 @@ class Plugin:
                         return file_path_with_ext
 
                     # Try searching recursively
-                    for root, dirs, files in os.walk(dir_path):
+                    for root, _dirs, files in os.walk(dir_path):
                         for file in files:
                             if file == plugin_name or file == plugin_name + ext:
                                 return os.path.join(root, file)
