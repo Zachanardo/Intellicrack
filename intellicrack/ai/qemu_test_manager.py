@@ -626,7 +626,7 @@ class QEMUTestManager:
 
         except Exception as e:
             logger.error(f"Failed to upload file via SFTP: {e}")
-            raise RuntimeError(f"Failed to upload file: {e}")
+            raise RuntimeError(f"Failed to upload file: {e}") from e
 
     def _upload_binary_to_vm(self, snapshot: QEMUSnapshot, local_binary: str, remote_path: str):
         """Upload binary file to VM."""
@@ -659,7 +659,7 @@ class QEMUTestManager:
 
         except Exception as e:
             logger.error(f"Failed to upload binary via SFTP: {e}")
-            raise RuntimeError(f"Failed to upload binary: {e}")
+            raise RuntimeError(f"Failed to upload binary: {e}") from e
 
     def _execute_command_in_vm(
         self, snapshot: QEMUSnapshot, command: str, timeout: int = 30

@@ -1,29 +1,29 @@
 repos:
-  # Note: Test hooks disabled until test infrastructure is fixed
-  # - repo: local
-  #   hooks:
-  #     - id: test-coverage
-  #       name: Check test coverage (95% minimum)
-  #       entry: C:/Intellicrack/mamba_env/python.exe -m pytest --cov=intellicrack --cov-fail-under=95 --cov-report=term-missing
-  #       language: system
-  #       pass_filenames: false
-  #       always_run: true
-  #       stages: [pre-commit]
+  # Test hooks re-enabled after fixing import issues
+  - repo: local
+    hooks:
+      - id: test-coverage
+        name: Check test coverage (95% minimum)
+        entry: C:/Intellicrack/mamba_env/python.exe -m pytest --cov=intellicrack --cov-fail-under=95 --cov-report=term-missing
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
 
-  #     - id: no-mock-validation
-  #       name: Verify no mock/fake data in tests
-  #       entry: C:/Intellicrack/mamba_env/python.exe scripts/verify_no_mocks.py
-  #       language: system
-  #       pass_filenames: false
-  #       always_run: true
-  #       stages: [pre-commit]
+      - id: no-mock-validation
+        name: Verify no mock/fake data in tests
+        entry: C:/Intellicrack/mamba_env/python.exe scripts/verify_no_mocks.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
 
-  #     - id: test-real-functionality
-  #       name: Run real functionality tests
-  #       entry: C:/Intellicrack/mamba_env/python.exe -m pytest tests/unit -k "not slow" --tb=short
-  #       language: system
-  #       pass_filenames: false
-  #       stages: [pre-commit]
+      - id: test-real-functionality
+        name: Run real functionality tests
+        entry: C:/Intellicrack/mamba_env/python.exe -m pytest tests/unit -k "not slow" --tb=short
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
 
   # Code Quality - Advanced Linting & Formatting
   - repo: https://github.com/astral-sh/ruff-pre-commit

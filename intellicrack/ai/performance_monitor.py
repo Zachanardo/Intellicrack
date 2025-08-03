@@ -618,3 +618,7 @@ def get_async_monitor():
     if _async_monitor is None:
         _async_monitor = AsyncPerformanceMonitor(get_performance_monitor())
     return _async_monitor
+
+
+# Create default instance for imports
+performance_monitor = get_performance_monitor()

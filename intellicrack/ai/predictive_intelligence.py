@@ -448,6 +448,19 @@ class LinearRegressionModel(PredictiveModel):
         self.bias: float = 0.0
         self.learning_rate = 0.01
 
+    def _extract_feature_names(self, training_data: list[dict[str, Any]]) -> list[str]:
+        """Extract unique feature names from training data."""
+        feature_names = set()
+        for sample in training_data:
+            if "features" in sample:
+                feature_names.update(sample["features"].keys())
+        return list(feature_names)
+
+    def _initialize_weights(self, feature_names: list[str]):
+        """Initialize weights for features if not already set."""
+        if not self.weights:
+            self.weights = dict.fromkeys(feature_names, 0.1)
+
     def train(self, training_data: list[dict[str, Any]]):
         """Train linear regression model."""
         super().train(training_data)
@@ -455,17 +468,8 @@ class LinearRegressionModel(PredictiveModel):
         if not training_data:
             return
 
-        # Extract features and targets
-        feature_names = set()
-        for sample in training_data:
-            if "features" in sample:
-                feature_names.update(sample["features"].keys())
-
-        feature_names = list(feature_names)
-
-        # Initialize weights if needed
-        if not self.weights:
-            self.weights = dict.fromkeys(feature_names, 0.1)
+        feature_names = self._extract_feature_names(training_data)
+        self._initialize_weights(feature_names)
 
         # Simple gradient descent training
         for epoch in range(50):  # Limited epochs for real-time training
