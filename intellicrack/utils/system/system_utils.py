@@ -142,7 +142,7 @@ def get_system_info() -> dict[str, Any]:
     # Add psutil information if available
     if psutil:
         try:
-            info["cpu_count"] = psutil.cpu_count()
+            info["cpu_count"] = psutil.cpu_count(logical=False)
             info["cpu_count_logical"] = psutil.cpu_count(logical=True)
             info["memory_total"] = psutil.virtual_memory().total
             info["memory_available"] = psutil.virtual_memory().available
@@ -207,7 +207,7 @@ def run_command(
         if isinstance(command, str) and not shell:
             command = command.split()
 
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 - controlled command execution for analysis tools
             command,
             shell=shell,
             capture_output=capture_output,
@@ -391,7 +391,7 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
             ps_command = (
                 f'Start-Process -FilePath "cmd" -ArgumentList "/c {command}" -Verb RunAs -Wait'
             )
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 B607 - controlled elevated execution for admin tasks
                 ["powershell", "-Command", ps_command], capture_output=True, text=True, check=False
             )
             return result.returncode == 0
@@ -400,7 +400,7 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
             command = command.split()
 
         sudo_command = ["sudo"] + command
-        result = subprocess.run(sudo_command, capture_output=True, text=True, check=False)
+        result = subprocess.run(sudo_command, capture_output=True, text=True, check=False)  # nosec B603 - controlled sudo execution
         return result.returncode == 0
 
     except (OSError, ValueError, RuntimeError) as e:

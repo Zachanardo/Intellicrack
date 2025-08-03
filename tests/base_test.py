@@ -192,3 +192,7 @@ class IntellicrackTestBase:
         avg_time = total_time / iterations
         assert avg_time < max_time, \
             f"Performance issue: {func.__name__} took {avg_time:.2f}s (max: {max_time}s)"
+
+
+# Alias for backward compatibility
+BaseIntellicrackTest = IntellicrackTestBase

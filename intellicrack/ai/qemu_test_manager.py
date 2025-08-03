@@ -271,7 +271,8 @@ class QEMUTestManager:
                     set_secret("QEMU_SSH_PRIVATE_KEY", private_key_str.getvalue())
                     set_secret("QEMU_SSH_PUBLIC_KEY", self.ssh_public_key)
                     logger.info("Recovery key successfully saved to secrets manager")
-                except:
+                except Exception as e:
+                    logger.debug(f"Failed to save recovery key to secrets manager: {e}")
                     pass  # Continue with local recovery key
 
             except Exception as recovery_e:
@@ -326,8 +327,8 @@ class QEMUTestManager:
                         del self.ssh_connection_pool[pool_key]
                     try:
                         client.close()
-                    except:
-                        pass
+                    except Exception:
+                        pass  # Ignore close errors
 
             # Create new connection with retries
             for attempt in range(retries):
@@ -911,8 +912,8 @@ class QEMUTestManager:
                 for client in self.ssh_connection_pool.values():
                     try:
                         client.close()
-                    except:
-                        pass
+                    except Exception:
+                        pass  # Ignore close errors
                 self.ssh_connection_pool.clear()
 
             # Then cleanup snapshots

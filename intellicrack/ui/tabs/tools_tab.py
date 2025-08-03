@@ -470,7 +470,7 @@ class ToolsTab(BaseTab):
             info.append(f"Version: {platform.version()}")
             info.append(f"Machine: {platform.machine()}")
             info.append(f"Processor: {platform.processor()}")
-            info.append(f"CPU Cores: {psutil.cpu_count()}")
+            info.append(f"CPU Cores: {psutil.cpu_count(logical=False)}")
             info.append(f"Memory: {psutil.virtual_memory().total // (1024**3)} GB")
 
             self.output_console.append("\n".join(info))
@@ -622,7 +622,8 @@ class ToolsTab(BaseTab):
             for s in ascii_strings[:100]:  # Limit to first 100
                 try:
                     self.tool_output.append(s.decode("ascii"))
-                except:
+                except UnicodeDecodeError:
+                    # Skip non-ASCII strings silently as expected
                     continue
 
             if unicode_strings:
@@ -631,7 +632,8 @@ class ToolsTab(BaseTab):
                     try:
                         decoded = s.decode("utf-16le")
                         self.tool_output.append(decoded)
-                    except:
+                    except UnicodeDecodeError:
+                        # Skip non-UTF-16 strings silently as expected
                         continue
 
             self.log_message(
@@ -704,9 +706,13 @@ class ToolsTab(BaseTab):
             return
 
         try:
-            # Try using objdump first
-            result = subprocess.run(
-                ["objdump", "-d", binary_path],
+            # Try using objdump first - validate binary path
+            if not Path(binary_path).exists():
+                self.log_message(f"Binary file not found: {binary_path}")
+                return
+
+            result = subprocess.run(  # nosec B603 B607 - objdump is a legitimate analysis tool
+                ["objdump", "-d", str(binary_path)],
                 check=False,
                 capture_output=True,
                 text=True,
@@ -912,9 +918,9 @@ class ToolsTab(BaseTab):
             return
 
         try:
-            # Try using nm tool
-            result = subprocess.run(
-                ["nm", binary_path],
+            # Try using nm tool for symbol analysis
+            result = subprocess.run(  # nosec B603 B607 - nm is a legitimate analysis tool
+                ["nm", str(binary_path)],
                 check=False,
                 capture_output=True,
                 text=True,
@@ -1181,9 +1187,9 @@ def get_plugin():
                 import subprocess
 
                 if platform.system() == "Windows":
-                    subprocess.run(["notepad", plugin_file], check=False)
+                    subprocess.run(["notepad", str(plugin_file)], check=False)  # nosec B603 B607 - system editor
                 else:
-                    subprocess.run(["xdg-open", plugin_file], check=False)
+                    subprocess.run(["xdg-open", str(plugin_file)], check=False)  # nosec B603 B607 - system opener
 
                 self.log_message(f"Opened plugin '{plugin_name}' for editing")
 

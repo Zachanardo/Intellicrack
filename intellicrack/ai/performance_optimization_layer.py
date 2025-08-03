@@ -484,7 +484,7 @@ class ResourceManager:
     def _get_system_limits(self) -> dict[ResourceType, int]:
         """Get system resource limits."""
         return {
-            ResourceType.CPU: psutil.cpu_count() if PSUTIL_AVAILABLE else 4,
+            ResourceType.CPU: psutil.cpu_count(logical=False) if PSUTIL_AVAILABLE else 4,
             # MB
             ResourceType.MEMORY: psutil.virtual_memory()
             if PSUTIL_AVAILABLE
@@ -686,7 +686,9 @@ class ParallelExecutor:
 
         # Determine optimal number of workers
         if max_workers is None:
-            max_workers = min(len(items), psutil.cpu_count() if PSUTIL_AVAILABLE else 4)
+            max_workers = min(
+                len(items), psutil.cpu_count(logical=False) if PSUTIL_AVAILABLE else 4
+            )
 
         # Measure sequential baseline (for first few items)
         baseline_items = items[: min(3, len(items))]
@@ -743,7 +745,9 @@ class ParallelExecutor:
             return []
 
         if max_workers is None:
-            max_workers = min(len(operations), psutil.cpu_count() if PSUTIL_AVAILABLE else 4)
+            max_workers = min(
+                len(operations), psutil.cpu_count(logical=False) if PSUTIL_AVAILABLE else 4
+            )
 
         results = []
 
@@ -989,7 +993,7 @@ class PerformanceOptimizationLayer:
             "parallel_stats": self.parallel_executor.get_execution_stats(),
             "resource_usage": self.resource_manager.get_resource_usage(),
             "system_info": {
-                "cpu_count": psutil.cpu_count() if PSUTIL_AVAILABLE else 4,
+                "cpu_count": psutil.cpu_count(logical=False) if PSUTIL_AVAILABLE else 4,
                 "memory_total_gb": psutil.virtual_memory()
                 if PSUTIL_AVAILABLE
                 else type(

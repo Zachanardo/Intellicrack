@@ -256,7 +256,7 @@ class FeatureExtractor:
 
             # Load average (Unix-like systems)
             try:
-                load_avg = psutil.getloadavg()[0] / psutil.cpu_count()
+                load_avg = psutil.getloadavg()[0] / psutil.cpu_count(logical=False)
             except (AttributeError, OSError) as e:
                 self.logger.error("Error in predictive_intelligence: %s", e)
                 load_avg = cpu_percent  # Fallback for Windows

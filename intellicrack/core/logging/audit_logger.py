@@ -122,7 +122,7 @@ class AuditEvent:
         """Get the current system user."""
         try:
             return os.getlogin()
-        except:
+        except (OSError, AttributeError):
             return os.environ.get("USER", os.environ.get("USERNAME", "unknown"))
 
     def to_dict(self) -> dict[str, Any]:
@@ -778,7 +778,7 @@ class PerformanceMonitor:
 
             # CPU metrics
             cpu_percent = psutil.cpu_percent(interval=0.1)
-            cpu_count = psutil.cpu_count()
+            cpu_count = psutil.cpu_count(logical=False)
 
             # Memory metrics
             memory = psutil.virtual_memory()
@@ -1028,8 +1028,11 @@ class ContextualLogger:
                     message=message,
                     metadata={**self.context, **kwargs},
                 )
-            except Exception:
-                pass  # Don't fail on audit logging errors
+            except Exception as e:
+                # Don't fail on audit logging errors, but log for debugging
+                import logging
+
+                logging.getLogger(__name__).debug(f"Audit logging error: {e}")
 
     def critical(self, message: str, **kwargs):
         """Log critical message with context."""
@@ -1044,8 +1047,11 @@ class ContextualLogger:
                     message=message,
                     metadata={**self.context, **kwargs},
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                # Don't fail on audit logging errors, but log for debugging
+                import logging
+
+                logging.getLogger(__name__).debug(f"Critical audit logging error: {e}")
 
 
 # Global telemetry collector
