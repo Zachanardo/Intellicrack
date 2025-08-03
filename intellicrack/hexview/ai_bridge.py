@@ -2105,7 +2105,7 @@ class AIBinaryBridge:
             ],
             "search_metadata": {
                 "total_matches": len(matches),
-                "search_coverage": (end_offset - start_offset) / len(binary_data) if binary_data else 0,
+                "search_coverage": self._calculate_search_coverage(matches, context),
                 "confidence": self._calculate_search_confidence(matches, query),
             },
         }
@@ -2210,6 +2210,31 @@ class AIBinaryBridge:
             confidence += 0.1
 
         return min(1.0, confidence)
+
+    def _calculate_search_coverage(self, matches: list[dict], context: dict) -> float:
+        """Calculate search coverage percentage based on matched regions."""
+        if not matches or not context:
+            return 0.0
+        
+        # Get total data size from context
+        total_size = context.get("total_size", 0)
+        if total_size == 0:
+            # Fallback - estimate from hex representation or other context data
+            hex_data = context.get("hex_representation", "")
+            if hex_data:
+                total_size = len(hex_data.replace(" ", "")) // 2
+            else:
+                return 0.0
+        
+        # Calculate total bytes covered by matches
+        covered_bytes = 0
+        for match in matches:
+            start = match.get("start_offset", 0)
+            end = match.get("end_offset", start)
+            covered_bytes += max(0, end - start)
+        
+        # Return coverage percentage
+        return min(1.0, covered_bytes / total_size) if total_size > 0 else 0.0
 
     def analyze_binary_patterns(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary patterns in a file.

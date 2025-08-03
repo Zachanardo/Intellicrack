@@ -1193,7 +1193,7 @@ class TrainingThread(QThread):
         """Pause the training process."""
         self.status = TrainingStatus.PAUSED
         self.logger.info("Training paused")
-        if PYQT5_AVAILABLE and self.progress_signal:
+        if PYQT6_AVAILABLE and self.progress_signal:
             self.progress_signal.emit({
                 "status": self.status.value,
                 "message": "Training paused",
@@ -1204,7 +1204,7 @@ class TrainingThread(QThread):
         """Resume the training process."""
         self.status = TrainingStatus.TRAINING
         self.logger.info("Training resumed")
-        if PYQT5_AVAILABLE and self.progress_signal:
+        if PYQT6_AVAILABLE and self.progress_signal:
             self.progress_signal.emit({
                 "status": self.status.value,
                 "message": "Training resumed",

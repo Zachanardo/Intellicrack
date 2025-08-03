@@ -26,6 +26,9 @@ from datetime import datetime
 
 __version__ = "1.0.0"
 
+# Configure logger for SimConcolic
+logger = logging.getLogger(__name__)
+
 class Plugin:
     """Base class for SimConcolic plugins"""
 

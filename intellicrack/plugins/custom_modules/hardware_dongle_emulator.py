@@ -27,12 +27,14 @@ Version: 2.0.0
 License: GPL v3
 """
 
+import hashlib
 import json
 import logging
 import os
 import random
 import struct
 import time
+import traceback
 import winreg
 from collections.abc import Callable
 from dataclasses import dataclass, field

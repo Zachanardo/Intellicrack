@@ -41,6 +41,7 @@ from .common_imports import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QListWidgetItem,
     QMessageBox,
     QProgressBar,
     QPushButton,

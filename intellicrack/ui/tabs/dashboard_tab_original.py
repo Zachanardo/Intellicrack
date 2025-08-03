@@ -1,6 +1,7 @@
 """Dashboard Tab Original implementation for Intellicrack UI."""
 
 import os
+import sys
 from datetime import datetime
 
 """UI module for Dashboard Tab Original.
