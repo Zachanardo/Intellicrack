@@ -17,8 +17,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from .api_obfuscation import APIObfuscator
-from .anti_debug_analyzer import AntiDebugAnalyzer, AntiDebugTechnique
-from .anti_debug_integration import AntiDebugDetectionEngine
 from .base_detector import BaseDetector
 from .debugger_detector import DebuggerDetector
 from .process_hollowing import ProcessHollowing
@@ -59,9 +57,6 @@ class AntiAnalysisEngine:
 
 __all__ = [
     'AntiAnalysisEngine',
-    'AntiDebugAnalyzer',
-    'AntiDebugDetectionEngine',
-    'AntiDebugTechnique',
     'BaseDetector',
     'VMDetector',
     'DebuggerDetector',

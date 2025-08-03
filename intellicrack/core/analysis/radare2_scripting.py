@@ -363,9 +363,10 @@ class R2ScriptingEngine:
             ]
 
             # Execute command
-            from ...utils.system.subprocess_utils import run_subprocess_check
-            process = run_subprocess_check(
+            process = subprocess.run(
                 cmd,
+                capture_output=True,
+                text=True,
                 timeout=300  # 5 minute timeout
             )
 

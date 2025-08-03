@@ -39,14 +39,6 @@ except ImportError:
     VOLATILITY3_AVAILABLE = False
     logger.warning("Volatility3 not available - memory forensics analysis disabled")
 
-# Check psutil availability
-try:
-    import psutil
-    PSUTIL_AVAILABLE = True
-except ImportError:
-    PSUTIL_AVAILABLE = False
-    logger.warning("psutil not available - some live analysis features will be limited")
-
 
 class MemoryArtifactType(Enum):
     """Types of memory artifacts"""
@@ -200,11 +192,6 @@ class MemoryForensicsEngine:
 
         # Results storage
         self.analysis_results = {}
-        self.analyzed_dumps: set = set()
-
-        # Initialize Volatility if available
-        if VOLATILITY3_AVAILABLE:
-            self._init_volatility()
 
     def _init_volatility(self):
         """Initialize Volatility3 framework"""
@@ -327,8 +314,7 @@ class MemoryForensicsEngine:
 
             # Try using subprocess to gather system information about the dump
             try:
-                from ...utils.system.subprocess_utils import run_subprocess_check
-                file_result = run_subprocess_check(['file', dump_path], timeout=10)
+                file_result = subprocess.run(['file', dump_path], capture_output=True, text=True, timeout=10)
                 if file_result.returncode == 0:
                     result.analysis_profile = file_result.stdout.strip()
                     logger.debug(f"File command output: {file_result.stdout}")
@@ -808,49 +794,14 @@ class MemoryForensicsEngine:
         return indicators
 
     def _detect_hidden_processes(self, processes: List[MemoryProcess]):
-        """Detect hidden processes using advanced psxview-like analysis"""
+        """Detect hidden processes using psxview-like analysis"""
         try:
-            # Get live process list for comparison
-            live_processes = set()
-            if PSUTIL_AVAILABLE:
-                try:
-                    live_processes = {proc.pid for proc in psutil.process_iter(['pid'])}
-                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                    pass
-
-            # Cross-reference memory dump processes with live processes
+            # This would involve comparing multiple process listing methods
+            # For now, mark processes with suspicious characteristics as potentially hidden
             for process in processes:
-                # Check for processes with suspicious characteristics
-                is_suspicious = False
-
-                # Orphaned processes (parent doesn't exist)
-                if process.ppid not in {p.pid for p in processes}:
-                    is_suspicious = True
-
-                # Processes with invalid or unusual PIDs
-                if process.pid <= 0 or process.pid > 65535:
-                    is_suspicious = True
-
-                # System processes with wrong characteristics
-                if (process.ppid == 0 and process.name.lower() not in ["system", "idle", "kernel"] and
-                    process.pid not in [0, 4]):
-                    is_suspicious = True
-
-                # Process name inconsistencies
-                if not process.name or len(process.name.strip()) == 0:
-                    is_suspicious = True
-
-                # Unusual process creation time patterns
-                if hasattr(process, 'create_time') and process.create_time:
-                    # Check for processes created at unusual times (e.g., system boot)
-                    if abs(process.create_time) < 100:  # Very early creation time
-                        is_suspicious = True
-
-                # Cross-check with live processes if available
-                if live_processes and process.pid not in live_processes:
-                    is_suspicious = True
-
-                process.is_hidden = is_suspicious
+                if (process.ppid == 0 and process.name.lower() != "system" and
+                    process.pid != 4):  # System process usually has PID 4
+                    process.is_hidden = True
 
         except Exception as e:
             logger.error(f"Hidden process detection failed: {e}")
@@ -888,10 +839,7 @@ class MemoryForensicsEngine:
 
             # Check for unsigned modules in system directories
             if any(sys_dir in module_path for sys_dir in ['system32', 'syswow64']):
-                # Check digital signature for system directory modules
-                if not self._verify_digital_signature(module_path):
-                    logger.warning(f"Unsigned module in system directory: {module_path}")
-                    return True
+                # In real implementation, check digital signature
                 return False
 
             # Check for modules loaded from unusual locations
@@ -905,94 +853,6 @@ class MemoryForensicsEngine:
                 return True
 
             return False
-
-        except Exception:
-            return False
-
-    def _verify_digital_signature(self, file_path: str) -> bool:
-        """Verify digital signature of a file"""
-        try:
-            import platform
-
-            # Platform-specific signature verification
-            if platform.system() == "Windows":
-                return self._verify_windows_signature(file_path)
-            else:
-                # For non-Windows systems, check basic file integrity
-                return self._verify_file_integrity(file_path)
-
-        except Exception as e:
-            logger.debug(f"Signature verification failed for {file_path}: {e}")
-            return False
-
-    def _verify_windows_signature(self, file_path: str) -> bool:
-        """Verify Windows digital signature using native tools"""
-        try:
-            import subprocess
-
-            # Use PowerShell's Get-AuthenticodeSignature cmdlet
-            cmd = [
-                'powershell', '-Command',
-                f'(Get-AuthenticodeSignature "{file_path}").Status -eq "Valid"'
-            ]
-
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-            return result.returncode == 0 and result.stdout.strip().lower() == 'true'
-
-        except Exception as e:
-            logger.debug(f"Windows signature verification failed: {e}")
-
-            # Fallback: Check if file exists and has reasonable properties
-            try:
-                import os
-                import stat
-
-                if not os.path.exists(file_path):
-                    return False
-
-                # Check basic file properties
-                file_stat = os.stat(file_path)
-
-                # System files should not be writable by users
-                if file_stat.st_mode & stat.S_IWOTH:
-                    return False
-
-                # System files should have reasonable sizes (not too small/large)
-                if file_stat.st_size < 1024 or file_stat.st_size > 50 * 1024 * 1024:
-                    return False
-
-                return True
-
-            except Exception:
-                return False
-
-    def _verify_file_integrity(self, file_path: str) -> bool:
-        """Basic file integrity verification for non-Windows systems"""
-        try:
-            import os
-
-            if not os.path.exists(file_path):
-                return False
-
-            # Check basic properties
-            file_stat = os.stat(file_path)
-
-            # File should have reasonable size
-            if file_stat.st_size < 100 or file_stat.st_size > 100 * 1024 * 1024:
-                return False
-
-            # File should not be world-writable
-            if file_stat.st_mode & 0o002:
-                return False
-
-            # For system directories, check if file looks legitimate
-            system_paths = ['/lib', '/usr/lib', '/usr/bin', '/bin', '/sbin']
-            if any(sys_path in file_path for sys_path in system_paths):
-                # System files should be owned by root
-                if file_stat.st_uid != 0:
-                    return False
-
-            return True
 
         except Exception:
             return False

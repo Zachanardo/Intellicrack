@@ -38,32 +38,13 @@ class FontManager:
         self.config = self._load_config()
 
     def _load_config(self):
-        """Load font configuration from centralized config system"""
-        try:
-            from ..config import get_config
-            config_manager = get_config()
-            font_config = config_manager.get('ui.fonts', {})
-            if font_config:
-                return font_config
-        except ImportError:
-            logger.debug("Centralized config not available, trying local file")
-        
-        # Fallback to local file loading
+        """Load font configuration"""
         try:
             with open(self.config_file, 'r') as f:
-                local_config = json.load(f)
-                logger.info("Font config loaded from local file (fallback)")
-                return local_config
+                return json.load(f)
         except Exception as e:
             logger.warning(f"Could not load font config: {e}")
-            return {
-                'available_fonts': [],
-                'font_sizes': {'code_default': 10},
-                'monospace_fonts': {
-                    'primary': ['Consolas', 'Monaco', 'Menlo'],
-                    'fallback': ['Courier New', 'monospace']
-                }
-            }
+            return {}
 
     def load_application_fonts(self):
         """Load custom fonts into Qt application"""

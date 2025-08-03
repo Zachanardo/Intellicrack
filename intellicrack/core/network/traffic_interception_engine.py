@@ -1,5 +1,4 @@
 """Traffic interception engine for capturing and analyzing network traffic."""
-import asyncio
 import logging
 import os
 import socket
@@ -399,7 +398,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         except Exception as e:
             self.logger.warning(f"Raw socket capture failed, using connection monitoring: {e}")
             self._monitor_local_connections()
-    async def _monitor_local_connections(self):
+    def _monitor_local_connections(self):
         """Monitor local connections when raw sockets aren't available"""
         self.logger.info("Monitoring localhost connections for license traffic")
 
@@ -433,7 +432,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                         logger.error("Exception in traffic_interception_engine: %s", e)
                         pass
 
-                await asyncio.sleep(1.0)
+                time.sleep(1.0)
 
             except Exception as e:
                 self.logger.debug(f"Connection monitoring error: {e}")
@@ -508,7 +507,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             # Limit queue size
             if len(self.packet_queue) > 10000:
                 self.packet_queue.pop(0)
-    async def _analysis_loop(self):
+    def _analysis_loop(self):
         """Main packet analysis loop"""
         while self.running:
             try:
@@ -529,7 +528,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                             except Exception as e:
                                 self.logger.error(f"Analysis callback error: {e}")
 
-                await asyncio.sleep(0.1)
+                time.sleep(0.1)
 
             except Exception as e:
                 self.logger.error(f"Analysis loop error: {e}")

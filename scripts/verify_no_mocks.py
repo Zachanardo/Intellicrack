@@ -10,54 +10,49 @@ import re
 from pathlib import Path
 from typing import List, Tuple
 
-# Patterns that indicate ACTUAL mock usage (more precise)
+# Patterns that indicate mock usage
 MOCK_PATTERNS = [
     # Direct mock imports
     r'from\s+unittest\.mock\s+import',
     r'from\s+mock\s+import',
     r'import\s+unittest\.mock',
-    r'import\s+mock\b',
+    r'import\s+mock',
     
-    # Mock creation with unittest.mock
-    r'unittest\.mock\.Mock\s*\(',
-    r'unittest\.mock\.MagicMock\s*\(',
-    r'unittest\.mock\.PropertyMock\s*\(',
-    r'unittest\.mock\.AsyncMock\s*\(',
-    r'unittest\.mock\.patch\s*\(',
-    r'@unittest\.mock\.patch',
+    # Mock creation
+    r'Mock\s*\(',
+    r'MagicMock\s*\(',
+    r'PropertyMock\s*\(',
+    r'AsyncMock\s*\(',
+    r'patch\s*\(',
+    r'@patch',
     
-    # Direct Mock usage (after import)
-    r'\bMock\s*\(',
-    r'\bMagicMock\s*\(',
-    r'\bPropertyMock\s*\(',
-    r'\bAsyncMock\s*\(',
-    
-    # Patch decorators and calls (be more specific)
-    r'@patch\s*\(',
-    r'with\s+patch\s*\(',
-    
-    # Mock configuration (only when clearly mock-related)
-    r'mock.*\.return_value\s*=',
-    r'mock.*\.side_effect\s*=',
-    r'\.return_value\s*=.*mock',
-    r'\.side_effect\s*=.*mock',
-    
-    # Mock assertions
+    # Mock configuration
+    r'return_value\s*=',
+    r'side_effect\s*=',
     r'\.assert_called',
     r'\.assert_not_called',
     r'\.assert_any_call',
     r'\.call_count',
     
-    # Obvious fake data indicators
+    # Fake data indicators
     r'fake_[a-zA-Z_]+\s*=',
     r'dummy_[a-zA-Z_]+\s*=',
     r'mock_[a-zA-Z_]+\s*=',
+    r'placeholder_[a-zA-Z_]+\s*=',
     
-    # Common test doubles (class definitions)
+    # Common test doubles
     r'class\s+Fake[A-Z]',
     r'class\s+Mock[A-Z]',
     r'class\s+Stub[A-Z]',
     r'class\s+Dummy[A-Z]',
+    
+    # Hardcoded test data
+    r'["\']test123["\']',
+    r'["\']example\.com["\']',
+    r'["\']foo@bar\.com["\']',
+    r'["\']placeholder["\']',
+    r'["\']todo["\']',
+    r'["\']fixme["\']',
 ]
 
 # Files to exclude from checking
@@ -65,7 +60,6 @@ EXCLUDE_FILES = [
     'conftest.py',
     '__init__.py',
     'base_test.py',  # Base test class is allowed to mention mocks in validation
-    'verify_no_mocks.py',  # This script itself
 ]
 
 # Directories to exclude

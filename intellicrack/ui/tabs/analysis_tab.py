@@ -75,7 +75,6 @@ class AnalysisTab(BaseTab):
         # Create individual analysis subtabs
         self.analysis_subtabs.addTab(self.create_static_analysis_tab(), "Static & Code Analysis")
         self.analysis_subtabs.addTab(self.create_protection_analysis_tab(), "Protection Analysis")
-        self.analysis_subtabs.addTab(self.create_bypass_recommendations_tab(), "Bypass Recommendations")
         self.analysis_subtabs.addTab(self.create_dynamic_hooking_tab(), "Dynamic & Hooking")
         self.analysis_subtabs.addTab(self.create_execution_engines_tab(), "Execution Engines")
         self.analysis_subtabs.addTab(self.create_analysis_options_tab(), "Options & Cache")
@@ -217,85 +216,6 @@ class AnalysisTab(BaseTab):
         layout.addStretch()
 
         return tab
-
-    def create_bypass_recommendations_tab(self):
-        """Create bypass recommendations controls and widget"""
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-
-        # Import the bypass recommendations widget
-        try:
-            from ..widgets.bypass_recommendations_widget import BypassRecommendationsWidget
-            
-            # Create the bypass recommendations widget
-            self.bypass_recommendations_widget = BypassRecommendationsWidget()
-            
-            # Connect widget signals to analysis tab handlers
-            self.bypass_recommendations_widget.analysis_requested.connect(self._on_bypass_analysis_requested)
-            self.bypass_recommendations_widget.recommendation_selected.connect(self._on_bypass_recommendation_selected)
-            
-            # Connect to app context for analysis results
-            if hasattr(self, 'app_context') and self.app_context:
-                self.app_context.analysis_completed.connect(self._on_analysis_results_updated)
-            
-            layout.addWidget(self.bypass_recommendations_widget)
-            
-        except ImportError as e:
-            # Fallback if widget not available
-            error_label = QLabel(f"Bypass recommendations widget not available: {str(e)}")
-            error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            error_label.setStyleSheet("color: #888; font-style: italic;")
-            layout.addWidget(error_label)
-            
-            # Add placeholder controls
-            placeholder_group = QGroupBox("Bypass Recommendations (Not Available)")
-            placeholder_layout = QVBoxLayout(placeholder_group)
-            
-            info_label = QLabel("This feature requires the bypass recommendations module.\nPlease check the installation.")
-            info_label.setWordWrap(True)
-            placeholder_layout.addWidget(info_label)
-            
-            layout.addWidget(placeholder_group)
-            
-        except Exception as e:
-            # General error fallback
-            error_label = QLabel(f"Error loading bypass recommendations: {str(e)}")
-            error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            error_label.setStyleSheet("color: red;")
-            layout.addWidget(error_label)
-        
-        layout.addStretch()
-        return tab
-
-    def _on_bypass_analysis_requested(self, analysis_options):
-        """Handle bypass analysis request from recommendations widget"""
-        if not self.current_binary:
-            self.log_activity("No binary loaded for bypass analysis", is_error=True)
-            return
-            
-        self.log_activity("Starting bypass analysis from recommendations tab...")
-        
-        # Trigger protection detection first if not already done
-        if not hasattr(self, 'analysis_results') or 'protection_detection' not in self.analysis_results:
-            self.detect_protections()
-        
-        # The widget will automatically update when analysis completes
-
-    def _on_bypass_recommendation_selected(self, recommendation_data):
-        """Handle bypass recommendation selection"""
-        self.log_activity(f"Bypass recommendation selected: {recommendation_data.get('title', 'Unknown')}")
-        
-        # Could trigger additional actions based on the selected recommendation
-        # For example, opening script generation, hex viewer to specific offset, etc.
-
-    def _on_analysis_results_updated(self, analysis_type, results):
-        """Handle analysis results update for bypass recommendations"""
-        if analysis_type == "protection_detection" and hasattr(self, 'bypass_recommendations_widget'):
-            # Update the bypass recommendations widget with new analysis results
-            try:
-                self.bypass_recommendations_widget.update_analysis_results(results)
-            except Exception as e:
-                self.log_activity(f"Error updating bypass recommendations: {str(e)}", is_error=True)
 
     def create_dynamic_hooking_tab(self):
         """Create dynamic analysis and hooking controls"""

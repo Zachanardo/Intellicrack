@@ -42,7 +42,6 @@ A comprehensive binary analysis and security research tool with GUI, AI integrat
 - **GPU**: NVIDIA, AMD, or Intel GPU with appropriate drivers
 - **Ghidra**: For advanced decompilation
 - **radare2**: For additional analysis capabilities
-- **IDA Pro**: For IDA integration features
 
 ## 🔧 Installation
 
@@ -312,13 +311,3 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 ## ⚠️ Disclaimer
 
 This tool is for educational and authorized security research purposes only. Users are responsible for complying with applicable laws and regulations. The authors assume no liability for misuse or damage caused by this software.
-
-## 🏆 Acknowledgments
-
-Intellicrack was successfully refactored from a 52,673-line monolithic script into a clean, modular architecture with:
-- 33 major classes properly separated
-- 1,648 functions implemented
-- 100+ dependencies properly managed
-- Clean separation of concerns
-
-Special thanks to the open-source security research community and the projects we build upon.

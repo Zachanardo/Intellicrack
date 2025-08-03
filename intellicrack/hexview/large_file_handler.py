@@ -20,7 +20,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import asyncio
 import logging
 import mmap
 import os
@@ -266,11 +265,11 @@ class MemoryMonitor:
                         except (OSError, ValueError, RuntimeError) as e:
                             logger.error("Memory monitor callback error: %s", e)
 
-                asyncio.run(asyncio.sleep(1.0))  # Check every second
+                time.sleep(1.0)  # Check every second
 
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Memory monitoring error: %s", e)
-                asyncio.run(asyncio.sleep(5.0))  # Wait longer on error
+                time.sleep(5.0)  # Wait longer on error
 
 
 class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
@@ -312,7 +311,7 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
                     # Get next load request
                     with self.queue_lock:
                         if not self.load_queue:
-                            asyncio.run(asyncio.sleep(0.1))
+                            time.sleep(0.1)
                             continue
                         offset, size = self.load_queue.pop(0)
 
@@ -336,7 +335,7 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
                             self.error_occurred.emit(str(e))
 
                     # Small delay to avoid overwhelming the system
-                    asyncio.run(asyncio.sleep(0.01))
+                    time.sleep(0.01)
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Background loader thread error: %s", e)

@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import asyncio
 import ctypes
 import logging
 import os
@@ -516,7 +515,7 @@ class SandboxDetector(BaseDetector):
 
         return False, 0.0, details
 
-    async def _check_time_acceleration(self) -> Tuple[bool, float, Dict]:
+    def _check_time_acceleration(self) -> Tuple[bool, float, Dict]:
         """Check for time acceleration used by sandboxes."""
         details = {'time_anomaly': False, 'drift': 0}
 
@@ -527,7 +526,7 @@ class SandboxDetector(BaseDetector):
             start_perf = time.perf_counter()
 
             # Sleep for a short period
-            await asyncio.sleep(2)
+            time.sleep(2)
 
             # Check time drift
             end_real = time.time()
@@ -549,7 +548,7 @@ class SandboxDetector(BaseDetector):
                 kernel32 = ctypes.windll.kernel32
 
                 tick1 = kernel32.GetTickCount()
-                await asyncio.sleep(1)
+                time.sleep(1)
                 tick2 = kernel32.GetTickCount()
 
                 tick_elapsed = (tick2 - tick1) / 1000.0
@@ -608,7 +607,7 @@ class SandboxDetector(BaseDetector):
 
         return False, 0.0, details
 
-    async def _check_mouse_movement(self) -> Tuple[bool, float, Dict]:
+    def _check_mouse_movement(self) -> Tuple[bool, float, Dict]:
         """Check for human-like mouse movement."""
         details = {'mouse_active': False, 'movement_count': 0}
 
@@ -645,7 +644,7 @@ class SandboxDetector(BaseDetector):
                     point = wintypes.POINT()
                     user32.GetCursorPos(ctypes.byref(point))
                     positions.append((point.x, point.y))
-                    await asyncio.sleep(0.5)
+                    time.sleep(0.5)
 
                 # Check for movement
                 unique_positions = len(set(positions))

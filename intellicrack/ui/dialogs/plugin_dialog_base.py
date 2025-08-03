@@ -21,7 +21,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import os
-from abc import ABC, abstractmethod
 
 from PyQt6.QtCore import QDateTime
 from PyQt6.QtWidgets import (
@@ -34,7 +33,7 @@ from PyQt6.QtWidgets import (
 )
 
 
-class PluginDialogBase(QDialog, ABC):
+class PluginDialogBase(QDialog):
     """Base class for dialogs that work with plugins"""
 
     def __init__(self, parent=None, plugin_path: str = None):
@@ -44,10 +43,9 @@ class PluginDialogBase(QDialog, ABC):
         self.plugin_label = None
         self.init_dialog()
 
-    @abstractmethod
     def init_dialog(self):
         """Initialize dialog - to be overridden by subclasses"""
-        pass
+        raise NotImplementedError("Subclasses must implement init_dialog()")
 
     def create_plugin_selection_layout(self):
         """Create the common plugin selection layout"""

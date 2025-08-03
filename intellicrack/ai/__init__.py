@@ -243,33 +243,19 @@ except ImportError as e:
 
 try:
     from .predictive_intelligence import (
-        BinaryClassifier,
-        BinaryFeatures,
-        BypassStrategy,
-        BypassStrategyRecommender,
+        ExecutionTimePredictor,
         PredictionConfidence,
         PredictionResult,
         PredictionType,
         PredictiveIntelligenceEngine,
-        ProtectionFamily,
-        ThreatIntelligenceManager,
-        VulnerabilityClass,
+        SuccessProbabilityPredictor,
         VulnerabilityPredictor,
-        analyze_binary_comprehensive,
-        detect_anomalies,
-        get_threat_intelligence,
-        predict_protection_type,
-        predict_vulnerabilities,
         predictive_intelligence,
-        recommend_bypass_strategy,
     )
 except ImportError as e:
     logger.warning("Failed to import predictive_intelligence: %s", e)
-    PredictiveIntelligenceEngine = BinaryClassifier = VulnerabilityPredictor = BypassStrategyRecommender = None
-    ThreatIntelligenceManager = BinaryFeatures = ProtectionFamily = VulnerabilityClass = BypassStrategy = None
+    PredictiveIntelligenceEngine = SuccessProbabilityPredictor = ExecutionTimePredictor = VulnerabilityPredictor = None
     PredictionType = PredictionConfidence = PredictionResult = predictive_intelligence = None
-    predict_protection_type = predict_vulnerabilities = recommend_bypass_strategy = detect_anomalies = None
-    get_threat_intelligence = analyze_binary_comprehensive = None
 
 try:
     from .resilience_self_healing import (
@@ -485,27 +471,6 @@ __all__ = [
 
     # From parsing_utils
     'ResponseLineParser',
-
-    # From predictive_intelligence
-    'PredictiveIntelligenceEngine',
-    'BinaryClassifier',
-    'VulnerabilityPredictor',
-    'BypassStrategyRecommender',
-    'ThreatIntelligenceManager',
-    'BinaryFeatures',
-    'ProtectionFamily',
-    'VulnerabilityClass',
-    'BypassStrategy',
-    'PredictionType',
-    'PredictionConfidence',
-    'PredictionResult',
-    'predictive_intelligence',
-    'predict_protection_type',
-    'predict_vulnerabilities',
-    'recommend_bypass_strategy',
-    'detect_anomalies',
-    'get_threat_intelligence',
-    'analyze_binary_comprehensive',
 ]
 
 # Package metadata

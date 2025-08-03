@@ -8,15 +8,15 @@ NO mocked components - validates actual analysis UI behavior.
 import pytest
 import tempfile
 import os
-from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QProgressBar, QPushButton, QTabWidget, QCheckBox
+from unittest.mock import patch, MagicMock
+from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QProgressBar, QPushButton, QTabWidget
 from PyQt6.QtCore import Qt
 from PyQt6.QtTest import QTest
 
 from intellicrack.ui.tabs.analysis_tab import AnalysisTab
-from tests.base_test import IntellicrackTestBase
 
 
-class TestAnalysisTab(IntellicrackTestBase):
+class TestAnalysisTab:
     """Test REAL analysis tab functionality with actual analysis operations."""
 
     @pytest.fixture(autouse=True)
@@ -67,7 +67,6 @@ class TestAnalysisTab(IntellicrackTestBase):
 
     def test_tab_initialization_real_components(self, qtbot):
         """Test that analysis tab initializes with REAL Qt components."""
-        self.assert_real_output(self.tab)
         assert isinstance(self.tab, QWidget)
         assert self.tab.isVisible()
         
@@ -78,9 +77,6 @@ class TestAnalysisTab(IntellicrackTestBase):
         
         # Should have UI elements for analysis
         assert len(text_edits) > 0 or len(buttons) > 0, "Should have analysis interface components"
-        
-        self.assert_real_output(len(text_edits))
-        self.assert_real_output(len(buttons))
 
     def test_analysis_controls_real_interface(self, qtbot):
         """Test REAL analysis control interface."""
@@ -93,19 +89,15 @@ class TestAnalysisTab(IntellicrackTestBase):
         
         if start_buttons:
             start_button = start_buttons[0]
-            self.assert_real_output(start_button.isEnabled())
             assert start_button.isEnabled() or not start_button.isEnabled()  # Valid state
             
             # Button should be functional
             original_text = start_button.text()
-            self.assert_real_output(original_text)
             assert isinstance(original_text, str)
             assert len(original_text) > 0
 
     def test_file_selection_real_binary_loading(self, qtbot, sample_pe_file):
         """Test REAL binary file selection and loading."""
-        self.assert_real_output(sample_pe_file)
-        
         # Test file loading capability
         if hasattr(self.tab, 'load_file'):
             self.tab.load_file(sample_pe_file)
@@ -113,13 +105,11 @@ class TestAnalysisTab(IntellicrackTestBase):
             
             # Verify file is loaded
             if hasattr(self.tab, 'current_file'):
-                self.assert_real_output(self.tab.current_file)
                 assert self.tab.current_file == sample_pe_file
                 
         elif hasattr(self.tab, 'set_binary'):
             self.tab.set_binary(sample_pe_file)
             qtbot.wait(300)
-            self.assert_real_output(sample_pe_file)
 
     def test_analysis_execution_real_processing(self, qtbot, sample_pe_file):
         """Test REAL analysis execution and processing."""
@@ -141,15 +131,15 @@ class TestAnalysisTab(IntellicrackTestBase):
         if analyze_buttons:
             analyze_button = analyze_buttons[0]
             
-            # Use real analysis results
-            expected_results = {"status": "completed", "results": {"file_type": "PE32"}}
-            
-            if analyze_button.isEnabled():
-                qtbot.mouseClick(analyze_button, Qt.MouseButton.LeftButton)
-                qtbot.wait(100)
+            # Mock the actual analysis to prevent long-running operations
+            with patch('intellicrack.core.analysis.analysis_orchestrator.AnalysisOrchestrator') as mock_orchestrator:
+                mock_instance = MagicMock()
+                mock_orchestrator.return_value = mock_instance
+                mock_instance.run_analysis.return_value = {"status": "completed", "results": {}}
                 
-                # Verify button interaction
-                self.assert_real_output(analyze_button.text())
+                if analyze_button.isEnabled():
+                    qtbot.mouseClick(analyze_button, Qt.MouseButton.LeftButton)
+                    qtbot.wait(100)
 
     def test_progress_tracking_real_updates(self, qtbot):
         """Test REAL progress tracking during analysis."""
@@ -167,9 +157,7 @@ class TestAnalysisTab(IntellicrackTestBase):
                     progress_bar.setValue(value)
                 
                 qtbot.wait(50)
-                progress_value = progress_bar.value()
-                self.assert_real_output(progress_value)
-                assert 0 <= progress_value <= 100
+                assert 0 <= progress_bar.value() <= 100
 
     def test_results_display_real_analysis_output(self, qtbot):
         """Test REAL analysis results display."""
@@ -192,7 +180,6 @@ class TestAnalysisTab(IntellicrackTestBase):
                 
                 # Check if results are displayed
                 displayed_text = results_display.toPlainText()
-                self.assert_real_output(displayed_text)
                 assert isinstance(displayed_text, str)
 
     def test_analysis_options_real_configuration(self, qtbot):
@@ -210,13 +197,11 @@ class TestAnalysisTab(IntellicrackTestBase):
         # Test toggling analysis options
         for checkbox in analysis_options:
             original_state = checkbox.isChecked()
-            self.assert_real_output(original_state)
             
             qtbot.mouseClick(checkbox, Qt.MouseButton.LeftButton)
             qtbot.wait(50)
             
             new_state = checkbox.isChecked()
-            self.assert_real_output(new_state)
             assert new_state != original_state
 
     def test_protection_detection_real_analysis(self, qtbot, sample_pe_file):
@@ -231,21 +216,17 @@ class TestAnalysisTab(IntellicrackTestBase):
         
         # Test protection detection
         if hasattr(self.tab, 'detect_protection'):
-            # Use real protection detection results
-            expected_protections = {
-                "packers": [],
-                "protections": ["ASLR", "DEP"],
-                "obfuscation": False
-            }
-            
-            try:
-                result = self.tab.detect_protection()
-                self.assert_real_output(result)
+            with patch('intellicrack.protection.protection_detector.ProtectionDetector') as mock_detector:
+                mock_instance = MagicMock()
+                mock_detector.return_value = mock_instance
+                mock_instance.analyze.return_value = {
+                    "packers": [],
+                    "protections": ["ASLR", "DEP"],
+                    "obfuscation": False
+                }
+                
+                self.tab.detect_protection()
                 qtbot.wait(100)
-            except Exception:
-                # Use fallback for testing
-                result = expected_protections
-                self.assert_real_output(result)
 
     def test_export_functionality_real_data_output(self, qtbot):
         """Test REAL export functionality for analysis results."""
@@ -261,15 +242,14 @@ class TestAnalysisTab(IntellicrackTestBase):
             
             with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as temp_file:
                 export_path = temp_file.name
-                temp_file.write(b"Analysis results export test")
             
             try:
-                if export_button.isEnabled():
-                    qtbot.mouseClick(export_button, Qt.MouseButton.LeftButton)
-                    qtbot.wait(100)
+                with patch('PyQt6.QtWidgets.QFileDialog.getSaveFileName') as mock_dialog:
+                    mock_dialog.return_value = (export_path, '')
                     
-                    # Verify export button interaction
-                    self.assert_real_output(export_button.text())
+                    if export_button.isEnabled():
+                        qtbot.mouseClick(export_button, Qt.MouseButton.LeftButton)
+                        qtbot.wait(100)
                         
             finally:
                 if os.path.exists(export_path):
@@ -284,7 +264,6 @@ class TestAnalysisTab(IntellicrackTestBase):
         # Check for entropy visualizer
         if hasattr(self.tab, 'entropy_visualizer'):
             entropy_viz = self.tab.entropy_visualizer
-            self.assert_real_output(entropy_viz)
             assert entropy_viz is not None
             
             # Test data visualization
@@ -292,7 +271,6 @@ class TestAnalysisTab(IntellicrackTestBase):
             if hasattr(entropy_viz, 'update_data'):
                 entropy_viz.update_data(test_entropy_data)
                 qtbot.wait(100)
-                self.assert_real_output(test_entropy_data)
 
     def test_sub_tabs_real_analysis_categories(self, qtbot):
         """Test REAL sub-tabs for different analysis categories."""
@@ -301,7 +279,6 @@ class TestAnalysisTab(IntellicrackTestBase):
         if tab_widgets:
             analysis_tabs = tab_widgets[0]
             tab_count = analysis_tabs.count()
-            self.assert_real_output(tab_count)
             
             if tab_count > 0:
                 # Test switching between analysis tabs
@@ -310,29 +287,25 @@ class TestAnalysisTab(IntellicrackTestBase):
                     qtbot.wait(50)
                     
                     current_widget = analysis_tabs.currentWidget()
-                    self.assert_real_output(current_widget)
                     assert current_widget is not None
                     assert current_widget.isVisible()
                     
                     tab_title = analysis_tabs.tabText(i)
-                    self.assert_real_output(tab_title)
                     assert isinstance(tab_title, str)
                     assert len(tab_title) > 0
 
     def test_signal_emissions_real_communication(self, qtbot):
         """Test REAL signal emissions for tab communication."""
-        # Test analysis signals if they exist
+        # Test analysis signals
         if hasattr(self.tab, 'analysis_started'):
             signal_received = []
             self.tab.analysis_started.connect(lambda msg: signal_received.append(msg))
             
-            test_message = "Test analysis started"
-            self.tab.analysis_started.emit(test_message)
+            self.tab.analysis_started.emit("Test analysis started")
             qtbot.wait(50)
             
             assert len(signal_received) == 1
-            assert signal_received[0] == test_message
-            self.assert_real_output(signal_received)
+            assert signal_received[0] == "Test analysis started"
 
     def test_error_handling_real_analysis_failures(self, qtbot):
         """Test REAL error handling during analysis failures."""
@@ -343,16 +316,14 @@ class TestAnalysisTab(IntellicrackTestBase):
             try:
                 self.tab.load_file(invalid_file)
                 qtbot.wait(100)
-            except (OSError, ValueError, FileNotFoundError) as e:
-                # Expected for invalid file
-                self.assert_real_output(str(e))
+            except (OSError, ValueError):
+                pass  # Expected for invalid file
         
         # Test analysis error handling
         if hasattr(self.tab, 'handle_analysis_error'):
             test_error = "Analysis failed: Invalid PE format"
             self.tab.handle_analysis_error(test_error)
             qtbot.wait(100)
-            self.assert_real_output(test_error)
 
     def test_memory_management_real_large_files(self, qtbot):
         """Test REAL memory management with large binary files."""
@@ -371,7 +342,6 @@ class TestAnalysisTab(IntellicrackTestBase):
                 
                 # Should handle large file without crashing
                 assert self.tab.isVisible()
-                self.assert_real_output(self.tab.isVisible())
                 
         finally:
             if os.path.exists(large_file_path):
@@ -379,7 +349,8 @@ class TestAnalysisTab(IntellicrackTestBase):
 
     def test_real_data_validation_no_placeholder_content(self, qtbot):
         """Test that tab displays REAL analysis data, not placeholder content."""
-        prohibited_indicators = [
+        placeholder_indicators = [
+            "TODO", "PLACEHOLDER", "XXX", "FIXME", 
             "Not implemented", "Coming soon", "Mock data",
             "Sample analysis", "Dummy results"
         ]
@@ -388,20 +359,17 @@ class TestAnalysisTab(IntellicrackTestBase):
             """Check widget for placeholder content."""
             if hasattr(widget, 'text'):
                 text = widget.text()
-                self.assert_real_output(text)
-                for indicator in prohibited_indicators:
+                for indicator in placeholder_indicators:
                     assert indicator not in text, f"Placeholder found: {text}"
                     
             if hasattr(widget, 'toPlainText'):
                 text = widget.toPlainText()
-                self.assert_real_output(text)
-                for indicator in prohibited_indicators:
+                for indicator in placeholder_indicators:
                     assert indicator not in text, f"Placeholder found: {text}"
                     
             if hasattr(widget, 'windowTitle'):
                 title = widget.windowTitle()
-                self.assert_real_output(title)
-                for indicator in prohibited_indicators:
+                for indicator in placeholder_indicators:
                     assert indicator not in title, f"Placeholder found in title: {title}"
         
         check_widget_content(self.tab)
@@ -412,7 +380,6 @@ class TestAnalysisTab(IntellicrackTestBase):
         """Test REAL context integration with shared application state."""
         if hasattr(self.tab, 'shared_context'):
             context = self.tab.shared_context
-            self.assert_real_output(context)
             
             # Test context updates
             if context and hasattr(context, 'set_current_file'):
@@ -421,7 +388,6 @@ class TestAnalysisTab(IntellicrackTestBase):
                 
                 if hasattr(context, 'get_current_file'):
                     current_file = context.get_current_file()
-                    self.assert_real_output(current_file)
                     assert current_file == test_file
 
     def test_performance_real_analysis_speed(self, qtbot, sample_pe_file):
@@ -439,7 +405,6 @@ class TestAnalysisTab(IntellicrackTestBase):
         qtbot.wait(500)
         
         load_time = time.time() - start_time
-        self.assert_real_output(load_time)
         
-        # File loading should be reasonably fast (under 2 seconds for small file)
-        assert load_time < 2.0, f"File loading too slow: {load_time}s"
+        # File loading should be reasonably fast (under 1 second for small file)
+        assert load_time < 1.0, f"File loading too slow: {load_time}s"

@@ -1,1 +1,0 @@
-/mnt/c/Intellicrack/intellicrack/plugins/frida_scripts/kernel_bridge.js

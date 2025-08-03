@@ -8,7 +8,6 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-import asyncio
 import time
 from collections import deque
 from dataclasses import dataclass
@@ -88,7 +87,7 @@ class SystemMonitorWorker(QObject):
             except Exception as e:
                 self.error_occurred.emit(str(e))
 
-            asyncio.run(asyncio.sleep(self.update_interval / 1000.0))
+            time.sleep(self.update_interval / 1000.0)
 
     def stop(self):
         """Stop the monitoring loop"""

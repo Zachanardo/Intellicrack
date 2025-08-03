@@ -21,9 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 import logging
-import os
 import platform
-import time
 from typing import Any, Dict, List, Optional
 
 from ...utils.core.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
@@ -225,9 +223,7 @@ class HardwareDongleEmulator:
                 if (wkGetHandle) {
                     Interceptor.attach(wkGetHandle, {
                         onLeave: function(retval) {
-                            // Generate dynamic handle based on process ID and timestamp
-                            var dynamicHandle = (Process.id << 16) | (Date.now() & 0xFFFF);
-                            retval.replace(dynamicHandle); // Return valid handle
+                            retval.replace(0x12345678); // Return valid handle
                             console.log("[CodeMeter] WkGetHandle returning valid handle");
                         }
                     });
@@ -255,9 +251,7 @@ class HardwareDongleEmulator:
                         var filename = this.context.r8 ? this.context.r8.readUtf16String() : "";
                         if (filename && (filename.includes("Sentinel") || filename.includes("HASP") || filename.includes("WibuKey"))) {
                             // Return a valid handle instead of INVALID_HANDLE_VALUE
-                            // Generate dynamic handle for dongle device  
-                            var dynamicHandle = (Process.id << 16) | (Date.now() & 0xFFFF);
-                            retval.replace(dynamicHandle);
+                            retval.replace(0x12345678);
                             console.log("[Dongle] CreateFile for dongle device returning valid handle");
                         }
                     }
@@ -282,7 +276,7 @@ class HardwareDongleEmulator:
         for dongle_type in dongle_types:
             if dongle_type == "SafeNet":
                 self.virtual_dongles["SafeNet"] = {
-                    "device_id": self._generate_dynamic_device_id("SafeNet"),
+                    "device_id": 0x12345678,
                     "vendor_id": 0x0529,  # SafeNet vendor ID
                     "product_id": 0x0001,
                     "firmware_version": "1.0.0",
@@ -293,11 +287,11 @@ class HardwareDongleEmulator:
 
             elif dongle_type == "HASP":
                 self.virtual_dongles["HASP"] = {
-                    "hasp_id": self._generate_dynamic_device_id("HASP"),
+                    "hasp_id": 0x12345678,
                     "vendor_code": 0x1234,
                     "feature_id": 0x0001,
                     "memory_size": 512,
-                    "time_stamp": int(time.time()),  # Current timestamp
+                    "time_stamp": 0x12345678,
                     "password": b"defaultpass"
                 }
 
@@ -488,25 +482,6 @@ class HardwareDongleEmulator:
         self.patches.clear()
         self.virtual_dongles.clear()
         self.logger.info("Cleared all dongle emulation hooks and virtual devices")
-
-    def _generate_dynamic_device_id(self, dongle_type: str) -> int:
-        """Generate dynamic device ID based on dongle type and system characteristics."""
-        import hashlib
-        import time
-        
-        # Create unique seed based on dongle type and system info
-        seed_data = f"{dongle_type}_{time.time()}_{os.getpid()}"
-        hash_object = hashlib.md5(seed_data.encode())
-        hash_hex = hash_object.hexdigest()
-        
-        # Convert first 8 characters to int
-        device_id = int(hash_hex[:8], 16)
-        
-        # Ensure it's in valid range and not a placeholder
-        if device_id == 0x12345678 or device_id == 0:
-            device_id = int(hash_hex[8:16], 16)
-        
-        return device_id
 
 
 def activate_hardware_dongle_emulation(app: Any, dongle_types: List[str] = None) -> Dict[str, Any]:

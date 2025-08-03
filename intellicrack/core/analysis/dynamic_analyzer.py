@@ -20,9 +20,8 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import asyncio
 import logging
-import os
+import subprocess
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -52,59 +51,7 @@ class AdvancedDynamicAnalyzer:
         self.network_activity = []
         self.file_operations = []
 
-        # Calculate dynamic memory limits based on system capabilities
-        self.memory_limits = self._calculate_memory_limits()
-
-    def _calculate_memory_limits(self) -> Dict[str, int]:
-        """Calculate dynamic memory limits based on system capabilities."""
-        try:
-            # Default conservative limits
-            default_limits = {
-                'max_region_size': 0x1000000,  # 16MB
-                'max_read_size': 0x100000,     # 1MB
-                'arch_multiplier': 1
-            }
-
-            if not PSUTIL_AVAILABLE:
-                self.logger.warning("psutil not available, using conservative memory limits")
-                return default_limits
-
-            # Get system memory information
-            virtual_memory = psutil.virtual_memory()
-            available_memory = virtual_memory.available
-
-            # Calculate adaptive limits based on available memory
-            # Use a conservative percentage of available memory
-            memory_percentage = 0.05  # Use 5% of available memory max
-            max_memory_for_analysis = int(available_memory * memory_percentage)
-
-            # Set architecture-based multipliers
-            arch_multiplier = 2 if os.name == 'nt' else 1  # Windows can handle larger regions
-
-            # Calculate region and read sizes
-            max_region_size = min(max_memory_for_analysis // 10, 0x4000000)  # Max 64MB per region
-            max_read_size = min(max_region_size // 8, 0x800000)  # Max 8MB per read
-
-            # Apply architecture scaling
-            if max_region_size > 0x2000000:  # If we have plenty of memory
-                arch_multiplier = 2 if os.name == 'nt' else 1.5
-
-            limits = {
-                'max_region_size': int(max_region_size * arch_multiplier),
-                'max_read_size': int(max_read_size * arch_multiplier),
-                'arch_multiplier': arch_multiplier,
-                'available_memory': available_memory,
-                'analysis_memory_budget': max_memory_for_analysis
-            }
-
-            self.logger.debug(f"Calculated dynamic memory limits: {limits}")
-            return limits
-
-        except Exception as e:
-            self.logger.warning(f"Failed to calculate dynamic memory limits: {e}")
-            return default_limits
-
-    async def run_comprehensive_analysis(self, payload: Optional[bytes] = None) -> Dict[str, Any]:
+    def run_comprehensive_analysis(self, payload: Optional[bytes] = None) -> Dict[str, Any]:
         """
         Execute multi-stage dynamic analysis.
 
@@ -121,20 +68,10 @@ class AdvancedDynamicAnalyzer:
         """
         self.logger.info(f"Running comprehensive dynamic analysis for {self.binary_path}. Payload provided: {bool(payload)}")
 
-        # Run analysis methods concurrently for better performance
-        subprocess_task = self._subprocess_analysis()
-        frida_task = self._frida_runtime_analysis(payload)
-        behavior_task = self._process_behavior_analysis()
-
-        # Await all tasks concurrently
-        subprocess_result, frida_result, behavior_result = await asyncio.gather(
-            subprocess_task, frida_task, behavior_task, return_exceptions=True
-        )
-
         analysis_results = {
-            'subprocess_execution': subprocess_result if not isinstance(subprocess_result, Exception) else {'success': False, 'error': str(subprocess_result)},
-            'frida_runtime_analysis': frida_result if not isinstance(frida_result, Exception) else {'success': False, 'error': str(frida_result)},
-            'process_behavior_analysis': behavior_result if not isinstance(behavior_result, Exception) else {'success': False, 'error': str(behavior_result)}
+            'subprocess_execution': self._subprocess_analysis(),
+            'frida_runtime_analysis': self._frida_runtime_analysis(payload),
+            'process_behavior_analysis': self._process_behavior_analysis()
         }
 
         self.logger.info("Comprehensive dynamic analysis completed.")
@@ -142,7 +79,7 @@ class AdvancedDynamicAnalyzer:
 
         return analysis_results
 
-    async def _subprocess_analysis(self) -> Dict[str, Any]:
+    def _subprocess_analysis(self) -> Dict[str, Any]:
         """
         Standard subprocess execution analysis.
 
@@ -157,33 +94,31 @@ class AdvancedDynamicAnalyzer:
         self.logger.info("Starting subprocess analysis for %s", self.binary_path)
 
         try:
-            from ...utils.system.subprocess_utils import async_run_subprocess
-
-            returncode, stdout, stderr = await async_run_subprocess(
+            result = subprocess.run(
                 [self.binary_path],
-                timeout=10,
                 capture_output=True,
-                text=True
-            )
+                text=True,
+                timeout=10
+            , check=False)
 
-            self.logger.debug("Subprocess result: Success=%s, ReturnCode=%s", returncode == 0, returncode)
+            self.logger.debug("Subprocess result: Success=%s, ReturnCode=%s", result.returncode == 0, result.returncode)
 
             return {
-                'success': returncode == 0,
-                'stdout': stdout,
-                'stderr': stderr,
-                'return_code': returncode
+                'success': result.returncode == 0,
+                'stdout': result.stdout,
+                'stderr': result.stderr,
+                'return_code': result.returncode
             }
-        except asyncio.TimeoutError:
+        except subprocess.TimeoutExpired:
             self.logger.error("Subprocess analysis error: Timeout expired")
             return {'success': False, 'error': 'Timeout expired'}
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Subprocess analysis error: %s", e, exc_info=True)
             return {'success': False, 'error': str(e)}
 
-    async def _frida_runtime_analysis(self, payload: Optional[bytes] = None) -> Dict[str, Any]:
+    def _frida_runtime_analysis(self, payload: Optional[bytes] = None) -> Dict[str, Any]:
         """
-        Advanced Frida-based runtime analysis with adaptive timing.
+        Advanced Frida-based runtime analysis and payload injection.
 
         Uses Frida instrumentation to perform deep runtime analysis of the target binary.
         Hooks key functions, monitors license-related activities, and optionally injects
@@ -502,54 +437,25 @@ class AdvancedDynamicAnalyzer:
                 }
             });
 
-            // Adaptive completion reporting - wait for activity to stabilize
-            var activityTimeout;
-            var lastActivityTime = Date.now();
-            var reportSent = false;
-            
-            function reportCompletion() {
-                if (!reportSent) {
-                    reportSent = true;
-                    send({
-                        type: 'analysis_complete',
-                        data: {
-                            interceptedCalls: interceptedCalls,
-                            stringReferences: stringReferences,
-                            networkActivity: networkActivity,
-                            fileActivity: fileActivity,
-                            registryActivity: registryActivity,
-                            cryptoActivity: cryptoActivity,
-                            timingChecks: timingChecks
-                        }
-                    });
-                }
-            }
-            
-            // Track activity and report when stable
-            function resetActivityTimer() {
-                lastActivityTime = Date.now();
-                if (activityTimeout) {
-                    clearTimeout(activityTimeout);
-                }
-                activityTimeout = setTimeout(reportCompletion, 3000); // 3 second stabilization period
-            }
-            
-            // Override send to track activity
-            const originalSend = send;
-            send = function(data) {
-                resetActivityTimer();
-                return originalSend(data);
-            };
-            
-            // Initial timeout for minimum execution time
-            setTimeout(reportCompletion, 8000); // Minimum 8 seconds
-            resetActivityTimer();
+            // Report completion
+            setTimeout(function() {
+                send({
+                    type: 'analysis_complete',
+                    data: {
+                        interceptedCalls: interceptedCalls,
+                        stringReferences: stringReferences,
+                        networkActivity: networkActivity,
+                        fileActivity: fileActivity,
+                        registryActivity: registryActivity,
+                        cryptoActivity: cryptoActivity,
+                        timingChecks: timingChecks
+                    }
+                });
+            }, 5000);
             '''
 
-            # Message handler with adaptive analysis
+            # Message handler
             analysis_data = {}
-            analysis_start_time = time.time()
-            last_activity_time = analysis_start_time
 
             def on_message(message, _data):  # pylint: disable=unused-argument
                 """
@@ -562,9 +468,6 @@ class AdvancedDynamicAnalyzer:
                 Processes different message types including analysis completion and
                 various activity tracking (file access, registry, network, licensing).
                 """
-                nonlocal last_activity_time
-                last_activity_time = time.time()
-
                 if message['type'] == 'send':
                     payload_data = message['payload']
                     msg_type = payload_data.get('type')
@@ -580,20 +483,16 @@ class AdvancedDynamicAnalyzer:
             script.on('message', on_message)
             script.load()
 
-            # Resume the process and let it run with adaptive timing
+            # Resume the process and let it run
             frida.resume(pid)
+            time.sleep(10)  # Run for 10 seconds
 
-            # Adaptive runtime analysis based on process behavior
-            runtime_duration = await self._calculate_adaptive_runtime(pid, analysis_start_time)
-            await asyncio.sleep(runtime_duration)
-
-            self.logger.info(f"Frida runtime analysis completed after {runtime_duration:.2f} seconds")
+            self.logger.info("Frida runtime analysis completed successfully")
             return {
                 'success': True,
                 'pid': pid,
                 'analysis_data': analysis_data,
-                'payload_injected': payload is not None,
-                'runtime_duration': runtime_duration
+                'payload_injected': payload is not None
             }
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -611,97 +510,7 @@ class AdvancedDynamicAnalyzer:
             except Exception as cleanup_error:
                 self.logger.error("Error during Frida cleanup: %s", cleanup_error)
 
-    def _calculate_process_stabilization_time(self, pid: int) -> float:
-        """Calculate appropriate stabilization time for process initialization"""
-        if not PSUTIL_AVAILABLE:
-            return 2.0  # Default fallback
-
-        try:
-            process = psutil.Process(pid)
-
-            # Base time for process stabilization
-            base_time = 0.5
-
-            # Factor in memory usage - larger processes need more time
-            try:
-                memory_mb = process.memory_info().rss / (1024 * 1024)
-                memory_factor = min(memory_mb / 100, 3.0)  # Cap at 3x multiplier
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                memory_factor = 1.0
-
-            # Factor in number of threads
-            try:
-                thread_count = process.num_threads()
-                thread_factor = min(thread_count / 10, 2.0)  # Cap at 2x multiplier
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                thread_factor = 1.0
-
-            # Calculate adaptive stabilization time
-            stabilization_time = base_time * (1 + memory_factor + thread_factor)
-
-            # Ensure reasonable bounds (0.5 to 8 seconds)
-            return max(0.5, min(stabilization_time, 8.0))
-
-        except Exception:
-            return 2.0  # Safe fallback
-
-    async def _calculate_adaptive_runtime(self, pid: int, start_time: float) -> float:
-        """Calculate adaptive runtime based on process behavior and activity."""
-        try:
-            if not PSUTIL_AVAILABLE:
-                # Fallback to reasonable default
-                return 8.0
-
-            process = psutil.Process(pid)
-            initial_cpu_times = process.cpu_times()
-            initial_memory = process.memory_info().rss
-
-            # Monitor process for activity patterns
-            activity_samples = []
-            base_runtime = 3.0  # Minimum runtime
-            max_runtime = 30.0  # Maximum runtime
-
-            # Sample process metrics over time
-            for i in range(5):  # 5 samples over 2.5 seconds
-                await asyncio.sleep(0.5)
-
-                try:
-                    current_cpu_times = process.cpu_times()
-                    current_memory = process.memory_info().rss
-
-                    # Calculate activity metrics
-                    cpu_delta = (current_cpu_times.user + current_cpu_times.system) - \
-                              (initial_cpu_times.user + initial_cpu_times.system)
-                    memory_delta = abs(current_memory - initial_memory)
-
-                    activity_score = cpu_delta * 10 + (memory_delta / 1024 / 1024)  # CPU weight + MB
-                    activity_samples.append(activity_score)
-
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    # Process may have terminated
-                    break
-
-            if activity_samples:
-                avg_activity = sum(activity_samples) / len(activity_samples)
-
-                # Calculate adaptive runtime based on activity
-                if avg_activity > 5.0:  # High activity
-                    runtime = min(max_runtime, base_runtime + (avg_activity * 2))
-                elif avg_activity > 1.0:  # Medium activity
-                    runtime = min(max_runtime, base_runtime + (avg_activity * 4))
-                else:  # Low activity
-                    runtime = base_runtime + 2.0
-
-                self.logger.debug(f"Adaptive runtime calculated: {runtime:.2f}s based on activity: {avg_activity:.2f}")
-                return runtime
-            else:
-                return base_runtime + 3.0
-
-        except Exception as e:
-            self.logger.warning(f"Error calculating adaptive runtime: {e}")
-            return 8.0  # Safe fallback
-
-    async def _process_behavior_analysis(self) -> Dict[str, Any]:
+    def _process_behavior_analysis(self) -> Dict[str, Any]:
         """
         Analyze process behavior and resource interactions.
 
@@ -721,15 +530,14 @@ class AdvancedDynamicAnalyzer:
 
         try:
             # Use psutil for detailed process analysis
-            process = await asyncio.create_subprocess_exec(
-                self.binary_path,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+            process = subprocess.Popen(
+                [self.binary_path],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
             )
 
-            # Wait for process to stabilize using adaptive timing
-            stabilization_time = self._calculate_process_stabilization_time(process.pid)
-            await asyncio.sleep(stabilization_time)
+            # Wait a bit and collect process info
+            time.sleep(2)
 
             ps_process = psutil.Process(process.pid)
 
@@ -791,7 +599,7 @@ class AdvancedDynamicAnalyzer:
                 'matches': []
             }
 
-    async def _frida_memory_scan(self, keywords: List[str], target_process: Optional[str] = None) -> Dict[str, Any]:
+    def _frida_memory_scan(self, keywords: List[str], target_process: Optional[str] = None) -> Dict[str, Any]:
         """Perform memory scanning using Frida instrumentation."""
         try:
             # Get process to attach to
@@ -811,9 +619,7 @@ class AdvancedDynamicAnalyzer:
                     pid = frida.spawn([str(self.binary_path)])
                     session = frida.attach(pid)
                     frida.resume(pid)
-                    # Allow process to initialize using adaptive timing
-                    init_time = self._calculate_process_stabilization_time(pid)
-                    await asyncio.sleep(init_time)
+                    time.sleep(2)  # Allow process to initialize
                 except Exception as e:
                     logger.error("Exception in dynamic_analyzer: %s", e)
                     return {
@@ -821,10 +627,6 @@ class AdvancedDynamicAnalyzer:
                         'error': f'Could not attach to or spawn process: {process_name}',
                         'matches': []
                     }
-
-            # Get dynamic memory limits calculated from system capabilities
-            max_region_size = self.memory_limits['max_region_size']
-            max_read_size = self.memory_limits['max_read_size']
 
             # Frida script for memory scanning
             script_code = f"""
@@ -838,15 +640,10 @@ class AdvancedDynamicAnalyzer:
                     const ranges = Process.enumerateRanges('r--');
 
                     ranges.forEach(function(range) {{
-                        // Dynamic memory region limits calculated from system capabilities
-                        const maxRegionSize = {max_region_size};
-                        const maxReadSize = {max_read_size};
-                        
-                        if (range.size > maxRegionSize) return; // Skip oversized regions
+                        if (range.size > 0x1000000) return; // Skip very large regions
 
                         try {{
-                            const readSize = Math.min(range.size, maxReadSize);
-                            const memory = Memory.readByteArray(range.base, readSize);
+                            const memory = Memory.readByteArray(range.base, Math.min(range.size, 0x100000));
                             if (memory) {{
                                 const view = new Uint8Array(memory);
                                 const text = String.fromCharCode.apply(null, view);
@@ -917,7 +714,7 @@ class AdvancedDynamicAnalyzer:
             timeout = 35  # Give extra time for completion
             start_time = time.time()
             while time.time() - start_time < timeout and results['status'] != 'complete':
-                await asyncio.sleep(1)
+                time.sleep(1)
 
             script.unload()
             session.detach()
@@ -944,7 +741,7 @@ class AdvancedDynamicAnalyzer:
                 'matches': []
             }
 
-    async def _psutil_memory_scan(self, keywords: List[str], target_process: Optional[str] = None) -> Dict[str, Any]:
+    def _psutil_memory_scan(self, keywords: List[str], target_process: Optional[str] = None) -> Dict[str, Any]:
         """Perform basic memory scanning using psutil (limited functionality)."""
         try:
             process_name = target_process or Path(self.binary_path).name
@@ -963,10 +760,8 @@ class AdvancedDynamicAnalyzer:
             if not target_proc:
                 # Try to start the process
                 try:
-                    proc = await asyncio.create_subprocess_exec(str(self.binary_path))
-                    # Wait for process startup using adaptive timing
-                    startup_time = self._calculate_process_stabilization_time(proc.pid)
-                    await asyncio.sleep(startup_time)
+                    proc = subprocess.Popen([str(self.binary_path)])
+                    time.sleep(2)
                     target_proc = psutil.Process(proc.pid)
                 except Exception as e:
                     logger.error("Exception in dynamic_analyzer: %s", e)
@@ -1086,78 +881,6 @@ class AdvancedDynamicAnalyzer:
                 'matches': []
             }
 
-    def analyze(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
-        """
-        Analyze a binary file - compatibility method for orchestrator.
-        
-        Args:
-            binary_path: Path to the binary to analyze
-            
-        Returns:
-            dict: Comprehensive analysis results
-        """
-        try:
-            # If we're already initialized with the same binary, just run analysis
-            if str(self.binary_path) == str(binary_path):
-                return self.run_comprehensive_analysis()
-            else:
-                # Create new analyzer for different binary
-                analyzer = AdvancedDynamicAnalyzer(binary_path)
-                return analyzer.run_comprehensive_analysis()
-        except Exception as e:
-            self.logger.error(f"Analysis failed: {e}")
-            return {
-                'status': 'error',
-                'error': str(e),
-                'subprocess_execution': {'success': False, 'error': str(e)},
-                'frida_runtime_analysis': {'success': False, 'error': str(e)},
-                'process_behavior_analysis': {'error': str(e)}
-            }
-
-    def is_available(self) -> bool:
-        """
-        Check if dynamic analysis is available on this system.
-        
-        Returns:
-            bool: True if dynamic analysis can be performed
-        """
-        # Check for required dependencies
-        available = True
-        reasons = []
-
-        # Check if psutil is available
-        try:
-            import psutil
-        except ImportError:
-            available = False
-            reasons.append("psutil not available")
-
-        # Check if we're on a supported platform
-        import platform
-        if platform.system() not in ['Windows', 'Linux']:
-            available = False
-            reasons.append(f"Unsupported platform: {platform.system()}")
-
-        # Check if binary exists and is executable
-        if not self.binary_path.exists():
-            available = False
-            reasons.append("Binary file not found")
-        elif not os.access(str(self.binary_path), os.X_OK):
-            # On Windows, check if it's an executable file
-            if platform.system() == 'Windows':
-                ext = self.binary_path.suffix.lower()
-                if ext not in ['.exe', '.dll', '.com', '.bat', '.cmd']:
-                    available = False
-                    reasons.append("Not an executable file")
-            else:
-                available = False
-                reasons.append("Binary not executable")
-
-        if not available:
-            self.logger.warning(f"Dynamic analysis not available: {', '.join(reasons)}")
-
-        return available
-
 
 # Convenience functions for application integration
 def run_dynamic_analysis(app, binary_path: Optional[Union[str, Path]] = None,
@@ -1235,7 +958,7 @@ def run_dynamic_analysis(app, binary_path: Optional[Union[str, Path]] = None,
     return results
 
 
-async def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> List[str]:
+def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> List[str]:
     """
     Monitor runtime behavior of the binary using Frida instrumentation.
 
@@ -1328,7 +1051,7 @@ async def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> Lis
 
         # Launch the process
         logs.append("Launching process...")
-        process = await asyncio.create_subprocess_exec(binary_path)
+        process = subprocess.Popen([binary_path], encoding='utf-8')
         logs.append(f"Process started with PID {process.pid}")
 
         # Attach Frida
@@ -1353,7 +1076,7 @@ async def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> Lis
 
         # Monitor for specified timeout
         logs.append(f"Monitoring for {timeout / 1000} seconds...")
-        await asyncio.sleep(timeout / 1000)
+        time.sleep(timeout / 1000)
 
         # Detach and terminate
         logs.append("Detaching Frida...")

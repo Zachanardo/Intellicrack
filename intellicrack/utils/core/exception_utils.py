@@ -198,64 +198,49 @@ def _report_error(exc_type, exc_value, exc_traceback) -> None:
 
 def load_config(config_path: str = "config.json") -> Dict[str, Any]:
     """
-    Load configuration using centralized config system.
+    Load configuration from JSON file.
 
     Args:
-        config_path: Deprecated - maintained for backward compatibility only
+        config_path: Path to configuration file
 
     Returns:
         Configuration dictionary
     """
     try:
-        from ...core.config_manager import get_config
-        config_manager = get_config()
-        # Return legacy-compatible config dict from modern system
-        return dict(config_manager.config)
-    except ImportError:
-        # Fallback to direct file loading if centralized system unavailable
-        try:
-            if os.path.exists(config_path):
-                with open(config_path, "r", encoding="utf-8") as f:
-                    config = json.load(f)
-                logger.info("Configuration loaded from %s (fallback)", config_path)
-                return config
-            else:
-                logger.warning("Configuration file not found: %s", config_path)
-                return {}
-        except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to load configuration: %s", e)
+        if os.path.exists(config_path):
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            logger.info("Configuration loaded from %s", config_path)
+            return config
+        else:
+            logger.warning("Configuration file not found: %s", config_path)
             return {}
+
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Failed to load configuration: %s", e)
+        return {}
 
 
 def save_config(config: Dict[str, Any], config_path: str = "config.json") -> bool:
     """
-    Save configuration using centralized config system.
+    Save configuration to JSON file.
 
     Args:
         config: Configuration dictionary to save
-        config_path: Deprecated - maintained for backward compatibility only
+        config_path: Path to configuration file
 
     Returns:
         True if successful, False otherwise
     """
     try:
-        from ...core.config_manager import get_config
-        config_manager = get_config()
-        # Update centralized config with provided values
-        for key, value in config.items():
-            config_manager.set(key, value)
-        logger.info("Configuration saved to centralized system")
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=2)
+        logger.info("Configuration saved to %s", config_path)
         return True
-    except ImportError:
-        # Fallback to direct file saving if centralized system unavailable
-        try:
-            with open(config_path, "w", encoding="utf-8") as f:
-                json.dump(config, f, indent=2)
-            logger.info("Configuration saved to %s (fallback)", config_path)
-            return True
-        except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to save configuration: %s", e)
-            return False
+
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Failed to save configuration: %s", e)
+        return False
 
 
 def setup_file_logging(log_file: str = "intellicrack.log",

@@ -220,80 +220,67 @@ class MemoryOptimizer:
         Returns:
             int: Estimated bytes saved by optimization
         """
-        import asyncio
-        
-        async def async_optimize():
-            memory_before = self.optimization_stats["current_memory_usage"]
-            techniques_used = []
+        memory_before = self.optimization_stats["current_memory_usage"]
+        techniques_used = []
 
-            try:
-                # Trigger garbage collection if enabled
-                if self.optimization_techniques["garbage_collection"]:
-                    _collected_objects = gc.collect()
-                    techniques_used.append(f"garbage_collection({_collected_objects} objects)")
-
-                # Use memory-efficient data structures if enabled
-                if self.optimization_techniques["memory_efficient_structures"]:
-                    # This could involve optimizing data structures in the application
-                    self._optimize_data_structures()
-                    techniques_used.append("memory_efficient_structures")
-
-                # Check for memory leaks if enabled
-                if self.optimization_techniques["leak_detection"]:
-                    _leak_info = self.check_for_memory_leaks()
-                    techniques_used.append(f"leak_detection({_leak_info})")
-
-                # Force update of memory usage after optimization
-                await asyncio.sleep(0.1)  # Small delay to allow GC to complete
-                _, _, _ = self.get_current_memory_usage()
-                memory_after = self.optimization_stats["current_memory_usage"]
-                
-                return memory_before, memory_after, techniques_used
-            except Exception as e:
-                logger.error(f"Error during async memory optimization: {e}")
-                return memory_before, memory_before, techniques_used
-
-        # Run async code in sync context
         try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        
-        memory_before, memory_after, techniques_used = loop.run_until_complete(async_optimize())
+            # Trigger garbage collection if enabled
+            if self.optimization_techniques["garbage_collection"]:
+                _collected_objects = gc.collect()
+                techniques_used.append(f"garbage_collection({_collected_objects} objects)")
 
-        # Calculate memory saved
-        memory_saved = max(0, memory_before - memory_after)
+            # Use memory-efficient data structures if enabled
+            if self.optimization_techniques["memory_efficient_structures"]:
+                # This could involve optimizing data structures in the application
+                self._optimize_data_structures()
+                techniques_used.append("memory_efficient_structures")
 
-        # Update statistics
-        self.optimization_stats["memory_saved"] += memory_saved
-        self.optimization_stats["collections_triggered"] += 1
-        self.optimization_stats["total_optimizations"] += 1
-        self.optimization_stats["last_optimization_time"] = time.time()
+            # Check for memory leaks if enabled
+            if self.optimization_techniques["leak_detection"]:
+                _leak_info = self.check_for_memory_leaks()
+                techniques_used.append(f"leak_detection({_leak_info})")
 
-        # Calculate average memory saved
-        if self.optimization_stats["total_optimizations"] > 0:
-            self.optimization_stats["average_memory_saved"] = (
-                self.optimization_stats["memory_saved"] / self.optimization_stats["total_optimizations"]
+            # Force update of memory usage after optimization
+            time.sleep(0.1)  # Small delay to allow GC to complete
+            _, _, _ = self.get_current_memory_usage()
+            memory_after = self.optimization_stats["current_memory_usage"]
+
+            # Calculate memory saved
+            memory_saved = max(0, memory_before - memory_after)
+
+            # Update statistics
+            self.optimization_stats["memory_saved"] += memory_saved
+            self.optimization_stats["collections_triggered"] += 1
+            self.optimization_stats["total_optimizations"] += 1
+            self.optimization_stats["last_optimization_time"] = time.time()
+
+            # Calculate average memory saved
+            if self.optimization_stats["total_optimizations"] > 0:
+                self.optimization_stats["average_memory_saved"] = (
+                    self.optimization_stats["memory_saved"] / self.optimization_stats["total_optimizations"]
+                )
+
+            # Log optimization results
+            memory_saved_mb = memory_saved / (1024 * 1024)
+            optimization_message = (
+                f"[Memory] Optimization completed: {memory_saved_mb:.2f} MB saved "
+                f"using {', '.join(techniques_used)}"
             )
 
-        # Log optimization results
-        memory_saved_mb = memory_saved / (1024 * 1024)
-        optimization_message = (
-            f"[Memory] Optimization completed: {memory_saved_mb:.2f} MB saved "
-            f"using {', '.join(techniques_used)}"
-        )
+            if self.app and hasattr(self.app, 'update_output'):
+                try:
+                    from ...utils.ui_utils import log_message
+                    self.app.update_output.emit(log_message(optimization_message))
+                except ImportError as e:
+                    self.logger.debug("UI utilities not available for memory optimization UI updates: %s", e)
 
-        if self.app and hasattr(self.app, 'update_output'):
-            try:
-                from ...utils.ui_utils import log_message
-                self.app.update_output.emit(log_message(optimization_message))
-            except ImportError as e:
-                self.logger.debug("UI utilities not available for memory optimization UI updates: %s", e)
+            self.logger.info(optimization_message)
 
-        self.logger.info(optimization_message)
+            return memory_saved
 
-        return memory_saved
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error during memory optimization: %s", e)
+            return 0
 
     def _optimize_data_structures(self) -> None:
         """

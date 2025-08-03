@@ -22,7 +22,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import asyncio
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Union
@@ -117,7 +116,7 @@ class NetworkForensicsEngine:
             self.logger.error("Network capture analysis failed: %s", e)
             return {'error': str(e)}
 
-    async def analyze_live_traffic(self, interface: str, duration: int = 60) -> Dict[str, Any]:
+    def analyze_live_traffic(self, interface: str, duration: int = 60) -> Dict[str, Any]:
         """
         Analyze live network traffic for forensic artifacts.
 
@@ -161,7 +160,7 @@ class NetworkForensicsEngine:
             start_time = time.time()
 
             # Monitor for specified duration
-            await asyncio.sleep(min(duration, 5))  # Cap at 5 seconds for demo
+            time.sleep(min(duration, 5))  # Cap at 5 seconds for demo
 
             # Get final network statistics
             end_stats = psutil.net_io_counters(pernic=True).get(interface)

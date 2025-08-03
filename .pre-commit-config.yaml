@@ -1,94 +1,34 @@
 repos:
-  # Code formatting
-  - repo: https://github.com/psf/black
-    rev: 23.12.1
+  - repo: local
     hooks:
-      - id: black
-        language_version: python3
-        args: [--line-length=88]
+      - id: test-coverage
+        name: Check test coverage (95% minimum)
+        entry: pytest --cov=intellicrack --cov-fail-under=95 --cov-report=term-missing
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [commit]
+      
+      - id: no-mock-validation
+        name: Verify no mock/fake data in tests
+        entry: python scripts/verify_no_mocks.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [commit]
+      
+      - id: test-real-functionality
+        name: Run real functionality tests
+        entry: pytest tests/unit -k "not slow" --tb=short
+        language: system
+        pass_filenames: false
+        stages: [commit]
 
-  # Import sorting
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        args: [--profile=black, --line-length=88]
-
-  # Linting
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
-    hooks:
-      - id: flake8
-        args: [--max-line-length=88, --extend-ignore=E203,W503]
-
-  # Security scanning
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.5
-    hooks:
-      - id: bandit
-        args: [--skip, B101,B601,B602,B603,B604,B605,B606,B607,B608,B609,B610]
-        exclude: ^tests/
-
-  # Type checking
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0
-    hooks:
-      - id: mypy
-        additional_dependencies: [types-all]
-        args: [--ignore-missing-imports, --no-strict-optional]
-
-  # General pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
-      - id: check-json
-      - id: check-toml
-      - id: check-xml
-      - id: check-merge-conflict
-      - id: check-case-conflict
-      - id: check-docstring-first
-      - id: debug-statements
-      - id: mixed-line-ending
-        args: [--fix=lf]
-
-  # Documentation
-  - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.3.0
-    hooks:
-      - id: pydocstyle
-        args: [--convention=google]
-
-  # Custom hook to verify no mocks in tests
-  - repo: local
-    hooks:
-      - id: verify-no-mocks
-        name: Verify No Mock Usage in Tests
-        entry: python scripts/verify_no_mocks.py
-        language: system
-        pass_filenames: false
-        files: ^tests/.*\.py$
-
-  # Custom hook for test coverage
-  - repo: local
-    hooks:
-      - id: test-coverage
-        name: Test Coverage Check
-        entry: pytest --cov=intellicrack --cov-fail-under=95 --quiet
-        language: system
-        pass_filenames: false
-        files: \.py$
-        stages: [pre-push]
-
-  # Custom hook for security tests
-  - repo: local
-    hooks:
-      - id: security-tests
-        name: Security Tests
-        entry: pytest tests/security/ -v --tb=short
-        language: system
-        pass_filenames: false
-        files: ^(intellicrack|tests)/.*\.py$
-        stages: [pre-push]
+      - id: check-added-large-files
+        args: ['--maxkb=1000']

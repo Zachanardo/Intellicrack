@@ -40,9 +40,8 @@ except ImportError:
 
     import os
     import sys
-    from abc import ABC, abstractmethod
 
-    class GhidraScript(ABC):
+    class GhidraScript:
         """Base class for Ghidra scripts when running outside Ghidra environment.
 
         This implementation provides the necessary interface for scripts that
@@ -57,14 +56,13 @@ except ImportError:
             self._script_args = []
             self._script_dir = os.path.dirname(os.path.abspath(__file__))
 
-        @abstractmethod
         def run(self):
             """Execute the script logic.
 
             This method should be overridden by subclasses to implement
             the actual script functionality.
             """
-            pass
+            raise NotImplementedError("Subclasses must implement the run() method")
 
         def println(self, message):
             """Print a message to the console.

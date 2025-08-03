@@ -4,7 +4,6 @@ This module provides centralized application context management including
 configuration, state management, and shared resources across the application.
 """
 import json
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -12,10 +11,8 @@ from typing import Any, Dict, List, Optional
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from intellicrack.logger import get_logger
-from .logging.audit_logger import get_audit_logger, AuditEvent, AuditEventType, AuditSeverity
 
 logger = get_logger(__name__)
-audit_logger = get_audit_logger()
 
 
 class AppContext(QObject):
@@ -71,185 +68,31 @@ class AppContext(QObject):
 
     # Binary Management
     def load_binary(self, file_path: str, metadata: Optional[Dict] = None) -> bool:
-        """Load a binary file with comprehensive validation and analysis."""
-        
-        # Audit log the binary load attempt
-        audit_logger.log_event(AuditEvent(
-            event_type=AuditEventType.BINARY_LOADED,
-            severity=AuditSeverity.INFO,
-            description=f"Binary load attempt: {Path(file_path).name}",
-            target=file_path,
-            details={"metadata": metadata or {}}
-        ))
-        
+        """Load a binary file and emit appropriate signals."""
         try:
             path = Path(file_path)
-            
-            # Basic file existence check
             if not path.exists():
                 logger.error(f"Binary file not found: {file_path}")
                 return False
-            
-            if not path.is_file():
-                logger.error(f"Path is not a file: {file_path}")
-                return False
-                
-            # Check file permissions
-            if not os.access(str(path), os.R_OK):
-                logger.error(f"File is not readable: {file_path}")
-                return False
-            
-            # Get file stats
-            file_stats = path.stat()
-            file_size = file_stats.st_size
-            
-            # Size validation
-            max_size = 500 * 1024 * 1024  # 500MB max
-            if file_size > max_size:
-                logger.error(f"File too large: {file_size} bytes (max: {max_size})")
-                return False
-                
-            if file_size == 0:
-                logger.error("File is empty")
-                return False
-            
-            # Import binary analysis utilities
-            from intellicrack.utils.binary.binary_utils import (
-                analyze_binary_format, is_binary_file, get_file_entropy
-            )
-            
-            # Check if it's actually a binary file
-            if not is_binary_file(str(path)):
-                logger.error("File is not a valid binary file")
-                return False
-            
-            # Analyze binary format
-            format_info = analyze_binary_format(str(path))
-            if format_info['file_type'] == 'Unknown':
-                logger.warning("Unknown binary format, proceeding with caution")
-            
-            # Calculate entropy for packing detection
-            entropy = get_file_entropy(str(path))
-            is_possibly_packed = entropy > 7.5
-            
-            # Validate binary format structure
-            valid_formats = ['PE', 'ELF', 'Mach-O', 'DOS', 'NE', 'LE']
-            is_valid_format = any(fmt in format_info['file_type'] for fmt in valid_formats)
-            
-            if not is_valid_format and format_info['file_type'] != 'Unknown':
-                logger.error(f"Unsupported binary format: {format_info['file_type']}")
-                return False
-            
-            # For PE files, perform additional validation
-            if 'PE' in format_info['file_type']:
-                try:
-                    import pefile
-                    pe = pefile.PE(str(path), fast_load=True)
-                    
-                    # Check for valid PE header
-                    if not pe.is_exe() and not pe.is_dll() and not pe.is_driver():
-                        logger.warning("PE file is not an executable, DLL, or driver")
-                    
-                    # Check for suspicious characteristics
-                    if pe.FILE_HEADER.Machine == 0:
-                        logger.error("Invalid PE machine type")
-                        return False
-                        
-                except Exception as e:
-                    logger.error(f"PE validation failed: {e}")
-                    # Don't fail completely, might be packed/protected
-            
-            # For ELF files, perform additional validation
-            elif 'ELF' in format_info['file_type']:
-                try:
-                    import elftools
-                    from elftools.elf.elffile import ELFFile
-                    
-                    with open(str(path), 'rb') as f:
-                        elf = ELFFile(f)
-                        
-                        # Basic ELF validation
-                        if not elf.header:
-                            logger.error("Invalid ELF header")
-                            return False
-                            
-                except ImportError:
-                    logger.warning("elftools not available, skipping ELF validation")
-                except Exception as e:
-                    logger.error(f"ELF validation failed: {e}")
-                    # Don't fail completely, might be packed/protected
-            
-            # Create comprehensive binary info
+
             binary_info = {
                 'path': str(path.absolute()),
                 'name': path.name,
-                'size': file_size,
+                'size': path.stat().st_size,
                 'loaded_at': datetime.now().isoformat(),
-                'metadata': metadata or {},
-                'validation': {
-                    'format': format_info['file_type'],
-                    'architecture': format_info.get('architecture', 'Unknown'),
-                    'bits': format_info.get('bits', 0),
-                    'entropy': round(entropy, 4),
-                    'is_possibly_packed': is_possibly_packed,
-                    'is_valid_format': is_valid_format,
-                    'validation_timestamp': datetime.now().isoformat()
-                }
+                'metadata': metadata or {}
             }
-            
-            # Run protection detection asynchronously in background
-            self._run_background_protection_detection(str(path))
-            
+
             self._state['current_binary'] = binary_info
             self._add_to_recent_files(str(path.absolute()))
 
-            logger.info(f"Binary loaded and validated: {path.name} (Format: {format_info['file_type']}, Entropy: {entropy:.4f})")
+            logger.info(f"Binary loaded: {path.name}")
             self.binary_loaded.emit(binary_info)
             return True
 
         except Exception as e:
             logger.error(f"Failed to load binary: {e}")
-            import traceback
-            logger.debug(traceback.format_exc())
             return False
-    
-    def _run_background_protection_detection(self, file_path: str):
-        """Run protection detection in background using ICP backend."""
-        try:
-            # Import here to avoid circular imports
-            from intellicrack.protection.icp_backend import get_icp_backend
-            import asyncio
-            import threading
-            
-            def run_detection():
-                try:
-                    backend = get_icp_backend()
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    
-                    # Run quick protection scan
-                    result = loop.run_until_complete(
-                        backend.analyze_file(file_path, show_entropy=False, timeout=10.0)
-                    )
-                    
-                    if not result.error and result.all_detections:
-                        protections = [d.name for d in result.all_detections]
-                        logger.info(f"Background protection detection found: {', '.join(protections)}")
-                        
-                        # Update binary info with protection data
-                        if self._state['current_binary'] and self._state['current_binary']['path'] == file_path:
-                            self._state['current_binary']['validation']['protections'] = protections
-                            self._state['current_binary']['validation']['protection_scan_complete'] = True
-                            
-                except Exception as e:
-                    logger.debug(f"Background protection detection failed: {e}")
-            
-            # Run in background thread
-            thread = threading.Thread(target=run_detection, daemon=True)
-            thread.start()
-            
-        except Exception as e:
-            logger.debug(f"Could not start background protection detection: {e}")
 
     def unload_binary(self):
         """Unload the current binary."""
@@ -441,7 +284,7 @@ class AppContext(QObject):
                 'task_id': task_id,
                 'original_info': task_info,
                 'error_message': error_message,
-                'failed_at': datetime.now().isoformat()
+                'failed_at': self._get_timestamp()
             }
 
             if 'failed_tasks' not in self._state:

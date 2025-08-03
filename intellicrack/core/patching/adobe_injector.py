@@ -1,5 +1,4 @@
 """Adobe software injector for patching Adobe products."""
-import asyncio
 import logging
 import os
 import struct
@@ -584,60 +583,7 @@ function bypassRegistryChecks() {
                 // Intercept Adobe license key queries
                 if (valueName && (valueName.includes("Adobe") || valueName.includes("License"))) {
                     console.log(`[!] Intercepted registry query: ${valueName}`);
-                    
-                    // Store the query arguments for modification in onLeave
-                    this.valueName = valueName;
-                    this.dataBuffer = args[4];  // lpData
-                    this.dataSize = args[5];    // lpcbData
-                }
-            },
-            onLeave: function(retval) {
-                if (this.valueName && this.dataBuffer && !this.dataBuffer.isNull()) {
-                    try {
-                        // Generate valid license data based on the specific query
-                        let licenseData = null;
-                        
-                        if (this.valueName.includes("SerialNumber") || this.valueName.includes("Serial")) {
-                            // Generate a valid Adobe serial number format
-                            licenseData = "1330-1570-8911-8131-6770-8131";
-                        } else if (this.valueName.includes("LicenseID") || this.valueName.includes("License")) {
-                            // Generate a valid license ID
-                            licenseData = "{" + 
-                                Math.random().toString(36).substr(2, 8).toUpperCase() + "-" +
-                                Math.random().toString(36).substr(2, 4).toUpperCase() + "-" +
-                                Math.random().toString(36).substr(2, 4).toUpperCase() + "-" +
-                                Math.random().toString(36).substr(2, 4).toUpperCase() + "-" +
-                                Math.random().toString(36).substr(2, 12).toUpperCase() + "}";
-                        } else if (this.valueName.includes("ProductKey") || this.valueName.includes("Key")) {
-                            // Generate a product key
-                            licenseData = "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX";
-                        } else if (this.valueName.includes("Expiration") || this.valueName.includes("Expire")) {
-                            // Set far future expiration date
-                            const futureDate = new Date();
-                            futureDate.setFullYear(futureDate.getFullYear() + 10);
-                            licenseData = futureDate.toISOString().split('T')[0];
-                        } else {
-                            // Generic license validation
-                            licenseData = "LICENSED";
-                        }
-                        
-                        if (licenseData) {
-                            // Write the license data to the buffer
-                            const utf16Data = Memory.allocUtf16String(licenseData);
-                            const dataLength = licenseData.length * 2; // UTF-16 length
-                            
-                            // Check if buffer is large enough
-                            const availableSize = this.dataSize.readUInt32();
-                            if (availableSize >= dataLength) {
-                                Memory.copy(this.dataBuffer, utf16Data, dataLength);
-                                this.dataSize.writeUInt32(dataLength);
-                                retval.replace(0); // ERROR_SUCCESS
-                                console.log(`[✓] Provided license data for: ${this.valueName}`);
-                            }
-                        }
-                    } catch (e) {
-                        console.log(`[!] Error providing license data: ${e.message}`);
-                    }
+                    // Could return fake license data here
                 }
             }
         });
@@ -759,7 +705,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 active_processes = self.get_running_adobe_processes()
                 for proc_name in active_processes:
                     self.inject_process(proc_name)
-                asyncio.run(asyncio.sleep(interval))
+                time.sleep(interval)
         except KeyboardInterrupt:
             logger.info("Adobe monitoring stopped by user")
         finally:

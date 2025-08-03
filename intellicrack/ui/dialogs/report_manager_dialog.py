@@ -20,7 +20,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import asyncio
 import logging
 import os
 import shutil
@@ -87,11 +86,11 @@ class ReportGenerationThread(QThread):
             # Simulate report generation steps
             self.status_updated.emit("Collecting analysis data...")
             self.progress_updated.emit(30)
-            asyncio.run(asyncio.sleep(1))  # Simulate work
+            time.sleep(1)  # Simulate work
 
             self.status_updated.emit("Processing results...")
             self.progress_updated.emit(60)
-            asyncio.run(asyncio.sleep(1))  # Simulate work
+            time.sleep(1)  # Simulate work
 
             self.status_updated.emit("Generating output...")
             self.progress_updated.emit(80)

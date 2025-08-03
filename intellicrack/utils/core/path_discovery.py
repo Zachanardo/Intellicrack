@@ -781,26 +781,3 @@ def get_system_path(path_type: str) -> Optional[str]:
 def ensure_tool_available(tool_name: str, parent_widget=None) -> Optional[str]:
     """Convenience function to ensure tool availability."""
     return get_path_discovery().ensure_tool_available(tool_name, parent_widget)
-
-
-def discover_ghidra_path() -> Optional[str]:
-    """
-    Discover Ghidra installation path.
-    
-    Returns:
-        Path to Ghidra installation directory or None if not found
-    """
-    path_discovery = get_path_discovery()
-    ghidra_executable = path_discovery.find_tool('ghidra')
-    
-    if ghidra_executable:
-        # Return the directory containing the executable
-        ghidra_dir = os.path.dirname(ghidra_executable)
-        
-        # If it's in a bin subdirectory, go up one level
-        if os.path.basename(ghidra_dir) in ['bin', 'scripts', 'Scripts']:
-            ghidra_dir = os.path.dirname(ghidra_dir)
-            
-        return ghidra_dir
-    
-    return None

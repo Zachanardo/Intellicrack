@@ -41,11 +41,6 @@ from .unified_protection_engine import (
     UnifiedProtectionResult,
     get_unified_engine,
 )
-from .advanced_detection_engine import (
-    AdvancedDetectionEngine,
-    AdvancedDetectionResult,
-    get_advanced_detection_engine,
-)
 
 __all__ = [
     'ProtectionDetector',
@@ -57,9 +52,6 @@ __all__ = [
     'UnifiedProtectionEngine',
     'UnifiedProtectionResult',
     'get_unified_engine',
-    'AdvancedDetectionEngine',
-    'AdvancedDetectionResult',
-    'get_advanced_detection_engine',
     'DetectionResult',
     'ProtectionAnalysis',
     'ProtectionType',

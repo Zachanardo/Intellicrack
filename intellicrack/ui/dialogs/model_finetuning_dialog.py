@@ -1,5 +1,4 @@
 """Model fine-tuning dialog for customizing AI models."""
-import asyncio
 import csv
 import json
 import logging
@@ -1150,7 +1149,7 @@ class TrainingThread(QThread):
                         })
 
                     # Simulate time delay
-                    asyncio.run(asyncio.sleep(0.1))
+                    time.sleep(0.1)
 
                 # Run validation at the end of each epoch
                 if not self.is_stopped:
@@ -1163,7 +1162,7 @@ class TrainingThread(QThread):
                         })
 
                     # Simulate validation time
-                    asyncio.run(asyncio.sleep(0.3))
+                    time.sleep(0.3)
 
                     # Return to training status
                     self.status = TrainingStatus.TRAINING
@@ -1968,7 +1967,7 @@ class ModelFinetuningDialog(QDialog):
             for _i in range(0, 101, 10):
                 progress.setValue(_i)
                 QApplication.processEvents()
-                asyncio.run(asyncio.sleep(0.1))
+                time.sleep(0.1)
 
             # Create a dummy model file for demonstration
             model_data = {

@@ -16,17 +16,12 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.logger import get_logger
 from .analysis_cache import AnalysisCache, get_analysis_cache
-from .icp_backend_enhanced import EnhancedICPBackend, get_icp_backend, ScanMode as ICPScanMode
-from .icp_backend import ICPScanResult
+from .icp_backend import ICPScanResult, get_icp_backend
+from .icp_backend import ScanMode as ICPScanMode
 from .intellicrack_protection_advanced import (
     AdvancedProtectionAnalysis,
     IntellicrackAdvancedProtection,
     ScanMode,
-)
-from .advanced_detection_engine import (
-    AdvancedDetectionEngine,
-    AdvancedDetectionResult,
-    get_advanced_detection_engine,
 )
 
 logger = get_logger(__name__)
@@ -41,7 +36,6 @@ class AnalysisSource(Enum):
     DIE = "die"
     ML_MODEL = "ml_model"
     UNIFIED_ENGINE = "unified_engine"
-    ADVANCED_ENGINE = "advanced_engine"
 
 
 @dataclass
@@ -58,7 +52,6 @@ class UnifiedProtectionResult:
     # Detailed results from each engine
     protection_analysis: Optional[AdvancedProtectionAnalysis] = None
     icp_analysis: Optional[ICPScanResult] = None
-    advanced_analysis: Optional[AdvancedDetectionResult] = None
 
     # Unified features
     is_packed: bool = False
@@ -96,7 +89,6 @@ class UnifiedProtectionEngine:
 
         # Initialize engines
         self.protection_detector = IntellicrackAdvancedProtection() if enable_protection else None
-        self.advanced_engine = get_advanced_detection_engine() if enable_protection else None
 
         # Initialize advanced cache
         if cache_config:
@@ -161,14 +153,6 @@ class UnifiedProtectionEngine:
                     file_path
                 )
 
-            # Submit advanced detection analysis
-            if self.advanced_engine:
-                futures['advanced'] = executor.submit(
-                    self._run_advanced_analysis,
-                    file_path,
-                    deep_scan
-                )
-
             # Collect results with timeout
             for name, future in futures.items():
                 try:
@@ -191,13 +175,6 @@ class UnifiedProtectionEngine:
                         if heur_result:
                             result.engines_used.append("Heuristic")
                             self._merge_heuristic_results(result, heur_result)
-
-                    elif name == 'advanced':
-                        advanced_result = future.result(timeout=timeout)
-                        if advanced_result:
-                            result.advanced_analysis = advanced_result
-                            result.engines_used.append("Advanced Detection Engine")
-                            self._merge_advanced_results(result, advanced_result)
 
                 except concurrent.futures.TimeoutError:
                     logger.warning(f"{name} analysis timed out")
@@ -310,14 +287,6 @@ class UnifiedProtectionEngine:
             logger.error(f"Heuristic analysis error: {e}")
             return None
 
-    def _run_advanced_analysis(self, file_path: str, deep_scan: bool) -> Optional[AdvancedDetectionResult]:
-        """Run advanced detection engine analysis"""
-        try:
-            return self.advanced_engine.analyze(file_path, deep_analysis=deep_scan)
-        except Exception as e:
-            logger.error(f"Advanced detection analysis error: {e}")
-            return None
-
     def _merge_protection_results(self, result: UnifiedProtectionResult, protection_analysis: AdvancedProtectionAnalysis):
         """Merge protection results into unified result"""
         result.file_type = protection_analysis.file_type
@@ -371,71 +340,6 @@ class UnifiedProtectionEngine:
                 'details': {'apis': heuristics['suspicious_imports']}
             }
             result.protections.append(protection)
-
-    def _merge_advanced_results(self, result: UnifiedProtectionResult, advanced_analysis: AdvancedDetectionResult):
-        """Merge advanced detection results into unified result"""
-        # Update protection flags based on advanced analysis
-        if advanced_analysis.entropy_metrics.packed_probability > 70.0:
-            result.is_packed = True
-        
-        if advanced_analysis.overall_confidence > 60.0:
-            result.is_protected = True
-            
-        # Update advanced feature flags
-        if advanced_analysis.anti_analysis.detection_probability > 50.0:
-            result.has_anti_debug = True
-            result.has_anti_vm = True
-            
-        # Convert advanced detections to unified format
-        for detection in advanced_analysis.detections:
-            protection = {
-                'name': detection.name,
-                'type': detection.type.value,
-                'source': AnalysisSource.ADVANCED_ENGINE,
-                'confidence': detection.confidence,
-                'details': detection.details,
-                'bypass_recommendations': detection.bypass_recommendations
-            }
-            result.protections.append(protection)
-            
-        # Add entropy-based detection if significant
-        if advanced_analysis.entropy_metrics.packed_probability > 80.0:
-            entropy_protection = {
-                'name': 'Advanced Entropy Analysis',
-                'type': 'packer',
-                'source': AnalysisSource.ADVANCED_ENGINE,
-                'confidence': advanced_analysis.entropy_metrics.packed_probability,
-                'details': {
-                    'overall_entropy': advanced_analysis.entropy_metrics.overall_entropy,
-                    'compression_ratio': advanced_analysis.entropy_metrics.compression_ratio,
-                    'high_entropy_sections': advanced_analysis.entropy_metrics.high_entropy_sections
-                },
-                'bypass_recommendations': [
-                    'Multi-dimensional entropy analysis for unpacking points',
-                    'Section-based dynamic analysis and reconstruction'
-                ]
-            }
-            result.protections.append(entropy_protection)
-            
-        # Add import obfuscation detection if significant
-        if advanced_analysis.import_analysis.obfuscation_probability > 70.0:
-            import_protection = {
-                'name': 'Import Table Obfuscation',
-                'type': 'protector',
-                'source': AnalysisSource.ADVANCED_ENGINE,
-                'confidence': advanced_analysis.import_analysis.obfuscation_probability,
-                'details': {
-                    'suspicious_apis': advanced_analysis.import_analysis.suspicious_apis[:10],
-                    'obfuscated_imports': advanced_analysis.import_analysis.obfuscated_imports[:10],
-                    'dynamic_loading': advanced_analysis.import_analysis.dynamic_loading_indicators
-                },
-                'bypass_recommendations': [
-                    'API call interception and reconstruction',
-                    'Dynamic import resolution monitoring',
-                    'Import table rebuilding techniques'
-                ]
-            }
-            result.protections.append(import_protection)
 
     def _run_icp_analysis(self, file_path: str, deep_scan: bool) -> Optional[ICPScanResult]:
         """Run ICP engine analysis"""
@@ -633,8 +537,7 @@ class UnifiedProtectionEngine:
             AnalysisSource.PROTECTION_ENGINE: 0.9,
             AnalysisSource.HEURISTIC: 0.5,
             AnalysisSource.SIGNATURE: 0.8,
-            AnalysisSource.HYBRID: 1.0,
-            AnalysisSource.ADVANCED_ENGINE: 0.95
+            AnalysisSource.HYBRID: 1.0
         }
 
         total_weighted_confidence = 0.0

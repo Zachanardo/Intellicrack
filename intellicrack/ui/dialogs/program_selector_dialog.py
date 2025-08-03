@@ -29,8 +29,6 @@ import sys
 from pathlib import Path
 
 from ...utils.system.file_resolution import file_resolver
-from ...utils.system.installation_discovery import installation_discovery_engine
-from ...utils.system.program_discovery import program_discovery_engine
 from .common_imports import (
     HAS_PYQT,
     QCheckBox,
@@ -148,12 +146,6 @@ class ProgramSelectorDialog(QDialog):
         self.selected_program = None
         self.discovered_programs = []
         self.analysis_results = {}
-        self.installation_folder = None
-        self.licensing_files = []
-
-        # Discovery engines
-        self.discovery_engine = program_discovery_engine
-        self.installation_discovery = installation_discovery_engine
 
         # Threading
         self.discovery_thread = None
@@ -168,7 +160,7 @@ class ProgramSelectorDialog(QDialog):
 
         # Setup UI
         self.setup_ui()
-        self.connect_signals()
+        self.setup_connections()
 
     def setup_ui(self):
         """Set up the user interface."""
@@ -392,17 +384,7 @@ class ProgramSelectorDialog(QDialog):
         discovered_program = self.discovery_engine.analyze_program_from_path(str(install_folder))
 
         if discovered_program:
-            program_dict = discovered_program.__dict__
-            
-            # Enhance with installation discovery analysis
-            installation_candidates = self.installation_discovery.discover_installation_roots(str(install_folder))
-            if installation_candidates:
-                best_candidate = installation_candidates[0]
-                program_dict['installation_confidence'] = best_candidate.confidence_score
-                program_dict['installation_markers'] = [m.description for m in best_candidate.markers_found]
-                program_dict['key_directories'] = [d.name for d in best_candidate.directories_found]
-                
-            return program_dict
+            return discovered_program.__dict__
         else:
             # Create basic program info
             return {
@@ -551,32 +533,16 @@ class ProgramSelectorDialog(QDialog):
 
     def update_program_details(self, program_data):
         """Update program details panel."""
-        # Update program info text with enhanced installation info
+        # Update program info text
         info_text = f"""Program Name: {program_data.get('display_name', 'Unknown')}
 Version: {program_data.get('version', 'Unknown')}
 Publisher: {program_data.get('publisher', 'Unknown')}
 Install Location: {program_data.get('install_location', 'Unknown')}
 Discovery Method: {program_data.get('discovery_method', 'Unknown')}
 Confidence Score: {program_data.get('confidence_score', 0):.2f}
-Analysis Priority: {program_data.get('analysis_priority', 0)}"""
+Analysis Priority: {program_data.get('analysis_priority', 0)}
 
-        # Add enhanced installation discovery info if available
-        if 'installation_confidence' in program_data:
-            info_text += f"\nInstallation Confidence: {program_data['installation_confidence']:.1f}/100"
-            
-        if 'installation_markers' in program_data and program_data['installation_markers']:
-            markers_text = ", ".join(program_data['installation_markers'][:3])  # Show first 3
-            if len(program_data['installation_markers']) > 3:
-                markers_text += f" (+{len(program_data['installation_markers']) - 3} more)"
-            info_text += f"\nInstallation Markers: {markers_text}"
-            
-        if 'key_directories' in program_data and program_data['key_directories']:
-            dirs_text = ", ".join(program_data['key_directories'][:5])  # Show first 5
-            if len(program_data['key_directories']) > 5:
-                dirs_text += f" (+{len(program_data['key_directories']) - 5} more)"
-            info_text += f"\nKey Directories: {dirs_text}"
-
-        info_text += f"\n\nDescription: {program_data.get('description', 'No description available')}"
+Description: {program_data.get('description', 'No description available')}"""
 
         self.program_info.setPlainText(info_text)
 
@@ -590,47 +556,12 @@ Analysis Priority: {program_data.get('analysis_priority', 0)}"""
             self.analyze_installation_folder(install_location)
 
     def analyze_installation_folder(self, folder_path):
-        """Analyze installation folder for licensing files using enhanced discovery."""
+        """Analyze installation folder for licensing files."""
         self.licensing_tree.clear()
         self.licensing_files = []
 
         try:
-            # Use enhanced installation discovery to find installation markers and structure
-            installation_candidates = self.installation_discovery.discover_installation_roots(
-                folder_path, include_subdirs=self.include_subdirs_checkbox.isChecked()
-            )
-            
-            # If we found installation candidates, use the best one
-            primary_installation = None
-            if installation_candidates:
-                primary_installation = installation_candidates[0]  # Highest confidence
-                
-                # Add installation confidence info to display
-                confidence_info = f"Installation Confidence: {primary_installation.confidence_score:.1f}/100"
-                self.add_info_item_to_tree("Installation Analysis", confidence_info, "Analysis", 0)
-                
-                # Show found installation markers
-                for marker in primary_installation.markers_found:
-                    marker_info = f"{marker.description} ({marker.marker_type})"
-                    self.add_info_item_to_tree(marker.file_name, marker_info, "Marker", int(marker.weight))
-                    
-                # Show key directory structures found
-                for structure in primary_installation.directories_found:
-                    struct_info = f"{structure.description} ({structure.structure_type})"
-                    self.add_info_item_to_tree(structure.name, struct_info, "Structure", int(structure.weight))
-
-            # Get comprehensive installation markers analysis
-            markers_found, marker_confidence = self.installation_discovery.analyze_installation_markers(folder_path)
-            
-            # Add all found markers to licensing files
-            for marker in markers_found:
-                if marker.marker_type in ['legal', 'licensing', 'protection', 'uninstaller']:
-                    # Find the actual file that matched this marker
-                    matching_files = self._find_matching_marker_files(folder_path, marker)
-                    for file_path in matching_files:
-                        self.add_licensing_file_to_tree(file_path, marker.description, int(marker.weight))
-
-            # Enhanced licensing pattern detection with the original comprehensive patterns
+            # Comprehensive licensing patterns - from obvious to highly obscure
             licensing_patterns = {
                 # Obvious licensing files
                 'license': 10, 'licence': 10, 'eula': 10, 'terms': 9, 'agreement': 9,
@@ -919,69 +850,6 @@ Analysis Priority: {program_data.get('analysis_priority', 0)}"""
 
         except Exception as e:
             logger.error(f"Error adding licensing file {file_path}: {e}")
-
-    def add_info_item_to_tree(self, name, description, item_type, priority):
-        """Add an informational item to the tree widget."""
-        try:
-            # Create tree item for information display
-            item = QTreeWidgetItem()
-            item.setText(0, name)
-            item.setText(1, item_type)
-            item.setText(2, description)
-            item.setText(3, str(priority))
-
-            # Set type-based styling
-            if item_type == "Analysis":
-                if HAS_PYQT:
-                    item.setBackground(0, Qt.GlobalColor.lightGray)
-            elif item_type == "Marker":
-                if HAS_PYQT:
-                    item.setBackground(0, Qt.GlobalColor.green)
-            elif item_type == "Structure":
-                if HAS_PYQT:
-                    item.setBackground(0, Qt.GlobalColor.blue)
-
-            self.licensing_tree.addTopLevelItem(item)
-
-        except Exception as e:
-            logger.error(f"Error adding info item {name}: {e}")
-
-    def _find_matching_marker_files(self, folder_path, marker):
-        """Find actual files that match an installation marker pattern."""
-        matching_files = []
-        
-        try:
-            import re
-            pattern = re.compile(marker.pattern, re.IGNORECASE)
-            
-            # Search in the specified folder
-            folder_path = Path(folder_path)
-            if not folder_path.exists():
-                return matching_files
-                
-            # Check files in directory
-            for file_path in folder_path.iterdir():
-                if file_path.is_file():
-                    if pattern.search(file_path.name):
-                        matching_files.append(str(file_path))
-                        
-            # If include subdirs is checked, search recursively  
-            if self.include_subdirs_checkbox.isChecked():
-                for root, dirs, files in os.walk(folder_path):
-                    # Limit depth to prevent excessive searching
-                    current_depth = len(Path(root).relative_to(folder_path).parts)
-                    if current_depth > 3:
-                        dirs.clear()
-                        continue
-                        
-                    for file_name in files:
-                        if pattern.search(file_name):
-                            matching_files.append(os.path.join(root, file_name))
-                            
-        except Exception as e:
-            logger.error(f"Error finding matching marker files: {e}")
-            
-        return matching_files
 
     def format_file_size(self, size):
         """Format file size in human readable format."""

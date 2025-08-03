@@ -46,24 +46,6 @@ class ToolsTab(BaseTab):
         self.loaded_plugins = {}
         self.network_interfaces = []
 
-    def _get_preferred_local_ip(self):
-        """Get the preferred local IP address from available network interfaces."""
-        try:
-            if hasattr(self.parent(), 'available_interfaces') and self.parent().available_interfaces:
-                for interface in self.parent().available_interfaces:
-                    if not interface.get('is_loopback', False) and interface.get('addresses'):
-                        for addr in interface['addresses']:
-                            if addr.get('family') == 'AF_INET' and addr.get('address'):
-                                return addr['address']
-            
-            # Try to get local IP using socket if available_interfaces not found
-            import socket
-            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-                s.connect(("8.8.8.8", 80))
-                return s.getsockname()[0]
-        except Exception:
-            return '127.0.0.1'
-
     def setup_content(self):
         """Setup the tools tab content"""
         layout = QHBoxLayout(self)
@@ -365,16 +347,7 @@ class ToolsTab(BaseTab):
         filter_layout = QHBoxLayout()
         filter_layout.addWidget(QLabel("Filter:"))
         self.capture_filter_edit = QLineEdit()
-        
-        # Get dynamic example IP from available interfaces
-        example_ip = self._get_preferred_local_ip()
-        if hasattr(self.parent(), 'available_interfaces') and self.parent().available_interfaces:
-            for interface in self.parent().available_interfaces:
-                if not interface.get('is_loopback', False) and interface.get('addresses'):
-                    example_ip = interface['addresses'][0]['address']
-                    break
-        
-        self.capture_filter_edit.setPlaceholderText(f"e.g., tcp port 80, host {example_ip}")
+        self.capture_filter_edit.setPlaceholderText("e.g., tcp port 80, host 192.168.1.1")
         filter_layout.addWidget(self.capture_filter_edit)
 
         # Capture controls
@@ -406,26 +379,7 @@ class ToolsTab(BaseTab):
         target_layout = QHBoxLayout()
         target_layout.addWidget(QLabel("Target:"))
         self.scan_target_edit = QLineEdit()
-        
-        # Get dynamic example network from available interfaces
-        preferred_ip = self._get_preferred_local_ip()
-        ip_parts = preferred_ip.split('.')
-        if len(ip_parts) == 4:
-            example_network = f"{'.'.join(ip_parts[:3])}.0/24"
-        else:
-            example_network = "127.0.0.1/24"
-        
-        if hasattr(self.parent(), 'available_interfaces') and self.parent().available_interfaces:
-            for interface in self.parent().available_interfaces:
-                if not interface.get('is_loopback', False) and interface.get('addresses'):
-                    ip = interface['addresses'][0]['address']
-                    # Convert IP to network range (e.g., 192.168.1.100 -> 192.168.1.0/24)
-                    ip_parts = ip.split('.')
-                    if len(ip_parts) == 4:
-                        example_network = f"{'.'.join(ip_parts[:3])}.0/24"
-                    break
-        
-        self.scan_target_edit.setPlaceholderText(f"IP address or range (e.g., {example_network})")
+        self.scan_target_edit.setPlaceholderText("IP address or range (e.g., 192.168.1.1/24)")
         target_layout.addWidget(self.scan_target_edit)
 
         # Scan types
@@ -1236,14 +1190,11 @@ def get_plugin():
             # Simulate packet capture start
             self.packets_table.setRowCount(0)
 
-            # Add sample packets for demonstration using dynamic IPs
-            local_ip = self._get_preferred_local_ip()
-            gateway_ip = ".".join(local_ip.split(".")[:-1]) + ".1"  # Assume .1 is gateway
-            
+            # Add sample packets for demonstration
             sample_packets = [
-                ["12:34:56.789", local_ip, gateway_ip, "TCP", "74", "HTTP GET request"],
-                ["12:34:56.790", gateway_ip, local_ip, "TCP", "60", "ACK"],
-                ["12:34:56.791", gateway_ip, local_ip, "HTTP", "1514", "HTTP Response"],
+                ["12:34:56.789", "192.168.1.100", "192.168.1.1", "TCP", "74", "HTTP GET request"],
+                ["12:34:56.790", "192.168.1.1", "192.168.1.100", "TCP", "60", "ACK"],
+                ["12:34:56.791", "192.168.1.1", "192.168.1.100", "HTTP", "1514", "HTTP Response"],
             ]
 
             for i, packet in enumerate(sample_packets):

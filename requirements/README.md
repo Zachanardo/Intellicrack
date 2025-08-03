@@ -1,73 +1,62 @@
 # Intellicrack Requirements Structure
 
-This directory contains dependency management files for the Intellicrack project.
+This directory contains the dependency management files for Intellicrack.
 
-## 🚀 **NEW STRUCTURE (August 2025)**
+## Files
 
-The project now uses a **modern, consolidated dependency management approach** with exact version pins for reproducible builds.
+- **pyproject.toml** - Main project configuration with dependencies for Linux/WSL
+- **pyproject_wsl.toml** - WSL-specific project configuration  
+- **requirements.txt** - Pip-installable requirements (generated from pyproject.toml)
+- **requirements_windows.txt** - Windows-specific requirements
+- **requirements.lock** - Locked dependencies (pip format)
+- **uv.lock** - UV package manager lock file for reproducible installs
 
-### **Canonical Files (Use These)**
+## Installation
 
-- **`../pyproject.toml`** - **CANONICAL** project configuration (moved to root)
-- **`requirements.lock`** - **PRODUCTION LOCK** with 364 exact pins (==) for reproducible builds
+### For Development (with UV)
 
-### **Legacy Files (Deprecated)**
+1. Install UV package manager:
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh  # Linux/WSL
+   # or
+   powershell -c "irm https://astral.sh/uv/install.ps1 | iex"  # Windows
+   ```
 
-- ~~`requirements.txt`~~ - **DEPRECATED** - Mixed pinning, inconsistent
-- ~~`requirements_windows.txt`~~ - **DEPRECATED** - Content moved to requirements.lock
-- `pyproject_wsl.toml` - **REFERENCE ONLY** - WSL/Linux variant (kept for comparison)
+2. Create virtual environment:
+   ```bash
+   # From project root
+   uv venv .venv_wsl    # Linux/WSL
+   uv venv .venv_windows  # Windows
+   ```
 
-## ✅ **Installation Instructions**
+3. Install dependencies:
+   ```bash
+   # From project root
+   uv pip install -r requirements/requirements.txt
+   ```
 
-### **Method 1: Standard Installation (Recommended)**
+### For Intel GPU Support
 
-```bash
-# From project root (C:\Intellicrack\)
-pip install .
-```
-
-This uses the canonical `pyproject.toml` with modern PEP 518/621 standards.
-
-### **Method 2: Exact Version Lock (Production)**
-
-```bash
-# From project root
-pip install -r requirements/requirements.lock
-```
-
-This installs exactly the same versions as the working environment (364 exact pins).
-
-### **Method 3: Development Installation**
-
-```bash
-# From project root  
-pip install -e .[dev]
-```
-
-This installs Intellicrack in editable mode with development dependencies.
-
-## 🔧 **Key Improvements**
-
-1. **Reproducible Builds**: All 364 dependencies now use exact pins (`==`)
-2. **Single Source**: `pyproject.toml` is the canonical dependency definition
-3. **Modern Standards**: Uses PEP 518/621 for packaging
-4. **Platform Support**: Proper Windows-specific conditions (`sys_platform`)
-5. **Optional Extras**: Structured extras for `[dev]`, `[nvidia-gpu]`, `[ai-local]`
-
-## 📋 **Migration Notes**
-
-- **OLD**: Multiple conflicting requirements files
-- **NEW**: Single `pyproject.toml` + exact `requirements.lock`
-- **Benefit**: Eliminates "works-on-my-machine" dependency issues
-
-## 🛠 **For Maintainers**
-
-To update the lock file:
+Intel Arc GPU support requires a conda environment:
 
 ```bash
-pip-tools pip-compile --generate-hashes --output-file=requirements/requirements.lock pyproject.toml
+# Run from project root
+dev\scripts\setup_intel_gpu.bat
 ```
 
-## 🔍 **Architecture Decision**
+Then launch with:
+```bash
+RUN_INTELLICRACK.bat --intel-gpu
+```
 
-This structure eliminates the previous fragmentation where 5+ different files competed to define dependencies, causing installation failures and non-reproducible builds.
+## Note on Directory Location
+
+The requirements files are in `/requirements/` instead of the project root to:
+1. Keep the root directory clean
+2. Support multiple requirement configurations (WSL, Windows, etc.)
+3. Allow for future expansion with additional requirement sets
+
+When cloning the project, developers should:
+1. Check `/requirements/` for dependency files
+2. Use UV with the lock file for reproducible builds
+3. Follow platform-specific instructions above

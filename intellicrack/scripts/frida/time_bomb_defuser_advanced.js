@@ -1,1 +1,0 @@
-/mnt/c/Intellicrack/intellicrack/plugins/frida_scripts/time_bomb_defuser_advanced.js
