@@ -249,10 +249,10 @@ class SandboxDetector(BaseDetector):
 
             # Check process count
             if platform.system() == "Windows":
-                result = subprocess.run(["tasklist"], check=False, capture_output=True, text=True)
+                result = subprocess.run(["tasklist"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
                 process_count = len(result.stdout.strip().split("\n")) - 3  # Header lines
             else:
-                result = subprocess.run(["ps", "aux"], check=False, capture_output=True, text=True)
+                result = subprocess.run(["ps", "aux"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
                 process_count = len(result.stdout.strip().split("\n")) - 1  # Header line
 
             if process_count < self.behavioral_patterns["limited_processes"]["min_processes"]:
@@ -342,10 +342,10 @@ class SandboxDetector(BaseDetector):
             # Check network connections
             if platform.system() == "Windows":
                 result = subprocess.run(
-                    ["netstat", "-an"], check=False, capture_output=True, text=True
+                    ["netstat", "-an"], check=False, capture_output=True, text=True  # noqa: S607
                 )
             else:
-                result = subprocess.run(["ss", "-an"], check=False, capture_output=True, text=True)
+                result = subprocess.run(["ss", "-an"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
 
             connections = len([l for l in result.stdout.split("\n") if "ESTABLISHED" in l])
             details["connections"] = connections
@@ -445,7 +445,7 @@ class SandboxDetector(BaseDetector):
             ]
 
             if platform.system() == "Windows":
-                result = subprocess.run(["tasklist"], check=False, capture_output=True, text=True)
+                result = subprocess.run(["tasklist"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
                 processes = result.stdout.lower()
 
                 running_apps = [app for app in user_apps if app in processes]

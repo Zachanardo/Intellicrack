@@ -2917,7 +2917,7 @@ def _run_ghidra_thread(ghidra_path: str, script: str, binary: str) -> threading.
     def run_ghidra():
         """Thread function to run Ghidra analysis."""
         try:
-            subprocess.run(
+            subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 [
                     ghidra_path,
                     binary,

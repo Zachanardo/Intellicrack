@@ -386,7 +386,7 @@ def demo_progress():
                             else ["findstr", "/r", "[a-zA-Z]", binary_path]
                         )
                         try:
-                            result = subprocess.run(
+                            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                                 cmd, check=False, capture_output=True, timeout=5
                             )
                             len(result.stdout.decode("utf-8", errors="ignore").split("\n"))

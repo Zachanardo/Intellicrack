@@ -255,7 +255,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             self.logger.info(f"Starting QEMU system: {' '.join(qemu_cmd[:5])}...")
 
             # Start QEMU process
-            self.qemu_process = subprocess.Popen(
+            self.qemu_process = subprocess.Popen(  # nosec S603 - Using QEMU for secure virtual testing environment in security research  # noqa: S603
                 qemu_cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,

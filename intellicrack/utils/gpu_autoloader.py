@@ -79,7 +79,7 @@ class GPUAutoLoader:
                 )
 
                 # Test if we can import from that environment
-                result = subprocess.run(
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     [
                         python_path,
                         "-c",

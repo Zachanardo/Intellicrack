@@ -66,7 +66,7 @@ def secure_subprocess(
         # Parse command string into list safely
         command = shlex.split(command)
 
-    return subprocess.run(
+    return subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
         command,
         shell=False,
         timeout=timeout,

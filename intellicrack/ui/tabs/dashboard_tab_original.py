@@ -788,9 +788,9 @@ class DashboardTab(BaseTab):
                         import subprocess
 
                         if sys.platform == "darwin":  # macOS
-                            subprocess.call(["open", file_path])
+                            subprocess.call(["open", file_path])  # nosec S603 - Using file command for file type detection  # noqa: S603, S607
                         else:  # Linux
-                            subprocess.call(["xdg-open", file_path])
+                            subprocess.call(["xdg-open", file_path])  # nosec S603 - Using file command for file type detection  # noqa: S603, S607
                 except Exception as e:
                     self.logger.error(f"Failed to open file: {e}")
                     QMessageBox.critical(self, "Error", f"Failed to open file: {e!s}")

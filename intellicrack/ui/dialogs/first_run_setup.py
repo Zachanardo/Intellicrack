@@ -65,7 +65,7 @@ class SetupWorker(QThread):
         """Install a Python package"""
         try:
             cmd = [sys.executable, "-m", "pip", "install"] + package.split()
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             if result.returncode != 0:
                 logger.error(f"Failed to install {package}: {result.stderr}")
                 self.success = False

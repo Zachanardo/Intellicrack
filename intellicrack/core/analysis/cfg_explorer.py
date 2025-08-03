@@ -1798,7 +1798,7 @@ def run_deep_cfg_analysis(app):
             try:
                 if SUBPROCESS_AVAILABLE:
                     subprocess.run(
-                        ["dot", "-Tsvg", "-o", "license_cfg.svg", "license_cfg.dot"], check=False
+                        ["dot", "-Tsvg", "-o", "license_cfg.svg", "license_cfg.dot"], check=False  # noqa: S607
                     )
                     app.update_output.emit(log_message("[CFG Analysis] Generated license_cfg.svg"))
             except (OSError, ValueError, RuntimeError) as e:

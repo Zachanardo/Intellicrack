@@ -1207,7 +1207,7 @@ def detect_tpm_usage(process_name: str | None = None) -> bool:
 
         # Check if TPM service is running
         result = subprocess.run(
-            ["sc", "query", "TPM"],
+            ["sc", "query", "TPM"],  # noqa: S607
             capture_output=True,
             text=True,
             check=False,
@@ -1222,7 +1222,7 @@ def detect_tpm_usage(process_name: str | None = None) -> bool:
             try:
                 # Use tasklist to check loaded modules
                 tasklist_result = subprocess.run(
-                    ["tasklist", "/m", "tbs.dll"],
+                    ["tasklist", "/m", "tbs.dll"],  # noqa: S607
                     capture_output=True,
                     text=True,
                     check=False,
@@ -1233,7 +1233,7 @@ def detect_tpm_usage(process_name: str | None = None) -> bool:
 
                 # Check for NCrypt TPM provider
                 tasklist_result = subprocess.run(
-                    ["tasklist", "/m", "ncrypt.dll"],
+                    ["tasklist", "/m", "ncrypt.dll"],  # noqa: S607
                     capture_output=True,
                     text=True,
                     check=False,

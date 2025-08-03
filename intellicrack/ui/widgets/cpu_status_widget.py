@@ -120,7 +120,7 @@ class CPUMonitorWorker(QObject):
                 import subprocess
 
                 return (
-                    subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"])
+                    subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"])  # noqa: S607
                     .decode()
                     .strip()
                 )

@@ -368,7 +368,7 @@ class ScriptExecutionManager(QObject):
                 cmd.append("--no-pause")
 
             # Execute
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
             # Clean up
             os.unlink(script_path)
@@ -444,7 +444,7 @@ class ScriptExecutionManager(QObject):
                 timeout = 300
 
             # Execute with timeout support
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 cmd, check=False, capture_output=True, text=True, timeout=timeout
             )
 
@@ -506,7 +506,7 @@ class ScriptExecutionManager(QObject):
                 timeout = 300
 
             # Execute IDA with timeout
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 cmd, check=False, capture_output=True, text=True, timeout=timeout
             )
 

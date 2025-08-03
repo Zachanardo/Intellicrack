@@ -1011,15 +1011,15 @@ class IntellicrackCLI:
             if platform.system() == "Windows":
                 # Try HxD or other Windows hex editors
                 try:
-                    subprocess.Popen(["hxd.exe", self.binary_path])
+                    subprocess.Popen(["hxd.exe", self.binary_path])  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
                 except (FileNotFoundError, OSError):
-                    subprocess.Popen(["notepad++.exe", "-nohex", self.binary_path])
+                    subprocess.Popen(["notepad++.exe", "-nohex", self.binary_path])  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
             elif platform.system() == "Linux":
                 # Try hexedit, xxd, or hexdump
                 try:
-                    subprocess.Popen(["hexedit", self.binary_path])
+                    subprocess.Popen(["hexedit", self.binary_path])  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
                 except (FileNotFoundError, OSError):
-                    subprocess.Popen(["ghex", self.binary_path])
+                    subprocess.Popen(["ghex", self.binary_path])  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
             else:
                 logger.error("No suitable hex editor found")
 

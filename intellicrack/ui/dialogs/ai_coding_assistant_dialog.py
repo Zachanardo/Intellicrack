@@ -1108,8 +1108,8 @@ def example_function():
     def run_python_script(self, file_path: str):
         """Run a Python script."""
         try:
-            result = subprocess.run(
-                ["python", file_path],
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                ["python", file_path],  # noqa: S607
                 check=False,
                 capture_output=True,
                 text=True,
@@ -1129,8 +1129,8 @@ def example_function():
     def run_javascript_script(self, file_path: str):
         """Run a JavaScript script (if Node.js is available)."""
         try:
-            result = subprocess.run(
-                ["node", file_path],
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                ["node", file_path],  # noqa: S607
                 check=False,
                 capture_output=True,
                 text=True,
@@ -1178,8 +1178,8 @@ def example_function():
                 temp_file_path = temp_file.name
 
             try:
-                result = subprocess.run(
-                    ["black", "--quiet", temp_file_path],
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    ["black", "--quiet", temp_file_path],  # noqa: S607
                     check=False,
                     capture_output=True,
                     text=True,

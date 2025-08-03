@@ -70,7 +70,7 @@ class ToolValidator:
 
             # Try to get version
             try:
-                result = subprocess.run(
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     [tool_path, "--version"],
                     check=False,
                     capture_output=True,
@@ -117,7 +117,7 @@ class ToolValidator:
 
         try:
             # Test basic functionality
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 [tool_path, "-v"],
                 check=False,
                 capture_output=True,
@@ -167,7 +167,7 @@ class ToolValidator:
         }
 
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 [tool_path, "--version"],
                 check=False,
                 capture_output=True,
@@ -212,7 +212,7 @@ class ToolValidator:
         }
 
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 [tool_path, "--version"],
                 check=False,
                 capture_output=True,
@@ -255,7 +255,7 @@ class ToolValidator:
         }
 
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 [tool_path, "--version"],
                 check=False,
                 capture_output=True,

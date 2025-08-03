@@ -1135,9 +1135,9 @@ Description: {program_data.get('description', 'No description available')}"""
                     if hasattr(os, "startfile"):
                         os.startfile(file_path)
                 elif sys.platform.startswith("linux"):
-                    subprocess.run(["xdg-open", file_path], check=False)
+                    subprocess.run(["xdg-open", file_path], check=False)  # nosec S603 - Using file command for file type detection  # noqa: S603, S607
                 elif sys.platform.startswith("darwin"):
-                    subprocess.run(["open", file_path], check=False)
+                    subprocess.run(["open", file_path], check=False)  # nosec S603 - Using file command for file type detection  # noqa: S603, S607
             except Exception as e:
                 logger.error(f"Error opening file {file_path}: {e}")
                 QMessageBox.warning(self, "Error", f"Could not open file: {e!s}")

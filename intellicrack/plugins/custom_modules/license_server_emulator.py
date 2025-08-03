@@ -1154,7 +1154,7 @@ class HardwareFingerprintGenerator:
                 if platform.system() == "Windows":
                     # Windows - use wmic command
                     result = subprocess.run(
-                        ["wmic", "cpu", "get", "ProcessorId", "/format:value"],
+                        ["wmic", "cpu", "get", "ProcessorId", "/format:value"],  # noqa: S607
                         check=False,
                         capture_output=True,
                         text=True,
@@ -1183,7 +1183,7 @@ class HardwareFingerprintGenerator:
                 elif platform.system() == "Darwin":
                     # macOS - use sysctl
                     result = subprocess.run(
-                        ["sysctl", "-n", "machdep.cpu.brand_string"],
+                        ["sysctl", "-n", "machdep.cpu.brand_string"],  # noqa: S607
                         check=False,
                         capture_output=True,
                         text=True,
@@ -1206,7 +1206,7 @@ class HardwareFingerprintGenerator:
             try:
                 if platform.system() == "Windows":
                     result = subprocess.run(
-                        ["wmic", "baseboard", "get", "SerialNumber", "/format:value"],
+                        ["wmic", "baseboard", "get", "SerialNumber", "/format:value"],  # noqa: S607
                         check=False,
                         capture_output=True,
                         text=True,
@@ -1218,7 +1218,7 @@ class HardwareFingerprintGenerator:
                     if not fingerprint.motherboard_id:
                         # Try alternative method
                         result = subprocess.run(
-                            ["wmic", "baseboard", "get", "Product,Manufacturer", "/format:value"],
+                            ["wmic", "baseboard", "get", "Product,Manufacturer", "/format:value"],  # noqa: S607
                             check=False,
                             capture_output=True,
                             text=True,
@@ -1248,7 +1248,7 @@ class HardwareFingerprintGenerator:
                 elif platform.system() == "Darwin":
                     # macOS - use system_profiler
                     result = subprocess.run(
-                        ["system_profiler", "SPHardwareDataType"],
+                        ["system_profiler", "SPHardwareDataType"],  # noqa: S607
                         check=False,
                         capture_output=True,
                         text=True,
@@ -1277,7 +1277,7 @@ class HardwareFingerprintGenerator:
             try:
                 if platform.system() == "Windows":
                     result = subprocess.run(
-                        [
+                        [  # noqa: S607
                             "wmic",
                             "logicaldisk",
                             "where",
@@ -1299,7 +1299,7 @@ class HardwareFingerprintGenerator:
                 elif platform.system() == "Linux":
                     # Try to get disk serial using lsblk
                     result = subprocess.run(
-                        ["lsblk", "-no", "SERIAL", "/dev/sda"],
+                        ["lsblk", "-no", "SERIAL", "/dev/sda"],  # noqa: S607
                         check=False,
                         capture_output=True,
                         text=True,
@@ -1310,7 +1310,7 @@ class HardwareFingerprintGenerator:
                     else:
                         # Fallback to disk ID
                         result = subprocess.run(
-                            ["ls", "-l", "/dev/disk/by-id/"],
+                            ["ls", "-l", "/dev/disk/by-id/"],  # noqa: S607
                             check=False,
                             capture_output=True,
                             text=True,
@@ -1326,7 +1326,7 @@ class HardwareFingerprintGenerator:
                 elif platform.system() == "Darwin":
                     # macOS - use diskutil
                     result = subprocess.run(
-                        ["diskutil", "info", "disk0"], check=False, capture_output=True, text=True
+                        ["diskutil", "info", "disk0"], check=False, capture_output=True, text=True  # noqa: S607
                     )
                     lines = result.stdout.split("\n")
                     for line in lines:
@@ -1398,7 +1398,7 @@ class HardwareFingerprintGenerator:
                 try:
                     if platform.system() == "Windows":
                         result = subprocess.run(
-                            [
+                            [  # noqa: S607
                                 "wmic",
                                 "computersystem",
                                 "get",
@@ -1423,7 +1423,7 @@ class HardwareFingerprintGenerator:
                                     break
                     elif platform.system() == "Darwin":
                         result = subprocess.run(
-                            ["sysctl", "-n", "hw.memsize"],
+                            ["sysctl", "-n", "hw.memsize"],  # noqa: S607
                             check=False,
                             capture_output=True,
                             text=True,

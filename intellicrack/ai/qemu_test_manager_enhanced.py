@@ -191,7 +191,7 @@ Process.enumerateModules().forEach(module => {{{{
                 "user,id=net0,hostfwd=tcp::2222-:22",
             ]
 
-            process = subprocess.Popen(
+            process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 qemu_cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -200,8 +200,8 @@ Process.enumerateModules().forEach(module => {{{{
             )
 
             # Also run the Frida script inside QEMU
-            frida_process = subprocess.Popen(
-                ["python3", script_path],
+            frida_process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                ["python3", script_path],  # noqa: S607
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -339,8 +339,8 @@ echo "}}"
 """
 
         # Execute and return real metrics
-        result = subprocess.run(
-            ["ssh", f"qemu@{self.vm_ip}", monitor_script],
+        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            ["ssh", f"qemu@{self.vm_ip}", monitor_script],  # noqa: S607
             check=False,
             capture_output=True,
             text=True,

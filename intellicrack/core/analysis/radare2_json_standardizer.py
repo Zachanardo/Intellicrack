@@ -744,7 +744,7 @@ class R2JSONStandardizer:
             import subprocess
 
             result = subprocess.run(
-                ["radare2", "-v"], check=False, capture_output=True, text=True, timeout=5
+                ["radare2", "-v"], check=False, capture_output=True, text=True, timeout=5  # noqa: S607
             )
             if result.returncode == 0:
                 return result.stdout.split("\n")[0].strip()

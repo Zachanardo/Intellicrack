@@ -876,9 +876,9 @@ class FileExplorerPanel:
             if sys.platform == "win32":
                 os.startfile(str(item_path.parent))
             elif sys.platform == "darwin":
-                subprocess.run(["open", str(item_path.parent)], check=False)
+                subprocess.run(["open", str(item_path.parent)], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
             else:
-                subprocess.run(["xdg-open", str(item_path.parent)], check=False)
+                subprocess.run(["xdg-open", str(item_path.parent)], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
 
     def copy_path(self):
         """Copy file path to clipboard"""

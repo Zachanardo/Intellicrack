@@ -711,8 +711,8 @@ class ToolsTab(BaseTab):
                 self.log_message(f"Binary file not found: {binary_path}")
                 return
 
-            result = subprocess.run(  # nosec B603 B607 - objdump is a legitimate analysis tool
-                ["objdump", "-d", str(binary_path)],
+            result = subprocess.run(  # nosec B603 B607 - objdump is a legitimate analysis tool  # noqa: S603
+                ["objdump", "-d", str(binary_path)],  # noqa: S607
                 check=False,
                 capture_output=True,
                 text=True,
@@ -919,8 +919,8 @@ class ToolsTab(BaseTab):
 
         try:
             # Try using nm tool for symbol analysis
-            result = subprocess.run(  # nosec B603 B607 - nm is a legitimate analysis tool
-                ["nm", str(binary_path)],
+            result = subprocess.run(  # nosec B603 B607 - nm is a legitimate analysis tool  # noqa: S603
+                ["nm", str(binary_path)],  # noqa: S607
                 check=False,
                 capture_output=True,
                 text=True,
@@ -1187,9 +1187,9 @@ def get_plugin():
                 import subprocess
 
                 if platform.system() == "Windows":
-                    subprocess.run(["notepad", str(plugin_file)], check=False)  # nosec B603 B607 - system editor
+                    subprocess.run(["notepad", str(plugin_file)], check=False)  # nosec B603 B607 - system editor  # noqa: S603, S607
                 else:
-                    subprocess.run(["xdg-open", str(plugin_file)], check=False)  # nosec B603 B607 - system opener
+                    subprocess.run(["xdg-open", str(plugin_file)], check=False)  # nosec B603 B607 - system opener  # noqa: S603, S607
 
                 self.log_message(f"Opened plugin '{plugin_name}' for editing")
 

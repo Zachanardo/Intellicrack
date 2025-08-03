@@ -537,7 +537,7 @@ class ProgramDiscoveryEngine:
         """Get version and publisher info from Unix executable."""
         try:
             # Try to get version from --version flag
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 [str(exe_path), "--version"], check=False, capture_output=True, text=True, timeout=5
             )
             if result.returncode == 0 and result.stdout:
@@ -586,7 +586,7 @@ class ProgramDiscoveryEngine:
         try:
             # Debian/Ubuntu - dpkg
             result = subprocess.run(
-                ["dpkg", "-l"], check=False, capture_output=True, text=True, timeout=30
+                ["dpkg", "-l"], check=False, capture_output=True, text=True, timeout=30  # noqa: S607
             )
             if result.returncode == 0:
                 programs.extend(self._parse_dpkg_output(result.stdout))
@@ -596,7 +596,7 @@ class ProgramDiscoveryEngine:
         try:
             # Red Hat/CentOS - rpm
             result = subprocess.run(
-                ["rpm", "-qa"], check=False, capture_output=True, text=True, timeout=30
+                ["rpm", "-qa"], check=False, capture_output=True, text=True, timeout=30  # noqa: S607
             )
             if result.returncode == 0:
                 programs.extend(self._parse_rpm_output(result.stdout))

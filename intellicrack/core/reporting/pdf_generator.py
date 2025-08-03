@@ -1241,9 +1241,9 @@ def run_report_generation(app: Any) -> None:
                 if platform.system() == "Windows":
                     os.startfile(report_path)  # pylint: disable=no-member
                 elif platform.system() == "Darwin":  # macOS
-                    subprocess.call(["open", report_path])
+                    subprocess.call(["open", report_path])  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
                 else:  # Linux
-                    subprocess.call(["xdg-open", report_path])
+                    subprocess.call(["xdg-open", report_path])  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
 
                 app.update_output.emit(f"[Report] Opened report: {report_path}")
             except (OSError, ValueError, RuntimeError) as e:

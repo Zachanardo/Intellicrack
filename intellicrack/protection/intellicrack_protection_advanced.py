@@ -269,7 +269,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         try:
             # Run protection engine with extended timeout for deep scans
             timeout = 60 if scan_mode in [ScanMode.DEEP, ScanMode.ALL] else 30
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 cmd, check=False, capture_output=True, text=True, timeout=timeout
             )
 
@@ -552,7 +552,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         try:
             # Use protection engine's string extraction
             cmd = [self.engine_path, "-s", file_path]
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
             if result.returncode == 0:
                 for line in result.stdout.split("\n"):

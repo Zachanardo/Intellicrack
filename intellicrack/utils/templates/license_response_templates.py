@@ -324,7 +324,7 @@ def get_microsoft_response_templates():
             try:
                 # Use slmgr to check Windows activation
                 result = subprocess.run(
-                    ["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/xpr"],
+                    ["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/xpr"],  # noqa: S607
                     capture_output=True,
                     text=True,
                     timeout=30,
@@ -402,8 +402,8 @@ def get_microsoft_response_templates():
                     for ospp_path in ospp_paths:
                         if os.path.exists(ospp_path):
                             try:
-                                result = subprocess.run(
-                                    ["cscript", "//nologo", ospp_path, "/dstatus"],
+                                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                                    ["cscript", "//nologo", ospp_path, "/dstatus"],  # noqa: S607
                                     capture_output=True,
                                     text=True,
                                     timeout=30,

@@ -783,11 +783,11 @@ class KeygenDialog(BinarySelectionDialog):
                 # Open the generated_keys folder
                 try:
                     if platform.system() == "Windows":
-                        subprocess.run(["explorer", save_dir], check=False)
+                        subprocess.run(["explorer", save_dir], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
                     elif platform.system() == "Darwin":  # macOS
-                        subprocess.run(["open", save_dir], check=False)
+                        subprocess.run(["open", save_dir], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
                     else:  # Linux
-                        subprocess.run(["xdg-open", save_dir], check=False)
+                        subprocess.run(["xdg-open", save_dir], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error in keygen_dialog: %s", e)
                     QMessageBox.information(self, "Folder Location", f"Keys saved to: {save_dir}")

@@ -771,7 +771,7 @@ class VMDetector:
 
             if platform.system() == "Windows":
                 result = subprocess.run(
-                    ["wmic", "cpu", "get", "name"], capture_output=True, text=True, check=False
+                    ["wmic", "cpu", "get", "name"], capture_output=True, text=True, check=False  # noqa: S607
                 )
                 if "virtual" in result.stdout.lower():
                     indicators.append("CPU name contains 'virtual'")
@@ -813,7 +813,7 @@ class VMDetector:
             import subprocess
 
             if platform.system() == "Windows":
-                result = subprocess.run(["getmac"], capture_output=True, text=True, check=False)
+                result = subprocess.run(["getmac"], capture_output=True, text=True, check=False)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
                 for prefix in vm_mac_prefixes:
                     if prefix.lower() in result.stdout.lower():
                         indicators.append(f"VM MAC prefix detected: {prefix}")

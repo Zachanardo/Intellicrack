@@ -506,7 +506,7 @@ class AICoordinationLayer:
                                 # Use shlex.quote to properly escape the binary path
                                 safe_path = shlex.quote(request.binary_path)
                                 logger.debug(f"Running file command with safe path: {safe_path}")
-                                result = subprocess.run(
+                                result = subprocess.run(  # noqa: S603
                                     [file_cmd, request.binary_path],
                                     capture_output=True,
                                     text=True,

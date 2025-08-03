@@ -327,8 +327,8 @@ class FileResolver:
             # This is a simplified check - real alias detection is more complex
             import subprocess
 
-            result = subprocess.run(
-                ["file", str(file_path)],
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                ["file", str(file_path)],  # noqa: S607
                 check=False,
                 capture_output=True,
                 text=True,
@@ -356,8 +356,8 @@ class FileResolver:
             end tell
             """
 
-            result = subprocess.run(
-                ["osascript", "-e", script],
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                ["osascript", "-e", script],  # noqa: S607
                 check=False,
                 capture_output=True,
                 text=True,
@@ -470,8 +470,8 @@ class FileResolver:
             # Get file command output
             import subprocess
 
-            result = subprocess.run(
-                ["file", str(file_path)],
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                ["file", str(file_path)],  # noqa: S607
                 check=False,
                 capture_output=True,
                 text=True,

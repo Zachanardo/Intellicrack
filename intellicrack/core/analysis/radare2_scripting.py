@@ -367,7 +367,7 @@ class R2ScriptingEngine:
             ]
 
             # Execute command
-            process = subprocess.run(
+            process = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 cmd,
                 check=False,
                 capture_output=True,

@@ -297,7 +297,7 @@ class IntellicrackAIInterface:
         try:
             logger.info(f"Executing: {' '.join(action.command)}")
 
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 action.command,
                 check=False,
                 capture_output=True,

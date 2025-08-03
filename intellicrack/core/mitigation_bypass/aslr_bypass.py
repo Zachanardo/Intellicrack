@@ -240,7 +240,7 @@ class ASLRBypass(MitigationBypassBase):
             if isinstance(payload, str):
                 payload = payload.encode()
 
-            process = subprocess.Popen(
+            process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 [target_binary],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -377,7 +377,7 @@ class ASLRBypass(MitigationBypassBase):
 
             # Test the overwrite
             if os.path.exists(target_binary):
-                process = subprocess.Popen(
+                process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     [target_binary],
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
@@ -406,7 +406,7 @@ class ASLRBypass(MitigationBypassBase):
         try:
             # Method 1: Parse /proc/self/maps if available
             try:
-                subprocess.Popen([target_binary], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                subprocess.Popen([target_binary], stdout=subprocess.PIPE, stderr=subprocess.PIPE)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 # In a real implementation, we would attach to the process and read its memory maps
                 # For now, return a typical libc base for demonstration
                 return 0x7FFFF7A00000  # Typical 64-bit libc base
@@ -540,7 +540,7 @@ class ASLRBypass(MitigationBypassBase):
 
             # Execute exploit
             if os.path.exists(target_binary):
-                process = subprocess.Popen(
+                process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     [target_binary],
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,

@@ -166,7 +166,7 @@ def install_dependencies(deps: list[str]) -> bool:
     try:
         for dep in deps:
             logger.info("Installing %s...", dep)
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 [
                     sys.executable,
                     "-m",

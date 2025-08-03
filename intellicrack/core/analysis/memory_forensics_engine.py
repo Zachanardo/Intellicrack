@@ -320,8 +320,8 @@ class MemoryForensicsEngine:
 
             # Try using subprocess to gather system information about the dump
             try:
-                file_result = subprocess.run(
-                    ["file", dump_path], check=False, capture_output=True, text=True, timeout=10
+                file_result = subprocess.run(  # nosec S603 - Using file command for file type detection  # noqa: S603
+                    ["file", dump_path], check=False, capture_output=True, text=True, timeout=10  # noqa: S607
                 )
                 if file_result.returncode == 0:
                     result.analysis_profile = file_result.stdout.strip()

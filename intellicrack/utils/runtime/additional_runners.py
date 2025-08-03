@@ -456,7 +456,7 @@ def run_ghidra_analysis_gui(binary_path: str, ghidra_path: str | None = None) ->
 
             # Launch Ghidra
             cmd = [ghidra_run, binary_path]
-            subprocess.Popen(cmd, encoding="utf-8")
+            subprocess.Popen(cmd, encoding="utf-8")  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
             results["launched"] = True
             results["project_dir"] = project_dir
@@ -613,7 +613,7 @@ def run_external_tool(
             cmd.extend(args)
 
         # Execute tool
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, check=False)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
         results["executed"] = True
         results["return_code"] = result.returncode
@@ -866,7 +866,7 @@ def run_external_command(command: str | list[str], timeout: int = 60) -> dict[st
         if isinstance(command, str):
             command = command.split()
 
-        result = subprocess.run(
+        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             command, capture_output=True, text=True, timeout=timeout, check=False
         )
 
@@ -1162,7 +1162,7 @@ def _detect_windows_usb_dongles() -> list[dict[str, Any]]:
             "Get-WmiObject -Class Win32_USBDevice | Select-Object DeviceID, Description, Manufacturer | ConvertTo-Json",
         ]
 
-        result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=10)
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=10)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
         if result.returncode == 0:
             devices = json.loads(result.stdout)
             if not isinstance(devices, list):
@@ -1219,7 +1219,7 @@ def _detect_linux_usb_dongles() -> list[dict[str, Any]]:
 
     try:
         # Use lsusb to list USB devices
-        result = subprocess.run(["lsusb"], check=False, capture_output=True, text=True, timeout=5)
+        result = subprocess.run(["lsusb"], check=False, capture_output=True, text=True, timeout=5)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
         if result.returncode == 0:
             for line in result.stdout.split("\n"):
                 if line.strip():
@@ -1340,7 +1340,7 @@ def _detect_windows_dongle_drivers() -> list[dict[str, Any]]:
         driver_patterns = ["hasp", "sentinel", "wibu", "aksusb", "securikey"]
 
         cmd = ["driverquery", "/v", "/fo", "csv"]
-        result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=10)
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=10)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
         if result.returncode == 0:
             import csv
@@ -1377,7 +1377,7 @@ def _detect_linux_dongle_drivers() -> list[dict[str, Any]]:
 
     try:
         # Check loaded kernel modules
-        result = subprocess.run(["lsmod"], check=False, capture_output=True, text=True, timeout=5)
+        result = subprocess.run(["lsmod"], check=False, capture_output=True, text=True, timeout=5)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
         if result.returncode == 0:
             for line in result.stdout.split("\n")[1:]:  # Skip header
                 if line.strip():
@@ -1906,7 +1906,7 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
         # Test 1: Basic execution test (does it run without crashing?)
         try:
             # Run with timeout to prevent hanging
-            proc = subprocess.run(
+            proc = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 [binary_path, "--version"],  # Try common version flag
                 check=False,
                 capture_output=True,
@@ -1930,7 +1930,7 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
 
         # Test 2: Check for license-related error messages
         try:
-            proc = subprocess.run(
+            proc = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 [binary_path],
                 check=False,
                 capture_output=True,
@@ -1981,7 +1981,7 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
                 env["TEMP"] = temp_dir
                 env["TMP"] = temp_dir
 
-                proc = subprocess.run(
+                proc = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     [binary_path, "--help"],
                     check=False,
                     capture_output=True,

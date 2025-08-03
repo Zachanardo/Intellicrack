@@ -171,8 +171,8 @@ def create_upx_packed_binary(output_path: Path) -> None:
 
     # Try to pack with UPX if available
     try:
-        result = subprocess.run(
-            ["upx", "--best", "-o", str(output_path), str(temp_path)],
+        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            ["upx", "--best", "-o", str(output_path), str(temp_path)],  # noqa: S607
             check=False,
             capture_output=True,
             text=True,

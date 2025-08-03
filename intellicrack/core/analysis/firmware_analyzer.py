@@ -770,8 +770,8 @@ class FirmwareAnalyzer:
 
             # Use subprocess to check for additional system tools
             try:
-                result = subprocess.run(
-                    ["file", file_path], check=False, capture_output=True, text=True, timeout=5
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    ["file", file_path], check=False, capture_output=True, text=True, timeout=5  # noqa: S607
                 )
                 if result.returncode == 0 and "executable" in result.stdout.lower():
                     findings.append(

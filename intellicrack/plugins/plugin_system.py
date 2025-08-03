@@ -2368,7 +2368,7 @@ finally:
             if sys.platform == "win32":
                 # Windows doesn't support resource limits, use process creation flags
                 CREATE_NO_WINDOW = 0x08000000
-                process = subprocess.Popen(
+                process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     [sys.executable, "-c", sandbox_code],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -2377,7 +2377,7 @@ finally:
                 )
             else:
                 # Unix-like systems with resource limits
-                process = subprocess.Popen(
+                process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     [sys.executable, "-c", sandbox_code],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,

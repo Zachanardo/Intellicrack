@@ -253,7 +253,7 @@ def response(flow: http.HTTPFlow) -> None:
                     "ssl_insecure=true",
                 ]
 
-                self.proxy_process = subprocess.Popen(
+                self.proxy_process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     cmd,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,

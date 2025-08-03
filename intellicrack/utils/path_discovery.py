@@ -359,7 +359,7 @@ def find_python_installations() -> list[dict[str, str]]:
                     # Get version
                     import subprocess
 
-                    result = subprocess.run(
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                         [path, "--version"], check=False, capture_output=True, text=True, timeout=5
                     )
                     version = (
@@ -499,7 +499,7 @@ def get_tool_version(tool_path: str, version_arg: str = "--version") -> str | No
     try:
         import subprocess
 
-        result = subprocess.run(
+        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             [tool_path, version_arg], check=False, capture_output=True, text=True, timeout=10
         )
 

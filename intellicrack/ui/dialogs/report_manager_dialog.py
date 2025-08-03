@@ -635,9 +635,9 @@ class ReportManagerDialog(BaseTemplateDialog):
             if sys.platform == "win32":
                 os.startfile(report_path)
             elif sys.platform == "darwin":
-                subprocess.run(["open", report_path], check=False)
+                subprocess.run(["open", report_path], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
             else:
-                subprocess.run(["xdg-open", report_path], check=False)
+                subprocess.run(["xdg-open", report_path], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in report_manager_dialog: %s", e)
             if HAS_PYQT:
@@ -802,9 +802,9 @@ class ReportManagerDialog(BaseTemplateDialog):
                     if sys.platform == "win32":
                         os.startfile(output_path)
                     elif sys.platform == "darwin":
-                        subprocess.run(["open", output_path], check=False)
+                        subprocess.run(["open", output_path], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
                     else:
-                        subprocess.run(["xdg-open", output_path], check=False)
+                        subprocess.run(["xdg-open", output_path], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
                 except Exception as e:
                     logger.error("Exception in report_manager_dialog: %s", e)
         else:

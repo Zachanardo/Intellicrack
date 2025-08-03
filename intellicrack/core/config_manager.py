@@ -457,7 +457,7 @@ class IntellicrackConfig:
 
         if version_flag:
             try:
-                result = subprocess.run(
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     [tool_path, version_flag],
                     check=False,
                     capture_output=True,

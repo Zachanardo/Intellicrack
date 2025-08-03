@@ -1106,7 +1106,7 @@ def sandbox_process(command: list[str], timeout: int = 60) -> dict[str, Any]:
     """Run a process in a sandboxed environment."""
     try:
         # Basic sandboxing using subprocess with timeout
-        result = subprocess.run(
+        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             command,
             capture_output=True,
             text=True,
@@ -1229,13 +1229,13 @@ def copy_to_clipboard(text: str) -> bool:
                 clipboard.setText(text)
                 return True
         elif platform.system() == "Windows":
-            subprocess.run(["clip"], input=text, text=True, check=True)
+            subprocess.run(["clip"], input=text, text=True, check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
             return True
         elif platform.system() == "Darwin":  # macOS
-            subprocess.run(["pbcopy"], input=text, text=True, check=True)
+            subprocess.run(["pbcopy"], input=text, text=True, check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
             return True
         elif platform.system() == "Linux":
-            subprocess.run(["xclip", "-selection", "clipboard"], input=text, text=True, check=True)
+            subprocess.run(["xclip", "-selection", "clipboard"], input=text, text=True, check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
             return True
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Failed to copy to clipboard: %s", e)

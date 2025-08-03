@@ -207,7 +207,7 @@ def run_command(
         if isinstance(command, str) and not shell:
             command = command.split()
 
-        result = subprocess.run(  # nosec B603 - controlled command execution for analysis tools
+        result = subprocess.run(  # nosec B603 - controlled command execution for analysis tools  # noqa: S603
             command,
             shell=shell,
             capture_output=capture_output,
@@ -391,8 +391,8 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
             ps_command = (
                 f'Start-Process -FilePath "cmd" -ArgumentList "/c {command}" -Verb RunAs -Wait'
             )
-            result = subprocess.run(  # nosec B603 B607 - controlled elevated execution for admin tasks
-                ["powershell", "-Command", ps_command], capture_output=True, text=True, check=False
+            result = subprocess.run(  # nosec B603 B607 - controlled elevated execution for admin tasks  # noqa: S603
+                ["powershell", "-Command", ps_command], capture_output=True, text=True, check=False  # noqa: S607
             )
             return result.returncode == 0
         # On Unix-like systems, use sudo
@@ -400,7 +400,7 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
             command = command.split()
 
         sudo_command = ["sudo"] + command
-        result = subprocess.run(sudo_command, capture_output=True, text=True, check=False)  # nosec B603 - controlled sudo execution
+        result = subprocess.run(sudo_command, capture_output=True, text=True, check=False)  # nosec B603 - controlled sudo execution  # noqa: S603
         return result.returncode == 0
 
     except (OSError, ValueError, RuntimeError) as e:

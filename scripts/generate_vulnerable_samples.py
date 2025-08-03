@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
     compiled = False
     for cmd in compile_commands:
         try:
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             if result.returncode == 0:
                 compiled = True
                 print(f"✓ Created buffer overflow binary: {output_path}")
@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
     compiled = False
     for cmd in compile_commands:
         try:
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             if result.returncode == 0:
                 compiled = True
                 print(f"✓ Created format string binary: {output_path}")
@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {
     compiled = False
     for cmd in compile_commands:
         try:
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             if result.returncode == 0:
                 compiled = True
                 print(f"✓ Created integer overflow binary: {output_path}")
@@ -286,7 +286,7 @@ int main(int argc, char *argv[]) {
     compiled = False
     for cmd in compile_commands:
         try:
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             if result.returncode == 0:
                 compiled = True
                 print(f"✓ Created heap overflow binary: {output_path}")
@@ -363,7 +363,7 @@ int main(int argc, char *argv[]) {
     compiled = False
     for cmd in compile_commands:
         try:
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             if result.returncode == 0:
                 compiled = True
                 print(f"✓ Created race condition binary: {output_path}")

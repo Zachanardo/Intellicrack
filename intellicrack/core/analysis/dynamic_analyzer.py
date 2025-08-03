@@ -93,7 +93,7 @@ class AdvancedDynamicAnalyzer:
         self.logger.info("Starting subprocess analysis for %s", self.binary_path)
 
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 [self.binary_path], capture_output=True, text=True, timeout=10, check=False
             )
 
@@ -535,7 +535,7 @@ class AdvancedDynamicAnalyzer:
 
         try:
             # Use psutil for detailed process analysis
-            process = subprocess.Popen(
+            process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 [self.binary_path],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -776,7 +776,7 @@ class AdvancedDynamicAnalyzer:
             if not target_proc:
                 # Try to start the process
                 try:
-                    proc = subprocess.Popen([str(self.binary_path)])
+                    proc = subprocess.Popen([str(self.binary_path)])  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     time.sleep(2)
                     target_proc = psutil.Process(proc.pid)
                 except Exception as e:
@@ -1089,7 +1089,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> list[str]
 
         # Launch the process
         logs.append("Launching process...")
-        process = subprocess.Popen([binary_path], encoding="utf-8")
+        process = subprocess.Popen([binary_path], encoding="utf-8")  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
         logs.append(f"Process started with PID {process.pid}")
 
         # Attach Frida

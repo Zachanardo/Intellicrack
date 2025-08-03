@@ -204,7 +204,7 @@ class VMDetector(BaseDetector):
             # Try to get hypervisor brand
             if platform.system() == "Linux":
                 result = subprocess.run(
-                    ["dmidecode", "-s", "system-product-name"],
+                    ["dmidecode", "-s", "system-product-name"],  # noqa: S607
                     check=False,
                     capture_output=True,
                     text=True,
@@ -400,11 +400,11 @@ class VMDetector(BaseDetector):
             # Get network interfaces
             if platform.system() == "Windows":
                 result = subprocess.run(
-                    ["ipconfig", "/all"], check=False, capture_output=True, text=True
+                    ["ipconfig", "/all"], check=False, capture_output=True, text=True  # noqa: S607
                 )
                 output = result.stdout
             else:
-                result = subprocess.run(["ip", "link"], check=False, capture_output=True, text=True)
+                result = subprocess.run(["ip", "link"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
                 output = result.stdout
 
             # Extract MAC addresses
@@ -475,7 +475,7 @@ class VMDetector(BaseDetector):
             if platform.system() == "Windows":
                 # Check loaded drivers
                 result = subprocess.run(
-                    ["driverquery"], check=False, capture_output=True, text=True
+                    ["driverquery"], check=False, capture_output=True, text=True  # noqa: S607
                 )
                 drivers = result.stdout.lower()
 
@@ -496,7 +496,7 @@ class VMDetector(BaseDetector):
 
             elif platform.system() == "Linux":
                 # Check loaded kernel modules
-                result = subprocess.run(["lsmod"], check=False, capture_output=True, text=True)
+                result = subprocess.run(["lsmod"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
                 modules = result.stdout.lower()
 
                 vm_modules = [

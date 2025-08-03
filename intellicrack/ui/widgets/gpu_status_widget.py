@@ -96,7 +96,7 @@ class GPUMonitorWorker(QObject):
         try:
             # Run nvidia-smi command
             result = subprocess.run(
-                [
+                [  # noqa: S607
                     "nvidia-smi",
                     "--query-gpu=index,name,temperature.gpu,utilization.gpu,memory.used,memory.total,power.draw",
                     "--format=csv,noheader,nounits",

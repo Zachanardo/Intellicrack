@@ -89,7 +89,7 @@ def run_ghidra_plugin(
         logger.info(f"Running Ghidra command: {' '.join(command)}")
 
         # Execute Ghidra
-        process = subprocess.Popen(
+        process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

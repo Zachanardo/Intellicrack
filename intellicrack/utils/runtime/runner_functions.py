@@ -2346,7 +2346,7 @@ def run_frida_analysis(
                     log_message(f"[Frida Analysis] Launching target: {binary_path}")
                 )
 
-            process = subprocess.Popen(
+            process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 [binary_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
             target_pid = process.pid
@@ -2646,8 +2646,8 @@ def run_radare2_analysis(
             # Fallback to command-line
             try:
                 # Get basic info
-                result = subprocess.run(
-                    ["r2", "-q", "-c", "ij", binary_path],
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    ["r2", "-q", "-c", "ij", binary_path],  # noqa: S607
                     capture_output=True,
                     text=True,
                     timeout=30,
