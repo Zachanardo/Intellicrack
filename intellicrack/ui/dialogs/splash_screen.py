@@ -117,4 +117,4 @@ def create_progress_splash_screen(image_path: Optional[str] = None) -> SplashScr
 IntellicrackApp = SplashScreen
 
 
-__all__ = ['SplashScreen', 'create_progress_splash_screen', 'IntellicrackApp']
+__all__ = ["SplashScreen", "create_progress_splash_screen", "IntellicrackApp"]

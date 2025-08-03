@@ -316,7 +316,7 @@ class PerformanceOptimizer:
 
         def parallel_wrapper(*args, **kwargs):
             # Check if arguments support parallel processing
-            if len(args) > 0 and hasattr(args[0], '__iter__') and not isinstance(args[0], str):
+            if len(args) > 0 and hasattr(args[0], "__iter__") and not isinstance(args[0], str):
                 # Parallel processing for iterable first argument
                 items = args[0]
                 remaining_args = args[1:]
@@ -340,7 +340,7 @@ class PerformanceOptimizer:
 
             # Check memory usage before execution
             memory_percent = psutil.virtual_memory() if PSUTIL_AVAILABLE else type(
-                '', (), {'percent': 0, 'total': 8*1024*1024*1024, 'available': 4*1024*1024*1024})().percent / 100.0
+                "", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})().percent / 100.0
 
             if memory_percent > gc_threshold:
                 # Force garbage collection
@@ -353,7 +353,7 @@ class PerformanceOptimizer:
 
             # Check memory after execution
             memory_percent_after = psutil.virtual_memory() if PSUTIL_AVAILABLE else type(
-                '', (), {'percent': 0, 'total': 8*1024*1024*1024, 'available': 4*1024*1024*1024})().percent / 100.0
+                "", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})().percent / 100.0
             if memory_percent_after > gc_threshold:
                 gc.collect()
 
@@ -451,7 +451,7 @@ class ResourceManager:
         return {
             ResourceType.CPU: psutil.cpu_count() if PSUTIL_AVAILABLE else 4,
             # MB
-            ResourceType.MEMORY: psutil.virtual_memory() if PSUTIL_AVAILABLE else type('', (), {'percent': 0, 'total': 8*1024*1024*1024, 'available': 4*1024*1024*1024})().total // (1024 * 1024),
+            ResourceType.MEMORY: psutil.virtual_memory() if PSUTIL_AVAILABLE else type("", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})().total // (1024 * 1024),
             ResourceType.THREADS: 500,  # Reasonable default
             ResourceType.PROCESSES: 100,
             ResourceType.DISK_IO: 1000,  # MB/s estimate
@@ -522,13 +522,13 @@ class ResourceManager:
 
         # Check memory
         available_memory = psutil.virtual_memory() if PSUTIL_AVAILABLE else type(
-            '', (), {'percent': 0, 'total': 8*1024*1024*1024, 'available': 4*1024*1024*1024})().available // (1024 * 1024)
+            "", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})().available // (1024 * 1024)
         if requirements.memory_mb > available_memory:
             return False
 
         # Check thread pool capacity
         thread_pool = self.resource_pools[ResourceType.THREADS]
-        if hasattr(thread_pool, '_threads') and len(thread_pool._threads) >= thread_pool._max_workers:
+        if hasattr(thread_pool, "_threads") and len(thread_pool._threads) >= thread_pool._max_workers:
             return False
 
         return True
@@ -537,9 +537,9 @@ class ResourceManager:
         """Get current resource usage."""
         cpu_usage = psutil.cpu_percent() if PSUTIL_AVAILABLE else 0.0
         memory = psutil.virtual_memory() if PSUTIL_AVAILABLE else type(
-            '', (), {'percent': 0, 'total': 8*1024*1024*1024, 'available': 4*1024*1024*1024})()
+            "", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})()
         disk_io = psutil.disk_io_counters() if PSUTIL_AVAILABLE else type(
-            '', (), {'read_bytes': 0, 'write_bytes': 0})()
+            "", (), {"read_bytes": 0, "write_bytes": 0})()
 
         usage = {
             "cpu_percent": cpu_usage,
@@ -915,8 +915,8 @@ class PerformanceOptimizationLayer:
             "resource_usage": self.resource_manager.get_resource_usage(),
             "system_info": {
                 "cpu_count": psutil.cpu_count() if PSUTIL_AVAILABLE else 4,
-                "memory_total_gb": psutil.virtual_memory() if PSUTIL_AVAILABLE else type('', (), {'percent': 0, 'total': 8*1024*1024*1024, 'available': 4*1024*1024*1024})().total / (1024**3),
-                "memory_available_gb": psutil.virtual_memory() if PSUTIL_AVAILABLE else type('', (), {'percent': 0, 'total': 8*1024*1024*1024, 'available': 4*1024*1024*1024})().available / (1024**3)
+                "memory_total_gb": psutil.virtual_memory() if PSUTIL_AVAILABLE else type("", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})().total / (1024**3),
+                "memory_available_gb": psutil.virtual_memory() if PSUTIL_AVAILABLE else type("", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})().available / (1024**3)
             }
         }
 

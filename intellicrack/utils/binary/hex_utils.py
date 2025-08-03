@@ -52,12 +52,12 @@ def create_hex_dump(data: Union[bytes, bytearray],
         chunk = data[i:i + bytes_per_line]
 
         # Hex representation
-        hex_part = ' '.join(f'{b:02x}' for b in chunk)
+        hex_part = " ".join(f"{b:02x}" for b in chunk)
         hex_part = hex_part.ljust(bytes_per_line * 3 - 1)
 
         # ASCII representation
-        ascii_part = ''.join(
-            chr(b) if 32 <= b < 127 else '.'
+        ascii_part = "".join(
+            chr(b) if 32 <= b < 127 else "."
             for b in chunk
         )
 
@@ -65,7 +65,7 @@ def create_hex_dump(data: Union[bytes, bytearray],
         line = f"{offset:08x}  {hex_part}  |{ascii_part}|"
         lines.append(line)
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def hex_to_bytes(hex_string: str) -> bytes:
@@ -80,10 +80,10 @@ def hex_to_bytes(hex_string: str) -> bytes:
     """
     # Remove common formatting
     hex_string = hex_string.strip()
-    hex_string = hex_string.replace(' ', '')
-    hex_string = hex_string.replace('\\x', '')
-    hex_string = hex_string.replace('0x', '')
-    hex_string = hex_string.replace(',', '')
+    hex_string = hex_string.replace(" ", "")
+    hex_string = hex_string.replace("\\x", "")
+    hex_string = hex_string.replace("0x", "")
+    hex_string = hex_string.replace(",", "")
 
     # Convert to bytes
     try:
@@ -94,7 +94,7 @@ def hex_to_bytes(hex_string: str) -> bytes:
 
 
 def bytes_to_hex(data: bytes,
-                format_style: str = 'plain',
+                format_style: str = "plain",
                 uppercase: bool = False) -> str:
     """
     Convert bytes to hex string in various formats.
@@ -112,17 +112,17 @@ def bytes_to_hex(data: bytes,
     else:
         hex_str = data.hex()
 
-    if format_style == 'plain':
+    if format_style == "plain":
         return hex_str
-    elif format_style == 'spaces':
-        return ' '.join(hex_str[i:i+2] for i in range(0, len(hex_str), 2))
-    elif format_style == '0x':
-        return '0x' + hex_str
-    elif format_style == '\\x':
-        return '\\x'.join([''] + [hex_str[i:i+2] for i in range(0, len(hex_str), 2)])
-    elif format_style == 'c_array':
-        hex_bytes = [f'0x{hex_str[i:i+2]}' for i in range(0, len(hex_str), 2)]
-        return ', '.join(hex_bytes)
+    elif format_style == "spaces":
+        return " ".join(hex_str[i:i+2] for i in range(0, len(hex_str), 2))
+    elif format_style == "0x":
+        return "0x" + hex_str
+    elif format_style == "\\x":
+        return "\\x".join([""] + [hex_str[i:i+2] for i in range(0, len(hex_str), 2)])
+    elif format_style == "c_array":
+        hex_bytes = [f"0x{hex_str[i:i+2]}" for i in range(0, len(hex_str), 2)]
+        return ", ".join(hex_bytes)
     else:
         return hex_str
 
@@ -156,7 +156,7 @@ def find_pattern(data: bytes, pattern: bytes, max_results: int = None) -> List[i
     return results
 
 
-def calculate_checksum(data: bytes, algorithm: str = 'sum8') -> int:
+def calculate_checksum(data: bytes, algorithm: str = "sum8") -> int:
     """
     Calculate checksum of data.
 
@@ -167,11 +167,11 @@ def calculate_checksum(data: bytes, algorithm: str = 'sum8') -> int:
     Returns:
         Checksum value
     """
-    if algorithm == 'sum8':
+    if algorithm == "sum8":
         return sum(data) & 0xFF
-    elif algorithm == 'sum16':
+    elif algorithm == "sum16":
         return sum(data) & 0xFFFF
-    elif algorithm == 'xor':
+    elif algorithm == "xor":
         result = 0
         for byte in data:
             result ^= byte
@@ -205,7 +205,7 @@ def patch_bytes(data: bytearray, offset: int, patch_data: bytes) -> bool:
         return False
 
 
-def nop_range(data: bytearray, start: int, end: int, arch: str = 'x86') -> bool:
+def nop_range(data: bytearray, start: int, end: int, arch: str = "x86") -> bool:
     """
     Fill range with NOP instructions.
 
@@ -219,10 +219,10 @@ def nop_range(data: bytearray, start: int, end: int, arch: str = 'x86') -> bool:
         True if successful
     """
     nop_bytes = {
-        'x86': b'\x90',
-        'x64': b'\x90',
-        'arm': b'\x00\xf0\x20\xe3',
-        'arm64': b'\x1f\x20\x03\xd5'
+        "x86": b"\x90",
+        "x64": b"\x90",
+        "arm": b"\x00\xf0\x20\xe3",
+        "arm64": b"\x1f\x20\x03\xd5"
     }
 
     if arch not in nop_bytes:
@@ -245,8 +245,8 @@ def nop_range(data: bytearray, start: int, end: int, arch: str = 'x86') -> bool:
 
     # Handle remainder with single-byte NOPs if possible
     if remainder > 0:
-        if arch in ['x86', 'x64']:
-            patch_data += b'\x90' * remainder
+        if arch in ["x86", "x64"]:
+            patch_data += b"\x90" * remainder
         else:
             logger.warning(f"Cannot perfectly fill {remainder} bytes on {arch}")
             return False
@@ -277,11 +277,11 @@ def compare_bytes(data1: bytes, data2: bytes, context: int = 3) -> List[Dict]:
             end = min(min_len, i + context + 1)
 
             diff = {
-                'offset': i,
-                'data1': data1[start:end],
-                'data2': data2[start:end],
-                'byte1': data1[i],
-                'byte2': data2[i]
+                "offset": i,
+                "data1": data1[start:end],
+                "data2": data2[start:end],
+                "byte1": data1[i],
+                "byte2": data2[i]
             }
 
             differences.append(diff)
@@ -295,10 +295,10 @@ def compare_bytes(data1: bytes, data2: bytes, context: int = 3) -> List[Dict]:
     # Handle length differences
     if len(data1) != len(data2):
         differences.append({
-            'offset': min_len,
-            'type': 'length',
-            'len1': len(data1),
-            'len2': len(data2)
+            "offset": min_len,
+            "type": "length",
+            "len1": len(data1),
+            "len2": len(data2)
         })
 
     return differences
@@ -342,17 +342,17 @@ def detect_encoding(data: bytes) -> Optional[str]:
         Detected encoding name or None
     """
     # Check for UTF-8 BOM
-    if data.startswith(b'\xef\xbb\xbf'):
-        return 'utf-8-sig'
+    if data.startswith(b"\xef\xbb\xbf"):
+        return "utf-8-sig"
 
     # Check for UTF-16 BOM
-    if data.startswith(b'\xff\xfe'):
-        return 'utf-16-le'
-    if data.startswith(b'\xfe\xff'):
-        return 'utf-16-be'
+    if data.startswith(b"\xff\xfe"):
+        return "utf-16-le"
+    if data.startswith(b"\xfe\xff"):
+        return "utf-16-be"
 
     # Try to decode as various encodings
-    encodings = ['utf-8', 'ascii', 'utf-16', 'latin-1']
+    encodings = ["utf-8", "ascii", "utf-16", "latin-1"]
 
     for encoding in encodings:
         try:

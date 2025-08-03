@@ -57,7 +57,8 @@ try:
     )
 except ImportError as e:
     logger.warning("Failed to import model_manager_module: %s", e)
-    ModelManager = ModelBackend = PyTorchBackend = TensorFlowBackend = ONNXBackend = SklearnBackend = None
+    ModelManager = ModelBackend = PyTorchBackend = None
+    TensorFlowBackend = ONNXBackend = SklearnBackend = None
     load_model = save_model = list_available_models = configure_ai_provider = None
 
 
@@ -81,7 +82,8 @@ except ImportError as e:
     LLMManager = LLMBackend = LLMConfig = LLMProvider = None
     LLMMessage = LLMResponse = None
     get_llm_manager = shutdown_llm_manager = None
-    create_openai_config = create_anthropic_config = create_gguf_config = create_ollama_config = None
+    create_openai_config = create_anthropic_config = None
+    create_gguf_config = create_ollama_config = None
 
 try:
     from .orchestrator import (
@@ -175,7 +177,8 @@ try:
     )
 except ImportError as e:
     logger.warning("Failed to import realtime_adaptation_engine: %s", e)
-    RealTimeAdaptationEngine = AdaptationType = TriggerCondition = AdaptationRule = RuntimeMetric = None
+    RealTimeAdaptationEngine = AdaptationType = TriggerCondition = None
+    AdaptationRule = RuntimeMetric = None
 
 try:
     from .semantic_code_analyzer import (
@@ -187,7 +190,8 @@ try:
     )
 except ImportError as e:
     logger.warning("Failed to import semantic_code_analyzer: %s", e)
-    SemanticCodeAnalyzer = SemanticIntent = BusinessLogicPattern = SemanticNode = SemanticRelationship = None
+    SemanticCodeAnalyzer = SemanticIntent = BusinessLogicPattern = None
+    SemanticNode = SemanticRelationship = None
 
 try:
     from .exploit_chain_builder import (
@@ -205,8 +209,10 @@ try:
     )
 except ImportError as e:
     logger.warning("Failed to import exploit_chain_builder: %s", e)
-    AutomatedExploitChainBuilder = ExploitChainFramework = ExploitPrimitiveLibrary = SafetyVerificationSystem = None
-    Vulnerability = ExploitType = ExploitPrimitive = ExploitStep = ExploitChain = ChainComplexity = exploit_chain_builder = None
+    AutomatedExploitChainBuilder = ExploitChainFramework = None
+    ExploitPrimitiveLibrary = SafetyVerificationSystem = None
+    Vulnerability = ExploitType = ExploitPrimitive = None
+    ExploitStep = ExploitChain = ChainComplexity = exploit_chain_builder = None
 
 try:
     from .performance_optimization_layer import (
@@ -221,7 +227,8 @@ try:
     )
 except ImportError as e:
     logger.warning("Failed to import performance_optimization_layer: %s", e)
-    PerformanceOptimizationLayer = PerformanceOptimizer = ResourceManager = ParallelExecutor = CacheManager = None
+    PerformanceOptimizationLayer = PerformanceOptimizer = None
+    ResourceManager = ParallelExecutor = CacheManager = None
     OptimizationStrategy = ResourceType = performance_optimization_layer = None
 
 try:
@@ -254,7 +261,8 @@ try:
     )
 except ImportError as e:
     logger.warning("Failed to import predictive_intelligence: %s", e)
-    PredictiveIntelligenceEngine = SuccessProbabilityPredictor = ExecutionTimePredictor = VulnerabilityPredictor = None
+    PredictiveIntelligenceEngine = SuccessProbabilityPredictor = None
+    ExecutionTimePredictor = VulnerabilityPredictor = None
     PredictionType = PredictionConfidence = PredictionResult = predictive_intelligence = None
 
 try:
@@ -345,132 +353,132 @@ except ImportError as e:
 # Define package exports
 __all__ = [
     # From ai_tools
-    'AIAssistant',
-    'CodeAnalyzer',
-    'analyze_with_ai',
-    'get_ai_suggestions',
-    'explain_code',
+    "AIAssistant",
+    "CodeAnalyzer",
+    "analyze_with_ai",
+    "get_ai_suggestions",
+    "explain_code",
 
     # ML predictor removed - using LLM-only approach
 
     # From model_manager_module
-    'ModelManager',
-    'ModelBackend',
-    'ONNXBackend',
-    'PyTorchBackend',
-    'SklearnBackend',
-    'TensorFlowBackend',
-    'load_model',
-    'save_model',
-    'list_available_models',
-    'configure_ai_provider',
+    "ModelManager",
+    "ModelBackend",
+    "ONNXBackend",
+    "PyTorchBackend",
+    "SklearnBackend",
+    "TensorFlowBackend",
+    "load_model",
+    "save_model",
+    "list_available_models",
+    "configure_ai_provider",
 
     # From orchestrator (Agentic AI System)
-    'AIOrchestrator',
-    'AISharedContext',
-    'AIEventBus',
-    'AITask',
-    'AIResult',
-    'AITaskType',
-    'AnalysisComplexity',
-    'get_orchestrator',
-    'shutdown_orchestrator',
+    "AIOrchestrator",
+    "AISharedContext",
+    "AIEventBus",
+    "AITask",
+    "AIResult",
+    "AITaskType",
+    "AnalysisComplexity",
+    "get_orchestrator",
+    "shutdown_orchestrator",
 
     # From coordination_layer (Intelligent Coordination)
-    'AICoordinationLayer',
-    'AnalysisRequest',
-    'CoordinatedResult',
-    'AnalysisStrategy',
-    'quick_vulnerability_scan',
-    'comprehensive_analysis',
+    "AICoordinationLayer",
+    "AnalysisRequest",
+    "CoordinatedResult",
+    "AnalysisStrategy",
+    "quick_vulnerability_scan",
+    "comprehensive_analysis",
 
     # From ai_assistant_enhanced
-    'IntellicrackAIAssistant',
-    'Tool',
-    'ToolCategory',
+    "IntellicrackAIAssistant",
+    "Tool",
+    "ToolCategory",
 
     # From exploitation modules
-    'VulnerabilityResearchAI',
-    'ExploitationOrchestrator',
+    "VulnerabilityResearchAI",
+    "ExploitationOrchestrator",
 
     # From advanced AI system components
-    'AILearningEngine',
-    'LearningRecord',
-    'PatternRule',
-    'FailureAnalysis',
-    'learning_engine',
-    'MultiAgentSystem',
-    'AgentRole',
-    'AgentMessage',
-    'AgentTask',
-    'TaskPriority',
-    'MessageType',
-    'RealTimeAdaptationEngine',
-    'AdaptationType',
-    'TriggerCondition',
-    'AdaptationRule',
-    'RuntimeMetric',
-    'SemanticCodeAnalyzer',
-    'SemanticIntent',
-    'BusinessLogicPattern',
-    'SemanticNode',
-    'SemanticRelationship',
-    'AutomatedExploitChainBuilder',
-    'ExploitChainFramework',
-    'ExploitPrimitiveLibrary',
-    'SafetyVerificationSystem',
-    'Vulnerability',
-    'ExploitType',
-    'ExploitPrimitive',
-    'ExploitStep',
-    'ExploitChain',
-    'ChainComplexity',
-    'exploit_chain_builder',
+    "AILearningEngine",
+    "LearningRecord",
+    "PatternRule",
+    "FailureAnalysis",
+    "learning_engine",
+    "MultiAgentSystem",
+    "AgentRole",
+    "AgentMessage",
+    "AgentTask",
+    "TaskPriority",
+    "MessageType",
+    "RealTimeAdaptationEngine",
+    "AdaptationType",
+    "TriggerCondition",
+    "AdaptationRule",
+    "RuntimeMetric",
+    "SemanticCodeAnalyzer",
+    "SemanticIntent",
+    "BusinessLogicPattern",
+    "SemanticNode",
+    "SemanticRelationship",
+    "AutomatedExploitChainBuilder",
+    "ExploitChainFramework",
+    "ExploitPrimitiveLibrary",
+    "SafetyVerificationSystem",
+    "Vulnerability",
+    "ExploitType",
+    "ExploitPrimitive",
+    "ExploitStep",
+    "ExploitChain",
+    "ChainComplexity",
+    "exploit_chain_builder",
 
     # From AI script generation system
-    'AIScriptGenerator',
-    'ScriptType',
-    'ScriptGenerationResult',
-    'AutonomousAgent',
-    'IntelligentCodeModifier',
-    'CodeChange',
-    'ModificationRequest',
-    'ModificationType',
-    'ChangeStatus',
-    'QemuTestManager',
-    'IntegrationManager',
-    'IntegrationTask',
-    'WorkflowResult',
-    'PerformanceMonitor',
-    'PerformanceMetric',
-    'PerformanceProfile',
-    'performance_monitor',
-    'profile_ai_operation',
-    'monitor_memory_usage',
-    'OptimizationManager',
-    'OptimizationRule',
-    'PerformanceConfig',
-    'optimization_manager',
-    'optimize_ai_performance',
-    'get_performance_recommendations',
-    'benchmark_ai_optimizations',
+    "AIScriptGenerator",
+    "ScriptType",
+    "ScriptGenerationResult",
+    "AutonomousAgent",
+    "IntelligentCodeModifier",
+    "CodeChange",
+    "ModificationRequest",
+    "ModificationType",
+    "ChangeStatus",
+    "QemuTestManager",
+    "IntegrationManager",
+    "IntegrationTask",
+    "WorkflowResult",
+    "PerformanceMonitor",
+    "PerformanceMetric",
+    "PerformanceProfile",
+    "performance_monitor",
+    "profile_ai_operation",
+    "monitor_memory_usage",
+    "OptimizationManager",
+    "OptimizationRule",
+    "PerformanceConfig",
+    "optimization_manager",
+    "optimize_ai_performance",
+    "get_performance_recommendations",
+    "benchmark_ai_optimizations",
 
     # From llm_backends (GGUF and API Support)
-    'LLMManager',
-    'LLMBackend',
-    'LLMConfig',
-    'LLMProvider',
-    'LLMMessage',
-    'LLMResponse',
-    'get_llm_manager',
-    'shutdown_llm_manager',
-    'create_openai_config',
-    'create_anthropic_config',
-    'create_gguf_config',
-    'create_ollama_config',
+    "LLMManager",
+    "LLMBackend",
+    "LLMConfig",
+    "LLMProvider",
+    "LLMMessage",
+    "LLMResponse",
+    "get_llm_manager",
+    "shutdown_llm_manager",
+    "create_openai_config",
+    "create_anthropic_config",
+    "create_gguf_config",
+    "create_ollama_config",
 
     # From parsing_utils
-    'ResponseLineParser',
+    "ResponseLineParser",
 ]
 
 # Package metadata

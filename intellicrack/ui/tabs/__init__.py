@@ -10,10 +10,10 @@ from .settings_tab import SettingsTab
 from .tools_tab import ToolsTab
 
 __all__ = [
-    'DashboardTab',
-    'AnalysisTab',
-    'ExploitationTab',
-    'AIAssistantTab',
-    'ToolsTab',
-    'SettingsTab'
+    "DashboardTab",
+    "AnalysisTab",
+    "ExploitationTab",
+    "AIAssistantTab",
+    "ToolsTab",
+    "SettingsTab"
 ]

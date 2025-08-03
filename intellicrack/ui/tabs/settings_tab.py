@@ -122,7 +122,7 @@ class SettingsTab(BaseTab):
         theme_select_layout.addWidget(QLabel("Theme:"))
         self.theme_combo = QComboBox()
         self.theme_combo.addItems(["Dark", "Light", "Auto"])
-        self.theme_combo.setCurrentText(self.settings.get('theme', 'Light'))
+        self.theme_combo.setCurrentText(self.settings.get("theme", "Light"))
         self.theme_combo.currentTextChanged.connect(self.on_theme_changed)
         theme_select_layout.addWidget(self.theme_combo)
         theme_select_layout.addStretch()
@@ -141,7 +141,7 @@ class SettingsTab(BaseTab):
         transparency_layout.addWidget(QLabel("Window Opacity:"))
         self.opacity_slider = QSlider(Qt.Orientation.Horizontal)
         self.opacity_slider.setRange(50, 100)
-        self.opacity_slider.setValue(self.settings.get('window_opacity', 100))
+        self.opacity_slider.setValue(self.settings.get("window_opacity", 100))
         self.opacity_slider.valueChanged.connect(self.on_opacity_changed)
         self.opacity_label = QLabel(f"{self.opacity_slider.value()}%")
         transparency_layout.addWidget(self.opacity_slider)
@@ -159,24 +159,24 @@ class SettingsTab(BaseTab):
         ui_font_layout = QHBoxLayout()
         ui_font_layout.addWidget(QLabel("UI Font:"))
         self.ui_font_combo = QFontComboBox()
-        self.ui_font_combo.setCurrentFont(QFont(self.settings.get('ui_font', 'Segoe UI')))
+        self.ui_font_combo.setCurrentFont(QFont(self.settings.get("ui_font", "Segoe UI")))
         ui_font_layout.addWidget(self.ui_font_combo)
 
         self.ui_font_size = QSpinBox()
         self.ui_font_size.setRange(8, 24)
-        self.ui_font_size.setValue(self.settings.get('ui_font_size', 10))
+        self.ui_font_size.setValue(self.settings.get("ui_font_size", 10))
         ui_font_layout.addWidget(self.ui_font_size)
 
         # Console Font
         console_font_layout = QHBoxLayout()
         console_font_layout.addWidget(QLabel("Console Font:"))
         self.console_font_combo = QFontComboBox()
-        self.console_font_combo.setCurrentFont(QFont(self.settings.get('console_font', 'Consolas')))
+        self.console_font_combo.setCurrentFont(QFont(self.settings.get("console_font", "Consolas")))
         console_font_layout.addWidget(self.console_font_combo)
 
         self.console_font_size = QSpinBox()
         self.console_font_size.setRange(8, 24)
-        self.console_font_size.setValue(self.settings.get('console_font_size', 10))
+        self.console_font_size.setValue(self.settings.get("console_font_size", 10))
         console_font_layout.addWidget(self.console_font_size)
 
         font_layout.addLayout(ui_font_layout)
@@ -190,7 +190,7 @@ class SettingsTab(BaseTab):
         icon_size_layout.addWidget(QLabel("Icon Size:"))
         self.icon_size_combo = QComboBox()
         self.icon_size_combo.addItems(["Small (16px)", "Medium (24px)", "Large (32px)"])
-        current_size = self.settings.get('icon_size', 24)
+        current_size = self.settings.get("icon_size", 24)
         if current_size == 16:
             self.icon_size_combo.setCurrentText("Small (16px)")
         elif current_size == 32:
@@ -202,11 +202,11 @@ class SettingsTab(BaseTab):
 
         # Show tooltips
         self.show_tooltips_cb = QCheckBox("Show Tooltips")
-        self.show_tooltips_cb.setChecked(self.settings.get('show_tooltips', True))
+        self.show_tooltips_cb.setChecked(self.settings.get("show_tooltips", True))
 
         # Animations
         self.enable_animations_cb = QCheckBox("Enable Animations")
-        self.enable_animations_cb.setChecked(self.settings.get('enable_animations', True))
+        self.enable_animations_cb.setChecked(self.settings.get("enable_animations", True))
 
         icon_layout.addLayout(icon_size_layout)
         icon_layout.addWidget(self.show_tooltips_cb)
@@ -230,14 +230,14 @@ class SettingsTab(BaseTab):
 
         # Auto-analysis
         self.auto_analysis_cb = QCheckBox("Enable Auto-Analysis")
-        self.auto_analysis_cb.setChecked(self.settings.get('auto_analysis', True))
+        self.auto_analysis_cb.setChecked(self.settings.get("auto_analysis", True))
 
         # Analysis depth
         depth_layout = QHBoxLayout()
         depth_layout.addWidget(QLabel("Default Analysis Depth:"))
         self.analysis_depth_combo = QComboBox()
         self.analysis_depth_combo.addItems(["Quick", "Standard", "Deep", "Comprehensive"])
-        self.analysis_depth_combo.setCurrentText(self.settings.get('analysis_depth', 'Standard'))
+        self.analysis_depth_combo.setCurrentText(self.settings.get("analysis_depth", "Standard"))
         depth_layout.addWidget(self.analysis_depth_combo)
         depth_layout.addStretch()
 
@@ -246,7 +246,7 @@ class SettingsTab(BaseTab):
         timeout_layout.addWidget(QLabel("Analysis Timeout (seconds):"))
         self.analysis_timeout = QSpinBox()
         self.analysis_timeout.setRange(10, 3600)
-        self.analysis_timeout.setValue(self.settings.get('analysis_timeout', 300))
+        self.analysis_timeout.setValue(self.settings.get("analysis_timeout", 300))
         timeout_layout.addWidget(self.analysis_timeout)
         timeout_layout.addStretch()
 
@@ -263,7 +263,7 @@ class SettingsTab(BaseTab):
         provider_layout.addWidget(QLabel("Default AI Provider:"))
         self.ai_provider_combo = QComboBox()
         self.ai_provider_combo.addItems(["OpenAI", "Anthropic", "Local Ollama", "Google Gemini"])
-        self.ai_provider_combo.setCurrentText(self.settings.get('ai_provider', 'OpenAI'))
+        self.ai_provider_combo.setCurrentText(self.settings.get("ai_provider", "OpenAI"))
         provider_layout.addWidget(self.ai_provider_combo)
         provider_layout.addStretch()
 
@@ -273,7 +273,7 @@ class SettingsTab(BaseTab):
         self.ai_temperature = QDoubleSpinBox()
         self.ai_temperature.setRange(0.0, 2.0)
         self.ai_temperature.setSingleStep(0.1)
-        self.ai_temperature.setValue(self.settings.get('ai_temperature', 0.7))
+        self.ai_temperature.setValue(self.settings.get("ai_temperature", 0.7))
         temp_layout.addWidget(self.ai_temperature)
         temp_layout.addStretch()
 
@@ -282,7 +282,7 @@ class SettingsTab(BaseTab):
         tokens_layout.addWidget(QLabel("Max Tokens:"))
         self.ai_max_tokens = QSpinBox()
         self.ai_max_tokens.setRange(100, 8000)
-        self.ai_max_tokens.setValue(self.settings.get('ai_max_tokens', 2000))
+        self.ai_max_tokens.setValue(self.settings.get("ai_max_tokens", 2000))
         tokens_layout.addWidget(self.ai_max_tokens)
         tokens_layout.addStretch()
 
@@ -296,15 +296,15 @@ class SettingsTab(BaseTab):
 
         # Include comments
         self.include_comments_cb = QCheckBox("Include Comments in Generated Scripts")
-        self.include_comments_cb.setChecked(self.settings.get('include_comments', True))
+        self.include_comments_cb.setChecked(self.settings.get("include_comments", True))
 
         # Include error handling
         self.include_error_handling_cb = QCheckBox("Include Error Handling")
-        self.include_error_handling_cb.setChecked(self.settings.get('include_error_handling', True))
+        self.include_error_handling_cb.setChecked(self.settings.get("include_error_handling", True))
 
         # Optimize code
         self.optimize_code_cb = QCheckBox("Optimize Generated Code")
-        self.optimize_code_cb.setChecked(self.settings.get('optimize_code', False))
+        self.optimize_code_cb.setChecked(self.settings.get("optimize_code", False))
 
         script_layout.addWidget(self.include_comments_cb)
         script_layout.addWidget(self.include_error_handling_cb)
@@ -331,7 +331,7 @@ class SettingsTab(BaseTab):
         cache_layout.addWidget(QLabel("Cache Size (MB):"))
         self.cache_size = QSpinBox()
         self.cache_size.setRange(100, 8192)
-        self.cache_size.setValue(self.settings.get('cache_size', 512))
+        self.cache_size.setValue(self.settings.get("cache_size", 512))
         cache_layout.addWidget(self.cache_size)
         cache_layout.addStretch()
 
@@ -340,13 +340,13 @@ class SettingsTab(BaseTab):
         memory_limit_layout.addWidget(QLabel("Memory Limit (MB):"))
         self.memory_limit = QSpinBox()
         self.memory_limit.setRange(512, 16384)
-        self.memory_limit.setValue(self.settings.get('memory_limit', 2048))
+        self.memory_limit.setValue(self.settings.get("memory_limit", 2048))
         memory_limit_layout.addWidget(self.memory_limit)
         memory_limit_layout.addStretch()
 
         # Auto cleanup
         self.auto_cleanup_cb = QCheckBox("Auto Cleanup Memory")
-        self.auto_cleanup_cb.setChecked(self.settings.get('auto_cleanup', True))
+        self.auto_cleanup_cb.setChecked(self.settings.get("auto_cleanup", True))
 
         memory_layout.addLayout(cache_layout)
         memory_layout.addLayout(memory_limit_layout)
@@ -361,17 +361,17 @@ class SettingsTab(BaseTab):
         threads_layout.addWidget(QLabel("Worker Threads:"))
         self.worker_threads = QSpinBox()
         self.worker_threads.setRange(1, 16)
-        self.worker_threads.setValue(self.settings.get('worker_threads', 4))
+        self.worker_threads.setValue(self.settings.get("worker_threads", 4))
         threads_layout.addWidget(self.worker_threads)
         threads_layout.addStretch()
 
         # Parallel processing
         self.parallel_processing_cb = QCheckBox("Enable Parallel Processing")
-        self.parallel_processing_cb.setChecked(self.settings.get('parallel_processing', True))
+        self.parallel_processing_cb.setChecked(self.settings.get("parallel_processing", True))
 
         # Background tasks
         self.background_tasks_cb = QCheckBox("Enable Background Tasks")
-        self.background_tasks_cb.setChecked(self.settings.get('background_tasks', True))
+        self.background_tasks_cb.setChecked(self.settings.get("background_tasks", True))
 
         threading_layout.addLayout(threads_layout)
         threading_layout.addWidget(self.parallel_processing_cb)
@@ -383,14 +383,14 @@ class SettingsTab(BaseTab):
 
         # Enable GPU
         self.enable_gpu_cb = QCheckBox("Enable GPU Acceleration")
-        self.enable_gpu_cb.setChecked(self.settings.get('enable_gpu', False))
+        self.enable_gpu_cb.setChecked(self.settings.get("enable_gpu", False))
 
         # GPU device
         gpu_device_layout = QHBoxLayout()
         gpu_device_layout.addWidget(QLabel("GPU Device:"))
         self.gpu_device_combo = QComboBox()
         self.gpu_device_combo.addItems(["Auto", "CUDA", "OpenCL", "DirectML"])
-        self.gpu_device_combo.setCurrentText(self.settings.get('gpu_device', 'Auto'))
+        self.gpu_device_combo.setCurrentText(self.settings.get("gpu_device", "Auto"))
         gpu_device_layout.addWidget(self.gpu_device_combo)
         gpu_device_layout.addStretch()
 
@@ -417,7 +417,7 @@ class SettingsTab(BaseTab):
         ghidra_layout = QHBoxLayout()
         ghidra_layout.addWidget(QLabel("Ghidra:"))
         self.ghidra_path = QLineEdit()
-        self.ghidra_path.setText(self.settings.get('ghidra_path', ''))
+        self.ghidra_path.setText(self.settings.get("ghidra_path", ""))
         browse_ghidra_btn = QPushButton("Browse")
         browse_ghidra_btn.clicked.connect(lambda: self.browse_path(self.ghidra_path, "Select Ghidra Directory"))
         ghidra_layout.addWidget(self.ghidra_path)
@@ -427,7 +427,7 @@ class SettingsTab(BaseTab):
         radare2_layout = QHBoxLayout()
         radare2_layout.addWidget(QLabel("Radare2:"))
         self.radare2_path = QLineEdit()
-        self.radare2_path.setText(self.settings.get('radare2_path', ''))
+        self.radare2_path.setText(self.settings.get("radare2_path", ""))
         browse_radare2_btn = QPushButton("Browse")
         browse_radare2_btn.clicked.connect(lambda: self.browse_path(self.radare2_path, "Select Radare2 Executable"))
         radare2_layout.addWidget(self.radare2_path)
@@ -437,7 +437,7 @@ class SettingsTab(BaseTab):
         ida_layout = QHBoxLayout()
         ida_layout.addWidget(QLabel("IDA Pro:"))
         self.ida_path = QLineEdit()
-        self.ida_path.setText(self.settings.get('ida_path', ''))
+        self.ida_path.setText(self.settings.get("ida_path", ""))
         browse_ida_btn = QPushButton("Browse")
         browse_ida_btn.clicked.connect(lambda: self.browse_path(self.ida_path, "Select IDA Pro Executable"))
         ida_layout.addWidget(self.ida_path)
@@ -447,7 +447,7 @@ class SettingsTab(BaseTab):
         x64dbg_layout = QHBoxLayout()
         x64dbg_layout.addWidget(QLabel("x64dbg:"))
         self.x64dbg_path = QLineEdit()
-        self.x64dbg_path.setText(self.settings.get('x64dbg_path', ''))
+        self.x64dbg_path.setText(self.settings.get("x64dbg_path", ""))
         browse_x64dbg_btn = QPushButton("Browse")
         browse_x64dbg_btn.clicked.connect(lambda: self.browse_path(self.x64dbg_path, "Select x64dbg Executable"))
         x64dbg_layout.addWidget(self.x64dbg_path)
@@ -466,7 +466,7 @@ class SettingsTab(BaseTab):
         output_dir_layout = QHBoxLayout()
         output_dir_layout.addWidget(QLabel("Output Directory:"))
         self.output_directory = QLineEdit()
-        self.output_directory.setText(self.settings.get('output_directory', ''))
+        self.output_directory.setText(self.settings.get("output_directory", ""))
         browse_output_btn = QPushButton("Browse")
         browse_output_btn.clicked.connect(lambda: self.browse_directory(self.output_directory, "Select Output Directory"))
         output_dir_layout.addWidget(self.output_directory)
@@ -476,7 +476,7 @@ class SettingsTab(BaseTab):
         reports_dir_layout = QHBoxLayout()
         reports_dir_layout.addWidget(QLabel("Reports Directory:"))
         self.reports_directory = QLineEdit()
-        self.reports_directory.setText(self.settings.get('reports_directory', ''))
+        self.reports_directory.setText(self.settings.get("reports_directory", ""))
         browse_reports_btn = QPushButton("Browse")
         browse_reports_btn.clicked.connect(lambda: self.browse_directory(self.reports_directory, "Select Reports Directory"))
         reports_dir_layout.addWidget(self.reports_directory)
@@ -486,7 +486,7 @@ class SettingsTab(BaseTab):
         scripts_dir_layout = QHBoxLayout()
         scripts_dir_layout.addWidget(QLabel("Scripts Directory:"))
         self.scripts_directory = QLineEdit()
-        self.scripts_directory.setText(self.settings.get('scripts_directory', ''))
+        self.scripts_directory.setText(self.settings.get("scripts_directory", ""))
         browse_scripts_btn = QPushButton("Browse")
         browse_scripts_btn.clicked.connect(lambda: self.browse_directory(self.scripts_directory, "Select Scripts Directory"))
         scripts_dir_layout.addWidget(self.scripts_directory)
@@ -516,19 +516,19 @@ class SettingsTab(BaseTab):
         log_level_layout.addWidget(QLabel("Log Level:"))
         self.log_level_combo = QComboBox()
         self.log_level_combo.addItems(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
-        self.log_level_combo.setCurrentText(self.settings.get('log_level', 'INFO'))
+        self.log_level_combo.setCurrentText(self.settings.get("log_level", "INFO"))
         log_level_layout.addWidget(self.log_level_combo)
         log_level_layout.addStretch()
 
         # Log to file
         self.log_to_file_cb = QCheckBox("Log to File")
-        self.log_to_file_cb.setChecked(self.settings.get('log_to_file', True))
+        self.log_to_file_cb.setChecked(self.settings.get("log_to_file", True))
 
         # Log file path
         log_file_layout = QHBoxLayout()
         log_file_layout.addWidget(QLabel("Log File:"))
         self.log_file_path = QLineEdit()
-        self.log_file_path.setText(self.settings.get('log_file_path', 'intellicrack.log'))
+        self.log_file_path.setText(self.settings.get("log_file_path", "intellicrack.log"))
         browse_log_btn = QPushButton("Browse")
         browse_log_btn.clicked.connect(lambda: self.browse_file(self.log_file_path, "Select Log File"))
         log_file_layout.addWidget(self.log_file_path)
@@ -544,15 +544,15 @@ class SettingsTab(BaseTab):
 
         # Safe mode
         self.safe_mode_cb = QCheckBox("Enable Safe Mode")
-        self.safe_mode_cb.setChecked(self.settings.get('safe_mode', True))
+        self.safe_mode_cb.setChecked(self.settings.get("safe_mode", True))
 
         # Confirm dangerous operations
         self.confirm_dangerous_cb = QCheckBox("Confirm Dangerous Operations")
-        self.confirm_dangerous_cb.setChecked(self.settings.get('confirm_dangerous', True))
+        self.confirm_dangerous_cb.setChecked(self.settings.get("confirm_dangerous", True))
 
         # Auto backup
         self.auto_backup_cb = QCheckBox("Auto Backup Before Modifications")
-        self.auto_backup_cb.setChecked(self.settings.get('auto_backup', True))
+        self.auto_backup_cb.setChecked(self.settings.get("auto_backup", True))
 
         security_layout.addWidget(self.safe_mode_cb)
         security_layout.addWidget(self.confirm_dangerous_cb)
@@ -566,7 +566,7 @@ class SettingsTab(BaseTab):
         proxy_layout = QHBoxLayout()
         proxy_layout.addWidget(QLabel("Proxy:"))
         self.proxy_edit = QLineEdit()
-        self.proxy_edit.setText(self.settings.get('proxy', ''))
+        self.proxy_edit.setText(self.settings.get("proxy", ""))
         self.proxy_edit.setPlaceholderText("http://proxy.internal:8080")
         proxy_layout.addWidget(self.proxy_edit)
 
@@ -575,7 +575,7 @@ class SettingsTab(BaseTab):
         timeout_layout.addWidget(QLabel("Network Timeout (seconds):"))
         self.network_timeout = QSpinBox()
         self.network_timeout.setRange(5, 300)
-        self.network_timeout.setValue(self.settings.get('network_timeout', 30))
+        self.network_timeout.setValue(self.settings.get("network_timeout", 30))
         timeout_layout.addWidget(self.network_timeout)
         timeout_layout.addStretch()
 
@@ -588,15 +588,15 @@ class SettingsTab(BaseTab):
 
         # Debug mode
         self.debug_mode_cb = QCheckBox("Enable Debug Mode")
-        self.debug_mode_cb.setChecked(self.settings.get('debug_mode', False))
+        self.debug_mode_cb.setChecked(self.settings.get("debug_mode", False))
 
         # Show debug console
         self.show_debug_console_cb = QCheckBox("Show Debug Console")
-        self.show_debug_console_cb.setChecked(self.settings.get('show_debug_console', False))
+        self.show_debug_console_cb.setChecked(self.settings.get("show_debug_console", False))
 
         # Enable experimental features
         self.experimental_features_cb = QCheckBox("Enable Experimental Features")
-        self.experimental_features_cb.setChecked(self.settings.get('experimental_features', False))
+        self.experimental_features_cb.setChecked(self.settings.get("experimental_features", False))
 
         dev_layout.addWidget(self.debug_mode_cb)
         dev_layout.addWidget(self.show_debug_console_cb)
@@ -672,7 +672,7 @@ class SettingsTab(BaseTab):
 
         try:
             if os.path.exists(settings_file):
-                with open(settings_file, 'r') as f:
+                with open(settings_file, "r") as f:
                     self.settings = json.load(f)
             else:
                 self.settings = self.get_default_settings()
@@ -684,59 +684,59 @@ class SettingsTab(BaseTab):
         """Get default settings"""
         return {
             # Appearance
-            'theme': 'Light',
-            'accent_color': '#0078d4',
-            'window_opacity': 100,
-            'ui_font': 'Segoe UI',
-            'ui_font_size': 10,
-            'console_font': 'Consolas',
-            'console_font_size': 10,
-            'icon_size': 24,
-            'show_tooltips': True,
-            'enable_animations': True,
+            "theme": "Light",
+            "accent_color": "#0078d4",
+            "window_opacity": 100,
+            "ui_font": "Segoe UI",
+            "ui_font_size": 10,
+            "console_font": "Consolas",
+            "console_font_size": 10,
+            "icon_size": 24,
+            "show_tooltips": True,
+            "enable_animations": True,
 
             # Analysis
-            'auto_analysis': True,
-            'analysis_depth': 'Standard',
-            'analysis_timeout': 300,
-            'ai_provider': 'OpenAI',
-            'ai_temperature': 0.7,
-            'ai_max_tokens': 2000,
-            'include_comments': True,
-            'include_error_handling': True,
-            'optimize_code': False,
+            "auto_analysis": True,
+            "analysis_depth": "Standard",
+            "analysis_timeout": 300,
+            "ai_provider": "OpenAI",
+            "ai_temperature": 0.7,
+            "ai_max_tokens": 2000,
+            "include_comments": True,
+            "include_error_handling": True,
+            "optimize_code": False,
 
             # Performance
-            'cache_size': 512,
-            'memory_limit': 2048,
-            'auto_cleanup': True,
-            'worker_threads': 4,
-            'parallel_processing': True,
-            'background_tasks': True,
-            'enable_gpu': False,
-            'gpu_device': 'Auto',
+            "cache_size": 512,
+            "memory_limit": 2048,
+            "auto_cleanup": True,
+            "worker_threads": 4,
+            "parallel_processing": True,
+            "background_tasks": True,
+            "enable_gpu": False,
+            "gpu_device": "Auto",
 
             # Paths
-            'ghidra_path': '',
-            'radare2_path': '',
-            'ida_path': '',
-            'x64dbg_path': '',
-            'output_directory': '',
-            'reports_directory': '',
-            'scripts_directory': '',
+            "ghidra_path": "",
+            "radare2_path": "",
+            "ida_path": "",
+            "x64dbg_path": "",
+            "output_directory": "",
+            "reports_directory": "",
+            "scripts_directory": "",
 
             # Advanced
-            'log_level': 'INFO',
-            'log_to_file': True,
-            'log_file_path': 'intellicrack.log',
-            'safe_mode': True,
-            'confirm_dangerous': True,
-            'auto_backup': True,
-            'proxy': '',
-            'network_timeout': 30,
-            'debug_mode': False,
-            'show_debug_console': False,
-            'experimental_features': False
+            "log_level": "INFO",
+            "log_to_file": True,
+            "log_file_path": "intellicrack.log",
+            "safe_mode": True,
+            "confirm_dangerous": True,
+            "auto_backup": True,
+            "proxy": "",
+            "network_timeout": 30,
+            "debug_mode": False,
+            "show_debug_console": False,
+            "experimental_features": False
         }
 
     def save_settings(self):
@@ -749,7 +749,7 @@ class SettingsTab(BaseTab):
         os.makedirs(os.path.dirname(settings_file), exist_ok=True)
 
         try:
-            with open(settings_file, 'w') as f:
+            with open(settings_file, "w") as f:
                 json.dump(self.settings, f, indent=4)
 
             QMessageBox.information(self, "Settings", "Settings saved successfully!")
@@ -761,45 +761,45 @@ class SettingsTab(BaseTab):
     def collect_settings_from_ui(self):
         """Collect settings from UI elements"""
         # Appearance settings
-        if hasattr(self, 'theme_combo'):
-            self.settings['theme'] = self.theme_combo.currentText()
-        if hasattr(self, 'opacity_slider'):
-            self.settings['window_opacity'] = self.opacity_slider.value()
-        if hasattr(self, 'ui_font_combo'):
-            self.settings['ui_font'] = self.ui_font_combo.currentFont().family()
-            self.settings['ui_font_size'] = self.ui_font_size.value()
-        if hasattr(self, 'console_font_combo'):
-            self.settings['console_font'] = self.console_font_combo.currentFont().family()
-            self.settings['console_font_size'] = self.console_font_size.value()
+        if hasattr(self, "theme_combo"):
+            self.settings["theme"] = self.theme_combo.currentText()
+        if hasattr(self, "opacity_slider"):
+            self.settings["window_opacity"] = self.opacity_slider.value()
+        if hasattr(self, "ui_font_combo"):
+            self.settings["ui_font"] = self.ui_font_combo.currentFont().family()
+            self.settings["ui_font_size"] = self.ui_font_size.value()
+        if hasattr(self, "console_font_combo"):
+            self.settings["console_font"] = self.console_font_combo.currentFont().family()
+            self.settings["console_font_size"] = self.console_font_size.value()
 
         # Get icon size from combo
-        if hasattr(self, 'icon_size_combo'):
+        if hasattr(self, "icon_size_combo"):
             size_text = self.icon_size_combo.currentText()
             if "16px" in size_text:
-                self.settings['icon_size'] = 16
+                self.settings["icon_size"] = 16
             elif "32px" in size_text:
-                self.settings['icon_size'] = 32
+                self.settings["icon_size"] = 32
             else:
-                self.settings['icon_size'] = 24
+                self.settings["icon_size"] = 24
 
-        if hasattr(self, 'show_tooltips_cb'):
-            self.settings['show_tooltips'] = self.show_tooltips_cb.isChecked()
-        if hasattr(self, 'enable_animations_cb'):
-            self.settings['enable_animations'] = self.enable_animations_cb.isChecked()
+        if hasattr(self, "show_tooltips_cb"):
+            self.settings["show_tooltips"] = self.show_tooltips_cb.isChecked()
+        if hasattr(self, "enable_animations_cb"):
+            self.settings["enable_animations"] = self.enable_animations_cb.isChecked()
 
         # Analysis settings
-        if hasattr(self, 'auto_analysis_cb'):
-            self.settings['auto_analysis'] = self.auto_analysis_cb.isChecked()
-        if hasattr(self, 'analysis_depth_combo'):
-            self.settings['analysis_depth'] = self.analysis_depth_combo.currentText()
-        if hasattr(self, 'analysis_timeout'):
-            self.settings['analysis_timeout'] = self.analysis_timeout.value()
-        if hasattr(self, 'ai_provider_combo'):
-            self.settings['ai_provider'] = self.ai_provider_combo.currentText()
-        if hasattr(self, 'ai_temperature'):
-            self.settings['ai_temperature'] = self.ai_temperature.value()
-        if hasattr(self, 'ai_max_tokens'):
-            self.settings['ai_max_tokens'] = self.ai_max_tokens.value()
+        if hasattr(self, "auto_analysis_cb"):
+            self.settings["auto_analysis"] = self.auto_analysis_cb.isChecked()
+        if hasattr(self, "analysis_depth_combo"):
+            self.settings["analysis_depth"] = self.analysis_depth_combo.currentText()
+        if hasattr(self, "analysis_timeout"):
+            self.settings["analysis_timeout"] = self.analysis_timeout.value()
+        if hasattr(self, "ai_provider_combo"):
+            self.settings["ai_provider"] = self.ai_provider_combo.currentText()
+        if hasattr(self, "ai_temperature"):
+            self.settings["ai_temperature"] = self.ai_temperature.value()
+        if hasattr(self, "ai_max_tokens"):
+            self.settings["ai_max_tokens"] = self.ai_max_tokens.value()
 
         # Continue collecting other settings...
         # (Performance, Paths, Advanced settings would be collected similarly)
@@ -823,10 +823,10 @@ class SettingsTab(BaseTab):
     def update_ui_from_settings(self):
         """Update UI elements from current settings"""
         # Update all UI elements to reflect current settings
-        if hasattr(self, 'theme_combo'):
-            self.theme_combo.setCurrentText(self.settings.get('theme', 'Dark'))
-        if hasattr(self, 'opacity_slider'):
-            self.opacity_slider.setValue(self.settings.get('window_opacity', 100))
+        if hasattr(self, "theme_combo"):
+            self.theme_combo.setCurrentText(self.settings.get("theme", "Dark"))
+        if hasattr(self, "opacity_slider"):
+            self.opacity_slider.setValue(self.settings.get("window_opacity", 100))
         # Continue updating other UI elements...
 
     def export_settings(self):
@@ -841,7 +841,7 @@ class SettingsTab(BaseTab):
         if file_path:
             try:
                 self.collect_settings_from_ui()
-                with open(file_path, 'w') as f:
+                with open(file_path, "w") as f:
                     json.dump(self.settings, f, indent=4)
                 QMessageBox.information(self, "Export", f"Settings exported to: {file_path}")
             except Exception as e:
@@ -858,7 +858,7 @@ class SettingsTab(BaseTab):
 
         if file_path:
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path, "r") as f:
                     imported_settings = json.load(f)
 
                 self.settings.update(imported_settings)
@@ -889,29 +889,29 @@ class SettingsTab(BaseTab):
 
     def on_theme_changed(self, theme):
         """Handle theme change"""
-        self.settings['theme'] = theme
+        self.settings["theme"] = theme
         self.theme_changed.emit(theme)
         self.update_preview()
 
     def on_opacity_changed(self, value):
         """Handle opacity change"""
         self.opacity_label.setText(f"{value}%")
-        self.settings['window_opacity'] = value
-        if hasattr(self.shared_context, 'main_window'):
+        self.settings["window_opacity"] = value
+        if hasattr(self.shared_context, "main_window"):
             self.shared_context.main_window.setWindowOpacity(value / 100.0)
 
     def select_accent_color(self):
         """Select accent color"""
-        color = QColorDialog.getColor(QColor(self.settings.get('accent_color', '#0078d4')), self)
+        color = QColorDialog.getColor(QColor(self.settings.get("accent_color", "#0078d4")), self)
         if color.isValid():
             color_hex = color.name()
-            self.settings['accent_color'] = color_hex
+            self.settings["accent_color"] = color_hex
             self.accent_color_btn.setStyleSheet(f"background-color: {color_hex};")
             self.update_preview()
 
     def log_message(self, message, level="info"):
         """Log message to console or status"""
-        if hasattr(self.shared_context, 'log_message'):
+        if hasattr(self.shared_context, "log_message"):
             self.shared_context.log_message(message, level)
         else:
             print(f"[{level.upper()}] {message}")

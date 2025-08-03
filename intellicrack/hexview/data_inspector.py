@@ -47,7 +47,7 @@ from ..ui.common_imports import (
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['DataInspector', 'DataType', 'DataInterpreter']
+__all__ = ["DataInspector", "DataType", "DataInterpreter"]
 
 
 class DataType(Enum):
@@ -122,85 +122,85 @@ class DataInterpreter:
 
             elif data_type == DataType.INT8:
                 if len(data) >= 1:
-                    return str(struct.unpack('b', data[:1])[0])
+                    return str(struct.unpack("b", data[:1])[0])
 
             elif data_type == DataType.UINT16_LE:
                 if len(data) >= 2:
-                    return str(struct.unpack('<H', data[:2])[0])
+                    return str(struct.unpack("<H", data[:2])[0])
 
             elif data_type == DataType.UINT16_BE:
                 if len(data) >= 2:
-                    return str(struct.unpack('>H', data[:2])[0])
+                    return str(struct.unpack(">H", data[:2])[0])
 
             elif data_type == DataType.INT16_LE:
                 if len(data) >= 2:
-                    return str(struct.unpack('<h', data[:2])[0])
+                    return str(struct.unpack("<h", data[:2])[0])
 
             elif data_type == DataType.INT16_BE:
                 if len(data) >= 2:
-                    return str(struct.unpack('>h', data[:2])[0])
+                    return str(struct.unpack(">h", data[:2])[0])
 
             elif data_type == DataType.UINT32_LE:
                 if len(data) >= 4:
-                    return str(struct.unpack('<I', data[:4])[0])
+                    return str(struct.unpack("<I", data[:4])[0])
 
             elif data_type == DataType.UINT32_BE:
                 if len(data) >= 4:
-                    return str(struct.unpack('>I', data[:4])[0])
+                    return str(struct.unpack(">I", data[:4])[0])
 
             elif data_type == DataType.INT32_LE:
                 if len(data) >= 4:
-                    return str(struct.unpack('<i', data[:4])[0])
+                    return str(struct.unpack("<i", data[:4])[0])
 
             elif data_type == DataType.INT32_BE:
                 if len(data) >= 4:
-                    return str(struct.unpack('>i', data[:4])[0])
+                    return str(struct.unpack(">i", data[:4])[0])
 
             elif data_type == DataType.UINT64_LE:
                 if len(data) >= 8:
-                    return str(struct.unpack('<Q', data[:8])[0])
+                    return str(struct.unpack("<Q", data[:8])[0])
 
             elif data_type == DataType.UINT64_BE:
                 if len(data) >= 8:
-                    return str(struct.unpack('>Q', data[:8])[0])
+                    return str(struct.unpack(">Q", data[:8])[0])
 
             elif data_type == DataType.INT64_LE:
                 if len(data) >= 8:
-                    return str(struct.unpack('<q', data[:8])[0])
+                    return str(struct.unpack("<q", data[:8])[0])
 
             elif data_type == DataType.INT64_BE:
                 if len(data) >= 8:
-                    return str(struct.unpack('>q', data[:8])[0])
+                    return str(struct.unpack(">q", data[:8])[0])
 
             elif data_type == DataType.FLOAT32_LE:
                 if len(data) >= 4:
-                    value = struct.unpack('<f', data[:4])[0]
+                    value = struct.unpack("<f", data[:4])[0]
                     return f"{value:.6f}"
 
             elif data_type == DataType.FLOAT32_BE:
                 if len(data) >= 4:
-                    value = struct.unpack('>f', data[:4])[0]
+                    value = struct.unpack(">f", data[:4])[0]
                     return f"{value:.6f}"
 
             elif data_type == DataType.FLOAT64_LE:
                 if len(data) >= 8:
-                    value = struct.unpack('<d', data[:8])[0]
+                    value = struct.unpack("<d", data[:8])[0]
                     return f"{value:.15f}"
 
             elif data_type == DataType.FLOAT64_BE:
                 if len(data) >= 8:
-                    value = struct.unpack('>d', data[:8])[0]
+                    value = struct.unpack(">d", data[:8])[0]
                     return f"{value:.15f}"
 
             elif data_type == DataType.ASCII:
                 try:
                     # Find null terminator or use entire data
-                    null_pos = data.find(b'\x00')
+                    null_pos = data.find(b"\x00")
                     if null_pos >= 0:
                         text_data = data[:null_pos]
                     else:
                         text_data = data
-                    return text_data.decode('ascii', errors='replace')
+                    return text_data.decode("ascii", errors="replace")
                 except (UnicodeDecodeError, AttributeError) as e:
                     logger.error("Error in data_inspector: %s", e)
                     return "Invalid ASCII"
@@ -208,12 +208,12 @@ class DataInterpreter:
             elif data_type == DataType.UTF8:
                 try:
                     # Find null terminator or use entire data
-                    null_pos = data.find(b'\x00')
+                    null_pos = data.find(b"\x00")
                     if null_pos >= 0:
                         text_data = data[:null_pos]
                     else:
                         text_data = data
-                    return text_data.decode('utf-8', errors='replace')
+                    return text_data.decode("utf-8", errors="replace")
                 except (UnicodeDecodeError, AttributeError) as e:
                     logger.error("Error in data_inspector: %s", e)
                     return "Invalid UTF-8"
@@ -221,12 +221,12 @@ class DataInterpreter:
             elif data_type == DataType.UTF16_LE:
                 try:
                     # Find null terminator (2 bytes for UTF-16)
-                    null_pos = data.find(b'\x00\x00')
+                    null_pos = data.find(b"\x00\x00")
                     if null_pos >= 0 and null_pos % 2 == 0:
                         text_data = data[:null_pos]
                     else:
                         text_data = data
-                    return text_data.decode('utf-16le', errors='replace')
+                    return text_data.decode("utf-16le", errors="replace")
                 except (UnicodeDecodeError, AttributeError) as e:
                     logger.error("Error in data_inspector: %s", e)
                     return "Invalid UTF-16 LE"
@@ -234,19 +234,19 @@ class DataInterpreter:
             elif data_type == DataType.UTF16_BE:
                 try:
                     # Find null terminator (2 bytes for UTF-16)
-                    null_pos = data.find(b'\x00\x00')
+                    null_pos = data.find(b"\x00\x00")
                     if null_pos >= 0 and null_pos % 2 == 0:
                         text_data = data[:null_pos]
                     else:
                         text_data = data
-                    return text_data.decode('utf-16be', errors='replace')
+                    return text_data.decode("utf-16be", errors="replace")
                 except (UnicodeDecodeError, AttributeError) as e:
                     logger.error("Error in data_inspector: %s", e)
                     return "Invalid UTF-16 BE"
 
             elif data_type == DataType.UNIX_TIMESTAMP_32:
                 if len(data) >= 4:
-                    timestamp = struct.unpack('<I', data[:4])[0]
+                    timestamp = struct.unpack("<I", data[:4])[0]
                     try:
                         dt = datetime.datetime.fromtimestamp(timestamp)
                         return dt.strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -256,7 +256,7 @@ class DataInterpreter:
 
             elif data_type == DataType.UNIX_TIMESTAMP_64:
                 if len(data) >= 8:
-                    timestamp = struct.unpack('<Q', data[:8])[0]
+                    timestamp = struct.unpack("<Q", data[:8])[0]
                     try:
                         # Handle both seconds and milliseconds
                         if timestamp > 1e12:  # Assume milliseconds
@@ -269,7 +269,7 @@ class DataInterpreter:
 
             elif data_type == DataType.WINDOWS_FILETIME:
                 if len(data) >= 8:
-                    filetime = struct.unpack('<Q', data[:8])[0]
+                    filetime = struct.unpack("<Q", data[:8])[0]
                     try:
                         # Windows FILETIME is 100-nanosecond intervals since Jan 1, 1601
                         timestamp = (filetime - 116444736000000000) / 10000000
@@ -281,8 +281,8 @@ class DataInterpreter:
 
             elif data_type == DataType.DOS_DATETIME:
                 if len(data) >= 4:
-                    dos_time = struct.unpack('<H', data[:2])[0]
-                    dos_date = struct.unpack('<H', data[2:4])[0]
+                    dos_time = struct.unpack("<H", data[:2])[0]
+                    dos_date = struct.unpack("<H", data[2:4])[0]
                     try:
                         # Extract DOS date/time components
                         year = ((dos_date >> 9) & 0x7F) + 1980
@@ -299,18 +299,18 @@ class DataInterpreter:
                         return f"Invalid DOS datetime: {dos_date:04X} {dos_time:04X}"
 
             elif data_type == DataType.BINARY:
-                return ' '.join(f"{_b:08b}" for _b in data[:8])  # Limit to 8 bytes
+                return " ".join(f"{_b:08b}" for _b in data[:8])  # Limit to 8 bytes
 
             elif data_type == DataType.HEX:
-                return ' '.join(f"{_b:02X}" for _b in data[:16])  # Limit to 16 bytes
+                return " ".join(f"{_b:02X}" for _b in data[:16])  # Limit to 16 bytes
 
             elif data_type == DataType.GUID:
                 if len(data) >= 16:
                     # Parse GUID (little-endian format)
-                    guid_parts = struct.unpack('<IHH8B', data[:16])
+                    guid_parts = struct.unpack("<IHH8B", data[:16])
                     return f"{guid_parts[0]:08X}-{guid_parts[1]:04X}-{guid_parts[2]:04X}-" + \
                            f"{guid_parts[3]:02X}{guid_parts[4]:02X}-" + \
-                           ''.join(f"{guid_parts[_i]:02X}" for _i in range(5, 11))
+                           "".join(f"{guid_parts[_i]:02X}" for _i in range(5, 11))
 
             elif data_type == DataType.IPV4_ADDRESS:
                 if len(data) >= 4:
@@ -318,12 +318,12 @@ class DataInterpreter:
 
             elif data_type == DataType.IPV6_ADDRESS:
                 if len(data) >= 16:
-                    parts = struct.unpack('>8H', data[:16])
-                    return ':'.join(f"{_part:04x}" for _part in parts)
+                    parts = struct.unpack(">8H", data[:16])
+                    return ":".join(f"{_part:04x}" for _part in parts)
 
             elif data_type == DataType.MAC_ADDRESS:
                 if len(data) >= 6:
-                    return ':'.join(f"{_b:02X}" for _b in data[:6])
+                    return ":".join(f"{_b:02X}" for _b in data[:6])
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Error interpreting data as %s: %s", data_type.value, e)
@@ -349,7 +349,7 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
             return
 
         super().__init__(parent)
-        self.current_data = b''
+        self.current_data = b""
         self.current_offset = 0
 
         # Initialize UI attributes
@@ -772,9 +772,9 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
         try:
             if input_type == "Hex":
                 # Parse hex input
-                hex_clean = value_text.replace(' ', '').replace('-', '')
+                hex_clean = value_text.replace(" ", "").replace("-", "")
                 if len(hex_clean) % 2 != 0:
-                    hex_clean = '0' + hex_clean
+                    hex_clean = "0" + hex_clean
                 new_data = bytes.fromhex(hex_clean)
 
             elif input_type == "Decimal":
@@ -790,14 +790,14 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
                     raise ValueError("Decimal value must be 0-255")
 
             elif input_type == "ASCII":
-                new_data = value_text.encode('ascii', errors='replace')
+                new_data = value_text.encode("ascii", errors="replace")
 
             elif input_type == "UTF-8":
-                new_data = value_text.encode('utf-8')
+                new_data = value_text.encode("utf-8")
 
             elif input_type == "Binary":
                 # Parse binary input
-                binary_clean = value_text.replace(' ', '')
+                binary_clean = value_text.replace(" ", "")
                 if len(binary_clean) % 8 != 0:
                     # Pad with zeros
                     binary_clean = binary_clean.zfill((len(binary_clean) + 7) // 8 * 8)

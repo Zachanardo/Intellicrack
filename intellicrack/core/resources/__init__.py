@@ -19,12 +19,12 @@ from .resource_manager import (
 )
 
 __all__ = [
-    'ResourceManager',
-    'ResourceType',
-    'ResourceState',
-    'ManagedResource',
-    'ProcessResource',
-    'VMResource',
-    'ContainerResource',
-    'get_resource_manager'
+    "ResourceManager",
+    "ResourceType",
+    "ResourceState",
+    "ManagedResource",
+    "ProcessResource",
+    "VMResource",
+    "ContainerResource",
+    "get_resource_manager"
 ]

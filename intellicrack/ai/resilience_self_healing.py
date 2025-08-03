@@ -50,7 +50,7 @@ except ImportError as e:
 
 
 # Security configuration for pickle
-PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
+PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 
 def secure_pickle_dump(obj, file_path):
     """Securely dump object with integrity check."""
@@ -61,7 +61,7 @@ def secure_pickle_dump(obj, file_path):
     mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
 
     # Write MAC + data
-    with open(file_path, 'wb') as f:
+    with open(file_path, "wb") as f:
         f.write(mac)
         f.write(data)
 
@@ -72,16 +72,16 @@ class RestrictedUnpickler(pickle.Unpickler):
         """Override find_class to restrict allowed classes."""
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
-            'numpy', 'numpy.core.multiarray', 'numpy.core.numeric',
-            'pandas', 'pandas.core.frame', 'pandas.core.series',
-            'sklearn', 'torch', 'tensorflow',
-            '__builtin__', 'builtins',
-            'collections', 'collections.abc',
-            'datetime'
+            "numpy", "numpy.core.multiarray", "numpy.core.numeric",
+            "pandas", "pandas.core.frame", "pandas.core.series",
+            "sklearn", "torch", "tensorflow",
+            "__builtin__", "builtins",
+            "collections", "collections.abc",
+            "datetime"
         }
 
         # Allow classes from our own modules
-        if module.startswith('intellicrack.'):
+        if module.startswith("intellicrack."):
             return super().find_class(module, name)
 
         # Check if module is in allowed list
@@ -93,7 +93,7 @@ class RestrictedUnpickler(pickle.Unpickler):
 
 def secure_pickle_load(file_path):
     """Securely load object with integrity verification and restricted unpickling."""
-    with open(file_path, 'rb') as f:
+    with open(file_path, "rb") as f:
         # Read MAC
         stored_mac = f.read(32)  # SHA256 produces 32 bytes
         data = f.read()
@@ -281,11 +281,11 @@ class HealthMonitor:
             cpu_percent = psutil.cpu_percent()
             memory = psutil.virtual_memory()
             try:
-                disk = psutil.disk_usage('/')
+                disk = psutil.disk_usage("/")
             except (OSError, PermissionError) as e:
                 self.logger.error("Error in resilience_self_healing: %s", e)
                 # Fallback for systems where '/' is not accessible
-                disk = type('', (), {'percent': 50.0})()
+                disk = type("", (), {"percent": 50.0})()
 
             issues = []
 
@@ -453,7 +453,7 @@ class HealthMonitor:
             memory_mb = memory_info.rss / (1024 * 1024)
 
             # Simple memory leak detection (would be more sophisticated in production)
-            if not hasattr(self, '_memory_history'):
+            if not hasattr(self, "_memory_history"):
                 self._memory_history = deque(maxlen=10)
 
             self._memory_history.append(memory_mb)
@@ -527,7 +527,7 @@ class HealthMonitor:
         logger.warning(f"Failure recorded: {component} - {description}")
 
         # Notify recovery system
-        if hasattr(self, 'recovery_system'):
+        if hasattr(self, "recovery_system"):
             self.recovery_system.handle_failure(failure)
 
     def get_system_health(self) -> Dict[str, Any]:
@@ -860,7 +860,7 @@ class RecoverySystem:
             collected = gc.collect()
 
             # Clear performance monitor caches if available
-            if hasattr(performance_monitor, 'clear_caches'):
+            if hasattr(performance_monitor, "clear_caches"):
                 performance_monitor.clear_caches()
 
             logger.info(
@@ -875,7 +875,7 @@ class RecoverySystem:
         """Execute resource cleanup."""
         try:
             # Clear caches
-            if hasattr(self.learning_engine, 'clear_caches'):
+            if hasattr(self.learning_engine, "clear_caches"):
                 self.learning_engine.clear_caches()
 
             # Force garbage collection
@@ -1044,7 +1044,7 @@ class StateManager:
                     resource_usage = {
                         "cpu_percent": psutil.cpu_percent(),
                         "memory_percent": psutil.virtual_memory().percent,
-                        "disk_percent": psutil.disk_usage('/').percent
+                        "disk_percent": psutil.disk_usage("/").percent
                     }
                 except (OSError, PermissionError) as e:
                     self.logger.error(

@@ -659,35 +659,35 @@ def _get_contextual_tooltip(text: str) -> str:
     text_lower = text.lower()
 
     # Binary/file related
-    if any(word in text_lower for word in ['binary', 'file', 'executable', 'target']):
+    if any(word in text_lower for word in ["binary", "file", "executable", "target"]):
         return "Select or specify a binary file for analysis"
 
     # Path related
-    if any(word in text_lower for word in ['path', 'directory', 'folder']):
+    if any(word in text_lower for word in ["path", "directory", "folder"]):
         return "Specify the file or directory path"
 
     # Analysis related
-    if any(word in text_lower for word in ['analysis', 'analyze', 'scan']):
+    if any(word in text_lower for word in ["analysis", "analyze", "scan"]):
         return "Configure or start analysis operations"
 
     # AI related
-    if any(word in text_lower for word in ['ai', 'model', 'assistant', 'openai', 'anthropic']):
+    if any(word in text_lower for word in ["ai", "model", "assistant", "openai", "anthropic"]):
         return "AI-powered analysis and assistance settings"
 
     # Network related
-    if any(word in text_lower for word in ['network', 'packet', 'capture', 'interface']):
+    if any(word in text_lower for word in ["network", "packet", "capture", "interface"]):
         return "Network analysis and monitoring tools"
 
     # Security related
-    if any(word in text_lower for word in ['protection', 'security', 'encrypt', 'hash']):
+    if any(word in text_lower for word in ["protection", "security", "encrypt", "hash"]):
         return "Security analysis and cryptographic operations"
 
     # Performance related
-    if any(word in text_lower for word in ['performance', 'memory', 'cache', 'thread']):
+    if any(word in text_lower for word in ["performance", "memory", "cache", "thread"]):
         return "Performance and system resource settings"
 
     # Theme/appearance related
-    if any(word in text_lower for word in ['theme', 'color', 'font', 'appearance']):
+    if any(word in text_lower for word in ["theme", "color", "font", "appearance"]):
         return "Visual appearance and theme settings"
 
     return ""  # No contextual match found

@@ -32,8 +32,8 @@ def read_file_with_ai_tools(
     file_path: str,
     purpose: str = "File analysis",
     app_instance=None,
-    mode: str = 'text',
-    encoding: str = 'utf-8',
+    mode: str = "text",
+    encoding: str = "utf-8",
     max_bytes: Optional[int] = None
 ) -> Tuple[Optional[Union[str, bytes]], bool]:
     """
@@ -64,10 +64,10 @@ def read_file_with_ai_tools(
         if file_data.get("status") == "success" and file_data.get("content") is not None:
             raw_content = file_data["content"]
 
-            if mode == 'binary':
+            if mode == "binary":
                 # Convert to bytes if needed
                 if isinstance(raw_content, str):
-                    content = raw_content.encode('latin-1', errors='ignore')
+                    content = raw_content.encode("latin-1", errors="ignore")
                 else:
                     content = raw_content
 
@@ -77,7 +77,7 @@ def read_file_with_ai_tools(
             else:
                 # Text mode - ensure string
                 if isinstance(raw_content, bytes):
-                    content = raw_content.decode(encoding, errors='ignore')
+                    content = raw_content.decode(encoding, errors="ignore")
                 else:
                     content = raw_content
 
@@ -92,14 +92,14 @@ def read_file_with_ai_tools(
     # Fallback to direct file reading if AIFileTools didn't work
     if content is None:
         try:
-            if mode == 'binary':
-                with open(file_path, 'rb') as f:
+            if mode == "binary":
+                with open(file_path, "rb") as f:
                     if max_bytes:
                         content = f.read(max_bytes)
                     else:
                         content = f.read()
             else:
-                with open(file_path, 'r', encoding=encoding) as f:
+                with open(file_path, "r", encoding=encoding) as f:
                     content = f.read()
 
             logger.debug(f"Read file using direct file access: {file_path}")
@@ -133,7 +133,7 @@ def read_binary_header(
         file_path=file_path,
         purpose=purpose,
         app_instance=app_instance,
-        mode='binary',
+        mode="binary",
         max_bytes=header_size
     )
     return content
@@ -143,7 +143,7 @@ def read_text_file(
     file_path: str,
     purpose: str = "Text file analysis",
     app_instance=None,
-    encoding: str = 'utf-8'
+    encoding: str = "utf-8"
 ) -> Optional[str]:
     """
     Read a text file with encoding support.
@@ -161,7 +161,7 @@ def read_text_file(
         file_path=file_path,
         purpose=purpose,
         app_instance=app_instance,
-        mode='text',
+        mode="text",
         encoding=encoding
     )
     return content
@@ -178,8 +178,8 @@ class FileReadingMixin:
         self,
         file_path: str,
         purpose: str = "File analysis",
-        mode: str = 'text',
-        encoding: str = 'utf-8',
+        mode: str = "text",
+        encoding: str = "utf-8",
         max_bytes: Optional[int] = None
     ) -> Optional[Union[str, bytes]]:
         """
@@ -195,7 +195,7 @@ class FileReadingMixin:
         Returns:
             File content or None
         """
-        app_instance = getattr(self, 'app_instance', None)
+        app_instance = getattr(self, "app_instance", None)
         content, _ = read_file_with_ai_tools(
             file_path=file_path,
             purpose=purpose,

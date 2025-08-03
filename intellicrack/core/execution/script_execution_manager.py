@@ -86,52 +86,52 @@ class ScriptExecutionManager(QObject):
         if self._should_ask_qemu_testing(script_type, target_binary, options):
             user_choice = self._show_qemu_test_dialog(script_type, target_binary, script_content)
 
-            if user_choice == 'test_qemu':
+            if user_choice == "test_qemu":
                 # Run QEMU test first
                 qemu_results = self._run_qemu_test(script_type, script_content, target_binary, options)
 
-                if qemu_results and qemu_results.get('success'):
+                if qemu_results and qemu_results.get("success"):
                     # Show results and ask if they want to proceed with host execution
                     if self._show_qemu_results_and_confirm(qemu_results):
                         return self._execute_on_host(script_type, script_content, target_binary, options)
                     else:
-                        return {'success': False, 'cancelled': True, 'message': 'User cancelled after QEMU test'}
+                        return {"success": False, "cancelled": True, "message": "User cancelled after QEMU test"}
                 else:
                     # QEMU test failed
-                    return {'success': False, 'qemu_failed': True, 'results': qemu_results}
+                    return {"success": False, "qemu_failed": True, "results": qemu_results}
 
-            elif user_choice == 'run_host':
+            elif user_choice == "run_host":
                 # Skip QEMU, run directly on host
                 return self._execute_on_host(script_type, script_content, target_binary, options)
-            elif user_choice == 'always_test':
+            elif user_choice == "always_test":
                 # Save preference and run QEMU test
-                self._save_qemu_preference('always', script_type)
+                self._save_qemu_preference("always", script_type)
                 qemu_results = self._run_qemu_test(script_type, script_content, target_binary, options)
 
-                if qemu_results and qemu_results.get('success'):
+                if qemu_results and qemu_results.get("success"):
                     if self._show_qemu_results_and_confirm(qemu_results):
                         return self._execute_on_host(script_type, script_content, target_binary, options)
                     else:
-                        return {'success': False, 'cancelled': True}
+                        return {"success": False, "cancelled": True}
                 else:
-                    return {'success': False, 'qemu_failed': True, 'results': qemu_results}
+                    return {"success": False, "qemu_failed": True, "results": qemu_results}
 
-            elif user_choice == 'never_test':
+            elif user_choice == "never_test":
                 # Save preference and run on host
-                self._save_qemu_preference('never', script_type)
+                self._save_qemu_preference("never", script_type)
                 return self._execute_on_host(script_type, script_content, target_binary, options)
 
             else:  # cancelled
-                return {'success': False, 'cancelled': True, 'message': 'User cancelled execution'}
+                return {"success": False, "cancelled": True, "message": "User cancelled execution"}
 
         else:
             # Based on saved preferences or options, either test or execute directly
             if self._should_auto_test_qemu(script_type, options):
                 qemu_results = self._run_qemu_test(script_type, script_content, target_binary, options)
-                if qemu_results and qemu_results.get('success'):
+                if qemu_results and qemu_results.get("success"):
                     return self._execute_on_host(script_type, script_content, target_binary, options)
                 else:
-                    return {'success': False, 'qemu_failed': True, 'results': qemu_results}
+                    return {"success": False, "qemu_failed": True, "results": qemu_results}
             else:
                 return self._execute_on_host(script_type, script_content, target_binary, options)
 
@@ -139,20 +139,20 @@ class ScriptExecutionManager(QObject):
                                 options: Dict[str, Any]) -> bool:
         """Determine if we should ask the user about QEMU testing."""
         # Check if force option is set
-        if options.get('force_qemu_test') is not None:
+        if options.get("force_qemu_test") is not None:
             return False  # Don't ask, use the forced option
 
         # Check saved preferences
         # First check general preference from preferences dialog
         general_pref = self.settings.value("execution/qemu_preference", "ask")
-        if general_pref in ['always', 'never']:
+        if general_pref in ["always", "never"]:
             return False  # Don't ask, use general preference
 
         # Then check script-specific preference
         pref_key = f"qemu_preference_{script_type}"
-        saved_pref = self.settings.value(pref_key, 'ask')
+        saved_pref = self.settings.value(pref_key, "ask")
 
-        if saved_pref in ['always', 'never']:
+        if saved_pref in ["always", "never"]:
             return False  # Don't ask, use saved preference
 
         # Check if binary is trusted
@@ -163,21 +163,21 @@ class ScriptExecutionManager(QObject):
 
     def _should_auto_test_qemu(self, script_type: str, options: Dict[str, Any]) -> bool:
         """Check if we should automatically test in QEMU."""
-        if options.get('force_qemu_test'):
+        if options.get("force_qemu_test"):
             return True
 
         # Check general preference first
         general_pref = self.settings.value("execution/qemu_preference", "ask")
-        if general_pref == 'always':
+        if general_pref == "always":
             return True
-        elif general_pref == 'never':
+        elif general_pref == "never":
             return False
 
         # Then check script-specific preference
         pref_key = f"qemu_preference_{script_type}"
-        saved_pref = self.settings.value(pref_key, 'ask')
+        saved_pref = self.settings.value(pref_key, "ask")
 
-        return saved_pref == 'always'
+        return saved_pref == "always"
 
     def _is_trusted_binary(self, binary_path: str) -> bool:
         """Check if a binary is in the trusted list."""
@@ -197,7 +197,7 @@ class ScriptExecutionManager(QObject):
         """Show QEMU test dialog and return user choice."""
         if not self.QEMUTestDialog:
             logger.warning("QEMUTestDialog not available, defaulting to host execution")
-            return 'run_host'
+            return "run_host"
         dialog = self.QEMUTestDialog(
             script_type=script_type,
             target_binary=target_binary,
@@ -210,14 +210,14 @@ class ScriptExecutionManager(QObject):
         if result == QDialog.Accepted:
             return dialog.get_user_choice()
         else:
-            return 'cancelled'
+            return "cancelled"
 
     def _run_qemu_test(self, script_type: str, script_content: str,
                       target_binary: str, options: Dict[str, Any]) -> Dict[str, Any]:
         """Run script in QEMU environment."""
         if not self.qemu_manager:
             logger.error("QEMU manager not available")
-            return {'success': False, 'error': 'QEMU testing not available'}
+            return {"success": False, "error": "QEMU testing not available"}
 
         self.qemu_test_started.emit(script_type, target_binary)
 
@@ -225,26 +225,26 @@ class ScriptExecutionManager(QObject):
             # Create snapshot for testing
             snapshot_id = self._create_qemu_snapshot(target_binary, options)
 
-            if not snapshot_id:                return {'success': False, 'error': 'Failed to create QEMU snapshot'}
+            if not snapshot_id:                return {"success": False, "error": "Failed to create QEMU snapshot"}
 
             # Run the appropriate test based on script type
-            if script_type == 'frida':
+            if script_type == "frida":
                 results = self.qemu_manager.test_frida_script_enhanced(
                     snapshot_id, script_content, target_binary
                 )
-            elif script_type == 'ghidra':
+            elif script_type == "ghidra":
                 results = self.qemu_manager.test_ghidra_script_enhanced(
                     snapshot_id, script_content, target_binary
                 )
             else:
-                results = {'success': False, 'error': f'Unsupported script type: {script_type}'}
+                results = {"success": False, "error": f"Unsupported script type: {script_type}"}
 
-            self.qemu_test_completed.emit(script_type, results.get('success', False), results)
+            self.qemu_test_completed.emit(script_type, results.get("success", False), results)
             return results
 
         except Exception as e:
             logger.exception(f"Error during QEMU test: {e}")
-            error_results = {'success': False, 'error': str(e)}
+            error_results = {"success": False, "error": str(e)}
             self.qemu_test_completed.emit(script_type, False, error_results)
             return error_results
 
@@ -260,8 +260,8 @@ class ScriptExecutionManager(QObject):
             success = self.qemu_manager.create_snapshot(
                 snapshot_id=snapshot_id,
                 binary_path=target_binary,
-                os_type=options.get('os_type', 'windows'),
-                architecture=options.get('architecture', 'x64')
+                os_type=options.get("os_type", "windows"),
+                architecture=options.get("architecture", "x64")
             )
 
             return snapshot_id if success else None
@@ -315,21 +315,21 @@ class ScriptExecutionManager(QObject):
         self.execution_started.emit(script_type, target_binary)
 
         try:
-            if script_type == 'frida':
+            if script_type == "frida":
                 results = self._execute_frida_host(script_content, target_binary, options)
-            elif script_type == 'ghidra':
+            elif script_type == "ghidra":
                 results = self._execute_ghidra_host(script_content, target_binary, options)
-            elif script_type == 'ida':
+            elif script_type == "ida":
                 results = self._execute_ida_host(script_content, target_binary, options)
             else:
-                results = {'success': False, 'error': f'Unsupported script type: {script_type}'}
+                results = {"success": False, "error": f"Unsupported script type: {script_type}"}
 
-            self.execution_completed.emit(script_type, results.get('success', False), results)
+            self.execution_completed.emit(script_type, results.get("success", False), results)
             return results
 
         except Exception as e:
             logger.exception(f"Error during host execution: {e}")
-            error_results = {'success': False, 'error': str(e)}
+            error_results = {"success": False, "error": str(e)}
             self.execution_completed.emit(script_type, False, error_results)
             return error_results
 
@@ -339,14 +339,14 @@ class ScriptExecutionManager(QObject):
             import tempfile
 
             # Save script to temporary file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".js", delete=False) as f:
                 f.write(script_content)
                 script_path = f.name
 
             # Prepare Frida command
-            cmd = ['frida', '-f', target_binary, '-l', script_path]
+            cmd = ["frida", "-f", target_binary, "-l", script_path]
 
-            if options.get('no_pause'):                cmd.append('--no-pause')
+            if options.get("no_pause"):                cmd.append("--no-pause")
 
             # Execute
             result = subprocess.run(cmd, capture_output=True, text=True)
@@ -355,14 +355,14 @@ class ScriptExecutionManager(QObject):
             os.unlink(script_path)
 
             return {
-                'success': result.returncode == 0,
-                'stdout': result.stdout,
-                'stderr': result.stderr,
-                'returncode': result.returncode
+                "success": result.returncode == 0,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "returncode": result.returncode
             }
 
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def _execute_ghidra_host(self, script_content: str, target_binary: str,
                             options: Dict[str, Any]) -> Dict[str, Any]:
@@ -372,52 +372,52 @@ class ScriptExecutionManager(QObject):
             # Find Ghidra installation
             ghidra_path = self._find_ghidra_installation()
             if not ghidra_path:
-                return {'success': False, 'error': 'Ghidra installation not found'}
+                return {"success": False, "error": "Ghidra installation not found"}
 
             # Save script to temporary file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
                 f.write(script_content)
                 script_path = f.name
 
             # Prepare Ghidra command with options support
-            analyze_headless = os.path.join(ghidra_path, 'support', 'analyzeHeadless')
+            analyze_headless = os.path.join(ghidra_path, "support", "analyzeHeadless")
             project_path = tempfile.mkdtemp()
-            project_name = 'temp_project'
+            project_name = "temp_project"
 
             cmd = [
                 analyze_headless,
                 project_path,
                 project_name,
-                '-import', target_binary,
-                '-postScript', script_path
+                "-import", target_binary,
+                "-postScript", script_path
             ]
 
             # Add command-line options from the options parameter
             if options:
                 # Memory settings
-                if 'max_memory' in options:
-                    cmd.extend(['-max-cpu', str(options['max_memory'])])
+                if "max_memory" in options:
+                    cmd.extend(["-max-cpu", str(options["max_memory"])])
 
                 # Analysis options
-                if options.get('analyze', True):
-                    cmd.append('-analyse')
+                if options.get("analyze", True):
+                    cmd.append("-analyse")
 
                 # Processor specification
-                if 'processor' in options:
-                    cmd.extend(['-processor', options['processor']])
+                if "processor" in options:
+                    cmd.extend(["-processor", options["processor"]])
 
                 # Custom script arguments
-                if 'script_args' in options:
-                    for arg in options['script_args']:
+                if "script_args" in options:
+                    for arg in options["script_args"]:
                         cmd.append(str(arg))
 
                 # Output options
-                if options.get('verbose', False):
-                    cmd.append('-log-level')
-                    cmd.append('DEBUG')
+                if options.get("verbose", False):
+                    cmd.append("-log-level")
+                    cmd.append("DEBUG")
 
                 # Timeout settings
-                timeout = options.get('timeout', 300)  # Default 5 minutes
+                timeout = options.get("timeout", 300)  # Default 5 minutes
             else:
                 timeout = 300
 
@@ -430,14 +430,14 @@ class ScriptExecutionManager(QObject):
             shutil.rmtree(project_path, ignore_errors=True)
 
             return {
-                'success': result.returncode == 0,
-                'stdout': result.stdout,
-                'stderr': result.stderr,
-                'returncode': result.returncode
+                "success": result.returncode == 0,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "returncode": result.returncode
             }
 
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def _execute_ida_host(self, script_content: str, target_binary: str,
                          options: Dict[str, Any]) -> Dict[str, Any]:
@@ -448,35 +448,35 @@ class ScriptExecutionManager(QObject):
             # Find IDA installation
             ida_path = self._find_ida_installation()
             if not ida_path:
-                return {'success': False, 'error': 'IDA installation not found'}
+                return {"success": False, "error": "IDA installation not found"}
 
             # Save script to temporary file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
                 f.write(script_content)
                 script_path = f.name
 
             # Prepare IDA command
-            ida_exe = 'idat64.exe' if os.name == 'nt' else 'idat64'
+            ida_exe = "idat64.exe" if os.name == "nt" else "idat64"
             ida_binary = os.path.join(ida_path, ida_exe)
 
             cmd = [
                 ida_binary,
-                '-A',  # Auto analysis
-                '-S' + script_path,  # Script to run
+                "-A",  # Auto analysis
+                "-S" + script_path,  # Script to run
                 target_binary
             ]
 
             # Add options support
             if options:
-                if options.get('batch_mode', True):
-                    cmd.append('-B')  # Batch mode
+                if options.get("batch_mode", True):
+                    cmd.append("-B")  # Batch mode
 
-                if 'log_file' in options:
-                    cmd.extend(['-L' + options['log_file']])
+                if "log_file" in options:
+                    cmd.extend(["-L" + options["log_file"]])
 
-                timeout = options.get('timeout', 300)
+                timeout = options.get("timeout", 300)
             else:
-                cmd.append('-B')  # Default batch mode
+                cmd.append("-B")  # Default batch mode
                 timeout = 300
 
             # Execute IDA with timeout
@@ -486,26 +486,26 @@ class ScriptExecutionManager(QObject):
             os.unlink(script_path)
 
             return {
-                'success': result.returncode == 0,
-                'stdout': result.stdout,
-                'stderr': result.stderr,
-                'returncode': result.returncode
+                "success": result.returncode == 0,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "returncode": result.returncode
             }
 
         except subprocess.TimeoutExpired:
-            return {'success': False, 'error': f'IDA execution timed out after {timeout} seconds'}
+            return {"success": False, "error": f"IDA execution timed out after {timeout} seconds"}
         except Exception as e:
-            return {'success': False, 'error': f'IDA execution failed: {str(e)}'}
+            return {"success": False, "error": f"IDA execution failed: {str(e)}"}
 
     def _find_ghidra_installation(self) -> Optional[str]:
         """Find Ghidra installation path."""
         # Check common locations
         possible_paths = [
-            os.environ.get('GHIDRA_HOME'),
-            os.path.expanduser('~/ghidra'),
-            '/opt/ghidra',
-            'C:\\ghidra',
-            'C:\\Program Files\\ghidra'
+            os.environ.get("GHIDRA_HOME"),
+            os.path.expanduser("~/ghidra"),
+            "/opt/ghidra",
+            "C:\\ghidra",
+            "C:\\Program Files\\ghidra"
         ]
 
         for path in possible_paths:
@@ -517,18 +517,18 @@ class ScriptExecutionManager(QObject):
         """Find IDA installation path."""
         # Check common locations
         possible_paths = [
-            os.environ.get('IDA_HOME'),
-            os.path.expanduser('~/ida'),
-            '/opt/ida',
-            'C:\\Program Files\\IDA Pro',
-            'C:\\Program Files (x86)\\IDA Pro',
-            'C:\\IDA'
+            os.environ.get("IDA_HOME"),
+            os.path.expanduser("~/ida"),
+            "/opt/ida",
+            "C:\\Program Files\\IDA Pro",
+            "C:\\Program Files (x86)\\IDA Pro",
+            "C:\\IDA"
         ]
 
         for path in possible_paths:
             if path and os.path.exists(path):
                 # Verify IDA executable exists
-                ida_exe = 'idat64.exe' if os.name == 'nt' else 'idat64'
+                ida_exe = "idat64.exe" if os.name == "nt" else "idat64"
                 if os.path.exists(os.path.join(path, ida_exe)):
                     return path
         return None
@@ -586,10 +586,10 @@ class ScriptExecutionManager(QObject):
         if not isinstance(history, list):            history = []
 
         entry = {
-            'script_type': script_type,
-            'target_binary': target_binary,
-            'success': success,
-            'timestamp': timestamp.isoformat()
+            "script_type": script_type,
+            "target_binary": target_binary,
+            "success": success,
+            "timestamp": timestamp.isoformat()
         }
 
         history.insert(0, entry)  # Add to beginning

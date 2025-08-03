@@ -70,40 +70,40 @@ class DiffSyntaxHighlighter(QSyntaxHighlighter):
         added_format = QTextCharFormat()
         added_format.setBackground(QColor(200, 255, 200))
         added_format.setForeground(QColor(0, 128, 0))
-        self.formats['added'] = added_format
+        self.formats["added"] = added_format
 
         # Deleted lines (red)
         deleted_format = QTextCharFormat()
         deleted_format.setBackground(QColor(255, 200, 200))
         deleted_format.setForeground(QColor(128, 0, 0))
-        self.formats['deleted'] = deleted_format
+        self.formats["deleted"] = deleted_format
 
         # Context lines (gray)
         context_format = QTextCharFormat()
         context_format.setForeground(QColor(128, 128, 128))
-        self.formats['context'] = context_format
+        self.formats["context"] = context_format
 
         # Header lines (blue)
         header_format = QTextCharFormat()
         header_format.setForeground(QColor(0, 0, 255))
         header_format.setFontWeight(QFont.Bold)
-        self.formats['header'] = header_format
+        self.formats["header"] = header_format
 
     def highlightBlock(self, text):
         """Highlight a block of diff text."""
         if not text:
             return
 
-        if text.startswith('+++') or text.startswith('---'):
-            self.setFormat(0, len(text), self.formats['header'])
-        elif text.startswith('@@'):
-            self.setFormat(0, len(text), self.formats['header'])
-        elif text.startswith('+'):
-            self.setFormat(0, len(text), self.formats['added'])
-        elif text.startswith('-'):
-            self.setFormat(0, len(text), self.formats['deleted'])
-        elif text.startswith(' '):
-            self.setFormat(0, len(text), self.formats['context'])
+        if text.startswith("+++") or text.startswith("---"):
+            self.setFormat(0, len(text), self.formats["header"])
+        elif text.startswith("@@"):
+            self.setFormat(0, len(text), self.formats["header"])
+        elif text.startswith("+"):
+            self.setFormat(0, len(text), self.formats["added"])
+        elif text.startswith("-"):
+            self.setFormat(0, len(text), self.formats["deleted"])
+        elif text.startswith(" "):
+            self.setFormat(0, len(text), self.formats["context"])
 
 
 class ModificationAnalysisThread(QThread):
@@ -514,11 +514,11 @@ class CodeModificationDialog(QDialog):
 
         # Create request
         requirements = [
-            req.strip() for req in self.requirements_edit.toPlainText().split('\n')
+            req.strip() for req in self.requirements_edit.toPlainText().split("\n")
             if req.strip()
         ]
         constraints = [
-            constraint.strip() for constraint in self.constraints_edit.toPlainText().split('\n')
+            constraint.strip() for constraint in self.constraints_edit.toPlainText().split("\n")
             if constraint.strip()
         ]
 
@@ -553,7 +553,7 @@ class CodeModificationDialog(QDialog):
         if changes:
             # Switch to changes tab
             parent_widget = self.parent()
-            if hasattr(parent_widget, 'setCurrentIndex'):
+            if hasattr(parent_widget, "setCurrentIndex"):
                 parent_widget.setCurrentIndex(1)  # Changes tab
 
     def on_analysis_error(self, error_message: str):

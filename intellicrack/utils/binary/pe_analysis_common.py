@@ -59,11 +59,11 @@ def get_pe_sections_info(pe) -> List[Dict]:
 
     for section in pe.sections:
         section_info = {
-            'name': section.Name.decode('utf-8', errors='ignore').rstrip('\x00'),
-            'virtual_address': section.VirtualAddress,
-            'virtual_size': section.Misc_VirtualSize,
-            'raw_size': section.SizeOfRawData,
-            'characteristics': section.Characteristics
+            "name": section.Name.decode("utf-8", errors="ignore").rstrip("\x00"),
+            "virtual_address": section.VirtualAddress,
+            "virtual_size": section.Misc_VirtualSize,
+            "raw_size": section.SizeOfRawData,
+            "characteristics": section.Characteristics
         }
         sections.append(section_info)
 
@@ -86,9 +86,9 @@ def extract_pe_icon(pe_path: str, output_path: Optional[str] = None) -> Optional
 
         # Find .rsrc section
         for section in pe.sections:
-            if section.Name.startswith(b'.rsrc\x00'):
+            if section.Name.startswith(b".rsrc\x00"):
                 # Get resource directory
-                if hasattr(pe, 'DIRECTORY_ENTRY_RESOURCE'):
+                if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
                     icon_data = extract_icon_from_resources(pe)
                     if icon_data:
                         # Create PIL Image from icon data
@@ -96,7 +96,7 @@ def extract_pe_icon(pe_path: str, output_path: Optional[str] = None) -> Optional
 
                         if icon_image and output_path:
                             # Save the icon
-                            icon_image.save(output_path, format='PNG')
+                            icon_image.save(output_path, format="PNG")
                             logger.info(f"Icon extracted and saved to {output_path}")
 
                         return icon_image
@@ -128,11 +128,11 @@ def extract_icon_from_resources(pe) -> Optional[bytes]:
 
         # Extract icon groups and individual icons
         for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
-            if hasattr(resource_type, 'id'):
+            if hasattr(resource_type, "id"):
                 if resource_type.id == RT_GROUP_ICON:
                     # Found icon group
                     for resource_id in resource_type.directory.entries:
-                        if hasattr(resource_id, 'directory'):
+                        if hasattr(resource_id, "directory"):
                             for resource_lang in resource_id.directory.entries:
                                 data_rva = resource_lang.data.struct.OffsetToData
                                 size = resource_lang.data.struct.Size
@@ -142,7 +142,7 @@ def extract_icon_from_resources(pe) -> Optional[bytes]:
                 elif resource_type.id == RT_ICON:
                     # Found individual icon
                     for resource_id in resource_type.directory.entries:
-                        if hasattr(resource_id, 'directory'):
+                        if hasattr(resource_id, "directory"):
                             for resource_lang in resource_id.directory.entries:
                                 data_rva = resource_lang.data.struct.OffsetToData
                                 size = resource_lang.data.struct.Size
@@ -157,7 +157,7 @@ def extract_icon_from_resources(pe) -> Optional[bytes]:
 
             # Parse GRPICONDIR structure
             # WORD idReserved, WORD idType, WORD idCount
-            _, _, count = struct.unpack('<HHH', group_data[:6])
+            _, _, count = struct.unpack("<HHH", group_data[:6])
 
             best_icon_id = None
             best_size = 0
@@ -168,7 +168,7 @@ def extract_icon_from_resources(pe) -> Optional[bytes]:
                 if offset + 14 <= len(group_data):
                     # GRPICONDIRENTRY structure
                     width, height, colors, _, planes, bits, size, icon_id = struct.unpack(
-                        '<BBBBHHIH', group_data[offset:offset+14]
+                        "<BBBBHHIH", group_data[offset:offset+14]
                     )
                     offset += 14
 
@@ -211,18 +211,18 @@ def create_image_from_icon_data(icon_data: bytes) -> Optional[Image.Image]:
         # If that fails, try parsing as DIB (BMP without header)
         if len(icon_data) >= 40:
             # Check if it's a BITMAPINFOHEADER
-            header_size = struct.unpack('<I', icon_data[:4])[0]
+            header_size = struct.unpack("<I", icon_data[:4])[0]
             if header_size == 40:  # BITMAPINFOHEADER
-                width, height = struct.unpack('<ii', icon_data[4:12])
+                width, height = struct.unpack("<ii", icon_data[4:12])
 
                 # Icons are stored bottom-up, height is doubled for mask
                 actual_height = abs(height) // 2
 
                 # Create BMP header
-                bmp_header = b'BM'
-                bmp_header += struct.pack('<I', len(icon_data) + 14)  # File size
-                bmp_header += b'\x00\x00\x00\x00'  # Reserved
-                bmp_header += struct.pack('<I', 14 + header_size)  # Offset to pixel data
+                bmp_header = b"BM"
+                bmp_header += struct.pack("<I", len(icon_data) + 14)  # File size
+                bmp_header += b"\x00\x00\x00\x00"  # Reserved
+                bmp_header += struct.pack("<I", 14 + header_size)  # Offset to pixel data
 
                 # Combine header with DIB data
                 bmp_data = bmp_header + icon_data
@@ -237,7 +237,7 @@ def create_image_from_icon_data(icon_data: bytes) -> Optional[Image.Image]:
                 return img
 
         # Try other formats
-        for _fmt in ['PNG', 'JPEG', 'GIF']:
+        for _fmt in ["PNG", "JPEG", "GIF"]:
             try:
                 icon_io = io.BytesIO(icon_data)
                 img = Image.open(icon_io)
@@ -280,11 +280,11 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> List[str]:
         RT_ICON = 3
         icon_index = 0
 
-        if hasattr(pe, 'DIRECTORY_ENTRY_RESOURCE'):
+        if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
             for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
-                if hasattr(resource_type, 'id') and resource_type.id == RT_ICON:
+                if hasattr(resource_type, "id") and resource_type.id == RT_ICON:
                     for resource_id in resource_type.directory.entries:
-                        if hasattr(resource_id, 'directory'):
+                        if hasattr(resource_id, "directory"):
                             for resource_lang in resource_id.directory.entries:
                                 try:
                                     data_rva = resource_lang.data.struct.OffsetToData
@@ -296,7 +296,7 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> List[str]:
                                     if icon_image:
                                         # Save icon
                                         icon_path = os.path.join(output_dir, f"{base_name}_icon_{icon_index}.png")
-                                        icon_image.save(icon_path, format='PNG')
+                                        icon_image.save(icon_path, format="PNG")
                                         saved_icons.append(icon_path)
                                         icon_index += 1
                                         logger.info(f"Extracted icon: {icon_path}")
@@ -325,11 +325,11 @@ def get_pe_icon_info(pe_path: str) -> Dict[str, any]:
         Dictionary with icon information
     """
     icon_info = {
-        'has_icon': False,
-        'icon_count': 0,
-        'icon_groups': 0,
-        'icon_sizes': [],
-        'largest_icon': None
+        "has_icon": False,
+        "icon_count": 0,
+        "icon_groups": 0,
+        "icon_sizes": [],
+        "largest_icon": None
     }
 
     try:
@@ -339,17 +339,17 @@ def get_pe_icon_info(pe_path: str) -> Dict[str, any]:
         RT_ICON = 3
         RT_GROUP_ICON = 14
 
-        if hasattr(pe, 'DIRECTORY_ENTRY_RESOURCE'):
+        if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
             icon_count = 0
             group_count = 0
             icon_sizes = []
 
             for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
-                if hasattr(resource_type, 'id'):
+                if hasattr(resource_type, "id"):
                     if resource_type.id == RT_ICON:
                         # Count individual icons
                         for resource_id in resource_type.directory.entries:
-                            if hasattr(resource_id, 'directory'):
+                            if hasattr(resource_id, "directory"):
                                 icon_count += len(resource_id.directory.entries)
 
                                 # Get icon sizes
@@ -362,14 +362,14 @@ def get_pe_icon_info(pe_path: str) -> Dict[str, any]:
                         group_count += len(resource_type.directory.entries)
 
             if icon_count > 0:
-                icon_info['has_icon'] = True
-                icon_info['icon_count'] = icon_count
-                icon_info['icon_groups'] = group_count
-                icon_info['icon_sizes'] = sorted(icon_sizes)
+                icon_info["has_icon"] = True
+                icon_info["icon_count"] = icon_count
+                icon_info["icon_groups"] = group_count
+                icon_info["icon_sizes"] = sorted(icon_sizes)
                 if icon_sizes:
-                    icon_info['largest_icon'] = {
-                        'size': max(icon_sizes),
-                        'size_kb': max(icon_sizes) / 1024
+                    icon_info["largest_icon"] = {
+                        "size": max(icon_sizes),
+                        "size_kb": max(icon_sizes) / 1024
                     }
 
         return icon_info

@@ -137,7 +137,7 @@ class ProtectionAnalysisWorkflow:
             self._report_progress("Starting quick protection scan...", 10)
             quick_summary = self.engine.get_quick_summary(file_path)
 
-            if not quick_summary['protected']:
+            if not quick_summary["protected"]:
                 result.success = True
                 result.recommendations = [
                     "No protections detected. The binary appears to be unprotected."]
@@ -153,7 +153,7 @@ class ProtectionAnalysisWorkflow:
             # Step 2.5: Supplemental analysis with YARA, Binwalk, and Volatility3
             self._report_progress("Running supplemental analysis engines...", 40)
             supplemental_data = self._run_supplemental_analysis(file_path)
-            if supplemental_data and hasattr(analysis, 'supplemental_data'):
+            if supplemental_data and hasattr(analysis, "supplemental_data"):
                 analysis.supplemental_data = supplemental_data
 
             # Step 3: Generate bypass recommendations
@@ -203,11 +203,11 @@ class ProtectionAnalysisWorkflow:
                 yara_result = self.yara_engine.scan_file(file_path, timeout=30)
                 if not yara_result.error:
                     yara_supplemental = self.yara_engine.generate_icp_supplemental_data(yara_result)
-                    supplemental_data['yara_analysis'] = {
-                        'matches_found': len(yara_result.matches),
-                        'total_rules': yara_result.total_rules,
-                        'scan_time': yara_result.scan_time,
-                        'supplemental_data': yara_supplemental
+                    supplemental_data["yara_analysis"] = {
+                        "matches_found": len(yara_result.matches),
+                        "total_rules": yara_result.total_rules,
+                        "scan_time": yara_result.scan_time,
+                        "supplemental_data": yara_supplemental
                     }
                     logger.debug(f"YARA analysis complete: {len(yara_result.matches)} matches found")
                 else:
@@ -228,12 +228,12 @@ class ProtectionAnalysisWorkflow:
                 )
                 if not firmware_result.error:
                     firmware_supplemental = self.firmware_analyzer.generate_icp_supplemental_data(firmware_result)
-                    supplemental_data['firmware_analysis'] = {
-                        'signatures_found': len(firmware_result.signatures),
-                        'security_findings': len(firmware_result.security_findings),
-                        'firmware_type': firmware_result.firmware_type.value,
-                        'analysis_time': firmware_result.analysis_time,
-                        'supplemental_data': firmware_supplemental
+                    supplemental_data["firmware_analysis"] = {
+                        "signatures_found": len(firmware_result.signatures),
+                        "security_findings": len(firmware_result.security_findings),
+                        "firmware_type": firmware_result.firmware_type.value,
+                        "analysis_time": firmware_result.analysis_time,
+                        "supplemental_data": firmware_supplemental
                     }
                     logger.debug(f"Binwalk analysis complete: {len(firmware_result.signatures)} signatures found")
                 else:
@@ -253,12 +253,12 @@ class ProtectionAnalysisWorkflow:
                 )
                 if not memory_result.error:
                     memory_supplemental = self.memory_forensics.generate_icp_supplemental_data(memory_result)
-                    supplemental_data['memory_analysis'] = {
-                        'artifacts_found': sum(memory_result.artifacts_found.values()),
-                        'analysis_profile': memory_result.analysis_profile,
-                        'has_suspicious_activity': memory_result.has_suspicious_activity,
-                        'analysis_time': memory_result.analysis_time,
-                        'supplemental_data': memory_supplemental
+                    supplemental_data["memory_analysis"] = {
+                        "artifacts_found": sum(memory_result.artifacts_found.values()),
+                        "analysis_profile": memory_result.analysis_profile,
+                        "has_suspicious_activity": memory_result.has_suspicious_activity,
+                        "analysis_time": memory_result.analysis_time,
+                        "supplemental_data": memory_supplemental
                     }
                     logger.debug(f"Volatility3 analysis complete: {sum(memory_result.artifacts_found.values())} artifacts found")
                 else:
@@ -287,20 +287,20 @@ class ProtectionAnalysisWorkflow:
         try:
             # Check file extension
             file_ext = os.path.splitext(file_path)[1].lower()
-            if file_ext in ['.dmp', '.vmem', '.raw', '.mem', '.dd']:
+            if file_ext in [".dmp", ".vmem", ".raw", ".mem", ".dd"]:
                 return True
 
             # Check file size (memory dumps are typically large)
             file_size = os.path.getsize(file_path)
             if file_size > 100 * 1024 * 1024:  # > 100MB
                 # Check for memory dump signatures
-                with open(file_path, 'rb') as f:
+                with open(file_path, "rb") as f:
                     header = f.read(4096)
                     # Look for common memory dump patterns
-                    if b'PAGEDUMP' in header or b'PAGEDU64' in header:
+                    if b"PAGEDUMP" in header or b"PAGEDU64" in header:
                         return True
                     # Windows crash dump signatures
-                    if header.startswith(b'PAGEDUMP') or header.startswith(b'PAGE'):
+                    if header.startswith(b"PAGEDUMP") or header.startswith(b"PAGE"):
                         return True
 
             return False
@@ -314,7 +314,7 @@ class ProtectionAnalysisWorkflow:
         recommendations = []
 
         # Check protection types
-        protection_types = set(p['type'] for p in analysis.protections)
+        protection_types = set(p["type"] for p in analysis.protections)
 
         # Priority recommendations
         if analysis.is_packed:
@@ -334,12 +334,12 @@ class ProtectionAnalysisWorkflow:
 
         # Tool recommendations
         tools_needed = set()
-        if 'packer' in protection_types:
-            tools_needed.update(['x64dbg', 'Scylla', 'Process Dump'])
-        if 'antidebug' in protection_types:
-            tools_needed.update(['ScyllaHide', 'TitanHide'])
-        if 'license' in protection_types:
-            tools_needed.update(['IDA Pro', 'API Monitor'])
+        if "packer" in protection_types:
+            tools_needed.update(["x64dbg", "Scylla", "Process Dump"])
+        if "antidebug" in protection_types:
+            tools_needed.update(["ScyllaHide", "TitanHide"])
+        if "license" in protection_types:
+            tools_needed.update(["IDA Pro", "API Monitor"])
 
         if tools_needed:
             recommendations.append(
@@ -353,7 +353,7 @@ class ProtectionAnalysisWorkflow:
             )
 
         # Supplemental analysis recommendations
-        if hasattr(analysis, 'supplemental_data') and analysis.supplemental_data:
+        if hasattr(analysis, "supplemental_data") and analysis.supplemental_data:
             supplemental_recs = self._generate_supplemental_recommendations(analysis.supplemental_data)
             recommendations.extend(supplemental_recs)
 
@@ -378,9 +378,9 @@ class ProtectionAnalysisWorkflow:
         recommendations = []
 
         # YARA pattern analysis recommendations
-        if 'yara_analysis' in supplemental_data:
-            yara_data = supplemental_data['yara_analysis']
-            matches_found = yara_data.get('matches_found', 0)
+        if "yara_analysis" in supplemental_data:
+            yara_data = supplemental_data["yara_analysis"]
+            matches_found = yara_data.get("matches_found", 0)
 
             if matches_found > 0:
                 recommendations.append(
@@ -388,18 +388,18 @@ class ProtectionAnalysisWorkflow:
                 )
 
                 # Look for specific pattern types in supplemental data
-                yara_supplemental = yara_data.get('supplemental_data', {})
-                protection_categories = yara_supplemental.get('protection_categories', {})
+                yara_supplemental = yara_data.get("supplemental_data", {})
+                protection_categories = yara_supplemental.get("protection_categories", {})
 
-                if protection_categories.get('packer', 0) > 0:
+                if protection_categories.get("packer", 0) > 0:
                     recommendations.append(
                         "📦 YARA identified packer signatures. Consider unpacking before further analysis."
                     )
-                if protection_categories.get('anti_debug', 0) > 0:
+                if protection_categories.get("anti_debug", 0) > 0:
                     recommendations.append(
                         "🛡️ YARA found anti-debug patterns. Use stealth debugging techniques."
                     )
-                if protection_categories.get('licensing', 0) > 0:
+                if protection_categories.get("licensing", 0) > 0:
                     recommendations.append(
                         "🔑 YARA detected licensing patterns. Focus on license validation bypass."
                     )
@@ -409,18 +409,18 @@ class ProtectionAnalysisWorkflow:
                 )
 
         # Binwalk firmware analysis recommendations
-        if 'firmware_analysis' in supplemental_data:
-            firmware_data = supplemental_data['firmware_analysis']
-            signatures_found = firmware_data.get('signatures_found', 0)
-            security_findings = firmware_data.get('security_findings', 0)
-            firmware_type = firmware_data.get('firmware_type', 'unknown')
+        if "firmware_analysis" in supplemental_data:
+            firmware_data = supplemental_data["firmware_analysis"]
+            signatures_found = firmware_data.get("signatures_found", 0)
+            security_findings = firmware_data.get("security_findings", 0)
+            firmware_type = firmware_data.get("firmware_type", "unknown")
 
             if signatures_found > 0:
                 recommendations.append(
                     f"🔧 Binwalk identified {signatures_found} embedded components. This may be firmware or contain embedded files."
                 )
 
-                if firmware_type != 'unknown':
+                if firmware_type != "unknown":
                     recommendations.append(
                         f"🖥️ Detected {firmware_type} firmware. Consider firmware-specific analysis techniques."
                     )
@@ -431,18 +431,18 @@ class ProtectionAnalysisWorkflow:
                 )
 
             # Look for specific firmware findings
-            firmware_supplemental = firmware_data.get('supplemental_data', {})
-            embedded_files = firmware_supplemental.get('embedded_files', [])
+            firmware_supplemental = firmware_data.get("supplemental_data", {})
+            embedded_files = firmware_supplemental.get("embedded_files", [])
             if embedded_files:
                 recommendations.append(
                     f"📁 Found {len(embedded_files)} embedded files. Extract and analyze individual components."
                 )
 
         # Volatility3 memory forensics recommendations
-        if 'memory_analysis' in supplemental_data:
-            memory_data = supplemental_data['memory_analysis']
-            artifacts_found = memory_data.get('artifacts_found', 0)
-            has_suspicious = memory_data.get('has_suspicious_activity', False)
+        if "memory_analysis" in supplemental_data:
+            memory_data = supplemental_data["memory_analysis"]
+            artifacts_found = memory_data.get("artifacts_found", 0)
+            has_suspicious = memory_data.get("has_suspicious_activity", False)
 
             if artifacts_found > 0:
                 recommendations.append(
@@ -455,8 +455,8 @@ class ProtectionAnalysisWorkflow:
                     )
 
                 # Look for specific memory findings
-                memory_supplemental = memory_data.get('supplemental_data', {})
-                protection_indicators = memory_supplemental.get('protection_indicators', [])
+                memory_supplemental = memory_data.get("supplemental_data", {})
+                protection_indicators = memory_supplemental.get("protection_indicators", [])
                 if protection_indicators:
                     recommendations.append(
                         f"🔒 Memory analysis revealed {len(protection_indicators)} protection indicators in runtime."
@@ -473,7 +473,7 @@ class ProtectionAnalysisWorkflow:
         # Filter protections if targets specified
         protections = analysis.protections
         if target_protections:
-            protections = [p for p in protections if p['name']
+            protections = [p for p in protections if p["name"]
                            in target_protections]
 
         for protection in protections:
@@ -482,7 +482,7 @@ class ProtectionAnalysisWorkflow:
                 script = self._generate_single_bypass_script(
                     analysis, protection)
                 if script:
-                    scripts[protection['name']] = script
+                    scripts[protection["name"]] = script
             except Exception as e:
                 logger.error(
                     f"Failed to generate script for {protection['name']}: {e}")
@@ -494,13 +494,13 @@ class ProtectionAnalysisWorkflow:
                                        protection: Dict[str, Any]) -> Optional[str]:
         """Generate bypass script for a single protection"""
         context = {
-            'file_path': analysis.file_path,
-            'file_type': analysis.file_type,
-            'architecture': analysis.architecture,
-            'protection_name': protection['name'],
-            'protection_type': protection['type'],
-            'protection_details': protection.get('details', {}),
-            'bypass_recommendations': protection.get('bypass_recommendations', [])
+            "file_path": analysis.file_path,
+            "file_type": analysis.file_type,
+            "architecture": analysis.architecture,
+            "protection_name": protection["name"],
+            "protection_type": protection["type"],
+            "protection_details": protection.get("details", {}),
+            "bypass_recommendations": protection.get("bypass_recommendations", [])
         }
 
         # Use AI if available
@@ -508,19 +508,19 @@ class ProtectionAnalysisWorkflow:
             try:
                 prompt = self._build_bypass_prompt(context)
                 response = self.llm_manager.generate(prompt)
-                if response and response.get('success'):
-                    return response.get('content', '')
+                if response and response.get("success"):
+                    return response.get("content", "")
             except Exception as e:
                 logger.warning(f"AI generation failed: {e}")
 
         # Fallback to template-based generation
-        protection_type = protection['type'].lower()
+        protection_type = protection["type"].lower()
 
-        if 'pack' in protection_type:
+        if "pack" in protection_type:
             return self._generate_unpacking_script(context)
-        elif 'debug' in protection_type:
+        elif "debug" in protection_type:
             return self._generate_antidebug_script(context)
-        elif 'licens' in protection_type or 'dongle' in protection_type:
+        elif "licens" in protection_type or "dongle" in protection_type:
             return self._generate_license_bypass_script(context)
         else:
             return self._generate_generic_bypass_script(context)
@@ -824,17 +824,17 @@ def quick_protection_analysis(file_path: str) -> Dict[str, Any]:
 
     if result.success and result.protection_analysis:
         return {
-            'protected': bool(result.protection_analysis.protections),
-            'protections': [p['name'] for p in result.protection_analysis.protections],
-            'recommendations': result.recommendations,
-            'confidence': result.confidence
+            "protected": bool(result.protection_analysis.protections),
+            "protections": [p["name"] for p in result.protection_analysis.protections],
+            "recommendations": result.recommendations,
+            "confidence": result.confidence
         }
     else:
         return {
-            'protected': False,
-            'protections': [],
-            'recommendations': result.recommendations or ["Analysis failed"],
-            'confidence': 0.0
+            "protected": False,
+            "protections": [],
+            "recommendations": result.recommendations or ["Analysis failed"],
+            "confidence": 0.0
         }
 
 

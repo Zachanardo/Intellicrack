@@ -47,7 +47,7 @@ from .hex_highlighter import HighlightType
 from .hex_renderer import ViewMode
 from .hex_widget import HexViewerWidget
 
-logger = logging.getLogger('Intellicrack.HexView')
+logger = logging.getLogger("Intellicrack.HexView")
 
 
 class HexViewerDialog(QDialog):
@@ -368,7 +368,7 @@ class HexViewerDialog(QDialog):
 
     def save_file(self):
         """Save changes to the currently open file."""
-        if not hasattr(self.hex_viewer, 'file_handler') or not self.hex_viewer.file_handler:
+        if not hasattr(self.hex_viewer, "file_handler") or not self.hex_viewer.file_handler:
             return
 
         if self.hex_viewer.file_handler.read_only:
@@ -389,7 +389,7 @@ class HexViewerDialog(QDialog):
 
     def toggle_edit_mode(self):
         """Toggle between read-only and editable mode."""
-        if not hasattr(self.hex_viewer, 'file_handler') or not self.hex_viewer.file_handler:
+        if not hasattr(self.hex_viewer, "file_handler") or not self.hex_viewer.file_handler:
             return
 
         # Get current file path
@@ -401,7 +401,7 @@ class HexViewerDialog(QDialog):
         self.hex_viewer.close()
 
         # Reload in opposite mode
-        new_mode = not getattr(self.hex_viewer.file_handler, 'read_only', True)
+        new_mode = not getattr(self.hex_viewer.file_handler, "read_only", True)
 
         # Reload file in new mode
         success = self.load_file(file_path, read_only=new_mode)
@@ -430,7 +430,7 @@ class HexViewerDialog(QDialog):
             start: Start offset of selection or current position
             end: End offset of selection (optional)
         """
-        if not hasattr(self.hex_viewer, 'file_handler') or not self.hex_viewer.file_handler:
+        if not hasattr(self.hex_viewer, "file_handler") or not self.hex_viewer.file_handler:
             self.status_bar.showMessage("No file loaded")
             return
 
@@ -669,7 +669,7 @@ class HexViewerDialog(QDialog):
         for h in self.hex_viewer.highlighter.highlights:
             if h.highlight_type == HighlightType.SEARCH_RESULT:
                 # Create list item
-                query = h.metadata.get('query', '')
+                query = h.metadata.get("query", "")
                 text = f"0x{h.start:X}: {query} ({h.size} bytes)"
                 item = QListWidgetItem(text)
                 item.setData(Qt.UserRole, h.id)

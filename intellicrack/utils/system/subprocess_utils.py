@@ -140,7 +140,7 @@ def create_popen_with_encoding(cmd: List[str], encoding: str = "utf-8",
             stderr=subprocess.PIPE,
             text=True,
             encoding=encoding,
-            errors='replace'
+            errors="replace"
         )
 
         if timeout:

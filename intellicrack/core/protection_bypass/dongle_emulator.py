@@ -86,7 +86,7 @@ class HardwareDongleEmulator:
 
         # Strategy 3: Patch dongle check instructions
         try:
-            if self.app and hasattr(self.app, 'binary_path') and self.app.binary_path:
+            if self.app and hasattr(self.app, "binary_path") and self.app.binary_path:
                 self._patch_dongle_checks()
                 results["methods_applied"].append("Binary Patching")
         except (OSError, ValueError, RuntimeError) as e:
@@ -311,11 +311,11 @@ class HardwareDongleEmulator:
         """
         Patch binary instructions that check for dongle presence.
         """
-        if not self.app or not hasattr(self.app, 'binary_path') or not self.app.binary_path:
+        if not self.app or not hasattr(self.app, "binary_path") or not self.app.binary_path:
             return
 
         try:
-            with open(self.app.binary_path, 'rb') as f:
+            with open(self.app.binary_path, "rb") as f:
                 binary_data = f.read()
 
             # Common dongle check patterns
@@ -501,6 +501,6 @@ def activate_hardware_dongle_emulation(app: Any, dongle_types: List[str] = None)
 
 # Export the main classes and functions
 __all__ = [
-    'HardwareDongleEmulator',
-    'activate_hardware_dongle_emulation'
+    "HardwareDongleEmulator",
+    "activate_hardware_dongle_emulation"
 ]

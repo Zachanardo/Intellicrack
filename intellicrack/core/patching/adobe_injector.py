@@ -99,12 +99,12 @@ WINDOWS_API_AVAILABLE = False
 
 
 # Windows API imports for process injection
-if sys.platform == 'win32':
+if sys.platform == "win32":
     try:
         import ctypes
-        KERNEL32 = ctypes.WinDLL('kernel32', use_last_error=True)
-        PSAPI = ctypes.WinDLL('psapi', use_last_error=True)
-        USER32 = ctypes.WinDLL('user32', use_last_error=True)
+        KERNEL32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        PSAPI = ctypes.WinDLL("psapi", use_last_error=True)
+        USER32 = ctypes.WinDLL("user32", use_last_error=True)
         WINDOWS_API_AVAILABLE = True
 
         # Windows structure definitions for thread and module enumeration
@@ -673,9 +673,9 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
         running = []
         try:
-            for _proc in psutil.process_iter(attrs=['name']):
+            for _proc in psutil.process_iter(attrs=["name"]):
                 try:
-                    pname = _proc.info['name']
+                    pname = _proc.info["name"]
                     if pname in self.ADOBE_PROCESSES and pname not in self.injected:
                         running.append(pname)
                 except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
@@ -732,9 +732,9 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             return None
 
         try:
-            for proc in psutil.process_iter(['pid', 'name']):
-                if proc.info['name'] == process_name:
-                    pid = proc.info['pid']
+            for proc in psutil.process_iter(["pid", "name"]):
+                if proc.info["name"] == process_name:
+                    pid = proc.info["pid"]
                     handle = KERNEL32.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
                     if handle:
                         return handle
@@ -761,7 +761,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
         try:
             # Allocate memory in the target process for the DLL path
-            dll_path_bytes = dll_path.encode('utf-8') + b'\x00'
+            dll_path_bytes = dll_path.encode("utf-8") + b"\x00"
             path_size = len(dll_path_bytes)
 
             # VirtualAllocEx
@@ -926,7 +926,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
         try:
             # Read DLL file
-            with open(dll_path, 'rb') as f:
+            with open(dll_path, "rb") as f:
                 dll_data = f.read()
 
             # Parse PE file
@@ -940,7 +940,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
             try:
                 # Calculate required memory size
-                image_size = getattr(pe.OPTIONAL_HEADER, 'SizeOfImage', 0)
+                image_size = getattr(pe.OPTIONAL_HEADER, "SizeOfImage", 0)
                 if not image_size:
                     logger.error("Failed to get SizeOfImage from PE header")
                     return False
@@ -1051,7 +1051,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 logger.debug("No relocations needed")
                 return True
 
-            if not hasattr(pe, 'DIRECTORY_ENTRY_BASERELOC'):
+            if not hasattr(pe, "DIRECTORY_ENTRY_BASERELOC"):
                 logger.warning("No relocation directory found")
                 return True
 
@@ -1075,7 +1075,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                         process_handle,
                         reloc_addr,
                         ctypes.byref(current_value),
-                        8 if getattr(pe, 'PE_TYPE', 0) == getattr(pefile, 'OPTIONAL_HEADER_MAGIC_PE_PLUS', 0x20b) else 4,
+                        8 if getattr(pe, "PE_TYPE", 0) == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20b) else 4,
                         ctypes.byref(bytes_read)
                     )
 
@@ -1093,7 +1093,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                         continue
 
                     # Write relocated value
-                    new_value_bytes = struct.pack('<Q' if write_size == 8 else '<I',
+                    new_value_bytes = struct.pack("<Q" if write_size == 8 else "<I",
                                                 new_value)
                     bytes_written = ctypes.c_size_t(0)
 
@@ -1116,13 +1116,13 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                         remote_base: int) -> bool:
         """Resolve import address table"""
         try:
-            if not hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            if not hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                 logger.warning("No import directory found")
                 return True
 
             # Process each import descriptor
             for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                dll_name = entry.dll.decode('utf-8')
+                dll_name = entry.dll.decode("utf-8")
 
                 # Get module handle
                 dll_handle = KERNEL32.GetModuleHandleW(dll_name)
@@ -1141,7 +1141,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                                                            ctypes.c_char_p(imp.ordinal))
                     else:
                         func_addr = KERNEL32.GetProcAddress(dll_handle,
-                                                           imp.name.encode('utf-8'))
+                                                           imp.name.encode("utf-8"))
 
                     if not func_addr:
                         logger.warning("Failed to resolve import: %s", imp.name or imp.ordinal)
@@ -1149,7 +1149,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
                     # Write to IAT
                     iat_addr = remote_base + imp.address
-                    addr_bytes = struct.pack('<Q' if getattr(pe, 'PE_TYPE', 0) == getattr(pefile, 'OPTIONAL_HEADER_MAGIC_PE_PLUS', 0x20b) else '<I',
+                    addr_bytes = struct.pack("<Q" if getattr(pe, "PE_TYPE", 0) == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20b) else "<I",
                                            func_addr)
                     bytes_written = ctypes.c_size_t(0)
 
@@ -1172,7 +1172,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                               remote_base: int) -> None:
         """Execute TLS callbacks if present"""
         try:
-            if not hasattr(pe, 'DIRECTORY_ENTRY_TLS'):
+            if not hasattr(pe, "DIRECTORY_ENTRY_TLS"):
                 return
 
             tls = pe.DIRECTORY_ENTRY_TLS.struct
@@ -1189,9 +1189,9 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
                 success = KERNEL32.ReadProcessMemory(
                     process_handle,
-                    remote_base + callback_addr - getattr(pe.OPTIONAL_HEADER, 'ImageBase', 0),
+                    remote_base + callback_addr - getattr(pe.OPTIONAL_HEADER, "ImageBase", 0),
                     ctypes.byref(addr_value),
-                    8 if getattr(pe, 'PE_TYPE', 0) == getattr(pefile, 'OPTIONAL_HEADER_MAGIC_PE_PLUS', 0x20b) else 4,
+                    8 if getattr(pe, "PE_TYPE", 0) == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20b) else 4,
                     ctypes.byref(bytes_read)
                 )
 
@@ -1201,11 +1201,11 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 # Execute callback
                 self._create_remote_thread(
                     process_handle,
-                    remote_base + addr_value.value - getattr(pe.OPTIONAL_HEADER, 'ImageBase', 0),
+                    remote_base + addr_value.value - getattr(pe.OPTIONAL_HEADER, "ImageBase", 0),
                     remote_base
                 )
 
-                callback_addr += 8 if getattr(pe, 'PE_TYPE', 0) == getattr(pefile, 'OPTIONAL_HEADER_MAGIC_PE_PLUS', 0x20b) else 4
+                callback_addr += 8 if getattr(pe, "PE_TYPE", 0) == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20b) else 4
 
         except Exception as e:
             logger.debug("TLS callback execution error (non-critical): %s", e)
@@ -1272,7 +1272,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             is_wow64_process = ctypes.c_bool(False)
 
             # IsWow64Process tells us if the process is 32-bit on 64-bit Windows
-            if hasattr(KERNEL32, 'IsWow64Process'):
+            if hasattr(KERNEL32, "IsWow64Process"):
                 result = KERNEL32.IsWow64Process(process_handle, ctypes.byref(is_wow64_process))
                 if result:
                     # If process is WOW64, it's 32-bit
@@ -1306,7 +1306,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         try:
             pe = pefile.PE(dll_path)
             # Check machine type
-            machine = getattr(pe.FILE_HEADER, 'Machine', 0) if hasattr(pe, 'FILE_HEADER') else 0
+            machine = getattr(pe.FILE_HEADER, "Machine", 0) if hasattr(pe, "FILE_HEADER") else 0
             if machine == 0x8664:  # IMAGE_FILE_MACHINE_AMD64
                 return True
             elif machine == 0x014c:  # IMAGE_FILE_MACHINE_I386
@@ -1388,7 +1388,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         """
         try:
             # For 64-bit -> 32-bit injection, we need to use special handling
-            dll_path_bytes = dll_path.encode('utf-8') + b'\x00'
+            dll_path_bytes = dll_path.encode("utf-8") + b"\x00"
             path_size = len(dll_path_bytes)
 
             # Allocate memory in 32-bit address space (below 4GB)
@@ -1427,7 +1427,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
             # Get 32-bit kernel32.dll handle
             # We need the 32-bit version for WOW64 processes
-            kernel32_32 = ctypes.WinDLL('C:\\Windows\\SysWOW64\\kernel32.dll')
+            kernel32_32 = ctypes.WinDLL("C:\\Windows\\SysWOW64\\kernel32.dll")
             kernel32_handle = kernel32_32._handle
 
             # Get LoadLibraryA address from 32-bit kernel32
@@ -1482,18 +1482,18 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             logger.info("Attempting Heaven's Gate injection (32-bit -> 64-bit)")
 
             # Allocate memory for DLL path
-            dll_path_bytes = dll_path.encode('utf-8') + b'\x00'
+            dll_path_bytes = dll_path.encode("utf-8") + b"\x00"
             path_size = len(dll_path_bytes)
 
             # Use NtWow64AllocateVirtualMemory64 if available
-            ntdll = ctypes.WinDLL('ntdll.dll')
+            ntdll = ctypes.WinDLL("ntdll.dll")
 
             # Allocate memory using 64-bit syscall
             remote_memory = ctypes.c_ulonglong(0)
             region_size = ctypes.c_ulonglong(path_size)
 
             # Try to use Wow64 functions for 64-bit memory operations
-            if hasattr(ntdll, 'NtWow64AllocateVirtualMemory64'):
+            if hasattr(ntdll, "NtWow64AllocateVirtualMemory64"):
                 status = ntdll.NtWow64AllocateVirtualMemory64(
                     process_handle,
                     ctypes.byref(remote_memory),
@@ -1511,7 +1511,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 return self._manual_heavens_gate_injection(process_handle, dll_path_bytes)
 
             # Write DLL path using Wow64 function
-            if hasattr(ntdll, 'NtWow64WriteVirtualMemory64'):
+            if hasattr(ntdll, "NtWow64WriteVirtualMemory64"):
                 bytes_written = ctypes.c_ulonglong(0)
                 status = ntdll.NtWow64WriteVirtualMemory64(
                     process_handle,
@@ -1535,7 +1535,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 return False
 
             # Create thread in 64-bit process using Wow64 functions
-            if hasattr(ntdll, 'NtWow64CreateThreadEx64'):
+            if hasattr(ntdll, "NtWow64CreateThreadEx64"):
                 thread_handle = ctypes.c_ulonglong(0)
                 status = ntdll.NtWow64CreateThreadEx64(
                     ctypes.byref(thread_handle),
@@ -1652,7 +1652,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         # Calculate offset to 64-bit code
         offset_to_64bit = len(shellcode) + 6  # 6 bytes for the next instructions
         shellcode.extend([0x68])  # push immediate
-        shellcode.extend(struct.pack('<I', offset_to_64bit))  # offset to 64-bit code
+        shellcode.extend(struct.pack("<I", offset_to_64bit))  # offset to 64-bit code
 
         shellcode.extend([0xCB])  # retf (far return)
 
@@ -1676,7 +1676,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
         # Push path size for allocation
         shellcode.extend([0x48, 0xC7, 0xC2])  # mov rdx, immediate (simplified)
-        shellcode.extend(struct.pack('<I', path_size))  # size value
+        shellcode.extend(struct.pack("<I", path_size))  # size value
 
         # For now, embed DLL path directly and use kernel32!LoadLibraryA
         # Get kernel32 base address (simplified)
@@ -1687,7 +1687,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         # Calculate return offset
         return_offset = len(shellcode) + 6
         shellcode.extend([0x68])  # push immediate
-        shellcode.extend(struct.pack('<I', return_offset))
+        shellcode.extend(struct.pack("<I", return_offset))
 
         shellcode.extend([0xCB])  # retf
 
@@ -1707,8 +1707,8 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         try:
             # Get 64-bit kernel32.dll handle
             # This is a simplified approach - real implementation would need proper resolution
-            kernel32_64 = ctypes.WinDLL('C:\\Windows\\System32\\kernel32.dll')
-            if hasattr(kernel32_64, '_handle'):
+            kernel32_64 = ctypes.WinDLL("C:\\Windows\\System32\\kernel32.dll")
+            if hasattr(kernel32_64, "_handle"):
                 handle = kernel32_64._handle
                 load_library_addr = KERNEL32.GetProcAddress(handle, b"LoadLibraryA")
                 return load_library_addr
@@ -1792,13 +1792,13 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             0x48, 0xB8,  # mov rax, immediate (LoadLibraryA address)
         ])
 
-        shellcode.extend(struct.pack('<Q', load_library_addr))
+        shellcode.extend(struct.pack("<Q", load_library_addr))
 
         shellcode.extend([
             0x48, 0xB9,  # mov rcx, immediate (DLL path address)
         ])
 
-        shellcode.extend(struct.pack('<Q', dll_addr))
+        shellcode.extend(struct.pack("<Q", dll_addr))
 
         shellcode.extend([
             0xFF, 0xD0,  # call rax (LoadLibraryA)
@@ -1829,12 +1829,12 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             Dictionary with verification results
         """
         result = {
-            'process_found': False,
-            'dll_loaded': False,
-            'dll_path': None,
-            'hooks_active': False,
-            'hook_details': [],
-            'modules': []
+            "process_found": False,
+            "dll_loaded": False,
+            "dll_path": None,
+            "hooks_active": False,
+            "hook_details": [],
+            "modules": []
         }
 
         if not WINDOWS_API_AVAILABLE:
@@ -1848,34 +1848,34 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 logger.error("Process not found: %s", target_name)
                 return result
 
-            result['process_found'] = True
+            result["process_found"] = True
 
             try:
                 # Enumerate loaded modules
                 modules = self._enumerate_modules(process_handle)
-                result['modules'] = modules
+                result["modules"] = modules
 
                 # Check if DLL is loaded
                 if dll_name:
                     for module in modules:
-                        if dll_name.lower() in module['name'].lower():
-                            result['dll_loaded'] = True
-                            result['dll_path'] = module['path']
-                            logger.info("Found injected DLL: %s", module['path'])
+                        if dll_name.lower() in module["name"].lower():
+                            result["dll_loaded"] = True
+                            result["dll_path"] = module["path"]
+                            logger.info("Found injected DLL: %s", module["path"])
                             break
                 else:
                     # Check for any non-system DLLs
                     for module in modules:
-                        if not self._is_system_dll(module['path']):
-                            result['dll_loaded'] = True
-                            result['dll_path'] = module['path']
-                            logger.info("Found injected DLL: %s", module['path'])
+                        if not self._is_system_dll(module["path"]):
+                            result["dll_loaded"] = True
+                            result["dll_path"] = module["path"]
+                            logger.info("Found injected DLL: %s", module["path"])
 
                 # Verify hooks if requested
-                if check_hooks and result['dll_loaded']:
-                    hook_info = self._verify_hooks(process_handle, result['dll_path'])
-                    result['hooks_active'] = hook_info['active']
-                    result['hook_details'] = hook_info['details']
+                if check_hooks and result["dll_loaded"]:
+                    hook_info = self._verify_hooks(process_handle, result["dll_path"])
+                    result["hooks_active"] = hook_info["active"]
+                    result["hook_details"] = hook_info["details"]
 
             finally:
                 KERNEL32.CloseHandle(process_handle)
@@ -1914,10 +1914,10 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 if KERNEL32.Module32First(snapshot, ctypes.byref(me32)):
                     while True:
                         modules.append({
-                            'name': me32.szModule.decode('utf-8', errors='ignore'),
-                            'path': me32.szExePath.decode('utf-8', errors='ignore'),
-                            'base': hex(ctypes.addressof(me32.modBaseAddr.contents) if me32.modBaseAddr else 0),
-                            'size': me32.modBaseSize
+                            "name": me32.szModule.decode("utf-8", errors="ignore"),
+                            "path": me32.szExePath.decode("utf-8", errors="ignore"),
+                            "base": hex(ctypes.addressof(me32.modBaseAddr.contents) if me32.modBaseAddr else 0),
+                            "size": me32.modBaseSize
                         })
 
                         # Get next module
@@ -1938,11 +1938,11 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             process_id = ctypes.c_ulong(0)
 
             # GetProcessId is available on Windows Vista+
-            if hasattr(KERNEL32, 'GetProcessId'):
+            if hasattr(KERNEL32, "GetProcessId"):
                 process_id.value = KERNEL32.GetProcessId(process_handle)
             else:
                 # Fallback: use NtQueryInformationProcess
-                ntdll = ctypes.WinDLL('ntdll.dll')
+                ntdll = ctypes.WinDLL("ntdll.dll")
 
                 # Use the globally defined PROCESS_BASIC_INFORMATION structure
 
@@ -1971,10 +1971,10 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
         dll_path_lower = dll_path.lower()
         system_paths = [
-            'c:\\windows\\system32',
-            'c:\\windows\\syswow64',
-            'c:\\windows\\winsxs',
-            'c:\\windows\\microsoft.net'
+            "c:\\windows\\system32",
+            "c:\\windows\\syswow64",
+            "c:\\windows\\winsxs",
+            "c:\\windows\\microsoft.net"
         ]
 
         return any(dll_path_lower.startswith(path) for path in system_paths)
@@ -1982,35 +1982,35 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
     def _verify_hooks(self, process_handle: int, dll_path: str) -> Dict[str, Any]:
         """Verify that hooks are active in the target process"""
         hook_info = {
-            'active': False,
-            'details': []
+            "active": False,
+            "details": []
         }
 
         try:
             # Check for common hook indicators
             # 1. Check if specific functions are hooked
             hook_targets = [
-                ('kernel32.dll', 'CreateFileW'),
-                ('advapi32.dll', 'RegOpenKeyExW'),
-                ('ws2_32.dll', 'connect'),
-                ('wininet.dll', 'InternetConnectW')
+                ("kernel32.dll", "CreateFileW"),
+                ("advapi32.dll", "RegOpenKeyExW"),
+                ("ws2_32.dll", "connect"),
+                ("wininet.dll", "InternetConnectW")
             ]
 
             for dll, func in hook_targets:
                 if self._is_function_hooked(process_handle, dll, func):
-                    hook_info['active'] = True
-                    hook_info['details'].append({
-                        'dll': dll,
-                        'function': func,
-                        'status': 'hooked'
+                    hook_info["active"] = True
+                    hook_info["details"].append({
+                        "dll": dll,
+                        "function": func,
+                        "status": "hooked"
                     })
 
             # 2. Check for inline hooks (JMP/CALL at function start)
             if dll_path and os.path.exists(dll_path):
                 inline_hooks = self._check_inline_hooks(process_handle)
                 if inline_hooks:
-                    hook_info['active'] = True
-                    hook_info['details'].extend(inline_hooks)
+                    hook_info["active"] = True
+                    hook_info["details"].extend(inline_hooks)
 
         except Exception as e:
             logger.error("Hook verification failed: %s", e)
@@ -2026,7 +2026,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             if not dll_handle:
                 return False
 
-            func_addr = KERNEL32.GetProcAddress(dll_handle, func_name.encode('utf-8'))
+            func_addr = KERNEL32.GetProcAddress(dll_handle, func_name.encode("utf-8"))
             if not func_addr:
                 return False
 
@@ -2122,7 +2122,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 # Get hook procedure address
                 # The DLL must export a function matching the hook type
                 hook_proc_name = self._get_hook_proc_name(hook_type)
-                hook_proc = KERNEL32.GetProcAddress(dll_handle, hook_proc_name.encode('utf-8'))
+                hook_proc = KERNEL32.GetProcAddress(dll_handle, hook_proc_name.encode("utf-8"))
 
                 if not hook_proc:
                     # Try generic hook procedure
@@ -2167,9 +2167,9 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         """Get main thread ID of target process"""
         try:
             # Get process ID first
-            for proc in psutil.process_iter(['pid', 'name']):
-                if proc.info['name'] == process_name:
-                    pid = proc.info['pid']
+            for proc in psutil.process_iter(["pid", "name"]):
+                if proc.info["name"] == process_name:
+                    pid = proc.info["pid"]
 
                     # Get main thread ID
                     # Create thread snapshot
@@ -2305,7 +2305,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
             try:
                 # Allocate memory for DLL path
-                dll_path_bytes = dll_path.encode('utf-8') + b'\x00'
+                dll_path_bytes = dll_path.encode("utf-8") + b"\x00"
                 path_size = len(dll_path_bytes)
 
                 remote_memory = KERNEL32.VirtualAllocEx(
@@ -2401,9 +2401,9 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         try:
             # Get process ID
             pid = 0
-            for proc in psutil.process_iter(['pid', 'name']):
-                if proc.info['name'] == process_name:
-                    pid = proc.info['pid']
+            for proc in psutil.process_iter(["pid", "name"]):
+                if proc.info["name"] == process_name:
+                    pid = proc.info["pid"]
                     break
 
             if not pid:
@@ -2424,9 +2424,9 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         try:
             # Get process ID
             pid = 0
-            for proc in psutil.process_iter(['pid', 'name']):
-                if proc.info['name'] == process_name:
-                    pid = proc.info['pid']
+            for proc in psutil.process_iter(["pid", "name"]):
+                if proc.info["name"] == process_name:
+                    pid = proc.info["pid"]
                     break
 
             if not pid:
@@ -2470,8 +2470,8 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
             # Alternative: Use undocumented NtAlertThread
             try:
-                ntdll = ctypes.WinDLL('ntdll.dll')
-                if hasattr(ntdll, 'NtAlertThread'):
+                ntdll = ctypes.WinDLL("ntdll.dll")
+                if hasattr(ntdll, "NtAlertThread"):
                     ntdll.NtAlertThread(thread_handle)
             except (OSError, AttributeError, Exception) as e:
                 self.logger.error("Error in adobe_injector: %s", e)
@@ -2546,7 +2546,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
             try:
                 # Allocate memory for the DLL and reflective loader
-                image_size = getattr(pe.OPTIONAL_HEADER, 'SizeOfImage', 0)
+                image_size = getattr(pe.OPTIONAL_HEADER, "SizeOfImage", 0)
                 if not image_size:
                     logger.error("Failed to get SizeOfImage from PE header")
                     return False
@@ -3104,7 +3104,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         """
         try:
             # Read DLL file into memory
-            with open(dll_path, 'rb') as f:
+            with open(dll_path, "rb") as f:
                 dll_data = f.read()
 
             # Inject from memory
@@ -3152,7 +3152,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 # Find target DLL in list
                 target_module = None
                 for module in module_list:
-                    if dll_name.lower() in module['name'].lower():
+                    if dll_name.lower() in module["name"].lower():
                         target_module = module
                         break
 
@@ -3162,9 +3162,9 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
                 # Unlink from all three lists
                 success = True
-                success &= self._unlink_from_list(process_handle, target_module, 'InLoadOrderLinks')
-                success &= self._unlink_from_list(process_handle, target_module, 'InMemoryOrderLinks')
-                success &= self._unlink_from_list(process_handle, target_module, 'InInitializationOrderLinks')
+                success &= self._unlink_from_list(process_handle, target_module, "InLoadOrderLinks")
+                success &= self._unlink_from_list(process_handle, target_module, "InMemoryOrderLinks")
+                success &= self._unlink_from_list(process_handle, target_module, "InInitializationOrderLinks")
 
                 if success:
                     logger.info("Successfully unlinked %s from PEB", dll_name)
@@ -3184,7 +3184,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         """Get PEB address for a process"""
         try:
             # Use NtQueryInformationProcess
-            ntdll = ctypes.WinDLL('ntdll.dll')
+            ntdll = ctypes.WinDLL("ntdll.dll")
 
             # Use the globally defined PROCESS_BASIC_INFORMATION structure
 
@@ -3345,14 +3345,14 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                     ctypes.byref(bytes_read)
                 )
 
-                module_name = name_buffer.raw[:name_length.value].decode('utf-16-le', errors='ignore')
+                module_name = name_buffer.raw[:name_length.value].decode("utf-16-le", errors="ignore")
             else:
                 module_name = "Unknown"
 
             return {
-                'entry_addr': entry_addr,
-                'base': dll_base.value,
-                'name': module_name
+                "entry_addr": entry_addr,
+                "base": dll_base.value,
+                "name": module_name
             }
 
         except Exception as e:
@@ -3365,16 +3365,16 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         try:
             # List offsets in LDR_DATA_TABLE_ENTRY
             list_offsets = {
-                'InLoadOrderLinks': 0x00,
-                'InMemoryOrderLinks': 0x10 if ctypes.sizeof(ctypes.c_void_p) == 8 else 0x08,
-                'InInitializationOrderLinks': 0x20 if ctypes.sizeof(ctypes.c_void_p) == 8 else 0x10
+                "InLoadOrderLinks": 0x00,
+                "InMemoryOrderLinks": 0x10 if ctypes.sizeof(ctypes.c_void_p) == 8 else 0x08,
+                "InInitializationOrderLinks": 0x20 if ctypes.sizeof(ctypes.c_void_p) == 8 else 0x10
             }
 
             if list_name not in list_offsets:
                 return False
 
             list_offset = list_offsets[list_name]
-            entry_addr = module['entry_addr']
+            entry_addr = module["entry_addr"]
 
             # Read Flink and Blink
             flink = ctypes.c_void_p(0)
@@ -3529,10 +3529,10 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             Dictionary with injection statistics
         """
         return {
-            'injected_processes': list(self.injected),
-            'running_adobe_processes': self.get_running_adobe_processes(),
-            'dependencies_available': DEPENDENCIES_AVAILABLE,
-            'monitoring_active': self.running
+            "injected_processes": list(self.injected),
+            "running_adobe_processes": self.get_running_adobe_processes(),
+            "dependencies_available": DEPENDENCIES_AVAILABLE,
+            "monitoring_active": self.running
         }
 
 

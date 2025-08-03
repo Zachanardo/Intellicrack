@@ -478,7 +478,7 @@ class ToolsTab(BaseTab):
             import psutil
 
             processes = []
-            for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
+            for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
                 try:
                     proc_info = proc.info
                     processes.append(f"PID: {proc_info['pid']:>6} | "
@@ -572,14 +572,14 @@ class ToolsTab(BaseTab):
             return
 
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 data = f.read(1024)  # Read first 1KB
 
             hex_lines = []
             for i in range(0, len(data), 16):
                 chunk = data[i:i+16]
-                hex_part = ' '.join(f'{b:02x}' for b in chunk)
-                ascii_part = ''.join(chr(b) if 32 <= b <= 126 else '.' for b in chunk)
+                hex_part = " ".join(f"{b:02x}" for b in chunk)
+                ascii_part = "".join(chr(b) if 32 <= b <= 126 else "." for b in chunk)
                 hex_lines.append(f"{i:08x}: {hex_part:<48} |{ascii_part}|")
 
             self.tool_output.append("Hex Dump (first 1KB):")
@@ -599,12 +599,12 @@ class ToolsTab(BaseTab):
         try:
             import re
 
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 data = f.read()
 
             # Extract ASCII strings (minimum length 4)
-            ascii_strings = re.findall(b'[!-~]{4,}', data)
-            unicode_strings = re.findall(b'(?:[!-~]\x00){4,}', data)
+            ascii_strings = re.findall(b"[!-~]{4,}", data)
+            unicode_strings = re.findall(b"(?:[!-~]\x00){4,}", data)
 
             self.tool_output.append("Extracted Strings:")
             self.tool_output.append("-" * 40)
@@ -612,7 +612,7 @@ class ToolsTab(BaseTab):
             self.tool_output.append("ASCII Strings:")
             for s in ascii_strings[:100]:  # Limit to first 100
                 try:
-                    self.tool_output.append(s.decode('ascii'))
+                    self.tool_output.append(s.decode("ascii"))
                 except:
                     continue
 
@@ -620,7 +620,7 @@ class ToolsTab(BaseTab):
                 self.tool_output.append("\nUnicode Strings:")
                 for s in unicode_strings[:50]:  # Limit to first 50
                     try:
-                        decoded = s.decode('utf-16le')
+                        decoded = s.decode("utf-16le")
                         self.tool_output.append(decoded)
                     except:
                         continue
@@ -695,7 +695,7 @@ class ToolsTab(BaseTab):
         try:
             # Try using objdump first
             result = subprocess.run(
-                ['objdump', '-d', binary_path],
+                ["objdump", "-d", binary_path],
                 capture_output=True,
                 text=True,
                 timeout=30
@@ -704,8 +704,8 @@ class ToolsTab(BaseTab):
             if result.returncode == 0:
                 self.tool_output.append("Disassembly Output:")
                 self.tool_output.append("-" * 40)
-                lines = result.stdout.split('\n')[:200]  # Limit output
-                self.tool_output.append('\n'.join(lines))
+                lines = result.stdout.split("\n")[:200]  # Limit output
+                self.tool_output.append("\n".join(lines))
                 self.log_message("Binary disassembled successfully")
             else:
                 self.output_console.append(f"Disassembly failed: {result.stderr}")
@@ -728,7 +728,7 @@ class ToolsTab(BaseTab):
             import math
             from collections import Counter
 
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             # Calculate entropy
@@ -789,14 +789,14 @@ class ToolsTab(BaseTab):
             self.tool_output.append("Import Analysis:")
             self.tool_output.append("-" * 40)
 
-            if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                    dll_name = entry.dll.decode('utf-8')
+                    dll_name = entry.dll.decode("utf-8")
                     self.tool_output.append(f"\nDLL: {dll_name}")
 
                     for imp in entry.imports:
                         if imp.name:
-                            func_name = imp.name.decode('utf-8')
+                            func_name = imp.name.decode("utf-8")
                             self.tool_output.append(f"  - {func_name}")
                         else:
                             self.tool_output.append(f"  - Ordinal: {imp.ordinal}")
@@ -825,7 +825,7 @@ class ToolsTab(BaseTab):
             self.tool_output.append("Export Analysis:")
             self.tool_output.append("-" * 40)
 
-            if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
+            if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
                 export_dir = pe.DIRECTORY_ENTRY_EXPORT
                 self.tool_output.append(f"Export DLL Name: {export_dir.name.decode('utf-8')}")
                 self.tool_output.append(f"Number of Functions: {export_dir.struct.NumberOfFunctions}")
@@ -834,7 +834,7 @@ class ToolsTab(BaseTab):
 
                 for exp in export_dir.symbols:
                     if exp.name:
-                        func_name = exp.name.decode('utf-8')
+                        func_name = exp.name.decode("utf-8")
                         self.tool_output.append(f"  {exp.ordinal}: {func_name} (RVA: 0x{exp.address:08x})")
                     else:
                         self.tool_output.append(f"  {exp.ordinal}: <no name> (RVA: 0x{exp.address:08x})")
@@ -866,7 +866,7 @@ class ToolsTab(BaseTab):
             self.tool_output.append("-" * 60)
 
             for section in pe.sections:
-                name = section.Name.decode('utf-8').rstrip('\x00')
+                name = section.Name.decode("utf-8").rstrip("\x00")
                 virt_addr = f"0x{section.VirtualAddress:08x}"
                 virt_size = f"0x{section.Misc_VirtualSize:08x}"
                 raw_addr = f"0x{section.PointerToRawData:08x}"
@@ -892,7 +892,7 @@ class ToolsTab(BaseTab):
         try:
             # Try using nm tool
             result = subprocess.run(
-                ['nm', binary_path],
+                ["nm", binary_path],
                 capture_output=True,
                 text=True,
                 timeout=30
@@ -901,7 +901,7 @@ class ToolsTab(BaseTab):
             if result.returncode == 0:
                 self.tool_output.append("Symbol Analysis:")
                 self.tool_output.append("-" * 40)
-                lines = result.stdout.split('\n')[:200]  # Limit output
+                lines = result.stdout.split("\n")[:200]  # Limit output
                 for line in lines:
                     if line.strip():
                         self.tool_output.append(line)
@@ -926,7 +926,7 @@ class ToolsTab(BaseTab):
         try:
             import hashlib
 
-            data_bytes = data.encode('utf-8')
+            data_bytes = data.encode("utf-8")
 
             if algorithm == "md5":
                 hash_obj = hashlib.md5(data_bytes)
@@ -953,8 +953,8 @@ class ToolsTab(BaseTab):
         try:
             import base64
 
-            data_bytes = data.encode('utf-8')
-            encoded = base64.b64encode(data_bytes).decode('utf-8')
+            data_bytes = data.encode("utf-8")
+            encoded = base64.b64encode(data_bytes).decode("utf-8")
 
             self.tool_output.append(f"Base64 Encoded: {encoded}")
             self.log_message("Base64 encoding completed")
@@ -973,7 +973,7 @@ class ToolsTab(BaseTab):
             import base64
 
             decoded_bytes = base64.b64decode(data)
-            decoded = decoded_bytes.decode('utf-8')
+            decoded = decoded_bytes.decode("utf-8")
 
             self.tool_output.append(f"Base64 Decoded: {decoded}")
             self.log_message("Base64 decoding completed")
@@ -990,7 +990,7 @@ class ToolsTab(BaseTab):
 
         if os.path.exists(plugins_dir):
             for file in os.listdir(plugins_dir):
-                if file.endswith('.py') and not file.startswith('__'):
+                if file.endswith(".py") and not file.startswith("__"):
                     plugin_name = file[:-3]  # Remove .py extension
                     item = QListWidgetItem(plugin_name)
 
@@ -1012,14 +1012,14 @@ class ToolsTab(BaseTab):
             self.output_console.append("Error: No plugin selected")
             return
 
-        plugin_name = current_item.text().split(' ')[0]  # Remove status text
+        plugin_name = current_item.text().split(" ")[0]  # Remove status text
 
         try:
             # Simulate plugin loading
             self.loaded_plugins[plugin_name] = {
-                'name': plugin_name,
-                'status': 'loaded',
-                'description': f'Plugin: {plugin_name}'
+                "name": plugin_name,
+                "status": "loaded",
+                "description": f"Plugin: {plugin_name}"
             }
 
             # Update plugin info
@@ -1043,7 +1043,7 @@ class ToolsTab(BaseTab):
             self.output_console.append("Error: No plugin selected")
             return
 
-        plugin_name = current_item.text().split(' ')[0]  # Remove status text
+        plugin_name = current_item.text().split(" ")[0]  # Remove status text
 
         if plugin_name in self.loaded_plugins:
             del self.loaded_plugins[plugin_name]
@@ -1062,7 +1062,7 @@ class ToolsTab(BaseTab):
             self.output_console.append("Error: No plugin selected")
             return
 
-        plugin_name = current_item.text().split(' ')[0]  # Remove status text
+        plugin_name = current_item.text().split(" ")[0]  # Remove status text
 
         if plugin_name in self.loaded_plugins:
             self.unload_selected_plugin()
@@ -1121,7 +1121,7 @@ def get_plugin():
             plugin_file = os.path.join(plugins_dir, f"{plugin_name.lower()}_plugin.py")
 
             try:
-                with open(plugin_file, 'w') as f:
+                with open(plugin_file, "w") as f:
                     f.write(plugin_template)
 
                 self.populate_plugin_list()
@@ -1138,7 +1138,7 @@ def get_plugin():
             self.output_console.append("Error: No plugin selected")
             return
 
-        plugin_name = current_item.text().split(' ')[0]  # Remove status text
+        plugin_name = current_item.text().split(" ")[0]  # Remove status text
 
         # Open plugin file in default editor
         plugins_dir = os.path.join(os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules")
@@ -1150,9 +1150,9 @@ def get_plugin():
                 import subprocess
 
                 if platform.system() == "Windows":
-                    subprocess.run(['notepad', plugin_file])
+                    subprocess.run(["notepad", plugin_file])
                 else:
-                    subprocess.run(['xdg-open', plugin_file])
+                    subprocess.run(["xdg-open", plugin_file])
 
                 self.log_message(f"Opened plugin '{plugin_name}' for editing")
 
@@ -1301,7 +1301,7 @@ def get_plugin():
 
     def log_message(self, message, level="info"):
         """Log message to console or status"""
-        if hasattr(self.shared_context, 'log_message'):
+        if hasattr(self.shared_context, "log_message"):
             self.shared_context.log_message(message, level)
         else:
             print(f"[{level.upper()}] {message}")

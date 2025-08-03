@@ -68,9 +68,9 @@ def create_popen_safely(cmd: List[str], **kwargs) -> subprocess.Popen:
         Popen process object
     """
     defaults = {
-        'stdout': subprocess.PIPE,
-        'stderr': subprocess.PIPE,
-        'text': True
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE,
+        "text": True
     }
     defaults.update(kwargs)
 
@@ -103,7 +103,7 @@ def create_suspended_process_with_context(create_func, get_context_func, target_
             return {"success": False, "error": error_msg}
 
         # Get thread context
-        context = get_context_func(process_info['thread_handle'])
+        context = get_context_func(process_info["thread_handle"])
         if not context:
             error_msg = "Failed to get thread context"
             logger_instance.error(error_msg)

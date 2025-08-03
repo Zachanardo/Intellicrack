@@ -45,11 +45,11 @@ class ComprehensiveR2Integration:
         self.ui_manager = None
         self.integrated_apps = []
         self.integration_status = {
-            'ui_manager': False,
-            'main_app': False,
-            'menu_integration': False,
-            'signal_connections': False,
-            'error_handling': False
+            "ui_manager": False,
+            "main_app": False,
+            "menu_integration": False,
+            "signal_connections": False,
+            "error_handling": False
         }
 
     def integrate_with_application(self, main_app) -> bool:
@@ -96,7 +96,7 @@ class ComprehensiveR2Integration:
         """Detect the best integration method based on application type"""
         try:
             # Check for IntellicrackApp class
-            if hasattr(main_app, '__class__') and 'IntellicrackApp' in str(type(main_app)):
+            if hasattr(main_app, "__class__") and "IntellicrackApp" in str(type(main_app)):
                 return "intellicrack_app"
 
             # Check for QMainWindow
@@ -104,7 +104,7 @@ class ComprehensiveR2Integration:
                 return "main_window"
 
             # Check for tab widget
-            if hasattr(main_app, 'tab_widget') and main_app.tab_widget:
+            if hasattr(main_app, "tab_widget") and main_app.tab_widget:
                 return "tab_widget"
 
             # Check for generic widget
@@ -128,7 +128,7 @@ class ComprehensiveR2Integration:
             if not self.ui_manager:
                 return False
 
-            self.integration_status['ui_manager'] = True
+            self.integration_status["ui_manager"] = True
 
             # Add specific IntellicrackApp integrations
             self._integrate_intellicrack_specific_features(main_app)
@@ -139,7 +139,7 @@ class ComprehensiveR2Integration:
             # Setup signal connections
             self._setup_intellicrack_signals(main_app)
 
-            self.integration_status['main_app'] = True
+            self.integration_status["main_app"] = True
             return True
 
         except Exception as e:
@@ -156,12 +156,12 @@ class ComprehensiveR2Integration:
             if not self.ui_manager.integrate_with_application(main_app):
                 return False
 
-            self.integration_status['ui_manager'] = True
+            self.integration_status["ui_manager"] = True
 
             # Setup main window specific features
             self._setup_main_window_features(main_app)
 
-            self.integration_status['main_app'] = True
+            self.integration_status["main_app"] = True
             return True
 
         except Exception as e:
@@ -189,8 +189,8 @@ class ComprehensiveR2Integration:
             self.ui_manager = R2UIManager(main_app)
             main_app.r2_ui_manager = self.ui_manager
 
-            self.integration_status['ui_manager'] = True
-            self.integration_status['main_app'] = True
+            self.integration_status["ui_manager"] = True
+            self.integration_status["main_app"] = True
             return True
 
         except Exception as e:
@@ -203,11 +203,11 @@ class ComprehensiveR2Integration:
             self.logger.info("Integrating with generic widget application")
 
             # Create a tab widget if it doesn't exist
-            if not hasattr(main_app, 'tab_widget'):
+            if not hasattr(main_app, "tab_widget"):
                 main_app.tab_widget = QTabWidget()
 
                 # Try to add to layout if it exists
-                if hasattr(main_app, 'layout') and main_app.layout():
+                if hasattr(main_app, "layout") and main_app.layout():
                     main_app.layout().addWidget(main_app.tab_widget)
 
             # Use tab widget integration method
@@ -226,10 +226,10 @@ class ComprehensiveR2Integration:
             self.ui_manager = R2UIManager(main_app)
 
             # Store reference in main app if possible
-            if hasattr(main_app, '__dict__'):
+            if hasattr(main_app, "__dict__"):
                 main_app.r2_ui_manager = self.ui_manager
 
-            self.integration_status['ui_manager'] = True
+            self.integration_status["ui_manager"] = True
 
             # Try to add some basic functionality
             self._add_fallback_functionality(main_app)
@@ -244,18 +244,18 @@ class ComprehensiveR2Integration:
         """Add IntellicrackApp specific integrations"""
         try:
             # Connect to existing signals if they exist
-            if hasattr(main_app, 'update_output'):
+            if hasattr(main_app, "update_output"):
                 self.ui_manager.status_updated.connect(
                     lambda msg: main_app.update_output.emit(f"[R2] {msg}")
                 )
 
             # Add menu items to existing menu
-            if hasattr(main_app, 'menuBar') and main_app.menuBar():
+            if hasattr(main_app, "menuBar") and main_app.menuBar():
                 self._add_radare2_menu_items(main_app)
-                self.integration_status['menu_integration'] = True
+                self.integration_status["menu_integration"] = True
 
             # Connect binary path updates
-            if hasattr(main_app, 'binary_path'):
+            if hasattr(main_app, "binary_path"):
                 if main_app.binary_path:
                     self.ui_manager.set_binary_path(main_app.binary_path)
 
@@ -269,11 +269,11 @@ class ComprehensiveR2Integration:
         try:
             # Create a method to update binary path
             def update_binary_path():
-                if hasattr(main_app, 'binary_path') and main_app.binary_path:
+                if hasattr(main_app, "binary_path") and main_app.binary_path:
                     self.ui_manager.set_binary_path(main_app.binary_path)
 
             # Connect to binary path changes if possible
-            if hasattr(main_app, 'binary_path_changed'):
+            if hasattr(main_app, "binary_path_changed"):
                 main_app.binary_path_changed.connect(update_binary_path)
 
             # Initial sync
@@ -288,16 +288,16 @@ class ComprehensiveR2Integration:
         """Setup signal connections for IntellicrackApp"""
         try:
             # Connect analysis completion to main app
-            if hasattr(main_app, 'update_analysis_results'):
+            if hasattr(main_app, "update_analysis_results"):
                 self.ui_manager.analysis_completed.connect(
                     lambda results: main_app.update_analysis_results.emit(str(results))
                 )
 
             # Connect progress updates
-            if hasattr(main_app, 'update_progress'):
+            if hasattr(main_app, "update_progress"):
                 self.ui_manager.analysis_progress.connect(main_app.update_progress.emit)
 
-            self.integration_status['signal_connections'] = True
+            self.integration_status["signal_connections"] = True
             self.logger.info("Signal connections established")
 
         except Exception as e:
@@ -307,11 +307,11 @@ class ComprehensiveR2Integration:
         """Setup features specific to QMainWindow"""
         try:
             # Add toolbar items if toolbar exists
-            if hasattr(main_app, 'addToolBar'):
+            if hasattr(main_app, "addToolBar"):
                 self._add_radare2_toolbar(main_app)
 
             # Add status bar integration
-            if hasattr(main_app, 'statusBar'):
+            if hasattr(main_app, "statusBar"):
                 self._integrate_status_bar(main_app)
 
             self.logger.info("Main window features setup completed")
@@ -396,7 +396,7 @@ class ComprehensiveR2Integration:
     def _integrate_status_bar(self, main_app):
         """Integrate with application status bar"""
         try:
-            if hasattr(main_app, 'statusBar'):
+            if hasattr(main_app, "statusBar"):
                 status_bar = main_app.statusBar()
 
                 # Connect status updates
@@ -413,7 +413,7 @@ class ComprehensiveR2Integration:
         """Add basic functionality for fallback integration"""
         try:
             # Try to add at least a way to start analysis
-            if hasattr(main_app, '__dict__'):
+            if hasattr(main_app, "__dict__"):
                 # Add start_radare2_analysis method
                 def start_r2_analysis(analysis_type="comprehensive"):
                     if self.ui_manager:
@@ -505,9 +505,9 @@ def cleanup_integration():
 
 
 __all__ = [
-    'ComprehensiveR2Integration',
-    'integrate_radare2_comprehensive',
-    'get_comprehensive_integration',
-    'get_integration_status',
-    'cleanup_integration'
+    "ComprehensiveR2Integration",
+    "integrate_radare2_comprehensive",
+    "get_comprehensive_integration",
+    "get_integration_status",
+    "cleanup_integration"
 ]

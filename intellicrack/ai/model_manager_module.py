@@ -65,7 +65,7 @@ except ImportError:
 try:
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
     import os
-    os.environ['MKL_THREADING_LAYER'] = 'GNU'
+    os.environ["MKL_THREADING_LAYER"] = "GNU"
 
     import tensorflow as tf
     from tensorflow import keras
@@ -126,8 +126,8 @@ class PyTorchBackend(ModelBackend):
             raise ImportError("PyTorch not available")
 
         try:
-            model = torch.load(model_path, map_location='cpu')
-            if hasattr(model, 'eval'):
+            model = torch.load(model_path, map_location="cpu")
+            if hasattr(model, "eval"):
                 model.eval()
             return model
         except (OSError, ValueError, RuntimeError) as e:
@@ -150,7 +150,7 @@ class PyTorchBackend(ModelBackend):
             with torch.no_grad():
                 output = model(input_tensor)
 
-            return output.numpy() if hasattr(output, 'numpy') else output
+            return output.numpy() if hasattr(output, "numpy") else output
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("PyTorch prediction failed: %s", e)
             raise
@@ -158,14 +158,14 @@ class PyTorchBackend(ModelBackend):
     def get_model_info(self, model: Any) -> Dict[str, Any]:
         """Get PyTorch model information."""
         info = {
-            'backend': 'pytorch',
-            'type': type(model).__name__,
-            'parameters': 0
+            "backend": "pytorch",
+            "type": type(model).__name__,
+            "parameters": 0
         }
 
-        if hasattr(model, 'parameters'):
+        if hasattr(model, "parameters"):
             try:
-                info['parameters'] = sum(_p.numel()
+                info["parameters"] = sum(_p.numel()
                                          for _p in model.parameters())
             except (AttributeError, RuntimeError) as e:
                 logger.debug("Failed to count PyTorch model parameters: %s", e)
@@ -207,14 +207,14 @@ class TensorFlowBackend(ModelBackend):
     def get_model_info(self, model: Any) -> Dict[str, Any]:
         """Get TensorFlow model information."""
         info = {
-            'backend': 'tensorflow',
-            'type': type(model).__name__,
-            'parameters': 0
+            "backend": "tensorflow",
+            "type": type(model).__name__,
+            "parameters": 0
         }
 
-        if hasattr(model, 'count_params'):
+        if hasattr(model, "count_params"):
             try:
-                info['parameters'] = model.count_params()
+                info["parameters"] = model.count_params()
             except (AttributeError, RuntimeError) as e:
                 logger.debug(
                     "Failed to count TensorFlow model parameters: %s", e)
@@ -264,25 +264,25 @@ class ONNXBackend(ModelBackend):
     def get_model_info(self, model: Any) -> Dict[str, Any]:
         """Get ONNX model information."""
         info = {
-            'backend': 'onnx',
-            'type': 'ONNX Runtime Session',
-            'inputs': [],
-            'outputs': []
+            "backend": "onnx",
+            "type": "ONNX Runtime Session",
+            "inputs": [],
+            "outputs": []
         }
 
         try:
             for _input_meta in model.get_inputs():
-                info['inputs'].append({
-                    'name': _input_meta.name,
-                    'shape': _input_meta.shape,
-                    'type': _input_meta.type
+                info["inputs"].append({
+                    "name": _input_meta.name,
+                    "shape": _input_meta.shape,
+                    "type": _input_meta.type
                 })
 
             for _output_meta in model.get_outputs():
-                info['outputs'].append({
-                    'name': _output_meta.name,
-                    'shape': _output_meta.shape,
-                    'type': _output_meta.type
+                info["outputs"].append({
+                    "name": _output_meta.name,
+                    "shape": _output_meta.shape,
+                    "type": _output_meta.type
                 })
         except (AttributeError, RuntimeError) as e:
             logger.debug("Failed to get ONNX model input/output info: %s", e)
@@ -312,7 +312,7 @@ class SklearnBackend(ModelBackend):
                 if not isinstance(input_data, np.ndarray):
                     input_data = np.array(input_data)
 
-            if hasattr(model, 'predict_proba'):
+            if hasattr(model, "predict_proba"):
                 return model.predict_proba(input_data)
             else:
                 return model.predict(input_data)
@@ -323,15 +323,15 @@ class SklearnBackend(ModelBackend):
     def get_model_info(self, model: Any) -> Dict[str, Any]:
         """Get scikit-learn model information."""
         info = {
-            'backend': 'sklearn',
-            'type': type(model).__name__
+            "backend": "sklearn",
+            "type": type(model).__name__
         }
 
-        if hasattr(model, 'feature_importances_'):
-            info['has_feature_importance'] = True
+        if hasattr(model, "feature_importances_"):
+            info["has_feature_importance"] = True
 
-        if hasattr(model, 'classes_'):
-            info['classes'] = len(model.classes_)
+        if hasattr(model, "classes_"):
+            info["classes"] = len(model.classes_)
 
         return info
 
@@ -349,7 +349,7 @@ class ModelCache:
         """
         self.logger = logging.getLogger(__name__ + ".ModelCache")
         self.cache_dir = cache_dir or os.path.join(
-            os.path.expanduser('~'), '.intellicrack', 'model_cache')
+            os.path.expanduser("~"), ".intellicrack", "model_cache")
         self.max_cache_size = max_cache_size
         self.cache = {}
         self.access_times = {}
@@ -414,10 +414,10 @@ class ModelCache:
         """Get cache statistics."""
         with self.lock:
             return {
-                'size': len(self.cache),
-                'max_size': self.max_cache_size,
-                'cache_dir': self.cache_dir,
-                'cached_models': list(self.cache.keys())
+                "size": len(self.cache),
+                "max_size": self.max_cache_size,
+                "cache_dir": self.cache_dir,
+                "cached_models": list(self.cache.keys())
             }
 
 
@@ -433,7 +433,7 @@ class ModelManager:
             cache_size: Maximum number of models to keep in cache
         """
         self.models_dir = models_dir or os.path.join(
-            os.path.dirname(__file__), '..', 'models')
+            os.path.dirname(__file__), "..", "models")
         self.cache = ModelCache(max_cache_size=cache_size)
         self.backends = self._initialize_backends()
         self.loaded_models = {}
@@ -458,31 +458,31 @@ class ModelManager:
         backends = {}
 
         if HAS_TORCH:
-            backends['pytorch'] = PyTorchBackend()
-            backends['pth'] = PyTorchBackend()
+            backends["pytorch"] = PyTorchBackend()
+            backends["pth"] = PyTorchBackend()
 
         if HAS_TENSORFLOW:
-            backends['tensorflow'] = TensorFlowBackend()
-            backends['h5'] = TensorFlowBackend()
-            backends['savedmodel'] = TensorFlowBackend()
+            backends["tensorflow"] = TensorFlowBackend()
+            backends["h5"] = TensorFlowBackend()
+            backends["savedmodel"] = TensorFlowBackend()
 
         if HAS_ONNX:
-            backends['onnx'] = ONNXBackend()
+            backends["onnx"] = ONNXBackend()
 
         if HAS_JOBLIB:
-            backends['sklearn'] = SklearnBackend()
-            backends['joblib'] = SklearnBackend()
-            backends['pkl'] = SklearnBackend()
+            backends["sklearn"] = SklearnBackend()
+            backends["joblib"] = SklearnBackend()
+            backends["pkl"] = SklearnBackend()
 
         return backends
 
     def _load_model_metadata(self):
         """Load model metadata from disk."""
-        metadata_file = os.path.join(self.models_dir, 'model_metadata.json')
+        metadata_file = os.path.join(self.models_dir, "model_metadata.json")
 
         if os.path.exists(metadata_file):
             try:
-                with open(metadata_file, 'r', encoding='utf-8') as f:
+                with open(metadata_file, "r", encoding="utf-8") as f:
                     self.model_metadata = json.load(f)
             except (OSError, ValueError, RuntimeError) as e:
                 logger.warning("Failed to load model metadata: %s", e)
@@ -490,33 +490,33 @@ class ModelManager:
 
     def _save_model_metadata(self):
         """Save model metadata to disk."""
-        metadata_file = os.path.join(self.models_dir, 'model_metadata.json')
+        metadata_file = os.path.join(self.models_dir, "model_metadata.json")
 
         try:
-            with open(metadata_file, 'w', encoding='utf-8') as f:
+            with open(metadata_file, "w", encoding="utf-8") as f:
                 json.dump(self.model_metadata, f, indent=2)
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to save model metadata: %s", e)
 
     def _detect_model_type(self, model_path: str) -> str:
         """Detect the model type from file extension or content."""
-        file_ext = Path(model_path).suffix.lower().lstrip('.')
+        file_ext = Path(model_path).suffix.lower().lstrip(".")
 
         # Direct extension mapping
         if file_ext in self.backends:
             return file_ext
 
         # Special cases
-        if file_ext == 'json' and os.path.exists(model_path.replace('.json', '.bin')):
-            return 'tensorflow'
+        if file_ext == "json" and os.path.exists(model_path.replace(".json", ".bin")):
+            return "tensorflow"
 
         if os.path.isdir(model_path):
             # Check for TensorFlow SavedModel format
-            if os.path.exists(os.path.join(model_path, 'saved_model.pb')):
-                return 'savedmodel'
+            if os.path.exists(os.path.join(model_path, "saved_model.pb")):
+                return "savedmodel"
 
         # Default fallback
-        return 'sklearn'
+        return "sklearn"
 
     def register_model(self, model_id: str, model_path: str,
                        model_type: str = None, metadata: Dict[str, Any] = None):
@@ -532,10 +532,10 @@ class ModelManager:
                 raise ValueError(f"Unsupported model type: {model_type}")
 
             self.model_metadata[model_id] = {
-                'path': model_path,
-                'type': model_type,
-                'registered': datetime.now().isoformat(),
-                'metadata': metadata or {}
+                "path": model_path,
+                "type": model_type,
+                "registered": datetime.now().isoformat(),
+                "metadata": metadata or {}
             }
 
             self._save_model_metadata()
@@ -552,8 +552,8 @@ class ModelManager:
                 return self.loaded_models[model_id]
 
             model_info = self.model_metadata[model_id]
-            model_path = model_info['path']
-            model_type = model_info['type']
+            model_path = model_info["path"]
+            model_type = model_info["type"]
 
             # Check cache first
             cached_model = self.cache.get(model_path)
@@ -596,7 +596,7 @@ class ModelManager:
         """Make predictions using a model."""
         model = self.load_model(model_id)
         model_info = self.model_metadata[model_id]
-        model_type = model_info['type']
+        model_type = model_info["type"]
 
         backend = self.backends[model_type]
         return backend.predict(model, input_data)
@@ -605,7 +605,7 @@ class ModelManager:
         """Make batch predictions with GPU optimization."""
         model = self.load_model(model_id)
         model_info = self.model_metadata[model_id]
-        model_type = model_info['type']
+        model_type = model_info["type"]
 
         # Apply GPU optimization for batch processing if available
         if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader and len(batch_data) > 1:
@@ -641,14 +641,14 @@ class ModelManager:
         # Add runtime info if model is loaded
         if model_id in self.loaded_models:
             model = self.loaded_models[model_id]
-            model_type = model_info['type']
+            model_type = model_info["type"]
             backend = self.backends[model_type]
 
             runtime_info = backend.get_model_info(model)
             model_info.update(runtime_info)
-            model_info['loaded'] = True
+            model_info["loaded"] = True
         else:
-            model_info['loaded'] = False
+            model_info["loaded"] = False
 
         return model_info
 
@@ -691,11 +691,11 @@ class ModelManager:
         """Get manager statistics."""
         with self.lock:
             return {
-                'registered_models': len(self.model_metadata),
-                'loaded_models': len(self.loaded_models),
-                'available_backends': self.get_available_backends(),
-                'models_directory': self.models_dir,
-                'cache_info': self.get_cache_info()
+                "registered_models": len(self.model_metadata),
+                "loaded_models": len(self.loaded_models),
+                "available_backends": self.get_available_backends(),
+                "models_directory": self.models_dir,
+                "cache_info": self.get_cache_info()
             }
 
     def import_local_model(self, file_path: str) -> Dict[str, Any]:
@@ -711,10 +711,10 @@ class ModelManager:
             self.register_model(model_id, file_path, model_type)
 
             return {
-                'model_id': model_id,
-                'local_path': file_path,
-                'name': model_name,
-                'type': model_type
+                "model_id": model_id,
+                "local_path": file_path,
+                "name": model_name,
+                "type": model_type
             }
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to import local model: %s", e)
@@ -722,18 +722,18 @@ class ModelManager:
 
     def get_available_repositories(self) -> List[str]:
         """Get list of available model repositories."""
-        return ['huggingface', 'local', 'custom']
+        return ["huggingface", "local", "custom"]
 
     def get_available_models(self, repository: str = None) -> List[Dict[str, Any]]:
         """Get list of available models."""
         models = []
         for model_id, metadata in self.model_metadata.items():
             model_info = {
-                'id': model_id,
-                'name': model_id,
-                'type': metadata.get('type', 'unknown'),
-                'path': metadata.get('path', ''),
-                'repository': repository or 'local'
+                "id": model_id,
+                "name": model_id,
+                "type": metadata.get("type", "unknown"),
+                "path": metadata.get("path", ""),
+                "repository": repository or "local"
             }
             models.append(model_info)
         return models
@@ -742,25 +742,25 @@ class ModelManager:
         """Get the file path for a model."""
         if model_id in self.model_metadata:
             model_info = self.model_metadata[model_id]
-            path = model_info.get('path', '')
+            path = model_info.get("path", "")
 
             # Handle different model types
-            if model_info.get('type') == 'api':
+            if model_info.get("type") == "api":
                 # API models return their API endpoint
                 return path
-            elif model_info.get('type') == 'repository':
+            elif model_info.get("type") == "repository":
                 # Repository models may need path resolution
-                repo_name = model_info.get('repository', '')
-                model_name = model_info.get('model_name', model_id)
+                repo_name = model_info.get("repository", "")
+                model_name = model_info.get("model_name", model_id)
                 if repo_name and model_name:
                     # Construct path to downloaded model
                     repo_dir = os.path.join(
-                        self.models_dir, 'repositories', repo_name)
+                        self.models_dir, "repositories", repo_name)
                     model_path = os.path.join(repo_dir, model_name)
                     if os.path.exists(model_path):
                         return model_path
                     # Try with common extensions
-                    for ext in ['.pth', '.h5', '.onnx', '.pkl', '.joblib']:
+                    for ext in [".pth", ".h5", ".onnx", ".pkl", ".joblib"]:
                         extended_path = model_path + ext
                         if os.path.exists(extended_path):
                             return extended_path
@@ -777,20 +777,20 @@ class ModelManager:
                 os.path.join(self.models_dir, f"{model_id}.onnx"),
                 os.path.join(self.models_dir, f"{model_id}.pkl"),
                 os.path.join(self.models_dir, f"{model_id}.joblib"),
-                os.path.join(self.models_dir, 'downloads', model_id),
-                os.path.join(self.models_dir, 'downloads', f"{model_id}.pth"),
+                os.path.join(self.models_dir, "downloads", model_id),
+                os.path.join(self.models_dir, "downloads", f"{model_id}.pth"),
             ]
 
             for p in possible_paths:
                 if os.path.exists(p):
                     # Update metadata with found path
-                    self.model_metadata[model_id]['path'] = p
+                    self.model_metadata[model_id]["path"] = p
                     self._save_model_metadata()
                     return p
 
         # Model not found - return empty string
         logger.warning(f"Model path not found for model_id: {model_id}")
-        return ''
+        return ""
 
     def import_api_model(self, model_name: str, api_config: Dict[str, Any]) -> Dict[str, Any]:
         """Import a model from an API."""
@@ -799,19 +799,19 @@ class ModelManager:
 
             # Store API configuration in metadata
             self.model_metadata[model_id] = {
-                'path': f"api://{model_name}",
-                'type': 'api',
-                'registered': datetime.now().isoformat(),
-                'metadata': api_config
+                "path": f"api://{model_name}",
+                "type": "api",
+                "registered": datetime.now().isoformat(),
+                "metadata": api_config
             }
 
             self._save_model_metadata()
 
             return {
-                'model_id': model_id,
-                'name': model_name,
-                'type': 'api',
-                'config': api_config
+                "model_id": model_id,
+                "name": model_name,
+                "type": "api",
+                "config": api_config
             }
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to import API model: %s", e)
@@ -841,7 +841,7 @@ class ModelManager:
             # For demonstration, we'll create a simple training workflow
             # In a real implementation, this would depend on the specific model type and data
 
-            if model_type.lower() == 'sklearn':
+            if model_type.lower() == "sklearn":
                 # Use sklearn backend for traditional ML models
                 try:
                     import numpy as np
@@ -849,7 +849,7 @@ class ModelManager:
                     from sklearn.model_selection import train_test_split
 
                     # Handle different data formats
-                    if hasattr(training_data, 'shape'):
+                    if hasattr(training_data, "shape"):
                         # NumPy array or similar
                         X = training_data[:, :-
                                           1] if training_data.shape[1] > 1 else training_data
@@ -883,16 +883,16 @@ class ModelManager:
                     # Store trained model in cache
                     model_id = f"trained_model_{model_type}_{len(self.cache.cache)}"
                     model_data = {
-                        'model': model,
-                        'backend': backend,
-                        'last_used': time.time(),
-                        'metadata': {
-                            'type': model_type,
-                            'trained': True,
-                            'training_samples': len(X_train),
-                            'validation_samples': len(X_val),
-                            'validation_score': val_score,
-                            'train_test_split_ratio': 0.8
+                        "model": model,
+                        "backend": backend,
+                        "last_used": time.time(),
+                        "metadata": {
+                            "type": model_type,
+                            "trained": True,
+                            "training_samples": len(X_train),
+                            "validation_samples": len(X_val),
+                            "validation_score": val_score,
+                            "train_test_split_ratio": 0.8
                         }
                     }
                     self.cache.put(model_id, model_data)
@@ -905,7 +905,7 @@ class ModelManager:
                     logger.warning("sklearn not available for training")
                     return False
 
-            elif model_type.lower() == 'pytorch':
+            elif model_type.lower() == "pytorch":
                 # PyTorch training implementation
                 try:
                     import torch
@@ -917,8 +917,8 @@ class ModelManager:
 
                     # Prepare data
                     if isinstance(training_data, dict):
-                        X = training_data.get('features', [])
-                        y = training_data.get('labels', [])
+                        X = training_data.get("features", [])
+                        y = training_data.get("labels", [])
                     else:
                         # Assume tuple of (features, labels)
                         X, y = training_data
@@ -974,7 +974,7 @@ class ModelManager:
 
                     # Training loop
                     num_epochs = 10
-                    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+                    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                     model.to(device)
 
                     best_val_acc = 0.0
@@ -1026,17 +1026,17 @@ class ModelManager:
                     # Store trained model
                     model_id = f"trained_pytorch_model_{len(self.cache.cache)}"
                     model_data = {
-                        'model': model,
-                        'backend': 'pytorch',
-                        'last_used': time.time(),
-                        'metadata': {
-                            'type': 'pytorch',
-                            'trained': True,
-                            'training_samples': train_size,
-                            'validation_samples': val_size,
-                            'best_validation_accuracy': best_val_acc,
-                            'num_epochs': num_epochs,
-                            'device': str(device)
+                        "model": model,
+                        "backend": "pytorch",
+                        "last_used": time.time(),
+                        "metadata": {
+                            "type": "pytorch",
+                            "trained": True,
+                            "training_samples": train_size,
+                            "validation_samples": val_size,
+                            "best_validation_accuracy": best_val_acc,
+                            "num_epochs": num_epochs,
+                            "device": str(device)
                         }
                     }
                     self.cache.put(model_id, model_data)
@@ -1051,7 +1051,7 @@ class ModelManager:
                     logger.error(f"PyTorch training error: {e}")
                     return False
 
-            elif model_type.lower() == 'tensorflow':
+            elif model_type.lower() == "tensorflow":
                 # TensorFlow/Keras training implementation
                 try:
                     import tensorflow as tf
@@ -1062,8 +1062,8 @@ class ModelManager:
 
                     # Prepare data
                     if isinstance(training_data, dict):
-                        X = training_data.get('features', [])
-                        y = training_data.get('labels', [])
+                        X = training_data.get("features", [])
+                        y = training_data.get("labels", [])
                     else:
                         X, y = training_data
 
@@ -1087,31 +1087,31 @@ class ModelManager:
 
                     # Build model
                     model = keras.Sequential([
-                        layers.Dense(128, activation='relu', input_shape=(X.shape[1],)),
+                        layers.Dense(128, activation="relu", input_shape=(X.shape[1],)),
                         layers.Dropout(0.2),
-                        layers.Dense(64, activation='relu'),
+                        layers.Dense(64, activation="relu"),
                         layers.Dropout(0.2),
                         layers.Dense(num_classes if num_classes > 2 else 1,
-                                   activation='softmax' if num_classes > 2 else 'sigmoid')
+                                   activation="softmax" if num_classes > 2 else "sigmoid")
                     ])
 
                     # Compile model
                     if num_classes > 2:
                         model.compile(
-                            optimizer='adam',
-                            loss='categorical_crossentropy',
-                            metrics=['accuracy']
+                            optimizer="adam",
+                            loss="categorical_crossentropy",
+                            metrics=["accuracy"]
                         )
                     else:
                         model.compile(
-                            optimizer='adam',
-                            loss='binary_crossentropy',
-                            metrics=['accuracy']
+                            optimizer="adam",
+                            loss="binary_crossentropy",
+                            metrics=["accuracy"]
                         )
 
                     # Early stopping callback
                     early_stopping = keras.callbacks.EarlyStopping(
-                        monitor='val_loss',
+                        monitor="val_loss",
                         patience=3,
                         restore_best_weights=True
                     )
@@ -1135,18 +1135,18 @@ class ModelManager:
                     # Store trained model
                     model_id = f"trained_tensorflow_model_{len(self.cache.cache)}"
                     model_data = {
-                        'model': model,
-                        'backend': 'tensorflow',
-                        'last_used': time.time(),
-                        'metadata': {
-                            'type': 'tensorflow',
-                            'trained': True,
-                            'training_samples': len(X_train),
-                            'validation_samples': len(X_val),
-                            'validation_loss': float(val_loss),
-                            'validation_accuracy': float(val_acc),
-                            'num_epochs': len(history.history['loss']),
-                            'num_classes': num_classes
+                        "model": model,
+                        "backend": "tensorflow",
+                        "last_used": time.time(),
+                        "metadata": {
+                            "type": "tensorflow",
+                            "trained": True,
+                            "training_samples": len(X_train),
+                            "validation_samples": len(X_val),
+                            "validation_loss": float(val_loss),
+                            "validation_accuracy": float(val_acc),
+                            "num_epochs": len(history.history["loss"]),
+                            "num_classes": num_classes
                         }
                     }
                     self.cache.put(model_id, model_data)
@@ -1191,7 +1191,7 @@ class ModelManager:
             # Try to determine model type and use appropriate saving method
             model_type = type(model).__name__.lower()
 
-            if 'sklearn' in str(type(model)) or hasattr(model, 'fit'):
+            if "sklearn" in str(type(model)) or hasattr(model, "fit"):
                 # Sklearn or sklearn-compatible model
                 try:
                     import joblib
@@ -1201,12 +1201,12 @@ class ModelManager:
                     return True
                 except ImportError:
                     # Fallback to pickle
-                    with open(save_path, 'wb') as f:
+                    with open(save_path, "wb") as f:
                         pickle.dump(model, f)
                     logger.info("Model saved using pickle: %s", path)
                     return True
 
-            elif 'torch' in str(type(model)):
+            elif "torch" in str(type(model)):
                 # PyTorch model
                 try:
                     import torch
@@ -1217,7 +1217,7 @@ class ModelManager:
                     logger.error("PyTorch not available for saving")
                     return False
 
-            elif 'tensorflow' in str(type(model)) or 'keras' in str(type(model)):
+            elif "tensorflow" in str(type(model)) or "keras" in str(type(model)):
                 # TensorFlow/Keras model
                 try:
                     model.save(str(save_path))
@@ -1229,7 +1229,7 @@ class ModelManager:
 
             else:
                 # Generic pickle save as fallback
-                with open(save_path, 'wb') as f:
+                with open(save_path, "wb") as f:
                     pickle.dump(model, f)
                 logger.info("Model saved using generic pickle: %s", path)
                 return True
@@ -1266,8 +1266,8 @@ class ModelManager:
                 logger.error(f"Model {model_id} not found in cache")
                 return {"error": "Model not found"}
 
-            model = model_data.get('model')
-            backend = model_data.get('backend')
+            model = model_data.get("model")
+            backend = model_data.get("backend")
 
             # Convert data to numpy arrays if needed
             if not isinstance(data, np.ndarray):
@@ -1480,29 +1480,29 @@ class ModelFineTuner:
             # Load the base model
             model = self.model_manager.load_model(model_id)
             model_info = self.model_manager.model_metadata[model_id]
-            model_type = model_info['type']
+            model_type = model_info["type"]
 
             results = {
-                'model_id': model_id,
-                'epochs': epochs,
-                'training_loss': [],
-                'validation_loss': [],
-                'metrics': {},
-                'fine_tuned_model_path': None
+                "model_id": model_id,
+                "epochs": epochs,
+                "training_loss": [],
+                "validation_loss": [],
+                "metrics": {},
+                "fine_tuned_model_path": None
             }
 
             try:
-                if model_type in ['pytorch', 'pth'] and HAS_TORCH:
+                if model_type in ["pytorch", "pth"] and HAS_TORCH:
                     results = self._fine_tune_pytorch(
                         model, training_data, validation_data,
                         epochs, learning_rate, batch_size, callback
                     )
-                elif model_type in ['tensorflow', 'h5'] and HAS_TENSORFLOW:
+                elif model_type in ["tensorflow", "h5"] and HAS_TENSORFLOW:
                     results = self._fine_tune_tensorflow(
                         model, training_data, validation_data,
                         epochs, learning_rate, batch_size, callback
                     )
-                elif model_type in ['sklearn', 'joblib'] and HAS_JOBLIB:
+                elif model_type in ["sklearn", "joblib"] and HAS_JOBLIB:
                     results = self._fine_tune_sklearn(
                         model, training_data, validation_data, callback
                     )
@@ -1520,33 +1520,33 @@ class ModelFineTuner:
 
                 # Save the model
                 backend = self.model_manager.backends[model_type]
-                if hasattr(backend, 'save_model'):
+                if hasattr(backend, "save_model"):
                     backend.save_model(model, fine_tuned_path)
                 else:
                     # Default save methods
-                    if model_type in ['pytorch', 'pth']:
+                    if model_type in ["pytorch", "pth"]:
                         torch.save(model, fine_tuned_path)
-                    elif model_type in ['tensorflow', 'h5']:
+                    elif model_type in ["tensorflow", "h5"]:
                         model.save(fine_tuned_path)
-                    elif model_type in ['sklearn', 'joblib']:
+                    elif model_type in ["sklearn", "joblib"]:
                         joblib.dump(model, fine_tuned_path)
 
                 # Register the fine-tuned model
                 self.model_manager.register_model(
                     fine_tuned_id, fine_tuned_path, model_type,
                     metadata={
-                        'base_model': model_id,
-                        'fine_tuning_params': {
-                            'epochs': epochs,
-                            'learning_rate': learning_rate,
-                            'batch_size': batch_size
+                        "base_model": model_id,
+                        "fine_tuning_params": {
+                            "epochs": epochs,
+                            "learning_rate": learning_rate,
+                            "batch_size": batch_size
                         },
-                        'results': results
+                        "results": results
                     }
                 )
 
-                results['fine_tuned_model_id'] = fine_tuned_id
-                results['fine_tuned_model_path'] = fine_tuned_path
+                results["fine_tuned_model_id"] = fine_tuned_id
+                results["fine_tuned_model_path"] = fine_tuned_path
 
                 # Store training history
                 self.training_history[fine_tuned_id] = results
@@ -1556,7 +1556,7 @@ class ModelFineTuner:
 
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Fine-tuning failed: %s", e)
-                results['error'] = str(e)
+                results["error"] = str(e)
 
             return results
 
@@ -1599,8 +1599,8 @@ class ModelFineTuner:
             val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
         results = {
-            'training_loss': [],
-            'validation_loss': []
+            "training_loss": [],
+            "validation_loss": []
         }
 
         # Training loop
@@ -1616,7 +1616,7 @@ class ModelFineTuner:
                 train_loss += loss.item()
 
             avg_train_loss = train_loss / len(train_loader)
-            results['training_loss'].append(avg_train_loss)
+            results["training_loss"].append(avg_train_loss)
 
             # Validation phase
             if val_loader:
@@ -1628,7 +1628,7 @@ class ModelFineTuner:
                         val_loss += criterion(output, target).item()
 
                 avg_val_loss = val_loss / len(val_loader)
-                results['validation_loss'].append(avg_val_loss)
+                results["validation_loss"].append(avg_val_loss)
                 model.train()
 
             # Callback for progress updates
@@ -1646,8 +1646,8 @@ class ModelFineTuner:
         # Compile model with new learning rate
         model.compile(
             optimizer=keras.optimizers.Adam(learning_rate=learning_rate),
-            loss='sparse_categorical_crossentropy',
-            metrics=['accuracy']
+            loss="sparse_categorical_crossentropy",
+            metrics=["accuracy"]
         )
 
         # Prepare callbacks
@@ -1669,8 +1669,8 @@ class ModelFineTuner:
                         epoch: Current epoch number (0-indexed)
                         logs: Dictionary containing training metrics (loss, val_loss, etc.)
                     """
-                    callback(epoch + 1, epochs, logs.get('loss'),
-                             logs.get('val_loss'))
+                    callback(epoch + 1, epochs, logs.get("loss"),
+                             logs.get("val_loss"))
             callbacks.append(ProgressCallback())
 
         # Train the model
@@ -1684,9 +1684,9 @@ class ModelFineTuner:
         )
 
         return {
-            'training_loss': history.history['loss'],
-            'validation_loss': history.history.get('val_loss', []),
-            'metrics': history.history
+            "training_loss": history.history["loss"],
+            "validation_loss": history.history.get("val_loss", []),
+            "metrics": history.history
         }
 
     def _fine_tune_sklearn(self, model: Any, training_data: Any,
@@ -1696,21 +1696,21 @@ class ModelFineTuner:
         X_train, y_train = training_data
 
         # Partial fit if supported, otherwise full refit
-        if hasattr(model, 'partial_fit'):
+        if hasattr(model, "partial_fit"):
             model.partial_fit(X_train, y_train)
         else:
             model.fit(X_train, y_train)
 
-        results = {'training_complete': True}
+        results = {"training_complete": True}
 
         # Calculate validation score if data provided
         if validation_data is not None:
             X_val, y_val = validation_data
             val_score = model.score(X_val, y_val)
-            results['validation_score'] = val_score
+            results["validation_score"] = val_score
 
         if callback:
-            callback(1, 1, None, results.get('validation_score'))
+            callback(1, 1, None, results.get("validation_score"))
 
         return results
 
@@ -1751,19 +1751,19 @@ def import_custom_model(model_path: str, model_type: str = None,
         model_info = manager.get_model_info(model_id)
 
         return {
-            'success': True,
-            'model_id': model_id,
-            'model_path': model_path,
-            'model_info': model_info
+            "success": True,
+            "model_id": model_id,
+            "model_path": model_path,
+            "model_info": model_info
         }
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Failed to import model: %s", e)
         return {
-            'success': False,
-            'error': str(e),
-            'model_id': model_id,
-            'model_path': model_path
+            "success": False,
+            "error": str(e),
+            "model_id": model_id,
+            "model_path": model_path
         }
 
 
@@ -1788,15 +1788,15 @@ def load_model(model_id: str, model_path: Optional[str] = None):
             # Auto-detect model type from extension
             ext = Path(model_path).suffix.lower()
             model_type_map = {
-                '.pkl': 'sklearn',
-                '.joblib': 'sklearn',
-                '.pt': 'pytorch',
-                '.pth': 'pytorch',
-                '.onnx': 'onnx',
-                '.pb': 'tensorflow',
-                '.h5': 'tensorflow'
+                ".pkl": "sklearn",
+                ".joblib": "sklearn",
+                ".pt": "pytorch",
+                ".pth": "pytorch",
+                ".onnx": "onnx",
+                ".pb": "tensorflow",
+                ".h5": "tensorflow"
             }
-            model_type = model_type_map.get(ext, 'sklearn')
+            model_type = model_type_map.get(ext, "sklearn")
 
             manager.register_model(model_id, model_path, model_type)
 
@@ -1827,28 +1827,28 @@ def save_model(model_id: str, save_path: str, model_format: str = "auto"):
         if model_format == "auto":
             ext = Path(save_path).suffix.lower()
             format_map = {
-                '.pkl': 'pickle',
-                '.joblib': 'joblib',
-                '.pt': 'pytorch',
-                '.pth': 'pytorch',
-                '.onnx': 'onnx',
-                '.h5': 'tensorflow'
+                ".pkl": "pickle",
+                ".joblib": "joblib",
+                ".pt": "pytorch",
+                ".pth": "pytorch",
+                ".onnx": "onnx",
+                ".h5": "tensorflow"
             }
-            model_format = format_map.get(ext, 'pickle')
+            model_format = format_map.get(ext, "pickle")
 
         # Save based on format
-        if model_format in ['pickle', 'pkl']:
+        if model_format in ["pickle", "pkl"]:
             import pickle as pickle_lib
-            with open(save_path, 'wb') as f:
+            with open(save_path, "wb") as f:
                 pickle_lib.dump(model, f)
-        elif model_format == 'joblib':
+        elif model_format == "joblib":
             if HAS_JOBLIB:
                 joblib.dump(model, save_path)
             else:
                 import pickle as pickle_lib
-                with open(save_path, 'wb') as f:
+                with open(save_path, "wb") as f:
                     pickle_lib.dump(model, f)
-        elif model_format == 'pytorch':
+        elif model_format == "pytorch":
             if HAS_TORCH and torch is not None:
                 torch.save(model, save_path)
             else:
@@ -1857,7 +1857,7 @@ def save_model(model_id: str, save_path: str, model_format: str = "auto"):
         else:
             # Default to pickle
             import pickle as pickle_lib
-            with open(save_path, 'wb') as f:
+            with open(save_path, "wb") as f:
                 pickle_lib.dump(model, f)
 
         return {
@@ -1967,9 +1967,9 @@ def configure_ai_provider(provider_name: str, config: Dict[str, Any]) -> Dict[st
 
 # Export for external use
 __all__ = [
-    'ModelManager', 'AsyncModelManager', 'ModelCache',
-    'PyTorchBackend', 'TensorFlowBackend', 'ONNXBackend', 'SklearnBackend', 'ModelBackend',
-    'create_model_manager', 'get_global_model_manager',
-    'ModelFineTuner', 'import_custom_model',
-    'load_model', 'save_model', 'list_available_models', 'configure_ai_provider'
+    "ModelManager", "AsyncModelManager", "ModelCache",
+    "PyTorchBackend", "TensorFlowBackend", "ONNXBackend", "SklearnBackend", "ModelBackend",
+    "create_model_manager", "get_global_model_manager",
+    "ModelFineTuner", "import_custom_model",
+    "load_model", "save_model", "list_available_models", "configure_ai_provider"
 ]

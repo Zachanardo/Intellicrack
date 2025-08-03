@@ -56,11 +56,11 @@ except ImportError as e:
         # Use main_app to show error message if possible
         if main_app:
             # Update status bar if available
-            if hasattr(main_app, 'status_bar'):
+            if hasattr(main_app, "status_bar"):
                 main_app.status_bar.showMessage("Radare2 integration module not available", 5000)
 
             # Log to output if available
-            if hasattr(main_app, 'update_output'):
+            if hasattr(main_app, "update_output"):
                 main_app.update_output.emit("[Error] Radare2 comprehensive integration module not found")
 
             # Show message box if Qt is available
@@ -77,16 +77,16 @@ except ImportError as e:
                 pass
 
             # Try to disable radare2-related UI elements
-            if hasattr(main_app, 'radare2_action'):
+            if hasattr(main_app, "radare2_action"):
                 main_app.radare2_action.setEnabled(False)
                 main_app.radare2_action.setText("Radare2 (Not Available)")
 
             # Track failed integration attempt
-            if hasattr(main_app, 'integration_attempts'):
+            if hasattr(main_app, "integration_attempts"):
                 main_app.integration_attempts.append({
-                    'module': 'radare2_comprehensive',
-                    'status': 'failed',
-                    'reason': 'Module not available'
+                    "module": "radare2_comprehensive",
+                    "status": "failed",
+                    "reason": "Module not available"
                 })
 
         return False
@@ -154,36 +154,36 @@ except ImportError as e:
 # Define package exports
 __all__ = [
     # From main_window
-    'IntellicrackMainWindow',
+    "IntellicrackMainWindow",
 
     # From dashboard_manager
-    'DashboardManager',
+    "DashboardManager",
 
     # Radare2 comprehensive integration
-    'integrate_radare2_comprehensive',
-    'get_comprehensive_integration',
-    'get_integration_status',
-    'cleanup_integration',
-    'ComprehensiveR2Integration',
+    "integrate_radare2_comprehensive",
+    "get_comprehensive_integration",
+    "get_integration_status",
+    "cleanup_integration",
+    "ComprehensiveR2Integration",
 
     # Radare2 UI components
-    'R2IntegrationWidget',
-    'R2ConfigurationDialog',
-    'R2ResultsViewer',
-    'create_radare2_tab',
+    "R2IntegrationWidget",
+    "R2ConfigurationDialog",
+    "R2ResultsViewer",
+    "create_radare2_tab",
 
     # Enhanced UI features
-    'EnhancedAnalysisDashboard',
-    'EnhancedMainWindow',
-    'create_enhanced_application',
+    "EnhancedAnalysisDashboard",
+    "EnhancedMainWindow",
+    "create_enhanced_application",
 
     # UI manager
-    'R2UIManager',
-    'create_r2_ui_manager',
+    "R2UIManager",
+    "create_r2_ui_manager",
 
     # Subpackages
-    'dialogs',
-    'widgets',
+    "dialogs",
+    "widgets",
 ]
 
 # Package metadata

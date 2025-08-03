@@ -42,7 +42,7 @@ except ImportError as e:
         import matplotlib.pyplot as plt
         from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
         from matplotlib.figure import Figure
-        plt.style.use('dark_background')
+        plt.style.use("dark_background")
     except ImportError as e:
         logger.error("Import error in entropy_graph_widget: %s", e)
         # Already initialized to None above
@@ -106,18 +106,18 @@ class EntropyGraphWidget(QWidget):
         if PYQTGRAPH_AVAILABLE:
             # Create PyQtGraph plot widget
             self.plot_widget = pg.PlotWidget()
-            self.plot_widget.setLabel('left', 'Entropy', units='bits')
-            self.plot_widget.setLabel('bottom', 'Section')
+            self.plot_widget.setLabel("left", "Entropy", units="bits")
+            self.plot_widget.setLabel("bottom", "Section")
             self.plot_widget.setYRange(0, 8.1)
 
             # Enable grid
             self.plot_widget.showGrid(x=False, y=True, alpha=0.3)
 
             # Set background color
-            self.plot_widget.setBackground('w')
+            self.plot_widget.setBackground("w")
 
             # Create bar graph item
-            self.bar_graph = pg.BarGraphItem(x=[], height=[], width=0.8, brush='b')
+            self.bar_graph = pg.BarGraphItem(x=[], height=[], width=0.8, brush="b")
             self.plot_widget.addItem(self.bar_graph)
 
             # Add threshold lines
@@ -166,8 +166,8 @@ class EntropyGraphWidget(QWidget):
             pos=6.0,
             angle=0,
             pen=pg.mkPen(color=(255, 152, 0, 100), width=2, style=Qt.DashLine),
-            label='Medium',
-            labelOpts={'position': 0.95, 'color': (255, 152, 0, 200)}
+            label="Medium",
+            labelOpts={"position": 0.95, "color": (255, 152, 0, 200)}
         )
         self.plot_widget.addItem(medium_line)
 
@@ -176,8 +176,8 @@ class EntropyGraphWidget(QWidget):
             pos=7.0,
             angle=0,
             pen=pg.mkPen(color=(244, 67, 54, 100), width=2, style=Qt.DashLine),
-            label='High',
-            labelOpts={'position': 0.95, 'color': (244, 67, 54, 200)}
+            label="High",
+            labelOpts={"position": 0.95, "color": (244, 67, 54, 200)}
         )
         self.plot_widget.addItem(high_line)
 
@@ -217,11 +217,11 @@ class EntropyGraphWidget(QWidget):
 
             # Determine color based on entropy value
             if entropy_val >= 7.0:
-                colors.append('#F44336')  # Red - High entropy
+                colors.append("#F44336")  # Red - High entropy
             elif entropy_val >= 6.0:
-                colors.append('#FF9800')  # Orange - Medium entropy
+                colors.append("#FF9800")  # Orange - Medium entropy
             else:
-                colors.append('#4CAF50')  # Green - Low entropy
+                colors.append("#4CAF50")  # Green - Low entropy
 
         # Update plot
         if PYQTGRAPH_AVAILABLE:
@@ -270,7 +270,7 @@ class EntropyGraphWidget(QWidget):
 
         # Update x-axis labels
         x_labels = [(i, name) for i, name in enumerate(sections)]
-        x_axis = self.plot_widget.getAxis('bottom')
+        x_axis = self.plot_widget.getAxis("bottom")
         x_axis.setTicks([x_labels])
 
         # Adjust view
@@ -289,26 +289,26 @@ class EntropyGraphWidget(QWidget):
             self.ax.text(
                 bar.get_x() + bar.get_width()/2.,
                 height + 0.05,
-                f'{entropy:.2f}',
-                ha='center',
-                va='bottom',
+                f"{entropy:.2f}",
+                ha="center",
+                va="bottom",
                 fontsize=8
             )
 
         # Customize plot
-        self.ax.set_xlabel('Section')
-        self.ax.set_ylabel('Entropy (bits)')
-        self.ax.set_title('Section Entropy Analysis')
+        self.ax.set_xlabel("Section")
+        self.ax.set_ylabel("Entropy (bits)")
+        self.ax.set_title("Section Entropy Analysis")
         self.ax.set_xticks(x_pos)
-        self.ax.set_xticklabels(sections, rotation=45, ha='right')
+        self.ax.set_xticklabels(sections, rotation=45, ha="right")
         self.ax.set_ylim(0, 8.1)
 
         # Add grid
-        self.ax.grid(True, axis='y', alpha=0.3)
+        self.ax.grid(True, axis="y", alpha=0.3)
 
         # Add threshold lines
-        self.ax.axhline(y=6.0, color='orange', linestyle='--', alpha=0.5, label='Medium')
-        self.ax.axhline(y=7.0, color='red', linestyle='--', alpha=0.5, label='High')
+        self.ax.axhline(y=6.0, color="orange", linestyle="--", alpha=0.5, label="Medium")
+        self.ax.axhline(y=7.0, color="red", linestyle="--", alpha=0.5, label="High")
 
         # Tight layout
         self.figure.tight_layout()
@@ -332,23 +332,23 @@ class EntropyGraphWidget(QWidget):
         """Get summary statistics of entropy data"""
         if not self.entropy_data:
             return {
-                'total_sections': 0,
-                'average_entropy': 0,
-                'max_entropy': 0,
-                'packed_sections': 0,
-                'encrypted_sections': 0,
-                'high_entropy_sections': 0
+                "total_sections": 0,
+                "average_entropy": 0,
+                "max_entropy": 0,
+                "packed_sections": 0,
+                "encrypted_sections": 0,
+                "high_entropy_sections": 0
             }
 
         entropies = [info.entropy for info in self.entropy_data]
 
         return {
-            'total_sections': len(self.entropy_data),
-            'average_entropy': sum(entropies) / len(entropies),
-            'max_entropy': max(entropies),
-            'packed_sections': sum(1 for info in self.entropy_data if info.packed),
-            'encrypted_sections': sum(1 for info in self.entropy_data if info.encrypted),
-            'high_entropy_sections': sum(1 for e in entropies if e >= 7.0)
+            "total_sections": len(self.entropy_data),
+            "average_entropy": sum(entropies) / len(entropies),
+            "max_entropy": max(entropies),
+            "packed_sections": sum(1 for info in self.entropy_data if info.packed),
+            "encrypted_sections": sum(1 for info in self.entropy_data if info.encrypted),
+            "high_entropy_sections": sum(1 for e in entropies if e >= 7.0)
         }
 
     def export_graph(self, file_path: str):
@@ -359,6 +359,6 @@ class EntropyGraphWidget(QWidget):
             exporter.export(file_path)
         else:
             # Export using matplotlib
-            self.figure.savefig(file_path, dpi=150, bbox_inches='tight')
+            self.figure.savefig(file_path, dpi=150, bbox_inches="tight")
 
         logger.info(f"Entropy graph exported to: {file_path}")

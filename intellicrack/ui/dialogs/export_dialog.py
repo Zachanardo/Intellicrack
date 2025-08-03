@@ -56,9 +56,9 @@ class ExportWorker(QThread):
     def run(self):
         """Execute export operation"""
         try:
-            export_format = self.export_config['format']
-            output_path = self.export_config['output_path']
-            analysis_results = self.export_config['results']
+            export_format = self.export_config["format"]
+            output_path = self.export_config["output_path"]
+            analysis_results = self.export_config["results"]
 
             self.progress_update.emit(10, "Preparing export data...")
 
@@ -98,7 +98,7 @@ class ExportWorker(QThread):
 
         self.progress_update.emit(70, "Writing JSON file...")
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(export_data, f, indent=2, ensure_ascii=False, default=str)
 
     def _export_xml(self, output_path: str, results: Dict[str, Any]):
@@ -121,22 +121,22 @@ class ExportWorker(QThread):
             icp_elem = ET.SubElement(root, "icp_analysis")
             icp_data = results["icp_analysis"]
 
-            if hasattr(icp_data, '__dict__'):
+            if hasattr(icp_data, "__dict__"):
                 # Convert analysis object to dict
                 icp_dict = {
-                    "is_protected": icp_data.is_protected if hasattr(icp_data, 'is_protected') else False,
-                    "file_type": icp_data.file_type if hasattr(icp_data, 'file_type') else "Unknown",
-                    "architecture": icp_data.architecture if hasattr(icp_data, 'architecture') else "Unknown",
+                    "is_protected": icp_data.is_protected if hasattr(icp_data, "is_protected") else False,
+                    "file_type": icp_data.file_type if hasattr(icp_data, "file_type") else "Unknown",
+                    "architecture": icp_data.architecture if hasattr(icp_data, "architecture") else "Unknown",
                     "detections": []
                 }
 
-                if hasattr(icp_data, 'all_detections'):
+                if hasattr(icp_data, "all_detections"):
                     for detection in icp_data.all_detections:
                         det_dict = {
-                            "name": detection.name if hasattr(detection, 'name') else "Unknown",
-                            "type": detection.type if hasattr(detection, 'type') else "Unknown",
-                            "confidence": detection.confidence if hasattr(detection, 'confidence') else 0.0,
-                            "version": detection.version if hasattr(detection, 'version') else ""
+                            "name": detection.name if hasattr(detection, "name") else "Unknown",
+                            "type": detection.type if hasattr(detection, "type") else "Unknown",
+                            "confidence": detection.confidence if hasattr(detection, "confidence") else 0.0,
+                            "version": detection.version if hasattr(detection, "version") else ""
                         }
                         icp_dict["detections"].append(det_dict)
 
@@ -145,7 +145,7 @@ class ExportWorker(QThread):
         self.progress_update.emit(70, "Writing XML file...")
 
         tree = ET.ElementTree(root)
-        tree.write(output_path, encoding='utf-8', xml_declaration=True)
+        tree.write(output_path, encoding="utf-8", xml_declaration=True)
 
     def _dict_to_xml(self, parent: ET.Element, data: Dict[str, Any]):
         """Convert dictionary to XML elements"""
@@ -184,17 +184,17 @@ class ExportWorker(QThread):
         if "icp_analysis" in results:
             icp_data = results["icp_analysis"]
 
-            file_type = getattr(icp_data, 'file_type', 'Unknown')
-            architecture = getattr(icp_data, 'architecture', 'Unknown')
-            is_protected = getattr(icp_data, 'is_protected', False)
+            file_type = getattr(icp_data, "file_type", "Unknown")
+            architecture = getattr(icp_data, "architecture", "Unknown")
+            is_protected = getattr(icp_data, "is_protected", False)
 
-            if hasattr(icp_data, 'all_detections'):
+            if hasattr(icp_data, "all_detections"):
                 for detection in icp_data.all_detections:
                     rows.append([
-                        getattr(detection, 'name', 'Unknown'),
-                        getattr(detection, 'type', 'Unknown'),
+                        getattr(detection, "name", "Unknown"),
+                        getattr(detection, "type", "Unknown"),
                         f"{getattr(detection, 'confidence', 0.0):.2%}",
-                        getattr(detection, 'version', ''),
+                        getattr(detection, "version", ""),
                         file_type,
                         architecture,
                         str(is_protected)
@@ -202,7 +202,7 @@ class ExportWorker(QThread):
 
         self.progress_update.emit(70, "Writing CSV file...")
 
-        with open(output_path, 'w', newline='', encoding='utf-8') as f:
+        with open(output_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerows(rows)
 
@@ -221,8 +221,8 @@ class ExportWorker(QThread):
         self.progress_update.emit(30, "Building PDF report...")
 
         # Choose page size based on export configuration
-        page_format = self.export_config.get('page_format', 'A4')
-        if page_format == 'letter':
+        page_format = self.export_config.get("page_format", "A4")
+        if page_format == "letter":
             pagesize = letter
         else:
             pagesize = A4
@@ -233,8 +233,8 @@ class ExportWorker(QThread):
 
         # Title
         title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
+            "CustomTitle",
+            parent=styles["Heading1"],
             fontSize=24,
             textColor=colors.darkblue,
             spaceAfter=30
@@ -244,26 +244,26 @@ class ExportWorker(QThread):
         story.append(Spacer(1, 20))
 
         # Metadata
-        story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal']))
+        story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles["Normal"]))
         story.append(Spacer(1, 20))
 
         # File Information
         if "file_info" in results:
-            story.append(Paragraph("File Information", styles['Heading2']))
+            story.append(Paragraph("File Information", styles["Heading2"]))
 
             file_data = []
             for key, value in results["file_info"].items():
-                file_data.append([key.replace('_', ' ').title(), str(value)])
+                file_data.append([key.replace("_", " ").title(), str(value)])
 
             file_table = Table(file_data, colWidths=[2*inch, 3*inch])
             file_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey),
-                ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 0), (-1, -1), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+                ("BACKGROUND", (0, 0), (-1, -1), colors.lightgrey),
+                ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+                ("FONTSIZE", (0, 0), (-1, -1), 10),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+                ("GRID", (0, 0), (-1, -1), 1, colors.black)
             ]))
 
             story.append(file_table)
@@ -271,7 +271,7 @@ class ExportWorker(QThread):
 
         # ICP Analysis Results
         if "icp_analysis" in results:
-            story.append(Paragraph("Protection Analysis Results", styles['Heading2']))
+            story.append(Paragraph("Protection Analysis Results", styles["Heading2"]))
 
             icp_data = results["icp_analysis"]
 
@@ -282,33 +282,33 @@ class ExportWorker(QThread):
             Protected: {'Yes' if getattr(icp_data, 'is_protected', False) else 'No'}<br/>
             """
 
-            story.append(Paragraph(summary_text, styles['Normal']))
+            story.append(Paragraph(summary_text, styles["Normal"]))
             story.append(Spacer(1, 15))
 
             # Detections table
-            if hasattr(icp_data, 'all_detections') and icp_data.all_detections:
-                story.append(Paragraph("Detected Protections", styles['Heading3']))
+            if hasattr(icp_data, "all_detections") and icp_data.all_detections:
+                story.append(Paragraph("Detected Protections", styles["Heading3"]))
 
                 detection_data = [["Name", "Type", "Confidence", "Version"]]
 
                 for detection in icp_data.all_detections:
                     detection_data.append([
-                        getattr(detection, 'name', 'Unknown'),
-                        getattr(detection, 'type', 'Unknown'),
+                        getattr(detection, "name", "Unknown"),
+                        getattr(detection, "type", "Unknown"),
                         f"{getattr(detection, 'confidence', 0.0):.1%}",
-                        getattr(detection, 'version', 'N/A')
+                        getattr(detection, "version", "N/A")
                     ])
 
                 detection_table = Table(detection_data, colWidths=[2*inch, 1.5*inch, 1*inch, 1*inch])
                 detection_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, 0), 12),
-                    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                    ('GRID', (0, 0), (-1, -1), 1, colors.black)
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, 0), 12),
+                    ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                    ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                    ("GRID", (0, 0), (-1, -1), 1, colors.black)
                 ]))
 
                 story.append(detection_table)
@@ -371,9 +371,9 @@ class ExportWorker(QThread):
         if "icp_analysis" in results:
             icp_data = results["icp_analysis"]
 
-            file_type = getattr(icp_data, 'file_type', 'Unknown')
-            architecture = getattr(icp_data, 'architecture', 'Unknown')
-            is_protected = getattr(icp_data, 'is_protected', False)
+            file_type = getattr(icp_data, "file_type", "Unknown")
+            architecture = getattr(icp_data, "architecture", "Unknown")
+            is_protected = getattr(icp_data, "is_protected", False)
 
             protected_class = "protected-yes" if is_protected else "protected-no"
             protected_text = "Yes" if is_protected else "No"
@@ -388,16 +388,16 @@ class ExportWorker(QThread):
 """
 
             # Detections
-            if hasattr(icp_data, 'all_detections') and icp_data.all_detections:
+            if hasattr(icp_data, "all_detections") and icp_data.all_detections:
                 html_content += """
         <h2>Detected Protections</h2>
 """
 
                 for detection in icp_data.all_detections:
-                    name = getattr(detection, 'name', 'Unknown')
-                    det_type = getattr(detection, 'type', 'Unknown')
-                    confidence = getattr(detection, 'confidence', 0.0)
-                    version = getattr(detection, 'version', '')
+                    name = getattr(detection, "name", "Unknown")
+                    det_type = getattr(detection, "type", "Unknown")
+                    confidence = getattr(detection, "confidence", 0.0)
+                    version = getattr(detection, "version", "")
 
                     # Confidence-based styling
                     if confidence >= 0.8:
@@ -425,7 +425,7 @@ class ExportWorker(QThread):
 
         self.progress_update.emit(70, "Writing HTML file...")
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(html_content)
 
 
@@ -741,7 +741,7 @@ class ExportDialog(QDialog):
                 preview_text = "Detection Name,Type,Confidence,Version,File Type,Architecture,Protected\n"
                 if "icp_analysis" in filtered_results:
                     icp_data = filtered_results["icp_analysis"]
-                    if hasattr(icp_data, 'all_detections'):
+                    if hasattr(icp_data, "all_detections"):
                         for detection in icp_data.all_detections[:5]:  # Preview first 5
                             preview_text += f"{getattr(detection, 'name', 'Unknown')},{getattr(detection, 'type', 'Unknown')},{getattr(detection, 'confidence', 0.0):.2%},...\n"
 
@@ -794,18 +794,18 @@ class ExportDialog(QDialog):
             icp_data = self.analysis_results["icp_analysis"]
 
             # Filter detections by confidence
-            if hasattr(icp_data, 'all_detections'):
+            if hasattr(icp_data, "all_detections"):
                 filtered_detections = []
                 for detection in icp_data.all_detections:
-                    if getattr(detection, 'confidence', 0.0) >= confidence_threshold:
+                    if getattr(detection, "confidence", 0.0) >= confidence_threshold:
                         filtered_detections.append(detection)
 
                 # Create filtered ICP data
                 class FilteredICPData:
                     def __init__(self, original, filtered_detections):
-                        self.file_type = getattr(original, 'file_type', 'Unknown')
-                        self.architecture = getattr(original, 'architecture', 'Unknown')
-                        self.is_protected = getattr(original, 'is_protected', False)
+                        self.file_type = getattr(original, "file_type", "Unknown")
+                        self.architecture = getattr(original, "architecture", "Unknown")
+                        self.is_protected = getattr(original, "is_protected", False)
                         self.all_detections = filtered_detections
 
                 filtered["icp_analysis"] = FilteredICPData(icp_data, filtered_detections)

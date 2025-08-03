@@ -66,8 +66,8 @@ class GPUAccelerationManager:
 
         # Use the unified GPU autoloader
         self.gpu_info = get_gpu_info()
-        self.gpu_available = self.gpu_info['available']
-        self.gpu_type = self.gpu_info['type']
+        self.gpu_available = self.gpu_info["available"]
+        self.gpu_type = self.gpu_info["type"]
         self.device = get_device()
 
         # Get torch reference if available - respect use_intel_pytorch setting
@@ -75,9 +75,9 @@ class GPUAccelerationManager:
             self._torch = gpu_autoloader.get_torch()
             self._ipex = gpu_autoloader.get_ipex()
         else:
-            self._torch = gpu_autoloader.get_torch() if self.gpu_type != 'intel_xpu' else None
+            self._torch = gpu_autoloader.get_torch() if self.gpu_type != "intel_xpu" else None
             self._ipex = None
-            if self.gpu_type == 'intel_xpu' and not use_intel_pytorch:
+            if self.gpu_type == "intel_xpu" and not use_intel_pytorch:
                 self.logger.info("Intel PyTorch disabled by configuration, falling back to OpenCL")
 
         # Legacy attributes for compatibility
@@ -89,29 +89,29 @@ class GPUAccelerationManager:
         self.cupy = cp
 
         # Initialize OpenCL if available and needed
-        if OPENCL_AVAILABLE and self.gpu_type not in ['intel_xpu', 'nvidia_cuda', 'amd_rocm']:
+        if OPENCL_AVAILABLE and self.gpu_type not in ["intel_xpu", "nvidia_cuda", "amd_rocm"]:
             self._init_opencl()
 
     def _determine_backend(self) -> Optional[str]:
         """Determine the backend based on GPU type and configuration"""
-        if self.gpu_type == 'intel_xpu':
+        if self.gpu_type == "intel_xpu":
             if self.use_intel_pytorch and self._ipex:
-                return 'intel_pytorch'
+                return "intel_pytorch"
             elif OPENCL_AVAILABLE:
-                return 'pyopencl'
+                return "pyopencl"
             else:
-                return 'intel_pytorch'  # fallback even without IPEX
-        elif self.gpu_type == 'nvidia_cuda':
+                return "intel_pytorch"  # fallback even without IPEX
+        elif self.gpu_type == "nvidia_cuda":
             if CUPY_AVAILABLE:
-                return 'cupy'
+                return "cupy"
             else:
-                return 'pytorch'
-        elif self.gpu_type == 'amd_rocm':
-            return 'pytorch'
-        elif self.gpu_type == 'directml':
-            return 'directml'
+                return "pytorch"
+        elif self.gpu_type == "amd_rocm":
+            return "pytorch"
+        elif self.gpu_type == "directml":
+            return "directml"
         elif OPENCL_AVAILABLE:
-            return 'pyopencl'
+            return "pyopencl"
         else:
             return None
 
@@ -169,9 +169,9 @@ class GPUAccelerationManager:
             return self._cpu_pattern_matching(data, patterns)
 
         try:
-            if self.gpu_backend == 'pyopencl' and self.context:
+            if self.gpu_backend == "pyopencl" and self.context:
                 return self._opencl_pattern_matching(data, patterns)
-            elif self.gpu_backend == 'cupy' and cp:
+            elif self.gpu_backend == "cupy" and cp:
                 return self._cupy_pattern_matching(data, patterns)
             elif self._torch:
                 return self._torch_pattern_matching(data, patterns)
@@ -348,7 +348,7 @@ class GPUAccelerationManager:
                 }
             }
         }
-        ''', 'pattern_match')
+        ''', "pattern_match")
 
         all_matches = []
 
@@ -391,11 +391,11 @@ class GPUAccelerator(GPUAccelerationManager):
         super().__init__(use_intel_pytorch=True, prefer_intel=True)
 
         # Legacy attributes
-        self.cuda_available = self.gpu_type == 'nvidia_cuda'
+        self.cuda_available = self.gpu_type == "nvidia_cuda"
         self.opencl_available = OPENCL_AVAILABLE
         self.tensorflow_available = TENSORFLOW_AVAILABLE and self.gpu_available
         self.pytorch_available = self._torch is not None
-        self.intel_pytorch_available = self.gpu_type == 'intel_xpu'
+        self.intel_pytorch_available = self.gpu_type == "intel_xpu"
 
         # Legacy device lists
         self.cuda_devices = []
@@ -407,19 +407,19 @@ class GPUAccelerator(GPUAccelerationManager):
         # Populate legacy device info
         if self.gpu_available:
             device_info = {
-                'index': 0,
-                'name': self.gpu_info.get('device_name', 'Unknown GPU'),
-                'memory': self.gpu_info.get('total_memory', 'Unknown'),
-                'backend': self.gpu_backend
+                "index": 0,
+                "name": self.gpu_info.get("device_name", "Unknown GPU"),
+                "memory": self.gpu_info.get("total_memory", "Unknown"),
+                "backend": self.gpu_backend
             }
 
-            if self.gpu_type == 'nvidia_cuda':
+            if self.gpu_type == "nvidia_cuda":
                 self.cuda_devices.append(device_info)
                 self.pytorch_devices.append(device_info)
-            elif self.gpu_type == 'intel_xpu':
+            elif self.gpu_type == "intel_xpu":
                 self.intel_devices.append(device_info)
                 self.pytorch_devices.append(device_info)
-            elif self.gpu_type == 'amd_rocm':
+            elif self.gpu_type == "amd_rocm":
                 self.pytorch_devices.append(device_info)
 
             if OPENCL_AVAILABLE:
@@ -428,7 +428,7 @@ class GPUAccelerator(GPUAccelerationManager):
         # Legacy attributes
         self.selected_backend = self.gpu_backend
         self.detected_gpu_vendor = self._detect_vendor()
-        self.detected_gpu_name = self.gpu_info.get('device_name', 'Unknown')
+        self.detected_gpu_name = self.gpu_info.get("device_name", "Unknown")
 
         # Benchmarking and error handling
         self.backend_benchmarks = {}
@@ -437,14 +437,14 @@ class GPUAccelerator(GPUAccelerationManager):
 
     def _detect_vendor(self) -> str:
         """Detect GPU vendor from type"""
-        if self.gpu_type and 'intel' in self.gpu_type:
-            return 'Intel'
-        elif self.gpu_type and ('nvidia' in self.gpu_type or 'cuda' in self.gpu_type):
-            return 'NVIDIA'
-        elif self.gpu_type and ('amd' in self.gpu_type or 'rocm' in self.gpu_type):
-            return 'AMD'
+        if self.gpu_type and "intel" in self.gpu_type:
+            return "Intel"
+        elif self.gpu_type and ("nvidia" in self.gpu_type or "cuda" in self.gpu_type):
+            return "NVIDIA"
+        elif self.gpu_type and ("amd" in self.gpu_type or "rocm" in self.gpu_type):
+            return "AMD"
         else:
-            return 'Unknown'
+            return "Unknown"
 
     def _check_available_backends(self):
         """Legacy method for compatibility"""
@@ -496,7 +496,7 @@ def is_gpu_acceleration_available():
     """
     try:
         gpu_info = get_gpu_info()
-        return gpu_info.get('available', False)
+        return gpu_info.get("available", False)
     except Exception as e:
         logger.debug(f"GPU availability check failed: {e}")
         return False

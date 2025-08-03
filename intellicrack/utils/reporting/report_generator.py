@@ -44,17 +44,17 @@ class ReportGenerator:
         self.output_dir.mkdir(exist_ok=True)
         self.sections = []
         self.metadata = {
-            'title': 'Analysis Report',
-            'author': 'Intellicrack',
-            'generated': datetime.datetime.now().isoformat()
+            "title": "Analysis Report",
+            "author": "Intellicrack",
+            "generated": datetime.datetime.now().isoformat()
         }
 
     def set_metadata(self, title: str = None, author: str = None, **kwargs):
         """Set report metadata."""
         if title:
-            self.metadata['title'] = title
+            self.metadata["title"] = title
         if author:
-            self.metadata['author'] = author
+            self.metadata["author"] = author
         self.metadata.update(kwargs)
 
     def add_section(self, title: str, content: Any) -> int:
@@ -69,15 +69,15 @@ class ReportGenerator:
             int: Section index
         """
         section = {
-            'title': title,
-            'content': content,
-            'timestamp': datetime.datetime.now().isoformat()
+            "title": title,
+            "content": content,
+            "timestamp": datetime.datetime.now().isoformat()
         }
         self.sections.append(section)
         return len(self.sections) - 1
 
 
-def generate_report(analysis_results: Dict[str, Any], output_format: str = 'text',
+def generate_report(analysis_results: Dict[str, Any], output_format: str = "text",
                    output_path: Optional[Union[str, Path]] = None) -> str:
     """
     Generate an analysis report in the specified format.
@@ -100,17 +100,17 @@ def generate_report(analysis_results: Dict[str, Any], output_format: str = 'text
     # Ensure output directory exists
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    if output_format == 'text':
+    if output_format == "text":
         content = generate_text_report(analysis_results)
-    elif output_format == 'json':
+    elif output_format == "json":
         content = json.dumps(analysis_results, indent=2, default=str)
-    elif output_format == 'html':
+    elif output_format == "html":
         content = generate_html_report(analysis_results)
     else:
         raise ValueError(f"Unsupported output format: {output_format}")
 
     # Write report
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(content)
 
     logger.info("Report generated: %s", output_path)
@@ -135,43 +135,43 @@ def generate_text_report(results: Dict[str, Any]) -> str:
     lines.append("")
 
     # Binary information
-    if 'binary_info' in results:
+    if "binary_info" in results:
         lines.append("BINARY INFORMATION")
         lines.append("-" * 40)
-        for key, value in results['binary_info'].items():
+        for key, value in results["binary_info"].items():
             lines.append(f"  {key}: {value}")
         lines.append("")
 
     # Vulnerabilities
-    if 'vulnerabilities' in results:
+    if "vulnerabilities" in results:
         lines.append("VULNERABILITIES")
         lines.append("-" * 40)
-        for vulnerability in results['vulnerabilities']:
+        for vulnerability in results["vulnerabilities"]:
             lines.append(f"  [{vulnerability.get('severity', 'UNKNOWN')}] {vulnerability.get('name', 'Unknown')}")
-            if 'description' in vulnerability:
+            if "description" in vulnerability:
                 lines.append(f"    {vulnerability['description']}")
         lines.append("")
 
     # Protection mechanisms
-    if 'protections' in results:
+    if "protections" in results:
         lines.append("PROTECTION MECHANISMS")
         lines.append("-" * 40)
-        for protection_item in results['protections']:
+        for protection_item in results["protections"]:
             lines.append(f"  - {protection_item}")
         lines.append("")
 
     # Analysis summary
-    if 'summary' in results:
+    if "summary" in results:
         lines.append("SUMMARY")
         lines.append("-" * 40)
-        lines.append(results['summary'])
+        lines.append(results["summary"])
         lines.append("")
 
     lines.append("=" * 80)
     lines.append("END OF REPORT")
     lines.append("=" * 80)
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def generate_html_report(results: Dict[str, Any]) -> str:
@@ -212,29 +212,29 @@ def generate_html_report(results: Dict[str, Any]) -> str:
 """]
 
     # Binary information section
-    if 'binary_info' in results:
+    if "binary_info" in results:
         html_parts.append("""
     <div class="section">
         <h2>Binary Information</h2>
         <table class="info-table">
 """)
-        for key, value in results['binary_info'].items():
+        for key, value in results["binary_info"].items():
             html_parts.append(f"            <tr><td><strong>{key}</strong></td><td>{value}</td></tr>")
         html_parts.append("        </table>\n    </div>")
 
     # Vulnerabilities section
-    if 'vulnerabilities' in results:
+    if "vulnerabilities" in results:
         html_parts.append("""
     <div class="section">
         <h2>Vulnerabilities</h2>
 """)
-        for vulnerability in results['vulnerabilities']:
-            severity = vulnerability.get('severity', 'info').lower()
+        for vulnerability in results["vulnerabilities"]:
+            severity = vulnerability.get("severity", "info").lower()
             html_parts.append(f'        <div class="vulnerability {severity}">')
             html_parts.append(f'            <strong>[{vulnerability.get("severity", "UNKNOWN")}]</strong> {vulnerability.get("name", "Unknown")}')
-            if 'description' in vulnerability:
+            if "description" in vulnerability:
                 html_parts.append(f'            <p>{vulnerability["description"]}</p>')
-            html_parts.append('        </div>')
+            html_parts.append("        </div>")
         html_parts.append("    </div>")
 
     # Add more sections as needed
@@ -244,10 +244,10 @@ def generate_html_report(results: Dict[str, Any]) -> str:
 </html>
 """)
 
-    return '\n'.join(html_parts)
+    return "\n".join(html_parts)
 
 
-def export_report(report_data: Dict[str, Any], format: str = 'pdf') -> Optional[str]:  # pylint: disable=redefined-builtin
+def export_report(report_data: Dict[str, Any], format: str = "pdf") -> Optional[str]:  # pylint: disable=redefined-builtin
     """
     Export report in various formats.
 
@@ -281,33 +281,33 @@ def export_report(report_data: Dict[str, Any], format: str = 'pdf') -> Optional[
         output_dir.mkdir(exist_ok=True)
 
         # Generate filename based on report content
-        report_title = report_data.get('title', 'intellicrack_report')
-        safe_title = "".join(c for c in report_title if c.isalnum() or c in (' ', '-', '_')).rstrip()
+        report_title = report_data.get("title", "intellicrack_report")
+        safe_title = "".join(c for c in report_title if c.isalnum() or c in (" ", "-", "_")).rstrip()
         filename = f"{safe_title}_{timestamp}"
 
-        if format.lower() == 'pdf':
+        if format.lower() == "pdf":
             # For now, export as HTML that can be converted to PDF
             output_file = output_dir / f"{filename}.html"
             html_content = _generate_html_report(report_data)
 
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write(html_content)
 
             logger.info("Report exported as HTML (ready for PDF conversion): %s", output_file)
 
-        elif format.lower() == 'json':
+        elif format.lower() == "json":
             output_file = output_dir / f"{filename}.json"
 
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(report_data, f, indent=2, default=str)
 
             logger.info("Report exported as JSON: %s", output_file)
 
-        elif format.lower() == 'txt':
+        elif format.lower() == "txt":
             output_file = output_dir / f"{filename}.txt"
             text_content = _generate_text_report(report_data)
 
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write(text_content)
 
             logger.info("Report exported as text: %s", output_file)
@@ -316,7 +316,7 @@ def export_report(report_data: Dict[str, Any], format: str = 'pdf') -> Optional[
             logger.warning("Export format '%s' not supported, exporting as JSON", format)
             output_file = output_dir / f"{filename}.json"
 
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(report_data, f, indent=2, default=str)
 
         return str(output_file)
@@ -340,33 +340,33 @@ def _generate_html_report(report_data: Dict[str, Any]) -> str:
     # Title and metadata
     html_parts.append(f"<h1>{report_data.get('title', 'Analysis Report')}</h1>")
 
-    if 'metadata' in report_data:
-        metadata = report_data['metadata']
+    if "metadata" in report_data:
+        metadata = report_data["metadata"]
         html_parts.append("<h2>Report Metadata</h2>")
         html_parts.append(f"<p><strong>Target:</strong> {metadata.get('target', 'Unknown')}</p>")
         html_parts.append(f"<p><strong>Timestamp:</strong> {metadata.get('timestamp', 'Unknown')}</p>")
         html_parts.append(f"<p><strong>Analysis Type:</strong> {metadata.get('analysis_type', 'Unknown')}</p>")
 
     # Executive Summary
-    if 'summary' in report_data:
+    if "summary" in report_data:
         html_parts.append("<h2>Executive Summary</h2>")
         html_parts.append(f"<p>{report_data['summary']}</p>")
 
     # Findings
-    if 'findings' in report_data:
+    if "findings" in report_data:
         html_parts.append("<h2>Findings</h2>")
-        for finding in report_data['findings']:
-            severity = finding.get('severity', 'low').lower()
+        for finding in report_data["findings"]:
+            severity = finding.get("severity", "low").lower()
             html_parts.append(f"<div class='finding {severity}'>")
             html_parts.append(f"<h3>{finding.get('title', 'Finding')}</h3>")
             html_parts.append(f"<p><strong>Severity:</strong> {finding.get('severity', 'Unknown')}</p>")
             html_parts.append(f"<p>{finding.get('description', 'No description')}</p>")
-            if 'recommendation' in finding:
+            if "recommendation" in finding:
                 html_parts.append(f"<p><strong>Recommendation:</strong> {finding['recommendation']}</p>")
             html_parts.append("</div>")
 
     html_parts.append("</body></html>")
-    return '\n'.join(html_parts)
+    return "\n".join(html_parts)
 
 
 def _generate_text_report(report_data: Dict[str, Any]) -> str:
@@ -379,8 +379,8 @@ def _generate_text_report(report_data: Dict[str, Any]) -> str:
     ]
 
     # Metadata
-    if 'metadata' in report_data:
-        metadata = report_data['metadata']
+    if "metadata" in report_data:
+        metadata = report_data["metadata"]
         text_parts.extend([
             "REPORT METADATA",
             "-" * 40,
@@ -391,34 +391,34 @@ def _generate_text_report(report_data: Dict[str, Any]) -> str:
         ])
 
     # Summary
-    if 'summary' in report_data:
+    if "summary" in report_data:
         text_parts.extend([
             "EXECUTIVE SUMMARY",
             "-" * 40,
-            report_data['summary'],
+            report_data["summary"],
             ""
         ])
 
     # Findings
-    if 'findings' in report_data:
+    if "findings" in report_data:
         text_parts.extend([
             "FINDINGS",
             "-" * 40
         ])
 
-        for i, finding in enumerate(report_data['findings'], 1):
+        for i, finding in enumerate(report_data["findings"], 1):
             text_parts.extend([
                 f"{i}. {finding.get('title', 'Finding')}",
                 f"   Severity: {finding.get('severity', 'Unknown')}",
                 f"   Description: {finding.get('description', 'No description')}"
             ])
 
-            if 'recommendation' in finding:
+            if "recommendation" in finding:
                 text_parts.append(f"   Recommendation: {finding['recommendation']}")
 
             text_parts.append("")
 
-    return '\n'.join(text_parts)
+    return "\n".join(text_parts)
 
 
 def format_findings(findings: List[Dict[str, Any]], include_remediation: bool = True) -> str:
@@ -437,18 +437,18 @@ def format_findings(findings: List[Dict[str, Any]], include_remediation: bool = 
     for i, finding in enumerate(findings, 1):
         formatted.append(f"{i}. {finding.get('title', 'Finding')}")
 
-        if 'severity' in finding:
+        if "severity" in finding:
             formatted.append(f"   Severity: {finding['severity']}")
 
-        if 'description' in finding:
+        if "description" in finding:
             formatted.append(f"   Description: {finding['description']}")
 
-        if include_remediation and 'remediation' in finding:
+        if include_remediation and "remediation" in finding:
             formatted.append(f"   Remediation: {finding['remediation']}")
 
         formatted.append("")  # Empty line between findings
 
-    return '\n'.join(formatted)
+    return "\n".join(formatted)
 
 
 def create_summary_report(binary_path: str, key_findings: List[str]) -> Dict[str, Any]:
@@ -463,22 +463,22 @@ def create_summary_report(binary_path: str, key_findings: List[str]) -> Dict[str
         dict: Summary report structure
     """
     return {
-        'binary': binary_path,
-        'timestamp': datetime.datetime.now().isoformat(),
-        'summary': {
-            'total_findings': len(key_findings),
-            'key_findings': key_findings
+        "binary": binary_path,
+        "timestamp": datetime.datetime.now().isoformat(),
+        "summary": {
+            "total_findings": len(key_findings),
+            "key_findings": key_findings
         }
     }
 
 
 # Exported functions
 __all__ = [
-    'ReportGenerator',
-    'generate_report',
-    'generate_text_report',
-    'generate_html_report',
-    'export_report',
-    'format_findings',
-    'create_summary_report',
+    "ReportGenerator",
+    "generate_report",
+    "generate_text_report",
+    "generate_html_report",
+    "export_report",
+    "format_findings",
+    "create_summary_report",
 ]

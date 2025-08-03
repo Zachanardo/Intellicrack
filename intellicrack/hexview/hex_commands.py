@@ -28,9 +28,9 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'HexCommand', 'CommandManager', 'OperationType',
-    'ReplaceCommand', 'InsertCommand', 'DeleteCommand',
-    'FillCommand', 'PasteCommand'
+    "HexCommand", "CommandManager", "OperationType",
+    "ReplaceCommand", "InsertCommand", "DeleteCommand",
+    "FillCommand", "PasteCommand"
 ]
 
 
@@ -91,7 +91,7 @@ class HexCommand(ABC):
         """
         pass
 
-    def can_merge_with(self, other: 'HexCommand') -> bool:
+    def can_merge_with(self, other: "HexCommand") -> bool:
         """
         Check if this command can be merged with another command.
 
@@ -104,7 +104,7 @@ class HexCommand(ABC):
         _other = other  # Store for potential future use
         return False
 
-    def merge_with(self, other: 'HexCommand') -> 'HexCommand':
+    def merge_with(self, other: "HexCommand") -> "HexCommand":
         """
         Merge this command with another command.
 
@@ -168,7 +168,7 @@ class ReplaceCommand(HexCommand):
         """Get the affected byte range."""
         return (self.offset, self.offset + len(self.new_data))
 
-    def can_merge_with(self, other: 'HexCommand') -> bool:
+    def can_merge_with(self, other: "HexCommand") -> bool:
         """Check if this command can be merged with a consecutive replace."""
         if not isinstance(other, ReplaceCommand):
             return False
@@ -177,7 +177,7 @@ class ReplaceCommand(HexCommand):
         this_end = self.offset + len(self.new_data)
         return other.offset == this_end
 
-    def merge_with(self, other: 'HexCommand') -> 'HexCommand':
+    def merge_with(self, other: "HexCommand") -> "HexCommand":
         """Merge with another replace command."""
         if not self.can_merge_with(other):
             raise ValueError("Cannot merge non-adjacent replace commands")
@@ -538,12 +538,12 @@ class CommandManager:
         summary = []
         for i, command in enumerate(self.command_history):
             summary.append({
-                'index': i,
-                'description': command.description,
-                'type': command.operation_type.value,
-                'executed': command.executed,
-                'is_current': i == self.current_index,
-                'affected_range': command.get_affected_range()
+                "index": i,
+                "description": command.description,
+                "type": command.operation_type.value,
+                "executed": command.executed,
+                "is_current": i == self.current_index,
+                "affected_range": command.get_affected_range()
             })
         return summary
 

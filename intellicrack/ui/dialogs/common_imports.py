@@ -119,7 +119,7 @@ except ImportError as e:
         class Icon:
             def __init__(self, source):
                 self.source = source
-                self.is_pixmap = hasattr(source, 'width') and hasattr(source, 'height')
+                self.is_pixmap = hasattr(source, "width") and hasattr(source, "height")
                 self.is_path = isinstance(source, str)
                 self._size = (32, 32)  # Default size
 
@@ -128,10 +128,10 @@ except ImportError as e:
                     return self.source
                 elif self.is_path:
                     # Create pixmap from path
-                    pixmap = type('Pixmap', (), {
-                        'width': self._size[0],
-                        'height': self._size[1],
-                        'path': self.source
+                    pixmap = type("Pixmap", (), {
+                        "width": self._size[0],
+                        "height": self._size[1],
+                        "path": self.source
                     })()
                     return pixmap
                 return None
@@ -143,9 +143,9 @@ except ImportError as e:
                 return False
 
             def actualSize(self, size=None):
-                return type('Size', (), {
-                    'width': lambda: self._size[0],
-                    'height': lambda: self._size[1]
+                return type("Size", (), {
+                    "width": lambda: self._size[0],
+                    "height": lambda: self._size[1]
                 })()
 
         return Icon(path_or_pixmap)
@@ -169,22 +169,22 @@ except ImportError as e:
                 # Simulate image data
                 self.data = bytearray(self.width * self.height * 4)  # RGBA
 
-            def scaled(self, width, height, aspect_ratio_mode='keep', transform_mode='smooth'):
+            def scaled(self, width, height, aspect_ratio_mode="keep", transform_mode="smooth"):
                 """Scale pixmap for display."""
                 new_pixmap = Pixmap(self.path, (width, height))
                 new_pixmap.valid = self.valid
                 return new_pixmap
 
             def size(self):
-                return type('Size', (), {
-                    'width': lambda: self.width,
-                    'height': lambda: self.height
+                return type("Size", (), {
+                    "width": lambda: self.width,
+                    "height": lambda: self.height
                 })()
 
             def isNull(self):
                 return not self.valid
 
-            def save(self, path, format='PNG', quality=100):
+            def save(self, path, format="PNG", quality=100):
                 """Save pixmap to file."""
                 return True  # Simulate successful save
 
@@ -196,12 +196,12 @@ except ImportError as e:
         """Create horizontal slider for exploit parameter control."""
         class HorizontalSlider:
             def __init__(self):
-                self.orientation = 'horizontal'
+                self.orientation = "horizontal"
                 self.minimum = 0
                 self.maximum = 100
                 self.value = 50
                 self.tick_interval = 10
-                self.tick_position = 'both'
+                self.tick_position = "both"
                 self.single_step = 1
                 self.page_step = 10
                 self.tracking = True
@@ -292,19 +292,19 @@ except ImportError as e:
 # Export all imports and utilities
 __all__ = [
     # Availability flag
-    'HAS_PYQT',
+    "HAS_PYQT",
     # Core imports
-    'Qt', 'QThread', 'QTimer', 'pyqtSignal',
+    "Qt", "QThread", "QTimer", "pyqtSignal",
     # GUI imports
-    'QFont', 'QIcon', 'QPixmap',
+    "QFont", "QIcon", "QPixmap",
     # Widget imports
-    'QCheckBox', 'QComboBox', 'QDialog', 'QFileDialog', 'QFormLayout',
-    'QGroupBox', 'QHBoxLayout', 'QHeaderView', 'QInputDialog', 'QLabel',
-    'QLineEdit', 'QListWidget', 'QListWidgetItem', 'QMessageBox',
-    'QProgressBar', 'QPushButton', 'QSlider', 'QSpinBox', 'QSplitter',
-    'QTableWidget', 'QTableWidgetItem', 'QTabWidget', 'QTextEdit',
-    'QTreeWidget', 'QTreeWidgetItem', 'QVBoxLayout', 'QWidget',
+    "QCheckBox", "QComboBox", "QDialog", "QFileDialog", "QFormLayout",
+    "QGroupBox", "QHBoxLayout", "QHeaderView", "QInputDialog", "QLabel",
+    "QLineEdit", "QListWidget", "QListWidgetItem", "QMessageBox",
+    "QProgressBar", "QPushButton", "QSlider", "QSpinBox", "QSplitter",
+    "QTableWidget", "QTableWidgetItem", "QTabWidget", "QTextEdit",
+    "QTreeWidget", "QTreeWidgetItem", "QVBoxLayout", "QWidget",
     # Utility functions
-    'create_icon', 'create_pixmap_from_file', 'get_user_input',
-    'create_horizontal_slider'
+    "create_icon", "create_pixmap_from_file", "get_user_input",
+    "create_horizontal_slider"
 ]

@@ -28,7 +28,7 @@ from typing import Any, Dict, Optional
 logger = logging.getLogger(__name__)
 
 # Check Windows availability
-WINDOWS_AVAILABLE = sys.platform == 'win32'
+WINDOWS_AVAILABLE = sys.platform == "win32"
 if WINDOWS_AVAILABLE:
     try:
         import ctypes.wintypes
@@ -277,10 +277,10 @@ class WindowsProcessStructures:
                 return None
 
             return {
-                'process_handle': process_info.hProcess,
-                'thread_handle': process_info.hThread,
-                'process_id': process_info.dwProcessId,
-                'thread_id': process_info.dwThreadId
+                "process_handle": process_info.hProcess,
+                "thread_handle": process_info.hThread,
+                "process_id": process_info.dwProcessId,
+                "thread_id": process_info.dwThreadId
             }
 
         except Exception as e:
@@ -290,42 +290,42 @@ class WindowsProcessStructures:
 
 # Common license domains for SSL interceptor and UI
 COMMON_LICENSE_DOMAINS = [
-    'licensing.adobe.com',
-    'lm.autodesk.com',
-    'activation.cloud.techsmith.com',
-    'license.jetbrains.com',
-    'license.sublimehq.com',
-    'licensing.tableausoftware.com',
-    'flexnetls.flexnetoperations.com',
-    'licensing.steinberg.net',
-    'license.ableton.com',
-    'api.licenses.adobe.com',
-    'lmlicensing.autodesk.com',
-    'lm-autocad.autodesk.com',
-    'kms.microsoft.com',
-    'kms.core.windows.net',
-    'licensing.mp.microsoft.com'
+    "licensing.adobe.com",
+    "lm.autodesk.com",
+    "activation.cloud.techsmith.com",
+    "license.jetbrains.com",
+    "license.sublimehq.com",
+    "licensing.tableausoftware.com",
+    "flexnetls.flexnetoperations.com",
+    "licensing.steinberg.net",
+    "license.ableton.com",
+    "api.licenses.adobe.com",
+    "lmlicensing.autodesk.com",
+    "lm-autocad.autodesk.com",
+    "kms.microsoft.com",
+    "kms.core.windows.net",
+    "licensing.mp.microsoft.com"
 ]
 
 
 def parse_objdump_line(line: str) -> Optional[Dict[str, Any]]:
     """Parse objdump output line - shared between ROP generator and taint analyzer."""
     line = line.strip()
-    if ':' in line and '\t' in line:
+    if ":" in line and "\t" in line:
         try:
             # Parse objdump format: "address: bytes \t mnemonic operands"
-            addr_part, instr_part = line.split(':', 1)
-            if '\t' in instr_part:
-                _, instr_full = instr_part.split('\t', 1)
+            addr_part, instr_part = line.split(":", 1)
+            if "\t" in instr_part:
+                _, instr_full = instr_part.split("\t", 1)
                 parts = instr_full.strip().split(None, 1)
-                mnemonic = parts[0] if parts else ''
-                operands = parts[1] if len(parts) > 1 else ''
+                mnemonic = parts[0] if parts else ""
+                operands = parts[1] if len(parts) > 1 else ""
 
                 return {
-                    'address': int(addr_part.strip(), 16),
-                    'mnemonic': mnemonic,
-                    'op_str': operands,
-                    'bytes': addr_part.strip()
+                    "address": int(addr_part.strip(), 16),
+                    "mnemonic": mnemonic,
+                    "op_str": operands,
+                    "bytes": addr_part.strip()
                 }
         except (ValueError, IndexError) as e:
             logger.error("Error in windows_structures: %s", e)

@@ -137,8 +137,8 @@ else:
                 self.progress_updated.emit(25)
 
                 # Extract plugin if it's a zip file
-                if self.plugin_path.endswith('.zip'):
-                    with zipfile.ZipFile(self.plugin_path, 'r') as zip_ref:
+                if self.plugin_path.endswith(".zip"):
+                    with zipfile.ZipFile(self.plugin_path, "r") as zip_ref:
                         zip_ref.extractall(self.install_dir)
                 else:
                     # Copy single file
@@ -149,7 +149,7 @@ else:
 
                 # Basic validation
                 plugin_files = os.listdir(self.install_dir)
-                if any(_f.endswith('.py') for _f in plugin_files):
+                if any(_f.endswith(".py") for _f in plugin_files):
                     self.progress_updated.emit(100)
                     self.status_updated.emit("Installation complete")
                     self.installation_finished.emit(True, "Plugin installed successfully")
@@ -175,7 +175,7 @@ else:
             # Plugin management
             self.installed_plugins = {}
             self.available_plugins = {}
-            self.plugin_categories = ['Analysis', 'Exploitation', 'Network', 'UI', 'Utilities']
+            self.plugin_categories = ["Analysis", "Exploitation", "Network", "UI", "Utilities"]
 
             # Threading
             self.install_thread = None
@@ -183,8 +183,8 @@ else:
 
             # Current state
             self.current_plugin = None
-            self.filter_category = 'All'
-            self.search_text = ''
+            self.filter_category = "All"
+            self.search_text = ""
 
             # Setup UI
             self.setup_ui()
@@ -204,16 +204,16 @@ else:
             self.auto_refresh_timer.timeout.connect(self.auto_refresh_plugins)
 
             # Check for updates on startup
-            if hasattr(self.app_context, 'config') and self.app_context.config.get('plugin_auto_update', True):
+            if hasattr(self.app_context, "config") and self.app_context.config.get("plugin_auto_update", True):
                 QTimer.singleShot(2000, self.check_for_updates)
 
             logger.info("Plugin Manager Dialog initialized")
 
             # Show welcome message for first time users
-            if not hasattr(self.app_context, 'plugin_manager_shown_before'):
+            if not hasattr(self.app_context, "plugin_manager_shown_before"):
                 self.show_welcome_message()
-                if hasattr(self.app_context, 'config'):
-                    self.app_context.config['plugin_manager_shown_before'] = True
+                if hasattr(self.app_context, "config"):
+                    self.app_context.config["plugin_manager_shown_before"] = True
 
         def setup_ui(self):
             """Set up the user interface."""
@@ -487,15 +487,15 @@ else:
                 if os.path.exists(self.plugins_dir):
                     for item in os.listdir(self.plugins_dir):
                         item_path = os.path.join(self.plugins_dir, item)
-                        if os.path.isdir(item_path) or item.endswith('.py'):
+                        if os.path.isdir(item_path) or item.endswith(".py"):
                             plugin_info = self.get_plugin_info(item_path)
                             self.installed_plugins.append(plugin_info)
 
-                            list_item = QListWidgetItem(plugin_info['name'])
+                            list_item = QListWidgetItem(plugin_info["name"])
                             list_item.setData(0, plugin_info)
 
                             # Color code based on status
-                            if plugin_info.get('enabled', True):
+                            if plugin_info.get("enabled", True):
                                 list_item.setForeground(list_item.foreground())  # Default color
                             else:
                                 from PyQt6.QtGui import QColor
@@ -513,28 +513,28 @@ else:
             # Simulate available plugins (in real implementation, would fetch from repositories)
             demo_plugins = [
                 {
-                    'name': 'License Bypass Helper',
-                    'version': '1.2.0',
-                    'description': 'Advanced license validation bypass techniques',
-                    'author': 'Community',
-                    'category': 'Analysis',
-                    'size': '45 KB'
+                    "name": "License Bypass Helper",
+                    "version": "1.2.0",
+                    "description": "Advanced license validation bypass techniques",
+                    "author": "Community",
+                    "category": "Analysis",
+                    "size": "45 KB"
                 },
                 {
-                    'name': 'Packer Detector Pro',
-                    'version': '2.1.0',
-                    'description': 'Detect and analyze various executable packers',
-                    'author': 'Security Team',
-                    'category': 'Analysis',
-                    'size': '128 KB'
+                    "name": "Packer Detector Pro",
+                    "version": "2.1.0",
+                    "description": "Detect and analyze various executable packers",
+                    "author": "Security Team",
+                    "category": "Analysis",
+                    "size": "128 KB"
                 },
                 {
-                    'name': 'Frida Script Generator',
-                    'version': '1.0.5',
-                    'description': 'Generate custom Frida scripts for dynamic analysis',
-                    'author': 'Dev Team',
-                    'category': 'Tool',
-                    'size': '67 KB'
+                    "name": "Frida Script Generator",
+                    "version": "1.0.5",
+                    "description": "Generate custom Frida scripts for dynamic analysis",
+                    "author": "Dev Team",
+                    "category": "Tool",
+                    "size": "67 KB"
                 }
             ]
 
@@ -547,32 +547,32 @@ else:
         def get_plugin_info(self, plugin_path):
             """Extract information about a plugin."""
             info = {
-                'name': os.path.basename(plugin_path),
-                'path': plugin_path,
-                'type': 'file' if os.path.isfile(plugin_path) else 'directory',
-                'enabled': True,
-                'version': '1.0.0',
-                'description': 'No description available'
+                "name": os.path.basename(plugin_path),
+                "path": plugin_path,
+                "type": "file" if os.path.isfile(plugin_path) else "directory",
+                "enabled": True,
+                "version": "1.0.0",
+                "description": "No description available"
             }
 
             # Try to read plugin metadata
             try:
-                if plugin_path.endswith('.py'):
-                    with open(plugin_path, 'r', encoding='utf-8') as f:
+                if plugin_path.endswith(".py"):
+                    with open(plugin_path, "r", encoding="utf-8") as f:
                         content = f.read()
 
                     # Extract basic metadata from comments
-                    lines = content.split('\n')
+                    lines = content.split("\n")
                     for line in lines[:20]:  # Check first 20 lines
                         line = line.strip()
-                        if line.startswith('# Name:'):
-                            info['name'] = line.split(':', 1)[1].strip()
-                        elif line.startswith('# Version:'):
-                            info['version'] = line.split(':', 1)[1].strip()
-                        elif line.startswith('# Description:'):
-                            info['description'] = line.split(':', 1)[1].strip()
-                        elif 'def ' in line and 'main' in line:
-                            info['has_main'] = True
+                        if line.startswith("# Name:"):
+                            info["name"] = line.split(":", 1)[1].strip()
+                        elif line.startswith("# Version:"):
+                            info["version"] = line.split(":", 1)[1].strip()
+                        elif line.startswith("# Description:"):
+                            info["description"] = line.split(":", 1)[1].strip()
+                        elif "def " in line and "main" in line:
+                            info["has_main"] = True
 
             except Exception as e:
                 logger.debug(f"Could not read plugin metadata: {e}")
@@ -616,7 +616,7 @@ Description: {plugin_info['description']}"""
             current_item = self.installed_list.currentItem()
             if current_item:
                 plugin_info = current_item.data(0)
-                plugin_info['enabled'] = True
+                plugin_info["enabled"] = True
                 current_item.setData(0, plugin_info)
                 current_item.setForeground(current_item.foreground())  # Reset to default color
                 self.on_installed_selection_changed()  # Refresh info display
@@ -627,7 +627,7 @@ Description: {plugin_info['description']}"""
             current_item = self.installed_list.currentItem()
             if current_item:
                 plugin_info = current_item.data(0)
-                plugin_info['enabled'] = False
+                plugin_info["enabled"] = False
                 current_item.setData(0, plugin_info)
                 from PyQt6.QtGui import QColor
                 current_item.setForeground(QColor(128, 128, 128))  # Gray out
@@ -648,10 +648,10 @@ Description: {plugin_info['description']}"""
 
                 if reply == QMessageBox.Yes:
                     try:
-                        if os.path.isfile(plugin_info['path']):
-                            os.remove(plugin_info['path'])
-                        elif os.path.isdir(plugin_info['path']):
-                            shutil.rmtree(plugin_info['path'])
+                        if os.path.isfile(plugin_info["path"]):
+                            os.remove(plugin_info["path"])
+                        elif os.path.isdir(plugin_info["path"]):
+                            shutil.rmtree(plugin_info["path"])
 
                         self.load_installed_plugins()  # Refresh list
                         QMessageBox.information(self, "Success", "Plugin removed successfully")
@@ -1257,7 +1257,7 @@ if __name__ == '__main__':
                 filename = f"{plugin_name.replace(' ', '_').lower()}_plugin.py"
                 file_path = os.path.join(self.plugins_dir, filename)
 
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(template_code)
 
                 QMessageBox.information(
@@ -1301,25 +1301,25 @@ if __name__ == '__main__':
 
             try:
                 # Basic syntax check
-                with open(plugin_file, 'r', encoding='utf-8') as f:
+                with open(plugin_file, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 # Try to compile the code
-                compile(content, plugin_file, 'exec')
+                compile(content, plugin_file, "exec")
                 self.test_output.append("✓ Syntax check passed")
 
                 # Check for required components
-                if 'class ' in content and 'Plugin' in content:
+                if "class " in content and "Plugin" in content:
                     self.test_output.append("✓ Plugin class found")
                 else:
                     self.test_output.append("⚠ Warning: No plugin class found")
 
-                if 'def execute(' in content:
+                if "def execute(" in content:
                     self.test_output.append("✓ Execute method found")
                 else:
                     self.test_output.append("⚠ Warning: No execute method found")
 
-                if 'PLUGIN_INFO' in content:
+                if "PLUGIN_INFO" in content:
                     self.test_output.append("✓ Plugin metadata found")
                 else:
                     self.test_output.append("⚠ Warning: No plugin metadata found")

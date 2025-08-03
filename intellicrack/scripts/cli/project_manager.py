@@ -72,48 +72,48 @@ class IntellicrackProject:
 
         # Project settings
         self.settings = {
-            'auto_save': True,
-            'backup_enabled': True,
-            'analysis_timeout': 300,
-            'export_format': 'json',
-            'temp_cleanup': True
+            "auto_save": True,
+            "backup_enabled": True,
+            "analysis_timeout": 300,
+            "export_format": "json",
+            "temp_cleanup": True
         }
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert project to dictionary."""
         return {
-            'name': self.name,
-            'path': self.path,
-            'description': self.description,
-            'created_time': self.created_time.isoformat(),
-            'modified_time': self.modified_time.isoformat(),
-            'binaries': self.binaries,
-            'analysis_results': self.analysis_results,
-            'scripts': self.scripts,
-            'reports': self.reports,
-            'notes': self.notes,
-            'tags': self.tags,
-            'settings': self.settings
+            "name": self.name,
+            "path": self.path,
+            "description": self.description,
+            "created_time": self.created_time.isoformat(),
+            "modified_time": self.modified_time.isoformat(),
+            "binaries": self.binaries,
+            "analysis_results": self.analysis_results,
+            "scripts": self.scripts,
+            "reports": self.reports,
+            "notes": self.notes,
+            "tags": self.tags,
+            "settings": self.settings
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'IntellicrackProject':
+    def from_dict(cls, data: Dict[str, Any]) -> "IntellicrackProject":
         """Create project from dictionary."""
         project = cls(
-            data['name'],
-            data['path'],
-            data.get('description', '')
+            data["name"],
+            data["path"],
+            data.get("description", "")
         )
 
-        project.created_time = datetime.fromisoformat(data.get('created_time', datetime.now().isoformat()))
-        project.modified_time = datetime.fromisoformat(data.get('modified_time', datetime.now().isoformat()))
-        project.binaries = data.get('binaries', [])
-        project.analysis_results = data.get('analysis_results', {})
-        project.scripts = data.get('scripts', [])
-        project.reports = data.get('reports', [])
-        project.notes = data.get('notes', '')
-        project.tags = data.get('tags', [])
-        project.settings = data.get('settings', project.settings)
+        project.created_time = datetime.fromisoformat(data.get("created_time", datetime.now().isoformat()))
+        project.modified_time = datetime.fromisoformat(data.get("modified_time", datetime.now().isoformat()))
+        project.binaries = data.get("binaries", [])
+        project.analysis_results = data.get("analysis_results", {})
+        project.scripts = data.get("scripts", [])
+        project.reports = data.get("reports", [])
+        project.notes = data.get("notes", "")
+        project.tags = data.get("tags", [])
+        project.settings = data.get("settings", project.settings)
 
         return project
 
@@ -139,8 +139,8 @@ class IntellicrackProject:
     def add_analysis_result(self, binary_name: str, analysis_data: Dict[str, Any]) -> None:
         """Add analysis result for a binary."""
         self.analysis_results[binary_name] = {
-            'timestamp': datetime.now().isoformat(),
-            'data': analysis_data
+            "timestamp": datetime.now().isoformat(),
+            "data": analysis_data
         }
         self.modified_time = datetime.now()
 
@@ -186,10 +186,10 @@ class ProjectManager:
 
         # Manager settings
         self.settings = {
-            'auto_backup': True,
-            'max_projects': 50,
-            'cleanup_old_projects': True,
-            'compression_enabled': True
+            "auto_backup": True,
+            "max_projects": 50,
+            "cleanup_old_projects": True,
+            "compression_enabled": True
         }
 
         self._ensure_workspace_structure()
@@ -212,9 +212,9 @@ class ProjectManager:
         """Load manager configuration."""
         try:
             if os.path.exists(self.config_file):
-                with open(self.config_file, 'r', encoding='utf-8') as f:
+                with open(self.config_file, "r", encoding="utf-8") as f:
                     config = json.load(f)
-                self.settings.update(config.get('manager_settings', {}))
+                self.settings.update(config.get("manager_settings", {}))
         except Exception as e:
             logger.debug(f"Non-critical operation failed: {e}")
 
@@ -222,10 +222,10 @@ class ProjectManager:
         """Save manager configuration."""
         try:
             config = {
-                'manager_settings': self.settings,
-                'last_updated': datetime.now().isoformat()
+                "manager_settings": self.settings,
+                "last_updated": datetime.now().isoformat()
             }
-            with open(self.config_file, 'w', encoding='utf-8') as f:
+            with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2)
         except Exception as e:
             logger.debug(f"Non-critical operation failed: {e}")
@@ -256,7 +256,7 @@ class ProjectManager:
             os.makedirs(project_path, exist_ok=True)
 
             # Create project structure
-            subdirs = ['binaries', 'results', 'scripts', 'reports', 'temp']
+            subdirs = ["binaries", "results", "scripts", "reports", "temp"]
             for subdir in subdirs:
                 os.makedirs(os.path.join(project_path, subdir), exist_ok=True)
 
@@ -347,7 +347,7 @@ class ProjectManager:
         try:
             if os.path.exists(self.templates_dir):
                 for file in os.listdir(self.templates_dir):
-                    if file.endswith('.json'):
+                    if file.endswith(".json"):
                         templates.append(file[:-5])  # Remove .json extension
         except Exception:
             pass
@@ -369,7 +369,7 @@ class ProjectManager:
             return None
 
         try:
-            with open(project_file, 'r', encoding='utf-8') as f:
+            with open(project_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             project = IntellicrackProject.from_dict(data)
@@ -396,11 +396,11 @@ class ProjectManager:
             project_file = os.path.join(project.path, "project.json")
 
             # Create backup if enabled
-            if self.settings['auto_backup'] and os.path.exists(project_file):
+            if self.settings["auto_backup"] and os.path.exists(project_file):
                 self._backup_project(project)
 
             # Save project data
-            with open(project_file, 'w', encoding='utf-8') as f:
+            with open(project_file, "w", encoding="utf-8") as f:
                 json.dump(project.to_dict(), f, indent=2)
 
             return True
@@ -432,7 +432,7 @@ class ProjectManager:
         try:
             # Create final backup
             project = self.load_project(name)
-            if project and self.settings['auto_backup']:
+            if project and self.settings["auto_backup"]:
                 self._backup_project(project)
 
             # Delete project directory
@@ -464,20 +464,20 @@ class ProjectManager:
 
                 if os.path.isdir(project_path) and os.path.exists(project_file):
                     try:
-                        with open(project_file, 'r', encoding='utf-8') as f:
+                        with open(project_file, "r", encoding="utf-8") as f:
                             data = json.load(f)
 
                         # Calculate project size
                         size = self._get_directory_size(project_path)
 
                         projects.append({
-                            'name': data['name'],
-                            'description': data.get('description', ''),
-                            'created_time': data.get('created_time', ''),
-                            'modified_time': data.get('modified_time', ''),
-                            'size': size,
-                            'binary_count': len(data.get('binaries', [])),
-                            'analysis_count': len(data.get('analysis_results', {}))
+                            "name": data["name"],
+                            "description": data.get("description", ""),
+                            "created_time": data.get("created_time", ""),
+                            "modified_time": data.get("modified_time", ""),
+                            "size": size,
+                            "binary_count": len(data.get("binaries", [])),
+                            "analysis_count": len(data.get("analysis_results", {}))
                         })
 
                     except Exception:
@@ -486,7 +486,7 @@ class ProjectManager:
         except Exception as e:
             logger.debug(f"Non-critical operation failed: {e}")
 
-        return sorted(projects, key=lambda x: x['modified_time'], reverse=True)
+        return sorted(projects, key=lambda x: x["modified_time"], reverse=True)
 
     def import_binary(self, project: IntellicrackProject, binary_path: str,
                      copy_file: bool = True) -> bool:
@@ -564,7 +564,7 @@ class ProjectManager:
                 ) as progress:
                     export_task = progress.add_task(f"Exporting {project.name}...", total=total_files)
 
-                    with zipfile.ZipFile(export_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    with zipfile.ZipFile(export_path, "w", zipfile.ZIP_DEFLATED) as zipf:
                         # Add project metadata
                         project_data = project.to_dict()
                         zipf.writestr("project.json", json.dumps(project_data, indent=2))
@@ -586,7 +586,7 @@ class ProjectManager:
                                 zipf.write(file_path, arc_path)
                                 progress.advance(export_task)
             else:
-                with zipfile.ZipFile(export_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                with zipfile.ZipFile(export_path, "w", zipfile.ZIP_DEFLATED) as zipf:
                     # Add project metadata
                     project_data = project.to_dict()
                     zipf.writestr("project.json", json.dumps(project_data, indent=2))
@@ -628,15 +628,15 @@ class ProjectManager:
         try:
             import zipfile
 
-            with zipfile.ZipFile(archive_path, 'r') as zipf:
+            with zipfile.ZipFile(archive_path, "r") as zipf:
                 # Read project metadata
-                project_data = json.loads(zipf.read("project.json").decode('utf-8'))
+                project_data = json.loads(zipf.read("project.json").decode("utf-8"))
 
                 # Use provided name or original name
-                name = project_name or project_data['name']
+                name = project_name or project_data["name"]
 
                 # Create new project
-                project = self.create_project(name, project_data.get('description', ''))
+                project = self.create_project(name, project_data.get("description", ""))
                 if not project:
                     return None
 
@@ -662,21 +662,21 @@ class ProjectManager:
 
         if os.path.exists(template_path):
             try:
-                with open(template_path, 'r', encoding='utf-8') as f:
+                with open(template_path, "r", encoding="utf-8") as f:
                     template_data = json.load(f)
 
                 # Apply template settings
-                project.settings.update(template_data.get('settings', {}))
-                project.tags.extend(template_data.get('tags', []))
-                project.notes = template_data.get('notes', '')
+                project.settings.update(template_data.get("settings", {}))
+                project.tags.extend(template_data.get("tags", []))
+                project.notes = template_data.get("notes", "")
 
                 # Create template files
-                for file_info in template_data.get('files', []):
-                    file_path = os.path.join(project.path, file_info['path'])
+                for file_info in template_data.get("files", []):
+                    file_path = os.path.join(project.path, file_info["path"])
                     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write(file_info.get('content', ''))
+                    with open(file_path, "w", encoding="utf-8") as f:
+                        f.write(file_info.get("content", ""))
 
             except Exception as e:
                 logger.debug(f"Failed to restore project file: {e}")
@@ -739,17 +739,17 @@ class ProjectManager:
             table.add_column("Modified", style="dim")
 
             for project in projects:
-                size_mb = project['size'] / (1024 * 1024)
+                size_mb = project["size"] / (1024 * 1024)
                 size_str = f"{size_mb:.1f} MB" if size_mb >= 1 else f"{project['size']} bytes"
 
-                modified_time = datetime.fromisoformat(project['modified_time'])
+                modified_time = datetime.fromisoformat(project["modified_time"])
                 modified_str = modified_time.strftime("%Y-%m-%d %H:%M")
 
                 table.add_row(
-                    project['name'],
-                    project['description'][:30] + "..." if len(project['description']) > 30 else project['description'],
-                    str(project['binary_count']),
-                    str(project['analysis_count']),
+                    project["name"],
+                    project["description"][:30] + "..." if len(project["description"]) > 30 else project["description"],
+                    str(project["binary_count"]),
+                    str(project["analysis_count"]),
                     size_str,
                     modified_str
                 )
@@ -766,10 +766,10 @@ class ProjectManager:
             print("-" * 80)
 
             for project in projects:
-                size_mb = project['size'] / (1024 * 1024)
+                size_mb = project["size"] / (1024 * 1024)
                 size_str = f"{size_mb:.1f}MB" if size_mb >= 1 else f"{project['size']}B"
 
-                modified_time = datetime.fromisoformat(project['modified_time'])
+                modified_time = datetime.fromisoformat(project["modified_time"])
                 modified_str = modified_time.strftime("%m-%d %H:%M")
 
                 print(f"{project['name']:<15} {project['binary_count']:<8} {project['analysis_count']:<8} "
@@ -898,7 +898,7 @@ def get_project_manager() -> ProjectManager:
 
 def format_size(size_bytes: int) -> str:
     """Format size in bytes to human readable string."""
-    for unit in ['B', 'KB', 'MB', 'GB']:
+    for unit in ["B", "KB", "MB", "GB"]:
         if size_bytes < 1024.0:
             return f"{size_bytes:.1f} {unit}"
         size_bytes /= 1024.0

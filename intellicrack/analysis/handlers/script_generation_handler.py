@@ -93,8 +93,8 @@ class ScriptGenerationWorker(QRunnable):
                     self.file_path, "ghidra")
             else:
                 result = {
-                    'success': False,
-                    'error': f"Unknown script type: {self.script_type}"
+                    "success": False,
+                    "error": f"Unknown script type: {self.script_type}"
                 }
 
             self.signals.result.emit(result)
@@ -136,11 +136,11 @@ class ScriptDisplayDialog(QDialog):
             QLabel(f"Type: {self.script_data.get('type', 'Unknown')}"))
 
         # Approach
-        approach = self.script_data.get('approach', 'Unknown')
+        approach = self.script_data.get("approach", "Unknown")
         info_layout.addWidget(QLabel(f"Approach: {approach}"))
 
         # Confidence
-        confidence = self.script_data.get('confidence', 0)
+        confidence = self.script_data.get("confidence", 0)
         confidence_label = QLabel(f"Confidence: {confidence:.0%}")
         if confidence >= 0.8:
             confidence_label.setStyleSheet("color: green;")
@@ -151,7 +151,7 @@ class ScriptDisplayDialog(QDialog):
         info_layout.addWidget(confidence_label)
 
         # Difficulty
-        difficulty = self.script_data.get('difficulty', 'Unknown')
+        difficulty = self.script_data.get("difficulty", "Unknown")
         info_layout.addWidget(QLabel(f"Difficulty: {difficulty}"))
 
         info_layout.addStretch()
@@ -161,7 +161,7 @@ class ScriptDisplayDialog(QDialog):
         self.script_text = QTextEdit()
         self.script_text.setReadOnly(True)
         self.script_text.setFont(QFont("Consolas", 10))
-        self.script_text.setPlainText(self.script_data.get('script', ''))
+        self.script_text.setPlainText(self.script_data.get("script", ""))
 
         # Apply basic syntax highlighting
         self._apply_syntax_highlighting()
@@ -169,12 +169,12 @@ class ScriptDisplayDialog(QDialog):
         layout.addWidget(self.script_text)
 
         # Warnings section
-        if 'warnings' in self.script_data and self.script_data['warnings']:
+        if "warnings" in self.script_data and self.script_data["warnings"]:
             warnings_label = QLabel("⚠️ Warnings:")
             warnings_label.setStyleSheet("color: orange; font-weight: bold;")
             layout.addWidget(warnings_label)
 
-            for warning in self.script_data['warnings']:
+            for warning in self.script_data["warnings"]:
                 warning_text = QLabel(f"  • {warning}")
                 warning_text.setWordWrap(True)
                 layout.addWidget(warning_text)
@@ -205,16 +205,16 @@ class ScriptDisplayDialog(QDialog):
         from PyQt6.QtGui import QColor, QFont, QTextCharFormat
 
         # This is a simplified version - could be enhanced with proper syntax highlighter
-        script_type = self.script_data.get('type', '').lower()
+        script_type = self.script_data.get("type", "").lower()
 
-        if script_type == 'frida':
+        if script_type == "frida":
             # JavaScript highlighting for Frida
-            keywords = ['function', 'var', 'let', 'const', 'if', 'else', 'for', 'while',
-                        'return', 'true', 'false', 'null', 'undefined', 'new']
-        elif script_type == 'ghidra':
+            keywords = ["function", "var", "let", "const", "if", "else", "for", "while",
+                        "return", "true", "false", "null", "undefined", "new"]
+        elif script_type == "ghidra":
             # Python highlighting for Ghidra
-            keywords = ['def', 'class', 'import', 'from', 'if', 'else', 'elif', 'for',
-                        'while', 'return', 'True', 'False', 'None', 'try', 'except']
+            keywords = ["def", "class", "import", "from", "if", "else", "elif", "for",
+                        "while", "return", "True", "False", "None", "try", "except"]
         else:
             keywords = []
 
@@ -260,7 +260,7 @@ class ScriptDisplayDialog(QDialog):
     def copy_script(self):
         """Copy script to clipboard"""
         from PyQt6.QtWidgets import QApplication
-        QApplication.clipboard().setText(self.script_data.get('script', ''))
+        QApplication.clipboard().setText(self.script_data.get("script", ""))
 
         # Show brief confirmation
         self.copy_btn.setText("Copied!")
@@ -271,11 +271,11 @@ class ScriptDisplayDialog(QDialog):
         """Save script to file"""
         from PyQt6.QtWidgets import QFileDialog
 
-        script_type = self.script_data.get('type', 'script').lower()
-        if script_type == 'frida':
+        script_type = self.script_data.get("type", "script").lower()
+        if script_type == "frida":
             default_name = "bypass_script.js"
             file_filter = "JavaScript Files (*.js);;All Files (*.*)"
-        elif script_type == 'ghidra':
+        elif script_type == "ghidra":
             default_name = "bypass_script.py"
             file_filter = "Python Files (*.py);;All Files (*.*)"
         else:
@@ -291,8 +291,8 @@ class ScriptDisplayDialog(QDialog):
 
         if file_path:
             try:
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(self.script_data.get('script', ''))
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write(self.script_data.get("script", ""))
 
                 QMessageBox.information(
                     self,
@@ -357,7 +357,7 @@ class ScriptGenerationHandler(QObject):
             return
 
         # Get protection list
-        protections = [p['name'] for p in self.current_result.protections]
+        protections = [p["name"] for p in self.current_result.protections]
 
         # Start generation in background
         worker = ScriptGenerationWorker(
@@ -376,7 +376,7 @@ class ScriptGenerationHandler(QObject):
 
     def _on_script_ready(self, result: dict, parent_widget=None):
         """Handle script generation completion"""
-        if result['success']:
+        if result["success"]:
             # Emit signal
             self.script_ready.emit(result)
 
@@ -386,7 +386,7 @@ class ScriptGenerationHandler(QObject):
                 dialog.exec()
         else:
             error_msg = result.get(
-                'error', 'Unknown error during script generation')
+                "error", "Unknown error during script generation")
             self.script_error.emit(error_msg)
 
             if parent_widget:

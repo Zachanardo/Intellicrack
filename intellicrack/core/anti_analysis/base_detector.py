@@ -57,10 +57,10 @@ class BaseDetector(ABC):
             aggressive_methods = []
 
         results = {
-            'detections': {},
-            'detection_count': 0,
-            'total_confidence': 0,
-            'average_confidence': 0
+            "detections": {},
+            "detection_count": 0,
+            "total_confidence": 0,
+            "average_confidence": 0
         }
 
         detection_count = 0
@@ -73,10 +73,10 @@ class BaseDetector(ABC):
 
             try:
                 detected, confidence, details = method_func()
-                results['detections'][method_name] = {
-                    'detected': detected,
-                    'confidence': confidence,
-                    'details': details
+                results["detections"][method_name] = {
+                    "detected": detected,
+                    "confidence": confidence,
+                    "details": details
                 }
 
                 if detected:
@@ -87,13 +87,13 @@ class BaseDetector(ABC):
                 self.logger.debug(f"Detection method {method_name} failed: {e}")
 
         # Calculate overall results
-        results['detection_count'] = detection_count
-        results['total_confidence'] = total_confidence
+        results["detection_count"] = detection_count
+        results["total_confidence"] = total_confidence
 
         if detection_count > 0:
-            results['average_confidence'] = total_confidence / detection_count
+            results["average_confidence"] = total_confidence / detection_count
         else:
-            results['average_confidence'] = 0
+            results["average_confidence"] = 0
 
         return results
 
@@ -115,25 +115,25 @@ class BaseDetector(ABC):
             Tuple of (raw_output, process_list)
         """
         try:
-            if platform.system() == 'Windows':
-                result = subprocess.run(['tasklist'], capture_output=True, text=True)
+            if platform.system() == "Windows":
+                result = subprocess.run(["tasklist"], capture_output=True, text=True)
                 processes = result.stdout.lower()
             else:
-                result = subprocess.run(['ps', 'aux'], capture_output=True, text=True)
+                result = subprocess.run(["ps", "aux"], capture_output=True, text=True)
                 processes = result.stdout.lower()
 
             # Also get individual process names
             process_list = []
-            if platform.system() == 'Windows':
+            if platform.system() == "Windows":
                 # Parse tasklist output
-                lines = result.stdout.strip().split('\n')[3:]  # Skip header
+                lines = result.stdout.strip().split("\n")[3:]  # Skip header
                 for line in lines:
                     if line.strip():
                         process_name = line.split()[0].lower()
                         process_list.append(process_name)
             else:
                 # Parse ps output
-                lines = result.stdout.strip().split('\n')[1:]  # Skip header
+                lines = result.stdout.strip().split("\n")[1:]  # Skip header
                 for line in lines:
                     if line.strip():
                         parts = line.split()
@@ -166,7 +166,7 @@ class BaseDetector(ABC):
 
         score = 0
         for method, result in detections.items():
-            if isinstance(result, dict) and result.get('detected'):
+            if isinstance(result, dict) and result.get("detected"):
                 if method in strong_methods:
                     score += 3
                 elif method in medium_methods:

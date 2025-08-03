@@ -358,7 +358,7 @@ class ConfigManager:
         """Load configuration from file."""
         try:
             if os.path.exists(self.config_file):
-                with open(self.config_file, 'r', encoding='utf-8') as f:
+                with open(self.config_file, "r", encoding="utf-8") as f:
                     saved_config = json.load(f)
 
                 # Update config with saved values, validating each one
@@ -387,7 +387,7 @@ class ConfigManager:
                 self._create_backup()
 
             # Save current config
-            with open(self.config_file, 'w', encoding='utf-8') as f:
+            with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=2, ensure_ascii=False)
 
             return True
@@ -463,7 +463,7 @@ You can modify core analysis, AI backend, and export preferences.
 
         console.print("\n[bold blue]Available configuration categories:[/bold blue]")
         for category in categories:
-            category_display = category.replace('_', ' ').title()
+            category_display = category.replace("_", " ").title()
             if Confirm.ask(f"Configure {category_display} settings?", default=False):
                 selected_categories.append(category)
 
@@ -494,7 +494,7 @@ You can modify core analysis, AI backend, and export preferences.
             return
 
         # Category header panel
-        category_title = category.replace('_', ' ').title()
+        category_title = category.replace("_", " ").title()
         category_panel = Panel(
             f"Configuring {category_title} Settings",
             border_style="blue",
@@ -556,7 +556,7 @@ You can modify core analysis, AI backend, and export preferences.
         # Group options by category
         categories = self.get_categories()
         for category in categories:
-            category_display = category.replace('_', ' ').title()
+            category_display = category.replace("_", " ").title()
             category_node = tree.add(f"📁 [bold cyan]{category_display}[/bold cyan]")
 
             category_options = self.get_category_options(category)
@@ -752,7 +752,7 @@ You can modify core analysis, AI backend, and export preferences.
             if format_type.lower() == "json":
                 export_data = {
                     "metadata": {
-                        "export_time": time.strftime('%Y-%m-%d %H:%M:%S'),
+                        "export_time": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "version": "2.1",
                         "tool": "Intellicrack CLI"
                     },
@@ -768,7 +768,7 @@ You can modify core analysis, AI backend, and export preferences.
                     }
                 }
 
-                with open(export_path, 'w', encoding='utf-8') as f:
+                with open(export_path, "w", encoding="utf-8") as f:
                     json.dump(export_data, f, indent=2, ensure_ascii=False)
 
             elif format_type.lower() == "yaml":
@@ -777,12 +777,12 @@ You can modify core analysis, AI backend, and export preferences.
                     export_data = {
                         "configuration": self.config,
                         "metadata": {
-                            "export_time": time.strftime('%Y-%m-%d %H:%M:%S'),
+                            "export_time": time.strftime("%Y-%m-%d %H:%M:%S"),
                             "version": "2.1"
                         }
                     }
 
-                    with open(export_path, 'w', encoding='utf-8') as f:
+                    with open(export_path, "w", encoding="utf-8") as f:
                         yaml.dump(export_data, f, default_flow_style=False)
 
                 except ImportError:
@@ -806,16 +806,16 @@ You can modify core analysis, AI backend, and export preferences.
             True if successful
         """
         try:
-            with open(import_path, 'r', encoding='utf-8') as f:
-                if import_path.endswith('.yaml') or import_path.endswith('.yml'):
+            with open(import_path, "r", encoding="utf-8") as f:
+                if import_path.endswith(".yaml") or import_path.endswith(".yml"):
                     import yaml
                     data = yaml.safe_load(f)
                 else:
                     data = json.load(f)
 
             # Extract configuration
-            if 'configuration' in data:
-                config_data = data['configuration']
+            if "configuration" in data:
+                config_data = data["configuration"]
             else:
                 config_data = data
 
@@ -908,7 +908,7 @@ You can modify core analysis, AI backend, and export preferences.
 
 def get_config_manager() -> ConfigManager:
     """Get default configuration manager instance."""
-    if not hasattr(get_config_manager, '_instance'):
+    if not hasattr(get_config_manager, "_instance"):
         get_config_manager._instance = ConfigManager()
     return get_config_manager._instance
 

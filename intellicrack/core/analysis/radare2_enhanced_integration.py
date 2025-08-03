@@ -84,11 +84,11 @@ class EnhancedR2Integration:
 
         # Performance and monitoring
         self.performance_stats = {
-            'analysis_times': {},
-            'cache_hits': 0,
-            'cache_misses': 0,
-            'errors_handled': 0,
-            'recoveries_successful': 0
+            "analysis_times": {},
+            "cache_hits": 0,
+            "cache_misses": 0,
+            "errors_handled": 0,
+            "recoveries_successful": 0
         }
 
         # Thread safety
@@ -100,10 +100,10 @@ class EnhancedR2Integration:
 
         # Results cache with TTL
         self.results_cache = {}
-        self.cache_ttl = self.config.get('cache_ttl', 300)  # 5 minutes default
+        self.cache_ttl = self.config.get("cache_ttl", 300)  # 5 minutes default
 
         # Real-time monitoring
-        self.monitoring_enabled = self.config.get('real_time_monitoring', False)
+        self.monitoring_enabled = self.config.get("real_time_monitoring", False)
         self.monitoring_thread = None
 
         self.logger.info(f"EnhancedR2Integration initialized for {binary_path}")
@@ -115,22 +115,22 @@ class EnhancedR2Integration:
             return
 
         component_classes = {
-            'decompiler': R2DecompilationEngine,
-            'esil': ESILAnalysisEngine,
-            'strings': R2StringAnalyzer,
-            'signatures': R2SignatureAnalyzer,
-            'imports': R2ImportExportAnalyzer,
-            'vulnerability': R2VulnerabilityEngine,
-            'ai': R2AIEngine,
-            'bypass': R2BypassGenerator,
-            'diff': R2BinaryDiff,
-            'scripting': R2ScriptingEngine
+            "decompiler": R2DecompilationEngine,
+            "esil": ESILAnalysisEngine,
+            "strings": R2StringAnalyzer,
+            "signatures": R2SignatureAnalyzer,
+            "imports": R2ImportExportAnalyzer,
+            "vulnerability": R2VulnerabilityEngine,
+            "ai": R2AIEngine,
+            "bypass": R2BypassGenerator,
+            "diff": R2BinaryDiff,
+            "scripting": R2ScriptingEngine
         }
 
         for name, component_class in component_classes.items():
             try:
                 with r2_error_context(f"init_{name}_component", binary_path=self.binary_path):
-                    if name == 'diff':
+                    if name == "diff":
                         # Binary diff needs two binaries, initialize later
                         self.components[name] = None
                     else:
@@ -154,26 +154,26 @@ class EnhancedR2Integration:
             analysis_types = list(self.components.keys())
 
         results = {
-            'metadata': {
-                'binary_path': self.binary_path,
-                'analysis_start': time.time(),
-                'analysis_types': analysis_types,
-                'config': self.config
+            "metadata": {
+                "binary_path": self.binary_path,
+                "analysis_start": time.time(),
+                "analysis_types": analysis_types,
+                "config": self.config
             },
-            'components': {},
-            'errors': [],
-            'performance': {}
+            "components": {},
+            "errors": [],
+            "performance": {}
         }
 
         # Use thread pool for parallel analysis where safe
-        parallel_safe = ['strings', 'imports', 'signatures']
-        sequential_required = ['decompiler', 'vulnerability', 'esil', 'ai', 'bypass']
+        parallel_safe = ["strings", "imports", "signatures"]
+        sequential_required = ["decompiler", "vulnerability", "esil", "ai", "bypass"]
 
         # Run parallel-safe analyses first
         parallel_types = [t for t in analysis_types if t in parallel_safe]
         if parallel_types:
             parallel_results = self._run_parallel_analysis(parallel_types)
-            results['components'].update(parallel_results)
+            results["components"].update(parallel_results)
 
         # Run sequential analyses
         sequential_types = [t for t in analysis_types if t in sequential_required]
@@ -181,26 +181,26 @@ class EnhancedR2Integration:
             try:
                 component_result = self._run_single_analysis(analysis_type)
                 if component_result:
-                    results['components'][analysis_type] = component_result
+                    results["components"][analysis_type] = component_result
             except Exception as e:
                 self.logger.error(f"Failed to run {analysis_type} analysis: {e}")
-                results['errors'].append({
-                    'component': analysis_type,
-                    'error': str(e),
-                    'timestamp': time.time()
+                results["errors"].append({
+                    "component": analysis_type,
+                    "error": str(e),
+                    "timestamp": time.time()
                 })
 
         # Add performance metrics
-        results['performance'] = self.get_performance_stats()
-        results['metadata']['analysis_end'] = time.time()
-        results['metadata']['total_duration'] = results['metadata']['analysis_end'] - results['metadata']['analysis_start']
+        results["performance"] = self.get_performance_stats()
+        results["metadata"]["analysis_end"] = time.time()
+        results["metadata"]["total_duration"] = results["metadata"]["analysis_end"] - results["metadata"]["analysis_start"]
 
         # Standardize results
         standardized_results = standardize_r2_result(
-            'comprehensive',
+            "comprehensive",
             results,
             self.binary_path,
-            {'enhanced_integration': True}
+            {"enhanced_integration": True}
         )
 
         return standardized_results
@@ -208,7 +208,7 @@ class EnhancedR2Integration:
     def _run_parallel_analysis(self, analysis_types: List[str]) -> Dict[str, Any]:
         """Run analyses in parallel for performance"""
         results = {}
-        max_workers = min(len(analysis_types), self.config.get('max_parallel_workers', 3))
+        max_workers = min(len(analysis_types), self.config.get("max_parallel_workers", 3))
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all tasks
@@ -227,8 +227,8 @@ class EnhancedR2Integration:
                 except Exception as e:
                     self.logger.error(f"Parallel analysis {analysis_type} failed: {e}")
                     self.error_handler.handle_error(e, f"parallel_{analysis_type}", {
-                        'binary_path': self.binary_path,
-                        'analysis_type': analysis_type
+                        "binary_path": self.binary_path,
+                        "analysis_type": analysis_type
                     })
 
         return results
@@ -239,10 +239,10 @@ class EnhancedR2Integration:
         cache_key = f"{analysis_type}_{self.binary_path}"
         cached_result = self._get_cached_result(cache_key)
         if cached_result:
-            self.performance_stats['cache_hits'] += 1
+            self.performance_stats["cache_hits"] += 1
             return cached_result
 
-        self.performance_stats['cache_misses'] += 1
+        self.performance_stats["cache_misses"] += 1
 
         # Check if component is available
         if analysis_type not in self.components or self.components[analysis_type] is None:
@@ -252,7 +252,7 @@ class EnhancedR2Integration:
         # Check if operation is degraded
         if self.error_handler.is_operation_degraded(f"r2_{analysis_type}"):
             self.logger.warning(f"Analysis {analysis_type} is in degraded mode, skipping")
-            return {'degraded': True, 'reason': 'Circuit breaker open'}
+            return {"degraded": True, "reason": "Circuit breaker open"}
 
         start_time = time.time()
 
@@ -261,26 +261,26 @@ class EnhancedR2Integration:
                 component = self.components[analysis_type]
 
                 # Run specific analysis
-                if analysis_type == 'decompiler':
+                if analysis_type == "decompiler":
                     result = component.analyze_license_functions()
-                elif analysis_type == 'esil':
+                elif analysis_type == "esil":
                     result = component.run_emulation_analysis()
-                elif analysis_type == 'strings':
+                elif analysis_type == "strings":
                     result = component.analyze_strings()
-                elif analysis_type == 'signatures':
+                elif analysis_type == "signatures":
                     result = component.analyze_signatures()
-                elif analysis_type == 'imports':
+                elif analysis_type == "imports":
                     result = component.analyze_imports_exports()
-                elif analysis_type == 'vulnerability':
+                elif analysis_type == "vulnerability":
                     result = component.comprehensive_vulnerability_scan()
-                elif analysis_type == 'ai':
+                elif analysis_type == "ai":
                     result = component.run_ai_analysis()
-                elif analysis_type == 'bypass':
+                elif analysis_type == "bypass":
                     result = component.generate_bypass_strategies()
-                elif analysis_type == 'scripting':
+                elif analysis_type == "scripting":
                     result = component.run_custom_analysis()
                 else:
-                    result = {'error': f'Unknown analysis type: {analysis_type}'}
+                    result = {"error": f"Unknown analysis type: {analysis_type}"}
 
                 # Record performance
                 duration = time.time() - start_time
@@ -296,39 +296,39 @@ class EnhancedR2Integration:
             self._record_analysis_time(analysis_type, duration, success=False)
 
             self.logger.error(f"Analysis {analysis_type} failed: {e}")
-            self.performance_stats['errors_handled'] += 1
+            self.performance_stats["errors_handled"] += 1
 
             # Try recovery
             if self.error_handler.handle_error(e, f"r2_{analysis_type}", {
-                'binary_path': self.binary_path,
-                'analysis_type': analysis_type,
-                'component': component
+                "binary_path": self.binary_path,
+                "analysis_type": analysis_type,
+                "component": component
             }):
-                self.performance_stats['recoveries_successful'] += 1
+                self.performance_stats["recoveries_successful"] += 1
                 # Retry once after recovery
                 try:
-                    if analysis_type == 'decompiler':
+                    if analysis_type == "decompiler":
                         result = component.analyze_license_functions()
-                    elif analysis_type == 'esil':
+                    elif analysis_type == "esil":
                         result = component.run_emulation_analysis()
                     # ... (same pattern for other types)
                     else:
-                        result = {'recovered': True, 'original_error': str(e)}
+                        result = {"recovered": True, "original_error": str(e)}
 
                     self._cache_result(cache_key, result)
                     return result
                 except Exception as retry_e:
                     self.logger.error(f"Retry failed for {analysis_type}: {retry_e}")
 
-            return {'error': str(e), 'failed_analysis': analysis_type}
+            return {"error": str(e), "failed_analysis": analysis_type}
 
     def _get_cached_result(self, cache_key: str) -> Optional[Dict[str, Any]]:
         """Get cached result if still valid"""
         with self._lock:
             if cache_key in self.results_cache:
                 cached_data = self.results_cache[cache_key]
-                if time.time() - cached_data['timestamp'] < self.cache_ttl:
-                    return cached_data['result']
+                if time.time() - cached_data["timestamp"] < self.cache_ttl:
+                    return cached_data["result"]
                 else:
                     # Remove expired cache entry
                     del self.results_cache[cache_key]
@@ -338,17 +338,17 @@ class EnhancedR2Integration:
         """Cache analysis result"""
         with self._lock:
             self.results_cache[cache_key] = {
-                'result': result,
-                'timestamp': time.time()
+                "result": result,
+                "timestamp": time.time()
             }
 
             # Limit cache size
-            max_cache_size = self.config.get('max_cache_size', 100)
+            max_cache_size = self.config.get("max_cache_size", 100)
             if len(self.results_cache) > max_cache_size:
                 # Remove oldest entries
                 sorted_items = sorted(
                     self.results_cache.items(),
-                    key=lambda x: x[1]['timestamp']
+                    key=lambda x: x[1]["timestamp"]
                 )
                 for key, _ in sorted_items[:10]:  # Remove 10 oldest
                     del self.results_cache[key]
@@ -356,24 +356,24 @@ class EnhancedR2Integration:
     def _record_analysis_time(self, analysis_type: str, duration: float, success: bool = True):
         """Record analysis performance"""
         with self._lock:
-            if analysis_type not in self.performance_stats['analysis_times']:
-                self.performance_stats['analysis_times'][analysis_type] = {
-                    'times': [],
-                    'successes': 0,
-                    'failures': 0
+            if analysis_type not in self.performance_stats["analysis_times"]:
+                self.performance_stats["analysis_times"][analysis_type] = {
+                    "times": [],
+                    "successes": 0,
+                    "failures": 0
                 }
 
-            stats = self.performance_stats['analysis_times'][analysis_type]
-            stats['times'].append(duration)
+            stats = self.performance_stats["analysis_times"][analysis_type]
+            stats["times"].append(duration)
 
             if success:
-                stats['successes'] += 1
+                stats["successes"] += 1
             else:
-                stats['failures'] += 1
+                stats["failures"] += 1
 
             # Keep only last 50 measurements
-            if len(stats['times']) > 50:
-                stats['times'] = stats['times'][-50:]
+            if len(stats["times"]) > 50:
+                stats["times"] = stats["times"][-50:]
 
     def start_real_time_monitoring(self, callback: Optional[Callable] = None):
         """Start real-time monitoring of analysis results"""
@@ -399,16 +399,16 @@ class EnhancedR2Integration:
         while self.monitoring_enabled:
             try:
                 # Run lightweight analysis
-                quick_results = self._run_single_analysis('strings')
+                quick_results = self._run_single_analysis("strings")
 
                 if callback and quick_results:
                     callback({
-                        'type': 'real_time_update',
-                        'results': quick_results,
-                        'timestamp': time.time()
+                        "type": "real_time_update",
+                        "results": quick_results,
+                        "timestamp": time.time()
                     })
 
-                time.sleep(self.config.get('monitoring_interval', 30))  # 30 seconds default
+                time.sleep(self.config.get("monitoring_interval", 30))  # 30 seconds default
 
             except Exception as e:
                 self.logger.error(f"Monitoring loop error: {e}")
@@ -420,23 +420,23 @@ class EnhancedR2Integration:
             stats = self.performance_stats.copy()
 
             # Calculate averages and rates
-            for analysis_type, data in stats['analysis_times'].items():
-                if data['times']:
-                    data['avg_time'] = sum(data['times']) / len(data['times'])
-                    data['max_time'] = max(data['times'])
-                    data['min_time'] = min(data['times'])
+            for analysis_type, data in stats["analysis_times"].items():
+                if data["times"]:
+                    data["avg_time"] = sum(data["times"]) / len(data["times"])
+                    data["max_time"] = max(data["times"])
+                    data["min_time"] = min(data["times"])
                     # Add analysis type metadata for reporting
-                    data['analysis_type'] = analysis_type
-                    data['total_time'] = sum(data['times'])
+                    data["analysis_type"] = analysis_type
+                    data["total_time"] = sum(data["times"])
 
-                total_attempts = data['successes'] + data['failures']
+                total_attempts = data["successes"] + data["failures"]
                 if total_attempts > 0:
-                    data['success_rate'] = data['successes'] / total_attempts
+                    data["success_rate"] = data["successes"] / total_attempts
                 else:
-                    data['success_rate'] = 0.0
+                    data["success_rate"] = 0.0
 
             # Add error handler stats
-            stats['error_handler'] = self.error_handler.get_error_statistics()
+            stats["error_handler"] = self.error_handler.get_error_statistics()
 
             return stats
 
@@ -445,17 +445,17 @@ class EnhancedR2Integration:
         stats = self.get_performance_stats()
 
         # Adjust cache TTL based on hit rate
-        total_cache_requests = stats['cache_hits'] + stats['cache_misses']
+        total_cache_requests = stats["cache_hits"] + stats["cache_misses"]
         if total_cache_requests > 0:
-            hit_rate = stats['cache_hits'] / total_cache_requests
+            hit_rate = stats["cache_hits"] / total_cache_requests
             if hit_rate < 0.3:  # Low hit rate
                 self.cache_ttl = min(self.cache_ttl * 1.5, 900)  # Increase TTL, max 15 min
             elif hit_rate > 0.8:  # High hit rate
                 self.cache_ttl = max(self.cache_ttl * 0.8, 60)  # Decrease TTL, min 1 min
 
         # Reset circuit breakers for high-performing operations
-        for analysis_type, data in stats['analysis_times'].items():
-            if data.get('success_rate', 0) > 0.9:  # High success rate
+        for analysis_type, data in stats["analysis_times"].items():
+            if data.get("success_rate", 0) > 0.9:  # High success rate
                 self.error_handler.reset_circuit_breaker(f"r2_{analysis_type}")
 
         self.logger.info(f"Performance optimized: cache_ttl={self.cache_ttl}")
@@ -471,38 +471,38 @@ class EnhancedR2Integration:
         stats = self.get_performance_stats()
 
         health = {
-            'overall_health': 'healthy',
-            'r2pipe_available': self.r2pipe_available,
-            'components_available': sum(1 for c in self.components.values() if c is not None),
-            'total_components': len(self.components),
-            'cache_health': {
-                'size': len(self.results_cache),
-                'hit_rate': 0.0
+            "overall_health": "healthy",
+            "r2pipe_available": self.r2pipe_available,
+            "components_available": sum(1 for c in self.components.values() if c is not None),
+            "total_components": len(self.components),
+            "cache_health": {
+                "size": len(self.results_cache),
+                "hit_rate": 0.0
             },
-            'error_health': {
-                'total_errors': stats['errors_handled'],
-                'recovery_rate': 0.0
+            "error_health": {
+                "total_errors": stats["errors_handled"],
+                "recovery_rate": 0.0
             }
         }
 
         # Calculate cache hit rate
-        total_requests = stats['cache_hits'] + stats['cache_misses']
+        total_requests = stats["cache_hits"] + stats["cache_misses"]
         if total_requests > 0:
-            health['cache_health']['hit_rate'] = stats['cache_hits'] / total_requests
+            health["cache_health"]["hit_rate"] = stats["cache_hits"] / total_requests
 
         # Calculate recovery rate
-        if stats['errors_handled'] > 0:
-            health['error_health']['recovery_rate'] = stats['recoveries_successful'] / stats['errors_handled']
+        if stats["errors_handled"] > 0:
+            health["error_health"]["recovery_rate"] = stats["recoveries_successful"] / stats["errors_handled"]
 
         # Determine overall health
-        if not health['r2pipe_available']:
-            health['overall_health'] = 'critical'
-        elif health['components_available'] < health['total_components'] * 0.5:
-            health['overall_health'] = 'critical'
-        elif health['error_health']['recovery_rate'] < 0.5:
-            health['overall_health'] = 'degraded'
-        elif health['cache_health']['hit_rate'] < 0.2:
-            health['overall_health'] = 'warning'
+        if not health["r2pipe_available"]:
+            health["overall_health"] = "critical"
+        elif health["components_available"] < health["total_components"] * 0.5:
+            health["overall_health"] = "critical"
+        elif health["error_health"]["recovery_rate"] < 0.5:
+            health["overall_health"] = "degraded"
+        elif health["cache_health"]["hit_rate"] < 0.2:
+            health["overall_health"] = "warning"
 
         return health
 
@@ -514,7 +514,7 @@ class EnhancedR2Integration:
 
             # Cleanup components
             for component in self.components.values():
-                if component and hasattr(component, 'cleanup'):
+                if component and hasattr(component, "cleanup"):
                     try:
                         component.cleanup()
                     except Exception as e:
@@ -541,6 +541,6 @@ def create_enhanced_r2_integration(binary_path: str, **config) -> EnhancedR2Inte
 
 
 __all__ = [
-    'EnhancedR2Integration',
-    'create_enhanced_r2_integration'
+    "EnhancedR2Integration",
+    "create_enhanced_r2_integration"
 ]

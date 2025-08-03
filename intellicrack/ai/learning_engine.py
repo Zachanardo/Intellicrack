@@ -459,9 +459,9 @@ class PatternEvolutionEngine:
         if isinstance(value, str):
             if len(value) > 50:
                 return "long_string"
-            elif re.match(r'^[a-zA-Z0-9_]+$', value):
+            elif re.match(r"^[a-zA-Z0-9_]+$", value):
                 return "identifier"
-            elif re.match(r'^https?://', value):
+            elif re.match(r"^https?://", value):
                 return "url"
             else:
                 return "string"
@@ -639,7 +639,7 @@ class PatternEvolutionEngine:
         # Error analysis
         failed_records = [r for r in records if not r.success]
         if failed_records:
-            error_types = Counter(r.error_message.split(':')[0] if r.error_message else "Unknown"
+            error_types = Counter(r.error_message.split(":")[0] if r.error_message else "Unknown"
                                   for r in failed_records)
             most_common_error = error_types.most_common(1)[0]
             insights.append(
@@ -668,9 +668,9 @@ class PatternEvolutionEngine:
         applicable_patterns = []
 
         # Use context to filter applicable patterns
-        target_type = context.get('target_type', 'unknown')
-        platform = context.get('platform', 'unknown')
-        complexity = context.get('complexity', 'medium')
+        target_type = context.get("target_type", "unknown")
+        platform = context.get("platform", "unknown")
+        complexity = context.get("complexity", "medium")
 
         logger.debug(
             f"Finding patterns for context: target={target_type}, platform={platform}, complexity={complexity}")
@@ -966,7 +966,7 @@ class FailureAnalysisEngine:
         failure_patterns = {}
         for record in records:
             if record.success_rate < 0.5:  # Failed more than succeeded
-                pattern = record.context.get('pattern_used', 'unknown')
+                pattern = record.context.get("pattern_used", "unknown")
                 failure_patterns[pattern] = failure_patterns.get(
                     pattern, 0) + 1
 
@@ -1045,28 +1045,28 @@ class FailureAnalysisEngine:
         for record in records:
             if record.success_rate > 0.7:
                 successful_patterns.append(
-                    record.context.get('strategy', 'unknown'))
+                    record.context.get("strategy", "unknown"))
             elif record.success_rate < 0.3:
                 failed_patterns.append(
-                    record.context.get('strategy', 'unknown'))
+                    record.context.get("strategy", "unknown"))
 
         logger.debug(
             f"Analyzed {len(records)} records for {failure_type}: {len(successful_patterns)} successful, {len(failed_patterns)} failed patterns")
 
         # Add type-specific strategies based on failure_type
-        if 'timeout' in failure_type.lower():
+        if "timeout" in failure_type.lower():
             strategies.extend([
                 "Increase timeout thresholds",
                 "Implement asynchronous processing",
                 "Add progress monitoring"
             ])
-        elif 'memory' in failure_type.lower():
+        elif "memory" in failure_type.lower():
             strategies.extend([
                 "Implement memory optimization",
                 "Add garbage collection triggers",
                 "Use streaming processing"
             ])
-        elif 'network' in failure_type.lower():
+        elif "network" in failure_type.lower():
             strategies.extend([
                 "Add retry mechanisms",
                 "Implement connection pooling",
@@ -1168,8 +1168,8 @@ class AILearningEngine:
             # Neural network for complex pattern learning
             self.neural_net = MLPClassifier(
                 hidden_layer_sizes=(128, 64, 32),
-                activation='relu',
-                solver='adam',
+                activation="relu",
+                solver="adam",
                 max_iter=1000,
                 random_state=42
             )
@@ -1186,9 +1186,9 @@ class AILearningEngine:
             # Model states
             self.models_trained = False
             self.training_data = {
-                'features': np.array([]),
-                'labels': np.array([]),
-                'metadata': []
+                "features": np.array([]),
+                "labels": np.array([]),
+                "metadata": []
             }
             # Initialize feature dimensions
             self.feature_dim = None
@@ -1304,33 +1304,33 @@ class AILearningEngine:
         """Record exploit chain creation for learning."""
         # Create context from vulnerability
         context = {
-            "vulnerability_type": str(vulnerability.vuln_type.value) if hasattr(vulnerability, 'vuln_type') else "unknown",
-            "severity": getattr(vulnerability, 'severity', 'unknown'),
-            "exploitability": getattr(vulnerability, 'exploitability', 0.0),
-            "chain_complexity": str(chain.complexity.value) if hasattr(chain, 'complexity') else "unknown",
-            "steps_count": len(chain.steps) if hasattr(chain, 'steps') else 0,
-            "safety_verified": getattr(chain, 'safety_verified', False)
+            "vulnerability_type": str(vulnerability.vuln_type.value) if hasattr(vulnerability, "vuln_type") else "unknown",
+            "severity": getattr(vulnerability, "severity", "unknown"),
+            "exploitability": getattr(vulnerability, "exploitability", 0.0),
+            "chain_complexity": str(chain.complexity.value) if hasattr(chain, "complexity") else "unknown",
+            "steps_count": len(chain.steps) if hasattr(chain, "steps") else 0,
+            "safety_verified": getattr(chain, "safety_verified", False)
         }
 
         # Create metadata from chain
         metadata = {
-            "chain_id": getattr(chain, 'chain_id', ''),
-            "success_probability": getattr(chain, 'success_probability', 0.0),
-            "stealth_rating": getattr(chain, 'stealth_rating', 0.0),
-            "stability_rating": getattr(chain, 'stability_rating', 0.0),
-            "primitive_types": [step.step_type.value for step in chain.steps] if hasattr(chain, 'steps') else []
+            "chain_id": getattr(chain, "chain_id", ""),
+            "success_probability": getattr(chain, "success_probability", 0.0),
+            "stealth_rating": getattr(chain, "stealth_rating", 0.0),
+            "stability_rating": getattr(chain, "stability_rating", 0.0),
+            "primitive_types": [step.step_type.value for step in chain.steps] if hasattr(chain, "steps") else []
         }
 
         return self.record_experience(
             task_type="exploit_chain_building",
-            input_data={"vuln_id": getattr(vulnerability, 'vuln_id', ''),
-                        "vuln_type": str(vulnerability.vuln_type.value) if hasattr(vulnerability, 'vuln_type') else ""},
-            output_data={"chain_id": getattr(chain, 'chain_id', ''),
-                         "success_probability": getattr(chain, 'success_probability', 0.0)},
+            input_data={"vuln_id": getattr(vulnerability, "vuln_id", ""),
+                        "vuln_type": str(vulnerability.vuln_type.value) if hasattr(vulnerability, "vuln_type") else ""},
+            output_data={"chain_id": getattr(chain, "chain_id", ""),
+                         "success_probability": getattr(chain, "success_probability", 0.0)},
             success=success,
-            confidence=getattr(chain, 'success_probability', 0.0),
+            confidence=getattr(chain, "success_probability", 0.0),
             execution_time=execution_time or 0.0,
-            memory_usage=getattr(chain, 'memory_footprint', 0),
+            memory_usage=getattr(chain, "memory_footprint", 0),
             error_message=error_message,
             context=context,
             metadata=metadata
@@ -1368,11 +1368,11 @@ class AILearningEngine:
                 feature_vector = self._extract_features(record)
                 if feature_vector is not None:
                     features.append(feature_vector)
-                    labels.append(1 if record['success'] else 0)
+                    labels.append(1 if record["success"] else 0)
                     metadata.append({
-                        'technique': record['exploit_data'].get('technique'),
-                        'target_type': record['exploit_data'].get('target_type'),
-                        'timestamp': record['timestamp']
+                        "technique": record["exploit_data"].get("technique"),
+                        "target_type": record["exploit_data"].get("target_type"),
+                        "timestamp": record["timestamp"]
                     })
 
             if len(features) < min_samples:
@@ -1404,12 +1404,12 @@ class AILearningEngine:
             self.models_trained = True
 
             # Store training data for future reference
-            self.training_data['features'] = features
-            self.training_data['labels'] = labels
-            self.training_data['metadata'] = metadata
+            self.training_data["features"] = features
+            self.training_data["labels"] = labels
+            self.training_data["metadata"] = metadata
 
             # Update learning stats
-            self.learning_stats['records_processed'] += len(recent_records)
+            self.learning_stats["records_processed"] += len(recent_records)
 
             # Discover new patterns
             self._discover_patterns(X_scaled, y, metadata)
@@ -1433,23 +1433,23 @@ class AILearningEngine:
         """
         try:
             features = []
-            exploit_data = record.get('exploit_data', {})
+            exploit_data = record.get("exploit_data", {})
 
             # Basic numeric features
-            features.append(float(record.get('success', 0)))
-            features.append(float(len(exploit_data.get('technique', ''))))
-            features.append(float(len(exploit_data.get('target_type', ''))))
+            features.append(float(record.get("success", 0)))
+            features.append(float(len(exploit_data.get("technique", ""))))
+            features.append(float(len(exploit_data.get("target_type", ""))))
 
             # Extract timing features
-            time_taken = exploit_data.get('execution_time', 0.0)
+            time_taken = exploit_data.get("execution_time", 0.0)
             features.append(float(time_taken))
 
             # Extract complexity features
-            payload_size = exploit_data.get('payload_size', 0)
+            payload_size = exploit_data.get("payload_size", 0)
             features.append(float(payload_size))
 
             # Extract success rate features
-            attempts = exploit_data.get('attempts', 1)
+            attempts = exploit_data.get("attempts", 1)
             features.append(float(attempts))
 
             # Extract protection level features
@@ -1457,12 +1457,12 @@ class AILearningEngine:
             features.append(float(protection_score))
 
             # Add technique-specific features
-            technique = exploit_data.get('technique', '')
+            technique = exploit_data.get("technique", "")
             technique_features = self._encode_technique(technique)
             features.extend(technique_features)
 
             # Add target-specific features
-            target_type = exploit_data.get('target_type', '')
+            target_type = exploit_data.get("target_type", "")
             target_features = self._encode_target_type(target_type)
             features.extend(target_features)
 
@@ -1484,15 +1484,15 @@ class AILearningEngine:
         score = 0.0
 
         # Check for various protections
-        if exploit_data.get('has_aslr', False):
+        if exploit_data.get("has_aslr", False):
             score += 2.0
-        if exploit_data.get('has_dep', False):
+        if exploit_data.get("has_dep", False):
             score += 2.0
-        if exploit_data.get('has_canary', False):
+        if exploit_data.get("has_canary", False):
             score += 2.0
-        if exploit_data.get('has_cfi', False):
+        if exploit_data.get("has_cfi", False):
             score += 2.0
-        if exploit_data.get('has_custom_protection', False):
+        if exploit_data.get("has_custom_protection", False):
             score += 2.0
 
         return min(score, 10.0)
@@ -1507,8 +1507,8 @@ class AILearningEngine:
             One-hot encoded vector
         """
         techniques = [
-            'buffer_overflow', 'heap_spray', 'rop_chain', 'return_to_libc',
-            'format_string', 'use_after_free', 'integer_overflow', 'race_condition'
+            "buffer_overflow", "heap_spray", "rop_chain", "return_to_libc",
+            "format_string", "use_after_free", "integer_overflow", "race_condition"
         ]
 
         vector = [0.0] * len(techniques)
@@ -1527,8 +1527,8 @@ class AILearningEngine:
             One-hot encoded vector
         """
         target_types = [
-            'windows_exe', 'linux_elf', 'macos_binary', 'android_apk',
-            'ios_app', 'web_application', 'firmware', 'driver'
+            "windows_exe", "linux_elf", "macos_binary", "android_apk",
+            "ios_app", "web_application", "firmware", "driver"
         ]
 
         vector = [0.0] * len(target_types)
@@ -1562,21 +1562,21 @@ class AILearningEngine:
             # Create new patterns from anomalies
             for idx in anomalous_successes:
                 pattern_data = {
-                    'feature_vector': X[idx].tolist(),
-                    'important_features': important_features.tolist(),
-                    'technique': metadata[idx].get('technique'),
-                    'target_type': metadata[idx].get('target_type'),
-                    'confidence': float(self.neural_net.predict_proba(X[idx:idx+1])[0, 1])
+                    "feature_vector": X[idx].tolist(),
+                    "important_features": important_features.tolist(),
+                    "technique": metadata[idx].get("technique"),
+                    "target_type": metadata[idx].get("target_type"),
+                    "confidence": float(self.neural_net.predict_proba(X[idx:idx+1])[0, 1])
                 }
 
                 # Record the discovered pattern
                 self.pattern_engine.add_pattern(
-                    pattern_type='anomaly_based',
+                    pattern_type="anomaly_based",
                     pattern_data=pattern_data,
-                    source='ml_discovery'
+                    source="ml_discovery"
                 )
 
-            self.learning_stats['patterns_discovered'] += len(anomalous_successes)
+            self.learning_stats["patterns_discovered"] += len(anomalous_successes)
             logger.info(f"Discovered {len(anomalous_successes)} new patterns")
 
         except Exception as e:
@@ -1592,13 +1592,13 @@ class AILearningEngine:
             Dictionary with prediction results from different models
         """
         if not self.models_trained:
-            return {'status': 'models_not_trained', 'probability': 0.5}
+            return {"status": "models_not_trained", "probability": 0.5}
 
         try:
             # Extract features
-            features = self._extract_features({'exploit_data': exploit_data, 'success': False})
+            features = self._extract_features({"exploit_data": exploit_data, "success": False})
             if features is None:
-                return {'status': 'feature_extraction_failed', 'probability': 0.5}
+                return {"status": "feature_extraction_failed", "probability": 0.5}
 
             import numpy as np
             X = np.array([features])
@@ -1615,17 +1615,17 @@ class AILearningEngine:
             ensemble_prob = (rf_prob + nn_prob) / 2
 
             return {
-                'status': 'success',
-                'ensemble_probability': ensemble_prob,
-                'random_forest_probability': rf_prob,
-                'neural_network_probability': nn_prob,
-                'is_anomaly': bool(is_anomaly),
-                'confidence': self._calculate_confidence(rf_prob, nn_prob)
+                "status": "success",
+                "ensemble_probability": ensemble_prob,
+                "random_forest_probability": rf_prob,
+                "neural_network_probability": nn_prob,
+                "is_anomaly": bool(is_anomaly),
+                "confidence": self._calculate_confidence(rf_prob, nn_prob)
             }
 
         except Exception as e:
             logger.error(f"Error predicting success: {e}")
-            return {'status': 'prediction_error', 'probability': 0.5, 'error': str(e)}
+            return {"status": "prediction_error", "probability": 0.5, "error": str(e)}
 
     def _calculate_confidence(self, rf_prob: float, nn_prob: float) -> float:
         """Calculate confidence based on model agreement.

@@ -72,7 +72,7 @@ class Session:
         self.connection_info = connection_info
         self.created_at = time.time()
         self.last_seen = self.created_at
-        self.status = 'active'
+        self.status = "active"
         self.commands_sent = 0
         self.commands_received = 0
         self.data_sent = 0
@@ -81,13 +81,13 @@ class Session:
 
         # Session metadata
         self.metadata = {
-            'os': connection_info.get('os', 'unknown'),
-            'arch': connection_info.get('arch', 'unknown'),
-            'hostname': connection_info.get('hostname', 'unknown'),
-            'user': connection_info.get('user', 'unknown'),
-            'privileges': connection_info.get('privileges', 'user'),
-            'ip_address': connection_info.get('ip', 'unknown'),
-            'user_agent': connection_info.get('user_agent', 'unknown')
+            "os": connection_info.get("os", "unknown"),
+            "arch": connection_info.get("arch", "unknown"),
+            "hostname": connection_info.get("hostname", "unknown"),
+            "user": connection_info.get("user", "unknown"),
+            "privileges": connection_info.get("privileges", "user"),
+            "ip_address": connection_info.get("ip", "unknown"),
+            "user_agent": connection_info.get("user_agent", "unknown")
         }
 
         # Command history
@@ -104,48 +104,48 @@ class Session:
     def update_last_seen(self):
         """Update last seen timestamp."""
         self.last_seen = time.time()
-        self.stats['last_beacon'] = self.last_seen
+        self.stats["last_beacon"] = self.last_seen
 
     def add_task(self, task: Dict[str, Any]):
         """Add task to session queue."""
-        task['created_at'] = time.time()
-        task['status'] = 'pending'
+        task["created_at"] = time.time()
+        task["status"] = "pending"
         self.tasks.append(task)
-        self.stats['total_tasks'] += 1
+        self.stats["total_tasks"] += 1
 
     def update_task_status(self, task_id: str, status: str, result: Any = None):
         """Update task status and result."""
         for task in self.tasks:
-            if task.get('task_id') == task_id:
-                task['status'] = status
-                task['completed_at'] = time.time()
+            if task.get("task_id") == task_id:
+                task["status"] = status
+                task["completed_at"] = time.time()
                 if result is not None:
-                    task['result'] = result
+                    task["result"] = result
 
-                if status == 'completed':
-                    self.stats['successful_tasks'] += 1
-                elif status == 'failed':
-                    self.stats['failed_tasks'] += 1
+                if status == "completed":
+                    self.stats["successful_tasks"] += 1
+                elif status == "failed":
+                    self.stats["failed_tasks"] += 1
                 break
 
     def get_pending_tasks(self) -> List[Dict[str, Any]]:
         """Get list of pending tasks."""
-        return [task for task in self.tasks if task.get('status') == 'pending']
+        return [task for task in self.tasks if task.get("status") == "pending"]
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert session to dictionary representation."""
         return {
-            'session_id': self.session_id,
-            'connection_info': self.connection_info,
-            'created_at': self.created_at,
-            'last_seen': self.last_seen,
-            'status': self.status,
-            'client_info': self.client_info,
-            'capabilities': self.capabilities,
-            'stats': self.stats,
-            'uptime': time.time() - self.created_at,
-            'task_count': len(self.tasks),
-            'pending_tasks': len(self.get_pending_tasks())
+            "session_id": self.session_id,
+            "connection_info": self.connection_info,
+            "created_at": self.created_at,
+            "last_seen": self.last_seen,
+            "status": self.status,
+            "client_info": self.client_info,
+            "capabilities": self.capabilities,
+            "stats": self.stats,
+            "uptime": time.time() - self.created_at,
+            "task_count": len(self.tasks),
+            "pending_tasks": len(self.get_pending_tasks())
         }
 
 
@@ -160,7 +160,7 @@ class SessionManager:
     def __init__(self, db_path: str = None):
         """Initialize the session manager with database and directory configuration."""
         self.db_path = db_path or os.path.join(
-            os.path.dirname(__file__), '..', '..', 'data', 'sessions.db'
+            os.path.dirname(__file__), "..", "..", "data", "sessions.db"
         )
         self.logger = logging.getLogger(__name__)
 
@@ -174,11 +174,11 @@ class SessionManager:
 
         # Session configuration
         self.config = {
-            'session_timeout': 3600,  # 1 hour
-            'max_sessions': 1000,
-            'cleanup_interval': 300,  # 5 minutes
-            'heartbeat_interval': 60,  # 1 minute
-            'max_command_history': 100
+            "session_timeout": 3600,  # 1 hour
+            "max_sessions": 1000,
+            "cleanup_interval": 300,  # 5 minutes
+            "heartbeat_interval": 60,  # 1 minute
+            "max_command_history": 100
         }
 
         # Threading
@@ -188,10 +188,10 @@ class SessionManager:
 
         # Statistics
         self.stats = {
-            'total_sessions': 0,
-            'active_sessions': 0,
-            'expired_sessions': 0,
-            'total_commands': 0
+            "total_sessions": 0,
+            "active_sessions": 0,
+            "expired_sessions": 0,
+            "total_commands": 0
         }
 
         # Initialize database
@@ -283,8 +283,8 @@ class SessionManager:
             self.sessions[session_id] = session
 
             # Update statistics
-            self.stats['total_sessions'] += 1
-            self.stats['active_sessions'] = len([s for s in self.sessions.values() if s.status == 'active'])
+            self.stats["total_sessions"] += 1
+            self.stats["active_sessions"] = len([s for s in self.sessions.values() if s.status == "active"])
 
             # Persist to database
             await self._persist_session(session)
@@ -305,7 +305,7 @@ class SessionManager:
         try:
             active_sessions = []
             for session in self.sessions.values():
-                if session.status == 'active':
+                if session.status == "active":
                     active_sessions.append(session.to_dict())
             return active_sessions
         except Exception as e:
@@ -317,13 +317,13 @@ class SessionManager:
         try:
             if session_id in self.sessions:
                 session = self.sessions[session_id]
-                session.status = 'inactive'
+                session.status = "inactive"
 
                 # Move to history
                 self.session_history.append(session.to_dict())
 
                 # Update statistics
-                self.stats['active_sessions'] = len([s for s in self.sessions.values() if s.status == 'active'])
+                self.stats["active_sessions"] = len([s for s in self.sessions.values() if s.status == "active"])
 
                 # Persist change
                 await self._persist_session(session)
@@ -342,8 +342,8 @@ class SessionManager:
                 session.update_last_seen()
 
                 # Extract capabilities if provided
-                if 'capabilities' in client_info:
-                    session.capabilities = client_info['capabilities']
+                if "capabilities" in client_info:
+                    session.capabilities = client_info["capabilities"]
 
                 # Persist changes
                 await self._persist_session(session)
@@ -359,13 +359,13 @@ class SessionManager:
             task_id = str(uuid.uuid4())
 
             task = {
-                'task_id': task_id,
-                'session_id': session_id,
-                'type': task_type,
-                'data': task_data,
-                'status': 'pending',
-                'created_at': time.time(),
-                'priority': task_data.get('priority', 'normal')
+                "task_id": task_id,
+                "session_id": session_id,
+                "type": task_type,
+                "data": task_data,
+                "status": "pending",
+                "created_at": time.time(),
+                "priority": task_data.get("priority", "normal")
             }
 
             # Add to session
@@ -379,7 +379,7 @@ class SessionManager:
             await self._persist_task(task)
 
             # Update statistics
-            self.stats['total_tasks'] += 1
+            self.stats["total_tasks"] += 1
 
             self.logger.info(f"Created task {task_id} for session {session_id}")
             return task
@@ -405,13 +405,13 @@ class SessionManager:
             # Find and update task in sessions
             for session in self.sessions.values():
                 for task in session.tasks:
-                    if task.get('task_id') == task_id:
-                        task['status'] = 'sent'
-                        task['sent_at'] = time.time()
+                    if task.get("task_id") == task_id:
+                        task["status"] = "sent"
+                        task["sent_at"] = time.time()
                         break
 
             # Update in database
-            await self._update_task_status(task_id, 'sent')
+            await self._update_task_status(task_id, "sent")
 
         except Exception as e:
             self.logger.error(f"Failed to mark task as sent: {e}")
@@ -419,7 +419,7 @@ class SessionManager:
     async def store_task_result(self, task_id: str, result: Any, success: bool):
         """Store task execution result."""
         try:
-            status = 'completed' if success else 'failed'
+            status = "completed" if success else "failed"
 
             # Update in sessions
             for session in self.sessions.values():
@@ -427,9 +427,9 @@ class SessionManager:
 
             # Store result
             self.task_results[task_id] = {
-                'result': result,
-                'success': success,
-                'timestamp': time.time()
+                "result": result,
+                "success": success,
+                "timestamp": time.time()
             }
 
             # Update in database
@@ -448,7 +448,7 @@ class SessionManager:
             file_path = os.path.join(self.upload_directory, f"{session_id}_{safe_filename}")
 
             # Write file to disk
-            with open(file_path, 'wb') as f:
+            with open(file_path, "wb") as f:
                 f.write(file_data)
 
             # Calculate file hash
@@ -457,28 +457,28 @@ class SessionManager:
 
             # Store file info
             file_info = {
-                'file_id': file_id,
-                'session_id': session_id,
-                'filename': filename,
-                'file_path': file_path,
-                'file_size': len(file_data),
-                'file_hash': file_hash,
-                'upload_time': time.time(),
-                'file_type': 'upload'
+                "file_id": file_id,
+                "session_id": session_id,
+                "filename": filename,
+                "file_path": file_path,
+                "file_size": len(file_data),
+                "file_hash": file_hash,
+                "upload_time": time.time(),
+                "file_type": "upload"
             }
 
             # Add to session
             if session_id in self.sessions:
                 session = self.sessions[session_id]
                 session.files[file_id] = file_info
-                session.stats['bytes_uploaded'] += len(file_data)
+                session.stats["bytes_uploaded"] += len(file_data)
 
             # Persist to database
             await self._persist_file(file_info)
 
             # Update statistics
-            self.stats['total_files'] += 1
-            self.stats['total_data_transfer'] += len(file_data)
+            self.stats["total_files"] += 1
+            self.stats["total_data_transfer"] += len(file_data)
 
             self.logger.info(f"Stored uploaded file: {filename} ({len(file_data)} bytes)")
 
@@ -498,7 +498,7 @@ class SessionManager:
         """Store keylog data from client."""
         try:
             filename = f"keylog_{int(timestamp)}.txt"
-            await self.store_uploaded_file(session_id, filename, keylog_data.encode('utf-8'))
+            await self.store_uploaded_file(session_id, filename, keylog_data.encode("utf-8"))
 
         except Exception as e:
             self.logger.error(f"Failed to store keylog data: {e}")
@@ -518,16 +518,16 @@ class SessionManager:
         """Get session manager statistics."""
         try:
             # Update active session count
-            self.stats['active_sessions'] = len([s for s in self.sessions.values() if s.status == 'active'])
+            self.stats["active_sessions"] = len([s for s in self.sessions.values() if s.status == "active"])
 
             # Add detailed statistics
             detailed_stats = self.stats.copy()
             detailed_stats.update({
-                'session_history_count': len(self.session_history),
-                'pending_task_count': sum(len(tasks) for tasks in self.pending_tasks.values()),
-                'task_result_count': len(self.task_results),
-                'average_session_uptime': self._calculate_average_uptime(),
-                'most_active_session': self._get_most_active_session()
+                "session_history_count": len(self.session_history),
+                "pending_task_count": sum(len(tasks) for tasks in self.pending_tasks.values()),
+                "task_result_count": len(self.task_results),
+                "average_session_uptime": self._calculate_average_uptime(),
+                "most_active_session": self._get_most_active_session()
             })
 
             return detailed_stats
@@ -561,7 +561,7 @@ class SessionManager:
 
             most_active = max(
                 self.sessions.values(),
-                key=lambda s: s.stats['total_tasks']
+                key=lambda s: s.stats["total_tasks"]
             )
 
             return most_active.session_id
@@ -579,17 +579,17 @@ class SessionManager:
         filename = os.path.basename(filename)
 
         # Remove any remaining path separators and dangerous characters
-        safe_filename = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', filename)
+        safe_filename = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", filename)
 
         # Remove any leading dots to prevent hidden files
-        safe_filename = safe_filename.lstrip('.')
+        safe_filename = safe_filename.lstrip(".")
 
         # Ensure filename is not empty
         if not safe_filename:
-            safe_filename = 'unnamed_file'
+            safe_filename = "unnamed_file"
 
         # Remove any directory traversal attempts
-        safe_filename = safe_filename.replace('..', '_')
+        safe_filename = safe_filename.replace("..", "_")
 
         return safe_filename[:255]  # Limit length
 
@@ -632,12 +632,12 @@ class SessionManager:
                 (task_id, session_id, task_type, task_data, status, created_at)
                 VALUES (?, ?, ?, ?, ?, ?)
             ''', (
-                task['task_id'],
-                task['session_id'],
-                task['type'],
-                json.dumps(task['data']),
-                task['status'],
-                task['created_at']
+                task["task_id"],
+                task["session_id"],
+                task["type"],
+                json.dumps(task["data"]),
+                task["status"],
+                task["created_at"]
             ))
 
             conn.commit()
@@ -692,14 +692,14 @@ class SessionManager:
                  file_hash, upload_time, file_type)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
-                file_info['file_id'],
-                file_info['session_id'],
-                file_info['filename'],
-                file_info['file_path'],
-                file_info['file_size'],
-                file_info['file_hash'],
-                file_info['upload_time'],
-                file_info['file_type']
+                file_info["file_id"],
+                file_info["session_id"],
+                file_info["filename"],
+                file_info["file_path"],
+                file_info["file_size"],
+                file_info["file_hash"],
+                file_info["upload_time"],
+                file_info["file_type"]
             ))
 
             conn.commit()
@@ -751,19 +751,19 @@ class SessionManager:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            cursor.execute('SELECT * FROM tasks WHERE session_id = ?', (session_id,))
+            cursor.execute("SELECT * FROM tasks WHERE session_id = ?", (session_id,))
             task_rows = cursor.fetchall()
 
-            cursor.execute('SELECT * FROM files WHERE session_id = ?', (session_id,))
+            cursor.execute("SELECT * FROM files WHERE session_id = ?", (session_id,))
             file_rows = cursor.fetchall()
 
             conn.close()
 
             export_data = {
-                'session': session.to_dict(),
-                'tasks': [dict(zip([col[0] for col in cursor.description], row, strict=False)) for row in task_rows],
-                'files': [dict(zip([col[0] for col in cursor.description], row, strict=False)) for row in file_rows],
-                'export_time': time.time()
+                "session": session.to_dict(),
+                "tasks": [dict(zip([col[0] for col in cursor.description], row, strict=False)) for row in task_rows],
+                "files": [dict(zip([col[0] for col in cursor.description], row, strict=False)) for row in file_rows],
+                "export_time": time.time()
             }
 
             return export_data

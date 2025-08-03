@@ -29,14 +29,14 @@ from .pipeline import Pipeline, PipelineProcessor
 from .progress_manager import ProgressManager
 
 __all__ = [
-    'cli_main',
-    'AIWrapper',
-    'Pipeline',
-    'PipelineProcessor',
-    'InteractiveMode',
-    'ProgressManager',
-    'ConfigProfileManager',
-    'EnhancedRunner'
+    "cli_main",
+    "AIWrapper",
+    "Pipeline",
+    "PipelineProcessor",
+    "InteractiveMode",
+    "ProgressManager",
+    "ConfigProfileManager",
+    "EnhancedRunner"
 ]
 
-__version__ = '1.0.0'
+__version__ = "1.0.0"

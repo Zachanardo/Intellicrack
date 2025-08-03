@@ -65,7 +65,7 @@ if not SYMBOLIC_ENGINE:
 
         import intellicrack
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(intellicrack.__file__)))
-        scripts_dir = os.path.join(base_dir, 'intellicrack', 'scripts')
+        scripts_dir = os.path.join(base_dir, "intellicrack", "scripts")
         if os.path.exists(scripts_dir):
             sys.path.insert(0, scripts_dir)
         from simconcolic import BinaryAnalyzer as SimConcolic
@@ -138,7 +138,7 @@ class ConcolicExecutionEngine:
             if ANGR_AVAILABLE and claripy:
                 # Create symbolic input for stdin
                 sym_stdin_size = 0x100  # 256 bytes
-                sym_stdin = claripy.BVS('stdin', sym_stdin_size * 8)
+                sym_stdin = claripy.BVS("stdin", sym_stdin_size * 8)
                 state.posix.stdin.write(0, sym_stdin, sym_stdin_size)
                 state.posix.stdin.seek(0)
 
@@ -235,9 +235,9 @@ class ConcolicExecutionEngine:
             return {
                 "success": True,
                 "engine": "simconcolic",
-                "paths_explored": results.get('paths_explored', 0),
-                "target_reached": results.get('target_reached', False),
-                "inputs": results.get('inputs', [])
+                "paths_explored": results.get("paths_explored", 0),
+                "target_reached": results.get("target_reached", False),
+                "inputs": results.get("inputs", [])
             }
         except Exception as e:
             return {
@@ -283,9 +283,9 @@ class ConcolicExecutionEngine:
                         xrefs = project.analyses.Xrefs(pattern, memory_only=True)
                         for xref in xrefs:
                             string_refs.append({
-                                'pattern': pattern.decode('utf-8', errors='ignore'),
-                                'string_addr': addr,
-                                'ref_addr': xref.addr
+                                "pattern": pattern.decode("utf-8", errors="ignore"),
+                                "string_addr": addr,
+                                "ref_addr": xref.addr
                             })
                             license_addrs.append(xref.addr)
                 except Exception as e:
@@ -293,7 +293,7 @@ class ConcolicExecutionEngine:
 
             for func in cfg.functions.values():
                 # Look for functions that might be license checks
-                if any(pattern in func.name.lower() for pattern in ['license', 'register', 'validate', 'check']):
+                if any(pattern in func.name.lower() for pattern in ["license", "register", "validate", "check"]):
                     license_addrs.append(func.addr)
 
             if not license_addrs:
@@ -306,7 +306,7 @@ class ConcolicExecutionEngine:
             if ANGR_AVAILABLE and claripy:
                 # Create symbolic license key
                 license_key_size = 32  # 32 byte license key
-                sym_license_key = claripy.BVS('license_key', license_key_size * 8)
+                sym_license_key = claripy.BVS("license_key", license_key_size * 8)
                 # Store it in symbolic memory for the program to use
                 license_key_addr = 0x10000000  # Arbitrary address in mapped memory
                 state.memory.store(license_key_addr, sym_license_key)

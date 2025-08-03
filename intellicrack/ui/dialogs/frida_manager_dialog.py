@@ -102,14 +102,14 @@ class ProcessWorker(QThread):
                 self.error.emit("psutil library not available - cannot scan processes")
                 return
             processes = []
-            for proc in psutil.process_iter(['pid', 'name', 'exe']):
+            for proc in psutil.process_iter(["pid", "name", "exe"]):
                 try:
                     info = proc.info
-                    if info['exe']:  # Only show processes with executables
+                    if info["exe"]:  # Only show processes with executables
                         processes.append({
-                            'pid': info['pid'],
-                            'name': info['name'],
-                            'path': info['exe']
+                            "pid": info["pid"],
+                            "name": info["name"],
+                            "path": info["exe"]
                         })
                 except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                     self.logger.error("Error in frida_manager_dialog: %s", e)
@@ -141,21 +141,21 @@ class FridaWorker(QThread):
                 self.error.emit("FridaManager not available")
                 return
 
-            if self.operation == 'attach':
-                pid = self.params.get('pid')
+            if self.operation == "attach":
+                pid = self.params.get("pid")
                 success = self.frida_manager.attach_to_process(pid)
-                self.operationComplete.emit('attach', success)
+                self.operationComplete.emit("attach", success)
 
-            elif self.operation == 'load_script':
-                session_id = self.params.get('session_id')
-                script_name = self.params.get('script_name')
-                options = self.params.get('options', {})
+            elif self.operation == "load_script":
+                session_id = self.params.get("session_id")
+                script_name = self.params.get("script_name")
+                options = self.params.get("options", {})
                 success = self.frida_manager.load_script(
                     session_id, script_name, options
                 )
-                self.operationComplete.emit('load_script', success)
+                self.operationComplete.emit("load_script", success)
 
-            elif self.operation == 'monitor':
+            elif self.operation == "monitor":
                 # Continuous monitoring
                 while not self.isInterruptionRequested():
                     stats = self.frida_manager.get_statistics()
@@ -1063,9 +1063,9 @@ class FridaManagerDialog(QDialog):
         self.process_table.setRowCount(len(processes))
 
         for i, proc in enumerate(processes):
-            self.process_table.setItem(i, 0, QTableWidgetItem(str(proc['pid'])))
-            self.process_table.setItem(i, 1, QTableWidgetItem(proc['name']))
-            self.process_table.setItem(i, 2, QTableWidgetItem(proc['path']))
+            self.process_table.setItem(i, 0, QTableWidgetItem(str(proc["pid"])))
+            self.process_table.setItem(i, 1, QTableWidgetItem(proc["name"]))
+            self.process_table.setItem(i, 2, QTableWidgetItem(proc["path"]))
 
         self.status_label.setText(f"Found {len(processes)} processes")
 
@@ -1087,7 +1087,7 @@ class FridaManagerDialog(QDialog):
             row = selected[0].row()
             pid = int(self.process_table.item(row, 0).text())
             name = self.process_table.item(row, 1).text()
-            self.selected_process = {'pid': pid, 'name': name}
+            self.selected_process = {"pid": pid, "name": name}
             self.attach_btn.setEnabled(True)
             self.status_label.setText(f"Selected: {name} (PID: {pid})")
 
@@ -1097,8 +1097,8 @@ class FridaManagerDialog(QDialog):
             return
 
         self.frida_worker = FridaWorker(self.frida_manager)
-        self.frida_worker.operation = 'attach'
-        self.frida_worker.params = {'pid': self.selected_process['pid']}
+        self.frida_worker.operation = "attach"
+        self.frida_worker.params = {"pid": self.selected_process["pid"]}
         self.frida_worker.operationComplete.connect(self.on_attach_complete)
         self.frida_worker.error.connect(self.show_error)
         self.frida_worker.start()
@@ -1108,7 +1108,7 @@ class FridaManagerDialog(QDialog):
 
     def on_attach_complete(self, operation: str, success: bool):
         """Handle attachment completion"""
-        if operation == 'attach' and success:
+        if operation == "attach" and success:
             self.current_session = f"{self.selected_process['name']}_{self.selected_process['pid']}"
             self.session_label.setText(f"Session: {self.current_session}")
             self.detach_btn.setEnabled(True)
@@ -1170,7 +1170,7 @@ class FridaManagerDialog(QDialog):
                 return
 
             device_id = device_item.data(1)
-            device = frida.get_device(device_id) if device_id != 'local' else frida.get_local_device()
+            device = frida.get_device(device_id) if device_id != "local" else frida.get_local_device()
 
             # Prepare spawn options
             spawn_options = {}
@@ -1178,15 +1178,15 @@ class FridaManagerDialog(QDialog):
             # Parse arguments if provided
             if args.strip():
                 import shlex
-                spawn_options['argv'] = [file_path] + shlex.split(args)
+                spawn_options["argv"] = [file_path] + shlex.split(args)
             else:
-                spawn_options['argv'] = [file_path]
+                spawn_options["argv"] = [file_path]
 
             # Set environment variables for exploitation
-            spawn_options['env'] = {
-                'LD_PRELOAD': '',  # Clear preload to avoid detection
-                'DYLD_INSERT_LIBRARIES': '',  # Clear for macOS
-                'FRIDA_ENABLED': '1'  # Custom env var
+            spawn_options["env"] = {
+                "LD_PRELOAD": "",  # Clear preload to avoid detection
+                "DYLD_INSERT_LIBRARIES": "",  # Clear for macOS
+                "FRIDA_ENABLED": "1"  # Custom env var
             }
 
             # Spawn with suspend flag to attach before execution
@@ -1198,7 +1198,7 @@ class FridaManagerDialog(QDialog):
             self.current_pid = pid
 
             # Set up message handler
-            self.current_session.on('detached', self._on_detached)
+            self.current_session.on("detached", self._on_detached)
 
             # Update UI
             self.attach_btn.setEnabled(False)
@@ -1330,7 +1330,7 @@ class FridaManagerDialog(QDialog):
         content_edit.setFont(QFont("Consolas", 10))
 
         try:
-            with open(script_path, 'r') as f:
+            with open(script_path, "r") as f:
                 content = f.read()
             content_edit.setPlainText(content)
 
@@ -1391,19 +1391,19 @@ class FridaManagerDialog(QDialog):
 
         # Get hook options from UI
         options = {
-            'batch_hooks': self.batch_hooks_cb.isChecked(),
-            'batch_size': self.batch_size_spin.value(),
-            'batch_timeout': self.batch_timeout_spin.value(),
-            'selective': self.selective_cb.isChecked(),
-            'priority': self.hook_priority_combo.currentText()
+            "batch_hooks": self.batch_hooks_cb.isChecked(),
+            "batch_size": self.batch_size_spin.value(),
+            "batch_timeout": self.batch_timeout_spin.value(),
+            "selective": self.selective_cb.isChecked(),
+            "priority": self.hook_priority_combo.currentText()
         }
 
         self.frida_worker = FridaWorker(self.frida_manager)
-        self.frida_worker.operation = 'load_script'
+        self.frida_worker.operation = "load_script"
         self.frida_worker.params = {
-            'session_id': self.current_session,
-            'script_name': script_name,
-            'options': options
+            "session_id": self.current_session,
+            "script_name": script_name,
+            "options": options
         }
         self.frida_worker.operationComplete.connect(self.on_script_loaded)
         self.frida_worker.error.connect(self.show_error)
@@ -1413,8 +1413,8 @@ class FridaManagerDialog(QDialog):
 
     def on_script_loaded(self, operation: str, success: bool):
         """Handle script loading completion"""
-        if operation == 'load_script' and success:
-            script_name = self.frida_worker.params.get('script_name')
+        if operation == "load_script" and success:
+            script_name = self.frida_worker.params.get("script_name")
             self.loaded_scripts_list.addItem(script_name)
             self.status_label.setText(f"Script loaded: {script_name}")
 
@@ -1551,32 +1551,32 @@ class FridaManagerDialog(QDialog):
             stats = self.frida_manager.get_statistics()
 
             # Update performance tab
-            if 'optimizer' in stats:
-                usage = stats['optimizer']['current_usage']
+            if "optimizer" in stats:
+                usage = stats["optimizer"]["current_usage"]
 
                 # CPU
-                cpu_percent = int(usage.get('cpu_percent', 0))
+                cpu_percent = int(usage.get("cpu_percent", 0))
                 self.cpu_progress.setValue(cpu_percent)
                 self.cpu_label.setText(f"{cpu_percent}%")
 
                 # Memory
-                memory_mb = int(usage.get('memory_mb', 0))
+                memory_mb = int(usage.get("memory_mb", 0))
                 self.mem_progress.setValue(memory_mb)
                 self.mem_label.setText(f"{memory_mb} MB")
 
                 # Threads
-                threads = usage.get('threads', 0)
+                threads = usage.get("threads", 0)
                 self.thread_label.setText(str(threads))
 
                 # Recommendations
-                recommendations = stats['optimizer'].get('recommendations', [])
+                recommendations = stats["optimizer"].get("recommendations", [])
                 self.recommendations_text.clear()
                 for rec in recommendations:
                     self.recommendations_text.append(f"• {rec}")
 
             # Update protection detection
-            if 'detector' in stats:
-                protections = stats['detector']
+            if "detector" in stats:
+                protections = stats["detector"]
                 for i, prot_type in enumerate(ProtectionType):
                     if prot_type.value in protections:
                         self.protection_grid.item(i, 1).setText("DETECTED")
@@ -1589,8 +1589,8 @@ class FridaManagerDialog(QDialog):
                             btn.setEnabled(True)
 
             # Update statistics table
-            if 'logger' in stats:
-                logger_stats = stats['logger']
+            if "logger" in stats:
+                logger_stats = stats["logger"]
                 self.stats_table.setRowCount(len(logger_stats))
 
                 row = 0
@@ -1600,8 +1600,8 @@ class FridaManagerDialog(QDialog):
                     row += 1
 
             # Update hook statistics
-            if 'batcher' in stats:
-                hook_stats = stats['batcher']
+            if "batcher" in stats:
+                hook_stats = stats["batcher"]
                 self.hook_stats_label.setText(
                     f"Total Hooks: {hook_stats.get('pending_hooks', 0)} | "
                     f"Active: {self.hooks_tree.topLevelItemCount()}"
@@ -1628,7 +1628,7 @@ class FridaManagerDialog(QDialog):
         # Trigger adaptation
         self.frida_manager._on_protection_detected(
             protection_type,
-            {'session': self.current_session}
+            {"session": self.current_session}
         )
 
         self.adaptation_log.append(
@@ -1668,11 +1668,11 @@ class FridaManagerDialog(QDialog):
         preset = FRIDA_PRESETS[preset_name]
 
         # Load all scripts in the preset
-        for script in preset.get('scripts', []):
+        for script in preset.get("scripts", []):
             self.frida_manager.load_script(
                 self.current_session,
                 script,
-                preset.get('options', {})
+                preset.get("options", {})
             )
             self.loaded_scripts_list.addItem(script)
 
@@ -1737,7 +1737,7 @@ class FridaManagerDialog(QDialog):
             )
 
             if file_path:
-                with open(file_path, 'w') as f:
+                with open(file_path, "w") as f:
                     json.dump(config, f, indent=2)
 
                 self.status_label.setText(f"Configuration saved: {file_path}")
@@ -1755,7 +1755,7 @@ class FridaManagerDialog(QDialog):
 
         if file_path:
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path, "r") as f:
                     config = json.load(f)
 
                 self.custom_config_text.setText(json.dumps(config, indent=2))
@@ -2067,8 +2067,8 @@ class FridaManagerDialog(QDialog):
             tab_widget = QTabWidget()
 
             for i, script in enumerate(self.ai_generated_scripts):
-                script_content = script.content if hasattr(script, 'content') else str(script)
-                script_type = script.metadata.script_type.value if hasattr(script, 'metadata') else f"Script {i+1}"
+                script_content = script.content if hasattr(script, "content") else str(script)
+                script_type = script.metadata.script_type.value if hasattr(script, "metadata") else f"Script {i+1}"
 
                 tab = QWidget()
                 tab_layout = QVBoxLayout()
@@ -2076,7 +2076,7 @@ class FridaManagerDialog(QDialog):
                 # Script info
                 info_layout = QHBoxLayout()
                 info_layout.addWidget(QLabel(f"Type: {script_type}"))
-                if hasattr(script, 'metadata'):
+                if hasattr(script, "metadata"):
                     info_layout.addWidget(QLabel(f"Success Probability: {script.metadata.success_probability:.0%}"))
                     info_layout.addWidget(QLabel(f"Target: {script.metadata.target_binary}"))
                 tab_layout.addLayout(info_layout)
@@ -2100,10 +2100,10 @@ class FridaManagerDialog(QDialog):
         else:
             # Single script preview
             script = self.ai_generated_scripts[0]
-            script_content = script.content if hasattr(script, 'content') else str(script)
+            script_content = script.content if hasattr(script, "content") else str(script)
 
             # Script info
-            if hasattr(script, 'metadata'):
+            if hasattr(script, "metadata"):
                 info_label = QLabel(f"Type: {script.metadata.script_type.value} | "
                                   f"Success Probability: {script.metadata.success_probability:.0%} | "
                                   f"Target: {script.metadata.target_binary}")
@@ -2117,7 +2117,7 @@ class FridaManagerDialog(QDialog):
             content_edit.setPlainText(script_content)
 
             # Apply syntax highlighting
-            if hasattr(script, 'metadata') and "frida" in script.metadata.script_type.value.lower():
+            if hasattr(script, "metadata") and "frida" in script.metadata.script_type.value.lower():
                 # Store highlighter reference to prevent garbage collection
                 content_edit.highlighter = JavaScriptHighlighter(content_edit.document())
 
@@ -2150,38 +2150,38 @@ class FridaManagerDialog(QDialog):
 
         try:
             # Initialize ScriptExecutionManager if not already done
-            if not hasattr(self, 'script_execution_manager'):
+            if not hasattr(self, "script_execution_manager"):
                 from ...core.execution import ScriptExecutionManager
                 self.script_execution_manager = ScriptExecutionManager(self)
 
             deployed_count = 0
             for script in self.ai_generated_scripts:
-                if hasattr(script, 'metadata') and "frida" in script.metadata.script_type.value.lower():
-                    script_content = script.content if hasattr(script, 'content') else str(script)
-                    target_binary = getattr(script.metadata, 'target_binary', self.selected_process.get('path', '') if self.selected_process else '')
+                if hasattr(script, "metadata") and "frida" in script.metadata.script_type.value.lower():
+                    script_content = script.content if hasattr(script, "content") else str(script)
+                    target_binary = getattr(script.metadata, "target_binary", self.selected_process.get("path", "") if self.selected_process else "")
 
                     # Execute through ScriptExecutionManager for QEMU testing option
                     result = self.script_execution_manager.execute_script(
-                        script_type='frida',
+                        script_type="frida",
                         script_content=script_content,
                         target_binary=target_binary,
                         options={
-                            'session_id': self.current_session,
-                            'ai_generated': True
+                            "session_id": self.current_session,
+                            "ai_generated": True
                         }
                     )
 
-                    if result.get('success'):
+                    if result.get("success"):
                         # Add to loaded scripts list
                         item = QListWidgetItem(f"AI Generated: {script.metadata.target_binary}")
                         item.setData(Qt.UserRole, script_content)
                         self.loaded_scripts_list.addItem(item)
                         deployed_count += 1
-                    elif result.get('cancelled'):
+                    elif result.get("cancelled"):
                         self.log_console.append_output("[AI] Script deployment cancelled by user")
                         break
                     else:
-                        error_msg = result.get('error', 'Unknown error')
+                        error_msg = result.get("error", "Unknown error")
                         self.log_console.append_output(f"[AI ERROR] Failed to deploy script: {error_msg}")
 
             if deployed_count > 0:
@@ -2247,39 +2247,39 @@ class FridaManagerDialog(QDialog):
         self.frida_manager.cleanup()
 
         # Stop timers
-        if hasattr(self, 'monitor_timer'):
+        if hasattr(self, "monitor_timer"):
             self.monitor_timer.stop()
 
         event.accept()
 
     def connect_structured_message_handlers(self):
         """Connect to structured message handlers from FridaManager"""
-        if hasattr(self.frida_manager, '_ui_message_callback'):
+        if hasattr(self.frida_manager, "_ui_message_callback"):
             return
 
         self.frida_manager._ui_message_callback = self.display_structured_message
 
     def display_structured_message(self, message_type: str, session_id: str, script_name: str, payload: dict):
         """Display structured message in the UI with rich formatting"""
-        message = payload.get('message', '')
-        target = payload.get('target', '')
-        action = payload.get('action', '')
-        data = payload.get('data', {})
+        message = payload.get("message", "")
+        target = payload.get("target", "")
+        action = payload.get("action", "")
+        data = payload.get("data", {})
 
         formatted_text = self._format_structured_message(message_type, script_name, message, target, action, data)
 
-        if message_type == 'error':
+        if message_type == "error":
             self.log_console.append_error(formatted_text)
-        elif message_type == 'warning':
+        elif message_type == "warning":
             self.log_console.append_warning(formatted_text)
-        elif message_type == 'success' or message_type == 'bypass':
+        elif message_type == "success" or message_type == "bypass":
             self.log_console.append_success(formatted_text)
-        elif message_type == 'info' or message_type == 'status':
+        elif message_type == "info" or message_type == "status":
             self.log_console.append_info(formatted_text)
         else:
             self.log_console.append_output(formatted_text, message_type.upper())
 
-        if message_type == 'detection':
+        if message_type == "detection":
             self._update_protection_display(payload)
 
     def _format_structured_message(self, msg_type: str, script_name: str, message: str, target: str, action: str, data: dict) -> str:
@@ -2304,8 +2304,8 @@ class FridaManagerDialog(QDialog):
 
     def _update_protection_display(self, payload: dict):
         """Update protection detection display when detection messages are received"""
-        protection_name = payload.get('data', {}).get('protection', '')
-        evidence = payload.get('data', {}).get('evidence', [])
+        protection_name = payload.get("data", {}).get("protection", "")
+        evidence = payload.get("data", {}).get("evidence", [])
 
         if protection_name:
             for i in range(self.protection_grid.rowCount()):
@@ -2327,4 +2327,4 @@ class FridaManagerDialog(QDialog):
 
 
 # Export the dialog
-__all__ = ['FridaManagerDialog']
+__all__ = ["FridaManagerDialog"]

@@ -23,7 +23,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 from typing import List, Optional, Tuple
 
 
-def run_process_with_output(cmd: List[str], encoding: str = 'utf-8',
+def run_process_with_output(cmd: List[str], encoding: str = "utf-8",
                           timeout: Optional[int] = None) -> Tuple[int, str, str]:
     """Run a process and capture stdout/stderr.
 
@@ -47,4 +47,4 @@ def run_ghidra_process(cmd: List[str]) -> Tuple[int, str, str]:
     Returns:
         tuple: (return_code, stdout, stderr)
     """
-    return run_process_with_output(cmd, encoding='utf-8')
+    return run_process_with_output(cmd, encoding="utf-8")

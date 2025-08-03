@@ -5,7 +5,7 @@ Production performance monitor for AI operations.
 import logging
 import time
 import threading
-from typing import Callable, Dict, Any, Optional
+from typing import Callable, Dict, Any
 from collections import defaultdict, deque
 from functools import wraps
 
@@ -36,9 +36,9 @@ class PerformanceMonitor:
             if operation_id in self.start_times:
                 duration = end_time - self.start_times[operation_id]
                 self.metrics[operation_name].append({
-                    'duration': duration,
-                    'timestamp': end_time,
-                    'success': success
+                    "duration": duration,
+                    "timestamp": end_time,
+                    "success": success
                 })
                 self.operation_counts[operation_name] += 1
                 if not success:
@@ -55,17 +55,17 @@ class PerformanceMonitor:
             if operation_name not in self.metrics:
                 return {}
             
-            durations = [m['duration'] for m in self.metrics[operation_name]]
+            durations = [m["duration"] for m in self.metrics[operation_name]]
             if not durations:
                 return {}
             
             return {
-                'count': len(durations),
-                'avg_duration': sum(durations) / len(durations),
-                'min_duration': min(durations),
-                'max_duration': max(durations),
-                'error_rate': self.error_counts[operation_name] / self.operation_counts[operation_name],
-                'total_operations': self.operation_counts[operation_name]
+                "count": len(durations),
+                "avg_duration": sum(durations) / len(durations),
+                "min_duration": min(durations),
+                "max_duration": max(durations),
+                "error_rate": self.error_counts[operation_name] / self.operation_counts[operation_name],
+                "total_operations": self.operation_counts[operation_name]
             }
 
 
@@ -84,8 +84,8 @@ class AsyncPerformanceMonitor:
         
         with self.lock:
             self.active_operations[operation_id] = {
-                'name': operation_name,
-                'start_time': start_time
+                "name": operation_name,
+                "start_time": start_time
             }
         
         try:
@@ -101,10 +101,10 @@ class AsyncPerformanceMonitor:
                 if operation_id in self.active_operations:
                     op_info = self.active_operations.pop(operation_id)
                     self.completed_operations.append({
-                        'name': operation_name,
-                        'duration': end_time - op_info['start_time'],
-                        'success': success,
-                        'timestamp': end_time
+                        "name": operation_name,
+                        "duration": end_time - op_info["start_time"],
+                        "success": success,
+                        "timestamp": end_time
                     })
         
         return result

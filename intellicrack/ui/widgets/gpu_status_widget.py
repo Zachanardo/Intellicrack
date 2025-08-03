@@ -103,20 +103,20 @@ class GPUMonitorWorker(QObject):
             )
 
             if result.returncode == 0:
-                lines = result.stdout.strip().split('\n')
+                lines = result.stdout.strip().split("\n")
                 for line in lines:
                     if line:
-                        parts = [p.strip() for p in line.split(',')]
+                        parts = [p.strip() for p in line.split(",")]
                         if len(parts) >= 7:
                             gpus.append({
                                 "vendor": "NVIDIA",
                                 "index": int(parts[0]),
                                 "name": parts[1],
-                                "temperature": float(parts[2]) if parts[2] != '[N/A]' else 0,
-                                "utilization": float(parts[3]) if parts[3] != '[N/A]' else 0,
-                                "memory_used": float(parts[4]) if parts[4] != '[N/A]' else 0,
-                                "memory_total": float(parts[5]) if parts[5] != '[N/A]' else 0,
-                                "power": float(parts[6]) if parts[6] != '[N/A]' else 0
+                                "temperature": float(parts[2]) if parts[2] != "[N/A]" else 0,
+                                "utilization": float(parts[3]) if parts[3] != "[N/A]" else 0,
+                                "memory_used": float(parts[4]) if parts[4] != "[N/A]" else 0,
+                                "memory_total": float(parts[5]) if parts[5] != "[N/A]" else 0,
+                                "power": float(parts[6]) if parts[6] != "[N/A]" else 0
                             })
         except (subprocess.SubprocessError, FileNotFoundError):
             pass
@@ -133,7 +133,7 @@ class GPUMonitorWorker(QObject):
             c = wmi.WMI()
 
             for gpu in c.Win32_VideoController():
-                if 'Intel' in gpu.Name and ('Arc' in gpu.Name or 'Xe' in gpu.Name):
+                if "Intel" in gpu.Name and ("Arc" in gpu.Name or "Xe" in gpu.Name):
                     gpus.append({
                         "vendor": "Intel",
                         "index": 0,
@@ -321,27 +321,27 @@ class GPUStatusWidget(QWidget):
         self.driver_label.setText("Driver: Detecting...")
 
         # Update performance metrics
-        utilization = gpu.get('utilization', 0)
+        utilization = gpu.get("utilization", 0)
         self.utilization_bar.setValue(int(utilization))
         self.utilization_label.setText(f"{utilization:.0f}%")
         self._set_bar_color(self.utilization_bar, utilization, 80, 95)
 
         # Memory
-        memory_used = gpu.get('memory_used', 0)
-        memory_total = gpu.get('memory_total', 1)
+        memory_used = gpu.get("memory_used", 0)
+        memory_total = gpu.get("memory_total", 1)
         memory_percent = (memory_used / memory_total * 100) if memory_total > 0 else 0
         self.memory_bar.setValue(int(memory_percent))
         self.memory_label.setText(f"{memory_used:.0f} MB / {memory_total:.0f} MB")
         self._set_bar_color(self.memory_bar, memory_percent, 80, 95)
 
         # Temperature
-        temp = gpu.get('temperature', 0)
+        temp = gpu.get("temperature", 0)
         self.temp_bar.setValue(int(temp))
         self.temp_label.setText(f"{temp:.0f}°C")
         self._set_bar_color(self.temp_bar, temp, 70, 85)
 
         # Power
-        power = gpu.get('power', 0)
+        power = gpu.get("power", 0)
         self.power_bar.setValue(int(power))
         self.power_label.setText(f"{power:.0f}W")
 
@@ -352,17 +352,17 @@ class GPUStatusWidget(QWidget):
         """Update GPU capabilities display"""
         caps_text = []
 
-        if gpu['vendor'] == 'NVIDIA':
+        if gpu["vendor"] == "NVIDIA":
             caps_text.append("CUDA Support: Yes")
             caps_text.append("Tensor Cores: Detecting...")
             caps_text.append("Ray Tracing: Detecting...")
             caps_text.append("NVENC: Yes")
-        elif gpu['vendor'] == 'Intel':
+        elif gpu["vendor"] == "Intel":
             caps_text.append("Intel Xe Architecture")
             caps_text.append("AV1 Encoding: Yes")
             caps_text.append("XeSS Support: Yes")
             caps_text.append("Ray Tracing: Hardware Accelerated")
-        elif gpu['vendor'] == 'AMD':
+        elif gpu["vendor"] == "AMD":
             caps_text.append("ROCm Support: Detecting...")
             caps_text.append("Ray Accelerators: Detecting...")
 
@@ -370,7 +370,7 @@ class GPUStatusWidget(QWidget):
         caps_text.append("Max Clock: Detecting...")
         caps_text.append("Memory Bandwidth: Detecting...")
 
-        self.caps_text.setPlainText('\n'.join(caps_text))
+        self.caps_text.setPlainText("\n".join(caps_text))
 
     def clear_display(self):
         """Clear all display fields"""
@@ -409,11 +409,11 @@ class GPUStatusWidget(QWidget):
         """Manually refresh GPU list"""
         # Trigger a manual refresh by restarting monitoring
         try:
-            if hasattr(self, 'monitor_worker') and self.monitor_worker:
+            if hasattr(self, "monitor_worker") and self.monitor_worker:
                 # Stop current monitoring
                 self.monitor_worker.stop_monitoring()
                 
-            if hasattr(self, 'monitor_thread') and self.monitor_thread:
+            if hasattr(self, "monitor_thread") and self.monitor_thread:
                 self.monitor_thread.quit()
                 self.monitor_thread.wait(1000)  # Wait up to 1 second
                 

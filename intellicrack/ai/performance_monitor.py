@@ -176,10 +176,10 @@ class PerformanceMonitor:
         for metric_name, value in checks:
             thresholds = self.thresholds.get(metric_name, {})
 
-            if value > thresholds.get("critical", float('inf')):
+            if value > thresholds.get("critical", float("inf")):
                 logger.critical(f"Critical {metric_name}: {value}")
                 self._trigger_optimization(metric_name, "critical", value)
-            elif value > thresholds.get("warning", float('inf')):
+            elif value > thresholds.get("warning", float("inf")):
                 logger.warning(f"High {metric_name}: {value}")
                 self._trigger_optimization(metric_name, "warning", value)
 
@@ -433,7 +433,7 @@ class PerformanceMonitor:
             summary = self.get_metrics_summary(timedelta(hours=24))
 
             if format == "json":
-                with open(file_path, 'w') as f:
+                with open(file_path, "w") as f:
                     json.dump(summary, f, indent=2, default=str)
             else:
                 raise ValueError(f"Unsupported format: {format}")
@@ -476,7 +476,7 @@ class PerformanceMonitor:
         try:
             current_stats = self.get_metrics_summary()
             logger.info(f"Final performance metrics: {current_stats}")
-            if hasattr(self, 'optimization_rules') and self.optimization_rules:
+            if hasattr(self, "optimization_rules") and self.optimization_rules:
                 logger.info(
                     f"Active optimization rules: {len(self.optimization_rules)}")
         except Exception as e:

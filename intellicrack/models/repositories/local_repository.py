@@ -60,7 +60,7 @@ class LocalFileRepository(ModelRepositoryInterface):
         """Load metadata for local models."""
         if os.path.exists(self.models_metadata_file):
             try:
-                with open(self.models_metadata_file, 'r') as f:
+                with open(self.models_metadata_file, "r") as f:
                     metadata = json.load(f)
 
                     # Convert metadata to ModelInfo objects
@@ -82,7 +82,7 @@ class LocalFileRepository(ModelRepositoryInterface):
         }
 
         try:
-            with open(self.models_metadata_file, 'w') as f:
+            with open(self.models_metadata_file, "w") as f:
                 json.dump(metadata, f, indent=2)
         except IOError as e:
             logger.warning(f"Failed to save local models metadata: {e}")
@@ -208,7 +208,7 @@ class LocalFileRepository(ModelRepositoryInterface):
             file_size = os.path.getsize(model_info.local_path)
 
             # Open source and destination files
-            with open(model_info.local_path, 'rb') as src, open(destination_path, 'wb') as dst:
+            with open(model_info.local_path, "rb") as src, open(destination_path, "wb") as dst:
                 # Copy in chunks for progress tracking
                 copied = 0
                 chunk_size = 1024 * 1024  # 1 MB chunks
@@ -262,7 +262,7 @@ class LocalFileRepository(ModelRepositoryInterface):
             # Copy the file
             try:
                 os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-                with open(file_path, 'rb') as src, open(dest_path, 'wb') as dst:
+                with open(file_path, "rb") as src, open(dest_path, "wb") as dst:
                     dst.write(src.read())
 
                 file_path = dest_path

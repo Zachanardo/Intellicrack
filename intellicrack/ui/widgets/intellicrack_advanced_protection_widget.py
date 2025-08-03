@@ -114,15 +114,15 @@ class EntropyGraphWidget(FigureCanvas):
         ax = self.figure.add_subplot(111)
 
         if not entropy_data:
-            ax.text(0.5, 0.5, 'No entropy data available',
-                   ha='center', va='center', transform=ax.transAxes)
+            ax.text(0.5, 0.5, "No entropy data available",
+                   ha="center", va="center", transform=ax.transAxes)
             self.draw()
             return
 
         # Prepare data
         sections = [e.section_name for e in entropy_data]
         entropies = [e.entropy for e in entropy_data]
-        colors = ['red' if e.packed else 'green' for e in entropy_data]
+        colors = ["red" if e.packed else "green" for e in entropy_data]
 
         # Create bar chart
         bars = ax.bar(sections, entropies, color=colors)
@@ -130,21 +130,21 @@ class EntropyGraphWidget(FigureCanvas):
         # Add value labels on bars
         for bar in bars:
             height = bar.get_height()
-            ax.annotate(f'{height:.2f}',
+            ax.annotate(f"{height:.2f}",
                        xy=(bar.get_x() + bar.get_width() / 2, height),
                        xytext=(0, 3),  # 3 points vertical offset
                        textcoords="offset points",
-                       ha='center', va='bottom',
+                       ha="center", va="bottom",
                        fontsize=8)
 
         # Add threshold line
-        ax.axhline(y=7.0, color='orange', linestyle='--', label='Packing threshold')
-        ax.axhline(y=7.5, color='red', linestyle='--', label='Encryption threshold')
+        ax.axhline(y=7.0, color="orange", linestyle="--", label="Packing threshold")
+        ax.axhline(y=7.5, color="red", linestyle="--", label="Encryption threshold")
 
         # Customize
-        ax.set_xlabel('Section')
-        ax.set_ylabel('Entropy')
-        ax.set_title('Section Entropy Analysis')
+        ax.set_xlabel("Section")
+        ax.set_ylabel("Entropy")
+        ax.set_title("Section Entropy Analysis")
         ax.set_ylim(0, 8)
         ax.legend()
 
@@ -944,7 +944,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
 
         if file_path:
             try:
-                with open(file_path, 'w') as f:
+                with open(file_path, "w") as f:
                     f.write(self.export_preview.toPlainText())
 
                 QMessageBox.information(
@@ -979,7 +979,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         if file_path and os.path.exists(file_path):
             self.file_path_edit.setText(file_path)
             # Auto-analyze if configured
-            if hasattr(self, 'auto_analyze') and self.auto_analyze:
+            if hasattr(self, "auto_analyze") and self.auto_analyze:
                 self.on_analyze_clicked()
 
 

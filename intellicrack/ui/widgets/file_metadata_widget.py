@@ -252,26 +252,26 @@ class FileMetadataWidget(QWidget):
 
         # Create metadata dictionary
         metadata = {
-            'path': file_info.absoluteFilePath(),
-            'name': file_info.fileName(),
-            'size': file_info.size(),
-            'size_formatted': self._format_size(file_info.size()),
-            'created': created_time.toString(Qt.ISODate) if created_time.isValid() else None,
-            'modified': modified_time.toString(Qt.ISODate),
-            'accessed': accessed_time.toString(Qt.ISODate),
-            'created_unix': created_time.toSecsSinceEpoch() if created_time.isValid() else None,
-            'modified_unix': modified_time.toSecsSinceEpoch(),
-            'accessed_unix': accessed_time.toSecsSinceEpoch(),
-            'type': file_type,
-            'is_dir': file_info.isDir(),
-            'is_file': file_info.isFile(),
-            'is_symlink': file_info.isSymLink(),
-            'is_readable': file_info.isReadable(),
-            'is_writable': file_info.isWritable(),
-            'is_executable': file_info.isExecutable(),
-            'owner': file_info.owner() if file_info.owner() else None,
-            'suffix': file_info.suffix(),
-            'complete_suffix': file_info.completeSuffix()
+            "path": file_info.absoluteFilePath(),
+            "name": file_info.fileName(),
+            "size": file_info.size(),
+            "size_formatted": self._format_size(file_info.size()),
+            "created": created_time.toString(Qt.ISODate) if created_time.isValid() else None,
+            "modified": modified_time.toString(Qt.ISODate),
+            "accessed": accessed_time.toString(Qt.ISODate),
+            "created_unix": created_time.toSecsSinceEpoch() if created_time.isValid() else None,
+            "modified_unix": modified_time.toSecsSinceEpoch(),
+            "accessed_unix": accessed_time.toSecsSinceEpoch(),
+            "type": file_type,
+            "is_dir": file_info.isDir(),
+            "is_file": file_info.isFile(),
+            "is_symlink": file_info.isSymLink(),
+            "is_readable": file_info.isReadable(),
+            "is_writable": file_info.isWritable(),
+            "is_executable": file_info.isExecutable(),
+            "owner": file_info.owner() if file_info.owner() else None,
+            "suffix": file_info.suffix(),
+            "complete_suffix": file_info.completeSuffix()
         }
 
         # Emit signal
@@ -312,7 +312,7 @@ class FileMetadataWidget(QWidget):
         Returns:
             Formatted size string
         """
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        for unit in ["B", "KB", "MB", "GB", "TB"]:
             if size < 1024.0:
                 return f"{size:.2f} {unit}"
             size /= 1024.0
@@ -342,11 +342,11 @@ class FileTimestampTracker:
         file_info = QFileInfo(file_path)
 
         timestamp_data = {
-            'path': file_path,
-            'initial_modified': file_info.lastModified(),
-            'initial_accessed': file_info.lastRead(),
-            'initial_size': file_info.size(),
-            'checks': []
+            "path": file_path,
+            "initial_modified": file_info.lastModified(),
+            "initial_accessed": file_info.lastRead(),
+            "initial_size": file_info.size(),
+            "checks": []
         }
 
         self.tracked_files[file_path] = timestamp_data
@@ -363,10 +363,10 @@ class FileTimestampTracker:
             Dictionary with change information
         """
         if file_path not in self.tracked_files:
-            return {'error': 'File not being tracked'}
+            return {"error": "File not being tracked"}
 
         if not os.path.exists(file_path):
-            return {'error': 'File no longer exists'}
+            return {"error": "File no longer exists"}
 
         file_info = QFileInfo(file_path)
         tracked = self.tracked_files[file_path]
@@ -376,21 +376,21 @@ class FileTimestampTracker:
         current_size = file_info.size()
 
         check_data = {
-            'timestamp': QDateTime.currentDateTime(),
-            'modified_changed': current_modified != tracked['initial_modified'],
-            'accessed_changed': current_accessed != tracked['initial_accessed'],
-            'size_changed': current_size != tracked['initial_size'],
-            'current_modified': current_modified,
-            'current_accessed': current_accessed,
-            'current_size': current_size
+            "timestamp": QDateTime.currentDateTime(),
+            "modified_changed": current_modified != tracked["initial_modified"],
+            "accessed_changed": current_accessed != tracked["initial_accessed"],
+            "size_changed": current_size != tracked["initial_size"],
+            "current_modified": current_modified,
+            "current_accessed": current_accessed,
+            "current_size": current_size
         }
 
-        tracked['checks'].append(check_data)
+        tracked["checks"].append(check_data)
 
         return {
-            'file': file_path,
-            'changed': check_data['modified_changed'] or check_data['size_changed'],
-            'details': check_data
+            "file": file_path,
+            "changed": check_data["modified_changed"] or check_data["size_changed"],
+            "details": check_data
         }
 
     def get_file_history(self, file_path: str) -> dict:

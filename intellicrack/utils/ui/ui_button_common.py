@@ -62,9 +62,9 @@ def add_extra_buttons(header_layout, extra_buttons, widget_refs=None):
         # Store reference if widget_refs provided
         if widget_refs is not None:
             if button_text == "Analyze Binary":
-                widget_refs['analyze_btn'] = btn
-            elif 'extra_buttons' in widget_refs:
-                widget_refs['extra_buttons'][button_text] = btn
+                widget_refs["analyze_btn"] = btn
+            elif "extra_buttons" in widget_refs:
+                widget_refs["extra_buttons"][button_text] = btn
 
     return buttons
 

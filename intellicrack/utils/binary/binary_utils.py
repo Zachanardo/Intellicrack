@@ -31,7 +31,7 @@ from typing import Any, Callable, Dict, Optional, Union
 logger = logging.getLogger(__name__)
 
 
-def compute_file_hash(file_path: Union[str, Path], algorithm: str = 'sha256',
+def compute_file_hash(file_path: Union[str, Path], algorithm: str = "sha256",
                      progress_signal: Optional[Callable[[int], None]] = None) -> str:
     """
     Computes the hash of a file using the specified algorithm with optional progress updates.
@@ -61,7 +61,7 @@ def compute_file_hash(file_path: Union[str, Path], algorithm: str = 'sha256',
                 if progress_signal and file_size > 0:
                     progress_percent = int((processed / file_size) * 100)
                     # Handle both signal objects and function callbacks
-                    if hasattr(progress_signal, 'emit'):
+                    if hasattr(progress_signal, "emit"):
                         # If it's a signal object with emit method
                         progress_signal.emit(progress_percent)
                     else:
@@ -93,7 +93,7 @@ def compute_file_hash(file_path: Union[str, Path], algorithm: str = 'sha256',
         return ""
 
 
-def get_file_hash(file_path: Union[str, Path], algorithm: str = 'sha256') -> str:
+def get_file_hash(file_path: Union[str, Path], algorithm: str = "sha256") -> str:
     """
     Simple wrapper for compute_file_hash without progress callback.
 
@@ -127,14 +127,14 @@ def read_binary(file_path: Union[str, Path], chunk_size: int = 8192) -> bytes:
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
 
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             chunks = []
             while True:
                 chunk = f.read(chunk_size)
                 if not chunk:
                     break
                 chunks.append(chunk)
-            return b''.join(chunks)
+            return b"".join(chunks)
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error reading binary file %s: %s", file_path, e)
         raise
@@ -157,13 +157,13 @@ def write_binary(file_path: Union[str, Path], data: bytes, create_backup: bool =
 
         # Create backup if file exists and backup requested
         if create_backup and file_path.exists():
-            backup_path = file_path.with_suffix(file_path.suffix + '.bak')
+            backup_path = file_path.with_suffix(file_path.suffix + ".bak")
             import shutil
             shutil.copy2(file_path, backup_path)
             logger.info("Created backup: %s", backup_path)
 
         # Write the data
-        with open(file_path, 'wb') as f:
+        with open(file_path, "wb") as f:
             f.write(data)
 
         logger.info(f"Successfully wrote {len(data)} bytes to {file_path}")
@@ -190,7 +190,7 @@ def analyze_binary_format(file_path: Union[str, Path]) -> Dict[str, Any]:
             return {"error": "File not found"}
 
         # Read file header
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             header = f.read(512)
 
         format_info = {
@@ -201,16 +201,16 @@ def analyze_binary_format(file_path: Union[str, Path]) -> Dict[str, Any]:
         }
 
         # Check for common binary formats
-        if header.startswith(b'MZ'):
+        if header.startswith(b"MZ"):
             format_info["type"] = "PE"
             # Check for PE signature
             if len(header) > 0x3C:
-                pe_offset = int.from_bytes(header[0x3C:0x40], 'little')
+                pe_offset = int.from_bytes(header[0x3C:0x40], "little")
                 if len(header) > pe_offset + 4:
-                    if header[pe_offset:pe_offset+4] == b'PE\x00\x00':
+                    if header[pe_offset:pe_offset+4] == b"PE\x00\x00":
                         format_info["type"] = "PE32/PE32+"
 
-        elif header.startswith(b'\x7fELF'):
+        elif header.startswith(b"\x7fELF"):
             format_info["type"] = "ELF"
             if len(header) > 4:
                 if header[4] == 1:
@@ -218,17 +218,17 @@ def analyze_binary_format(file_path: Union[str, Path]) -> Dict[str, Any]:
                 elif header[4] == 2:
                     format_info["architecture"] = "64-bit"
 
-        elif header.startswith(b'\xCE\xFA\xED\xFE') or header.startswith(b'\xCF\xFA\xED\xFE'):
+        elif header.startswith(b"\xCE\xFA\xED\xFE") or header.startswith(b"\xCF\xFA\xED\xFE"):
             format_info["type"] = "Mach-O"
             format_info["architecture"] = "32-bit"
-        elif header.startswith(b'\xFE\xED\xFA\xCE') or header.startswith(b'\xFE\xED\xFA\xCF'):
+        elif header.startswith(b"\xFE\xED\xFA\xCE") or header.startswith(b"\xFE\xED\xFA\xCF"):
             format_info["type"] = "Mach-O"
             format_info["architecture"] = "64-bit"
 
-        elif header.startswith(b'PK\x03\x04'):
+        elif header.startswith(b"PK\x03\x04"):
             format_info["type"] = "ZIP/JAR/APK"
             # Check if it's an APK
-            if file_path.suffix.lower() == '.apk':
+            if file_path.suffix.lower() == ".apk":
                 format_info["type"] = "APK"
 
         return format_info
@@ -250,9 +250,9 @@ def is_binary_file(file_path: Union[str, Path], sample_size: int = 8192) -> bool
         bool: True if file appears to be binary
     """
     try:
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             chunk = f.read(sample_size)
-            return b'\x00' in chunk
+            return b"\x00" in chunk
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error checking if file is binary: %s", e)
         return False
@@ -272,7 +272,7 @@ def get_file_entropy(file_path: Union[str, Path], block_size: int = 256) -> floa
     try:
         import math
 
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             data = f.read(block_size)
 
         if not data:
@@ -311,9 +311,9 @@ def check_suspicious_pe_sections(pe_obj) -> list:
     """
     suspicious_sections = []
     try:
-        if hasattr(pe_obj, 'sections'):
+        if hasattr(pe_obj, "sections"):
             for section in pe_obj.sections:
-                section_name = section.Name.decode('utf-8', errors='ignore').strip('\x00')
+                section_name = section.Name.decode("utf-8", errors="ignore").strip("\x00")
 
                 # Check if section is both writable and executable (security risk)
                 if (section.Characteristics & 0x20000000) and (section.Characteristics & 0x80000000):
@@ -352,13 +352,13 @@ def validate_binary_path(binary_path: str, logger_instance=None) -> bool:
 
 # Exported functions
 __all__ = [
-    'compute_file_hash',
-    'get_file_hash',
-    'read_binary',
-    'write_binary',
-    'analyze_binary_format',
-    'is_binary_file',
-    'get_file_entropy',
-    'check_suspicious_pe_sections',
-    'validate_binary_path',
+    "compute_file_hash",
+    "get_file_hash",
+    "read_binary",
+    "write_binary",
+    "analyze_binary_format",
+    "is_binary_file",
+    "get_file_entropy",
+    "check_suspicious_pe_sections",
+    "validate_binary_path",
 ]

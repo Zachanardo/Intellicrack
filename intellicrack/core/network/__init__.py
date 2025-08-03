@@ -58,9 +58,9 @@ except ImportError as e:
     CloudLicenseHooker = None
 
 __all__ = [
-    'TrafficAnalyzer',
-    'SSLInterceptor',
-    'ProtocolFingerprinter',
-    'LicenseServerEmulator',
-    'CloudLicenseHooker'
+    "TrafficAnalyzer",
+    "SSLInterceptor",
+    "ProtocolFingerprinter",
+    "LicenseServerEmulator",
+    "CloudLicenseHooker"
 ]

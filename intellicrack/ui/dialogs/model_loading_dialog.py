@@ -232,7 +232,7 @@ class ModelLoadingDialog(QDialog):
             info = self.llm_manager.get_llm_info(model_id)
             if info:
                 item_text = f"{model_id} ({info['provider']}) - {info['model_name']}"
-                if info.get('is_initialized'):
+                if info.get("is_initialized"):
                     item_text += " ✓"
 
                 item = QListWidgetItem(item_text)

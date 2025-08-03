@@ -188,7 +188,7 @@ class ModelBatchTester:
         """
         file_path = Path(file_path)
 
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             data = json.load(f)
 
         suite_id = data.get("suite_id", file_path.stem)
@@ -279,7 +279,7 @@ class ModelBatchTester:
                 perf_context,
                 tokens_generated=tokens_generated,
                 sequence_length=len(test_case.prompt),
-                device=getattr(llm, 'device', 'cpu')
+                device=getattr(llm, "device", "cpu")
             )
 
             # Validate output
@@ -602,13 +602,13 @@ class ModelBatchTester:
                 ]
             }
 
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 json.dump(data, f, indent=2)
 
         elif format == "html":
             # Generate HTML report
             html = self._generate_html_report(report)
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 f.write(html)
 
         logger.info(f"Exported test report to {output_path}")

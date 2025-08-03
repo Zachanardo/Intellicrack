@@ -21,14 +21,14 @@ from .audit_logger import (
 )
 
 __all__ = [
-    'AuditLogger',
-    'AuditEvent',
-    'AuditEventType',
-    'AuditSeverity',
-    'get_audit_logger',
-    'log_exploit_attempt',
-    'log_binary_analysis',
-    'log_vm_operation',
-    'log_credential_access',
-    'log_tool_execution'
+    "AuditLogger",
+    "AuditEvent",
+    "AuditEventType",
+    "AuditSeverity",
+    "get_audit_logger",
+    "log_exploit_attempt",
+    "log_binary_analysis",
+    "log_vm_operation",
+    "log_credential_access",
+    "log_tool_execution"
 ]

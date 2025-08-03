@@ -66,7 +66,7 @@ try:
     RESOURCE_AVAILABLE = True
 except ImportError as e:
     import platform
-    if platform.system() != 'Windows':
+    if platform.system() != "Windows":
         logger.error("Import error in plugin_system: %s", e)
     RESOURCE_AVAILABLE = False
 
@@ -353,7 +353,7 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
             prefix = f"[{plugin_name}]"
             if message["type"] == "send":
                 # Check if payload is simple string or structured data
-                payload = message.get('payload', '')
+                payload = message.get("payload", "")
                 if isinstance(payload, (str, int, float, bool)):
                     log_text = f"{prefix} {payload}"
                 else:
@@ -371,8 +371,8 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
 
             elif message["type"] == "error":
                 # More specific error logging from Frida script errors
-                description = message.get('description', 'Unknown error')
-                stack = message.get('stack', 'No stack trace')
+                description = message.get("description", "Unknown error")
+                stack = message.get("stack", "No stack trace")
                 app.update_output.emit(
                     log_message(
                         f"{prefix} Script Error: Desc: {description}\nStack: {stack}"))
@@ -468,7 +468,7 @@ def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
     ghidra_path = CONFIG.get("ghidra_path")
     if not ghidra_path:
         # Try to find Ghidra using path discovery
-        ghidra_path = find_tool('ghidra')
+        ghidra_path = find_tool("ghidra")
 
     if not ghidra_path or not os.path.exists(ghidra_path):
         app.update_output.emit(log_message(
@@ -1465,7 +1465,7 @@ def create_plugin_template(plugin_name: str, template_type: str = "advanced") ->
     """
 
     # Sanitize plugin name
-    class_name = ''.join(word.capitalize() for word in plugin_name.split())
+    class_name = "".join(word.capitalize() for word in plugin_name.split())
     if not class_name.endswith("Plugin"):
         class_name += "Plugin"
 
@@ -1702,8 +1702,8 @@ def run_plugin_remotely(app, plugin_info: Dict[str, Any]) -> Optional[List[str]]
     try:
         # Execute the plugin remotely
         results = executor.execute_plugin(
-            plugin_info['path'],
-            'analyze',
+            plugin_info["path"],
+            "analyze",
             app.binary_path
         )
 
@@ -1799,7 +1799,7 @@ class PluginSystem:
         custom_dir = os.path.join(self.plugin_dir, "custom_modules")
         if os.path.exists(custom_dir):
             for file in os.listdir(custom_dir):
-                if file.endswith('.py') and not file.startswith('__'):
+                if file.endswith(".py") and not file.startswith("__"):
                     discovered.append(file[:-3])
 
         # Check other plugin directories
@@ -1807,7 +1807,7 @@ class PluginSystem:
             plugin_path = os.path.join(self.plugin_dir, subdir)
             if os.path.exists(plugin_path):
                 for file in os.listdir(plugin_path):
-                    if file.endswith(('.js', '.py')) and not file.startswith('__'):
+                    if file.endswith((".js", ".py")) and not file.startswith("__"):
                         discovered.append(os.path.splitext(file)[0])
 
         return discovered
@@ -1848,7 +1848,7 @@ class PluginSystem:
         plugin_installed = False
 
         # If it's a URL, download the plugin
-        if plugin_name.startswith(('http://', 'https://', 'ftp://')):
+        if plugin_name.startswith(("http://", "https://", "ftp://")):
             try:
                 import urllib.parse
                 import urllib.request
@@ -1860,10 +1860,10 @@ class PluginSystem:
                     filename = f"plugin_{hash(plugin_name)}.py"
 
                 # Determine destination directory based on file extension
-                if filename.endswith('.js'):
+                if filename.endswith(".js"):
                     dest_dir = os.path.join(self.plugin_dir, "frida_scripts")
-                elif filename.endswith('.py'):
-                    if 'ghidra' in filename.lower():
+                elif filename.endswith(".py"):
+                    if "ghidra" in filename.lower():
                         dest_dir = os.path.join(self.plugin_dir, "ghidra_scripts")
                     else:
                         dest_dir = os.path.join(self.plugin_dir, "custom_modules")
@@ -1897,10 +1897,10 @@ class PluginSystem:
                 filename = os.path.basename(plugin_name)
 
                 # Determine destination based on file type
-                if filename.endswith('.js'):
+                if filename.endswith(".js"):
                     dest_dir = os.path.join(self.plugin_dir, "frida_scripts")
-                elif filename.endswith('.py'):
-                    if 'ghidra' in filename.lower():
+                elif filename.endswith(".py"):
+                    if "ghidra" in filename.lower():
                         dest_dir = os.path.join(self.plugin_dir, "ghidra_scripts")
                     else:
                         dest_dir = os.path.join(self.plugin_dir, "custom_modules")
@@ -1952,7 +1952,7 @@ class PluginSystem:
             return None
 
         # Determine plugin type and execute
-        if plugin_path.endswith('.py'):
+        if plugin_path.endswith(".py"):
             # Python plugin
             try:
                 # Create isolated module namespace
@@ -1962,15 +1962,15 @@ class PluginSystem:
                 module = importlib.util.module_from_spec(spec)
 
                 # Add plugin utilities to module namespace
-                module.__dict__['logger'] = self.logger
-                module.__dict__['plugin_dir'] = self.plugin_dir
-                module.__dict__['intellicrack'] = sys.modules.get('intellicrack')
+                module.__dict__["logger"] = self.logger
+                module.__dict__["plugin_dir"] = self.plugin_dir
+                module.__dict__["intellicrack"] = sys.modules.get("intellicrack")
 
                 # Execute the module
                 spec.loader.exec_module(module)
 
                 # Look for entry points in order of preference
-                entry_points = ['execute', 'run', 'main', 'plugin_main', 'start']
+                entry_points = ["execute", "run", "main", "plugin_main", "start"]
 
                 for entry_point in entry_points:
                     if hasattr(module, entry_point) and callable(getattr(module, entry_point)):
@@ -2018,7 +2018,7 @@ class PluginSystem:
                     instance = plugin_class()
 
                     # Look for run/execute methods
-                    for method_name in ['execute', 'run', 'main', 'start']:
+                    for method_name in ["execute", "run", "main", "start"]:
                         if hasattr(instance, method_name):
                             method = getattr(instance, method_name)
                             if callable(method):
@@ -2034,16 +2034,16 @@ class PluginSystem:
                 self.logger.debug(f"Traceback: {traceback.format_exc()}")
                 return None
 
-        elif plugin_path.endswith('.js'):
+        elif plugin_path.endswith(".js"):
             # JavaScript/Frida plugin
             if FRIDA_AVAILABLE and frida:
                 try:
                     # Read the script content
-                    with open(plugin_path, 'r') as f:
+                    with open(plugin_path, "r") as f:
                         script_content = f.read()
 
                     # Get target process from kwargs or find it
-                    target_process = kwargs.get('target_process')
+                    target_process = kwargs.get("target_process")
                     if not target_process:
                         # Try to get from first argument
                         if args and isinstance(args[0], (str, int)):
@@ -2072,13 +2072,13 @@ class PluginSystem:
                     # Set up message handler
                     messages = []
                     def on_message(message, data):
-                        messages.append({'message': message, 'data': data})
-                        if message['type'] == 'send':
+                        messages.append({"message": message, "data": data})
+                        if message["type"] == "send":
                             self.logger.info(f"Frida message: {message.get('payload', '')}")
-                        elif message['type'] == 'error':
+                        elif message["type"] == "error":
                             self.logger.error(f"Frida error: {message.get('description', '')}")
 
-                    script.on('message', on_message)
+                    script.on("message", on_message)
                     script.load()
 
                     # Wait for script to initialize
@@ -2086,10 +2086,10 @@ class PluginSystem:
                     time.sleep(0.5)
 
                     # Call exported functions if any
-                    if hasattr(script.exports, 'execute'):
+                    if hasattr(script.exports, "execute"):
                         result = script.exports.execute(*args[1:] if len(args) > 1 else [], **kwargs)
                         return result
-                    elif hasattr(script.exports, 'main'):
+                    elif hasattr(script.exports, "main"):
                         result = script.exports.main(*args[1:] if len(args) > 1 else [], **kwargs)
                         return result
 
@@ -2127,9 +2127,9 @@ class PluginSystem:
 
             if not original_filename:
                 # Guess extension from URL or content
-                if plugin_url.endswith('.js'):
+                if plugin_url.endswith(".js"):
                     original_filename = f"remote_plugin_{url_hash}.js"
-                elif plugin_url.endswith('.py'):
+                elif plugin_url.endswith(".py"):
                     original_filename = f"remote_plugin_{url_hash}.py"
                 else:
                     original_filename = f"remote_plugin_{url_hash}.py"
@@ -2140,12 +2140,12 @@ class PluginSystem:
             try:
                 # Set up request with timeout and size limit
                 req = urllib.request.Request(plugin_url, headers={
-                    'User-Agent': 'Intellicrack Plugin System/1.0'
+                    "User-Agent": "Intellicrack Plugin System/1.0"
                 })
 
                 with urllib.request.urlopen(req, timeout=30) as response:
                     # Check content size (limit to 10MB)
-                    content_length = response.headers.get('Content-Length')
+                    content_length = response.headers.get("Content-Length")
                     if content_length and int(content_length) > 10 * 1024 * 1024:
                         raise ValueError("Remote plugin too large (>10MB)")
 
@@ -2162,16 +2162,16 @@ class PluginSystem:
 
                     # Verify content is text-based (not binary)
                     try:
-                        content_text = content.decode('utf-8')
+                        content_text = content.decode("utf-8")
                     except UnicodeDecodeError as e:
                         logger.error("UnicodeDecodeError in plugin_system: %s", e)
                         raise ValueError("Remote plugin contains binary data")
 
                     # Basic security scan
                     dangerous_patterns = [
-                        'os.system', 'subprocess.call', 'eval(', 'exec(',
-                        '__import__("os")', 'compile(', 'globals()', 'locals()',
-                        'open(', 'file(', '__builtins__'
+                        "os.system", "subprocess.call", "eval(", "exec(",
+                        '__import__("os")', "compile(", "globals()", "locals()",
+                        "open(", "file(", "__builtins__"
                     ]
 
                     content_lower = content_text.lower()
@@ -2181,7 +2181,7 @@ class PluginSystem:
                             # Continue but log warning
 
                     # Write to temporary file
-                    with open(temp_plugin_path, 'w', encoding='utf-8') as f:
+                    with open(temp_plugin_path, "w", encoding="utf-8") as f:
                         f.write(content_text)
 
             except Exception as e:
@@ -2229,7 +2229,7 @@ class PluginSystem:
                 return None
 
         # Extract function name from kwargs
-        function_name = kwargs.pop('function_name', 'execute')
+        function_name = kwargs.pop("function_name", "execute")
 
         # Create sandbox process with resource limits
         try:
@@ -2335,11 +2335,11 @@ finally:
             # Execute in subprocess
             import subprocess
 
-            if sys.platform == 'win32':
+            if sys.platform == "win32":
                 # Windows doesn't support resource limits, use process creation flags
                 CREATE_NO_WINDOW = 0x08000000
                 process = subprocess.Popen(
-                    [sys.executable, '-c', sandbox_code],
+                    [sys.executable, "-c", sandbox_code],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
@@ -2348,11 +2348,11 @@ finally:
             else:
                 # Unix-like systems with resource limits
                 process = subprocess.Popen(
-                    [sys.executable, '-c', sandbox_code],
+                    [sys.executable, "-c", sandbox_code],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
-                    preexec_fn=getattr(os, 'setsid', None) if sys.platform != 'win32' else None  # Create new process group on Unix
+                    preexec_fn=getattr(os, "setsid", None) if sys.platform != "win32" else None  # Create new process group on Unix
                 )
 
             # Wait for completion with timeout
@@ -2361,7 +2361,7 @@ finally:
             except subprocess.TimeoutExpired as e:
                 logger.error("Subprocess timeout in plugin_system: %s", e)
                 # Kill the process group on timeout
-                if sys.platform != 'win32':
+                if sys.platform != "win32":
                     os.killpg(os.getpgid(process.pid), signal.SIGTERM)
                 else:
                     process.terminate()
@@ -2382,7 +2382,7 @@ finally:
                             return result["result"]
                     else:
                         self.logger.error(f"Sandbox execution failed: {result.get('error', 'Unknown error')}")
-                        if result.get('traceback'):
+                        if result.get("traceback"):
                             self.logger.debug(f"Traceback: {result['traceback']}")
                         return None
                 except json.JSONDecodeError:
@@ -2404,19 +2404,19 @@ finally:
 # Import shared exports to avoid duplication
 try:
     from .plugin_config import PLUGIN_SYSTEM_EXPORTS
-    __all__ = ['PluginSystem', 'create_plugin_template'] + PLUGIN_SYSTEM_EXPORTS
+    __all__ = ["PluginSystem", "create_plugin_template"] + PLUGIN_SYSTEM_EXPORTS
 except ImportError as e:
     logger.error("Import error in plugin_system: %s", e)
     # Fallback in case of circular import issues
     __all__ = [
-        'PluginSystem',
-        'load_plugins',
-        'run_plugin',
-        'run_custom_plugin',
-        'run_frida_plugin_from_file',
-        'run_ghidra_plugin_from_file',
-        'create_sample_plugins',
-        'create_plugin_template',
-        'run_plugin_in_sandbox',
-        'run_plugin_remotely'
+        "PluginSystem",
+        "load_plugins",
+        "run_plugin",
+        "run_custom_plugin",
+        "run_frida_plugin_from_file",
+        "run_ghidra_plugin_from_file",
+        "create_sample_plugins",
+        "create_plugin_template",
+        "run_plugin_in_sandbox",
+        "run_plugin_remotely"
     ]

@@ -25,6 +25,6 @@ from .patching.patch_verification import (
     verify_patches,
 )
 
-__all__ = ['verify_patches', 'test_patch_and_verify',
-           'apply_parsed_patch_instructions_with_validation',
-           'rewrite_license_functions_with_parsing']
+__all__ = ["verify_patches", "test_patch_and_verify",
+           "apply_parsed_patch_instructions_with_validation",
+           "rewrite_license_functions_with_parsing"]

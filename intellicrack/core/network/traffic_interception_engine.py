@@ -63,7 +63,7 @@ class InterceptedPacket:
     def __post_init__(self):
         """Initialize flags if not provided"""
         if not self.flags:
-            self.flags = {'syn': False, 'ack': False, 'fin': False, 'rst': False}
+            self.flags = {"syn": False, "ack": False, "fin": False, "rst": False}
 
 
 @dataclass
@@ -100,69 +100,69 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
         # Statistics
         self.stats = {
-            'packets_captured': 0,
-            'license_packets_detected': 0,
-            'protocols_detected': set(),
-            'total_bytes': 0,
-            'start_time': None
+            "packets_captured": 0,
+            "license_packets_detected": 0,
+            "protocols_detected": set(),
+            "total_bytes": 0,
+            "start_time": None
         }
 
         # Configuration
         self.capture_config = {
-            'promiscuous_mode': False,
-            'buffer_size': 65536,
-            'timeout_ms': 100,
-            'filter_expression': None
+            "promiscuous_mode": False,
+            "buffer_size": 65536,
+            "timeout_ms": 100,
+            "filter_expression": None
         }
 
         # Protocol patterns for license detection
         self.license_patterns = {
-            'flexlm': [
-                b'VENDOR_STRING',
-                b'FEATURE',
-                b'INCREMENT',
-                b'SERVER',
-                b'HOSTID',
-                b'SIGN='
+            "flexlm": [
+                b"VENDOR_STRING",
+                b"FEATURE",
+                b"INCREMENT",
+                b"SERVER",
+                b"HOSTID",
+                b"SIGN="
             ],
-            'hasp': [
-                b'hasp',
-                b'HASP',
-                b'sentinel',
-                b'SENTINEL',
-                b'Aladdin'
+            "hasp": [
+                b"hasp",
+                b"HASP",
+                b"sentinel",
+                b"SENTINEL",
+                b"Aladdin"
             ],
-            'adobe': [
-                b'adobe',
-                b'ADOBE',
-                b'lcsap',
-                b'LCSAP',
-                b'activation',
-                b'serial'
+            "adobe": [
+                b"adobe",
+                b"ADOBE",
+                b"lcsap",
+                b"LCSAP",
+                b"activation",
+                b"serial"
             ],
-            'autodesk': [
-                b'adsk',
-                b'ADSK',
-                b'autodesk',
-                b'AUTODESK',
-                b'AdskNetworkLicenseManager'
+            "autodesk": [
+                b"adsk",
+                b"ADSK",
+                b"autodesk",
+                b"AUTODESK",
+                b"AdskNetworkLicenseManager"
             ],
-            'microsoft': [
-                b'kms',
-                b'KMS',
-                b'microsoft',
-                b'MICROSOFT',
-                b'activation'
+            "microsoft": [
+                b"kms",
+                b"KMS",
+                b"microsoft",
+                b"MICROSOFT",
+                b"activation"
             ],
-            'generic_license': [
-                b'license',
-                b'LICENSE',
-                b'activation',
-                b'ACTIVATION',
-                b'checkout',
-                b'CHECKOUT',
-                b'verify',
-                b'VERIFY'
+            "generic_license": [
+                b"license",
+                b"LICENSE",
+                b"activation",
+                b"ACTIVATION",
+                b"checkout",
+                b"CHECKOUT",
+                b"verify",
+                b"VERIFY"
             ]
         }
 
@@ -207,7 +207,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 return "socket"
         elif sys.platform.startswith("linux"):
             # Check if running as root (geteuid only available on Unix-like systems)
-            is_root = hasattr(os, 'geteuid') and os.geteuid() == 0  # pylint: disable=no-member
+            is_root = hasattr(os, "geteuid") and os.geteuid() == 0  # pylint: disable=no-member
             if HAS_SCAPY and is_root:
                 self.logger.info("Using Scapy for Linux packet capture (root required)")
                 return "scapy"
@@ -242,7 +242,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 self.license_ports.update(ports)
 
             self.running = True
-            self.stats['start_time'] = time.time()
+            self.stats["start_time"] = time.time()
 
             # Start capture thread
             self.capture_thread = threading.Thread(
@@ -324,15 +324,15 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                             dest_ip=ip_layer.dst,
                             source_port=tcp_layer.sport,
                             dest_port=tcp_layer.dport,
-                            protocol='tcp',
-                            data=bytes(tcp_layer.payload) if tcp_layer.payload else b'',
+                            protocol="tcp",
+                            data=bytes(tcp_layer.payload) if tcp_layer.payload else b"",
                             timestamp=time.time(),
                             packet_size=len(packet),
                             flags={
-                                'syn': bool(tcp_layer.flags & 0x02),
-                                'ack': bool(tcp_layer.flags & 0x10),
-                                'fin': bool(tcp_layer.flags & 0x01),
-                                'rst': bool(tcp_layer.flags & 0x04)
+                                "syn": bool(tcp_layer.flags & 0x02),
+                                "ack": bool(tcp_layer.flags & 0x10),
+                                "fin": bool(tcp_layer.flags & 0x01),
+                                "rst": bool(tcp_layer.flags & 0x04)
                             }
                         )
 
@@ -419,9 +419,9 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                             with self.connection_lock:
                                 if connection_key not in self.active_connections:
                                     self.active_connections[connection_key] = {
-                                        'first_seen': time.time(),
-                                        'last_activity': time.time(),
-                                        'packet_count': 0
+                                        "first_seen": time.time(),
+                                        "last_activity": time.time(),
+                                        "packet_count": 0
                                     }
 
                                     self.logger.info(f"License server detected on port {port}")
@@ -444,7 +444,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 return
 
             # Parse IP header
-            ip_header = struct.unpack('!BBHHHBBH4s4s', raw_packet[:20])
+            ip_header = struct.unpack("!BBHHHBBH4s4s", raw_packet[:20])
             protocol = ip_header[6]
 
             # Only process TCP packets
@@ -458,7 +458,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             if len(raw_packet) < 40:
                 return
 
-            tcp_header = struct.unpack('!HHLLBBHHH', raw_packet[20:40])
+            tcp_header = struct.unpack("!HHLLBBHHH", raw_packet[20:40])
             source_port = tcp_header[0]
             dest_port = tcp_header[1]
             flags = tcp_header[5]
@@ -470,7 +470,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             # Extract payload
             tcp_header_length = (tcp_header[4] >> 4) * 4
             payload_start = 20 + tcp_header_length
-            payload = raw_packet[payload_start:] if payload_start < len(raw_packet) else b''
+            payload = raw_packet[payload_start:] if payload_start < len(raw_packet) else b""
 
             # Create intercepted packet
             intercepted = InterceptedPacket(
@@ -478,15 +478,15 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 dest_ip=dest_ip,
                 source_port=source_port,
                 dest_port=dest_port,
-                protocol='tcp',
+                protocol="tcp",
                 data=payload,
                 timestamp=time.time(),
                 packet_size=len(raw_packet),
                 flags={
-                    'syn': bool(flags & 0x02),
-                    'ack': bool(flags & 0x10),
-                    'fin': bool(flags & 0x01),
-                    'rst': bool(flags & 0x04)
+                    "syn": bool(flags & 0x02),
+                    "ack": bool(flags & 0x10),
+                    "fin": bool(flags & 0x01),
+                    "rst": bool(flags & 0x04)
                 }
             )
 
@@ -501,8 +501,8 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self.packet_queue.append(packet)
 
             # Update statistics
-            self.stats['packets_captured'] += 1
-            self.stats['total_bytes'] += packet.packet_size
+            self.stats["packets_captured"] += 1
+            self.stats["total_bytes"] += packet.packet_size
 
             # Limit queue size
             if len(self.packet_queue) > 10000:
@@ -556,7 +556,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 for pattern in patterns:
                     if pattern in packet.data:
                         matches += 1
-                        patterns_matched.append(pattern.decode('utf-8', errors='ignore'))
+                        patterns_matched.append(pattern.decode("utf-8", errors="ignore"))
 
                 if matches > 0:
                     pattern_confidence = min(matches / len(patterns), 1.0) * 0.7
@@ -570,7 +570,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 data_lower = packet.data.lower()
 
                 # Look for license-related keywords
-                license_keywords = [b'license', b'activation', b'checkout', b'verify', b'serial']
+                license_keywords = [b"license", b"activation", b"checkout", b"verify", b"serial"]
                 keyword_matches = sum(1 for keyword in license_keywords if keyword in data_lower)
 
                 if keyword_matches > 0:
@@ -583,14 +583,14 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
             # Update statistics
             if is_license_related:
-                self.stats['license_packets_detected'] += 1
-                self.stats['protocols_detected'].add(protocol_type)
+                self.stats["license_packets_detected"] += 1
+                self.stats["protocols_detected"].add(protocol_type)
 
             analysis_metadata = {
-                'keywords_found': patterns_matched,
-                'port_based_detection': packet.dest_port in self.license_ports or packet.source_port in self.license_ports,
-                'data_size': len(packet.data),
-                'connection_flags': packet.flags
+                "keywords_found": patterns_matched,
+                "port_based_detection": packet.dest_port in self.license_ports or packet.source_port in self.license_ports,
+                "data_size": len(packet.data),
+                "connection_flags": packet.flags
             }
 
             return AnalyzedTraffic(
@@ -639,16 +639,16 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
     def get_statistics(self) -> Dict[str, Any]:
         """Get traffic interception statistics"""
         current_time = time.time()
-        uptime = current_time - self.stats['start_time'] if self.stats['start_time'] else 0
+        uptime = current_time - self.stats["start_time"] if self.stats["start_time"] else 0
 
         stats = self.stats.copy()
-        stats['protocols_detected'] = list(stats['protocols_detected'])
-        stats['uptime_seconds'] = uptime
-        stats['packets_per_second'] = stats['packets_captured'] / max(uptime, 1)
-        stats['active_connections'] = len(self.active_connections)
-        stats['capture_backend'] = self.capture_backend
-        stats['dns_redirections'] = len(self.dns_redirections)
-        stats['proxy_mappings'] = len(self.proxy_mappings)
+        stats["protocols_detected"] = list(stats["protocols_detected"])
+        stats["uptime_seconds"] = uptime
+        stats["packets_per_second"] = stats["packets_captured"] / max(uptime, 1)
+        stats["active_connections"] = len(self.active_connections)
+        stats["capture_backend"] = self.capture_backend
+        stats["dns_redirections"] = len(self.dns_redirections)
+        stats["proxy_mappings"] = len(self.proxy_mappings)
 
         return stats
 
@@ -660,13 +660,13 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         with self.connection_lock:
             for connection_key, info in self.active_connections.items():
                 connections.append({
-                    'endpoint': connection_key,
-                    'duration': current_time - info['first_seen'],
-                    'last_activity': info['last_activity'],
-                    'packet_count': info['packet_count']
+                    "endpoint": connection_key,
+                    "duration": current_time - info["first_seen"],
+                    "last_activity": info["last_activity"],
+                    "packet_count": info["packet_count"]
                 })
 
         return connections
 
 
-__all__ = ['TrafficInterceptionEngine', 'InterceptedPacket', 'AnalyzedTraffic']
+__all__ = ["TrafficInterceptionEngine", "InterceptedPacket", "AnalyzedTraffic"]

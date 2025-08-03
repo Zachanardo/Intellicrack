@@ -107,17 +107,17 @@ class R2ErrorHandler:
         self.error_history: List[ErrorEvent] = []
         self.recovery_actions: Dict[str, RecoveryAction] = {}
         self.session_stats = {
-            'total_errors': 0,
-            'recovered_errors': 0,
-            'critical_errors': 0,
-            'session_start': datetime.now(),
-            'last_error': None
+            "total_errors": 0,
+            "recovered_errors": 0,
+            "critical_errors": 0,
+            "session_start": datetime.now(),
+            "last_error": None
         }
         self.circuit_breakers = {}
         self.performance_monitor = {
-            'operation_times': {},
-            'failure_rates': {},
-            'recovery_success_rates': {}
+            "operation_times": {},
+            "failure_rates": {},
+            "recovery_success_rates": {}
         }
 
         # Initialize built-in recovery actions
@@ -131,7 +131,7 @@ class R2ErrorHandler:
     def _initialize_recovery_actions(self):
         """Initialize built-in recovery actions"""
         # R2 session recovery
-        self.recovery_actions['restart_r2_session'] = RecoveryAction(
+        self.recovery_actions["restart_r2_session"] = RecoveryAction(
             name="Restart R2 Session",
             description="Restart radare2 session with fresh state",
             action=self._restart_r2_session,
@@ -140,7 +140,7 @@ class R2ErrorHandler:
         )
 
         # Binary re-analysis
-        self.recovery_actions['re_analyze_binary'] = RecoveryAction(
+        self.recovery_actions["re_analyze_binary"] = RecoveryAction(
             name="Re-analyze Binary",
             description="Re-run binary analysis with different parameters",
             action=self._re_analyze_binary,
@@ -149,7 +149,7 @@ class R2ErrorHandler:
         )
 
         # Command retry with fallback
-        self.recovery_actions['retry_with_fallback'] = RecoveryAction(
+        self.recovery_actions["retry_with_fallback"] = RecoveryAction(
             name="Retry with Fallback",
             description="Retry command with simplified parameters",
             action=self._retry_with_fallback,
@@ -158,7 +158,7 @@ class R2ErrorHandler:
         )
 
         # Memory cleanup
-        self.recovery_actions['cleanup_memory'] = RecoveryAction(
+        self.recovery_actions["cleanup_memory"] = RecoveryAction(
             name="Cleanup Memory",
             description="Clean up radare2 memory and temporary files",
             action=self._cleanup_memory,
@@ -167,7 +167,7 @@ class R2ErrorHandler:
         )
 
         # Graceful degradation
-        self.recovery_actions['graceful_degradation'] = RecoveryAction(
+        self.recovery_actions["graceful_degradation"] = RecoveryAction(
             name="Graceful Degradation",
             description="Continue with reduced functionality",
             action=self._graceful_degradation,
@@ -225,7 +225,7 @@ class R2ErrorHandler:
                     success = self._execute_recovery(error_event)
                     if success:
                         error_event.resolved = True
-                        self.session_stats['recovered_errors'] += 1
+                        self.session_stats["recovered_errors"] += 1
                         return True
 
                 # Update circuit breaker on failure
@@ -248,7 +248,7 @@ class R2ErrorHandler:
             severity=severity,
             message=str(error),
             context={
-                'operation': operation_name,
+                "operation": operation_name,
                 **(context or {})
             },
             traceback=traceback.format_exc(),
@@ -263,19 +263,19 @@ class R2ErrorHandler:
 
         # High severity for core functionality failures
         if isinstance(error, (FileNotFoundError, PermissionError)):
-            if 'radare2' in str(error).lower() or 'r2' in operation_name:
+            if "radare2" in str(error).lower() or "r2" in operation_name:
                 return ErrorSeverity.HIGH
 
         # Connection/pipe errors with r2
-        if 'r2pipe' in str(error) or 'BrokenPipeError' in str(type(error)):
+        if "r2pipe" in str(error) or "BrokenPipeError" in str(type(error)):
             return ErrorSeverity.HIGH
 
         # Timeout errors are medium severity
-        if 'timeout' in str(error).lower() or isinstance(error, TimeoutError):
+        if "timeout" in str(error).lower() or isinstance(error, TimeoutError):
             return ErrorSeverity.MEDIUM
 
         # JSON/parsing errors are typically low severity
-        if isinstance(error, (ValueError, KeyError)) and 'json' in str(error).lower():
+        if isinstance(error, (ValueError, KeyError)) and "json" in str(error).lower():
             return ErrorSeverity.LOW
 
         # Default to medium
@@ -288,19 +288,19 @@ class R2ErrorHandler:
             return RecoveryStrategy.USER_INTERVENTION
 
         # Too many errors in session - graceful degradation
-        if self.session_stats['total_errors'] > self.max_errors_per_session:
+        if self.session_stats["total_errors"] > self.max_errors_per_session:
             return RecoveryStrategy.GRACEFUL_DEGRADATION
 
         # R2 session issues - restart session
-        if 'r2pipe' in error_event.message or error_event.error_type == 'BrokenPipeError':
+        if "r2pipe" in error_event.message or error_event.error_type == "BrokenPipeError":
             return RecoveryStrategy.RETRY  # Will use restart_r2_session action
 
         # File access issues - retry with fallback
-        if error_event.error_type in ['FileNotFoundError', 'PermissionError']:
+        if error_event.error_type in ["FileNotFoundError", "PermissionError"]:
             return RecoveryStrategy.FALLBACK
 
         # Timeout or performance issues - graceful degradation
-        if 'timeout' in error_event.message.lower():
+        if "timeout" in error_event.message.lower():
             return RecoveryStrategy.GRACEFUL_DEGRADATION
 
         # Default to retry
@@ -329,22 +329,22 @@ class R2ErrorHandler:
     def _execute_retry_recovery(self, error_event: ErrorEvent) -> bool:
         """Execute retry-based recovery"""
         # Determine which recovery action to use
-        if 'r2pipe' in error_event.message:
-            action_name = 'restart_r2_session'
-        elif 'binary' in error_event.context.get('operation', ''):
-            action_name = 're_analyze_binary'
+        if "r2pipe" in error_event.message:
+            action_name = "restart_r2_session"
+        elif "binary" in error_event.context.get("operation", ""):
+            action_name = "re_analyze_binary"
         else:
-            action_name = 'retry_with_fallback'
+            action_name = "retry_with_fallback"
 
         return self._execute_recovery_action(action_name, error_event)
 
     def _execute_fallback_recovery(self, error_event: ErrorEvent) -> bool:
         """Execute fallback recovery"""
-        return self._execute_recovery_action('retry_with_fallback', error_event)
+        return self._execute_recovery_action("retry_with_fallback", error_event)
 
     def _execute_graceful_degradation(self, error_event: ErrorEvent) -> bool:
         """Execute graceful degradation"""
-        return self._execute_recovery_action('graceful_degradation', error_event)
+        return self._execute_recovery_action("graceful_degradation", error_event)
 
     def _execute_user_intervention(self, error_event: ErrorEvent) -> bool:
         """Execute user intervention recovery"""
@@ -399,8 +399,8 @@ class R2ErrorHandler:
         """Restart radare2 session"""
         try:
             # Get session from context if available
-            r2_session = error_event.context.get('r2_session')
-            binary_path = error_event.context.get('binary_path')
+            r2_session = error_event.context.get("r2_session")
+            binary_path = error_event.context.get("binary_path")
 
             if r2_session and binary_path:
                 # Close existing session
@@ -410,11 +410,11 @@ class R2ErrorHandler:
                     self.logger.debug(f"Error closing r2 session during recovery: {e}")
 
                 # Create new session
-                new_session = r2pipe.open(binary_path, flags=['-2'])
-                new_session.cmd('aaa')
+                new_session = r2pipe.open(binary_path, flags=["-2"])
+                new_session.cmd("aaa")
 
                 # Update context with new session
-                error_event.context['r2_session'] = new_session
+                error_event.context["r2_session"] = new_session
 
                 self.logger.info("R2 session restarted successfully")
                 return True
@@ -428,14 +428,14 @@ class R2ErrorHandler:
     def _re_analyze_binary(self, error_event: ErrorEvent) -> bool:
         """Re-analyze binary with different parameters"""
         try:
-            r2_session = error_event.context.get('r2_session')
+            r2_session = error_event.context.get("r2_session")
 
             if r2_session:
                 # Try lighter analysis first
-                r2_session.cmd('aa')
+                r2_session.cmd("aa")
 
                 # If that succeeds, try more comprehensive
-                r2_session.cmd('aaa')
+                r2_session.cmd("aaa")
 
                 self.logger.info("Binary re-analysis completed")
                 return True
@@ -462,18 +462,18 @@ class R2ErrorHandler:
     def _cleanup_memory(self, error_event: ErrorEvent) -> bool:
         """Clean up radare2 memory and temporary files"""
         try:
-            r2_session = error_event.context.get('r2_session')
+            r2_session = error_event.context.get("r2_session")
 
             if r2_session:
                 # Clear analysis cache
                 try:
-                    r2_session.cmd('af-*')
-                    r2_session.cmd('fs-*')
+                    r2_session.cmd("af-*")
+                    r2_session.cmd("fs-*")
                 except Exception as e:
                     self.logger.debug(f"Error closing r2 session during recovery: {e}")
 
             # Clean up temporary files
-            temp_files = error_event.context.get('temp_files', [])
+            temp_files = error_event.context.get("temp_files", [])
             for temp_file in temp_files:
                 try:
                     if os.path.exists(temp_file):
@@ -492,18 +492,18 @@ class R2ErrorHandler:
         """Implement graceful degradation"""
         try:
             # Mark operation as degraded
-            operation = error_event.context.get('operation', 'unknown')
+            operation = error_event.context.get("operation", "unknown")
 
             if operation not in self.circuit_breakers:
                 self.circuit_breakers[operation] = {
-                    'failure_count': 0,
-                    'success_count': 0,
-                    'state': 'closed',  # closed, open, half_open
-                    'last_failure': None,
-                    'degraded': False
+                    "failure_count": 0,
+                    "success_count": 0,
+                    "state": "closed",  # closed, open, half_open
+                    "last_failure": None,
+                    "degraded": False
                 }
 
-            self.circuit_breakers[operation]['degraded'] = True
+            self.circuit_breakers[operation]["degraded"] = True
 
             self.logger.info(f"Graceful degradation activated for {operation}")
             return True
@@ -521,12 +521,12 @@ class R2ErrorHandler:
 
         breaker = self.circuit_breakers[operation_name]
 
-        if breaker['state'] == 'open':
+        if breaker["state"] == "open":
             # Check if enough time has passed to try half-open
-            if breaker['last_failure']:
-                time_since_failure = datetime.now() - breaker['last_failure']
+            if breaker["last_failure"]:
+                time_since_failure = datetime.now() - breaker["last_failure"]
                 if time_since_failure > timedelta(minutes=5):  # 5 minute cooldown
-                    breaker['state'] = 'half_open'
+                    breaker["state"] = "half_open"
                     return False
             return True
 
@@ -536,62 +536,62 @@ class R2ErrorHandler:
         """Update circuit breaker state"""
         if operation_name not in self.circuit_breakers:
             self.circuit_breakers[operation_name] = {
-                'failure_count': 0,
-                'success_count': 0,
-                'state': 'closed',
-                'last_failure': None,
-                'degraded': False
+                "failure_count": 0,
+                "success_count": 0,
+                "state": "closed",
+                "last_failure": None,
+                "degraded": False
             }
 
         breaker = self.circuit_breakers[operation_name]
 
         if success:
-            breaker['success_count'] += 1
-            breaker['failure_count'] = 0  # Reset failure count on success
-            if breaker['state'] == 'half_open':
-                breaker['state'] = 'closed'  # Close circuit on success
+            breaker["success_count"] += 1
+            breaker["failure_count"] = 0  # Reset failure count on success
+            if breaker["state"] == "half_open":
+                breaker["state"] = "closed"  # Close circuit on success
         else:
-            breaker['failure_count'] += 1
-            breaker['last_failure'] = datetime.now()
+            breaker["failure_count"] += 1
+            breaker["last_failure"] = datetime.now()
 
             # Open circuit if too many failures
-            if breaker['failure_count'] >= 5:  # Threshold of 5 failures
-                breaker['state'] = 'open'
+            if breaker["failure_count"] >= 5:  # Threshold of 5 failures
+                breaker["state"] = "open"
 
     # Performance monitoring
 
     def _record_performance(self, operation_name: str, duration: float, success: bool):
         """Record performance metrics"""
-        if operation_name not in self.performance_monitor['operation_times']:
-            self.performance_monitor['operation_times'][operation_name] = []
-            self.performance_monitor['failure_rates'][operation_name] = {'successes': 0, 'failures': 0}
+        if operation_name not in self.performance_monitor["operation_times"]:
+            self.performance_monitor["operation_times"][operation_name] = []
+            self.performance_monitor["failure_rates"][operation_name] = {"successes": 0, "failures": 0}
 
-        self.performance_monitor['operation_times'][operation_name].append(duration)
+        self.performance_monitor["operation_times"][operation_name].append(duration)
 
         # Keep only last 100 measurements
-        if len(self.performance_monitor['operation_times'][operation_name]) > 100:
-            self.performance_monitor['operation_times'][operation_name] = \
-                self.performance_monitor['operation_times'][operation_name][-100:]
+        if len(self.performance_monitor["operation_times"][operation_name]) > 100:
+            self.performance_monitor["operation_times"][operation_name] = \
+                self.performance_monitor["operation_times"][operation_name][-100:]
 
         # Update failure rate
         if success:
-            self.performance_monitor['failure_rates'][operation_name]['successes'] += 1
+            self.performance_monitor["failure_rates"][operation_name]["successes"] += 1
         else:
-            self.performance_monitor['failure_rates'][operation_name]['failures'] += 1
+            self.performance_monitor["failure_rates"][operation_name]["failures"] += 1
 
     def _record_recovery_success(self, action_name: str):
         """Record successful recovery"""
-        if action_name not in self.performance_monitor['recovery_success_rates']:
-            self.performance_monitor['recovery_success_rates'][action_name] = {'successes': 0, 'failures': 0}
+        if action_name not in self.performance_monitor["recovery_success_rates"]:
+            self.performance_monitor["recovery_success_rates"][action_name] = {"successes": 0, "failures": 0}
 
-        self.performance_monitor['recovery_success_rates'][action_name]['successes'] += 1
+        self.performance_monitor["recovery_success_rates"][action_name]["successes"] += 1
 
     def _record_recovery_failure(self, action_name: str):
         """Record failed recovery"""
-        if action_name not in self.performance_monitor['recovery_success_rates']:
-            self.performance_monitor['recovery_success_rates'][action_name] = {'successes': 0, 'failures': 0}
+        if action_name not in self.performance_monitor["recovery_success_rates"]:
+            self.performance_monitor["recovery_success_rates"][action_name] = {"successes": 0, "failures": 0}
 
-        self.performance_monitor['recovery_success_rates'][action_name]['failures'] += 1
+        self.performance_monitor["recovery_success_rates"][action_name]["failures"] += 1
 
     def _record_error(self, error_event: ErrorEvent):
         """Record error in history"""
@@ -602,11 +602,11 @@ class R2ErrorHandler:
             self.error_history = self.error_history[-500:]
 
         # Update session stats
-        self.session_stats['total_errors'] += 1
-        self.session_stats['last_error'] = error_event.timestamp
+        self.session_stats["total_errors"] += 1
+        self.session_stats["last_error"] = error_event.timestamp
 
         if error_event.severity == ErrorSeverity.CRITICAL:
-            self.session_stats['critical_errors'] += 1
+            self.session_stats["critical_errors"] += 1
 
     # Public API methods
 
@@ -618,12 +618,12 @@ class R2ErrorHandler:
     def get_error_statistics(self) -> Dict[str, Any]:
         """Get error statistics"""
         return {
-            'session_stats': self.session_stats.copy(),
-            'error_count_by_type': self._get_error_count_by_type(),
-            'error_count_by_severity': self._get_error_count_by_severity(),
-            'circuit_breaker_status': self.circuit_breakers.copy(),
-            'performance_metrics': self._get_performance_metrics(),
-            'recovery_rates': self._get_recovery_rates()
+            "session_stats": self.session_stats.copy(),
+            "error_count_by_type": self._get_error_count_by_type(),
+            "error_count_by_severity": self._get_error_count_by_severity(),
+            "circuit_breaker_status": self.circuit_breakers.copy(),
+            "performance_metrics": self._get_performance_metrics(),
+            "recovery_rates": self._get_recovery_rates()
         }
 
     def _get_error_count_by_type(self) -> Dict[str, int]:
@@ -643,23 +643,23 @@ class R2ErrorHandler:
     def _get_performance_metrics(self) -> Dict[str, Any]:
         """Get performance metrics"""
         metrics = {}
-        for operation, times in self.performance_monitor['operation_times'].items():
+        for operation, times in self.performance_monitor["operation_times"].items():
             if times:
                 metrics[operation] = {
-                    'avg_duration': sum(times) / len(times),
-                    'max_duration': max(times),
-                    'min_duration': min(times),
-                    'total_calls': len(times)
+                    "avg_duration": sum(times) / len(times),
+                    "max_duration": max(times),
+                    "min_duration": min(times),
+                    "total_calls": len(times)
                 }
         return metrics
 
     def _get_recovery_rates(self) -> Dict[str, float]:
         """Get recovery success rates"""
         rates = {}
-        for action, stats in self.performance_monitor['recovery_success_rates'].items():
-            total = stats['successes'] + stats['failures']
+        for action, stats in self.performance_monitor["recovery_success_rates"].items():
+            total = stats["successes"] + stats["failures"]
             if total > 0:
-                rates[action] = stats['successes'] / total
+                rates[action] = stats["successes"] / total
             else:
                 rates[action] = 0.0
         return rates
@@ -667,28 +667,28 @@ class R2ErrorHandler:
     def is_operation_degraded(self, operation_name: str) -> bool:
         """Check if operation is in degraded mode"""
         if operation_name in self.circuit_breakers:
-            return self.circuit_breakers[operation_name].get('degraded', False)
+            return self.circuit_breakers[operation_name].get("degraded", False)
         return False
 
     def reset_circuit_breaker(self, operation_name: str):
         """Reset circuit breaker for operation"""
         if operation_name in self.circuit_breakers:
             self.circuit_breakers[operation_name] = {
-                'failure_count': 0,
-                'success_count': 0,
-                'state': 'closed',
-                'last_failure': None,
-                'degraded': False
+                "failure_count": 0,
+                "success_count": 0,
+                "state": "closed",
+                "last_failure": None,
+                "degraded": False
             }
             self.logger.info(f"Reset circuit breaker for {operation_name}")
 
     def clear_error_history(self):
         """Clear error history"""
         self.error_history.clear()
-        self.session_stats['total_errors'] = 0
-        self.session_stats['recovered_errors'] = 0
-        self.session_stats['critical_errors'] = 0
-        self.session_stats['last_error'] = None
+        self.session_stats["total_errors"] = 0
+        self.session_stats["recovered_errors"] = 0
+        self.session_stats["critical_errors"] = 0
+        self.session_stats["last_error"] = None
         self.logger.info("Error history cleared")
 
 
@@ -729,12 +729,12 @@ def r2_error_context(operation_name: str, **context):
 
 
 __all__ = [
-    'R2ErrorHandler',
-    'ErrorSeverity',
-    'RecoveryStrategy',
-    'ErrorEvent',
-    'RecoveryAction',
-    'get_error_handler',
-    'handle_r2_error',
-    'r2_error_context'
+    "R2ErrorHandler",
+    "ErrorSeverity",
+    "RecoveryStrategy",
+    "ErrorEvent",
+    "RecoveryAction",
+    "get_error_handler",
+    "handle_r2_error",
+    "r2_error_context"
 ]

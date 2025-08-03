@@ -115,7 +115,7 @@ class OpenAIRepository(APIRepositoryBase):
                 model_id = model_data.get("id")
 
                 # For most API usage we'll only care about chat and embedding models
-                if not (model_id.startswith('gpt-') or 'embedding' in model_id or model_id == 'dall-e-3'):
+                if not (model_id.startswith("gpt-") or "embedding" in model_id or model_id == "dall-e-3"):
                     continue
 
                 # Get detailed model info
@@ -163,14 +163,14 @@ class OpenAIRepository(APIRepositoryBase):
         try:
             # Determine model capabilities based on model ID
             capabilities = []
-            if model_id.startswith('gpt-'):
-                capabilities.append('text-generation')
-                if 'vision' in model_id or model_id in ['gpt-4-turbo', 'gpt-4o']:
-                    capabilities.append('vision')
-            elif 'embedding' in model_id:
-                capabilities.append('embeddings')
-            elif model_id == 'dall-e-3':
-                capabilities.append('image-generation')
+            if model_id.startswith("gpt-"):
+                capabilities.append("text-generation")
+                if "vision" in model_id or model_id in ["gpt-4-turbo", "gpt-4o"]:
+                    capabilities.append("vision")
+            elif "embedding" in model_id:
+                capabilities.append("embeddings")
+            elif model_id == "dall-e-3":
+                capabilities.append("image-generation")
 
             # Extract model information
             model_info = ModelInfo(

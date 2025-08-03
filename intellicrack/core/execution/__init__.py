@@ -20,4 +20,4 @@ from .script_execution_manager import ScriptExecutionManager
 
 """Script execution management module."""
 
-__all__ = ['ScriptExecutionManager']
+__all__ = ["ScriptExecutionManager"]

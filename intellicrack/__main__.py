@@ -35,9 +35,9 @@ import os
 import sys
 
 # Configure TensorFlow to prevent GPU initialization issues with Intel Arc B580
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable GPU for TensorFlow
-os.environ['MKL_THREADING_LAYER'] = 'GNU'  # Fix PyTorch + TensorFlow import conflict
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow
+os.environ["MKL_THREADING_LAYER"] = "GNU"  # Fix PyTorch + TensorFlow import conflict
 
 # Import security enforcement early to apply patches
 try:
@@ -54,8 +54,8 @@ from .main import main
 
 # Set Qt to offscreen mode for WSL/headless environments if no display
 # This prevents Qt initialization errors when running without a GUI environment
-if 'DISPLAY' not in os.environ and 'QT_QPA_PLATFORM' not in os.environ:
-    os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+if "DISPLAY" not in os.environ and "QT_QPA_PLATFORM" not in os.environ:
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 
 if __name__ == "__main__":

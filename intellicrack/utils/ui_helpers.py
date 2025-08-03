@@ -27,6 +27,6 @@ from .ui.ui_helpers import (
     show_file_dialog,
 )
 
-__all__ = ['check_binary_path_and_warn', 'emit_log_message', 'show_file_dialog',
-           'ask_yes_no_question', 'generate_exploit_payload_common',
-           'generate_exploit_strategy_common']
+__all__ = ["check_binary_path_and_warn", "emit_log_message", "show_file_dialog",
+           "ask_yes_no_question", "generate_exploit_payload_common",
+           "generate_exploit_strategy_common"]

@@ -6,7 +6,7 @@ analysis assistance, and intelligent suggestions within the application.
 
 from datetime import datetime
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
 QCheckBox,
@@ -732,15 +732,11 @@ class AIAssistantTab(BaseTab):
             # Initialize enhanced analyzers
             from ...core.analysis.binary_analyzer import BinaryAnalyzer
             from ...core.analysis.dynamic_analyzer import DynamicAnalyzer
-            from ...core.analysis.firmware_analyzer import FirmwareAnalyzer
-            from ...utils.pe_analyzer import PEAnalyzer
             from ...utils.string_extractor import StringExtractor
 
             # Create comprehensive analyzer instances
             binary_analyzer = BinaryAnalyzer()
             dynamic_analyzer = DynamicAnalyzer()
-            firmware_analyzer = FirmwareAnalyzer()
-            pe_analyzer = PEAnalyzer()
             string_extractor = StringExtractor()
 
             analysis_text = f"[*] Enhanced AI Binary Analysis for {os.path.basename(binary_path)}\n"
@@ -2462,13 +2458,13 @@ main();
     def generate_ai_response(self, message):
         """Generate AI response based on user message"""
         try:
-            if hasattr(self, 'ai_model_manager') and self.current_model:
+            if hasattr(self, "ai_model_manager") and self.current_model:
                 response = self.ai_model_manager.generate_response(
                     model=self.current_model,
                     prompt=message,
                     context={
-                        'role': 'binary_analysis_assistant',
-                        'focus': 'reverse_engineering'
+                        "role": "binary_analysis_assistant",
+                        "focus": "reverse_engineering"
                     }
                 )
                 return response
@@ -2508,8 +2504,7 @@ main();
 
         # Start real model training with progress monitoring
         try:
-            from ...ai.ai_model_manager import AIModelManager
-            if hasattr(self, 'ai_model_manager'):
+            if hasattr(self, "ai_model_manager"):
                 # Create training thread to avoid blocking UI
                 from PyQt6.QtCore import QThread, pyqtSignal
                 
@@ -2525,10 +2520,10 @@ main();
                     def run(self):
                         try:
                             self.model_manager.train_model(
-                                dataset_path=self.params['dataset_path'],
-                                training_type=self.params['training_type'],
-                                epochs=self.params['epochs'],
-                                learning_rate=self.params['learning_rate'],
+                                dataset_path=self.params["dataset_path"],
+                                training_type=self.params["training_type"],
+                                epochs=self.params["epochs"],
+                                learning_rate=self.params["learning_rate"],
                                 progress_callback=lambda data: self.progress_update.emit(data)
                             )
                             self.finished_training.emit(True, "Training completed successfully")
@@ -2539,10 +2534,10 @@ main();
                 self.training_thread = TrainingThread(
                     self.ai_model_manager,
                     {
-                        'dataset_path': dataset_path,
-                        'training_type': training_type,
-                        'epochs': epochs,
-                        'learning_rate': float(learning_rate)
+                        "dataset_path": dataset_path,
+                        "training_type": training_type,
+                        "epochs": epochs,
+                        "learning_rate": float(learning_rate)
                     }
                 )
                 
@@ -2563,10 +2558,10 @@ main();
     def _update_training_progress(self, progress_data):
         """Update real training progress from model trainer"""
         if isinstance(progress_data, dict):
-            epoch = progress_data.get('epoch', 0)
-            loss = progress_data.get('loss', 0.0)
-            accuracy = progress_data.get('accuracy', 0.0)
-            progress_pct = progress_data.get('progress', 0)
+            epoch = progress_data.get("epoch", 0)
+            loss = progress_data.get("loss", 0.0)
+            accuracy = progress_data.get("accuracy", 0.0)
+            progress_pct = progress_data.get("progress", 0)
             
             self.training_progress.setValue(int(progress_pct))
             self.training_status_label.setText(
@@ -2587,7 +2582,7 @@ main();
             self.training_status_label.setText("Training failed")
         
         # Clean up thread
-        if hasattr(self, 'training_thread'):
+        if hasattr(self, "training_thread"):
             self.training_thread.deleteLater()
             self.training_thread = None
     
@@ -2595,14 +2590,14 @@ main();
         """Stop ongoing model training"""
         try:
             # Stop the training thread if running
-            if hasattr(self, 'training_thread') and self.training_thread and self.training_thread.isRunning():
+            if hasattr(self, "training_thread") and self.training_thread and self.training_thread.isRunning():
                 self.training_thread.terminate()
                 self.training_thread.wait()
                 self.training_thread.deleteLater()
                 self.training_thread = None
             
             # Stop model training
-            if hasattr(self, 'ai_model_manager'):
+            if hasattr(self, "ai_model_manager"):
                 self.ai_model_manager.stop_training()
                 self.log_message("Training stopped by user", "warning")
                 self.training_status_label.setText("Training stopped")

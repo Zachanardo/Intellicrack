@@ -77,7 +77,7 @@ class VirtualizationDetectionBypass:
 
         # Strategy 2: Patch VM detection instructions
         try:
-            if self.app and hasattr(self.app, 'binary_path') and self.app.binary_path:
+            if self.app and hasattr(self.app, "binary_path") and self.app.binary_path:
                 self._patch_vm_detection()
                 results["methods_applied"].append("Binary Patching")
         except (OSError, ValueError, RuntimeError) as e:
@@ -125,14 +125,14 @@ class VirtualizationDetectionBypass:
 
         # Common driver paths on Windows
         driver_paths = [
-            os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'System32', 'drivers', driver_name),
-            os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'SysWOW64', 'drivers', driver_name),
-            os.path.join('C:\\Windows', 'System32', 'drivers', driver_name),
+            os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "System32", "drivers", driver_name),
+            os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "SysWOW64", "drivers", driver_name),
+            os.path.join("C:\\Windows", "System32", "drivers", driver_name),
         ]
         for path in driver_paths:
             if os.path.exists(path):
                 return path
-        return os.path.join('C:\\Windows', 'System32', 'drivers', driver_name)
+        return os.path.join("C:\\Windows", "System32", "drivers", driver_name)
 
     def _hook_vm_detection_apis(self) -> None:
         """
@@ -243,11 +243,11 @@ class VirtualizationDetectionBypass:
         """
         Patch binary instructions that detect virtualization.
         """
-        if not self.app or not hasattr(self.app, 'binary_path') or not self.app.binary_path:
+        if not self.app or not hasattr(self.app, "binary_path") or not self.app.binary_path:
             return
 
         try:
-            with open(self.app.binary_path, 'rb') as f:
+            with open(self.app.binary_path, "rb") as f:
                 binary_data = f.read()
 
             # Common VM detection patterns
@@ -565,7 +565,7 @@ class VirtualizationDetectionBypass:
             modifications_applied = 0
             for path, value in dmi_modifications.items():
                 try:
-                    with open(path, 'w') as f:
+                    with open(path, "w") as f:
                         f.write(value)
                     modifications_applied += 1
                     self.logger.info(f"Modified {path} = {value}")
@@ -718,14 +718,14 @@ class VMDetector:
 
         # Common driver paths on Windows
         driver_paths = [
-            os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'System32', 'drivers', driver_name),
-            os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'SysWOW64', 'drivers', driver_name),
-            os.path.join('C:\\Windows', 'System32', 'drivers', driver_name),
+            os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "System32", "drivers", driver_name),
+            os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "SysWOW64", "drivers", driver_name),
+            os.path.join("C:\\Windows", "System32", "drivers", driver_name),
         ]
         for path in driver_paths:
             if os.path.exists(path):
                 return path
-        return os.path.join('C:\\Windows', 'System32', 'drivers', driver_name)
+        return os.path.join("C:\\Windows", "System32", "drivers", driver_name)
 
     def detect(self) -> Dict[str, Any]:
         """
@@ -753,7 +753,7 @@ class VMDetector:
                 if "virtual" in result.stdout.lower():
                     indicators.append("CPU name contains 'virtual'")
             elif platform.system() == "Linux":
-                with open("/proc/cpuinfo", "r", encoding='utf-8') as f:
+                with open("/proc/cpuinfo", "r", encoding="utf-8") as f:
                     cpuinfo = f.read().lower()
                     if "hypervisor" in cpuinfo:
                         indicators.append("Hypervisor flag in cpuinfo")
@@ -958,23 +958,23 @@ class VMDetector:
                 "    try:"
             ])
             for technique in techniques[:5]:  # Limit to first 5 techniques
-                if 'timing' in technique.lower():
+                if "timing" in technique.lower():
                     script_lines.extend([
                         "        # Timing-based bypass",
                         "        import time",
                         "        time.sleep(0.1)  # Add delay to confuse timing checks"
                     ])
-                elif 'process' in technique.lower():
+                elif "process" in technique.lower():
                     script_lines.extend([
                         "        # Process-based bypass",
                         "        # Hide suspicious processes from detection"
                     ])
-                elif 'memory' in technique.lower():
+                elif "memory" in technique.lower():
                     script_lines.extend([
                         "        # Memory-based bypass",
                         "        # Modify memory patterns that VMs look for"
                     ])
-                elif 'hardware' in technique.lower():
+                elif "hardware" in technique.lower():
                     script_lines.extend([
                         "        # Hardware-based bypass",
                         "        # Spoof hardware identifiers"
@@ -1089,7 +1089,7 @@ class VirtualizationAnalyzer:
         found_strings = string_analysis["strings_found"]
 
         try:
-            with open(self.binary_path, 'rb') as f:
+            with open(self.binary_path, "rb") as f:
                 data = f.read()
 
             # Check for VM detection instructions
@@ -1151,10 +1151,10 @@ def analyze_vm_protection(binary_path: str) -> Dict[str, Any]:
 
 # Export the main classes and functions
 __all__ = [
-    'VirtualizationDetectionBypass',
-    'bypass_vm_detection',
-    'VMDetector',
-    'VirtualizationAnalyzer',
-    'detect_virtualization',
-    'analyze_vm_protection'
+    "VirtualizationDetectionBypass",
+    "bypass_vm_detection",
+    "VMDetector",
+    "VirtualizationAnalyzer",
+    "detect_virtualization",
+    "analyze_vm_protection"
 ]

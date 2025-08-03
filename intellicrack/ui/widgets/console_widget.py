@@ -335,7 +335,7 @@ class ConsoleWidget(QWidget):
 
         if filename:
             try:
-                with open(filename, 'w', encoding='utf-8') as f:
+                with open(filename, "w", encoding="utf-8") as f:
                     f.write(self.output.toPlainText())
                 self.append_success(f"Log exported to: {filename}")
             except Exception as e:
@@ -344,7 +344,7 @@ class ConsoleWidget(QWidget):
 
     def process_command(self):
         """Process entered command (if input enabled)"""
-        if not hasattr(self, 'command_input'):
+        if not hasattr(self, "command_input"):
             return
 
         command = self.command_input.text().strip()
@@ -366,7 +366,7 @@ class ConsoleWidget(QWidget):
 
     def eventFilter(self, obj, event):
         """Handle key events for command history"""
-        if hasattr(self, 'command_input') and obj == self.command_input:
+        if hasattr(self, "command_input") and obj == self.command_input:
             if event.type() == event.KeyPress:
                 if event.key() == Qt.Key_Up:
                     # Previous command
@@ -400,4 +400,4 @@ class ConsoleWidget(QWidget):
 
 
 # Export the widget
-__all__ = ['ConsoleWidget']
+__all__ = ["ConsoleWidget"]

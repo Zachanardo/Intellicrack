@@ -90,7 +90,7 @@ except ImportError as e:
     get_llm_config_manager = None
 
 
-logger = get_logger(__name__) if 'get_logger' in globals() else logging.getLogger(__name__)
+logger = get_logger(__name__) if "get_logger" in globals() else logging.getLogger(__name__)
 
 
 class ModelTestThread(QThread):
@@ -99,7 +99,7 @@ class ModelTestThread(QThread):
     test_complete = pyqtSignal(bool, str)  # success, message
     test_progress = pyqtSignal(str)  # progress message
 
-    def __init__(self, config: 'LLMConfig'):
+    def __init__(self, config: "LLMConfig"):
         """Initialize the ModelTestThread with default values."""
         super().__init__()
         self.config = config
@@ -527,7 +527,7 @@ class LLMConfigDialog(QDialog):
 
         # Server URL
         self.ollama_url = QLineEdit()
-        self.ollama_url.setText(get_secret('OLLAMA_API_BASE', 'http://localhost:11434'))
+        self.ollama_url.setText(get_secret("OLLAMA_API_BASE", "http://localhost:11434"))
         layout.addRow("Server URL:", self.ollama_url)
 
         # Model name
@@ -1030,7 +1030,7 @@ class LLMConfigDialog(QDialog):
         if path:
             self.pytorch_model_path.setText(path)
             if not self.pytorch_model_name.text():
-                model_name = os.path.basename(path).replace('.pth', '').replace('.pt', '').replace('.bin', '')
+                model_name = os.path.basename(path).replace(".pth", "").replace(".pt", "").replace(".bin", "")
                 self.pytorch_model_name.setText(model_name)
 
     def browse_tensorflow_model(self):
@@ -1044,7 +1044,7 @@ class LLMConfigDialog(QDialog):
         if path:
             self.tensorflow_model_path.setText(path)
             if not self.tensorflow_model_name.text():
-                model_name = os.path.basename(path).replace('.h5', '')
+                model_name = os.path.basename(path).replace(".h5", "")
                 self.tensorflow_model_name.setText(model_name)
 
     def browse_onnx_model(self):
@@ -1073,7 +1073,7 @@ class LLMConfigDialog(QDialog):
         if path:
             self.safetensors_model_path.setText(path)
             if not self.safetensors_model_name.text():
-                model_name = os.path.basename(path).replace('.safetensors', '')
+                model_name = os.path.basename(path).replace(".safetensors", "")
                 self.safetensors_model_name.setText(model_name)
 
     def browse_gptq_model(self):
@@ -1192,7 +1192,7 @@ class LLMConfigDialog(QDialog):
 
         model_name = self.pytorch_model_name.text().strip()
         if not model_name:
-            model_name = os.path.basename(self.pytorch_model_path.text()).replace('.pth', '').replace('.pt', '').replace('.bin', '')
+            model_name = os.path.basename(self.pytorch_model_path.text()).replace(".pth", "").replace(".pt", "").replace(".bin", "")
 
         config = create_pytorch_config(
             model_path=self.pytorch_model_path.text(),
@@ -1217,7 +1217,7 @@ class LLMConfigDialog(QDialog):
 
         model_name = self.tensorflow_model_name.text().strip()
         if not model_name:
-            model_name = os.path.basename(self.tensorflow_model_path.text()).replace('.h5', '')
+            model_name = os.path.basename(self.tensorflow_model_path.text()).replace(".h5", "")
 
         config = create_tensorflow_config(
             model_path=self.tensorflow_model_path.text(),
@@ -1267,7 +1267,7 @@ class LLMConfigDialog(QDialog):
 
         model_name = self.safetensors_model_name.text().strip()
         if not model_name:
-            model_name = os.path.basename(self.safetensors_model_path.text()).replace('.safetensors', '')
+            model_name = os.path.basename(self.safetensors_model_path.text()).replace(".safetensors", "")
 
         config = create_safetensors_config(
             model_path=self.safetensors_model_path.text(),
@@ -1552,7 +1552,7 @@ class LLMConfigDialog(QDialog):
         )
         self.test_model_config(config)
 
-    def test_model_config(self, config: 'LLMConfig'):
+    def test_model_config(self, config: "LLMConfig"):
         """Test a model configuration."""
         if self.test_thread and self.test_thread.isRunning():
             QMessageBox.warning(self, "Test In Progress", "Please wait for the current test to complete")
@@ -1647,7 +1647,7 @@ class LLMConfigDialog(QDialog):
             # Get base model
             if self.llm_manager and base_model_id in self.llm_manager.backends:
                 base_llm = self.llm_manager.backends[base_model_id]
-                if hasattr(base_llm, 'model') and base_llm.model is not None:
+                if hasattr(base_llm, "model") and base_llm.model is not None:
                     # Load adapter
                     adapter_name = self.lora_adapter_name.text() or "default"
                     model_with_adapter = adapter_manager.load_adapter(
@@ -1712,7 +1712,7 @@ class LLMConfigDialog(QDialog):
             info_text += f"Exists: {adapter_info['exists']}\n"
             info_text += f"Size: {adapter_info['size_mb']:.2f} MB\n"
 
-            if adapter_info['config']:
+            if adapter_info["config"]:
                 info_text += "\nConfiguration:\n"
                 info_text += f"  Task Type: {adapter_info['config'].get('task_type', 'N/A')}\n"
                 info_text += f"  LoRA Rank: {adapter_info['config'].get('r', 'N/A')}\n"
@@ -1748,7 +1748,7 @@ class LLMConfigDialog(QDialog):
                 # Get base model
                 if self.llm_manager and base_model_id in self.llm_manager.backends:
                     base_llm = self.llm_manager.backends[base_model_id]
-                    if hasattr(base_llm, 'model') and base_llm.model is not None:
+                    if hasattr(base_llm, "model") and base_llm.model is not None:
                         # Apply LoRA to model
                         adapter_name = self.lora_adapter_name.text() or "new_adapter"
                         peft_model = adapter_manager.apply_lora_to_model(

@@ -27,4 +27,4 @@ from .binary_similarity_search import BinarySimilaritySearch
 BinarySimilaritySearcher = BinarySimilaritySearch
 SimilaritySearcher = BinarySimilaritySearch
 
-__all__ = ['BinarySimilaritySearcher', 'SimilaritySearcher']
+__all__ = ["BinarySimilaritySearcher", "SimilaritySearcher"]

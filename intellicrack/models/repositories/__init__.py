@@ -41,18 +41,18 @@ RepositoryFactory.register_repository_type("lmstudio", LMStudioRepository)
 RepositoryFactory.register_repository_type("google", GoogleRepository)
 
 __all__ = [
-    'ModelRepositoryInterface',
-    'ModelInfo',
-    'DownloadProgressCallback',
-    'APIRepositoryBase',
-    'RateLimitConfig',
-    'CacheManager',
-    'RateLimiter',
-    'LocalFileRepository',
-    'OpenAIRepository',
-    'AnthropicRepository',
-    'OpenRouterRepository',
-    'LMStudioRepository',
-    'GoogleRepository',
-    'RepositoryFactory'
+    "ModelRepositoryInterface",
+    "ModelInfo",
+    "DownloadProgressCallback",
+    "APIRepositoryBase",
+    "RateLimitConfig",
+    "CacheManager",
+    "RateLimiter",
+    "LocalFileRepository",
+    "OpenAIRepository",
+    "AnthropicRepository",
+    "OpenRouterRepository",
+    "LMStudioRepository",
+    "GoogleRepository",
+    "RepositoryFactory"
 ]

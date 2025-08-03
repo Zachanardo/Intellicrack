@@ -118,4 +118,4 @@ class BaseSnapshotHandler(ABC):
         return name in self.snapshots
 
 
-__all__ = ['BaseSnapshotHandler']
+__all__ = ["BaseSnapshotHandler"]

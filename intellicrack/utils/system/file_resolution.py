@@ -28,9 +28,9 @@ from typing import Dict, Optional, Tuple, Union
 logger = logging.getLogger(__name__)
 
 # Platform detection
-IS_WINDOWS = sys.platform.startswith('win')
-IS_LINUX = sys.platform.startswith('linux')
-IS_MACOS = sys.platform.startswith('darwin')
+IS_WINDOWS = sys.platform.startswith("win")
+IS_LINUX = sys.platform.startswith("linux")
+IS_MACOS = sys.platform.startswith("darwin")
 
 # Windows COM interface imports
 if IS_WINDOWS:
@@ -75,59 +75,59 @@ class FileResolver:
     # Comprehensive file type registry
     FILE_TYPES = {
         # Windows Executables
-        '.exe': FileTypeInfo('.exe', 'Windows Executable', 'executable', True, 'pe'),
-        '.dll': FileTypeInfo('.dll', 'Windows Dynamic Library', 'library', True, 'pe'),
-        '.sys': FileTypeInfo('.sys', 'Windows System Driver', 'driver', True, 'pe'),
-        '.scr': FileTypeInfo('.scr', 'Windows Screen Saver', 'executable', True, 'pe'),
-        '.cpl': FileTypeInfo('.cpl', 'Control Panel Item', 'executable', True, 'pe'),
-        '.ocx': FileTypeInfo('.ocx', 'ActiveX Control', 'library', True, 'pe'),
+        ".exe": FileTypeInfo(".exe", "Windows Executable", "executable", True, "pe"),
+        ".dll": FileTypeInfo(".dll", "Windows Dynamic Library", "library", True, "pe"),
+        ".sys": FileTypeInfo(".sys", "Windows System Driver", "driver", True, "pe"),
+        ".scr": FileTypeInfo(".scr", "Windows Screen Saver", "executable", True, "pe"),
+        ".cpl": FileTypeInfo(".cpl", "Control Panel Item", "executable", True, "pe"),
+        ".ocx": FileTypeInfo(".ocx", "ActiveX Control", "library", True, "pe"),
 
         # Windows Shortcuts and Links
-        '.lnk': FileTypeInfo('.lnk', 'Windows Shortcut', 'shortcut', True, 'shortcut'),
-        '.url': FileTypeInfo('.url', 'Internet Shortcut', 'shortcut', True, 'url'),
+        ".lnk": FileTypeInfo(".lnk", "Windows Shortcut", "shortcut", True, "shortcut"),
+        ".url": FileTypeInfo(".url", "Internet Shortcut", "shortcut", True, "url"),
 
         # Windows Installers
-        '.msi': FileTypeInfo('.msi', 'Windows Installer Package', 'installer', True, 'msi'),
-        '.msp': FileTypeInfo('.msp', 'Windows Installer Patch', 'installer', True, 'msi'),
-        '.msm': FileTypeInfo('.msm', 'Windows Installer Merge Module', 'installer', True, 'msi'),
-        '.cab': FileTypeInfo('.cab', 'Cabinet Archive', 'archive', True, 'cabinet'),
+        ".msi": FileTypeInfo(".msi", "Windows Installer Package", "installer", True, "msi"),
+        ".msp": FileTypeInfo(".msp", "Windows Installer Patch", "installer", True, "msi"),
+        ".msm": FileTypeInfo(".msm", "Windows Installer Merge Module", "installer", True, "msi"),
+        ".cab": FileTypeInfo(".cab", "Cabinet Archive", "archive", True, "cabinet"),
 
         # Linux/Unix Executables
-        '.so': FileTypeInfo('.so', 'Shared Object Library', 'library', True, 'elf'),
-        '.o': FileTypeInfo('.o', 'Object File', 'object', True, 'elf'),
-        '.a': FileTypeInfo('.a', 'Static Library Archive', 'library', True, 'ar'),
+        ".so": FileTypeInfo(".so", "Shared Object Library", "library", True, "elf"),
+        ".o": FileTypeInfo(".o", "Object File", "object", True, "elf"),
+        ".a": FileTypeInfo(".a", "Static Library Archive", "library", True, "ar"),
 
         # Linux Packages
-        '.deb': FileTypeInfo('.deb', 'Debian Package', 'installer', True, 'deb'),
-        '.rpm': FileTypeInfo('.rpm', 'Red Hat Package', 'installer', True, 'rpm'),
-        '.snap': FileTypeInfo('.snap', 'Snap Package', 'installer', True, 'snap'),
-        '.flatpak': FileTypeInfo('.flatpak', 'Flatpak Package', 'installer', True, 'flatpak'),
-        '.appimage': FileTypeInfo('.appimage', 'AppImage Package', 'installer', True, 'appimage'),
+        ".deb": FileTypeInfo(".deb", "Debian Package", "installer", True, "deb"),
+        ".rpm": FileTypeInfo(".rpm", "Red Hat Package", "installer", True, "rpm"),
+        ".snap": FileTypeInfo(".snap", "Snap Package", "installer", True, "snap"),
+        ".flatpak": FileTypeInfo(".flatpak", "Flatpak Package", "installer", True, "flatpak"),
+        ".appimage": FileTypeInfo(".appimage", "AppImage Package", "installer", True, "appimage"),
 
         # macOS Executables and Packages
-        '.app': FileTypeInfo('.app', 'macOS Application Bundle', 'executable', True, 'macho_bundle'),
-        '.dylib': FileTypeInfo('.dylib', 'macOS Dynamic Library', 'library', True, 'macho'),
-        '.bundle': FileTypeInfo('.bundle', 'macOS Bundle', 'library', True, 'macho_bundle'),
-        '.framework': FileTypeInfo('.framework', 'macOS Framework', 'library', True, 'macho_framework'),
-        '.pkg': FileTypeInfo('.pkg', 'macOS Installer Package', 'installer', True, 'pkg'),
-        '.dmg': FileTypeInfo('.dmg', 'macOS Disk Image', 'installer', True, 'dmg'),
+        ".app": FileTypeInfo(".app", "macOS Application Bundle", "executable", True, "macho_bundle"),
+        ".dylib": FileTypeInfo(".dylib", "macOS Dynamic Library", "library", True, "macho"),
+        ".bundle": FileTypeInfo(".bundle", "macOS Bundle", "library", True, "macho_bundle"),
+        ".framework": FileTypeInfo(".framework", "macOS Framework", "library", True, "macho_framework"),
+        ".pkg": FileTypeInfo(".pkg", "macOS Installer Package", "installer", True, "pkg"),
+        ".dmg": FileTypeInfo(".dmg", "macOS Disk Image", "installer", True, "dmg"),
 
         # Cross-platform formats
-        '.dat': FileTypeInfo('.dat', 'Data File', 'data', True, 'generic'),
-        '.img': FileTypeInfo('.img', 'Disk Image', 'image', True, 'generic'),
-        '.iso': FileTypeInfo('.iso', 'ISO Disk Image', 'image', True, 'iso'),
+        ".dat": FileTypeInfo(".dat", "Data File", "data", True, "generic"),
+        ".img": FileTypeInfo(".img", "Disk Image", "image", True, "generic"),
+        ".iso": FileTypeInfo(".iso", "ISO Disk Image", "image", True, "iso"),
 
         # Archive formats
-        '.zip': FileTypeInfo('.zip', 'ZIP Archive', 'archive', True, 'zip'),
-        '.rar': FileTypeInfo('.rar', 'RAR Archive', 'archive', True, 'rar'),
-        '.7z': FileTypeInfo('.7z', '7-Zip Archive', 'archive', True, '7z'),
-        '.tar': FileTypeInfo('.tar', 'TAR Archive', 'archive', True, 'tar'),
-        '.gz': FileTypeInfo('.gz', 'GZip Archive', 'archive', True, 'gzip'),
+        ".zip": FileTypeInfo(".zip", "ZIP Archive", "archive", True, "zip"),
+        ".rar": FileTypeInfo(".rar", "RAR Archive", "archive", True, "rar"),
+        ".7z": FileTypeInfo(".7z", "7-Zip Archive", "archive", True, "7z"),
+        ".tar": FileTypeInfo(".tar", "TAR Archive", "archive", True, "tar"),
+        ".gz": FileTypeInfo(".gz", "GZip Archive", "archive", True, "gzip"),
 
         # Firmware and embedded
-        '.bin': FileTypeInfo('.bin', 'Firmware Binary', 'firmware', True, 'firmware'),
-        '.hex': FileTypeInfo('.hex', 'Intel HEX File', 'firmware', True, 'intel_hex'),
-        '.elf': FileTypeInfo('.elf', 'ELF Binary', 'executable', True, 'elf'),
+        ".bin": FileTypeInfo(".bin", "Firmware Binary", "firmware", True, "firmware"),
+        ".hex": FileTypeInfo(".hex", "Intel HEX File", "firmware", True, "intel_hex"),
+        ".elf": FileTypeInfo(".elf", "ELF Binary", "executable", True, "elf"),
     }
 
     def __init__(self):
@@ -158,14 +158,14 @@ class FileResolver:
         }
 
         # Handle shortcuts
-        if file_path.suffix.lower() == '.lnk':
+        if file_path.suffix.lower() == ".lnk":
             resolved_path, shortcut_info = self._resolve_windows_shortcut(file_path)
             if resolved_path:
                 metadata.update(shortcut_info)
                 metadata["is_shortcut"] = True
                 metadata["resolution_method"] = "windows_shortcut"
                 return resolved_path, metadata
-        elif file_path.suffix.lower() == '.url':
+        elif file_path.suffix.lower() == ".url":
             resolved_path, url_info = self._resolve_url_shortcut(file_path)
             if resolved_path:
                 metadata.update(url_info)
@@ -198,14 +198,14 @@ class FileResolver:
 
         # Check if it's a directory (like .app bundles)
         if file_path.is_dir():
-            if extension == '.app':
-                return self.FILE_TYPES.get('.app', FileTypeInfo(extension, 'Unknown Directory', 'directory'))
-            elif extension == '.framework':
-                return self.FILE_TYPES.get('.framework', FileTypeInfo(extension, 'Framework Directory', 'directory'))
+            if extension == ".app":
+                return self.FILE_TYPES.get(".app", FileTypeInfo(extension, "Unknown Directory", "directory"))
+            elif extension == ".framework":
+                return self.FILE_TYPES.get(".framework", FileTypeInfo(extension, "Framework Directory", "directory"))
             else:
-                return FileTypeInfo(extension, 'Directory', 'directory', False)
+                return FileTypeInfo(extension, "Directory", "directory", False)
 
-        return self.FILE_TYPES.get(extension, FileTypeInfo(extension, 'Unknown File Type', 'unknown', False))
+        return self.FILE_TYPES.get(extension, FileTypeInfo(extension, "Unknown File Type", "unknown", False))
 
     def get_supported_file_filters(self) -> str:
         """Generate Qt file dialog filter string for all supported types."""
@@ -230,19 +230,19 @@ class FileResolver:
 
         # Category-specific filters
         category_names = {
-            'executable': 'Executable Files',
-            'library': 'Library Files',
-            'installer': 'Installer Packages',
-            'shortcut': 'Shortcuts and Links',
-            'archive': 'Archive Files',
-            'firmware': 'Firmware Files',
-            'binary': 'Binary Files',
-            'data': 'Data Files',
-            'image': 'Disk Images'
+            "executable": "Executable Files",
+            "library": "Library Files",
+            "installer": "Installer Packages",
+            "shortcut": "Shortcuts and Links",
+            "archive": "Archive Files",
+            "firmware": "Firmware Files",
+            "binary": "Binary Files",
+            "data": "Data Files",
+            "image": "Disk Images"
         }
 
         for category, exts in sorted(categories.items()):
-            category_name = category_names.get(category, category.title() + ' Files')
+            category_name = category_names.get(category, category.title() + " Files")
             filters.append(f"{category_name} ({' '.join(sorted(exts))})")
 
         # All files last
@@ -257,7 +257,7 @@ class FileResolver:
 
         try:
             # Initialize COM if available
-            if hasattr(pythoncom, 'CoInitialize'):
+            if hasattr(pythoncom, "CoInitialize"):
                 pythoncom.CoInitialize()
 
             shell_link = win32com.client.Dispatch("WScript.Shell")
@@ -270,7 +270,7 @@ class FileResolver:
             icon_location = shortcut.IconLocation
 
             # Uninitialize COM if it was initialized
-            if hasattr(pythoncom, 'CoUninitialize'):
+            if hasattr(pythoncom, "CoUninitialize"):
                 pythoncom.CoUninitialize()
 
             if target_path and os.path.exists(target_path):
@@ -293,12 +293,12 @@ class FileResolver:
         """Resolve Windows .url internet shortcut file."""
         try:
             # .url files are INI-style text files
-            with open(url_path, 'r', encoding='utf-8') as f:
+            with open(url_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # Look for URL= line
             for line in content.splitlines():
-                if line.startswith('URL='):
+                if line.startswith("URL="):
                     url = line[4:].strip()
                     return url, {
                         "target_url": url,
@@ -321,12 +321,12 @@ class FileResolver:
             # This is a simplified check - real alias detection is more complex
             import subprocess
             result = subprocess.run(
-                ['file', str(file_path)],
+                ["file", str(file_path)],
                 capture_output=True,
                 text=True,
                 timeout=5
             )
-            return 'alias' in result.stdout.lower()
+            return "alias" in result.stdout.lower()
         except Exception as e:
             self.logger.debug(f"Error checking macOS alias for {file_path}: {e}")
             return False
@@ -349,7 +349,7 @@ class FileResolver:
             '''
 
             result = subprocess.run(
-                ['osascript', '-e', script],
+                ["osascript", "-e", script],
                 capture_output=True,
                 text=True,
                 timeout=10
@@ -412,7 +412,7 @@ class FileResolver:
 
     def _format_bytes(self, bytes_size: int) -> str:
         """Format bytes into human readable string."""
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        for unit in ["B", "KB", "MB", "GB", "TB"]:
             if bytes_size < 1024.0:
                 return f"{bytes_size:.1f} {unit}"
             bytes_size /= 1024.0
@@ -437,7 +437,7 @@ class FileResolver:
                     self.logger.error("Import error in file_resolution: %s", e)
 
             # Check if it's a PE file
-            if file_path.suffix.lower() in ['.exe', '.dll', '.sys']:
+            if file_path.suffix.lower() in [".exe", ".dll", ".sys"]:
                 metadata["is_pe"] = True
                 metadata["format_hint"] = "pe"
 
@@ -452,16 +452,16 @@ class FileResolver:
 
         try:
             # Check if it's an ELF file
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 magic = f.read(4)
-                if magic == b'\x7fELF':
+                if magic == b"\x7fELF":
                     metadata["is_elf"] = True
                     metadata["format_hint"] = "elf"
 
             # Get file command output
             import subprocess
             result = subprocess.run(
-                ['file', str(file_path)],
+                ["file", str(file_path)],
                 capture_output=True,
                 text=True,
                 timeout=5
@@ -481,10 +481,10 @@ class FileResolver:
 
         try:
             # Check for Mach-O format
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 magic = f.read(4)
-                if magic in [b'\xfe\xed\xfa\xce', b'\xce\xfa\xed\xfe',
-                           b'\xfe\xed\xfa\xcf', b'\xcf\xfa\xed\xfe']:
+                if magic in [b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe",
+                           b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"]:
                     metadata["is_macho"] = True
                     metadata["format_hint"] = "macho"
 

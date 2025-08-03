@@ -27,5 +27,5 @@ from .templates.network_api_common import (
     summarize_network_capabilities,
 )
 
-__all__ = ['analyze_network_apis', 'process_network_api_results', 'get_scapy_layers',
-           'detect_network_apis', 'get_network_api_categories', 'summarize_network_capabilities']
+__all__ = ["analyze_network_apis", "process_network_api_results", "get_scapy_layers",
+           "detect_network_apis", "get_network_api_categories", "summarize_network_capabilities"]

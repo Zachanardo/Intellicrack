@@ -90,7 +90,7 @@ def detect_packing(binary_path: Union[str, Path]) -> List[str]:
         # Calculate entropy for each section
         section_entropies = []
         for section in pe.sections:
-            section_name = section.Name.decode('utf-8', 'ignore').strip('\x00')
+            section_name = section.Name.decode("utf-8", "ignore").strip("\x00")
             section_data = section.get_data()
             entropy = calculate_entropy(section_data)
 
@@ -106,8 +106,8 @@ def detect_packing(binary_path: Union[str, Path]) -> List[str]:
                 results.append(f"  ⚠️ High entropy (>{entropy:.4f}) suggests compression or obfuscation")
 
         # Check imports - packed files often have few imports
-        if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
-            import_entries = getattr(pe, 'DIRECTORY_ENTRY_IMPORT', [])
+        if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
+            import_entries = getattr(pe, "DIRECTORY_ENTRY_IMPORT", [])
             import_count = sum(len(import_entry.imports) for import_entry in import_entries)
             results.append("\nImport analysis:")
             results.append(f"  Total imports: {import_count}")
@@ -129,7 +129,7 @@ def detect_packing(binary_path: Union[str, Path]) -> List[str]:
             for import_entry in import_entries:
                 for import_item in import_entry.imports:
                     if import_item.name:
-                        name = import_item.name.decode('utf-8', 'ignore')
+                        name = import_item.name.decode("utf-8", "ignore")
                         if any(suspicious_item in name for suspicious_item in suspicious_imports):
                             found_suspicious.append(name)
 
@@ -146,13 +146,13 @@ def detect_packing(binary_path: Union[str, Path]) -> List[str]:
         # Suspicious section names
         suspicious_sections = [".ndata", "UPX", ".packed", ".nsp", ".enigma"]
         for section in pe.sections:
-            name = section.Name.decode('utf-8', 'ignore').strip('\x00')
+            name = section.Name.decode("utf-8", "ignore").strip("\x00")
             if any(suspicious_name.lower() in name.lower() for suspicious_name in suspicious_sections):
                 results.append(f"  ⚠️ Suspicious section name: {name}")
 
         # Executable & writable sections (often used by self-modifying packers)
         for section in pe.sections:
-            name = section.Name.decode('utf-8', 'ignore').strip('\x00')
+            name = section.Name.decode("utf-8", "ignore").strip("\x00")
             is_executable = (section.Characteristics & 0x20000000) != 0
             is_writable = (section.Characteristics & 0x80000000) != 0
 
@@ -196,20 +196,20 @@ def detect_protection(binary_path: Union[str, Path]) -> Dict[str, Any]:
         dict: Protection detection results
     """
     results = {
-        'packing': False,
-        'obfuscation': False,
-        'anti_debug': False,
-        'anti_vm': False,
-        'dongle': False,
-        'license': False,
-        'details': []
+        "packing": False,
+        "obfuscation": False,
+        "anti_debug": False,
+        "anti_vm": False,
+        "dongle": False,
+        "license": False,
+        "details": []
     }
 
     # Run packing detection
     packing_results = detect_packing(binary_path)
     if any("PACKED" in result_line or "PROBABLE PACKING" in result_line for result_line in packing_results):
-        results['packing'] = True
-        results['details'].extend(packing_results)
+        results["packing"] = True
+        results["details"].extend(packing_results)
 
     # Add more detection methods here as they are implemented
 
@@ -227,20 +227,20 @@ def analyze_protection(binary_path: Union[str, Path]) -> Dict[str, Any]:
         dict: Detailed protection analysis
     """
     analysis = {
-        'protection_type': 'unknown',
-        'confidence': 0.0,
-        'indicators': [],
-        'recommendations': []
+        "protection_type": "unknown",
+        "confidence": 0.0,
+        "indicators": [],
+        "recommendations": []
     }
 
     # Get basic protection detection
     detection = detect_protection(binary_path)
 
-    if detection['packing']:
-        analysis['protection_type'] = 'packed'
-        analysis['confidence'] = 0.8
-        analysis['indicators'].append('High entropy sections detected')
-        analysis['recommendations'].append('Consider unpacking before analysis')
+    if detection["packing"]:
+        analysis["protection_type"] = "packed"
+        analysis["confidence"] = 0.8
+        analysis["indicators"].append("High entropy sections detected")
+        analysis["recommendations"].append("Consider unpacking before analysis")
 
     return analysis
 
@@ -257,11 +257,11 @@ def bypass_protection(binary_path: Union[str, Path], protection_type: str) -> Di
         dict: Bypass strategies and recommendations
     """
     strategies = {
-        'success_probability': 'unknown',
-        'methods': [],
-        'tools': [],
-        'warnings': [],
-        'binary_analysis': {}
+        "success_probability": "unknown",
+        "methods": [],
+        "tools": [],
+        "warnings": [],
+        "binary_analysis": {}
     }
 
     # Analyze the specific binary for targeted bypass strategies
@@ -269,99 +269,99 @@ def bypass_protection(binary_path: Union[str, Path], protection_type: str) -> Di
         binary_path = Path(binary_path)
 
         if not binary_path.exists():
-            strategies['warnings'].append(f'Binary file not found: {binary_path}')
+            strategies["warnings"].append(f"Binary file not found: {binary_path}")
             return strategies
 
         # Get basic file information for strategy customization
         file_size = binary_path.stat().st_size
-        strategies['binary_analysis']['file_size'] = file_size
-        strategies['binary_analysis']['file_name'] = binary_path.name
+        strategies["binary_analysis"]["file_size"] = file_size
+        strategies["binary_analysis"]["file_name"] = binary_path.name
 
         # Read file header to determine architecture and type
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             header = f.read(64)
 
-        if header.startswith(b'MZ'):
-            strategies['binary_analysis']['format'] = 'PE'
-            strategies['binary_analysis']['platform'] = 'Windows'
-        elif header.startswith(b'\x7fELF'):
-            strategies['binary_analysis']['format'] = 'ELF'
-            strategies['binary_analysis']['platform'] = 'Linux'
-        elif header[0:4] in [b'\xfe\xed\xfa\xce', b'\xfe\xed\xfa\xcf']:
-            strategies['binary_analysis']['format'] = 'Mach-O'
-            strategies['binary_analysis']['platform'] = 'macOS'
+        if header.startswith(b"MZ"):
+            strategies["binary_analysis"]["format"] = "PE"
+            strategies["binary_analysis"]["platform"] = "Windows"
+        elif header.startswith(b"\x7fELF"):
+            strategies["binary_analysis"]["format"] = "ELF"
+            strategies["binary_analysis"]["platform"] = "Linux"
+        elif header[0:4] in [b"\xfe\xed\xfa\xce", b"\xfe\xed\xfa\xcf"]:
+            strategies["binary_analysis"]["format"] = "Mach-O"
+            strategies["binary_analysis"]["platform"] = "macOS"
         else:
-            strategies['binary_analysis']['format'] = 'Unknown'
-            strategies['binary_analysis']['platform'] = 'Unknown'
+            strategies["binary_analysis"]["format"] = "Unknown"
+            strategies["binary_analysis"]["platform"] = "Unknown"
 
     except Exception as e:
         logger.error("Exception in protection_utils: %s", e)
-        strategies['warnings'].append(f'Failed to analyze binary: {e}')
-        strategies['binary_analysis']['error'] = str(e)
+        strategies["warnings"].append(f"Failed to analyze binary: {e}")
+        strategies["binary_analysis"]["error"] = str(e)
 
     # Customize bypass strategies based on protection type and binary analysis
-    if protection_type.lower() == 'packed':
-        strategies['methods'] = [
-            'Dynamic unpacking using debugger',
-            'Memory dumping at OEP',
-            'Using specialized unpackers'
+    if protection_type.lower() == "packed":
+        strategies["methods"] = [
+            "Dynamic unpacking using debugger",
+            "Memory dumping at OEP",
+            "Using specialized unpackers"
         ]
 
         # Customize tools based on platform
-        platform = strategies['binary_analysis'].get('platform', 'Unknown')
-        if platform == 'Windows':
-            strategies['tools'] = ['x64dbg', 'OllyDbg', 'UPX', 'VMUnpacker', 'PEiD']
-        elif platform == 'Linux':
-            strategies['tools'] = ['gdb', 'radare2', 'UPX', 'objdump']
-        elif platform == 'macOS':
-            strategies['tools'] = ['lldb', 'radare2', 'otool', 'class-dump']
+        platform = strategies["binary_analysis"].get("platform", "Unknown")
+        if platform == "Windows":
+            strategies["tools"] = ["x64dbg", "OllyDbg", "UPX", "VMUnpacker", "PEiD"]
+        elif platform == "Linux":
+            strategies["tools"] = ["gdb", "radare2", "UPX", "objdump"]
+        elif platform == "macOS":
+            strategies["tools"] = ["lldb", "radare2", "otool", "class-dump"]
         else:
-            strategies['tools'] = ['radare2', 'IDA Pro', 'Ghidra']
+            strategies["tools"] = ["radare2", "IDA Pro", "Ghidra"]
 
-        strategies['warnings'] = ['May trigger anti-debugging mechanisms']
+        strategies["warnings"] = ["May trigger anti-debugging mechanisms"]
 
         # Adjust success probability based on file size
         if file_size < 1024 * 1024:  # < 1MB
-            strategies['success_probability'] = 'high'
+            strategies["success_probability"] = "high"
         elif file_size < 10 * 1024 * 1024:  # < 10MB
-            strategies['success_probability'] = 'medium'
+            strategies["success_probability"] = "medium"
         else:
-            strategies['success_probability'] = 'low'
-            strategies['warnings'].append('Large file size may indicate complex packing')
+            strategies["success_probability"] = "low"
+            strategies["warnings"].append("Large file size may indicate complex packing")
 
-    elif protection_type.lower() == 'obfuscated':
-        strategies['methods'] = [
-            'Control flow deobfuscation',
-            'String decryption',
-            'Dead code elimination'
+    elif protection_type.lower() == "obfuscated":
+        strategies["methods"] = [
+            "Control flow deobfuscation",
+            "String decryption",
+            "Dead code elimination"
         ]
-        strategies['tools'] = ['de4dot', 'VMProtect unpacker', 'Themida unpacker']
-        strategies['success_probability'] = 'medium'
+        strategies["tools"] = ["de4dot", "VMProtect unpacker", "Themida unpacker"]
+        strategies["success_probability"] = "medium"
 
-    elif protection_type.lower() == 'anti_debug':
-        strategies['methods'] = [
-            'Patch anti-debug checks',
-            'Use stealth debugger',
-            'Runtime NOP patching'
+    elif protection_type.lower() == "anti_debug":
+        strategies["methods"] = [
+            "Patch anti-debug checks",
+            "Use stealth debugger",
+            "Runtime NOP patching"
         ]
 
-        platform = strategies['binary_analysis'].get('platform', 'Unknown')
-        if platform == 'Windows':
-            strategies['tools'] = ['ScyllaHide', 'x64dbg with anti-anti-debug', 'Detours']
+        platform = strategies["binary_analysis"].get("platform", "Unknown")
+        if platform == "Windows":
+            strategies["tools"] = ["ScyllaHide", "x64dbg with anti-anti-debug", "Detours"]
         else:
-            strategies['tools'] = ['gdb with anti-detection', 'Intel Pin', 'DynamoRIO']
+            strategies["tools"] = ["gdb with anti-detection", "Intel Pin", "DynamoRIO"]
 
-        strategies['success_probability'] = 'high'
+        strategies["success_probability"] = "high"
 
-    elif protection_type.lower() == 'virtualized':
-        strategies['methods'] = [
-            'VM handler analysis',
-            'Bytecode extraction',
-            'Dynamic trace analysis'
+    elif protection_type.lower() == "virtualized":
+        strategies["methods"] = [
+            "VM handler analysis",
+            "Bytecode extraction",
+            "Dynamic trace analysis"
         ]
-        strategies['tools'] = ['VMAttack', 'Titan Engine', 'Intel Pin']
-        strategies['success_probability'] = 'low'
-        strategies['warnings'] = ['Virtualization protection requires advanced techniques']
+        strategies["tools"] = ["VMAttack", "Titan Engine", "Intel Pin"]
+        strategies["success_probability"] = "low"
+        strategies["warnings"] = ["Virtualization protection requires advanced techniques"]
 
     return strategies
 
@@ -379,20 +379,20 @@ def check_anti_debug_tricks(binary_path: Union[str, Path]) -> List[Dict[str, Any
     tricks = []
 
     if pefile is None:
-        return [{'name': 'Error', 'description': 'pefile module not available'}]
+        return [{"name": "Error", "description": "pefile module not available"}]
 
     try:
         pe = pefile.PE(str(binary_path))
 
         # Check for IsDebuggerPresent
-        if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+        if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
             for import_entry in pe.DIRECTORY_ENTRY_IMPORT:
                 for import_item in import_entry.imports:
-                    if import_item.name and b'IsDebuggerPresent' in import_item.name:
+                    if import_item.name and b"IsDebuggerPresent" in import_item.name:
                         tricks.append({
-                            'name': 'IsDebuggerPresent',
-                            'description': 'Checks for attached debugger via API',
-                            'severity': 'medium'
+                            "name": "IsDebuggerPresent",
+                            "description": "Checks for attached debugger via API",
+                            "severity": "medium"
                         })
 
         pe.close()
@@ -415,15 +415,15 @@ def identify_protection_vendor(binary_path: Union[str, Path]) -> Optional[str]:
     """
     # Known protection signatures
     signatures = {
-        'UPX': [b'UPX!', b'UPX0', b'UPX1', b'UPX2'],
-        'ASPack': [b'ASPack'],
-        'Themida': [b'.themida', b'.winlicense'],
-        'VMProtect': [b'.vmp0', b'.vmp1', b'.vmp2'],
-        'Enigma': [b'.enigma1', b'.enigma2'],
+        "UPX": [b"UPX!", b"UPX0", b"UPX1", b"UPX2"],
+        "ASPack": [b"ASPack"],
+        "Themida": [b".themida", b".winlicense"],
+        "VMProtect": [b".vmp0", b".vmp1", b".vmp2"],
+        "Enigma": [b".enigma1", b".enigma2"],
     }
 
     try:
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             # Read first 1MB for signature scanning
             data = f.read(1024 * 1024)
 
@@ -450,8 +450,8 @@ def inject_comprehensive_api_hooks(app, script: str = None) -> None:
     message = "[API Hooks] Starting comprehensive API hooking and runtime monitoring..."
 
     # Handle different app types and output methods
-    if hasattr(app, 'update_output'):
-        if hasattr(app.update_output, 'emit'):
+    if hasattr(app, "update_output"):
+        if hasattr(app.update_output, "emit"):
             # PyQt signal
             app.update_output.emit(message)
         elif callable(app.update_output):
@@ -516,14 +516,14 @@ def inject_comprehensive_api_hooks(app, script: str = None) -> None:
             raise ImportError("Frida not available")
 
         # Check if we have a binary path
-        if hasattr(app, 'binary_path') and app.binary_path:
+        if hasattr(app, "binary_path") and app.binary_path:
             success_msg = f"[API Hooks] Hooks would be injected into {app.binary_path}"
         else:
             success_msg = "[API Hooks] Ready to inject hooks (select a binary first)"
 
         # Update output with success
-        if hasattr(app, 'update_output'):
-            if hasattr(app.update_output, 'emit'):
+        if hasattr(app, "update_output"):
+            if hasattr(app.update_output, "emit"):
                 app.update_output.emit(success_msg)
                 app.update_output.emit("[API Hooks] Frida-based API hooking available")
             elif callable(app.update_output):
@@ -535,8 +535,8 @@ def inject_comprehensive_api_hooks(app, script: str = None) -> None:
     except ImportError:
         # Fallback mode without Frida
         fallback_msg = "[API Hooks] Frida not available - using basic monitoring mode"
-        if hasattr(app, 'update_output'):
-            if hasattr(app.update_output, 'emit'):
+        if hasattr(app, "update_output"):
+            if hasattr(app.update_output, "emit"):
                 app.update_output.emit(fallback_msg)
             elif callable(app.update_output):
                 app.update_output(fallback_msg)
@@ -546,12 +546,12 @@ def inject_comprehensive_api_hooks(app, script: str = None) -> None:
 
 # Exported functions
 __all__ = [
-    'calculate_entropy',
-    'detect_packing',
-    'detect_protection',
-    'analyze_protection',
-    'bypass_protection',
-    'check_anti_debug_tricks',
-    'identify_protection_vendor',
-    'inject_comprehensive_api_hooks',
+    "calculate_entropy",
+    "detect_packing",
+    "detect_protection",
+    "analyze_protection",
+    "bypass_protection",
+    "check_anti_debug_tricks",
+    "identify_protection_vendor",
+    "inject_comprehensive_api_hooks",
 ]

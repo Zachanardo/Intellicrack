@@ -43,16 +43,16 @@ from .unified_protection_engine import (
 )
 
 __all__ = [
-    'ProtectionDetector',
-    'get_protection_detector',
-    'quick_analyze',
-    'deep_analyze',
-    'IntellicrackProtectionCore',
-    'DIEProtectionDetector',  # Backward compatibility
-    'UnifiedProtectionEngine',
-    'UnifiedProtectionResult',
-    'get_unified_engine',
-    'DetectionResult',
-    'ProtectionAnalysis',
-    'ProtectionType',
+    "ProtectionDetector",
+    "get_protection_detector",
+    "quick_analyze",
+    "deep_analyze",
+    "IntellicrackProtectionCore",
+    "DIEProtectionDetector",  # Backward compatibility
+    "UnifiedProtectionEngine",
+    "UnifiedProtectionResult",
+    "get_unified_engine",
+    "DetectionResult",
+    "ProtectionAnalysis",
+    "ProtectionType",
 ]

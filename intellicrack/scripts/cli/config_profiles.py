@@ -67,7 +67,7 @@ class ConfigProfile:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ConfigProfile':
+    def from_dict(cls, data: Dict[str, Any]) -> "ConfigProfile":
         """Create profile from dictionary"""
         profile = cls(data["name"], data.get("description", ""))
         profile.created_at = datetime.fromisoformat(data["created_at"])
@@ -107,7 +107,7 @@ class ProfileManager:
 
         for profile_file in self.profile_dir.glob("*.json"):
             try:
-                with open(profile_file, 'r') as f:
+                with open(profile_file, "r") as f:
                     data = json.load(f)
                     profile = ConfigProfile.from_dict(data)
                     profiles[profile.name] = profile
@@ -120,7 +120,7 @@ class ProfileManager:
         """Save profile to disk"""
         profile_path = self.profile_dir / f"{profile.name}.json"
 
-        with open(profile_path, 'w') as f:
+        with open(profile_path, "w") as f:
             json.dump(profile.to_dict(), f, indent=2)
 
         self.profiles[profile.name] = profile
@@ -250,7 +250,7 @@ class ProfileManager:
                 setattr(args, key, value)
 
         # Apply plugins
-        if profile.plugins_enabled and hasattr(args, 'plugins'):
+        if profile.plugins_enabled and hasattr(args, "plugins"):
             args.plugins = profile.plugins_enabled
 
         self.console.print(f"[green]Applied profile '{profile_name}'[/green]")

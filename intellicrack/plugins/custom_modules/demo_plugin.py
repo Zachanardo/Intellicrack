@@ -72,18 +72,18 @@ class DemoPlugin(BasePlugin):
             description=PLUGIN_DESCRIPTION,
             categories=PLUGIN_CATEGORIES,
             capabilities=[
-                'analyze', 'patch', 'validate', 'configure',
-                'entropy_analysis', 'string_extraction', 'pattern_matching'
+                "analyze", "patch", "validate", "configure",
+                "entropy_analysis", "string_extraction", "pattern_matching"
             ]
         )
 
         # Plugin configuration from environment
         default_config = {
-            'max_file_size': int(os.environ.get('PLUGIN_MAX_FILE_SIZE', str(50 * 1024 * 1024))),
-            'detailed_output': os.environ.get('PLUGIN_DETAILED_OUTPUT', 'true').lower() == 'true',
-            'include_file_hash': os.environ.get('PLUGIN_INCLUDE_HASH', 'true').lower() == 'true',
-            'show_hex_preview': os.environ.get('PLUGIN_SHOW_HEX', 'true').lower() == 'true',
-            'analysis_timeout': int(os.environ.get('PLUGIN_ANALYSIS_TIMEOUT', '15'))
+            "max_file_size": int(os.environ.get("PLUGIN_MAX_FILE_SIZE", str(50 * 1024 * 1024))),
+            "detailed_output": os.environ.get("PLUGIN_DETAILED_OUTPUT", "true").lower() == "true",
+            "include_file_hash": os.environ.get("PLUGIN_INCLUDE_HASH", "true").lower() == "true",
+            "show_hex_preview": os.environ.get("PLUGIN_SHOW_HEX", "true").lower() == "true",
+            "analysis_timeout": int(os.environ.get("PLUGIN_ANALYSIS_TIMEOUT", "15"))
         }
 
         # Initialize base plugin
@@ -98,12 +98,12 @@ class DemoPlugin(BasePlugin):
 
         # Analysis patterns - these are standard file signatures
         self.file_signatures = {
-            'pe_signature': b'MZ',
-            'elf_signature': b'\x7fELF',
-            'macho_signature': b'\xcf\xfa\xed\xfe',
-            'zip_signature': b'PK',
-            'pdf_signature': b'%PDF',
-            'java_signature': b'\xca\xfe\xba\xbe'
+            "pe_signature": b"MZ",
+            "elf_signature": b"\x7fELF",
+            "macho_signature": b"\xcf\xfa\xed\xfe",
+            "zip_signature": b"PK",
+            "pdf_signature": b"%PDF",
+            "java_signature": b"\xca\xfe\xba\xbe"
         }
 
         # Common system library names for detection
@@ -117,8 +117,8 @@ class DemoPlugin(BasePlugin):
         metadata = super().get_metadata()
         # Add custom state information
         metadata.update({
-            'analysis_count': self.analysis_count,
-            'last_analysis': self.last_analysis_time,
+            "analysis_count": self.analysis_count,
+            "last_analysis": self.last_analysis_time,
         })
         return metadata
 
@@ -140,7 +140,7 @@ class DemoPlugin(BasePlugin):
             if file_size == 0:
                 return False, "File is empty"
 
-            if file_size > self.config_manager.get('max_file_size'):
+            if file_size > self.config_manager.get("max_file_size"):
                 return False, f"File too large: {file_size:,} bytes (max: {self.config_manager.get('max_file_size'):,})"
 
             # Check read permissions
@@ -158,12 +158,12 @@ class DemoPlugin(BasePlugin):
         for sig_name, sig_bytes in self.file_signatures.items():
             if data.startswith(sig_bytes):
                 file_types = {
-                    'pe_signature': "PE (Windows Executable)",
-                    'elf_signature': "ELF (Linux Executable)",
-                    'macho_signature': "Mach-O (macOS Executable)",
-                    'zip_signature': "ZIP Archive",
-                    'pdf_signature': "PDF Document",
-                    'java_signature': "Java Class File"
+                    "pe_signature": "PE (Windows Executable)",
+                    "elf_signature": "ELF (Linux Executable)",
+                    "macho_signature": "Mach-O (macOS Executable)",
+                    "zip_signature": "ZIP Archive",
+                    "pdf_signature": "PDF Document",
+                    "java_signature": "Java Class File"
                 }
                 return file_types.get(sig_name, "Unknown")
         return "Unknown/Generic Binary"
@@ -172,23 +172,23 @@ class DemoPlugin(BasePlugin):
         """Load system library names based on platform."""
         import platform
 
-        if platform.system() == 'Windows':
+        if platform.system() == "Windows":
             return [
-                b'kernel32.dll', b'ntdll.dll', b'user32.dll', b'advapi32.dll',
-                b'gdi32.dll', b'shell32.dll', b'ole32.dll', b'msvcrt.dll'
+                b"kernel32.dll", b"ntdll.dll", b"user32.dll", b"advapi32.dll",
+                b"gdi32.dll", b"shell32.dll", b"ole32.dll", b"msvcrt.dll"
             ]
-        elif platform.system() == 'Linux':
+        elif platform.system() == "Linux":
             return [
-                b'libc.so', b'libpthread.so', b'libdl.so', b'libm.so',
-                b'librt.so', b'libgcc_s.so', b'libstdc++.so'
+                b"libc.so", b"libpthread.so", b"libdl.so", b"libm.so",
+                b"librt.so", b"libgcc_s.so", b"libstdc++.so"
             ]
-        elif platform.system() == 'Darwin':
+        elif platform.system() == "Darwin":
             return [
-                b'libSystem.dylib', b'libc++.dylib', b'libobjc.dylib',
-                b'CoreFoundation', b'Foundation'
+                b"libSystem.dylib", b"libc++.dylib", b"libobjc.dylib",
+                b"CoreFoundation", b"Foundation"
             ]
         else:
-            return [b'libc', b'libm', b'libdl']  # Generic Unix
+            return [b"libc", b"libm", b"libdl"]  # Generic Unix
 
     def _calculate_entropy(self, data: bytes) -> float:
         """Calculate Shannon entropy of data."""
@@ -197,7 +197,7 @@ class DemoPlugin(BasePlugin):
     def _find_strings(self, data: bytes, min_length: int = 4) -> List[str]:
         """Extract printable strings from binary data."""
         strings = extract_ascii_strings(data, min_length)
-        max_strings = int(os.environ.get('PLUGIN_MAX_STRINGS', '20'))
+        max_strings = int(os.environ.get("PLUGIN_MAX_STRINGS", "20"))
         return strings[:max_strings]
 
     def analyze(self, binary_path: str) -> List[str]:
@@ -231,7 +231,7 @@ class DemoPlugin(BasePlugin):
 
             # Step 3: Read and analyze file content
             results.append("\n🔬 Step 3: Content Analysis")
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 # Read first part of file for analysis
                 sample_size = min(8192, file_info.st_size)  # First 8KB or entire file
                 file_data = f.read(sample_size)
@@ -241,8 +241,8 @@ class DemoPlugin(BasePlugin):
             results.append(f"🏷️  File Type: {file_type}")
 
             # Hash calculation (if enabled)
-            if self.config_manager.get('include_file_hash'):
-                with open(binary_path, 'rb') as f:
+            if self.config_manager.get("include_file_hash"):
+                with open(binary_path, "rb") as f:
                     full_data = f.read()
                     file_hash = hashlib.sha256(full_data).hexdigest()
                     results.append(f"🔐 SHA256: {file_hash[:32]}...{file_hash[-8:]}")
@@ -258,12 +258,12 @@ class DemoPlugin(BasePlugin):
                 results.append("   ✅ Normal entropy range")
 
             # Hex preview (if enabled)
-            if self.config_manager.get('show_hex_preview'):
+            if self.config_manager.get("show_hex_preview"):
                 results.append("\n🔍 Step 4: Hex Preview (first 64 bytes)")
-                hex_preview = ' '.join(f'{b:02x}' for b in file_data[:64])
+                hex_preview = " ".join(f"{b:02x}" for b in file_data[:64])
                 # Format as lines of 16 bytes
                 for i in range(0, min(64, len(hex_preview.split())), 16):
-                    hex_line = ' '.join(hex_preview.split()[i:i+16])
+                    hex_line = " ".join(hex_preview.split()[i:i+16])
                     results.append(f"  {i:04x}: {hex_line}")
 
             # String extraction
@@ -272,7 +272,7 @@ class DemoPlugin(BasePlugin):
             if strings:
                 results.append(f"Found {len(strings)} strings (showing sample):")
                 for i, string in enumerate(strings[:10], 1):
-                    truncated = string[:40] + '...' if len(string) > 40 else string
+                    truncated = string[:40] + "..." if len(string) > 40 else string
                     results.append(f"  {i:2d}. '{truncated}'")
             else:
                 results.append("No printable strings found in sample")
@@ -310,7 +310,7 @@ class DemoPlugin(BasePlugin):
             results.append(f"🔢 Total analyses: {self.analysis_count}")
 
             # Educational notes
-            if self.config_manager.get('detailed_output'):
+            if self.config_manager.get("detailed_output"):
                 results.append("\n📚 Educational Notes")
                 results.append("This demo plugin demonstrates:")
                 results.append("  • File validation and error handling")
@@ -337,19 +337,19 @@ class DemoPlugin(BasePlugin):
             options = {}
 
         # Extract configuration from options
-        create_backup = options.get('create_backup', True)
-        patch_mode = options.get('mode', 'analysis')  # 'analysis', 'apply', 'simulate'
-        target_offset = options.get('target_offset', None)
-        patch_bytes = options.get('patch_bytes', None)
-        patch_type = options.get('patch_type', 'auto')  # 'nop', 'jmp', 'call', 'custom'
-        max_patches = options.get('max_patches', 10)
-        verbose = options.get('verbose', True)
+        create_backup = options.get("create_backup", True)
+        patch_mode = options.get("mode", "analysis")  # 'analysis', 'apply', 'simulate'
+        target_offset = options.get("target_offset", None)
+        patch_bytes = options.get("patch_bytes", None)
+        patch_type = options.get("patch_type", "auto")  # 'nop', 'jmp', 'call', 'custom'
+        max_patches = options.get("max_patches", 10)
+        verbose = options.get("verbose", True)
 
         try:
             results.append(f"🔧 {self.name} - Patch {'Analysis' if patch_mode == 'analysis' else 'Application'}")
             results.append(f"🎯 Target: {os.path.basename(binary_path)}")
             results.append(f"⚙️  Mode: {patch_mode.upper()}")
-            if patch_type != 'auto':
+            if patch_type != "auto":
                 results.append(f"🔀 Patch Type: {patch_type}")
             results.append("="*50)
 
@@ -362,9 +362,9 @@ class DemoPlugin(BasePlugin):
             results.append(f"✅ {validation_msg}")
 
             # Safety check - create backup if requested
-            if create_backup and patch_mode == 'apply':
+            if create_backup and patch_mode == "apply":
                 results.append("\n🛡️  Safety Measures")
-                backup_suffix = options.get('backup_suffix', f"{int(time.time())}")
+                backup_suffix = options.get("backup_suffix", f"{int(time.time())}")
                 backup_path = binary_path + f".backup_{backup_suffix}"
 
                 try:
@@ -374,10 +374,10 @@ class DemoPlugin(BasePlugin):
                 except Exception as e:
                     logger.error("Exception in demo_plugin: %s", e)
                     results.append(f"⚠️  Backup failed: {e}")
-                    if options.get('require_backup', True):
+                    if options.get("require_backup", True):
                         results.append("❌ Aborting patch for safety")
                         return results
-            elif patch_mode == 'apply' and not create_backup:
+            elif patch_mode == "apply" and not create_backup:
                 results.append("⚠️  Backup disabled by options - proceeding without safety net")
 
             # Demonstrate patch analysis
@@ -385,23 +385,23 @@ class DemoPlugin(BasePlugin):
             if verbose:
                 results.append("Analyzing binary for patch opportunities...")
 
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read(1024)  # Read first 1KB
 
             # Check if we should target a specific offset
-            if target_offset is not None and patch_mode != 'analysis':
+            if target_offset is not None and patch_mode != "analysis":
                 results.append(f"\n🎯 Targeting specific offset: 0x{target_offset:08x}")
                 if patch_bytes:
                     results.append(f"📝 Patch bytes: {patch_bytes.hex() if isinstance(patch_bytes, bytes) else patch_bytes}")
 
                 # Apply patch at specific offset if mode is 'apply'
-                if patch_mode == 'apply':
+                if patch_mode == "apply":
                     success = self._apply_patch_at_offset(binary_path, target_offset, patch_bytes, options)
                     if success:
                         results.append("✅ Patch applied successfully at target offset")
                     else:
                         results.append("❌ Failed to apply patch at target offset")
-                elif patch_mode == 'simulate':
+                elif patch_mode == "simulate":
                     results.append("🔄 Simulating patch at target offset...")
                     results.append(f"   Would write {len(patch_bytes) if patch_bytes else 0} bytes")
 
@@ -409,28 +409,28 @@ class DemoPlugin(BasePlugin):
             patch_opportunities = []
 
             # Filter opportunities based on patch_type option
-            if patch_type in ['auto', 'nop']:
+            if patch_type in ["auto", "nop"]:
                 # Look for NOP instructions (safe to patch)
-                if b'\x90\x90\x90\x90' in data:
+                if b"\x90\x90\x90\x90" in data:
                     patch_opportunities.append({
-                        'type': 'nop',
-                        'description': "NOP sled detected - safe patch target"
+                        "type": "nop",
+                        "description": "NOP sled detected - safe patch target"
                     })
 
-            if patch_type in ['auto', 'jmp', 'call']:
+            if patch_type in ["auto", "jmp", "call"]:
                 # Look for function prologues
-                if b'\x55\x8b\xec' in data:
+                if b"\x55\x8b\xec" in data:
                     patch_opportunities.append({
-                        'type': 'prologue',
-                        'description': "Function prologue found - potential hook point"
+                        "type": "prologue",
+                        "description": "Function prologue found - potential hook point"
                     })
 
-            if patch_type in ['auto', 'api']:
+            if patch_type in ["auto", "api"]:
                 # Look for common API calls
-                if b'kernel32' in data.lower():
+                if b"kernel32" in data.lower():
                     patch_opportunities.append({
-                        'type': 'api',
-                        'description': "Windows API usage detected - IAT patching possible"
+                        "type": "api",
+                        "description": "Windows API usage detected - IAT patching possible"
                     })
 
             # Limit opportunities based on max_patches option
@@ -469,15 +469,15 @@ class DemoPlugin(BasePlugin):
 
             # Pass options to analysis function
             analysis_options = {
-                'patch_type': patch_type,
-                'max_results': max_patches,
-                'scan_depth': options.get('scan_depth', 8192)
+                "patch_type": patch_type,
+                "max_results": max_patches,
+                "scan_depth": options.get("scan_depth", 8192)
             }
             patch_results = self._perform_safe_patch_analysis(binary_path, analysis_options)
 
             if patch_results.get("patchable_locations"):
                 results.append("✅ Found patchable locations:")
-                display_count = min(len(patch_results["patchable_locations"]), options.get('display_limit', 3))
+                display_count = min(len(patch_results["patchable_locations"]), options.get("display_limit", 3))
                 for i, location in enumerate(patch_results["patchable_locations"][:display_count], 1):
                     results.append(f"  {i}. Offset 0x{location['offset']:08x}: {location['description']}")
 
@@ -490,9 +490,9 @@ class DemoPlugin(BasePlugin):
                 results.append("  • Backup and restore functionality ready")
 
                 # Show mode-specific status
-                if patch_mode == 'apply':
+                if patch_mode == "apply":
                     results.append("  • ✅ Ready to apply patches")
-                elif patch_mode == 'simulate':
+                elif patch_mode == "simulate":
                     results.append("  • 🔄 Simulation mode - no changes will be made")
                 else:
                     results.append("  • 📊 Analysis mode - review only")
@@ -501,7 +501,7 @@ class DemoPlugin(BasePlugin):
 
             results.append("\n✅ Patch analysis completed successfully")
             results.append(f"💡 Mode: {patch_mode.upper()} - {'changes applied' if patch_mode == 'apply' else 'no modifications made'}")
-            if create_backup and patch_mode == 'apply' and 'backup_path' in locals():
+            if create_backup and patch_mode == "apply" and "backup_path" in locals():
                 results.append(f"🛡️  Backup available at: {os.path.basename(backup_path)}")
 
         except Exception as e:
@@ -516,12 +516,12 @@ class DemoPlugin(BasePlugin):
         if options is None:
             options = {}
 
-        patch_type_filter = options.get('patch_type', 'auto')
-        max_results = options.get('max_results', 10)
-        scan_depth = options.get('scan_depth', 8192)
+        patch_type_filter = options.get("patch_type", "auto")
+        max_results = options.get("max_results", 10)
+        scan_depth = options.get("scan_depth", 8192)
 
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read(min(scan_depth, os.path.getsize(binary_path)))
 
             patchable_locations = []
@@ -529,7 +529,7 @@ class DemoPlugin(BasePlugin):
             # Look for actual patchable patterns in the binary
             for i, _byte_val in enumerate(data[:-4]):
                 # Look for NOP instructions (0x90) - safe to patch
-                if data[i:i+4] == b'\x90\x90\x90\x90':
+                if data[i:i+4] == b"\x90\x90\x90\x90":
                     patchable_locations.append({
                         "offset": i,
                         "description": "NOP sled - safe for instruction patching",
@@ -538,7 +538,7 @@ class DemoPlugin(BasePlugin):
                     })
 
                 # Look for function prologues (push ebp; mov ebp, esp)
-                elif data[i:i+3] == b'\x55\x8b\xec':
+                elif data[i:i+3] == b"\x55\x8b\xec":
                     patchable_locations.append({
                         "offset": i,
                         "description": "Function prologue - hook point",
@@ -557,8 +557,8 @@ class DemoPlugin(BasePlugin):
 
             # Look for string patterns that could be patched
             import re
-            text_data = data.decode('ascii', errors='ignore')
-            license_patterns = re.finditer(r'(trial|license|expire|demo)', text_data, re.IGNORECASE)
+            text_data = data.decode("ascii", errors="ignore")
+            license_patterns = re.finditer(r"(trial|license|expire|demo)", text_data, re.IGNORECASE)
 
             for match in license_patterns:
                 offset = match.start()
@@ -570,18 +570,18 @@ class DemoPlugin(BasePlugin):
                 })
 
             # Apply type filtering based on options
-            if patch_type_filter != 'auto':
+            if patch_type_filter != "auto":
                 filtered_locations = []
                 type_map = {
-                    'nop': ['nop_sled'],
-                    'jmp': ['function_prologue', 'call_instruction'],
-                    'call': ['call_instruction', 'function_prologue'],
-                    'api': ['license_string'],
-                    'custom': ['nop_sled', 'function_prologue', 'call_instruction', 'license_string']
+                    "nop": ["nop_sled"],
+                    "jmp": ["function_prologue", "call_instruction"],
+                    "call": ["call_instruction", "function_prologue"],
+                    "api": ["license_string"],
+                    "custom": ["nop_sled", "function_prologue", "call_instruction", "license_string"]
                 }
                 allowed_types = type_map.get(patch_type_filter, [])
                 for location in patchable_locations:
-                    if location['type'] in allowed_types:
+                    if location["type"] in allowed_types:
                         filtered_locations.append(location)
                 patchable_locations = filtered_locations
 
@@ -590,7 +590,7 @@ class DemoPlugin(BasePlugin):
                 "patchable_locations": patchable_locations[:max_results],
                 "analysis_size": len(data),
                 "total_opportunities": len(patchable_locations),
-                "filtered_by": patch_type_filter if patch_type_filter != 'auto' else None
+                "filtered_by": patch_type_filter if patch_type_filter != "auto" else None
             }
 
         except Exception as e:
@@ -605,35 +605,35 @@ class DemoPlugin(BasePlugin):
         """Apply patch at specific offset in binary."""
         try:
             # Safety checks based on options
-            verify_bytes = options.get('verify_original_bytes', None)
-            update_checksum = options.get('update_checksum', False)
-            patch_method = options.get('patch_method', 'direct')  # 'direct', 'temporary', 'memory_mapped'
+            verify_bytes = options.get("verify_original_bytes", None)
+            update_checksum = options.get("update_checksum", False)
+            patch_method = options.get("patch_method", "direct")  # 'direct', 'temporary', 'memory_mapped'
 
             # Read current bytes at offset for verification
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 f.seek(offset)
                 original_bytes = f.read(len(patch_bytes))
 
             # Verify original bytes if requested
             if verify_bytes and original_bytes != verify_bytes:
                 self.logger.warning(f"Original bytes mismatch at offset 0x{offset:08x}")
-                if options.get('force_patch', False):
+                if options.get("force_patch", False):
                     self.logger.info("Forcing patch despite mismatch (force_patch=True)")
                 else:
                     return False
 
             # Apply patch based on method
-            if patch_method == 'direct':
+            if patch_method == "direct":
                 # Direct file modification
-                with open(binary_path, 'r+b') as f:
+                with open(binary_path, "r+b") as f:
                     f.seek(offset)
                     f.write(patch_bytes)
-            elif patch_method == 'temporary':
+            elif patch_method == "temporary":
                 # Create temporary file first
                 import shutil
                 import tempfile
-                with tempfile.NamedTemporaryFile(mode='wb', delete=False) as tmp:
-                    with open(binary_path, 'rb') as src:
+                with tempfile.NamedTemporaryFile(mode="wb", delete=False) as tmp:
+                    with open(binary_path, "rb") as src:
                         # Copy up to offset
                         tmp.write(src.read(offset))
                         # Write patch bytes
@@ -645,15 +645,15 @@ class DemoPlugin(BasePlugin):
                     tmp_path = tmp.name
                 # Replace original with patched
                 shutil.move(tmp_path, binary_path)
-            elif patch_method == 'memory_mapped':
+            elif patch_method == "memory_mapped":
                 # Use memory mapping for large files
                 import mmap
-                with open(binary_path, 'r+b') as f:
+                with open(binary_path, "r+b") as f:
                     with mmap.mmap(f.fileno(), 0) as mm:
                         mm[offset:offset + len(patch_bytes)] = patch_bytes
 
             # Update PE checksum if requested and applicable
-            if update_checksum and binary_path.lower().endswith('.exe'):
+            if update_checksum and binary_path.lower().endswith(".exe"):
                 try:
                     self._update_pe_checksum(binary_path)
                 except Exception as e:
@@ -719,43 +719,43 @@ class DemoPlugin(BasePlugin):
             Dictionary containing execution results
 
         """
-        operation = kwargs.get('operation', 'analyze')
-        target = kwargs.get('target') or (args[0] if args else None)
+        operation = kwargs.get("operation", "analyze")
+        target = kwargs.get("target") or (args[0] if args else None)
 
         if not target:
             return {
-                'success': False,
-                'error': 'No target specified',
-                'results': []
+                "success": False,
+                "error": "No target specified",
+                "results": []
             }
 
         try:
-            if operation == 'analyze':
+            if operation == "analyze":
                 results = self.analyze(target)
                 return {
-                    'success': True,
-                    'operation': 'analyze',
-                    'results': results
+                    "success": True,
+                    "operation": "analyze",
+                    "results": results
                 }
-            elif operation == 'patch':
-                results = self.patch(target, kwargs.get('options'))
+            elif operation == "patch":
+                results = self.patch(target, kwargs.get("options"))
                 return {
-                    'success': True,
-                    'operation': 'patch',
-                    'results': results
+                    "success": True,
+                    "operation": "patch",
+                    "results": results
                 }
             else:
                 return {
-                    'success': False,
-                    'error': f'Unknown operation: {operation}',
-                    'results': []
+                    "success": False,
+                    "error": f"Unknown operation: {operation}",
+                    "results": []
                 }
         except Exception as e:
             logger.error("Exception in demo_plugin: %s", e)
             return {
-                'success': False,
-                'error': str(e),
-                'results': []
+                "success": False,
+                "error": str(e),
+                "results": []
             }
 
 # Function to register this plugin with Intellicrack
@@ -771,8 +771,8 @@ _plugin_metadata = PluginMetadata(
     description=PLUGIN_DESCRIPTION,
     categories=PLUGIN_CATEGORIES,
     capabilities=[
-        'analyze', 'patch', 'validate', 'configure',
-        'entropy_analysis', 'string_extraction', 'pattern_matching'
+        "analyze", "patch", "validate", "configure",
+        "entropy_analysis", "string_extraction", "pattern_matching"
     ]
 )
-PLUGIN_INFO = create_plugin_info(_plugin_metadata, 'register')
+PLUGIN_INFO = create_plugin_info(_plugin_metadata, "register")

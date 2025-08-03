@@ -131,10 +131,10 @@ class DropZoneWidget(QWidget):
 
         # Supported extensions
         supported_exts = [
-            '.exe', '.dll', '.so', '.dylib', '.elf', '.bin',
-            '.sys', '.drv', '.ocx', '.app', '.apk', '.ipa',
-            '.dex', '.jar', '.class', '.pyc', '.pyd', '.msi',
-            '.rpm', '.deb', '.dmg', '.pkg'
+            ".exe", ".dll", ".so", ".dylib", ".elf", ".bin",
+            ".sys", ".drv", ".ocx", ".app", ".apk", ".ipa",
+            ".dex", ".jar", ".class", ".pyc", ".pyd", ".msi",
+            ".rpm", ".deb", ".dmg", ".pkg"
         ]
 
         ext = os.path.splitext(file_path)[1].lower()

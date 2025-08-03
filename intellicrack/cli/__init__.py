@@ -24,4 +24,4 @@ Intellicrack CLI Package
 Provides command-line interface for Intellicrack functionality.
 """
 
-__all__ = ['cli', 'main']
+__all__ = ["cli", "main"]

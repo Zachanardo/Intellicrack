@@ -94,7 +94,7 @@ class CacheStatsWidget(QWidget):
     def update_stats(self, stats: Dict[str, Any]):
         """Update displayed statistics"""
         try:
-            stats_data = stats.get('stats', {})
+            stats_data = stats.get("stats", {})
 
             # Update labels
             self.entries_label.setText(f"Entries: {stats_data.get('total_entries', 0)}")
@@ -102,13 +102,13 @@ class CacheStatsWidget(QWidget):
             self.hit_rate_label.setText(f"Hit Rate: {stats_data.get('hit_rate', 0):.1f}%")
 
             # Update progress bars
-            max_entries = stats.get('max_entries', 1000)
-            current_entries = stats_data.get('total_entries', 0)
+            max_entries = stats.get("max_entries", 1000)
+            current_entries = stats_data.get("total_entries", 0)
             entry_percentage = min(100, (current_entries / max_entries) * 100)
             self.entry_progress.setValue(int(entry_percentage))
 
-            max_size = stats.get('max_size_mb', 100)
-            current_size = stats.get('cache_size_mb', 0)
+            max_size = stats.get("max_size_mb", 100)
+            current_size = stats.get("cache_size_mb", 0)
             size_percentage = min(100, (current_size / max_size) * 100)
             self.size_progress.setValue(int(size_percentage))
 
@@ -156,8 +156,8 @@ class CacheTopEntriesWidget(QWidget):
         self.table.setRowCount(len(entries))
 
         for row, entry in enumerate(entries):
-            self.table.setItem(row, 0, QTableWidgetItem(entry.get('file', '')))
-            self.table.setItem(row, 1, QTableWidgetItem(str(entry.get('access_count', 0))))
+            self.table.setItem(row, 0, QTableWidgetItem(entry.get("file", "")))
+            self.table.setItem(row, 1, QTableWidgetItem(str(entry.get("access_count", 0))))
             self.table.setItem(row, 2, QTableWidgetItem(f"{entry.get('size_kb', 0):.1f}"))
             self.table.setItem(row, 3, QTableWidgetItem(f"{entry.get('age_hours', 0):.1f}"))
 
@@ -281,7 +281,7 @@ class CacheManagementWidget(QWidget):
             self.stats_widget.update_stats(stats)
 
             # Update top entries
-            top_entries = stats.get('top_entries', [])
+            top_entries = stats.get("top_entries", [])
             self.top_entries_widget.update_entries(top_entries)
 
             # Update details
@@ -294,7 +294,7 @@ class CacheManagementWidget(QWidget):
         """Update cache details text"""
         details = []
 
-        stats_data = stats.get('stats', {})
+        stats_data = stats.get("stats", {})
 
         details.append(f"Cache Directory: {stats.get('cache_directory', 'Unknown')}")
         details.append(f"Total Entries: {stats_data.get('total_entries', 0)}")
@@ -311,11 +311,11 @@ class CacheManagementWidget(QWidget):
             from PyQt6.QtWidgets import QApplication
             main_window = None
             for widget in QApplication.allWidgets():
-                if hasattr(widget, 'ai_coordinator') and widget.ai_coordinator:
+                if hasattr(widget, "ai_coordinator") and widget.ai_coordinator:
                     main_window = widget
                     break
 
-            if main_window and hasattr(main_window.ai_coordinator, 'get_performance_stats'):
+            if main_window and hasattr(main_window.ai_coordinator, "get_performance_stats"):
                 ai_stats = main_window.ai_coordinator.get_performance_stats()
                 details.append("")
                 details.append("=== AI Coordination Layer Performance ===")
@@ -327,26 +327,26 @@ class CacheManagementWidget(QWidget):
                 details.append(f"Average ML Time: {ai_stats.get('avg_ml_time', 0):.2f}s")
                 details.append(f"Average LLM Time: {ai_stats.get('avg_llm_time', 0):.2f}s")
                 details.append("Components Available:")
-                components = ai_stats.get('components_available', {})
+                components = ai_stats.get("components_available", {})
                 details.append(f"  - ML Predictor: {'Yes' if components.get('ml_predictor', False) else 'No'}")
                 details.append(f"  - Model Manager: {'Yes' if components.get('model_manager', False) else 'No'}")
         except Exception as e:
             logger.debug(f"Could not retrieve AI coordination stats: {e}")
 
-        oldest = stats_data.get('oldest_entry', 0)
-        newest = stats_data.get('newest_entry', 0)
+        oldest = stats_data.get("oldest_entry", 0)
+        newest = stats_data.get("newest_entry", 0)
 
         if oldest > 0:
             import datetime
-            oldest_date = datetime.datetime.fromtimestamp(oldest).strftime('%Y-%m-%d %H:%M:%S')
+            oldest_date = datetime.datetime.fromtimestamp(oldest).strftime("%Y-%m-%d %H:%M:%S")
             details.append(f"Oldest Entry: {oldest_date}")
 
         if newest > 0:
             import datetime
-            newest_date = datetime.datetime.fromtimestamp(newest).strftime('%Y-%m-%d %H:%M:%S')
+            newest_date = datetime.datetime.fromtimestamp(newest).strftime("%Y-%m-%d %H:%M:%S")
             details.append(f"Newest Entry: {newest_date}")
 
-        self.details_text.setPlainText('\n'.join(details))
+        self.details_text.setPlainText("\n".join(details))
 
     def cleanup_cache(self):
         """Clean up invalid cache entries"""
@@ -410,11 +410,11 @@ class CacheManagementWidget(QWidget):
                     from PyQt6.QtWidgets import QApplication
                     main_window = None
                     for widget in QApplication.allWidgets():
-                        if hasattr(widget, 'ai_coordinator') and widget.ai_coordinator:
+                        if hasattr(widget, "ai_coordinator") and widget.ai_coordinator:
                             main_window = widget
                             break
 
-                    if main_window and hasattr(main_window.ai_coordinator, 'clear_cache'):
+                    if main_window and hasattr(main_window.ai_coordinator, "clear_cache"):
                         main_window.ai_coordinator.clear_cache()
                         logger.info("AI coordination cache cleared")
 
@@ -440,6 +440,6 @@ class CacheManagementWidget(QWidget):
 
     def closeEvent(self, event):
         """Clean up on close"""
-        if hasattr(self, 'timer'):
+        if hasattr(self, "timer"):
             self.timer.stop()
         super().closeEvent(event)

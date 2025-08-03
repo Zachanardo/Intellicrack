@@ -49,19 +49,19 @@ class NetworkAnalysisPlugin:
 
         # Check for network-related strings
         network_indicators = [
-            b'http://', b'https://', b'ftp://',
-            b'socket', b'connect', b'bind', b'listen',
-            b'send', b'recv', b'WSAStartup'
+            b"http://", b"https://", b"ftp://",
+            b"socket", b"connect", b"bind", b"listen",
+            b"send", b"recv", b"WSAStartup"
         ]
 
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
                 found_indicators = []
                 for indicator in network_indicators:
                     if indicator in data:
-                        found_indicators.append(indicator.decode('utf-8', errors='ignore'))
+                        found_indicators.append(indicator.decode("utf-8", errors="ignore"))
 
                 if found_indicators:
                     results.append("Network indicators found:")
@@ -82,45 +82,45 @@ class NetworkAnalysisPlugin:
         # Socket API function names to search for
         socket_apis = {
             # Windows socket APIs
-            b'WSAStartup': 'Windows Sockets initialization',
-            b'WSACleanup': 'Windows Sockets cleanup',
-            b'WSASocketA': 'Windows async socket creation',
-            b'WSAConnect': 'Windows async connect',
-            b'WSASend': 'Windows async send',
-            b'WSARecv': 'Windows async receive',
-            b'WSAAccept': 'Windows async accept',
-            b'WSAIoctl': 'Windows socket I/O control',
+            b"WSAStartup": "Windows Sockets initialization",
+            b"WSACleanup": "Windows Sockets cleanup",
+            b"WSASocketA": "Windows async socket creation",
+            b"WSAConnect": "Windows async connect",
+            b"WSASend": "Windows async send",
+            b"WSARecv": "Windows async receive",
+            b"WSAAccept": "Windows async accept",
+            b"WSAIoctl": "Windows socket I/O control",
 
             # Standard socket APIs
-            b'socket': 'Socket creation',
-            b'connect': 'Socket connection',
-            b'bind': 'Socket binding',
-            b'listen': 'Socket listening',
-            b'accept': 'Socket accept connections',
-            b'send': 'Socket send data',
-            b'recv': 'Socket receive data',
-            b'sendto': 'UDP send',
-            b'recvfrom': 'UDP receive',
-            b'shutdown': 'Socket shutdown',
-            b'closesocket': 'Close socket',
-            b'gethostbyname': 'DNS hostname resolution',
-            b'getaddrinfo': 'Address information',
-            b'inet_addr': 'IP address conversion',
-            b'inet_ntoa': 'IP address to string',
-            b'htons': 'Host to network byte order (short)',
-            b'htonl': 'Host to network byte order (long)',
-            b'ntohs': 'Network to host byte order (short)',
-            b'ntohl': 'Network to host byte order (long)',
+            b"socket": "Socket creation",
+            b"connect": "Socket connection",
+            b"bind": "Socket binding",
+            b"listen": "Socket listening",
+            b"accept": "Socket accept connections",
+            b"send": "Socket send data",
+            b"recv": "Socket receive data",
+            b"sendto": "UDP send",
+            b"recvfrom": "UDP receive",
+            b"shutdown": "Socket shutdown",
+            b"closesocket": "Close socket",
+            b"gethostbyname": "DNS hostname resolution",
+            b"getaddrinfo": "Address information",
+            b"inet_addr": "IP address conversion",
+            b"inet_ntoa": "IP address to string",
+            b"htons": "Host to network byte order (short)",
+            b"htonl": "Host to network byte order (long)",
+            b"ntohs": "Network to host byte order (short)",
+            b"ntohl": "Network to host byte order (long)",
 
             # SSL/TLS APIs
-            b'SSL_connect': 'SSL connection',
-            b'SSL_read': 'SSL read',
-            b'SSL_write': 'SSL write',
-            b'SSL_CTX_new': 'SSL context creation'
+            b"SSL_connect": "SSL connection",
+            b"SSL_read": "SSL read",
+            b"SSL_write": "SSL write",
+            b"SSL_CTX_new": "SSL context creation"
         }
 
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             found_apis = []
@@ -140,13 +140,13 @@ class NetworkAnalysisPlugin:
 
         return results
 
-    def create_socket_server(self, host: str = '127.0.0.1', port: int = 0) -> Dict[str, Any]:
+    def create_socket_server(self, host: str = "127.0.0.1", port: int = 0) -> Dict[str, Any]:
         """Create a socket server for testing."""
         result = {
-            'success': False,
-            'host': host,
-            'port': port,
-            'socket_info': {}
+            "success": False,
+            "host": host,
+            "port": port,
+            "socket_info": {}
         }
 
         try:
@@ -159,28 +159,28 @@ class NetworkAnalysisPlugin:
 
             # Get actual port if 0 was specified
             actual_host, actual_port = server_socket.getsockname()
-            result['port'] = actual_port
+            result["port"] = actual_port
 
             # Start listening
             server_socket.listen(5)
 
-            result['success'] = True
-            result['socket_info'] = {
-                'family': 'AF_INET',
-                'type': 'SOCK_STREAM',
-                'protocol': 'TCP',
-                'address': f"{actual_host}:{actual_port}",
-                'state': 'LISTENING'
+            result["success"] = True
+            result["socket_info"] = {
+                "family": "AF_INET",
+                "type": "SOCK_STREAM",
+                "protocol": "TCP",
+                "address": f"{actual_host}:{actual_port}",
+                "state": "LISTENING"
             }
 
             # Store socket for later use
             self.active_sockets[f"server_{actual_port}"] = server_socket
 
-            result['message'] = f"Server listening on {actual_host}:{actual_port}"
+            result["message"] = f"Server listening on {actual_host}:{actual_port}"
 
         except Exception as e:
-            result['error'] = str(e)
-            result['message'] = f"Failed to create server: {e}"
+            result["error"] = str(e)
+            result["message"] = f"Failed to create server: {e}"
 
         return result
 
@@ -202,19 +202,19 @@ class NetworkAnalysisPlugin:
                     except:
                         # Common port services
                         common_ports = {
-                            21: 'ftp', 22: 'ssh', 23: 'telnet', 25: 'smtp',
-                            53: 'dns', 80: 'http', 110: 'pop3', 143: 'imap',
-                            443: 'https', 445: 'smb', 3306: 'mysql', 3389: 'rdp',
-                            5432: 'postgresql', 6379: 'redis', 8080: 'http-alt',
-                            8443: 'https-alt', 27017: 'mongodb'
+                            21: "ftp", 22: "ssh", 23: "telnet", 25: "smtp",
+                            53: "dns", 80: "http", 110: "pop3", 143: "imap",
+                            443: "https", 445: "smb", 3306: "mysql", 3389: "rdp",
+                            5432: "postgresql", 6379: "redis", 8080: "http-alt",
+                            8443: "https-alt", 27017: "mongodb"
                         }
-                        service_name = common_ports.get(port, 'unknown')
+                        service_name = common_ports.get(port, "unknown")
 
                     open_ports.append({
-                        'port': port,
-                        'service': service_name,
-                        'state': 'open',
-                        'protocol': 'tcp'
+                        "port": port,
+                        "service": service_name,
+                        "state": "open",
+                        "protocol": "tcp"
                     })
             except socket.timeout:
                 # Port is filtered or host is down
@@ -230,14 +230,14 @@ class NetworkAnalysisPlugin:
     def monitor_socket_activity(self, duration: int = 60) -> Dict[str, Any]:
         """Monitor real-time socket activity."""
         result = {
-            'monitoring_started': time.time(),
-            'duration': duration,
-            'connections': [],
-            'statistics': {}
+            "monitoring_started": time.time(),
+            "duration": duration,
+            "connections": [],
+            "statistics": {}
         }
 
         if self.monitoring:
-            return {'error': 'Monitoring already in progress'}
+            return {"error": "Monitoring already in progress"}
 
         def monitor_thread():
             """Thread function for monitoring."""
@@ -249,7 +249,7 @@ class NetworkAnalysisPlugin:
                 import psutil
 
                 initial_connections = set()
-                for conn in psutil.net_connections(kind='inet'):
+                for conn in psutil.net_connections(kind="inet"):
                     if conn.status == psutil.CONN_ESTABLISHED:
                         conn_id = f"{conn.laddr}:{conn.raddr}"
                         initial_connections.add(conn_id)
@@ -257,7 +257,7 @@ class NetworkAnalysisPlugin:
                 while self.monitoring and (time.time() - start_time) < duration:
                     current_connections = set()
 
-                    for conn in psutil.net_connections(kind='inet'):
+                    for conn in psutil.net_connections(kind="inet"):
                         if conn.status == psutil.CONN_ESTABLISHED:
                             conn_id = f"{conn.laddr}:{conn.raddr}"
                             current_connections.add(conn_id)
@@ -265,20 +265,20 @@ class NetworkAnalysisPlugin:
                             # New connection detected
                             if conn_id not in initial_connections:
                                 connection_log.append({
-                                    'timestamp': time.time(),
-                                    'type': 'new_connection',
-                                    'local': f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else 'N/A',
-                                    'remote': f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else 'N/A',
-                                    'pid': conn.pid if hasattr(conn, 'pid') else 'N/A'
+                                    "timestamp": time.time(),
+                                    "type": "new_connection",
+                                    "local": f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "N/A",
+                                    "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "N/A",
+                                    "pid": conn.pid if hasattr(conn, "pid") else "N/A"
                                 })
 
                     # Check for closed connections
                     closed_connections = initial_connections - current_connections
                     for conn_id in closed_connections:
                         connection_log.append({
-                            'timestamp': time.time(),
-                            'type': 'closed_connection',
-                            'connection': conn_id
+                            "timestamp": time.time(),
+                            "type": "closed_connection",
+                            "connection": conn_id
                         })
 
                     initial_connections = current_connections
@@ -289,11 +289,11 @@ class NetworkAnalysisPlugin:
             finally:
                 self.monitoring = False
 
-            result['connections'] = connection_log
-            result['statistics'] = {
-                'total_events': len(connection_log),
-                'new_connections': sum(1 for c in connection_log if c['type'] == 'new_connection'),
-                'closed_connections': sum(1 for c in connection_log if c['type'] == 'closed_connection')
+            result["connections"] = connection_log
+            result["statistics"] = {
+                "total_events": len(connection_log),
+                "new_connections": sum(1 for c in connection_log if c["type"] == "new_connection"),
+                "closed_connections": sum(1 for c in connection_log if c["type"] == "closed_connection")
             }
 
         # Start monitoring in a separate thread
@@ -306,16 +306,16 @@ class NetworkAnalysisPlugin:
     def analyze_socket_traffic(self, capture_file: Optional[str] = None) -> Dict[str, Any]:
         """Analyze socket traffic patterns."""
         result = {
-            'analysis_time': time.time(),
-            'patterns': [],
-            'suspicious_activity': []
+            "analysis_time": time.time(),
+            "patterns": [],
+            "suspicious_activity": []
         }
 
         try:
             import psutil
 
             # Get current network connections
-            connections = psutil.net_connections(kind='inet')
+            connections = psutil.net_connections(kind="inet")
 
             # Analyze connection patterns
             port_frequency = {}
@@ -336,39 +336,39 @@ class NetworkAnalysisPlugin:
 
                         # Check for suspicious ports
                         if conn.raddr.port in suspicious_ports:
-                            result['suspicious_activity'].append({
-                                'type': 'suspicious_port',
-                                'details': f"Connection to suspicious port {conn.raddr.port} at {ip}",
-                                'severity': 'medium'
+                            result["suspicious_activity"].append({
+                                "type": "suspicious_port",
+                                "details": f"Connection to suspicious port {conn.raddr.port} at {ip}",
+                                "severity": "medium"
                             })
 
             # Identify patterns
             if port_frequency:
                 most_used_ports = sorted(port_frequency.items(), key=lambda x: x[1], reverse=True)[:5]
-                result['patterns'].append({
-                    'type': 'port_usage',
-                    'description': 'Most frequently used ports',
-                    'data': most_used_ports
+                result["patterns"].append({
+                    "type": "port_usage",
+                    "description": "Most frequently used ports",
+                    "data": most_used_ports
                 })
 
             if ip_frequency:
                 most_connected_ips = sorted(ip_frequency.items(), key=lambda x: x[1], reverse=True)[:5]
-                result['patterns'].append({
-                    'type': 'ip_connections',
-                    'description': 'Most frequently connected IPs',
-                    'data': most_connected_ips
+                result["patterns"].append({
+                    "type": "ip_connections",
+                    "description": "Most frequently connected IPs",
+                    "data": most_connected_ips
                 })
 
             # Check for potential port scanning
             if len(port_frequency) > 50:
-                result['suspicious_activity'].append({
-                    'type': 'possible_port_scan',
-                    'details': f"Large number of different ports in use: {len(port_frequency)}",
-                    'severity': 'high'
+                result["suspicious_activity"].append({
+                    "type": "possible_port_scan",
+                    "details": f"Large number of different ports in use: {len(port_frequency)}",
+                    "severity": "high"
                 })
 
         except Exception as e:
-            result['error'] = str(e)
+            result["error"] = str(e)
 
         return result
 
@@ -398,12 +398,12 @@ class NetworkAnalysisPlugin:
             import psutil
 
             # Get network connections
-            connections = psutil.net_connections(kind='inet')
+            connections = psutil.net_connections(kind="inet")
             if target_process:
                 # Filter connections for specific process
                 try:
                     proc = psutil.Process(target_process)
-                    connections = proc.connections(kind='inet')
+                    connections = proc.connections(kind="inet")
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     results.append(f"Error: Cannot access process {target_process}")
                     return results
@@ -423,17 +423,17 @@ class NetworkAnalysisPlugin:
                             remote_host = conn.raddr.ip
 
                     active_connections.append({
-                        'local': local_addr,
-                        'remote': remote_addr,
-                        'remote_host': remote_host,
-                        'status': conn.status,
-                        'pid': conn.pid if hasattr(conn, 'pid') else 'N/A'
+                        "local": local_addr,
+                        "remote": remote_addr,
+                        "remote_host": remote_host,
+                        "status": conn.status,
+                        "pid": conn.pid if hasattr(conn, "pid") else "N/A"
                     })
 
             if active_connections:
                 results.append(f"Found {len(active_connections)} active network connections:")
                 for i, conn in enumerate(active_connections[:10]):  # Show max 10
-                    host_info = f" [{conn['remote_host']}]" if conn['remote_host'] else ""
+                    host_info = f" [{conn['remote_host']}]" if conn["remote_host"] else ""
                     results.append(f"  {i+1}. {conn['local']} -> {conn['remote']}{host_info} (PID: {conn['pid']})")
                 if len(active_connections) > 10:
                     results.append(f"  ... and {len(active_connections) - 10} more connections")
@@ -442,12 +442,12 @@ class NetworkAnalysisPlugin:
 
             # Check for listening ports
             listening_ports = []
-            for conn in psutil.net_connections(kind='inet'):
+            for conn in psutil.net_connections(kind="inet"):
                 if conn.status == psutil.CONN_LISTEN:
                     local_addr = f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "N/A"
                     listening_ports.append({
-                        'address': local_addr,
-                        'pid': conn.pid if hasattr(conn, 'pid') else 'N/A'
+                        "address": local_addr,
+                        "pid": conn.pid if hasattr(conn, "pid") else "N/A"
                     })
 
             if listening_ports:
@@ -477,39 +477,39 @@ class NetworkAnalysisPlugin:
     def get_socket_info(self, sock: socket.socket) -> Dict[str, Any]:
         """Get detailed information about a socket."""
         info = {
-            'family': sock.family.name if hasattr(sock.family, 'name') else str(sock.family),
-            'type': sock.type.name if hasattr(sock.type, 'name') else str(sock.type),
-            'proto': sock.proto
+            "family": sock.family.name if hasattr(sock.family, "name") else str(sock.family),
+            "type": sock.type.name if hasattr(sock.type, "name") else str(sock.type),
+            "proto": sock.proto
         }
 
         try:
             # Get socket name (local address)
             local_addr = sock.getsockname()
             if len(local_addr) == 2:  # IPv4
-                info['local_address'] = f"{local_addr[0]}:{local_addr[1]}"
+                info["local_address"] = f"{local_addr[0]}:{local_addr[1]}"
             else:
-                info['local_address'] = str(local_addr)
+                info["local_address"] = str(local_addr)
         except:
-            info['local_address'] = 'Not bound'
+            info["local_address"] = "Not bound"
 
         try:
             # Get peer name (remote address)
             peer_addr = sock.getpeername()
             if len(peer_addr) == 2:  # IPv4
-                info['remote_address'] = f"{peer_addr[0]}:{peer_addr[1]}"
+                info["remote_address"] = f"{peer_addr[0]}:{peer_addr[1]}"
             else:
-                info['remote_address'] = str(peer_addr)
+                info["remote_address"] = str(peer_addr)
         except:
-            info['remote_address'] = 'Not connected'
+            info["remote_address"] = "Not connected"
 
         # Get socket options
         try:
-            info['reuse_addr'] = bool(sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR))
-            info['keep_alive'] = bool(sock.getsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE))
-            if hasattr(socket, 'SO_RCVBUF'):
-                info['recv_buffer'] = sock.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF)
-            if hasattr(socket, 'SO_SNDBUF'):
-                info['send_buffer'] = sock.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
+            info["reuse_addr"] = bool(sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR))
+            info["keep_alive"] = bool(sock.getsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE))
+            if hasattr(socket, "SO_RCVBUF"):
+                info["recv_buffer"] = sock.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF)
+            if hasattr(socket, "SO_SNDBUF"):
+                info["send_buffer"] = sock.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
         except:
             pass
 

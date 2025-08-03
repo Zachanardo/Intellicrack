@@ -733,12 +733,12 @@ def save_ghidra_script(script_content: str, script_name: str, output_dir: str) -
         os.makedirs(output_dir, exist_ok=True)
 
         # Ensure .java extension
-        if not script_name.endswith('.java'):
-            script_name += '.java'
+        if not script_name.endswith(".java"):
+            script_name += ".java"
 
         script_path = os.path.join(output_dir, script_name)
 
-        with open(script_path, 'w', encoding='utf-8') as f:
+        with open(script_path, "w", encoding="utf-8") as f:
             f.write(script_content)
 
         logger.info(f"Ghidra script saved to: {script_path}")
@@ -761,28 +761,28 @@ def get_ghidra_project_info(project_dir: str, project_name: str) -> Dict[str, An
         Dictionary with project information
     """
     info = {
-        'exists': False,
-        'project_dir': project_dir,
-        'project_name': project_name,
-        'files': [],
-        'size': 0
+        "exists": False,
+        "project_dir": project_dir,
+        "project_name": project_name,
+        "files": [],
+        "size": 0
     }
 
     try:
         project_path = os.path.join(project_dir, f"{project_name}.gpr")
 
         if os.path.exists(project_path):
-            info['exists'] = True
-            info['project_file'] = project_path
-            info['size'] = os.path.getsize(project_path)
-            info['modified'] = os.path.getmtime(project_path)
+            info["exists"] = True
+            info["project_file"] = project_path
+            info["size"] = os.path.getsize(project_path)
+            info["modified"] = os.path.getmtime(project_path)
 
             # List project files
             project_files = []
             for file in os.listdir(project_dir):
                 if file.startswith(project_name):
                     project_files.append(file)
-            info['files'] = project_files
+            info["files"] = project_files
 
     except Exception as e:
         logger.debug(f"Failed to get project info: {e}")
@@ -829,9 +829,9 @@ def cleanup_ghidra_project(project_dir: str, project_name: str) -> bool:
 
 # Export commonly used functions
 __all__ = [
-    'run_ghidra_plugin',
-    'create_ghidra_analysis_script',
-    'save_ghidra_script',
-    'get_ghidra_project_info',
-    'cleanup_ghidra_project'
+    "run_ghidra_plugin",
+    "create_ghidra_analysis_script",
+    "save_ghidra_script",
+    "get_ghidra_project_info",
+    "cleanup_ghidra_project"
 ]

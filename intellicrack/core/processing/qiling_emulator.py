@@ -72,23 +72,23 @@ class QilingEmulator:
     """
 
     ARCH_MAPPING = {
-        'x86': 'x86' if QILING_AVAILABLE else None,
-        'x64': 'x86' if QILING_AVAILABLE else None,
-        'x86_64': 'x86' if QILING_AVAILABLE else None,
-        'arm': 'arm' if QILING_AVAILABLE else None,
-        'arm64': 'arm64' if QILING_AVAILABLE else None,
-        'mips': 'mips' if QILING_AVAILABLE else None,
+        "x86": "x86" if QILING_AVAILABLE else None,
+        "x64": "x86" if QILING_AVAILABLE else None,
+        "x86_64": "x86" if QILING_AVAILABLE else None,
+        "arm": "arm" if QILING_AVAILABLE else None,
+        "arm64": "arm64" if QILING_AVAILABLE else None,
+        "mips": "mips" if QILING_AVAILABLE else None,
     }
 
     OS_MAPPING = {
-        'windows': 'windows' if QILING_AVAILABLE else None,
-        'linux': 'linux' if QILING_AVAILABLE else None,
-        'macos': 'macos' if QILING_AVAILABLE else None,
-        'freebsd': 'freebsd' if QILING_AVAILABLE else None,
+        "windows": "windows" if QILING_AVAILABLE else None,
+        "linux": "linux" if QILING_AVAILABLE else None,
+        "macos": "macos" if QILING_AVAILABLE else None,
+        "freebsd": "freebsd" if QILING_AVAILABLE else None,
     }
 
     def __init__(self, binary_path: str, rootfs: Optional[str] = None,
-                 ostype: str = 'windows', arch: str = 'x86_64',
+                 ostype: str = "windows", arch: str = "x86_64",
                  verbose: bool = False):
         """
         Initialize Qiling emulator.
@@ -145,18 +145,18 @@ class QilingEmulator:
             return None
 
         arch_map = {
-            'x86': QL_ARCH.X86,
-            'x64': QL_ARCH.X8664,
-            'x86_64': QL_ARCH.X8664,
-            'arm': QL_ARCH.ARM,
-            'arm64': QL_ARCH.ARM64,
-            'aarch64': QL_ARCH.ARM64,
-            'mips': QL_ARCH.MIPS,
-            'mips64': QL_ARCH.MIPS64,
-            'ppc': QL_ARCH.PPC,
-            'ppc64': QL_ARCH.PPC64,
-            'riscv': QL_ARCH.RISCV,
-            'riscv64': QL_ARCH.RISCV64,
+            "x86": QL_ARCH.X86,
+            "x64": QL_ARCH.X8664,
+            "x86_64": QL_ARCH.X8664,
+            "arm": QL_ARCH.ARM,
+            "arm64": QL_ARCH.ARM64,
+            "aarch64": QL_ARCH.ARM64,
+            "mips": QL_ARCH.MIPS,
+            "mips64": QL_ARCH.MIPS64,
+            "ppc": QL_ARCH.PPC,
+            "ppc64": QL_ARCH.PPC64,
+            "riscv": QL_ARCH.RISCV,
+            "riscv64": QL_ARCH.RISCV64,
         }
 
         return arch_map.get(arch.lower(), QL_ARCH.X8664)
@@ -167,14 +167,14 @@ class QilingEmulator:
             return None
 
         os_map = {
-            'windows': QL_OS.WINDOWS,
-            'linux': QL_OS.LINUX,
-            'macos': QL_OS.MACOS,
-            'darwin': QL_OS.MACOS,
-            'freebsd': QL_OS.FREEBSD,
-            'qnx': QL_OS.QNX,
-            'dos': QL_OS.DOS,
-            'uefi': QL_OS.UEFI,
+            "windows": QL_OS.WINDOWS,
+            "linux": QL_OS.LINUX,
+            "macos": QL_OS.MACOS,
+            "darwin": QL_OS.MACOS,
+            "freebsd": QL_OS.FREEBSD,
+            "qnx": QL_OS.QNX,
+            "dos": QL_OS.DOS,
+            "uefi": QL_OS.UEFI,
         }
 
         return os_map.get(ostype.lower(), QL_OS.WINDOWS)
@@ -224,9 +224,9 @@ class QilingEmulator:
             raise FileNotFoundError(f"Host path not found: {host_path}")
 
         self.mapped_files.append({
-            'host': host_path,
-            'guest': guest_path,
-            'type': 'directory' if os.path.isdir(host_path) else 'file'
+            "host": host_path,
+            "guest": guest_path,
+            "type": "directory" if os.path.isdir(host_path) else "file"
         })
 
         self.logger.info("Mapped %s -> %s", host_path, guest_path)
@@ -239,27 +239,27 @@ class QilingEmulator:
         # Map common license file locations
         license_paths = [
             # Windows common paths
-            ('C:\\ProgramData', '/ProgramData'),
-            ('C:\\Windows\\System32\\drivers\\etc', '/Windows/System32/drivers/etc'),
+            ("C:\\ProgramData", "/ProgramData"),
+            ("C:\\Windows\\System32\\drivers\\etc", "/Windows/System32/drivers/etc"),
             # Linux common paths
-            ('/etc', '/etc'),
-            ('/usr/share', '/usr/share'),
-            ('/var/lib', '/var/lib'),
+            ("/etc", "/etc"),
+            ("/usr/share", "/usr/share"),
+            ("/var/lib", "/var/lib"),
         ]
 
         for host, guest in license_paths:
-            if self.ql_os == QL_OS.WINDOWS and guest.startswith('/'):
-                guest = 'C:' + guest.replace('/', '\\')
+            if self.ql_os == QL_OS.WINDOWS and guest.startswith("/"):
+                guest = "C:" + guest.replace("/", "\\")
 
             try:
-                if hasattr(self.ql, 'os') and hasattr(self.ql.os, 'fs_mapper'):
+                if hasattr(self.ql, "os") and hasattr(self.ql.os, "fs_mapper"):
                     # Use QlFsMappedObject for advanced mapping
                     mapped_obj = QlFsMappedObject(host, guest)
                     self.ql.os.fs_mapper.add_fs_mapping(mapped_obj)
                     self.mapped_files.append({
-                        'host': host,
-                        'guest': guest,
-                        'mapped_object': mapped_obj
+                        "host": host,
+                        "guest": guest,
+                        "mapped_object": mapped_obj
                     })
             except (AttributeError, OSError) as e:
                 self.logger.debug("Could not map %s: %s", host, e)
@@ -268,31 +268,31 @@ class QilingEmulator:
         """Add hooks for common license check patterns."""
         license_apis = [
             # Windows Registry APIs
-            'RegOpenKeyExA', 'RegOpenKeyExW',
-            'RegQueryValueExA', 'RegQueryValueExW',
-            'RegCreateKeyExA', 'RegCreateKeyExW',
-            'RegSetValueExA', 'RegSetValueExW',
+            "RegOpenKeyExA", "RegOpenKeyExW",
+            "RegQueryValueExA", "RegQueryValueExW",
+            "RegCreateKeyExA", "RegCreateKeyExW",
+            "RegSetValueExA", "RegSetValueExW",
 
             # File APIs (license files)
-            'CreateFileA', 'CreateFileW',
-            'ReadFile', 'WriteFile',
+            "CreateFileA", "CreateFileW",
+            "ReadFile", "WriteFile",
 
             # Network APIs (license servers)
-            'connect', 'send', 'recv',
-            'InternetOpenA', 'InternetOpenW',
-            'HttpSendRequestA', 'HttpSendRequestW',
+            "connect", "send", "recv",
+            "InternetOpenA", "InternetOpenW",
+            "HttpSendRequestA", "HttpSendRequestW",
 
             # Crypto APIs (license validation)
-            'CryptHashData', 'CryptVerifySignature',
-            'CryptDecrypt', 'CryptEncrypt',
+            "CryptHashData", "CryptVerifySignature",
+            "CryptDecrypt", "CryptEncrypt",
 
             # Time APIs (trial periods)
-            'GetSystemTime', 'GetLocalTime',
-            'GetTickCount', 'GetTickCount64',
+            "GetSystemTime", "GetLocalTime",
+            "GetTickCount", "GetTickCount64",
 
             # Hardware ID APIs
-            'GetVolumeInformationA', 'GetVolumeInformationW',
-            'GetComputerNameA', 'GetComputerNameW',
+            "GetVolumeInformationA", "GetVolumeInformationW",
+            "GetComputerNameA", "GetComputerNameW",
         ]
 
         for api in license_apis:
@@ -304,20 +304,20 @@ class QilingEmulator:
 
         # Log the API call
         self.api_calls.append({
-            'api': api_name,
-            'address': hex(address),
-            'params': params,
-            'timestamp': time.time()
+            "api": api_name,
+            "address": hex(address),
+            "params": params,
+            "timestamp": time.time()
         })
 
         # Check for suspicious patterns
         if any(keyword in str(params).lower() for keyword in
-               ['license', 'serial', 'key', 'trial', 'activation', 'registration']):
+               ["license", "serial", "key", "trial", "activation", "registration"]):
             self.license_checks.append({
-                'api': api_name,
-                'address': hex(address),
-                'params': params,
-                'type': 'direct_check'
+                "api": api_name,
+                "address": hex(address),
+                "params": params,
+                "type": "direct_check"
             })
 
         # Log potential license check
@@ -330,21 +330,21 @@ class QilingEmulator:
         # Extract current CPU state from Qiling object
         cpu_state = {}
         try:
-            if hasattr(ql, 'arch') and hasattr(ql.arch, 'regs'):
-                if hasattr(ql.arch.regs, 'eip'):  # x86
-                    cpu_state['pc'] = hex(ql.arch.regs.eip)
-                elif hasattr(ql.arch.regs, 'rip'):  # x64
-                    cpu_state['pc'] = hex(ql.arch.regs.rip)
-                elif hasattr(ql.arch.regs, 'pc'):  # ARM
-                    cpu_state['pc'] = hex(ql.arch.regs.pc)
+            if hasattr(ql, "arch") and hasattr(ql.arch, "regs"):
+                if hasattr(ql.arch.regs, "eip"):  # x86
+                    cpu_state["pc"] = hex(ql.arch.regs.eip)
+                elif hasattr(ql.arch.regs, "rip"):  # x64
+                    cpu_state["pc"] = hex(ql.arch.regs.rip)
+                elif hasattr(ql.arch.regs, "pc"):  # ARM
+                    cpu_state["pc"] = hex(ql.arch.regs.pc)
 
                 # Get stack pointer
-                if hasattr(ql.arch.regs, 'esp'):
-                    cpu_state['sp'] = hex(ql.arch.regs.esp)
-                elif hasattr(ql.arch.regs, 'rsp'):
-                    cpu_state['sp'] = hex(ql.arch.regs.rsp)
-                elif hasattr(ql.arch.regs, 'sp'):
-                    cpu_state['sp'] = hex(ql.arch.regs.sp)
+                if hasattr(ql.arch.regs, "esp"):
+                    cpu_state["sp"] = hex(ql.arch.regs.esp)
+                elif hasattr(ql.arch.regs, "rsp"):
+                    cpu_state["sp"] = hex(ql.arch.regs.rsp)
+                elif hasattr(ql.arch.regs, "sp"):
+                    cpu_state["sp"] = hex(ql.arch.regs.sp)
         except (AttributeError, Exception) as e:
             self.logger.debug(f"Failed to extract CPU state: {e}")
 
@@ -358,22 +358,22 @@ class QilingEmulator:
 
         # Check if this is a stack access
         is_stack_access = False
-        if cpu_state.get('sp'):
+        if cpu_state.get("sp"):
             try:
-                stack_addr = int(cpu_state['sp'], 16)
+                stack_addr = int(cpu_state["sp"], 16)
                 is_stack_access = abs(address - stack_addr) < 0x10000  # Within 64KB of stack
             except (ValueError, TypeError):
                 pass
 
         self.memory_accesses.append({
-            'type': access_type,
-            'address': hex(address),
-            'size': size,
-            'value': hex(value) if access == 2 else None,
-            'memory_content': memory_content,
-            'cpu_state': cpu_state,
-            'is_stack_access': is_stack_access,
-            'timestamp': time.time()
+            "type": access_type,
+            "address": hex(address),
+            "size": size,
+            "value": hex(value) if access == 2 else None,
+            "memory_content": memory_content,
+            "cpu_state": cpu_state,
+            "is_stack_access": is_stack_access,
+            "timestamp": time.time()
         })
 
     def hook_code_execution(self, ql: Qiling, address: int, size: int):
@@ -418,19 +418,19 @@ class QilingEmulator:
 
             # Initialize Qiling with proper arch and OS constants
             init_params = {
-                'argv': argv,
-                'verbose': verbose
+                "argv": argv,
+                "verbose": verbose
             }
 
             # Add architecture and OS if available
             if self.ql_arch is not None:
-                init_params['archtype'] = self.ql_arch
+                init_params["archtype"] = self.ql_arch
             if self.ql_os is not None:
-                init_params['ostype'] = self.ql_os
+                init_params["ostype"] = self.ql_os
 
             # Add rootfs if exists
             if os.path.exists(self.rootfs):
-                init_params['rootfs'] = self.rootfs
+                init_params["rootfs"] = self.rootfs
 
             self.ql = Qiling(**init_params)
 
@@ -477,15 +477,15 @@ class QilingEmulator:
 
             # Analyze results
             results = self._analyze_results()
-            results['execution_time'] = execution_time
-            results['timeout_occurred'] = timeout_occurred
-            results['timeout_limit'] = timeout if timeout else None
+            results["execution_time"] = execution_time
+            results["timeout_occurred"] = timeout_occurred
+            results["timeout_limit"] = timeout if timeout else None
 
             if timeout_occurred:
-                results['status'] = 'timeout'
+                results["status"] = "timeout"
                 self.logger.info("Emulation timed out after %.2f seconds", execution_time)
             else:
-                results['status'] = 'success'
+                results["status"] = "success"
 
             return results
 
@@ -498,14 +498,14 @@ class QilingEmulator:
             self.logger.debug(traceback.format_exc())
 
             return {
-                'status': 'error',
-                'error': str(e),
-                'execution_time': time.time() - start_time,
-                'timeout_occurred': timeout_occurred,
-                'timeout_limit': timeout if timeout else None,
-                'api_calls': self.api_calls,
-                'memory_accesses': self.memory_accesses,
-                'license_checks': self.license_checks
+                "status": "error",
+                "error": str(e),
+                "execution_time": time.time() - start_time,
+                "timeout_occurred": timeout_occurred,
+                "timeout_limit": timeout if timeout else None,
+                "api_calls": self.api_calls,
+                "memory_accesses": self.memory_accesses,
+                "license_checks": self.license_checks
             }
 
         finally:
@@ -524,55 +524,55 @@ class QilingEmulator:
     def get_arch_info(self) -> Dict[str, Any]:
         """Get detailed architecture information using QL_ARCH constants."""
         if not QILING_AVAILABLE or not QL_ARCH or not self.ql_arch:
-            return {'arch': self.arch, 'bits': 32 if '86' in self.arch else 64}
+            return {"arch": self.arch, "bits": 32 if "86" in self.arch else 64}
 
         arch_info = {
-            'arch_string': self.arch,
-            'ql_arch': self.ql_arch,
-            'bits': 32,
-            'endianness': 'little',
-            'instruction_set': 'unknown'
+            "arch_string": self.arch,
+            "ql_arch": self.ql_arch,
+            "bits": 32,
+            "endianness": "little",
+            "instruction_set": "unknown"
         }
 
         # Determine architecture details
         if self.ql_arch in [QL_ARCH.X86]:
             arch_info.update({
-                'bits': 32,
-                'instruction_set': 'x86',
-                'registers': ['eax', 'ebx', 'ecx', 'edx', 'esi', 'edi', 'ebp', 'esp']
+                "bits": 32,
+                "instruction_set": "x86",
+                "registers": ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"]
             })
         elif self.ql_arch in [QL_ARCH.X8664]:
             arch_info.update({
-                'bits': 64,
-                'instruction_set': 'x86_64',
-                'registers': ['rax', 'rbx', 'rcx', 'rdx', 'rsi', 'rdi', 'rbp', 'rsp',
-                            'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15']
+                "bits": 64,
+                "instruction_set": "x86_64",
+                "registers": ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp",
+                            "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"]
             })
         elif self.ql_arch in [QL_ARCH.ARM]:
             arch_info.update({
-                'bits': 32,
-                'instruction_set': 'arm',
-                'registers': ['r0', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7',
-                            'r8', 'r9', 'r10', 'r11', 'r12', 'sp', 'lr', 'pc']
+                "bits": 32,
+                "instruction_set": "arm",
+                "registers": ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+                            "r8", "r9", "r10", "r11", "r12", "sp", "lr", "pc"]
             })
         elif self.ql_arch in [QL_ARCH.ARM64]:
             arch_info.update({
-                'bits': 64,
-                'instruction_set': 'aarch64',
-                'registers': ['x0', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7',
-                            'x8', 'x9', 'x10', 'x11', 'x12', 'x13', 'x14', 'x15',
-                            'x16', 'x17', 'x18', 'x19', 'x20', 'x21', 'x22', 'x23',
-                            'x24', 'x25', 'x26', 'x27', 'x28', 'x29', 'x30', 'sp']
+                "bits": 64,
+                "instruction_set": "aarch64",
+                "registers": ["x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7",
+                            "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15",
+                            "x16", "x17", "x18", "x19", "x20", "x21", "x22", "x23",
+                            "x24", "x25", "x26", "x27", "x28", "x29", "x30", "sp"]
             })
         elif self.ql_arch in [QL_ARCH.MIPS, QL_ARCH.MIPS64]:
             arch_info.update({
-                'bits': 64 if self.ql_arch == QL_ARCH.MIPS64 else 32,
-                'instruction_set': 'mips',
-                'endianness': 'big',  # MIPS is typically big-endian
-                'registers': ['zero', 'at', 'v0', 'v1', 'a0', 'a1', 'a2', 'a3',
-                            't0', 't1', 't2', 't3', 't4', 't5', 't6', 't7',
-                            's0', 's1', 's2', 's3', 's4', 's5', 's6', 's7',
-                            't8', 't9', 'k0', 'k1', 'gp', 'sp', 'fp', 'ra']
+                "bits": 64 if self.ql_arch == QL_ARCH.MIPS64 else 32,
+                "instruction_set": "mips",
+                "endianness": "big",  # MIPS is typically big-endian
+                "registers": ["zero", "at", "v0", "v1", "a0", "a1", "a2", "a3",
+                            "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
+                            "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
+                            "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"]
             })
 
         return arch_info
@@ -580,48 +580,48 @@ class QilingEmulator:
     def get_os_info(self) -> Dict[str, Any]:
         """Get detailed OS information using QL_OS constants."""
         if not QILING_AVAILABLE or not QL_OS or not self.ql_os:
-            return {'os': self.ostype, 'family': 'unknown'}
+            return {"os": self.ostype, "family": "unknown"}
 
         os_info = {
-            'os_string': self.ostype,
-            'ql_os': self.ql_os,
-            'family': 'unknown',
-            'syscall_convention': 'unknown',
-            'executable_format': 'unknown'
+            "os_string": self.ostype,
+            "ql_os": self.ql_os,
+            "family": "unknown",
+            "syscall_convention": "unknown",
+            "executable_format": "unknown"
         }
 
         # Determine OS details
         if self.ql_os == QL_OS.WINDOWS:
             os_info.update({
-                'family': 'windows',
-                'syscall_convention': 'stdcall',
-                'executable_format': 'PE',
-                'path_separator': '\\',
-                'common_dirs': ['C:\\Windows', 'C:\\Program Files', 'C:\\ProgramData']
+                "family": "windows",
+                "syscall_convention": "stdcall",
+                "executable_format": "PE",
+                "path_separator": "\\",
+                "common_dirs": ["C:\\Windows", "C:\\Program Files", "C:\\ProgramData"]
             })
         elif self.ql_os == QL_OS.LINUX:
             os_info.update({
-                'family': 'unix',
-                'syscall_convention': 'sysv',
-                'executable_format': 'ELF',
-                'path_separator': '/',
-                'common_dirs': ['/usr', '/etc', '/var', '/tmp', '/home']
+                "family": "unix",
+                "syscall_convention": "sysv",
+                "executable_format": "ELF",
+                "path_separator": "/",
+                "common_dirs": ["/usr", "/etc", "/var", "/tmp", "/home"]
             })
         elif self.ql_os == QL_OS.MACOS:
             os_info.update({
-                'family': 'unix',
-                'syscall_convention': 'sysv',
-                'executable_format': 'Mach-O',
-                'path_separator': '/',
-                'common_dirs': ['/Applications', '/Library', '/System', '/Users']
+                "family": "unix",
+                "syscall_convention": "sysv",
+                "executable_format": "Mach-O",
+                "path_separator": "/",
+                "common_dirs": ["/Applications", "/Library", "/System", "/Users"]
             })
         elif self.ql_os == QL_OS.FREEBSD:
             os_info.update({
-                'family': 'bsd',
-                'syscall_convention': 'sysv',
-                'executable_format': 'ELF',
-                'path_separator': '/',
-                'common_dirs': ['/usr', '/etc', '/var', '/tmp']
+                "family": "bsd",
+                "syscall_convention": "sysv",
+                "executable_format": "ELF",
+                "path_separator": "/",
+                "common_dirs": ["/usr", "/etc", "/var", "/tmp"]
             })
 
         return os_info
@@ -630,62 +630,62 @@ class QilingEmulator:
         """Analyze emulation results for suspicious behavior."""
         # Count API categories
         api_categories = {
-            'registry': 0,
-            'file': 0,
-            'network': 0,
-            'crypto': 0,
-            'time': 0,
-            'hardware': 0
+            "registry": 0,
+            "file": 0,
+            "network": 0,
+            "crypto": 0,
+            "time": 0,
+            "hardware": 0
         }
 
         for api_call in self.api_calls:
-            api_name = api_call['api'].lower()
+            api_name = api_call["api"].lower()
 
-            if 'reg' in api_name:
-                api_categories['registry'] += 1
-            elif any(x in api_name for x in ['file', 'read', 'write']):
-                api_categories['file'] += 1
-            elif any(x in api_name for x in ['connect', 'send', 'recv', 'internet', 'http']):
-                api_categories['network'] += 1
-            elif 'crypt' in api_name:
-                api_categories['crypto'] += 1
-            elif any(x in api_name for x in ['time', 'tick']):
-                api_categories['time'] += 1
-            elif any(x in api_name for x in ['volume', 'computer', 'hardware']):
-                api_categories['hardware'] += 1
+            if "reg" in api_name:
+                api_categories["registry"] += 1
+            elif any(x in api_name for x in ["file", "read", "write"]):
+                api_categories["file"] += 1
+            elif any(x in api_name for x in ["connect", "send", "recv", "internet", "http"]):
+                api_categories["network"] += 1
+            elif "crypt" in api_name:
+                api_categories["crypto"] += 1
+            elif any(x in api_name for x in ["time", "tick"]):
+                api_categories["time"] += 1
+            elif any(x in api_name for x in ["volume", "computer", "hardware"]):
+                api_categories["hardware"] += 1
 
         # Detect suspicious patterns
-        if api_categories['registry'] > 5 and api_categories['crypto'] > 0:
+        if api_categories["registry"] > 5 and api_categories["crypto"] > 0:
             self.suspicious_behaviors.append({
-                'type': 'license_check',
-                'confidence': 'high',
-                'reason': 'Heavy registry access with cryptography'
+                "type": "license_check",
+                "confidence": "high",
+                "reason": "Heavy registry access with cryptography"
             })
 
-        if api_categories['network'] > 0 and api_categories['hardware'] > 0:
+        if api_categories["network"] > 0 and api_categories["hardware"] > 0:
             self.suspicious_behaviors.append({
-                'type': 'online_activation',
-                'confidence': 'medium',
-                'reason': 'Network communication with hardware ID access'
+                "type": "online_activation",
+                "confidence": "medium",
+                "reason": "Network communication with hardware ID access"
             })
 
-        if api_categories['time'] > 3:
+        if api_categories["time"] > 3:
             self.suspicious_behaviors.append({
-                'type': 'trial_check',
-                'confidence': 'medium',
-                'reason': 'Multiple time-related API calls'
+                "type": "trial_check",
+                "confidence": "medium",
+                "reason": "Multiple time-related API calls"
             })
 
         return {
-            'api_calls': self.api_calls,
-            'api_categories': api_categories,
-            'memory_accesses': len(self.memory_accesses),
-            'license_checks': self.license_checks,
-            'suspicious_behaviors': self.suspicious_behaviors,
-            'total_api_calls': len(self.api_calls),
-            'arch_info': self.get_arch_info(),
-            'os_info': self.get_os_info(),
-            'mapped_files': self.mapped_files
+            "api_calls": self.api_calls,
+            "api_categories": api_categories,
+            "memory_accesses": len(self.memory_accesses),
+            "license_checks": self.license_checks,
+            "suspicious_behaviors": self.suspicious_behaviors,
+            "total_api_calls": len(self.api_calls),
+            "arch_info": self.get_arch_info(),
+            "os_info": self.get_os_info(),
+            "mapped_files": self.mapped_files
         }
 
     def emulate_with_patches(self, patches: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -711,8 +711,8 @@ class QilingEmulator:
             to the given memory addresses in the emulated process.
             """
             for _patch in patches:
-                addr = _patch['address']
-                data = _patch['bytes']
+                addr = _patch["address"]
+                data = _patch["bytes"]
                 ql.mem.write(addr, data)
                 self.logger.info(f"Applied patch at {hex(addr)}: {data.hex()}")
 
@@ -735,55 +735,55 @@ class QilingEmulator:
             - entry_point: Entry point if detectable
         """
         format_info = {
-            'format': 'unknown',
-            'arch': self.get_arch_info(),
-            'os': self.get_os_info(),
-            'entry_point': None,
-            'sections': [],
-            'imports': []
+            "format": "unknown",
+            "arch": self.get_arch_info(),
+            "os": self.get_os_info(),
+            "entry_point": None,
+            "sections": [],
+            "imports": []
         }
 
         try:
             # Try PE format detection
             import pefile
             pe = pefile.PE(self.binary_path)
-            format_info['format'] = 'PE'
-            format_info['entry_point'] = hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
+            format_info["format"] = "PE"
+            format_info["entry_point"] = hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
 
             # Get sections
             for section in pe.sections:
-                format_info['sections'].append({
-                    'name': section.Name.decode('utf-8').rstrip('\x00'),
-                    'virtual_address': hex(section.VirtualAddress),
-                    'size': section.SizeOfRawData
+                format_info["sections"].append({
+                    "name": section.Name.decode("utf-8").rstrip("\x00"),
+                    "virtual_address": hex(section.VirtualAddress),
+                    "size": section.SizeOfRawData
                 })
 
             # Get imports
-            if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                    dll_name = entry.dll.decode('utf-8')
-                    format_info['imports'].append({
-                        'dll': dll_name,
-                        'functions': [imp.name.decode('utf-8') if imp.name else f"Ordinal_{imp.ordinal}"
+                    dll_name = entry.dll.decode("utf-8")
+                    format_info["imports"].append({
+                        "dll": dll_name,
+                        "functions": [imp.name.decode("utf-8") if imp.name else f"Ordinal_{imp.ordinal}"
                                     for imp in entry.imports]
                     })
 
         except (ImportError, pefile.PEFormatError):
             # Try ELF format
             try:
-                with open(self.binary_path, 'rb') as f:
+                with open(self.binary_path, "rb") as f:
                     magic = f.read(4)
-                    if magic == b'\x7fELF':
-                        format_info['format'] = 'ELF'
+                    if magic == b"\x7fELF":
+                        format_info["format"] = "ELF"
                         # Basic ELF parsing
                         f.seek(0x18)  # e_entry offset for 64-bit
-                        entry = int.from_bytes(f.read(8), 'little')
-                        format_info['entry_point'] = hex(entry)
-                    elif magic[:2] == b'MZ':
-                        format_info['format'] = 'PE'  # DOS header
-                    elif magic in [b'\xce\xfa\xed\xfe', b'\xfe\xed\xfa\xce',
-                                 b'\xce\xfa\xed\xfe', b'\xfe\xed\xfa\xcf']:
-                        format_info['format'] = 'Mach-O'
+                        entry = int.from_bytes(f.read(8), "little")
+                        format_info["entry_point"] = hex(entry)
+                    elif magic[:2] == b"MZ":
+                        format_info["format"] = "PE"  # DOS header
+                    elif magic in [b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xce",
+                                 b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf"]:
+                        format_info["format"] = "Mach-O"
             except Exception:
                 pass
 
@@ -803,8 +803,8 @@ def run_qiling_emulation(binary_path: str, options: Dict[str, Any] = None) -> Di
     """
     if not QILING_AVAILABLE:
         return {
-            'status': 'error',
-            'error': 'Qiling not installed. Run: pip install qiling'
+            "status": "error",
+            "error": "Qiling not installed. Run: pip install qiling"
         }
 
     options = options or {}
@@ -817,32 +817,32 @@ def run_qiling_emulation(binary_path: str, options: Dict[str, Any] = None) -> Di
             logger.error("Import error in qiling_emulator: %s", e)
             pefile = None
 
-        ostype = 'windows'  # Default
-        arch = 'x86_64'     # Default
+        ostype = "windows"  # Default
+        arch = "x86_64"     # Default
 
         # Try to detect from binary
         try:
             pe = pefile.PE(binary_path)
             if pe.FILE_HEADER.Machine == 0x14c:
-                arch = 'x86'
+                arch = "x86"
             elif pe.FILE_HEADER.Machine == 0x8664:
-                arch = 'x86_64'
-            ostype = 'windows'
+                arch = "x86_64"
+            ostype = "windows"
         except (OSError, pefile.PEFormatError, AttributeError) as e:
             logger.error("Error in qiling_emulator: %s", e)
             # Try ELF
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 magic = f.read(4)
-                if magic[:4] == b'\x7fELF':
-                    ostype = 'linux'
+                if magic[:4] == b"\x7fELF":
+                    ostype = "linux"
                     # Could parse ELF header for arch
 
         # Create emulator
         emulator = QilingEmulator(
             binary_path=binary_path,
-            ostype=options.get('ostype', ostype),
-            arch=options.get('arch', arch),
-            verbose=options.get('verbose', False)
+            ostype=options.get("ostype", ostype),
+            arch=options.get("arch", arch),
+            verbose=options.get("verbose", False)
         )
 
         # Get binary format info
@@ -850,22 +850,22 @@ def run_qiling_emulation(binary_path: str, options: Dict[str, Any] = None) -> Di
 
         # Run emulation
         results = emulator.run(
-            timeout=options.get('timeout', 60),
-            until_address=options.get('until_address')
+            timeout=options.get("timeout", 60),
+            until_address=options.get("until_address")
         )
 
         # Add format info to results
-        results['binary_format'] = format_info
+        results["binary_format"] = format_info
 
         return results
 
     except (OSError, ValueError, RuntimeError) as e:
         logging.error("Qiling emulation failed: %s", e)
         return {
-            'status': 'error',
-            'error': str(e)
+            "status": "error",
+            "error": str(e)
         }
 
 
 # Export public API
-__all__ = ['QilingEmulator', 'run_qiling_emulation', 'QILING_AVAILABLE']
+__all__ = ["QilingEmulator", "run_qiling_emulation", "QILING_AVAILABLE"]

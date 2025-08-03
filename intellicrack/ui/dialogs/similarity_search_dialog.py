@@ -56,7 +56,7 @@ except ImportError as e:
     logger.error("Import error in similarity_search_dialog: %s", e)
     HAS_SIMILARITY_SEARCH = False
 
-__all__ = ['BinarySimilaritySearchDialog']
+__all__ = ["BinarySimilaritySearchDialog"]
 
 
 class BinarySimilaritySearchDialog(QDialog):

@@ -24,7 +24,7 @@ import logging
 from enum import Enum, auto
 from typing import Any, Dict, List, Optional, Tuple
 
-logger = logging.getLogger('Intellicrack.HexView')
+logger = logging.getLogger("Intellicrack.HexView")
 
 
 class HighlightType(Enum):
@@ -109,9 +109,9 @@ class HexHighlight:
             Tuple of (red, green, blue, alpha) values (0-255)
         """
         # Parse the hex color code
-        color = self.color.lstrip('#')
+        color = self.color.lstrip("#")
         if len(color) == 3:
-            color = ''.join(c+c for c in color)
+            color = "".join(c+c for c in color)
 
         r, g, b = tuple(int(color[i:i+2], 16) for i in (0, 2, 4))
         a = int(self.alpha * 255)

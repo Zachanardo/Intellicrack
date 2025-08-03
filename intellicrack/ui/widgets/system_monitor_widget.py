@@ -271,20 +271,20 @@ class SystemMonitorWidget(QWidget):
 
             # CPU graph
             self.cpu_plot = pg.PlotWidget(title="CPU Usage")
-            self.cpu_plot.setLabel('left', 'Usage', units='%')
-            self.cpu_plot.setLabel('bottom', 'Time', units='s')
+            self.cpu_plot.setLabel("left", "Usage", units="%")
+            self.cpu_plot.setLabel("bottom", "Time", units="s")
             self.cpu_plot.setYRange(0, 100)
             self.cpu_plot.showGrid(x=True, y=True)
-            self.cpu_curve = self.cpu_plot.plot(pen='y')
+            self.cpu_curve = self.cpu_plot.plot(pen="y")
             graphs_layout.addWidget(self.cpu_plot)
 
             # Memory graph
             self.memory_plot = pg.PlotWidget(title="Memory Usage")
-            self.memory_plot.setLabel('left', 'Usage', units='%')
-            self.memory_plot.setLabel('bottom', 'Time', units='s')
+            self.memory_plot.setLabel("left", "Usage", units="%")
+            self.memory_plot.setLabel("bottom", "Time", units="s")
             self.memory_plot.setYRange(0, 100)
             self.memory_plot.showGrid(x=True, y=True)
-            self.memory_curve = self.memory_plot.plot(pen='g')
+            self.memory_curve = self.memory_plot.plot(pen="g")
             graphs_layout.addWidget(self.memory_plot)
 
             content_splitter.addWidget(graphs_group)
@@ -330,7 +330,7 @@ class SystemMonitorWidget(QWidget):
         self.memory_bar.setValue(int(metrics.memory_percent))
         self.memory_label.setText(f"{metrics.memory_used_gb:.1f}/{metrics.memory_total_gb:.1f} GB")
 
-        if GPU_AVAILABLE and hasattr(self, 'gpu_bar'):
+        if GPU_AVAILABLE and hasattr(self, "gpu_bar"):
             if metrics.gpu_percent is not None:
                 self.gpu_bar.setValue(int(metrics.gpu_percent))
                 self.gpu_label.setText(f"{metrics.gpu_percent:.1f}%")
@@ -371,29 +371,29 @@ class SystemMonitorWidget(QWidget):
         try:
             # Get top processes by CPU usage
             processes = []
-            for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent', 'status']):
+            for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent", "status"]):
                 try:
                     pinfo = proc.info
-                    if pinfo['cpu_percent'] > 0 or pinfo['memory_percent'] > 0:
+                    if pinfo["cpu_percent"] > 0 or pinfo["memory_percent"] > 0:
                         processes.append(pinfo)
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
 
             # Sort by CPU usage
-            processes.sort(key=lambda x: x['cpu_percent'], reverse=True)
+            processes.sort(key=lambda x: x["cpu_percent"], reverse=True)
 
             # Update table
             self.process_table.setRowCount(min(10, len(processes)))  # Show top 10
 
             for row, proc in enumerate(processes[:10]):
-                self.process_table.setItem(row, 0, QTableWidgetItem(str(proc['pid'])))
-                self.process_table.setItem(row, 1, QTableWidgetItem(proc['name']))
+                self.process_table.setItem(row, 0, QTableWidgetItem(str(proc["pid"])))
+                self.process_table.setItem(row, 1, QTableWidgetItem(proc["name"]))
                 self.process_table.setItem(row, 2, QTableWidgetItem(f"{proc['cpu_percent']:.1f}"))
                 self.process_table.setItem(row, 3, QTableWidgetItem(f"{proc['memory_percent']:.1f}"))
-                self.process_table.setItem(row, 4, QTableWidgetItem(proc['status']))
+                self.process_table.setItem(row, 4, QTableWidgetItem(proc["status"]))
 
                 # Highlight high usage
-                if proc['cpu_percent'] > 50:
+                if proc["cpu_percent"] > 50:
                     for col in range(5):
                         item = self.process_table.item(row, col)
                         if item:
@@ -420,10 +420,10 @@ class SystemMonitorWidget(QWidget):
         if GPU_AVAILABLE and metrics.gpu_percent is not None:
             if metrics.gpu_percent > self.gpu_threshold:
                 self.alert_triggered.emit("gpu", f"High GPU usage: {metrics.gpu_percent:.1f}%")
-                if hasattr(self, 'gpu_bar'):
+                if hasattr(self, "gpu_bar"):
                     self.gpu_bar.setStyleSheet("QProgressBar::chunk { background-color: #ff6666; }")
             else:
-                if hasattr(self, 'gpu_bar'):
+                if hasattr(self, "gpu_bar"):
                     self.gpu_bar.setStyleSheet("")
 
     def _on_interval_changed(self, value: int):
@@ -503,7 +503,7 @@ class SystemMonitorWidget(QWidget):
                 "network_recv_mb": metric.network_recv_mb,
             })
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(data, f, indent=2)
 
     def closeEvent(self, event):

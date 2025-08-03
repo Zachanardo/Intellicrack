@@ -29,7 +29,7 @@ import struct
 from enum import Enum, auto
 from typing import Any, Dict, List, Optional
 
-logger = logging.getLogger('Intellicrack.HexView.AI')
+logger = logging.getLogger("Intellicrack.HexView.AI")
 
 # Import LLM backend support
 try:
@@ -189,10 +189,10 @@ class BinaryContextBuilder:
         strings = []
 
         # ASCII strings
-        ascii_pattern = re.compile(b'[ -~]{%d,}' % min_length)
+        ascii_pattern = re.compile(b"[ -~]{%d,}" % min_length)
         for match in ascii_pattern.finditer(data):
             try:
-                string_value = match.group(0).decode('ascii')
+                string_value = match.group(0).decode("ascii")
                 strings.append({
                     "offset": match.start(),
                     "size": len(match.group(0)),
@@ -1008,8 +1008,8 @@ class AIBinaryBridge:
         _binary_data = binary_data  # Store for potential future use
         try:
             # Extract JSON from response
-            json_start = response.find('{')
-            json_end = response.rfind('}') + 1
+            json_start = response.find("{")
+            json_end = response.rfind("}") + 1
 
             if json_start >= 0 and json_end > json_start:
                 json_str = response[json_start:json_end]
@@ -1051,8 +1051,8 @@ class AIBinaryBridge:
         _binary_data = binary_data  # Store for potential future use
         try:
             # Extract JSON from response
-            json_start = response.find('{')
-            json_end = response.rfind('}') + 1
+            json_start = response.find("{")
+            json_end = response.rfind("}") + 1
 
             if json_start >= 0 and json_end > json_start:
                 json_str = response[json_start:json_end]
@@ -1099,8 +1099,8 @@ class AIBinaryBridge:
         _binary_data = binary_data  # Store for potential future use
         try:
             # Extract JSON from response
-            json_start = response.find('{')
-            json_end = response.rfind('}') + 1
+            json_start = response.find("{")
+            json_end = response.rfind("}") + 1
 
             if json_start >= 0 and json_end > json_start:
                 json_str = response[json_start:json_end]
@@ -1128,8 +1128,8 @@ class AIBinaryBridge:
         _binary_data = binary_data  # Store for potential future use
         try:
             # Extract JSON from response
-            json_start = response.find('{')
-            json_end = response.rfind('}') + 1
+            json_start = response.find("{")
+            json_end = response.rfind("}") + 1
 
             if json_start >= 0 and json_end > json_start:
                 json_str = response[json_start:json_end]
@@ -1249,7 +1249,7 @@ class AIBinaryBridge:
                             "end_offset": offset + string_offset + len(string_val),
                             "pattern_type": "string",
                             "description": f"{string_info.get('encoding', 'ascii')} string: '{string_val}'",
-                            "encoding": string_info.get('encoding', 'ascii')
+                            "encoding": string_info.get("encoding", "ascii")
                         }
                         
                         if security_flag:
@@ -1339,12 +1339,12 @@ class AIBinaryBridge:
                     "start_offset": _segment["offset"],
                     "end_offset": _segment["offset"] + _segment["size"],
                     "description": f"High entropy region (entropy: {_segment['entropy']:.2f})",
-                    "severity": "medium" if _segment['entropy'] > 7.5 else "low"
+                    "severity": "medium" if _segment["entropy"] > 7.5 else "low"
                 }
 
                 # Add security implications if security-focused
                 if is_security_focused:
-                    if _segment['entropy'] > 7.8:
+                    if _segment["entropy"] > 7.8:
                         anomaly["security_implication"] = "Possible encrypted/compressed content or packed executable"
                     else:
                         anomaly["security_implication"] = "Moderately obfuscated data"
@@ -1359,20 +1359,20 @@ class AIBinaryBridge:
                 "end_offset": _string["offset"] + _string["size"],
                 "pattern_type": "string",
                 "description": f"{_string['encoding']} string: '{_string['value']}'",
-                "encoding": _string['encoding']
+                "encoding": _string["encoding"]
             }
 
             # Check for suspicious patterns in strings
-            value_lower = _string['value'].lower()
+            value_lower = _string["value"].lower()
             if any(susp in value_lower for susp in ["password", "key", "token", "secret", "admin", "root"]):
                 pattern["security_flag"] = "credential_related"
-                suspicious_strings.append(_string['value'])
+                suspicious_strings.append(_string["value"])
             elif any(susp in value_lower for susp in [".exe", ".dll", "cmd", "powershell", "bash"]):
                 pattern["security_flag"] = "execution_related"
-                suspicious_strings.append(_string['value'])
+                suspicious_strings.append(_string["value"])
             elif any(susp in value_lower for susp in ["http://", "https://", "ftp://", "ws://"]):
                 pattern["security_flag"] = "network_related"
-                suspicious_strings.append(_string['value'])
+                suspicious_strings.append(_string["value"])
 
             patterns.append(pattern)
 
@@ -1402,11 +1402,11 @@ class AIBinaryBridge:
         for _hint in context.get("structure_hints", []):
             if _hint["type"] == "file_signature":
                 data_meaning = f"{_hint['description']} file"
-                if "executable" in _hint['description'].lower():
+                if "executable" in _hint["description"].lower():
                     data_type = "executable"
-                elif "archive" in _hint['description'].lower():
+                elif "archive" in _hint["description"].lower():
                     data_type = "archive"
-                elif "image" in _hint['description'].lower():
+                elif "image" in _hint["description"].lower():
                     data_type = "media"
                 break
 
@@ -1461,12 +1461,10 @@ class AIBinaryBridge:
         # Import real analysis modules for edit suggestions
         try:
             from intellicrack.core.vulnerability_research import VulnerabilityEngine
-            from intellicrack.ai.binary_analysis import BinaryAnalyzer
             from intellicrack.utils.exploitation import ExploitationUtils
             
             # Initialize real analysis engines
             vuln_engine = VulnerabilityEngine()
-            binary_analyzer = BinaryAnalyzer()
             exploit_utils = ExploitationUtils()
             
             # Extract binary data from context
@@ -1614,12 +1612,12 @@ class AIBinaryBridge:
             length = 8
 
             # Look for specific offset in intent
-            offset_match = re.search(r'offset\s+(\d+|0x[0-9a-fA-F]+)', intent_lower)
+            offset_match = re.search(r"offset\s+(\d+|0x[0-9a-fA-F]+)", intent_lower)
             if offset_match:
                 offset_str = offset_match.group(1)
-                offset = int(offset_str, 16) if offset_str.startswith('0x') else int(offset_str)
+                offset = int(offset_str, 16) if offset_str.startswith("0x") else int(offset_str)
 
-            length_match = re.search(r'(\d+)\s*bytes?', intent_lower)
+            length_match = re.search(r"(\d+)\s*bytes?", intent_lower)
             if length_match:
                 length = int(length_match.group(1))
 
@@ -2003,7 +2001,7 @@ class AIBinaryBridge:
                     })
 
             # Look for IP address patterns in strings
-            ip_pattern = re.compile(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b')
+            ip_pattern = re.compile(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b")
             for _string in context.get("strings", []):
                 if ip_pattern.search(_string["value"]):
                     matches.append({
@@ -2241,7 +2239,7 @@ class AIBinaryBridge:
                 }
 
             # Read a sample of the binary
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 # Read first 4KB for analysis
                 data = f.read(4096)
 

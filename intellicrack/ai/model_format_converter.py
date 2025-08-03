@@ -73,7 +73,7 @@ except ImportError as e:
 try:
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
     import os
-    os.environ['MKL_THREADING_LAYER'] = 'GNU'
+    os.environ["MKL_THREADING_LAYER"] = "GNU"
 
     import tensorflow as tf
     HAS_TF = True
@@ -250,13 +250,13 @@ class ModelFormatConverter:
         """
         if model_path.is_file():
             # Check file extensions
-            if model_path.suffix in ['.pt', '.pth', '.bin']:
+            if model_path.suffix in [".pt", ".pth", ".bin"]:
                 return "pytorch"
-            elif model_path.suffix == '.onnx':
+            elif model_path.suffix == ".onnx":
                 return "onnx"
-            elif model_path.suffix in ['.pb', '.h5']:
+            elif model_path.suffix in [".pb", ".h5"]:
                 return "tensorflow"
-            elif model_path.suffix == '.safetensors':
+            elif model_path.suffix == ".safetensors":
                 return "safetensors"
 
         elif model_path.is_dir():
@@ -365,8 +365,8 @@ class ModelFormatConverter:
 
             # Dynamic axes for variable sequence length
             dynamic_axes = kwargs.get("dynamic_axes", {
-                'input_ids': {0: 'batch_size', 1: 'sequence'},
-                'output': {0: 'batch_size', 1: 'sequence'}
+                "input_ids": {0: "batch_size", 1: "sequence"},
+                "output": {0: "batch_size", 1: "sequence"}
             })
 
             torch.onnx.export(
@@ -376,8 +376,8 @@ class ModelFormatConverter:
                 export_params=True,
                 opset_version=kwargs.get("opset_version", 14),
                 do_constant_folding=kwargs.get("do_constant_folding", True),
-                input_names=kwargs.get("input_names", ['input_ids']),
-                output_names=kwargs.get("output_names", ['output']),
+                input_names=kwargs.get("input_names", ["input_ids"]),
+                output_names=kwargs.get("output_names", ["output"]),
                 dynamic_axes=dynamic_axes,
                 verbose=kwargs.get("verbose", False)
             )
@@ -447,15 +447,15 @@ class ModelFormatConverter:
                 state_dict = torch.load(source_path, map_location=device)
 
                 # Handle full model vs state dict
-                if hasattr(state_dict, 'state_dict'):
+                if hasattr(state_dict, "state_dict"):
                     state_dict = state_dict.state_dict()
 
             # Ensure output directory exists
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Add .safetensors extension if needed
-            if output_path.suffix != '.safetensors':
-                output_path = output_path.with_suffix('.safetensors')
+            if output_path.suffix != ".safetensors":
+                output_path = output_path.with_suffix(".safetensors")
 
             # Apply GPU optimization if available before saving
             if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader and device != "cpu":
@@ -463,7 +463,7 @@ class ModelFormatConverter:
                     # Try to optimize the state dict tensors
                     optimized_dict = {}
                     for key, tensor in state_dict.items():
-                        if hasattr(tensor, 'shape'):  # It's a tensor
+                        if hasattr(tensor, "shape"):  # It's a tensor
                             optimized_tensor = gpu_autoloader(tensor)
                             optimized_dict[key] = optimized_tensor if optimized_tensor is not None else tensor
                         else:
@@ -507,9 +507,9 @@ class ModelFormatConverter:
 
         try:
             # Extract conversion options from kwargs
-            device = kwargs.get('device', 'cpu')
-            dtype = kwargs.get('dtype', None)
-            preserve_layout = kwargs.get('preserve_layout', True)
+            device = kwargs.get("device", "cpu")
+            dtype = kwargs.get("dtype", None)
+            preserve_layout = kwargs.get("preserve_layout", True)
 
             # Load SafeTensors
             state_dict = {}
@@ -525,13 +525,13 @@ class ModelFormatConverter:
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Add .pt extension if needed
-            if output_path.suffix not in ['.pt', '.pth', '.bin']:
-                output_path = output_path.with_suffix('.pt')
+            if output_path.suffix not in [".pt", ".pth", ".bin"]:
+                output_path = output_path.with_suffix(".pt")
 
             # Save as PyTorch with options
             save_kwargs = {}
             if not preserve_layout:
-                save_kwargs['_use_new_zipfile_serialization'] = False
+                save_kwargs["_use_new_zipfile_serialization"] = False
             torch.save(state_dict, str(output_path), **save_kwargs)
 
             logger.info(
@@ -571,20 +571,20 @@ class ModelFormatConverter:
                 if source_path.is_dir():
                     model = tf.saved_model.load(str(source_path))
                 else:
-                    if hasattr(tf, 'keras'):
+                    if hasattr(tf, "keras"):
                         model = tf.keras.models.load_model(str(source_path))
                     else:
                         raise ImportError(
                             "TensorFlow keras module not available")
 
                 # Get concrete function
-                if hasattr(model, 'signatures'):
+                if hasattr(model, "signatures"):
                     concrete_func = model.signatures[
-                        kwargs.get('signature_key', 'serving_default')
+                        kwargs.get("signature_key", "serving_default")
                     ]
                 else:
                     # For Keras models
-                    input_spec = kwargs.get('input_spec')
+                    input_spec = kwargs.get("input_spec")
                     if not input_spec:
                         logger.error("input_spec required for Keras models")
                         return None
@@ -601,7 +601,7 @@ class ModelFormatConverter:
 
                 model_proto, _ = tf2onnx.convert.from_function(
                     concrete_func,
-                    opset=kwargs.get('opset_version', 14),
+                    opset=kwargs.get("opset_version", 14),
                     output_path=str(output_path)
                 )
 
@@ -747,7 +747,7 @@ class ModelFormatConverter:
                     # Run model
                     if isinstance(model, torch.nn.Module):
                         # Assume single input
-                        output = model(torch_inputs['input'])
+                        output = model(torch_inputs["input"])
                     else:
                         output = model(**torch_inputs)
 
@@ -755,14 +755,14 @@ class ModelFormatConverter:
                     if isinstance(output, dict):
                         return {k: v.numpy() for k, v in output.items()}
                     else:
-                        return {'output': output.numpy()}
+                        return {"output": output.numpy()}
 
             elif format == "tensorflow" and HAS_TF:
                 # TensorFlow inference
                 model = tf.saved_model.load(str(model_path))
 
                 # Get inference function
-                infer = model.signatures.get('serving_default', model)
+                infer = model.signatures.get("serving_default", model)
 
                 # Run inference
                 outputs = infer(**inputs)
@@ -861,7 +861,7 @@ class ModelFormatConverter:
             loader = model_loaders.get(model_type, AutoModel)
 
             # Load the model
-            if callable(loader) and hasattr(loader, 'from_pretrained'):
+            if callable(loader) and hasattr(loader, "from_pretrained"):
                 model = loader.from_pretrained(str(model_path))
             elif callable(loader):
                 model = loader(str(model_path))

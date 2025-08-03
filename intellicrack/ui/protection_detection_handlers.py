@@ -83,7 +83,7 @@ class ProtectionDetectionHandlers:
                     output += "No commercial protections detected.\n"
 
             # Update the protection results text area
-            if hasattr(self, 'protection_results'):
+            if hasattr(self, "protection_results"):
                 self.protection_results.append(output)
 
             self.update_status("Commercial protection scan complete")
@@ -110,7 +110,7 @@ class ProtectionDetectionHandlers:
                 output += f"{_result}\n"
 
             # Update the protection results text area
-            if hasattr(self, 'protection_results'):
+            if hasattr(self, "protection_results"):
                 self.protection_results.append(output)
 
             self.update_status("Hardware dongle detection complete")
@@ -138,7 +138,7 @@ class ProtectionDetectionHandlers:
                 output += f"Error: {results['error']}\n"
             else:
                 output += f"TPM Present: {'Yes' if results['tpm_present'] else 'No'}\n"
-                if results['tpm_present']:
+                if results["tpm_present"]:
                     output += f"TPM Version: {results.get('tpm_version', 'Unknown')}\n"
                     output += f"TPM Enabled: {'Yes' if results['tpm_enabled'] else 'No'}\n"
                     output += f"TPM Owned: {'Yes' if results['tpm_owned'] else 'No'}\n"
@@ -149,7 +149,7 @@ class ProtectionDetectionHandlers:
                             output += f"  - {_method}\n"
 
             # Update the protection results text area
-            if hasattr(self, 'protection_results'):
+            if hasattr(self, "protection_results"):
                 self.protection_results.append(output)
 
             self.update_status("TPM detection complete")
@@ -196,7 +196,7 @@ class ProtectionDetectionHandlers:
                     output += "No checksum/integrity verification detected.\n"
 
             # Update the protection results text area
-            if hasattr(self, 'protection_results'):
+            if hasattr(self, "protection_results"):
                 self.protection_results.append(output)
 
             self.update_status("Checksum detection complete")
@@ -243,7 +243,7 @@ class ProtectionDetectionHandlers:
                     output += "No self-healing code detected.\n"
 
             # Update the protection results text area
-            if hasattr(self, 'protection_results'):
+            if hasattr(self, "protection_results"):
                 self.protection_results.append(output)
 
             self.update_status("Self-healing code detection complete")
@@ -290,7 +290,7 @@ class ProtectionDetectionHandlers:
                     output += f"  - {_error}\n"
 
             # Update the protection results text area
-            if hasattr(self, 'protection_results'):
+            if hasattr(self, "protection_results"):
                 self.protection_results.append(output)
 
             self.update_status("TPM bypass attempt complete")
@@ -337,7 +337,7 @@ class ProtectionDetectionHandlers:
                     output += f"  - {_error}\n"
 
             # Update the protection results text area
-            if hasattr(self, 'protection_results'):
+            if hasattr(self, "protection_results"):
                 self.protection_results.append(output)
 
             self.update_status("VM detection bypass attempt complete")
@@ -387,7 +387,7 @@ class ProtectionDetectionHandlers:
                     output += f"  - {_error}\n"
 
             # Update the protection results text area
-            if hasattr(self, 'protection_results'):
+            if hasattr(self, "protection_results"):
                 self.protection_results.append(output)
 
             self.update_status("Hardware dongle emulation complete")
@@ -422,7 +422,7 @@ class ProtectionDetectionHandlers:
                 output += "No results returned from script detection.\n"
 
             # Update the protection results text area
-            if hasattr(self, 'protection_results'):
+            if hasattr(self, "protection_results"):
                 self.protection_results.append(output)
 
             self.update_status("Embedded script detection complete")

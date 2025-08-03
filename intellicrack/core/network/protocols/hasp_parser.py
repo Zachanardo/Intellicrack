@@ -235,7 +235,7 @@ class HASPSentinelParser:
             offset = 0
 
             # Check HASP magic signature
-            magic = struct.unpack('<I', data[offset:offset+4])[0]
+            magic = struct.unpack("<I", data[offset:offset+4])[0]
             offset += 4
 
             if magic not in [0x48415350, 0x53454E54, 0x484C4D58]:  # "HASP", "SENT", "HLMX"
@@ -243,45 +243,45 @@ class HASPSentinelParser:
                 return None
 
             # Parse header
-            command = struct.unpack('<I', data[offset:offset+4])[0]
+            command = struct.unpack("<I", data[offset:offset+4])[0]
             offset += 4
 
-            session_id = struct.unpack('<I', data[offset:offset+4])[0]
+            session_id = struct.unpack("<I", data[offset:offset+4])[0]
             offset += 4
 
-            feature_id = struct.unpack('<I', data[offset:offset+4])[0]
+            feature_id = struct.unpack("<I", data[offset:offset+4])[0]
             offset += 4
 
-            vendor_code = struct.unpack('<I', data[offset:offset+4])[0]
+            vendor_code = struct.unpack("<I", data[offset:offset+4])[0]
             offset += 4
 
             # Parse variable-length fields
-            scope_length = struct.unpack('<H', data[offset:offset+2])[0]
+            scope_length = struct.unpack("<H", data[offset:offset+2])[0]
             offset += 2
 
             if offset + scope_length > len(data):
                 return None
 
-            scope = data[offset:offset+scope_length].decode('utf-8', errors='ignore')
+            scope = data[offset:offset+scope_length].decode("utf-8", errors="ignore")
             offset += scope_length
 
-            format_length = struct.unpack('<H', data[offset:offset+2])[0]
+            format_length = struct.unpack("<H", data[offset:offset+2])[0]
             offset += 2
 
             if offset + format_length > len(data):
                 return None
 
-            format_str = data[offset:offset+format_length].decode('utf-8', errors='ignore')
+            format_str = data[offset:offset+format_length].decode("utf-8", errors="ignore")
             offset += format_length
 
             # Parse client info JSON
-            client_info_length = struct.unpack('<H', data[offset:offset+2])[0]
+            client_info_length = struct.unpack("<H", data[offset:offset+2])[0]
             offset += 2
 
             client_info = {}
             if client_info_length > 0 and offset + client_info_length <= len(data):
                 try:
-                    client_info_json = data[offset:offset+client_info_length].decode('utf-8')
+                    client_info_json = data[offset:offset+client_info_length].decode("utf-8")
                     client_info = json.loads(client_info_json)
                 except (UnicodeDecodeError, ValueError, json.JSONDecodeError, Exception) as e:
                     logger.error("Error in hasp_parser: %s", e)
@@ -289,10 +289,10 @@ class HASPSentinelParser:
                 offset += client_info_length
 
             # Parse encryption data
-            encryption_length = struct.unpack('<H', data[offset:offset+2])[0]
+            encryption_length = struct.unpack("<H", data[offset:offset+2])[0]
             offset += 2
 
-            encryption_data = b''
+            encryption_data = b""
             if encryption_length > 0 and offset + encryption_length <= len(data):
                 encryption_data = data[offset:offset+encryption_length]
                 offset += encryption_length
@@ -328,8 +328,8 @@ class HASPSentinelParser:
         try:
             offset = 0
             while offset < len(data) - 4:
-                param_type = struct.unpack('<H', data[offset:offset+2])[0]
-                param_length = struct.unpack('<H', data[offset+2:offset+4])[0]
+                param_type = struct.unpack("<H", data[offset:offset+2])[0]
+                param_length = struct.unpack("<H", data[offset+2:offset+4])[0]
                 offset += 4
 
                 if offset + param_length > len(data):
@@ -339,16 +339,16 @@ class HASPSentinelParser:
                 offset += param_length
 
                 if param_type == 0x0001:  # Hostname
-                    params['hostname'] = param_data.decode('utf-8', errors='ignore')
+                    params["hostname"] = param_data.decode("utf-8", errors="ignore")
                 elif param_type == 0x0002:  # Username
-                    params['username'] = param_data.decode('utf-8', errors='ignore')
+                    params["username"] = param_data.decode("utf-8", errors="ignore")
                 elif param_type == 0x0003:  # Process name
-                    params['process'] = param_data.decode('utf-8', errors='ignore')
+                    params["process"] = param_data.decode("utf-8", errors="ignore")
                 elif param_type == 0x0004:  # IP address
                     if len(param_data) == 4:
-                        params['ip_address'] = '.'.join(str(b) for b in param_data)
+                        params["ip_address"] = ".".join(str(b) for b in param_data)
                 else:
-                    params[f'param_{param_type:04X}'] = param_data
+                    params[f"param_{param_type:04X}"] = param_data
 
         except Exception as e:
             self.logger.debug(f"Error parsing additional params: {e}")
@@ -408,7 +408,7 @@ class HASPSentinelParser:
                 session_id=0,
                 feature_id=request.feature_id,
                 license_data={},
-                encryption_response=b'',
+                encryption_response=b"",
                 expiry_info={},
                 hardware_info={}
             )
@@ -438,7 +438,7 @@ class HASPSentinelParser:
                 "session_established": True,
                 "encryption_seed": self.encryption_keys[session_id].hex()[:16]
             },
-            encryption_response=b'',
+            encryption_response=b"",
             expiry_info={},
             hardware_info=self.hardware_fingerprint
         )
@@ -458,7 +458,7 @@ class HASPSentinelParser:
             session_id=request.session_id,
             feature_id=request.feature_id,
             license_data={"logout_time": int(time.time())},
-            encryption_response=b'',
+            encryption_response=b"",
             expiry_info={},
             hardware_info={}
         )
@@ -471,7 +471,7 @@ class HASPSentinelParser:
                 session_id=request.session_id,
                 feature_id=request.feature_id,
                 license_data={},
-                encryption_response=b'',
+                encryption_response=b"",
                 expiry_info={},
                 hardware_info={}
             )
@@ -485,7 +485,7 @@ class HASPSentinelParser:
                 session_id=request.session_id,
                 feature_id=request.feature_id,
                 license_data={},
-                encryption_response=b'',
+                encryption_response=b"",
                 expiry_info={},
                 hardware_info={}
             )
@@ -500,7 +500,7 @@ class HASPSentinelParser:
                 session_id=request.session_id,
                 feature_id=request.feature_id,
                 license_data={},
-                encryption_response=b'',
+                encryption_response=b"",
                 expiry_info={},
                 hardware_info={}
             )
@@ -513,7 +513,7 @@ class HASPSentinelParser:
                 "feature_name": feature["name"],
                 "users_remaining": feature["max_users"] - active_users - 1
             },
-            encryption_response=b'',
+            encryption_response=b"",
             expiry_info={
                 "expiry_date": feature["expiry"],
                 "days_remaining": 365 if feature["expiry"] != "permanent" else -1
@@ -529,7 +529,7 @@ class HASPSentinelParser:
                 session_id=request.session_id,
                 feature_id=request.feature_id,
                 license_data={},
-                encryption_response=b'',
+                encryption_response=b"",
                 expiry_info={},
                 hardware_info={}
             )
@@ -573,7 +573,7 @@ class HASPSentinelParser:
             session_id=request.session_id,
             feature_id=request.feature_id,
             license_data={"memory_size": memory_size},
-            encryption_response=b'',
+            encryption_response=b"",
             expiry_info={},
             hardware_info={}
         )
@@ -582,8 +582,8 @@ class HASPSentinelParser:
         """Handle memory read request"""
         # Simulate reading from HASP memory
         # Generate deterministic data based on address
-        address = request.additional_params.get('address', 0)
-        length = request.additional_params.get('length', 16)
+        address = request.additional_params.get("address", 0)
+        length = request.additional_params.get("length", 16)
 
         data = bytearray()
         for i in range(length):
@@ -607,7 +607,7 @@ class HASPSentinelParser:
             session_id=request.session_id,
             feature_id=request.feature_id,
             license_data={"bytes_written": len(request.encryption_data)},
-            encryption_response=b'',
+            encryption_response=b"",
             expiry_info={},
             hardware_info={}
         )
@@ -624,7 +624,7 @@ class HASPSentinelParser:
                 "rtc_time": current_time,
                 "rtc_string": time.ctime(current_time)
             },
-            encryption_response=struct.pack('<I', current_time),
+            encryption_response=struct.pack("<I", current_time),
             expiry_info={},
             hardware_info={}
         )
@@ -641,7 +641,7 @@ class HASPSentinelParser:
                 "memory_available": 32768,
                 "features_available": len(self.features)
             },
-            encryption_response=b'',
+            encryption_response=b"",
             expiry_info={},
             hardware_info=self.hardware_fingerprint
         )
@@ -655,7 +655,7 @@ class HASPSentinelParser:
                 session_id=request.session_id,
                 feature_id=request.feature_id,
                 license_data=feature,
-                encryption_response=b'',
+                encryption_response=b"",
                 expiry_info={
                     "expiry_date": feature["expiry"],
                     "days_remaining": 365 if feature["expiry"] != "permanent" else -1
@@ -668,7 +668,7 @@ class HASPSentinelParser:
                 session_id=request.session_id,
                 feature_id=request.feature_id,
                 license_data={},
-                encryption_response=b'',
+                encryption_response=b"",
                 expiry_info={},
                 hardware_info={}
             )
@@ -680,7 +680,7 @@ class HASPSentinelParser:
             session_id=request.session_id,
             feature_id=request.feature_id,
             license_data={"logout_time": int(time.time())},
-            encryption_response=b'',
+            encryption_response=b"",
             expiry_info={},
             hardware_info={}
         )
@@ -698,7 +698,7 @@ class HASPSentinelParser:
             session_id=request.session_id,
             feature_id=request.feature_id,
             license_data={"heartbeat_time": int(time.time())},
-            encryption_response=b'',
+            encryption_response=b"",
             expiry_info={},
             hardware_info={}
         )
@@ -710,7 +710,7 @@ class HASPSentinelParser:
             session_id=request.session_id,
             feature_id=request.feature_id,
             license_data=self.hardware_fingerprint,
-            encryption_response=b'',
+            encryption_response=b"",
             expiry_info={},
             hardware_info=self.hardware_fingerprint
         )
@@ -723,7 +723,7 @@ class HASPSentinelParser:
             session_id=request.session_id,
             feature_id=request.feature_id,
             license_data={},
-            encryption_response=b'',
+            encryption_response=b"",
             expiry_info={},
             hardware_info={}
         )
@@ -742,34 +742,34 @@ class HASPSentinelParser:
             packet = bytearray()
 
             # Magic signature
-            packet.extend(struct.pack('<I', 0x48415350))  # "HASP"
+            packet.extend(struct.pack("<I", 0x48415350))  # "HASP"
 
             # Status code
-            packet.extend(struct.pack('<I', response.status))
+            packet.extend(struct.pack("<I", response.status))
 
             # Session ID
-            packet.extend(struct.pack('<I', response.session_id))
+            packet.extend(struct.pack("<I", response.session_id))
 
             # Feature ID
-            packet.extend(struct.pack('<I', response.feature_id))
+            packet.extend(struct.pack("<I", response.feature_id))
 
             # License data (JSON)
-            license_json = json.dumps(response.license_data).encode('utf-8')
-            packet.extend(struct.pack('<H', len(license_json)))
+            license_json = json.dumps(response.license_data).encode("utf-8")
+            packet.extend(struct.pack("<H", len(license_json)))
             packet.extend(license_json)
 
             # Encryption response
-            packet.extend(struct.pack('<H', len(response.encryption_response)))
+            packet.extend(struct.pack("<H", len(response.encryption_response)))
             packet.extend(response.encryption_response)
 
             # Expiry info (JSON)
-            expiry_json = json.dumps(response.expiry_info).encode('utf-8')
-            packet.extend(struct.pack('<H', len(expiry_json)))
+            expiry_json = json.dumps(response.expiry_info).encode("utf-8")
+            packet.extend(struct.pack("<H", len(expiry_json)))
             packet.extend(expiry_json)
 
             # Hardware info (JSON)
-            hardware_json = json.dumps(response.hardware_info).encode('utf-8')
-            packet.extend(struct.pack('<H', len(hardware_json)))
+            hardware_json = json.dumps(response.hardware_info).encode("utf-8")
+            packet.extend(struct.pack("<H", len(hardware_json)))
             packet.extend(hardware_json)
 
             return bytes(packet)
@@ -777,4 +777,4 @@ class HASPSentinelParser:
         except Exception as e:
             self.logger.error(f"Failed to serialize HASP response: {e}")
             # Return minimal error response
-            return struct.pack('<II', 0x48415350, response.status)
+            return struct.pack("<II", 0x48415350, response.status)

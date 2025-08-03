@@ -49,7 +49,7 @@ class BaseWindowsPatcher(ABC):
 
         # Optional ntdll loading for classes that need it
         self.ntdll = get_windows_ntdll()
-        if hasattr(self, '_requires_ntdll') and self._requires_ntdll and not self.ntdll:
+        if hasattr(self, "_requires_ntdll") and self._requires_ntdll and not self.ntdll:
             raise RuntimeError("Failed to load required Windows libraries")
 
     def _initialize_windows_constants(self):

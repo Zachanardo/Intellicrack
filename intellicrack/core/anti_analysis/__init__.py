@@ -56,12 +56,12 @@ class AntiAnalysisEngine:
 
 
 __all__ = [
-    'AntiAnalysisEngine',
-    'BaseDetector',
-    'VMDetector',
-    'DebuggerDetector',
-    'SandboxDetector',
-    'TimingAttackDefense',
-    'APIObfuscator',
-    'ProcessHollowing'
+    "AntiAnalysisEngine",
+    "BaseDetector",
+    "VMDetector",
+    "DebuggerDetector",
+    "SandboxDetector",
+    "TimingAttackDefense",
+    "APIObfuscator",
+    "ProcessHollowing"
 ]

@@ -42,7 +42,7 @@ except ImportError as e:
     logger.error("Import error in distributed_analysis_manager: %s", e)
     HAS_QEMU = False
 
-__all__ = ['DistributedAnalysisManager']
+__all__ = ["DistributedAnalysisManager"]
 
 
 class DistributedAnalysisManager:

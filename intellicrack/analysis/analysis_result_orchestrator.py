@@ -62,7 +62,7 @@ class AnalysisResultOrchestrator(QObject):
         Args:
             handler: A QObject with an on_analysis_complete(result) slot
         """
-        if hasattr(handler, 'on_analysis_complete'):
+        if hasattr(handler, "on_analysis_complete"):
             self.handlers.append(handler)
             logger.info(f"Registered handler: {handler.__class__.__name__}")
         else:
@@ -105,7 +105,7 @@ class AnalysisResultOrchestrator(QObject):
                     f"Error: {str(e)}"
                 )
 
-    def on_icp_analysis_complete(self, result: 'ICPScanResult'):
+    def on_icp_analysis_complete(self, result: "ICPScanResult"):
         """
         Handle ICP analysis completion and distribute to relevant handlers.
 
@@ -115,7 +115,7 @@ class AnalysisResultOrchestrator(QObject):
         logger.info(f"Orchestrator received ICP analysis result for: {result.file_path}")
 
         # Store ICP result for handlers that need it
-        if hasattr(self, '_current_result') and self._current_result:
+        if hasattr(self, "_current_result") and self._current_result:
             # Add ICP data to existing result
             self._current_result.icp_analysis = result
 
@@ -123,14 +123,14 @@ class AnalysisResultOrchestrator(QObject):
         for handler in self.handlers:
             try:
                 # Check if handler has ICP-specific method
-                if hasattr(handler, 'on_icp_analysis_complete'):
+                if hasattr(handler, "on_icp_analysis_complete"):
                     handler.on_icp_analysis_complete(result)
                     self.handler_status.emit(
                         handler.__class__.__name__,
                         "ICP processing complete"
                     )
                 # Fallback to general analysis method if ICP result can be converted
-                elif hasattr(handler, 'on_analysis_complete') and hasattr(self, '_current_result') and self._current_result:
+                elif hasattr(handler, "on_analysis_complete") and hasattr(self, "_current_result") and self._current_result:
                     handler.on_analysis_complete(self._current_result)
                     self.handler_status.emit(
                         handler.__class__.__name__,
@@ -147,7 +147,7 @@ class AnalysisResultOrchestrator(QObject):
         """Get the most recent analysis result"""
         return self._current_result
 
-    def validate_icp_result(self, result: 'ICPScanResult') -> bool:
+    def validate_icp_result(self, result: "ICPScanResult") -> bool:
         """Validate an ICP scan result for consistency and completeness.
 
         Args:
@@ -165,25 +165,25 @@ class AnalysisResultOrchestrator(QObject):
             return False
 
         # Validate required fields
-        if not hasattr(result, 'file_path') or not result.file_path:
+        if not hasattr(result, "file_path") or not result.file_path:
             logger.error("ICPScanResult missing required file_path")
             return False
 
         # Validate protection data if present
-        if hasattr(result, 'protections') and result.protections:
+        if hasattr(result, "protections") and result.protections:
             for protection in result.protections:
-                if not hasattr(protection, 'type') or not hasattr(protection, 'confidence'):
+                if not hasattr(protection, "type") or not hasattr(protection, "confidence"):
                     logger.warning(f"Incomplete protection data in ICPScanResult: {protection}")
 
         # Check for analysis status
-        if hasattr(result, 'status'):
-            if result.status not in ['completed', 'partial', 'failed', 'in_progress']:
+        if hasattr(result, "status"):
+            if result.status not in ["completed", "partial", "failed", "in_progress"]:
                 logger.warning(f"Unexpected ICPScanResult status: {result.status}")
 
         logger.info(f"ICPScanResult validation passed for {result.file_path}")
         return True
 
-    def merge_icp_with_unified_result(self, icp_result: 'ICPScanResult', unified_result: Optional[UnifiedProtectionResult] = None) -> UnifiedProtectionResult:
+    def merge_icp_with_unified_result(self, icp_result: "ICPScanResult", unified_result: Optional[UnifiedProtectionResult] = None) -> UnifiedProtectionResult:
         """Merge ICP scan results with unified protection result.
 
         Args:
@@ -197,28 +197,28 @@ class AnalysisResultOrchestrator(QObject):
             if UnifiedProtectionResult:
                 # Create new unified result from ICP data
                 unified_result = UnifiedProtectionResult()
-                unified_result.file_path = icp_result.file_path if hasattr(icp_result, 'file_path') else None
-                unified_result.analysis_timestamp = getattr(icp_result, 'timestamp', None)
+                unified_result.file_path = icp_result.file_path if hasattr(icp_result, "file_path") else None
+                unified_result.analysis_timestamp = getattr(icp_result, "timestamp", None)
             else:
                 logger.error("UnifiedProtectionResult not available")
                 return None
 
         # Merge ICP data into unified result
-        if hasattr(unified_result, 'icp_analysis'):
+        if hasattr(unified_result, "icp_analysis"):
             unified_result.icp_analysis = icp_result
 
         # Extract and merge protection data
-        if hasattr(icp_result, 'protections') and hasattr(unified_result, 'protections'):
+        if hasattr(icp_result, "protections") and hasattr(unified_result, "protections"):
             # Merge protection lists, avoiding duplicates
-            existing_types = {p.type for p in unified_result.protections if hasattr(p, 'type')}
+            existing_types = {p.type for p in unified_result.protections if hasattr(p, "type")}
 
             for protection in icp_result.protections:
-                if hasattr(protection, 'type') and protection.type not in existing_types:
+                if hasattr(protection, "type") and protection.type not in existing_types:
                     unified_result.protections.append(protection)
                     existing_types.add(protection.type)
 
         # Update confidence scores
-        if hasattr(icp_result, 'overall_confidence') and hasattr(unified_result, 'confidence'):
+        if hasattr(icp_result, "overall_confidence") and hasattr(unified_result, "confidence"):
             # Average the confidence scores
             if unified_result.confidence:
                 unified_result.confidence = (unified_result.confidence + icp_result.overall_confidence) / 2
@@ -228,7 +228,7 @@ class AnalysisResultOrchestrator(QObject):
         logger.info(f"Merged ICPScanResult with UnifiedProtectionResult for {unified_result.file_path}")
         return unified_result
 
-    def extract_icp_recommendations(self, result: 'ICPScanResult') -> list:
+    def extract_icp_recommendations(self, result: "ICPScanResult") -> list:
         """Extract bypass recommendations from ICP scan result.
 
         Args:
@@ -243,20 +243,20 @@ class AnalysisResultOrchestrator(QObject):
             return recommendations
 
         # Extract direct recommendations
-        if hasattr(result, 'recommendations'):
+        if hasattr(result, "recommendations"):
             recommendations.extend(result.recommendations)
 
         # Generate recommendations based on protections found
-        if hasattr(result, 'protections'):
+        if hasattr(result, "protections"):
             for protection in result.protections:
-                if hasattr(protection, 'type') and hasattr(protection, 'bypass_difficulty'):
-                    if protection.bypass_difficulty == 'low':
+                if hasattr(protection, "type") and hasattr(protection, "bypass_difficulty"):
+                    if protection.bypass_difficulty == "low":
                         recommendations.append(f"Protection '{protection.type}' has low bypass difficulty - standard techniques should work")
-                    elif protection.bypass_difficulty == 'high':
+                    elif protection.bypass_difficulty == "high":
                         recommendations.append(f"Protection '{protection.type}' requires advanced bypass techniques")
 
         # Add tool-specific recommendations
-        if hasattr(result, 'suggested_tools'):
+        if hasattr(result, "suggested_tools"):
             for tool in result.suggested_tools:
                 recommendations.append(f"Consider using {tool} for analysis")
 

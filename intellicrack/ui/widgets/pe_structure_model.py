@@ -112,7 +112,7 @@ class PEStructureModel(QAbstractItemModel):
 
         info = self.pe_model.get_file_info()
         for key, value in info.items():
-            if key not in ['file_path', 'parsed']:
+            if key not in ["file_path", "parsed"]:
                 info_item = PEStructureItem(f"{key}: {value}", file_info)
                 file_info.append_child(info_item)
 
@@ -228,8 +228,8 @@ class PEStructureModel(QAbstractItemModel):
                 cert_info = "Signing Certificate"
                 if signing_cert.subject:
                     # Extract CN from subject
-                    subject_parts = signing_cert.subject.split(',')
-                    cn_part = next((part.strip() for part in subject_parts if part.strip().startswith('CN=')), None)
+                    subject_parts = signing_cert.subject.split(",")
+                    cn_part = next((part.strip() for part in subject_parts if part.strip().startswith("CN=")), None)
                     if cn_part:
                         cert_info = f"{cert_info} - {cn_part[3:]}"  # Remove 'CN=' prefix
 
@@ -268,8 +268,8 @@ class PEStructureModel(QAbstractItemModel):
                     cert_name = f"Certificate {i}"
                     # Try to get CN from subject
                     if cert.subject:
-                        subject_parts = cert.subject.split(',')
-                        cn_part = next((part.strip() for part in subject_parts if part.strip().startswith('CN=')), None)
+                        subject_parts = cert.subject.split(",")
+                        cn_part = next((part.strip() for part in subject_parts if part.strip().startswith("CN=")), None)
                         if cn_part:
                             cert_name = f"{cert_name} - {cn_part[3:]}"
 

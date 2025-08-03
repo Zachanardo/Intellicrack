@@ -80,9 +80,9 @@ class C2ServerThread(QThread):
             self.server = C2Server(self.server_config)
 
             # Set up event handlers
-            self.server.add_event_handler('session_connected', self.on_session_connected)
-            self.server.add_event_handler('session_disconnected', self.on_session_disconnected)
-            self.server.add_event_handler('beacon_received', self.on_beacon_received)
+            self.server.add_event_handler("session_connected", self.on_session_connected)
+            self.server.add_event_handler("session_disconnected", self.on_session_disconnected)
+            self.server.add_event_handler("beacon_received", self.on_beacon_received)
 
             # Run server
             loop = asyncio.new_event_loop()
@@ -108,22 +108,22 @@ class C2ServerThread(QThread):
     def on_session_connected(self, session):
         """Handle new session connection."""
         self.session_update.emit({
-            'event': 'connected',
-            'session': session.to_dict() if hasattr(session, 'to_dict') else session
+            "event": "connected",
+            "session": session.to_dict() if hasattr(session, "to_dict") else session
         })
 
     def on_session_disconnected(self, session):
         """Handle session disconnection."""
         self.session_update.emit({
-            'event': 'disconnected',
-            'session': session.to_dict() if hasattr(session, 'to_dict') else session
+            "event": "disconnected",
+            "session": session.to_dict() if hasattr(session, "to_dict") else session
         })
 
     def on_beacon_received(self, data):
         """Handle beacon from session."""
         self.session_update.emit({
-            'event': 'beacon',
-            'data': data
+            "event": "beacon",
+            "data": data
         })
 
 
@@ -570,24 +570,24 @@ class C2ManagementDialog(QDialog):
         try:
             # Build server configuration
             config = {
-                'https_enabled': self.https_check.isChecked(),
-                'dns_enabled': self.dns_check.isChecked(),
-                'tcp_enabled': self.tcp_check.isChecked(),
-                'https': {
-                    'host': self.listen_addr_edit.text(),
-                    'port': self.https_port_spin.value()
+                "https_enabled": self.https_check.isChecked(),
+                "dns_enabled": self.dns_check.isChecked(),
+                "tcp_enabled": self.tcp_check.isChecked(),
+                "https": {
+                    "host": self.listen_addr_edit.text(),
+                    "port": self.https_port_spin.value()
                 },
-                'dns': {
-                    'host': self.listen_addr_edit.text(),
-                    'port': self.dns_port_spin.value(),
-                    'domain': os.environ.get('DNS_DOMAIN', 'internal.local')
+                "dns": {
+                    "host": self.listen_addr_edit.text(),
+                    "port": self.dns_port_spin.value(),
+                    "domain": os.environ.get("DNS_DOMAIN", "internal.local")
                 },
-                'tcp': {
-                    'host': self.listen_addr_edit.text(),
-                    'port': self.tcp_port_spin.value()
+                "tcp": {
+                    "host": self.listen_addr_edit.text(),
+                    "port": self.tcp_port_spin.value()
                 },
-                'beacon_interval': self.beacon_interval_spin.value(),
-                'jitter_percent': self.jitter_spin.value()
+                "beacon_interval": self.beacon_interval_spin.value(),
+                "jitter_percent": self.jitter_spin.value()
             }
 
             # Start server thread
@@ -639,21 +639,21 @@ class C2ManagementDialog(QDialog):
 
     def on_session_update(self, update: Dict[str, Any]):
         """Handle session updates from server."""
-        event = update.get('event')
+        event = update.get("event")
 
-        if event == 'connected':
-            session = update.get('session', {})
+        if event == "connected":
+            session = update.get("session", {})
             self.add_session(session)
             self.log_message(f"New session connected: {session.get('session_id', 'unknown')}", "success")
 
-        elif event == 'disconnected':
-            session = update.get('session', {})
-            self.remove_session(session.get('session_id'))
+        elif event == "disconnected":
+            session = update.get("session", {})
+            self.remove_session(session.get("session_id"))
             self.log_message(f"Session disconnected: {session.get('session_id', 'unknown')}", "warning")
 
-        elif event == 'beacon':
-            data = update.get('data', {})
-            session_id = data.get('session', {}).get('session_id')
+        elif event == "beacon":
+            data = update.get("data", {})
+            session_id = data.get("session", {}).get("session_id")
             if session_id:
                 self.update_session_beacon(session_id)
 
@@ -667,7 +667,7 @@ class C2ManagementDialog(QDialog):
     def add_session(self, session: Dict[str, Any]):
         """Add new session to table."""
         try:
-            session_id = session.get('session_id', 'unknown')
+            session_id = session.get("session_id", "unknown")
 
             # Store session
             self.active_sessions[session_id] = session
@@ -679,20 +679,20 @@ class C2ManagementDialog(QDialog):
             # Populate row
             self.sessions_table.setItem(row, 0, QTableWidgetItem(session_id[:8]))
 
-            conn_info = session.get('connection_info', {})
+            conn_info = session.get("connection_info", {})
             self.sessions_table.setItem(row, 1, QTableWidgetItem(
-                str(conn_info.get('remote_addr', 'unknown'))
+                str(conn_info.get("remote_addr", "unknown"))
             ))
 
-            client_info = session.get('client_info', {})
+            client_info = session.get("client_info", {})
             self.sessions_table.setItem(row, 2, QTableWidgetItem(
-                client_info.get('username', 'unknown')
+                client_info.get("username", "unknown")
             ))
             self.sessions_table.setItem(row, 3, QTableWidgetItem(
-                client_info.get('platform', 'unknown')
+                client_info.get("platform", "unknown")
             ))
             self.sessions_table.setItem(row, 4, QTableWidgetItem(
-                client_info.get('architecture', 'unknown')
+                client_info.get("architecture", "unknown")
             ))
 
             # Status
@@ -776,20 +776,20 @@ class C2ManagementDialog(QDialog):
             details = []
             details.append(f"Session ID: {session.get('session_id', 'unknown')}")
 
-            conn_info = session.get('connection_info', {})
+            conn_info = session.get("connection_info", {})
             details.append(f"Remote Address: {conn_info.get('remote_addr', 'unknown')}")
             details.append(f"Protocol: {conn_info.get('protocol', 'unknown')}")
 
-            client_info = session.get('client_info', {})
+            client_info = session.get("client_info", {})
             details.append(f"Username: {client_info.get('username', 'unknown')}")
             details.append(f"Hostname: {client_info.get('hostname', 'unknown')}")
             details.append(f"OS: {client_info.get('platform', 'unknown')}")
             details.append(f"Architecture: {client_info.get('architecture', 'unknown')}")
 
-            caps = session.get('capabilities', [])
+            caps = session.get("capabilities", [])
             details.append(f"Capabilities: {', '.join(caps)}")
 
-            self.details_text.setText('\n'.join(details))
+            self.details_text.setText("\n".join(details))
 
         except Exception as e:
             self.logger.error(f"Failed to display session details: {e}")
@@ -918,8 +918,8 @@ class C2ManagementDialog(QDialog):
                 stats = self.server_thread.server.get_server_statistics()
 
                 # Update labels
-                if stats.get('start_time'):
-                    uptime = time.time() - stats['start_time']
+                if stats.get("start_time"):
+                    uptime = time.time() - stats["start_time"]
                     hours = int(uptime // 3600)
                     minutes = int((uptime % 3600) // 60)
                     seconds = int(uptime % 60)
@@ -928,7 +928,7 @@ class C2ManagementDialog(QDialog):
                 self.sessions_count_label.setText(f"Active Sessions: {stats.get('active_sessions', 0)}")
                 self.total_connections_label.setText(f"Total Connections: {stats.get('total_connections', 0)}")
 
-                data_kb = stats.get('total_data_transfer', 0) / 1024
+                data_kb = stats.get("total_data_transfer", 0) / 1024
                 self.data_transferred_label.setText(f"Data Transferred: {data_kb:.2f} KB")
 
                 # Update session uptime in table
@@ -938,7 +938,7 @@ class C2ManagementDialog(QDialog):
                         partial_id = session_id_item.text()
                         for sid, session in self.active_sessions.items():
                             if sid.startswith(partial_id):
-                                created_at = session.get('created_at', time.time())
+                                created_at = session.get("created_at", time.time())
                                 session_uptime = time.time() - created_at
                                 uptime_str = f"{int(session_uptime//3600):02d}:{int((session_uptime%3600)//60):02d}:{int(session_uptime%60):02d}"
                                 self.sessions_table.setItem(row, 7, QTableWidgetItem(uptime_str))
@@ -964,7 +964,7 @@ class C2ManagementDialog(QDialog):
                 return
 
             # Get remote file path
-            if hasattr(current_item, 'full_path'):
+            if hasattr(current_item, "full_path"):
                 remote_path = current_item.full_path
             else:
                 remote_path = file_path
@@ -983,9 +983,9 @@ class C2ManagementDialog(QDialog):
 
             # Send download command to session
             command = {
-                'type': 'download_file',
-                'remote_path': remote_path,
-                'local_path': local_path
+                "type": "download_file",
+                "remote_path": remote_path,
+                "local_path": local_path
             }
 
             success = self.send_command_to_session(session_id, command)
@@ -1016,7 +1016,7 @@ class C2ManagementDialog(QDialog):
                 return
 
             # Get remote file path
-            if hasattr(current_item, 'full_path'):
+            if hasattr(current_item, "full_path"):
                 remote_path = current_item.full_path
             else:
                 remote_path = file_path
@@ -1035,8 +1035,8 @@ class C2ManagementDialog(QDialog):
 
             # Send delete command to session
             command = {
-                'type': 'delete_file',
-                'remote_path': remote_path
+                "type": "delete_file",
+                "remote_path": remote_path
             }
 
             success = self.send_command_to_session(session_id, command)
@@ -1122,8 +1122,8 @@ class C2ManagementDialog(QDialog):
                 return
 
             # Get remote directory from path input (if available)
-            remote_dir = getattr(self, 'remote_path_input', None)
-            if remote_dir and hasattr(remote_dir, 'text'):
+            remote_dir = getattr(self, "remote_path_input", None)
+            if remote_dir and hasattr(remote_dir, "text"):
                 remote_base_path = remote_dir.text() or "/"
             else:
                 remote_base_path = "/"
@@ -1147,7 +1147,7 @@ class C2ManagementDialog(QDialog):
 
                 try:
                     # Read file data
-                    with open(local_path, 'rb') as f:
+                    with open(local_path, "rb") as f:
                         file_data = f.read()
 
                     import base64
@@ -1157,10 +1157,10 @@ class C2ManagementDialog(QDialog):
 
                     # Send upload command to session
                     command = {
-                        'type': 'upload_file',
-                        'remote_path': remote_path,
-                        'file_data': base64.b64encode(file_data).decode('utf-8'),
-                        'file_size': len(file_data)
+                        "type": "upload_file",
+                        "remote_path": remote_path,
+                        "file_data": base64.b64encode(file_data).decode("utf-8"),
+                        "file_size": len(file_data)
                     }
 
                     success = self.send_command_to_session(session_id, command)
@@ -1205,7 +1205,7 @@ class C2ManagementDialog(QDialog):
             return
             
         # Split into lines
-        lines = current_text.split('\n')
+        lines = current_text.split("\n")
         filtered_lines = []
         
         # Apply filter based on type
@@ -1215,38 +1215,38 @@ class C2ManagementDialog(QDialog):
             line_lower = line.lower()
             
             # Filter by log level/type
-            if filter_type_lower == 'all':
+            if filter_type_lower == "all":
                 filtered_lines.append(line)
-            elif filter_type_lower == 'error' and ('error' in line_lower or 'fail' in line_lower):
+            elif filter_type_lower == "error" and ("error" in line_lower or "fail" in line_lower):
                 filtered_lines.append(line)
-            elif filter_type_lower == 'warning' and ('warning' in line_lower or 'warn' in line_lower):
+            elif filter_type_lower == "warning" and ("warning" in line_lower or "warn" in line_lower):
                 filtered_lines.append(line)
-            elif filter_type_lower == 'info' and ('info' in line_lower or 'information' in line_lower):
+            elif filter_type_lower == "info" and ("info" in line_lower or "information" in line_lower):
                 filtered_lines.append(line)
-            elif filter_type_lower == 'success' and ('success' in line_lower or 'complete' in line_lower):
+            elif filter_type_lower == "success" and ("success" in line_lower or "complete" in line_lower):
                 filtered_lines.append(line)
-            elif filter_type_lower == 'connection' and ('connect' in line_lower or 'disconnect' in line_lower):
+            elif filter_type_lower == "connection" and ("connect" in line_lower or "disconnect" in line_lower):
                 filtered_lines.append(line)
-            elif filter_type_lower == 'command' and ('command' in line_lower or 'execute' in line_lower):
+            elif filter_type_lower == "command" and ("command" in line_lower or "execute" in line_lower):
                 filtered_lines.append(line)
-            elif filter_type_lower == 'upload' and ('upload' in line_lower or 'download' in line_lower):
+            elif filter_type_lower == "upload" and ("upload" in line_lower or "download" in line_lower):
                 filtered_lines.append(line)
-            elif filter_type_lower == 'client' and ('client' in line_lower or 'agent' in line_lower):
+            elif filter_type_lower == "client" and ("client" in line_lower or "agent" in line_lower):
                 filtered_lines.append(line)
             # Custom filter - search for the filter text in the line
-            elif filter_type_lower not in ['all', 'error', 'warning', 'info', 'success', 'connection', 'command', 'upload', 'client']:
+            elif filter_type_lower not in ["all", "error", "warning", "info", "success", "connection", "command", "upload", "client"]:
                 if filter_type_lower in line_lower:
                     filtered_lines.append(line)
         
         # Update display with filtered content
-        self.log_display.setPlainText('\n'.join(filtered_lines))
+        self.log_display.setPlainText("\n".join(filtered_lines))
         
         # Store original text for reset
-        if not hasattr(self, '_original_log_text'):
+        if not hasattr(self, "_original_log_text"):
             self._original_log_text = current_text
         
         # Update status
-        if hasattr(self, 'filter_status_label'):
+        if hasattr(self, "filter_status_label"):
             self.filter_status_label.setText(f"Filter: {filter_type} ({len(filtered_lines)} lines)")
 
     def clear_logs(self):

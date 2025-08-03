@@ -47,7 +47,7 @@ except ImportError:
 
 # Add parent directory to path for imports
 script_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
+project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
 sys.path.insert(0, project_root)
 
 
@@ -75,16 +75,16 @@ class AITerminalChat:
 
         # Available commands
         self.commands = {
-            '/help': self._show_help,
-            '/clear': self._clear_history,
-            '/save': self._save_conversation,
-            '/load': self._load_conversation,
-            '/export': self._export_conversation,
-            '/analyze': self._analyze_current_binary,
-            '/context': self._show_context,
-            '/backend': self._switch_backend,
-            '/quit': self._quit_chat,
-            '/exit': self._quit_chat
+            "/help": self._show_help,
+            "/clear": self._clear_history,
+            "/save": self._save_conversation,
+            "/load": self._load_conversation,
+            "/export": self._export_conversation,
+            "/analyze": self._analyze_current_binary,
+            "/context": self._show_context,
+            "/backend": self._switch_backend,
+            "/quit": self._quit_chat,
+            "/exit": self._quit_chat
         }
 
         # Initialize AI backend
@@ -145,13 +145,13 @@ class AITerminalChat:
                     continue
 
                 # Check for commands
-                if user_input.startswith('/'):
+                if user_input.startswith("/"):
                     command = user_input.split()[0]
                     args = user_input.split()[1:] if len(user_input.split()) > 1 else []
 
                     if command in self.commands:
                         result = self.commands[command](args)
-                        if result == 'quit':
+                        if result == "quit":
                             break
                         continue
                     else:
@@ -185,13 +185,13 @@ class AITerminalChat:
                     continue
 
                 # Check for commands
-                if user_input.startswith('/'):
+                if user_input.startswith("/"):
                     command = user_input.split()[0]
                     args = user_input.split()[1:] if len(user_input.split()) > 1 else []
 
                     if command in self.commands:
                         result = self.commands[command](args)
-                        if result == 'quit':
+                        if result == "quit":
                             break
                         continue
                     else:
@@ -211,9 +211,9 @@ class AITerminalChat:
         """Process AI query with rich formatting."""
         # Add to conversation history
         self.conversation_history.append({
-            'timestamp': datetime.now().isoformat(),
-            'type': 'user',
-            'content': user_input
+            "timestamp": datetime.now().isoformat(),
+            "type": "user",
+            "content": user_input
         })
 
         # Show thinking indicator with progress bar
@@ -231,7 +231,7 @@ class AITerminalChat:
             progress.update(thinking_task, advance=50, description="[blue]Generating response...")
 
             # Check if response contains code and prepare syntax highlighting
-            if '```' in response:
+            if "```" in response:
                 progress.update(thinking_task, advance=15, description="[yellow]Formatting code blocks...")
 
             progress.update(thinking_task, advance=10, description="[green]Finalizing response...")
@@ -241,9 +241,9 @@ class AITerminalChat:
 
         # Add response to history
         self.conversation_history.append({
-            'timestamp': datetime.now().isoformat(),
-            'type': 'ai',
-            'content': response
+            "timestamp": datetime.now().isoformat(),
+            "type": "ai",
+            "content": response
         })
 
         # Trim history if too long
@@ -254,9 +254,9 @@ class AITerminalChat:
         """Process AI query with basic formatting."""
         # Add to conversation history
         self.conversation_history.append({
-            'timestamp': datetime.now().isoformat(),
-            'type': 'user',
-            'content': user_input
+            "timestamp": datetime.now().isoformat(),
+            "type": "user",
+            "content": user_input
         })
 
         print("AI: Thinking...")
@@ -266,9 +266,9 @@ class AITerminalChat:
 
         # Add response to history
         self.conversation_history.append({
-            'timestamp': datetime.now().isoformat(),
-            'type': 'ai',
-            'content': response
+            "timestamp": datetime.now().isoformat(),
+            "type": "ai",
+            "content": response
         })
 
     def _get_ai_response(self, user_input: str) -> str:
@@ -287,7 +287,7 @@ class AITerminalChat:
 
             if self.analysis_results:
                 # Add key analysis findings to context
-                vuln_count = len(self.analysis_results.get('vulnerabilities', {}).get('vulnerabilities', []))
+                vuln_count = len(self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", []))
                 if vuln_count > 0:
                     contextual_question = f"Context: Found {vuln_count} vulnerabilities\n{contextual_question}"
 
@@ -308,7 +308,7 @@ class AITerminalChat:
                 )
 
                 if isinstance(response, dict):
-                    return response.get('analysis', response.get('response', str(response)))
+                    return response.get("analysis", response.get("response", str(response)))
                 else:
                     return str(response)
 
@@ -323,7 +323,7 @@ class AITerminalChat:
         user_lower = user_input.lower()
 
         # Binary analysis questions
-        if any(word in user_lower for word in ['analyze', 'analysis', 'binary', 'file']):
+        if any(word in user_lower for word in ["analyze", "analysis", "binary", "file"]):
             if self.binary_path:
                 return f"""I can see you're working with {os.path.basename(self.binary_path)}.
 
@@ -337,8 +337,8 @@ Would you like me to focus on any specific aspect of the analysis?"""
                 return "To analyze a binary, please load one first using the 'load' command in the main interface."
 
         # Vulnerability questions
-        elif any(word in user_lower for word in ['vulnerability', 'vuln', 'security', 'exploit']):
-            vuln_count = len(self.analysis_results.get('vulnerabilities', {}).get('vulnerabilities', []))
+        elif any(word in user_lower for word in ["vulnerability", "vuln", "security", "exploit"]):
+            vuln_count = len(self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", []))
             if vuln_count > 0:
                 return f"""I found {vuln_count} potential vulnerabilities in your binary:
 
@@ -351,8 +351,8 @@ I recommend addressing the high-severity issues first. Would you like specific r
                 return "No critical vulnerabilities detected in the current analysis. The binary appears to have good security protections."
 
         # Protection questions
-        elif any(word in user_lower for word in ['protection', 'aslr', 'dep', 'canary', 'mitigation']):
-            protections = self.analysis_results.get('protections', {})
+        elif any(word in user_lower for word in ["protection", "aslr", "dep", "canary", "mitigation"]):
+            protections = self.analysis_results.get("protections", {})
             if protections:
                 enabled = [k for k, v in protections.items() if v]
                 disabled = [k for k, v in protections.items() if not v]
@@ -369,11 +369,11 @@ I recommend addressing the high-severity issues first. Would you like specific r
                 return "No protection information available. Run a comprehensive analysis to check security mitigations."
 
         # String analysis questions
-        elif any(word in user_lower for word in ['string', 'text', 'password', 'key']):
-            strings = self.analysis_results.get('strings', [])
+        elif any(word in user_lower for word in ["string", "text", "password", "key"]):
+            strings = self.analysis_results.get("strings", [])
             if strings:
                 interesting_strings = [s for s in strings if any(keyword in s.lower()
-                                     for keyword in ['password', 'key', 'license', 'admin', 'secret'])]
+                                     for keyword in ["password", "key", "license", "admin", "secret"])]
 
                 if interesting_strings:
                     return f"""Found {len(interesting_strings)} potentially interesting strings:
@@ -387,7 +387,7 @@ These strings might indicate authentication mechanisms or sensitive data."""
                 return "No string analysis data available. Run string extraction first."
 
         # Help questions
-        elif any(word in user_lower for word in ['help', 'what', 'how', 'explain']):
+        elif any(word in user_lower for word in ["help", "what", "how", "explain"]):
             return """I'm here to help you understand your binary analysis results!
 
 I can assist with:
@@ -416,26 +416,26 @@ Could you be more specific about what aspect of the analysis you'd like to explo
     def _build_context(self) -> Dict[str, Any]:
         """Build context for AI responses."""
         context = {
-            'session_info': {
-                'start_time': self.session_start.isoformat(),
-                'conversation_length': len(self.conversation_history)
+            "session_info": {
+                "start_time": self.session_start.isoformat(),
+                "conversation_length": len(self.conversation_history)
             }
         }
 
         if self.binary_path:
-            context['binary_info'] = {
-                'name': os.path.basename(self.binary_path),
-                'path': self.binary_path,
-                'size': os.path.getsize(self.binary_path) if os.path.exists(self.binary_path) else 0
+            context["binary_info"] = {
+                "name": os.path.basename(self.binary_path),
+                "path": self.binary_path,
+                "size": os.path.getsize(self.binary_path) if os.path.exists(self.binary_path) else 0
             }
 
         if self.analysis_results:
             # Summarize analysis results for context
-            context['analysis_summary'] = {
-                'categories': list(self.analysis_results.keys()),
-                'vulnerability_count': len(self.analysis_results.get('vulnerabilities', {}).get('vulnerabilities', [])),
-                'string_count': len(self.analysis_results.get('strings', [])),
-                'has_protections': 'protections' in self.analysis_results
+            context["analysis_summary"] = {
+                "categories": list(self.analysis_results.keys()),
+                "vulnerability_count": len(self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", [])),
+                "string_count": len(self.analysis_results.get("strings", [])),
+                "has_protections": "protections" in self.analysis_results
             }
 
         return context
@@ -459,10 +459,10 @@ Could you be more specific about what aspect of the analysis you'd like to explo
         layout["header"].update(Panel(header_content, border_style="green"))
 
         # Body with response content - check for code blocks and markdown
-        if '```' in response:
+        if "```" in response:
             # Process code blocks with syntax highlighting
             response_content = self._process_code_blocks(response)
-        elif response.startswith('#') or '*' in response or '**' in response:
+        elif response.startswith("#") or "*" in response or "**" in response:
             # Render as markdown for formatted text
             response_content = Markdown(response)
         else:
@@ -499,10 +499,10 @@ Could you be more specific about what aspect of the analysis you'd like to explo
         import re
 
         # Pattern to match code blocks with optional language specification
-        pattern = r'```(\w+)?\n(.*?)\n```'
+        pattern = r"```(\w+)?\n(.*?)\n```"
 
         def replace_code_block(match):
-            language = match.group(1) or 'python'  # Default to python if no language specified
+            language = match.group(1) or "python"  # Default to python if no language specified
             code = match.group(2)
 
             # Create syntax highlighted code block
@@ -520,7 +520,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
                     if part.strip():
                         result_parts.append(part)
                 elif i % 3 == 2:  # Code content parts
-                    lang = parts[i-1] or 'python'
+                    lang = parts[i-1] or "python"
                     syntax = Syntax(part, lang, theme="monokai", line_numbers=True)
                     result_parts.append(syntax)
 
@@ -538,17 +538,17 @@ Could you be more specific about what aspect of the analysis you'd like to explo
         # Create summary panels for different analysis types
         panels = []
 
-        if 'vulnerabilities' in self.analysis_results:
-            vuln_data = self.analysis_results['vulnerabilities']
-            vuln_count = len(vuln_data.get('vulnerabilities', [])) if isinstance(vuln_data, dict) else 0
+        if "vulnerabilities" in self.analysis_results:
+            vuln_data = self.analysis_results["vulnerabilities"]
+            vuln_count = len(vuln_data.get("vulnerabilities", [])) if isinstance(vuln_data, dict) else 0
             panels.append(Panel(f"[red]{vuln_count}[/red] vulnerabilities found", title="Security", border_style="red"))
 
-        if 'strings' in self.analysis_results:
-            string_count = len(self.analysis_results['strings'])
+        if "strings" in self.analysis_results:
+            string_count = len(self.analysis_results["strings"])
             panels.append(Panel(f"[blue]{string_count}[/blue] strings extracted", title="Strings", border_style="blue"))
 
-        if 'protections' in self.analysis_results:
-            protection_data = self.analysis_results['protections']
+        if "protections" in self.analysis_results:
+            protection_data = self.analysis_results["protections"]
             protection_count = len(protection_data) if isinstance(protection_data, (list, dict)) else 1
             panels.append(Panel(f"[yellow]{protection_count}[/yellow] protections detected", title="Protections", border_style="yellow"))
 
@@ -606,15 +606,15 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
         try:
             conversation_data = {
-                'session_info': {
-                    'start_time': self.session_start.isoformat(),
-                    'end_time': datetime.now().isoformat(),
-                    'binary_path': self.binary_path
+                "session_info": {
+                    "start_time": self.session_start.isoformat(),
+                    "end_time": datetime.now().isoformat(),
+                    "binary_path": self.binary_path
                 },
-                'conversation': self.conversation_history
+                "conversation": self.conversation_history
             }
 
-            with open(filename, 'w', encoding='utf-8') as f:
+            with open(filename, "w", encoding="utf-8") as f:
                 json.dump(conversation_data, f, indent=2, ensure_ascii=False)
 
             if self.console:
@@ -656,9 +656,9 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
         # Simulate AI response
         response = {
-            'timestamp': datetime.now().isoformat(),
-            'type': 'ai',
-            'content': overview
+            "timestamp": datetime.now().isoformat(),
+            "type": "ai",
+            "content": overview
         }
 
         self.conversation_history.append(response)
@@ -729,8 +729,8 @@ Could you be more specific about what aspect of the analysis you'd like to explo
                     print(msg)
 
                 # Update context with new backend info
-                self.context['ai_backend'] = backend_name
-                self.context['backend_capabilities'] = self.ai_assistant.llm_manager.get_backend_capabilities(backend_name)
+                self.context["ai_backend"] = backend_name
+                self.context["backend_capabilities"] = self.ai_assistant.llm_manager.get_backend_capabilities(backend_name)
 
             else:
                 msg = f"Failed to switch to {backend_name} backend. Check configuration."
@@ -758,7 +758,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
         else:
             print("Thanks for using Intellicrack AI Assistant!")
 
-        return 'quit'
+        return "quit"
 
     def _load_conversation(self, args: List[str]) -> Optional[str]:
         """Load conversation from file."""
@@ -772,10 +772,10 @@ Could you be more specific about what aspect of the analysis you'd like to explo
         filename = args[0]
 
         try:
-            with open(filename, 'r', encoding='utf-8') as f:
+            with open(filename, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            self.conversation_history = data.get('conversation', [])
+            self.conversation_history = data.get("conversation", [])
 
             if self.console:
                 self.console.print(f"[green]Conversation loaded from {filename}[/green]")
@@ -792,15 +792,15 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
     def _export_conversation(self, args: List[str]) -> Optional[str]:
         """Export conversation in various formats."""
-        format_type = args[0] if args else 'txt'
+        format_type = args[0] if args else "txt"
         filename = f"conversation_export_{int(time.time())}.{format_type}"
 
         try:
-            if format_type == 'json':
+            if format_type == "json":
                 self._save_conversation([filename])
-            elif format_type == 'txt':
+            elif format_type == "txt":
                 self._export_text(filename)
-            elif format_type == 'md':
+            elif format_type == "md":
                 self._export_markdown(filename)
             else:
                 if self.console:
@@ -824,7 +824,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
     def _export_text(self, filename: str):
         """Export conversation as plain text."""
-        with open(filename, 'w', encoding='utf-8') as f:
+        with open(filename, "w", encoding="utf-8") as f:
             f.write("Intellicrack AI Chat Session\n")
             f.write(f"Started: {self.session_start}\n")
             if self.binary_path:
@@ -832,16 +832,16 @@ Could you be more specific about what aspect of the analysis you'd like to explo
             f.write("\n" + "="*50 + "\n\n")
 
             for entry in self.conversation_history:
-                timestamp = entry.get('timestamp', '')
-                entry_type = entry.get('type', 'unknown')
-                content = entry.get('content', '')
+                timestamp = entry.get("timestamp", "")
+                entry_type = entry.get("type", "unknown")
+                content = entry.get("content", "")
 
-                speaker = "You" if entry_type == 'user' else "AI"
+                speaker = "You" if entry_type == "user" else "AI"
                 f.write(f"[{timestamp}] {speaker}: {content}\n\n")
 
     def _export_markdown(self, filename: str):
         """Export conversation as Markdown."""
-        with open(filename, 'w', encoding='utf-8') as f:
+        with open(filename, "w", encoding="utf-8") as f:
             f.write("# Intellicrack AI Chat Session\n\n")
             f.write(f"**Started:** {self.session_start}\n")
             if self.binary_path:
@@ -849,11 +849,11 @@ Could you be more specific about what aspect of the analysis you'd like to explo
             f.write("\n---\n\n")
 
             for entry in self.conversation_history:
-                timestamp = entry.get('timestamp', '')
-                entry_type = entry.get('type', 'unknown')
-                content = entry.get('content', '')
+                timestamp = entry.get("timestamp", "")
+                entry_type = entry.get("type", "unknown")
+                content = entry.get("content", "")
 
-                if entry_type == 'user':
+                if entry_type == "user":
                     f.write(f"## 👤 User\n\n{content}\n\n")
                 else:
                     f.write(f"## 🤖 AI Assistant\n\n{content}\n\n")

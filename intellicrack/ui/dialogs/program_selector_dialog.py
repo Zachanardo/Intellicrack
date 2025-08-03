@@ -152,10 +152,10 @@ class ProgramSelectorDialog(QDialog):
 
         # Filters and search
         self.file_filters = {
-            'All Executables': ['*.exe', '*.dll', '*.so', '*.dylib', '*.bin'],
-            'Windows': ['*.exe', '*.dll', '*.sys'],
-            'Linux': ['*.so', '*.bin'],
-            'macOS': ['*.dylib', '*.app']
+            "All Executables": ["*.exe", "*.dll", "*.so", "*.dylib", "*.bin"],
+            "Windows": ["*.exe", "*.dll", "*.sys"],
+            "Linux": ["*.so", "*.bin"],
+            "macOS": ["*.dylib", "*.app"]
         }
 
         # Setup UI
@@ -421,30 +421,30 @@ class ProgramSelectorDialog(QDialog):
         """Get desktop folder paths for current user."""
         desktop_paths = []
 
-        if sys.platform.startswith('win'):
+        if sys.platform.startswith("win"):
             # Windows desktop paths
-            user_profile = os.environ.get('USERPROFILE', '')
+            user_profile = os.environ.get("USERPROFILE", "")
             if user_profile:
                 desktop_paths.extend([
-                    os.path.join(user_profile, 'Desktop'),
-                    os.path.join(user_profile, 'OneDrive', 'Desktop'),
-                    r'C:\Users\Public\Desktop'
+                    os.path.join(user_profile, "Desktop"),
+                    os.path.join(user_profile, "OneDrive", "Desktop"),
+                    r"C:\Users\Public\Desktop"
                 ])
-        elif sys.platform.startswith('linux'):
+        elif sys.platform.startswith("linux"):
             # Linux desktop paths
-            home = os.environ.get('HOME', '')
+            home = os.environ.get("HOME", "")
             if home:
                 desktop_paths.extend([
-                    os.path.join(home, 'Desktop'),
-                    os.path.join(home, '.local', 'share', 'applications')
+                    os.path.join(home, "Desktop"),
+                    os.path.join(home, ".local", "share", "applications")
                 ])
-        elif sys.platform.startswith('darwin'):
+        elif sys.platform.startswith("darwin"):
             # macOS desktop paths
-            home = os.environ.get('HOME', '')
+            home = os.environ.get("HOME", "")
             if home:
                 desktop_paths.extend([
-                    os.path.join(home, 'Desktop'),
-                    '/Applications'
+                    os.path.join(home, "Desktop"),
+                    "/Applications"
                 ])
 
         # Filter to existing paths
@@ -547,7 +547,7 @@ Description: {program_data.get('description', 'No description available')}"""
         self.program_info.setPlainText(info_text)
 
         # Update installation folder
-        install_location = program_data.get('install_location', '')
+        install_location = program_data.get("install_location", "")
         self.installation_folder = install_location
         self.folder_path_label.setText(install_location or "No installation folder detected")
 
@@ -564,138 +564,138 @@ Description: {program_data.get('description', 'No description available')}"""
             # Comprehensive licensing patterns - from obvious to highly obscure
             licensing_patterns = {
                 # Obvious licensing files
-                'license': 10, 'licence': 10, 'eula': 10, 'terms': 9, 'agreement': 9,
-                'copyright': 8, 'legal': 8, 'rights': 8, 'disclaimer': 7,
+                "license": 10, "licence": 10, "eula": 10, "terms": 9, "agreement": 9,
+                "copyright": 8, "legal": 8, "rights": 8, "disclaimer": 7,
 
                 # Activation and protection
-                'activation': 9, 'serial': 9, 'key': 8, 'keyfile': 8, 'keystore': 8,
-                'authenticate': 7, 'auth': 7, 'register': 7, 'registration': 8,
-                'unlock': 7, 'unlocker': 8, 'crack': 9, 'patch': 8, 'keygen': 9,
+                "activation": 9, "serial": 9, "key": 8, "keyfile": 8, "keystore": 8,
+                "authenticate": 7, "auth": 7, "register": 7, "registration": 8,
+                "unlock": 7, "unlocker": 8, "crack": 9, "patch": 8, "keygen": 9,
 
                 # Commercial licensing terms
-                'commercial': 7, 'proprietary': 7, 'subscription': 6, 'trial': 6,
-                'demo': 5, 'evaluation': 6, 'eval': 6, 'beta': 4, 'alpha': 4,
+                "commercial": 7, "proprietary": 7, "subscription": 6, "trial": 6,
+                "demo": 5, "evaluation": 6, "eval": 6, "beta": 4, "alpha": 4,
 
                 # Legal and compliance
-                'compliance': 6, 'policy': 5, 'privacy': 5, 'gdpr': 6, 'dmca': 7,
-                'takedown': 6, 'notice': 5, 'attribution': 6, 'credits': 5,
+                "compliance": 6, "policy": 5, "privacy": 5, "gdpr": 6, "dmca": 7,
+                "takedown": 6, "notice": 5, "attribution": 6, "credits": 5,
 
                 # Software protection schemes
-                'dongle': 8, 'hasp': 8, 'sentinel': 8, 'flexlm': 8, 'rlm': 8,
-                'safenet': 8, 'wibu': 8, 'codemeter': 8, 'reprise': 8,
-                'macrovision': 7, 'installshield': 6, 'nalpeiron': 7,
+                "dongle": 8, "hasp": 8, "sentinel": 8, "flexlm": 8, "rlm": 8,
+                "safenet": 8, "wibu": 8, "codemeter": 8, "reprise": 8,
+                "macrovision": 7, "installshield": 6, "nalpeiron": 7,
 
                 # Obscure protection files
-                'lic': 8, 'dat': 6, 'bin': 5, 'db': 5, 'cfg': 5, 'conf': 5,
-                'ini': 5, 'reg': 6, 'xml': 5, 'json': 4, 'sig': 7, 'cert': 7,
-                'crt': 7, 'pem': 6, 'p7b': 6, 'p12': 6, 'pfx': 6,
+                "lic": 8, "dat": 6, "bin": 5, "db": 5, "cfg": 5, "conf": 5,
+                "ini": 5, "reg": 6, "xml": 5, "json": 4, "sig": 7, "cert": 7,
+                "crt": 7, "pem": 6, "p7b": 6, "p12": 6, "pfx": 6,
 
                 # Company-specific patterns
-                'adobe': 7, 'autodesk': 7, 'microsoft': 6, 'oracle': 6,
-                'vmware': 7, 'citrix': 7, 'symantec': 7, 'mcafee': 7,
-                'norton': 7, 'kaspersky': 7, 'eset': 7, 'avast': 6,
+                "adobe": 7, "autodesk": 7, "microsoft": 6, "oracle": 6,
+                "vmware": 7, "citrix": 7, "symantec": 7, "mcafee": 7,
+                "norton": 7, "kaspersky": 7, "eset": 7, "avast": 6,
 
                 # Hidden/encoded files
-                'hidden': 6, 'encoded': 6, 'encrypted': 7, 'obfuscated': 7,
-                'protected': 7, 'secured': 6, 'locked': 6, 'vault': 7,
+                "hidden": 6, "encoded": 6, "encrypted": 7, "obfuscated": 7,
+                "protected": 7, "secured": 6, "locked": 6, "vault": 7,
 
                 # License server related
-                'server': 5, 'daemon': 6, 'service': 5, 'client': 4,
-                'manager': 5, 'admin': 5, 'control': 5, 'monitor': 5,
+                "server": 5, "daemon": 6, "service": 5, "client": 4,
+                "manager": 5, "admin": 5, "control": 5, "monitor": 5,
 
                 # File integrity and validation
-                'checksum': 6, 'hash': 6, 'md5': 6, 'sha1': 6, 'sha256': 6,
-                'crc': 6, 'verify': 6, 'validate': 6, 'integrity': 6,
+                "checksum": 6, "hash": 6, "md5": 6, "sha1": 6, "sha256": 6,
+                "crc": 6, "verify": 6, "validate": 6, "integrity": 6,
 
                 # Backup and recovery
-                'backup': 5, 'recovery': 5, 'restore': 5, 'emergency': 6,
-                'rescue': 6, 'safe': 5, 'secure': 6,
+                "backup": 5, "recovery": 5, "restore": 5, "emergency": 6,
+                "rescue": 6, "safe": 5, "secure": 6,
 
                 # Version and update control
-                'version': 4, 'update': 4, 'software_patch': 6, 'hotfix': 5,
-                'upgrade': 5, 'migration': 5, 'transfer': 5,
+                "version": 4, "update": 4, "software_patch": 6, "hotfix": 5,
+                "upgrade": 5, "migration": 5, "transfer": 5,
 
                 # Obscure extensions and patterns
-                'token': 7, 'ticket': 6, 'voucher': 6, 'permit': 7,
-                'grant': 6, 'allow': 5, 'deny': 6, 'block': 6,
-                'whitelist': 6, 'blacklist': 6, 'filter': 5,
+                "token": 7, "ticket": 6, "voucher": 6, "permit": 7,
+                "grant": 6, "allow": 5, "deny": 6, "block": 6,
+                "whitelist": 6, "blacklist": 6, "filter": 5,
 
                 # Network licensing
-                'network': 5, 'floating': 6, 'concurrent': 6, 'node': 5,
-                'seat': 6, 'user': 4, 'machine': 5, 'hardware_binding': 5,
+                "network": 5, "floating": 6, "concurrent": 6, "node": 5,
+                "seat": 6, "user": 4, "machine": 5, "hardware_binding": 5,
 
                 # Cryptographic elements
-                'rsa': 6, 'dsa': 6, 'ecc': 6, 'aes': 6, 'des': 6,
-                'blowfish': 6, 'twofish': 6, 'serpent': 6,
+                "rsa": 6, "dsa": 6, "ecc": 6, "aes": 6, "des": 6,
+                "blowfish": 6, "twofish": 6, "serpent": 6,
 
                 # File naming conventions
-                'readme': 4, 'install': 4, 'setup': 4, 'config': 4,
-                'settings': 4, 'options': 4, 'preferences': 4,
+                "readme": 4, "install": 4, "setup": 4, "config": 4,
+                "settings": 4, "options": 4, "preferences": 4,
 
                 # Suspicious/crack-related terms
-                'nfo': 7, 'diz': 6, 'scene': 6, 'release': 5,
-                'team': 4, 'group': 4, 'crew': 5, 'union': 5,
-                'force': 5, 'revenge': 6, 'paradox': 6, 'prophet': 6,
+                "nfo": 7, "diz": 6, "scene": 6, "release": 5,
+                "team": 4, "group": 4, "crew": 5, "union": 5,
+                "force": 5, "revenge": 6, "paradox": 6, "prophet": 6,
 
                 # Database and storage
-                'sqlite': 5, 'mysql': 5, 'postgres': 5, 'oracle_db': 6,
-                'access': 5, 'firebird': 5, 'derby': 5,
+                "sqlite": 5, "mysql": 5, "postgres": 5, "oracle_db": 6,
+                "access": 5, "firebird": 5, "derby": 5,
 
                 # Virtualization and sandboxing
-                'virtual': 5, 'sandbox': 6, 'container': 5, 'docker': 5,
-                'vm': 5, 'hyperv': 5, 'xen': 5, 'kvm': 5,
+                "virtual": 5, "sandbox": 6, "container": 5, "docker": 5,
+                "vm": 5, "hyperv": 5, "xen": 5, "kvm": 5,
 
                 # Hardware fingerprinting
-                'fingerprint': 7, 'hwid': 7, 'hardware': 6, 'bios': 6,
-                'uefi': 6, 'tpm': 7, 'smartcard': 7, 'usb': 6,
+                "fingerprint": 7, "hwid": 7, "hardware": 6, "bios": 6,
+                "uefi": 6, "tpm": 7, "smartcard": 7, "usb": 6,
 
                 # Time-based licensing
-                'expire': 7, 'expiry': 7, 'timeout': 6, 'timer': 6,
-                'countdown': 6, 'deadline': 6, 'schedule': 5,
+                "expire": 7, "expiry": 7, "timeout": 6, "timer": 6,
+                "countdown": 6, "deadline": 6, "schedule": 5,
 
                 # Custom extensions that might hide licensing
-                'x': 4, 'z': 4, 'tmp': 5, 'temp': 5, 'bak': 5,
-                'old': 4, 'new': 4, 'orig': 5, 'copy': 4,
+                "x": 4, "z": 4, "tmp": 5, "temp": 5, "bak": 5,
+                "old": 4, "new": 4, "orig": 5, "copy": 4,
 
                 # Vendor-specific file patterns
-                'flexera': 7, 'installaware': 6, 'wise': 6, 'inno': 6,
-                'nsis': 6, 'wix': 6, 'msi': 6, 'msm': 6, 'msp': 6,
+                "flexera": 7, "installaware": 6, "wise": 6, "inno": 6,
+                "nsis": 6, "wix": 6, "msi": 6, "msm": 6, "msp": 6,
             }
 
             # Comprehensive file extensions
             extensions = [
                 # Text formats
-                '.txt', '.rtf', '.doc', '.docx', '.pdf', '.html', '.htm', '.xml',
-                '.json', '.yaml', '.yml', '.ini', '.cfg', '.conf', '.properties',
+                ".txt", ".rtf", ".doc", ".docx", ".pdf", ".html", ".htm", ".xml",
+                ".json", ".yaml", ".yml", ".ini", ".cfg", ".conf", ".properties",
 
                 # Binary formats
-                '.dll', '.exe', '.sys', '.ocx', '.ax', '.cpl', '.scr',
-                '.bin', '.dat', '.db', '.sqlite', '.mdb', '.accdb',
+                ".dll", ".exe", ".sys", ".ocx", ".ax", ".cpl", ".scr",
+                ".bin", ".dat", ".db", ".sqlite", ".mdb", ".accdb",
 
                 # Certificate and key files
-                '.cer', '.crt', '.der', '.pem', '.p7b', '.p7c', '.p12', '.pfx',
-                '.key', '.pub', '.sig', '.csr', '.jks', '.keystore',
+                ".cer", ".crt", ".der", ".pem", ".p7b", ".p7c", ".p12", ".pfx",
+                ".key", ".pub", ".sig", ".csr", ".jks", ".keystore",
 
                 # Archive formats (might contain licensing)
-                '.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz',
-                '.cab', '.msi', '.pkg', '.deb', '.rpm',
+                ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz",
+                ".cab", ".msi", ".pkg", ".deb", ".rpm",
 
                 # Image formats (sometimes contain embedded licensing)
-                '.bmp', '.jpg', '.jpeg', '.png', '.gif', '.tiff', '.ico',
+                ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".tiff", ".ico",
 
                 # Script and code files
-                '.bat', '.cmd', '.ps1', '.vbs', '.js', '.py', '.pl', '.sh',
-                '.reg', '.inf', '.cat', '.manifest',
+                ".bat", ".cmd", ".ps1", ".vbs", ".js", ".py", ".pl", ".sh",
+                ".reg", ".inf", ".cat", ".manifest",
 
                 # Data files
-                '.csv', '.tsv', '.log', '.out', '.dump', '.trace',
+                ".csv", ".tsv", ".log", ".out", ".dump", ".trace",
 
                 # Licensing-specific extensions
-                '.lic', '.license', '.key', '.dat', '.bin', '.token',
-                '.permit', '.grant', '.auth', '.unlock', '.crack',
+                ".lic", ".license", ".key", ".dat", ".bin", ".token",
+                ".permit", ".grant", ".auth", ".unlock", ".crack",
 
                 # Hidden or no extension
-                '', '.', '.hidden', '.sys', '.tmp'
+                "", ".", ".hidden", ".sys", ".tmp"
             ]
 
             # Search for licensing-related files with advanced detection
@@ -728,27 +728,27 @@ Description: {program_data.get('description', 'No description available')}"""
                                 max_priority = pattern_priority
 
                                 # Categorize based on pattern type
-                                if pattern in ['license', 'licence', 'eula', 'terms', 'agreement']:
+                                if pattern in ["license", "licence", "eula", "terms", "agreement"]:
                                     best_file_type = "License"
-                                elif pattern in ['activation', 'serial', 'key', 'keyfile', 'keystore', 'auth']:
+                                elif pattern in ["activation", "serial", "key", "keyfile", "keystore", "auth"]:
                                     best_file_type = "Activation"
-                                elif pattern in ['crack', 'patch', 'keygen', 'unlocker']:
+                                elif pattern in ["crack", "patch", "keygen", "unlocker"]:
                                     best_file_type = "Bypass"
-                                elif pattern in ['dongle', 'hasp', 'sentinel', 'flexlm', 'safenet', 'wibu']:
+                                elif pattern in ["dongle", "hasp", "sentinel", "flexlm", "safenet", "wibu"]:
                                     best_file_type = "Protection"
-                                elif pattern in ['cert', 'crt', 'pem', 'sig', 'token']:
+                                elif pattern in ["cert", "crt", "pem", "sig", "token"]:
                                     best_file_type = "Certificate"
-                                elif pattern in ['server', 'daemon', 'service', 'manager']:
+                                elif pattern in ["server", "daemon", "service", "manager"]:
                                     best_file_type = "Service"
-                                elif pattern in ['backup', 'recovery', 'emergency']:
+                                elif pattern in ["backup", "recovery", "emergency"]:
                                     best_file_type = "Backup"
-                                elif pattern in ['encrypted', 'protected', 'secured', 'locked']:
+                                elif pattern in ["encrypted", "protected", "secured", "locked"]:
                                     best_file_type = "Protected"
-                                elif pattern in ['fingerprint', 'hwid', 'hardware', 'tpm']:
+                                elif pattern in ["fingerprint", "hwid", "hardware", "tpm"]:
                                     best_file_type = "Hardware"
-                                elif pattern in ['expire', 'timeout', 'timer', 'deadline']:
+                                elif pattern in ["expire", "timeout", "timer", "deadline"]:
                                     best_file_type = "Temporal"
-                                elif pattern in ['network', 'floating', 'concurrent']:
+                                elif pattern in ["network", "floating", "concurrent"]:
                                     best_file_type = "Network"
                                 else:
                                     best_file_type = "Legal"
@@ -756,16 +756,16 @@ Description: {program_data.get('description', 'No description available')}"""
                     # Check suspicious file extensions (even without pattern matches)
                     if file_ext in extensions:
                         ext_priority = 0
-                        if file_ext in ['.lic', '.license', '.key', '.token']:
+                        if file_ext in [".lic", ".license", ".key", ".token"]:
                             ext_priority = 8
-                        elif file_ext in ['.dll', '.exe', '.sys'] and max_priority == 0:
+                        elif file_ext in [".dll", ".exe", ".sys"] and max_priority == 0:
                             # Only consider executables if no other patterns matched
                             ext_priority = 4
-                        elif file_ext in ['.dat', '.bin', '.db']:
+                        elif file_ext in [".dat", ".bin", ".db"]:
                             ext_priority = 5
-                        elif file_ext in ['.txt', '.rtf', '.pdf', '.doc']:
+                        elif file_ext in [".txt", ".rtf", ".pdf", ".doc"]:
                             ext_priority = 3
-                        elif file_ext in ['.cert', '.crt', '.pem', '.sig']:
+                        elif file_ext in [".cert", ".crt", ".pem", ".sig"]:
                             ext_priority = 7
                         else:
                             ext_priority = 2
@@ -776,14 +776,14 @@ Description: {program_data.get('description', 'No description available')}"""
                                 best_file_type = "Document"
 
                     # Special checks for hidden or suspicious files
-                    if file.startswith('.') and max_priority == 0:
+                    if file.startswith(".") and max_priority == 0:
                         max_priority = 4
                         best_file_type = "Hidden"
 
                     # Check for files with no extension (often suspicious)
                     if not file_ext and len(file) > 0 and max_priority == 0:
                         # Common names that might be licensing related
-                        no_ext_patterns = ['readme', 'license', 'eula', 'terms', 'key', 'serial']
+                        no_ext_patterns = ["readme", "license", "eula", "terms", "key", "serial"]
                         for pattern in no_ext_patterns:
                             if pattern in file_lower:
                                 max_priority = 6
@@ -793,9 +793,9 @@ Description: {program_data.get('description', 'No description available')}"""
                     # Boost priority for files in certain directories
                     dir_boost = 0
                     root_lower = root.lower()
-                    if any(term in root_lower for term in ['license', 'legal', 'key', 'crack', 'patch']):
+                    if any(term in root_lower for term in ["license", "legal", "key", "crack", "patch"]):
                         dir_boost = 2
-                    elif any(term in root_lower for term in ['bin', 'data', 'config']):
+                    elif any(term in root_lower for term in ["bin", "data", "config"]):
                         dir_boost = 1
 
                     final_priority = min(max_priority + dir_boost, 10)
@@ -810,7 +810,7 @@ Description: {program_data.get('description', 'No description available')}"""
                         self.add_licensing_file_to_tree(file_path, best_file_type, final_priority)
 
             # Sort by priority
-            self.licensing_files.sort(key=lambda x: x['priority'], reverse=True)
+            self.licensing_files.sort(key=lambda x: x["priority"], reverse=True)
 
         except Exception as e:
             logger.error(f"Error analyzing installation folder {folder_path}: {e}")
@@ -819,10 +819,10 @@ Description: {program_data.get('description', 'No description available')}"""
         """Add a licensing file to the tree widget."""
         try:
             file_info = {
-                'path': file_path,
-                'type': file_type,
-                'priority': priority,
-                'size': os.path.getsize(file_path) if os.path.exists(file_path) else 0
+                "path": file_path,
+                "type": file_type,
+                "priority": priority,
+                "size": os.path.getsize(file_path) if os.path.exists(file_path) else 0
             }
 
             self.licensing_files.append(file_info)
@@ -831,7 +831,7 @@ Description: {program_data.get('description', 'No description available')}"""
             item = QTreeWidgetItem()
             item.setText(0, os.path.basename(file_path))
             item.setText(1, file_type)
-            item.setText(2, self.format_file_size(file_info['size']))
+            item.setText(2, self.format_file_size(file_info["size"]))
             item.setText(3, str(priority))
             item.setData(0, Qt.UserRole, file_info)
 
@@ -853,7 +853,7 @@ Description: {program_data.get('description', 'No description available')}"""
 
     def format_file_size(self, size):
         """Format file size in human readable format."""
-        for unit in ['B', 'KB', 'MB', 'GB']:
+        for unit in ["B", "KB", "MB", "GB"]:
             if size < 1024.0:
                 return f"{size:.1f} {unit}"
             size /= 1024.0
@@ -881,16 +881,16 @@ Description: {program_data.get('description', 'No description available')}"""
         """Open a licensing file for viewing."""
         file_info = item.data(0, Qt.UserRole)
         if file_info:
-            file_path = file_info['path']
+            file_path = file_info["path"]
             try:
                 # Use system default program to open file
-                if sys.platform.startswith('win'):
-                    if hasattr(os, 'startfile'):
+                if sys.platform.startswith("win"):
+                    if hasattr(os, "startfile"):
                         os.startfile(file_path)
-                elif sys.platform.startswith('linux'):
-                    subprocess.run(['xdg-open', file_path])
-                elif sys.platform.startswith('darwin'):
-                    subprocess.run(['open', file_path])
+                elif sys.platform.startswith("linux"):
+                    subprocess.run(["xdg-open", file_path])
+                elif sys.platform.startswith("darwin"):
+                    subprocess.run(["open", file_path])
             except Exception as e:
                 logger.error(f"Error opening file {file_path}: {e}")
                 QMessageBox.warning(self, "Error", f"Could not open file: {str(e)}")
@@ -906,10 +906,10 @@ Description: {program_data.get('description', 'No description available')}"""
     def get_selected_program_data(self):
         """Get data for the selected program."""
         return {
-            'program_info': self.selected_program,
-            'installation_folder': self.installation_folder,
-            'licensing_files': self.licensing_files,
-            'auto_analyze': self.auto_analyze_checkbox.isChecked()
+            "program_info": self.selected_program,
+            "installation_folder": self.installation_folder,
+            "licensing_files": self.licensing_files,
+            "auto_analyze": self.auto_analyze_checkbox.isChecked()
         }
 
 

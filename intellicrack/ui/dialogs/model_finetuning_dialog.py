@@ -172,7 +172,7 @@ class TrainingConfig:
     evaluation_strategy: str = "epoch"
     logging_steps: int = 10
 
-    def to_enhanced_config(self) -> 'EnhancedTrainingConfiguration':
+    def to_enhanced_config(self) -> "EnhancedTrainingConfiguration":
         """Convert TrainingConfig to EnhancedTrainingConfiguration if available."""
         if ENHANCED_TRAINING_AVAILABLE:
             return EnhancedTrainingConfiguration(
@@ -306,10 +306,10 @@ class TrainingThread(QThread):
 
             elif TORCH_AVAILABLE and self.config.model_format == "PyTorch":
                 # Load PyTorch model
-                if model_path.endswith('.bin') or model_path.endswith('.pt'):
-                    checkpoint = torch.load(model_path, map_location='cpu')
-                    if 'model_state_dict' in checkpoint:
-                        self.model = checkpoint['model_state_dict']
+                if model_path.endswith(".bin") or model_path.endswith(".pt"):
+                    checkpoint = torch.load(model_path, map_location="cpu")
+                    if "model_state_dict" in checkpoint:
+                        self.model = checkpoint["model_state_dict"]
                     else:
                         self.model = checkpoint
 
@@ -340,22 +340,22 @@ class TrainingThread(QThread):
         try:
             if TORCH_AVAILABLE:
                 # Determine model architecture based on configuration
-                model_type = getattr(self.config, 'model_type', 'transformer').lower()
-                vocab_size = getattr(self.config, 'vocab_size', 32000)
-                hidden_size = getattr(self.config, 'hidden_size', 512)
-                num_layers = getattr(self.config, 'num_layers', 6)
-                num_heads = getattr(self.config, 'num_attention_heads', 8)
+                model_type = getattr(self.config, "model_type", "transformer").lower()
+                vocab_size = getattr(self.config, "vocab_size", 32000)
+                hidden_size = getattr(self.config, "hidden_size", 512)
+                num_layers = getattr(self.config, "num_layers", 6)
+                num_heads = getattr(self.config, "num_attention_heads", 8)
 
                 self.logger.info("Creating %s model with %d parameters", model_type,
                                self._estimate_parameter_count(hidden_size, num_layers, vocab_size))
 
-                if model_type == 'gpt':
+                if model_type == "gpt":
                     self.model = self._create_gpt_model(vocab_size, hidden_size, num_layers, num_heads)
-                elif model_type == 'bert':
+                elif model_type == "bert":
                     self.model = self._create_bert_model(vocab_size, hidden_size, num_layers, num_heads)
-                elif model_type == 'roberta':
+                elif model_type == "roberta":
                     self.model = self._create_roberta_model(vocab_size, hidden_size, num_layers, num_heads)
-                elif model_type == 'llama':
+                elif model_type == "llama":
                     self.model = self._create_llama_model(vocab_size, hidden_size, num_layers, num_heads)
                 else:
                     # Default transformer model with enhanced features
@@ -505,7 +505,7 @@ class TrainingThread(QThread):
                     nhead=num_heads,
                     dim_feedforward=hidden_size * 4,
                     dropout=0.1,
-                    activation='gelu',
+                    activation="gelu",
                     batch_first=True
                 )
                 self.transformer = nn.TransformerEncoder(encoder_layer, num_layers)
@@ -550,9 +550,9 @@ class TrainingThread(QThread):
                 pooled_output = torch.tanh(self.pooler(hidden_states[:, 0]))
 
                 return {
-                    'logits': mlm_logits,
-                    'pooled_output': pooled_output,
-                    'hidden_states': hidden_states
+                    "logits": mlm_logits,
+                    "pooled_output": pooled_output,
+                    "hidden_states": hidden_states
                 }
 
         return BERTModel(vocab_size, hidden_size, num_layers, num_heads)
@@ -823,8 +823,8 @@ class TrainingThread(QThread):
 
                 # Add single characters
                 for i in range(26):
-                    vocab.append(chr(ord('a') + i))
-                    vocab.append(chr(ord('A') + i))
+                    vocab.append(chr(ord("a") + i))
+                    vocab.append(chr(ord("A") + i))
 
                 # Add digits
                 for i in range(10):
@@ -922,9 +922,9 @@ class TrainingThread(QThread):
                 torch.nn.init.zeros_(module.bias)
             elif isinstance(module, nn.MultiheadAttention):
                 # Initialize attention weights
-                if hasattr(module, 'in_proj_weight') and module.in_proj_weight is not None:
+                if hasattr(module, "in_proj_weight") and module.in_proj_weight is not None:
                     torch.nn.init.xavier_uniform_(module.in_proj_weight)
-                if hasattr(module, 'out_proj') and module.out_proj.weight is not None:
+                if hasattr(module, "out_proj") and module.out_proj.weight is not None:
                     torch.nn.init.xavier_uniform_(module.out_proj.weight)
 
         self.model.apply(init_weights)
@@ -932,28 +932,28 @@ class TrainingThread(QThread):
 
     def _add_model_metadata(self, model_type: str, vocab_size: int, hidden_size: int, num_layers: int):
         """Add comprehensive metadata to the model."""
-        if not hasattr(self.model, 'config'):
+        if not hasattr(self.model, "config"):
             self.model.config = {}
 
         self.model.config.update({
-            'model_type': model_type,
-            'vocab_size': vocab_size,
-            'hidden_size': hidden_size,
-            'num_layers': num_layers,
-            'num_parameters': sum(p.numel() for p in self.model.parameters()),
-            'trainable_parameters': sum(p.numel() for p in self.model.parameters() if p.requires_grad),
-            'created_timestamp': time.time(),
-            'framework': 'pytorch',
-            'version': '1.0.0'
+            "model_type": model_type,
+            "vocab_size": vocab_size,
+            "hidden_size": hidden_size,
+            "num_layers": num_layers,
+            "num_parameters": sum(p.numel() for p in self.model.parameters()),
+            "trainable_parameters": sum(p.numel() for p in self.model.parameters() if p.requires_grad),
+            "created_timestamp": time.time(),
+            "framework": "pytorch",
+            "version": "1.0.0"
         })
 
         # Add training configuration
         self.model.training_config = {
-            'learning_rate': getattr(self.config, 'learning_rate', 1e-4),
-            'batch_size': getattr(self.config, 'batch_size', 32),
-            'max_epochs': getattr(self.config, 'max_epochs', 10),
-            'warmup_steps': getattr(self.config, 'warmup_steps', 1000),
-            'weight_decay': getattr(self.config, 'weight_decay', 0.01)
+            "learning_rate": getattr(self.config, "learning_rate", 1e-4),
+            "batch_size": getattr(self.config, "batch_size", 32),
+            "max_epochs": getattr(self.config, "max_epochs", 10),
+            "warmup_steps": getattr(self.config, "warmup_steps", 1000),
+            "weight_decay": getattr(self.config, "weight_decay", 0.01)
         }
 
     def _estimate_parameter_count(self, hidden_size: int, num_layers: int, vocab_size: int) -> int:
@@ -976,11 +976,11 @@ class TrainingThread(QThread):
             def __init__(self):
                 """Initialize fallback model with basic configuration parameters."""
                 self.config = {
-                    'model_type': 'fallback',
-                    'vocab_size': 32000,
-                    'hidden_size': 512,
-                    'num_layers': 6,
-                    'status': 'fallback_mode'
+                    "model_type": "fallback",
+                    "vocab_size": 32000,
+                    "hidden_size": 512,
+                    "num_layers": 6,
+                    "status": "fallback_mode"
                 }
 
             def forward(self, *args, **kwargs):
@@ -1020,15 +1020,15 @@ class TrainingThread(QThread):
             data = []
 
             if dataset_format == "json":
-                with open(dataset_path, 'r', encoding='utf-8') as f:
+                with open(dataset_path, "r", encoding="utf-8") as f:
                     raw_data = json.load(f)
                     if isinstance(raw_data, list):
                         data = raw_data
-                    elif isinstance(raw_data, dict) and 'data' in raw_data:
-                        data = raw_data['data']
+                    elif isinstance(raw_data, dict) and "data" in raw_data:
+                        data = raw_data["data"]
 
             elif dataset_format == "jsonl":
-                with open(dataset_path, 'r', encoding='utf-8') as f:
+                with open(dataset_path, "r", encoding="utf-8") as f:
                     for _line in f:
                         try:
                             item = json.loads(_line.strip())
@@ -1038,12 +1038,12 @@ class TrainingThread(QThread):
                             continue
 
             elif dataset_format == "csv":
-                with open(dataset_path, 'r', encoding='utf-8') as f:
+                with open(dataset_path, "r", encoding="utf-8") as f:
                     reader = csv.DictReader(f)
                     data = list(reader)
 
             elif dataset_format == "txt":
-                with open(dataset_path, 'r', encoding='utf-8') as f:
+                with open(dataset_path, "r", encoding="utf-8") as f:
                     lines = f.readlines()
                     # Convert to input/output format
                     data = [{"input": _line.strip(), "output": ""} for _line in lines if _line.strip()]
@@ -1066,7 +1066,7 @@ class TrainingThread(QThread):
         try:
             if TRANSFORMERS_AVAILABLE and self.tokenizer:
                 # Setup LoRA if available
-                if PEFT_AVAILABLE and hasattr(self.model, 'config'):
+                if PEFT_AVAILABLE and hasattr(self.model, "config"):
                     lora_config = LoraConfig(
                         task_type=TaskType.CAUSAL_LM,
                         r=self.config.lora_rank,
@@ -1343,7 +1343,7 @@ class ModelFinetuningDialog(QDialog):
     def _move_to_device(self, tensor_or_model):
         """Move tensor or model to the appropriate device."""
         try:
-            if GPU_AUTOLOADER_AVAILABLE and hasattr(tensor_or_model, 'to'):
+            if GPU_AUTOLOADER_AVAILABLE and hasattr(tensor_or_model, "to"):
                 return to_device(tensor_or_model, self.training_device)
             return tensor_or_model
         except Exception as e:
@@ -1357,7 +1357,7 @@ class ModelFinetuningDialog(QDialog):
                 device_info = f"Training Device: {self.training_device}\n"
                 if self.gpu_info.get("available", False):
                     device_info += f"GPU Devices: {len(self.gpu_info.get('devices', []))}\n"
-                    for i, device in enumerate(self.gpu_info.get('devices', [])):
+                    for i, device in enumerate(self.gpu_info.get("devices", [])):
                         device_info += f"  GPU {i}: {device.get('name', 'Unknown')}\n"
                 else:
                     device_info += "GPU: Not available\n"
@@ -1764,12 +1764,12 @@ class ModelFinetuningDialog(QDialog):
             # Auto-detect format based on extension
             ext = Path(path).suffix.lower()
             format_map = {
-                '.bin': 'PyTorch',
-                '.pt': 'PyTorch',
-                '.pth': 'PyTorch',
-                '.gguf': 'GGUF',
-                '.ggml': 'GGML',
-                '.onnx': 'ONNX'
+                ".bin": "PyTorch",
+                ".pt": "PyTorch",
+                ".pth": "PyTorch",
+                ".gguf": "GGUF",
+                ".ggml": "GGML",
+                ".onnx": "ONNX"
             }
 
             if ext in format_map:
@@ -1799,10 +1799,10 @@ class ModelFinetuningDialog(QDialog):
             # Auto-detect format
             ext = Path(path).suffix.lower()
             format_map = {
-                '.json': 'JSON',
-                '.jsonl': 'JSONL',
-                '.csv': 'CSV',
-                '.txt': 'TXT'
+                ".json": "JSON",
+                ".jsonl": "JSONL",
+                ".csv": "CSV",
+                ".txt": "TXT"
             }
 
             if ext in format_map:
@@ -1848,7 +1848,7 @@ class ModelFinetuningDialog(QDialog):
 
             # Create and start training thread
             self.training_thread = TrainingThread(self.training_config)
-            if hasattr(self.training_thread, 'progress_signal'):
+            if hasattr(self.training_thread, "progress_signal"):
                 self.training_thread.progress_signal.connect(self._update_training_progress)
             self.training_thread.finished.connect(self._on_training_finished)
             self.training_thread.start()
@@ -1972,12 +1972,12 @@ class ModelFinetuningDialog(QDialog):
             # Create a dummy model file for demonstration
             model_data = {
                 "config": self.training_config.__dict__,
-                "training_history": getattr(self.training_thread, 'training_history', []),
+                "training_history": getattr(self.training_thread, "training_history", []),
                 "timestamp": time.time(),
                 "version": "1.0"
             }
 
-            with open(save_path, 'wb') as f:
+            with open(save_path, "wb") as f:
                 pickle.dump(model_data, f)
 
             progress.close()
@@ -2012,15 +2012,15 @@ class ModelFinetuningDialog(QDialog):
             samples = []
 
             if dataset_format == "json":
-                with open(dataset_path, 'r', encoding='utf-8') as f:
+                with open(dataset_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, list):
                         samples = data[:sample_count]
-                    elif isinstance(data, dict) and 'data' in data:
-                        samples = data['data'][:sample_count]
+                    elif isinstance(data, dict) and "data" in data:
+                        samples = data["data"][:sample_count]
 
             elif dataset_format == "jsonl":
-                with open(dataset_path, 'r', encoding='utf-8') as f:
+                with open(dataset_path, "r", encoding="utf-8") as f:
                     for i, line in enumerate(f):
                         if i >= sample_count:
                             break
@@ -2032,7 +2032,7 @@ class ModelFinetuningDialog(QDialog):
                             continue
 
             elif dataset_format == "csv":
-                with open(dataset_path, 'r', encoding='utf-8') as f:
+                with open(dataset_path, "r", encoding="utf-8") as f:
                     reader = csv.DictReader(f)
                     for i, row in enumerate(reader):
                         if i >= sample_count:
@@ -2056,8 +2056,8 @@ class ModelFinetuningDialog(QDialog):
         self.dataset_preview.insertRow(row)
 
         # Extract input and output
-        input_text = sample.get('input', sample.get('question', sample.get('text', str(sample))))
-        output_text = sample.get('output', sample.get('answer', sample.get('response', '')))
+        input_text = sample.get("input", sample.get("question", sample.get("text", str(sample))))
+        output_text = sample.get("output", sample.get("answer", sample.get("response", "")))
 
         # Truncate for display
         input_item = QTableWidgetItem(self._truncate_text(str(input_text), 200))
@@ -2177,7 +2177,7 @@ class ModelFinetuningDialog(QDialog):
 
             if save_path:
                 sample_data = self._get_sample_data(template)
-                with open(save_path, 'w', encoding='utf-8') as f:
+                with open(save_path, "w", encoding="utf-8") as f:
                     f.write(sample_data)
 
                 self.dataset_path_edit.setText(save_path)
@@ -2208,7 +2208,7 @@ class ModelFinetuningDialog(QDialog):
             dataset_format = self.dataset_format_combo.currentText().lower()
 
             if dataset_format == "json":
-                with open(dataset_path, 'r', encoding='utf-8') as f:
+                with open(dataset_path, "r", encoding="utf-8") as f:
                     try:
                         data = json.load(f)
                         if isinstance(data, list):
@@ -2216,7 +2216,7 @@ class ModelFinetuningDialog(QDialog):
                             for i, item in enumerate(data):
                                 if not isinstance(item, dict):
                                     issues.append(f"Sample {i}: Not a dictionary")
-                                elif 'input' not in item or 'output' not in item:
+                                elif "input" not in item or "output" not in item:
                                     issues.append(f"Sample {i}: Missing input or output field")
                         else:
                             issues.append("Root element is not an array")
@@ -2258,26 +2258,26 @@ class ModelFinetuningDialog(QDialog):
 
             if save_path:
                 # Load source data
-                with open(source_path, 'r', encoding='utf-8') as f:
+                with open(source_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
 
                 # Export in target format
                 target_ext = Path(save_path).suffix.lower()
 
-                if target_ext == '.jsonl':
-                    with open(save_path, 'w', encoding='utf-8') as f:
+                if target_ext == ".jsonl":
+                    with open(save_path, "w", encoding="utf-8") as f:
                         for _item in data:
-                            f.write(json.dumps(_item) + '\n')
+                            f.write(json.dumps(_item) + "\n")
 
-                elif target_ext == '.csv':
-                    with open(save_path, 'w', newline='', encoding='utf-8') as f:
+                elif target_ext == ".csv":
+                    with open(save_path, "w", newline="", encoding="utf-8") as f:
                         if data:
                             writer = csv.DictWriter(f, fieldnames=data[0].keys())
                             writer.writeheader()
                             writer.writerows(data)
 
                 else:  # JSON
-                    with open(save_path, 'w', encoding='utf-8') as f:
+                    with open(save_path, "w", encoding="utf-8") as f:
                         json.dump(data, f, indent=2, ensure_ascii=False)
 
                 QMessageBox.information(
@@ -2315,7 +2315,7 @@ class ModelFinetuningDialog(QDialog):
                 return
 
             # Load sample data
-            with open(dataset_path, 'r', encoding='utf-8') as f:
+            with open(dataset_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             if not data:
@@ -2324,7 +2324,7 @@ class ModelFinetuningDialog(QDialog):
 
             # Take first sample for preview
             sample = data[0]
-            original_text = sample.get('input', sample.get('text', str(sample)))
+            original_text = sample.get("input", sample.get("text", str(sample)))
 
             # Generate augmented versions
             augmented_samples = []
@@ -2369,12 +2369,12 @@ class ModelFinetuningDialog(QDialog):
             try:
                 # Download required NLTK data if needed
                 try:
-                    wordnet.synsets('test')
+                    wordnet.synsets("test")
                 except LookupError as e:
                     self.logger.error("LookupError in model_finetuning_dialog: %s", e)
                     if NLTK_AVAILABLE:
-                        nltk.download('wordnet', quiet=True)
-                        nltk.download('punkt', quiet=True)
+                        nltk.download("wordnet", quiet=True)
+                        nltk.download("punkt", quiet=True)
 
                 # Replace some words with synonyms
                 result_words = []
@@ -2440,7 +2440,7 @@ class ModelFinetuningDialog(QDialog):
             aug_prob = self.aug_prob_slider.value() / 100.0
 
             # Load dataset
-            with open(dataset_path, 'r', encoding='utf-8') as f:
+            with open(dataset_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             # Apply augmentation
@@ -2462,19 +2462,19 @@ class ModelFinetuningDialog(QDialog):
                             augmented_sample = sample.copy()
 
                             # Apply to input field
-                            if 'input' in sample:
-                                augmented_sample['input'] = self._apply_augmentation_technique(
-                                    sample['input'], _technique
+                            if "input" in sample:
+                                augmented_sample["input"] = self._apply_augmentation_technique(
+                                    sample["input"], _technique
                                 )
 
                             augmented_data.append(augmented_sample)
 
             # Save augmented dataset
-            output_path = dataset_path.replace('.json', '_augmented.json')
+            output_path = dataset_path.replace(".json", "_augmented.json")
             if output_path == dataset_path:
-                output_path = str(Path(dataset_path).with_suffix('')) + '_augmented.json'
+                output_path = str(Path(dataset_path).with_suffix("")) + "_augmented.json"
 
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(augmented_data, f, indent=2, ensure_ascii=False)
 
             self.aug_progress.setValue(100)
@@ -2508,16 +2508,16 @@ class ModelFinetuningDialog(QDialog):
             steps = [_item["step"] for _item in history]
             losses = [_item["loss"] for _item in history]
 
-            ax.plot(steps, losses, 'b-', linewidth=2, label='Training Loss')
-            ax.set_xlabel('Training Step')
-            ax.set_ylabel('Loss')
-            ax.set_title('Training Progress')
+            ax.plot(steps, losses, "b-", linewidth=2, label="Training Loss")
+            ax.set_xlabel("Training Step")
+            ax.set_ylabel("Loss")
+            ax.set_title("Training Progress")
             ax.grid(True, alpha=0.3)
             ax.legend()
 
             # Save plot as temporary file and display
             temp_path = "temp_training_plot.png"
-            fig.savefig(temp_path, dpi=100, bbox_inches='tight')
+            fig.savefig(temp_path, dpi=100, bbox_inches="tight")
             plt.close(fig)
 
             # Update visualization label
@@ -2561,16 +2561,16 @@ class ModelFinetuningDialog(QDialog):
                     "export_time": time.time()
                 }
 
-                if save_path.endswith('.csv'):
+                if save_path.endswith(".csv"):
                     # Export as CSV
-                    with open(save_path, 'w', newline='', encoding='utf-8') as f:
+                    with open(save_path, "w", newline="", encoding="utf-8") as f:
                         if self.training_thread.training_history:
                             writer = csv.DictWriter(f, fieldnames=self.training_thread.training_history[0].keys())
                             writer.writeheader()
                             writer.writerows(self.training_thread.training_history)
                 else:
                     # Export as JSON
-                    with open(save_path, 'w', encoding='utf-8') as f:
+                    with open(save_path, "w", encoding="utf-8") as f:
                         json.dump(metrics_data, f, indent=2)
 
                 QMessageBox.information(
@@ -2606,10 +2606,10 @@ class ModelFinetuningDialog(QDialog):
                 steps = [_item["step"] for _item in history]
                 losses = [_item["loss"] for _item in history]
 
-                ax.plot(steps, losses, 'b-', linewidth=2, label='Training Loss')
-                ax.set_xlabel('Training Step')
-                ax.set_ylabel('Loss')
-                ax.set_title('Training Progress - Intellicrack Model Fine-tuning')
+                ax.plot(steps, losses, "b-", linewidth=2, label="Training Loss")
+                ax.set_xlabel("Training Step")
+                ax.set_ylabel("Loss")
+                ax.set_title("Training Progress - Intellicrack Model Fine-tuning")
                 ax.grid(True, alpha=0.3)
                 ax.legend()
 
@@ -2621,9 +2621,9 @@ class ModelFinetuningDialog(QDialog):
 
                     stats_text = f"Initial Loss: {initial_loss:.4f}\nFinal Loss: {final_loss:.4f}\nImprovement: {improvement:.4f}"
                     ax.text(0.02, 0.98, stats_text, transform=ax.transAxes,
-                           verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+                           verticalalignment="top", bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8))
 
-                fig.savefig(save_path, dpi=300, bbox_inches='tight')
+                fig.savefig(save_path, dpi=300, bbox_inches="tight")
                 plt.close(fig)
 
                 QMessageBox.information(
@@ -2674,15 +2674,15 @@ class ModelFinetuningDialog(QDialog):
         config = TrainingConfig()
 
         # Update config with current UI values
-        if hasattr(self, 'model_path_edit') and self.model_path_edit:
+        if hasattr(self, "model_path_edit") and self.model_path_edit:
             config.model_path = self.model_path_edit.text()
-        if hasattr(self, 'dataset_path_edit') and self.dataset_path_edit:
+        if hasattr(self, "dataset_path_edit") and self.dataset_path_edit:
             config.dataset_path = self.dataset_path_edit.text()
-        if hasattr(self, 'epochs_spin') and self.epochs_spin:
+        if hasattr(self, "epochs_spin") and self.epochs_spin:
             config.epochs = self.epochs_spin.value()
-        if hasattr(self, 'batch_size_spin') and self.batch_size_spin:
+        if hasattr(self, "batch_size_spin") and self.batch_size_spin:
             config.batch_size = self.batch_size_spin.value()
-        if hasattr(self, 'learning_rate_spin') and self.learning_rate_spin:
+        if hasattr(self, "learning_rate_spin") and self.learning_rate_spin:
             config.learning_rate = self.learning_rate_spin.value()
 
         return config
@@ -2794,9 +2794,9 @@ def create_model_finetuning_dialog(parent=None) -> Optional[ModelFinetuningDialo
 
 # Export public interface
 __all__ = [
-    'ModelFinetuningDialog',
-    'TrainingConfig',
-    'AugmentationConfig',
-    'TrainingThread',
-    'create_model_finetuning_dialog',
+    "ModelFinetuningDialog",
+    "TrainingConfig",
+    "AugmentationConfig",
+    "TrainingThread",
+    "create_model_finetuning_dialog",
 ]

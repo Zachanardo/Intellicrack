@@ -58,8 +58,8 @@ def generate_analysis_report(app, report_type, results_data, generator_func=None
     if not filename:
         return None
 
-    if not filename.endswith('.html'):
-        filename += '.html'
+    if not filename.endswith(".html"):
+        filename += ".html"
 
     # Generate report using provided function or default
     if generator_func:
@@ -105,7 +105,7 @@ def _generate_default_report(filename, report_type, results_data):
     """
 
     try:
-        with open(filename, 'w', encoding='utf-8') as f:
+        with open(filename, "w", encoding="utf-8") as f:
             f.write(html_content)
         return filename
     except (OSError, ValueError, RuntimeError) as e:
@@ -124,8 +124,8 @@ def ensure_html_extension(filename):
     Returns:
         str: Filename with .html extension
     """
-    if not filename.endswith('.html'):
-        return filename + '.html'
+    if not filename.endswith(".html"):
+        return filename + ".html"
     return filename
 
 
@@ -164,8 +164,8 @@ def handle_pyqt6_report_generation(app, report_type, generator):
         filename = show_file_dialog(app, "Save Report")
 
         if filename:
-            if not filename.endswith('.html'):
-                filename += '.html'
+            if not filename.endswith(".html"):
+                filename += ".html"
 
             report_path = generator.generate_report(filename)
             return report_path

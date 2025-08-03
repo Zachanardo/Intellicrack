@@ -28,9 +28,9 @@ from pathlib import Path
 def check_for_logger_import(lines):
     """Check if file has logger import."""
     for line in lines[:50]:  # Check first 50 lines
-        if 'from intellicrack.logger import logger' in line:
+        if "from intellicrack.logger import logger" in line:
             return True
-        if re.match(r'^logger\s*=', line.strip()):
+        if re.match(r"^logger\s*=", line.strip()):
             return True
     return False
 
@@ -39,7 +39,7 @@ def find_exception_blocks(file_path):
     violations = []
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
     except:
         return violations
@@ -57,14 +57,14 @@ def find_exception_blocks(file_path):
         stripped = line.strip()
 
         # Check if we're entering an except block
-        if re.match(r'^except\s+.*:', stripped):
+        if re.match(r"^except\s+.*:", stripped):
             in_except_block = True
             except_start_line = i + 1
             except_indent = len(line) - len(line.lstrip())
             has_logger = False
 
             # Extract exception type
-            match = re.match(r'^except\s+(\w+(?:\s+as\s+\w+)?)?:', stripped)
+            match = re.match(r"^except\s+(\w+(?:\s+as\s+\w+)?)?:", stripped)
             if match and match.group(1):
                 exception_type = match.group(1).split()[0]
             else:
@@ -78,30 +78,30 @@ def find_exception_blocks(file_path):
                 # We've left the except block
                 if not has_logger:
                     violations.append({
-                        'line': except_start_line,
-                        'type': exception_type,
-                        'has_logger_import': has_logger_import,
-                        'context': lines[max(0, except_start_line-2):min(len(lines), except_start_line+3)]
+                        "line": except_start_line,
+                        "type": exception_type,
+                        "has_logger_import": has_logger_import,
+                        "context": lines[max(0, except_start_line-2):min(len(lines), except_start_line+3)]
                     })
                 in_except_block = False
-            elif 'logger' in line or 'logging' in line:
+            elif "logger" in line or "logging" in line:
                 has_logger = True
 
     # Check if the last except block had a logger
     if in_except_block and not has_logger:
         violations.append({
-            'line': except_start_line,
-            'type': exception_type,
-            'has_logger_import': has_logger_import,
-            'context': lines[max(0, except_start_line-2):min(len(lines), except_start_line+3)]
+            "line": except_start_line,
+            "type": exception_type,
+            "has_logger_import": has_logger_import,
+            "context": lines[max(0, except_start_line-2):min(len(lines), except_start_line+3)]
         })
 
     return violations
 
 def main():
     """Main function to find all S110 violations."""
-    project_root = Path('/mnt/c/Intellicrack')
-    intellicrack_dir = project_root / 'intellicrack'
+    project_root = Path("/mnt/c/Intellicrack")
+    intellicrack_dir = project_root / "intellicrack"
 
     all_violations = defaultdict(list)
     files_without_logger_import = []
@@ -109,7 +109,7 @@ def main():
     # Find all Python files
     for root, _dirs, files in os.walk(intellicrack_dir):
         for file in files:
-            if file.endswith('.py'):
+            if file.endswith(".py"):
                 file_path = Path(root) / file
                 violations = find_exception_blocks(file_path)
 
@@ -118,7 +118,7 @@ def main():
                     all_violations[str(rel_path)] = violations
 
                     # Check if any violation is in a file without logger import
-                    if any(not v['has_logger_import'] for v in violations):
+                    if any(not v["has_logger_import"] for v in violations):
                         files_without_logger_import.append(str(rel_path))
 
     # Print summary

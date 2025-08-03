@@ -394,7 +394,7 @@ class AICoordinationLayer:
             from .llm_backends import LLMManager, LLMMessage
 
             # Check if we have an LLM manager available
-            llm_manager = getattr(self, '_llm_manager', None)
+            llm_manager = getattr(self, "_llm_manager", None)
             if not llm_manager:
                 # Create a temporary LLM manager if one doesn't exist
                 llm_manager = LLMManager()
@@ -487,7 +487,7 @@ class AICoordinationLayer:
                             any(real_path.startswith(allowed_dir) for allowed_dir in allowed_dirs)):
 
                             # Find full path to file command
-                            file_cmd = shutil.which('file')
+                            file_cmd = shutil.which("file")
                             if file_cmd and os.path.isfile(file_cmd):
                                 # Use full path to file command and avoid shell injection
                                 # Use shlex.quote to properly escape the binary path

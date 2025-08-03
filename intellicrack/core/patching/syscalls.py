@@ -29,7 +29,7 @@ from ...utils.logger import get_logger
 logger = get_logger(__name__)
 
 # Only available on Windows
-if sys.platform == 'win32':
+if sys.platform == "win32":
     try:
         import ctypes.wintypes
         AVAILABLE = True
@@ -51,7 +51,7 @@ THREAD_BASIC_INFORMATION = 0
 
 
 # Windows structures
-if sys.platform == 'win32' and AVAILABLE:
+if sys.platform == "win32" and AVAILABLE:
     class THREAD_BASIC_INFORMATION_32(ctypes.Structure):
         """Thread basic information structure for 32-bit processes."""
         _fields_ = [
@@ -82,7 +82,7 @@ class DirectSyscalls:
 
         try:
             # Get NTDLL base
-            kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
             self.ntdll_base = kernel32.GetModuleHandleW("ntdll.dll")
 
             # Detect if we're in WOW64
@@ -106,7 +106,7 @@ class DirectSyscalls:
             return
 
         try:
-            kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
             # Common syscalls we need
             syscalls = [
@@ -121,7 +121,7 @@ class DirectSyscalls:
 
             for syscall_name in syscalls:
                 # Get function address
-                func_addr = kernel32.GetProcAddress(self.ntdll_base, syscall_name.encode('utf-8'))
+                func_addr = kernel32.GetProcAddress(self.ntdll_base, syscall_name.encode("utf-8"))
                 if func_addr:
                     # Read first few bytes to get syscall number
                     syscall_num = self._get_syscall_number(func_addr)
@@ -144,9 +144,9 @@ class DirectSyscalls:
             # 64-bit: 4C 8B D1 B8 XX XX XX XX (MOV R10, RCX; MOV EAX, imm32)
 
             if buffer[0] == 0xB8:  # 32-bit
-                return struct.unpack('<I', bytes(buffer[1:5]))[0]
+                return struct.unpack("<I", bytes(buffer[1:5]))[0]
             elif buffer[0] == 0x4C and buffer[3] == 0xB8:  # 64-bit
-                return struct.unpack('<I', bytes(buffer[4:8]))[0]
+                return struct.unpack("<I", bytes(buffer[4:8]))[0]
 
         except Exception as e:
             logger.debug(f"Failed to get syscall number: {e}")
@@ -160,7 +160,7 @@ class DirectSyscalls:
             # This is stored in TEB->WOW64Reserved at offset 0xC0
 
             # Get TEB address through NtCurrentTeb()
-            if sys.platform != 'win32':
+            if sys.platform != "win32":
                 return
 
             # Define TEB structure offsets
@@ -170,7 +170,7 @@ class DirectSyscalls:
                 TEB_WOW64_RESERVED_OFFSET = 0xC0
 
             # Get current TEB
-            ntdll = ctypes.WinDLL('ntdll.dll')
+            ntdll = ctypes.WinDLL("ntdll.dll")
 
             # Get TEB through GS/FS segment
             if ctypes.sizeof(ctypes.c_void_p) == 8:
@@ -182,7 +182,7 @@ class DirectSyscalls:
                 ])
 
                 # Allocate executable memory for shellcode
-                kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+                kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
                 shellcode_addr = kernel32.VirtualAlloc(
                     None, len(asm_code), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE
@@ -367,7 +367,7 @@ class DirectSyscalls:
     def _syscall_64(self, syscall_num: int, *args) -> int:
         """Execute 64-bit syscall"""
         try:
-            if not AVAILABLE or sys.platform != 'win32':
+            if not AVAILABLE or sys.platform != "win32":
                 return self._fallback_syscall(syscall_num, *args)
 
             # Windows x64 syscall convention:
@@ -383,33 +383,33 @@ class DirectSyscalls:
             shellcode = bytearray()
 
             # mov rax, syscall_num
-            shellcode.extend(b'\x48\xB8')  # mov rax, imm64
-            shellcode.extend(struct.pack('<Q', syscall_num))
+            shellcode.extend(b"\x48\xB8")  # mov rax, imm64
+            shellcode.extend(struct.pack("<Q", syscall_num))
 
             # Setup first 4 arguments if present
             if len(args) >= 1 and args[0] is not None:
                 # mov rcx, arg1
                 if isinstance(args[0], int):
-                    shellcode.extend(b'\x48\xB9')  # mov rcx, imm64
-                    shellcode.extend(struct.pack('<Q', args[0]))
+                    shellcode.extend(b"\x48\xB9")  # mov rcx, imm64
+                    shellcode.extend(struct.pack("<Q", args[0]))
 
             if len(args) >= 2 and args[1] is not None:
                 # mov rdx, arg2
                 if isinstance(args[1], int):
-                    shellcode.extend(b'\x48\xBA')  # mov rdx, imm64
-                    shellcode.extend(struct.pack('<Q', args[1]))
+                    shellcode.extend(b"\x48\xBA")  # mov rdx, imm64
+                    shellcode.extend(struct.pack("<Q", args[1]))
 
             if len(args) >= 3 and args[2] is not None:
                 # mov r8, arg3
                 if isinstance(args[2], int):
-                    shellcode.extend(b'\x49\xB8')  # mov r8, imm64
-                    shellcode.extend(struct.pack('<Q', args[2]))
+                    shellcode.extend(b"\x49\xB8")  # mov r8, imm64
+                    shellcode.extend(struct.pack("<Q", args[2]))
 
             if len(args) >= 4 and args[3] is not None:
                 # mov r9, arg4
                 if isinstance(args[3], int):
-                    shellcode.extend(b'\x49\xB9')  # mov r9, imm64
-                    shellcode.extend(struct.pack('<Q', args[3]))
+                    shellcode.extend(b"\x49\xB9")  # mov r9, imm64
+                    shellcode.extend(struct.pack("<Q", args[3]))
 
             # For 5+ arguments, we'd need to set up stack, but for now we'll handle up to 4
             if len(args) > 4:
@@ -417,13 +417,13 @@ class DirectSyscalls:
                 return self._fallback_syscall(syscall_num, *args)
 
             # Add syscall instruction
-            shellcode.extend(b'\x0F\x05')  # syscall
+            shellcode.extend(b"\x0F\x05")  # syscall
 
             # Add return
-            shellcode.extend(b'\xC3')  # ret
+            shellcode.extend(b"\xC3")  # ret
 
             # Allocate executable memory
-            kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
             code_addr = kernel32.VirtualAlloc(
                 None, len(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE
@@ -456,7 +456,7 @@ class DirectSyscalls:
     def _syscall_32(self, syscall_num: int, *args) -> int:
         """Execute 32-bit syscall"""
         try:
-            if not AVAILABLE or sys.platform != 'win32':
+            if not AVAILABLE or sys.platform != "win32":
                 return self._fallback_syscall(syscall_num, *args)
 
             # Windows x86 syscall convention:
@@ -476,20 +476,20 @@ class DirectSyscalls:
                     if isinstance(args[i], int):
                         # push arg
                         shellcode.append(0x68)  # push imm32
-                        shellcode.extend(struct.pack('<I', args[i] & 0xFFFFFFFF))
+                        shellcode.extend(struct.pack("<I", args[i] & 0xFFFFFFFF))
 
                 # mov eax, syscall_num
                 shellcode.append(0xB8)  # mov eax, imm32
-                shellcode.extend(struct.pack('<I', syscall_num))
+                shellcode.extend(struct.pack("<I", syscall_num))
 
                 # call [wow64_transition]
-                shellcode.extend(b'\xFF\x15')  # call dword ptr [addr]
-                shellcode.extend(struct.pack('<I', self.wow64_transition))
+                shellcode.extend(b"\xFF\x15")  # call dword ptr [addr]
+                shellcode.extend(struct.pack("<I", self.wow64_transition))
 
                 # Clean up stack (stdcall convention)
                 if len(args) > 0:
                     # add esp, num_args * 4
-                    shellcode.extend(b'\x83\xC4')  # add esp, imm8
+                    shellcode.extend(b"\x83\xC4")  # add esp, imm8
                     shellcode.append(len(args) * 4)
 
             else:
@@ -499,30 +499,30 @@ class DirectSyscalls:
                     if isinstance(args[i], int):
                         # push arg
                         shellcode.append(0x68)  # push imm32
-                        shellcode.extend(struct.pack('<I', args[i] & 0xFFFFFFFF))
+                        shellcode.extend(struct.pack("<I", args[i] & 0xFFFFFFFF))
 
                 # mov eax, syscall_num
                 shellcode.append(0xB8)  # mov eax, imm32
-                shellcode.extend(struct.pack('<I', syscall_num))
+                shellcode.extend(struct.pack("<I", syscall_num))
 
                 # Get stack pointer for arguments
                 # mov edx, esp
-                shellcode.extend(b'\x89\xE2')  # mov edx, esp
+                shellcode.extend(b"\x89\xE2")  # mov edx, esp
 
                 # Perform syscall using int 0x2e (works on most Windows versions)
-                shellcode.extend(b'\xCD\x2E')  # int 0x2e
+                shellcode.extend(b"\xCD\x2E")  # int 0x2e
 
                 # Clean up stack
                 if len(args) > 0:
                     # add esp, num_args * 4
-                    shellcode.extend(b'\x83\xC4')  # add esp, imm8
+                    shellcode.extend(b"\x83\xC4")  # add esp, imm8
                     shellcode.append(len(args) * 4)
 
             # Add return
             shellcode.append(0xC3)  # ret
 
             # Allocate executable memory
-            kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
             code_addr = kernel32.VirtualAlloc(
                 None, len(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE
@@ -558,7 +558,7 @@ class DirectSyscalls:
         for name, num in self.syscall_numbers.items():
             if num == syscall_num:
                 # Call the regular NTDLL function
-                ntdll = ctypes.WinDLL('ntdll.dll')
+                ntdll = ctypes.WinDLL("ntdll.dll")
                 if hasattr(ntdll, name):
                     func = getattr(ntdll, name)
                     return func(*args)
@@ -592,7 +592,7 @@ def inject_using_syscalls(process_handle: int, dll_path: str) -> bool:
 
     try:
         # Prepare DLL path
-        dll_path_bytes = dll_path.encode('utf-8') + b'\x00'
+        dll_path_bytes = dll_path.encode("utf-8") + b"\x00"
         path_size = len(dll_path_bytes)
 
         # Allocate memory using syscall
@@ -620,7 +620,7 @@ def inject_using_syscalls(process_handle: int, dll_path: str) -> bool:
             return False
 
         # Get LoadLibraryA address (still need this from kernel32)
-        kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
         kernel32_handle = kernel32.GetModuleHandleW("kernel32.dll")
         load_library_addr = kernel32.GetProcAddress(kernel32_handle, b"LoadLibraryA")
 

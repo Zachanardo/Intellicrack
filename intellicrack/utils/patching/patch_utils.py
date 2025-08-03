@@ -332,12 +332,12 @@ def get_section_info(file_path: Union[str, Path]) -> List[Dict[str, Any]]:
 
         for section in pe.sections:
             section_info = {
-                'name': section.Name.decode('utf-8', 'ignore').strip('\x00'),
-                'virtual_address': section.VirtualAddress,
-                'virtual_size': section.Misc_VirtualSize,
-                'raw_address': section.PointerToRawData,
-                'raw_size': section.SizeOfRawData,
-                'characteristics': section.Characteristics
+                "name": section.Name.decode("utf-8", "ignore").strip("\x00"),
+                "virtual_address": section.VirtualAddress,
+                "virtual_size": section.Misc_VirtualSize,
+                "raw_address": section.PointerToRawData,
+                "raw_size": section.SizeOfRawData,
+                "characteristics": section.Characteristics
             }
             sections.append(section_info)
 
@@ -389,11 +389,11 @@ def create_nop_patch(address: int, length: int, arch: str = "x86") -> Dict[str, 
 
 # Exported functions
 __all__ = [
-    'parse_patch_instructions',
-    'create_patch',
-    'apply_patch',
-    'validate_patch',
-    'convert_rva_to_offset',
-    'get_section_info',
-    'create_nop_patch',
+    "parse_patch_instructions",
+    "create_patch",
+    "apply_patch",
+    "validate_patch",
+    "convert_rva_to_offset",
+    "get_section_info",
+    "create_nop_patch",
 ]

@@ -238,7 +238,7 @@ class ICPReportGenerator:
 
         # Save report
         report_path = self.report_output_path / f"{report_name}.html"
-        report_path.write_text(html_content, encoding='utf-8')
+        report_path.write_text(html_content, encoding="utf-8")
 
         logger.info(f"HTML report generated: {report_path}")
         return str(report_path)
@@ -302,8 +302,8 @@ class ICPReportGenerator:
         html = "<h2>Detected Protections</h2>"
 
         for protection in result.protections:
-            severity_class = self._get_severity_class(protection.get('type', ''))
-            badge_class = protection.get('type', 'unknown').lower().replace('-', '')
+            severity_class = self._get_severity_class(protection.get("type", ""))
+            badge_class = protection.get("type", "unknown").lower().replace("-", "")
 
             html += f"""
             <div class="detection {severity_class}">
@@ -312,15 +312,15 @@ class ICPReportGenerator:
                 <p><strong>Source:</strong> {protection.get('source', 'Unknown')}</p>
             """
 
-            if protection.get('version'):
+            if protection.get("version"):
                 html += f"<p><strong>Version:</strong> {protection['version']}</p>"
 
-            if protection.get('details'):
+            if protection.get("details"):
                 html += f"<p><strong>Details:</strong> {self._format_details(protection['details'])}</p>"
 
-            if options.include_bypass_methods and protection.get('bypass_recommendations'):
+            if options.include_bypass_methods and protection.get("bypass_recommendations"):
                 html += "<h4>Bypass Recommendations:</h4><ul>"
-                for rec in protection['bypass_recommendations']:
+                for rec in protection["bypass_recommendations"]:
                     html += f"<li>{rec}</li>"
                 html += "</ul>"
 
@@ -369,23 +369,23 @@ class ICPReportGenerator:
 
         if result.is_packed:
             recommendations.append({
-                'title': 'Unpacking Required',
-                'desc': 'The file is packed. Use dynamic analysis tools to unpack before further analysis.',
-                'tools': ['x64dbg', 'Process Dump', 'Scylla']
+                "title": "Unpacking Required",
+                "desc": "The file is packed. Use dynamic analysis tools to unpack before further analysis.",
+                "tools": ["x64dbg", "Process Dump", "Scylla"]
             })
 
         if result.has_anti_debug:
             recommendations.append({
-                'title': 'Anti-Debug Bypass Needed',
-                'desc': 'Anti-debugging mechanisms detected. Use kernel-mode debuggers or anti-anti-debug plugins.',
-                'tools': ['ScyllaHide', 'TitanHide', 'VirtualKD']
+                "title": "Anti-Debug Bypass Needed",
+                "desc": "Anti-debugging mechanisms detected. Use kernel-mode debuggers or anti-anti-debug plugins.",
+                "tools": ["ScyllaHide", "TitanHide", "VirtualKD"]
             })
 
         if result.has_licensing:
             recommendations.append({
-                'title': 'License Analysis',
-                'desc': 'Licensing system detected. Analyze license validation routines and key algorithms.',
-                'tools': ['IDA Pro', 'API Monitor', 'WinAPIOverride']
+                "title": "License Analysis",
+                "desc": "Licensing system detected. Analyze license validation routines and key algorithms.",
+                "tools": ["IDA Pro", "API Monitor", "WinAPIOverride"]
             })
 
         if not recommendations:
@@ -420,7 +420,7 @@ class ICPReportGenerator:
                 <ol>
             """
 
-            for step in strategy['steps']:
+            for step in strategy["steps"]:
                 html += f"<li>{step}</li>"
 
             html += "</ol></div>"
@@ -432,7 +432,7 @@ class ICPReportGenerator:
         html = "<h2>Technical Details</h2>"
 
         # Add entropy information if available
-        if hasattr(result, 'entropy_data'):
+        if hasattr(result, "entropy_data"):
             html += "<h3>Entropy Analysis</h3>"
             html += "<p>High entropy sections may indicate packing or encryption.</p>"
             # Would add entropy graph here if matplotlib is available
@@ -442,12 +442,12 @@ class ICPReportGenerator:
         html += "<table><tr><th>Feature</th><th>Status</th></tr>"
 
         features = [
-            ('Packed', result.is_packed),
-            ('Protected', result.is_protected),
-            ('Obfuscated', result.is_obfuscated),
-            ('Anti-Debug', result.has_anti_debug),
-            ('Anti-VM', result.has_anti_vm),
-            ('Licensing', result.has_licensing)
+            ("Packed", result.is_packed),
+            ("Protected", result.is_protected),
+            ("Obfuscated", result.is_obfuscated),
+            ("Anti-Debug", result.has_anti_debug),
+            ("Anti-VM", result.has_anti_vm),
+            ("Licensing", result.has_licensing)
         ]
 
         for feature, status in features:
@@ -501,7 +501,7 @@ class ICPReportGenerator:
                 lines.append(f"     Type: {protection['type']}")
                 lines.append(f"     Confidence: {protection.get('confidence', 0):.1f}%")
                 lines.append(f"     Source: {protection.get('source', 'Unknown')}")
-                if protection.get('version'):
+                if protection.get("version"):
                     lines.append(f"     Version: {protection['version']}")
                 lines.append("")
         else:
@@ -530,7 +530,7 @@ class ICPReportGenerator:
 
         # Save report
         report_path = self.report_output_path / f"{report_name}.txt"
-        report_path.write_text("\n".join(lines), encoding='utf-8')
+        report_path.write_text("\n".join(lines), encoding="utf-8")
 
         logger.info(f"Text report generated: {report_path}")
         return str(report_path)
@@ -543,63 +543,63 @@ class ICPReportGenerator:
     ) -> str:
         """Generate JSON report"""
         report_data = {
-            'metadata': {
-                'generated': datetime.datetime.now().isoformat(),
-                'version': self._get_version(),
-                'file_path': result.file_path,
-                'file_name': Path(result.file_path).name
+            "metadata": {
+                "generated": datetime.datetime.now().isoformat(),
+                "version": self._get_version(),
+                "file_path": result.file_path,
+                "file_name": Path(result.file_path).name
             },
-            'summary': {
-                'file_type': result.file_type,
-                'architecture': result.architecture,
-                'is_protected': result.is_protected,
-                'is_packed': result.is_packed,
-                'is_obfuscated': result.is_obfuscated,
-                'has_anti_debug': result.has_anti_debug,
-                'has_anti_vm': result.has_anti_vm,
-                'has_licensing': result.has_licensing,
-                'confidence_score': result.confidence_score,
-                'analysis_time': result.analysis_time,
-                'engines_used': result.engines_used
+            "summary": {
+                "file_type": result.file_type,
+                "architecture": result.architecture,
+                "is_protected": result.is_protected,
+                "is_packed": result.is_packed,
+                "is_obfuscated": result.is_obfuscated,
+                "has_anti_debug": result.has_anti_debug,
+                "has_anti_vm": result.has_anti_vm,
+                "has_licensing": result.has_licensing,
+                "confidence_score": result.confidence_score,
+                "analysis_time": result.analysis_time,
+                "engines_used": result.engines_used
             },
-            'protections': [
+            "protections": [
                 {
-                    'name': p['name'],
-                    'type': p['type'],
-                    'confidence': p.get('confidence', 0),
-                    'source': p.get('source', 'Unknown'),
-                    'version': p.get('version', ''),
-                    'details': p.get('details', {})
+                    "name": p["name"],
+                    "type": p["type"],
+                    "confidence": p.get("confidence", 0),
+                    "source": p.get("source", "Unknown"),
+                    "version": p.get("version", ""),
+                    "details": p.get("details", {})
                 }
                 for p in result.protections
             ],
-            'bypass_strategies': result.bypass_strategies
+            "bypass_strategies": result.bypass_strategies
         }
 
         # Add ICP analysis if available
         if result.icp_analysis:
-            report_data['icp_analysis'] = {
-                'detections': [
+            report_data["icp_analysis"] = {
+                "detections": [
                     {
-                        'name': d.name,
-                        'type': d.type,
-                        'version': d.version,
-                        'info': d.info,
-                        'confidence': d.confidence
+                        "name": d.name,
+                        "type": d.type,
+                        "version": d.version,
+                        "info": d.info,
+                        "confidence": d.confidence
                     }
                     for d in result.icp_analysis.all_detections
                 ],
-                'error': result.icp_analysis.error
+                "error": result.icp_analysis.error
             }
 
             if options.include_raw_json and result.icp_analysis.raw_json:
-                report_data['icp_raw'] = result.icp_analysis.raw_json
+                report_data["icp_raw"] = result.icp_analysis.raw_json
 
         # Save report
         report_path = self.report_output_path / f"{report_name}.json"
         report_path.write_text(
             json.dumps(report_data, indent=2),
-            encoding='utf-8'
+            encoding="utf-8"
         )
 
         logger.info(f"JSON report generated: {report_path}")
@@ -608,19 +608,19 @@ class ICPReportGenerator:
     def _get_severity_class(self, protection_type: str) -> str:
         """Get CSS class for protection severity"""
         severity_map = {
-            'protector': 'critical',
-            'license': 'high',
-            'drm': 'high',
-            'packer': 'medium',
-            'obfuscator': 'medium',
-            'anti-debug': 'medium',
-            'anti-vm': 'low'
+            "protector": "critical",
+            "license": "high",
+            "drm": "high",
+            "packer": "medium",
+            "obfuscator": "medium",
+            "anti-debug": "medium",
+            "anti-vm": "low"
         }
-        return severity_map.get(protection_type.lower(), 'low')
+        return severity_map.get(protection_type.lower(), "low")
 
     def _format_size(self, size: int) -> str:
         """Format file size in human readable format"""
-        for unit in ['B', 'KB', 'MB', 'GB']:
+        for unit in ["B", "KB", "MB", "GB"]:
             if size < 1024.0:
                 return f"{size:.2f} {unit}"
             size /= 1024.0
@@ -639,6 +639,6 @@ class ICPReportGenerator:
         """Get Intellicrack version"""
         try:
             import intellicrack
-            return getattr(intellicrack, '__version__', '1.0.0')
+            return getattr(intellicrack, "__version__", "1.0.0")
         except:
-            return '1.0.0'
+            return "1.0.0"

@@ -159,7 +159,7 @@ class LocalGGUFServer:
                 # Initialize IPEX if available
                 if ipex is not None:
                     # Check for XPU device support
-                    if hasattr(torch, 'xpu') and torch.xpu.is_available():
+                    if hasattr(torch, "xpu") and torch.xpu.is_available():
                         device_count = torch.xpu.device_count()
                         for i in range(device_count):
                             device_name = torch.xpu.get_device_name(i)
@@ -177,20 +177,20 @@ class LocalGGUFServer:
                     logger.info(f"Intel Extension for PyTorch version: {ipex.__version__}")
 
                     # Enable IPEX optimizations if available
-                    if hasattr(ipex, 'enable_auto_mixed_precision'):
+                    if hasattr(ipex, "enable_auto_mixed_precision"):
                         ipex.enable_auto_mixed_precision()
                         logger.info("Enabled IPEX auto mixed precision")
             except Exception as e:
                 logger.debug(f"IPEX GPU detection failed: {e}")
 
         # Check llama.cpp build info for GPU support
-        if HAS_LLAMA_CPP and hasattr(llama_cpp, 'llama_backend_init'):
+        if HAS_LLAMA_CPP and hasattr(llama_cpp, "llama_backend_init"):
             try:
                 # Initialize llama backend to check capabilities
                 llama_cpp.llama_backend_init()
 
                 # Check if llama.cpp was built with GPU support
-                if hasattr(llama_cpp, 'LLAMA_SUPPORTS_GPU_OFFLOAD'):
+                if hasattr(llama_cpp, "LLAMA_SUPPORTS_GPU_OFFLOAD"):
                     if llama_cpp.LLAMA_SUPPORTS_GPU_OFFLOAD:
                         logger.info("llama.cpp built with GPU offload support")
                         if not self.gpu_backend:
@@ -383,7 +383,7 @@ class LocalGGUFServer:
     def _setup_routes(self):
         """Setup Flask routes for the server."""
 
-        @self.app.route('/health', methods=['GET'])
+        @self.app.route("/health", methods=["GET"])
         def health():
             """Health check endpoint."""
             return jsonify({
@@ -396,7 +396,7 @@ class LocalGGUFServer:
                 "gpu_layers": self.model_config.get("n_gpu_layers", 0) if self.model else 0
             })
 
-        @self.app.route('/models', methods=['GET'])
+        @self.app.route("/models", methods=["GET"])
         def list_models():
             """List available models."""
             return jsonify({
@@ -404,7 +404,7 @@ class LocalGGUFServer:
                 "current_model": self.model_config.get("model_name", None)
             })
 
-        @self.app.route('/gpu_info', methods=['GET'])
+        @self.app.route("/gpu_info", methods=["GET"])
         def gpu_info():
             """Get detailed GPU information."""
             gpu_details = {
@@ -429,7 +429,7 @@ class LocalGGUFServer:
 
             return jsonify(gpu_details)
 
-        @self.app.route('/v1/chat/completions', methods=['POST'])
+        @self.app.route("/v1/chat/completions", methods=["POST"])
         def chat_completions():
             """OpenAI-compatible chat completions endpoint."""
             try:
@@ -437,12 +437,12 @@ class LocalGGUFServer:
                     return jsonify({"error": "No model loaded"}), 400
 
                 data = request.get_json()
-                messages = data.get('messages', [])
-                max_tokens = data.get('max_tokens', 2048)
-                temperature = data.get('temperature', 0.7)
-                top_p = data.get('top_p', 0.9)
-                stop = data.get('stop', [])
-                stream = data.get('stream', False)
+                messages = data.get("messages", [])
+                max_tokens = data.get("max_tokens", 2048)
+                temperature = data.get("temperature", 0.7)
+                top_p = data.get("top_p", 0.9)
+                stop = data.get("stop", [])
+                stream = data.get("stream", False)
 
                 if not messages:
                     return jsonify({"error": "No messages provided"}), 400
@@ -460,7 +460,7 @@ class LocalGGUFServer:
                 logger.error(f"Chat completion error: {e}")
                 return jsonify({"error": str(e)}), 500
 
-        @self.app.route('/v1/completions', methods=['POST'])
+        @self.app.route("/v1/completions", methods=["POST"])
         def completions():
             """OpenAI-compatible completions endpoint."""
             try:
@@ -468,12 +468,12 @@ class LocalGGUFServer:
                     return jsonify({"error": "No model loaded"}), 400
 
                 data = request.get_json()
-                prompt = data.get('prompt', '')
-                max_tokens = data.get('max_tokens', 2048)
-                temperature = data.get('temperature', 0.7)
-                top_p = data.get('top_p', 0.9)
-                stop = data.get('stop', [])
-                stream = data.get('stream', False)
+                prompt = data.get("prompt", "")
+                max_tokens = data.get("max_tokens", 2048)
+                temperature = data.get("temperature", 0.7)
+                top_p = data.get("top_p", 0.9)
+                stop = data.get("stop", [])
+                stream = data.get("stream", False)
 
                 if not prompt:
                     return jsonify({"error": "No prompt provided"}), 400
@@ -488,12 +488,12 @@ class LocalGGUFServer:
                 logger.error(f"Completion error: {e}")
                 return jsonify({"error": str(e)}), 500
 
-        @self.app.route('/load_model', methods=['POST'])
+        @self.app.route("/load_model", methods=["POST"])
         def load_model_endpoint():
             """Load a new model."""
             try:
                 data = request.get_json()
-                model_path = data.get('model_path')
+                model_path = data.get("model_path")
 
                 if not model_path:
                     return jsonify({"error": "model_path required"}), 400
@@ -517,7 +517,7 @@ class LocalGGUFServer:
                 logger.error(f"Model loading error: {e}")
                 return jsonify({"error": str(e)}), 500
 
-        @self.app.route('/unload_model', methods=['POST'])
+        @self.app.route("/unload_model", methods=["POST"])
         def unload_model_endpoint():
             """Unload the current model."""
             try:
@@ -532,14 +532,14 @@ class LocalGGUFServer:
         prompt_parts = []
 
         for message in messages:
-            role = message.get('role', 'user')
-            content = message.get('content', '')
+            role = message.get("role", "user")
+            content = message.get("content", "")
 
-            if role == 'system':
+            if role == "system":
                 prompt_parts.append(f"System: {content}")
-            elif role == 'user':
+            elif role == "user":
                 prompt_parts.append(f"User: {content}")
-            elif role == 'assistant':
+            elif role == "assistant":
                 prompt_parts.append(f"Assistant: {content}")
 
         prompt_parts.append("Assistant:")
@@ -559,7 +559,7 @@ class LocalGGUFServer:
                 echo=False
             )
 
-            content = response['choices'][0]['text']
+            content = response["choices"][0]["text"]
 
             # Format as OpenAI-compatible response
             return jsonify({
@@ -573,12 +573,12 @@ class LocalGGUFServer:
                         "role": "assistant",
                         "content": content
                     },
-                    "finish_reason": response['choices'][0]['finish_reason']
+                    "finish_reason": response["choices"][0]["finish_reason"]
                 }],
                 "usage": {
-                    "prompt_tokens": response.get('usage', {}).get('prompt_tokens', 0),
-                    "completion_tokens": response.get('usage', {}).get('completion_tokens', 0),
-                    "total_tokens": response.get('usage', {}).get('total_tokens', 0)
+                    "prompt_tokens": response.get("usage", {}).get("prompt_tokens", 0),
+                    "completion_tokens": response.get("usage", {}).get("completion_tokens", 0),
+                    "total_tokens": response.get("usage", {}).get("total_tokens", 0)
                 }
             })
 
@@ -602,7 +602,7 @@ class LocalGGUFServer:
                 )
 
                 for chunk in response_iter:
-                    delta = chunk['choices'][0]['delta']
+                    delta = chunk["choices"][0]["delta"]
 
                     response_chunk = {
                         "id": f"chatcmpl-{int(time.time())}",
@@ -612,7 +612,7 @@ class LocalGGUFServer:
                         "choices": [{
                             "index": 0,
                             "delta": delta,
-                            "finish_reason": chunk['choices'][0].get('finish_reason')
+                            "finish_reason": chunk["choices"][0].get("finish_reason")
                         }]
                     }
 
@@ -623,11 +623,11 @@ class LocalGGUFServer:
 
             return self.app.response_class(
                 generate(),
-                mimetype='text/plain',
+                mimetype="text/plain",
                 headers={
-                    'Cache-Control': 'no-cache',
-                    'Connection': 'keep-alive',
-                    'Content-Type': 'text/event-stream'
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                    "Content-Type": "text/event-stream"
                 }
             )
 
@@ -753,10 +753,10 @@ class GGUFModelManager:
             response = requests.get(model_url, stream=True)
             response.raise_for_status()
 
-            total_size = int(response.headers.get('content-length', 0))
+            total_size = int(response.headers.get("content-length", 0))
             downloaded = 0
 
-            with open(model_path, 'wb') as f:
+            with open(model_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
                         f.write(chunk)

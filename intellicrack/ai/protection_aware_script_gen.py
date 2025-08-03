@@ -51,13 +51,13 @@ class ProtectionAwareScriptGenerator:
 
         # Protection-specific script templates
         self.script_templates = {
-            'sentinel_hasp': self._get_hasp_scripts(),
-            'flexlm': self._get_flexlm_scripts(),
-            'winlicense': self._get_winlicense_scripts(),
-            'steam_ceg': self._get_steam_scripts(),
-            'vmprotect': self._get_vmprotect_scripts(),
-            'denuvo': self._get_denuvo_scripts(),
-            'microsoft_activation': self._get_ms_activation_scripts()
+            "sentinel_hasp": self._get_hasp_scripts(),
+            "flexlm": self._get_flexlm_scripts(),
+            "winlicense": self._get_winlicense_scripts(),
+            "steam_ceg": self._get_steam_scripts(),
+            "vmprotect": self._get_vmprotect_scripts(),
+            "denuvo": self._get_denuvo_scripts(),
+            "microsoft_activation": self._get_ms_activation_scripts()
         }
 
     def generate_bypass_script(self, binary_path: str,
@@ -80,22 +80,22 @@ class ProtectionAwareScriptGenerator:
             self.logger.error(
                 "Exception in protection_aware_script_gen: %s", e)
             return {
-                'success': False,
-                'error': f'Failed to analyze protection: {str(e)}',
-                'script': self._get_generic_analysis_script(script_type)
+                "success": False,
+                "error": f"Failed to analyze protection: {str(e)}",
+                "script": self._get_generic_analysis_script(script_type)
             }
 
         # Early exit if no protection detected
         if not result or not result.is_protected:
             return {
-                'success': True,
-                'protection_type': 'None',
-                'confidence': 1.0,
-                'script': self._get_basic_analysis_script(script_type),
-                'approach': 'Basic analysis - no protection detected',
-                'metadata': {
-                    'file_type': result.file_type if result else 'Unknown',
-                    'architecture': result.architecture if result else 'Unknown'
+                "success": True,
+                "protection_type": "None",
+                "confidence": 1.0,
+                "script": self._get_basic_analysis_script(script_type),
+                "approach": "Basic analysis - no protection detected",
+                "metadata": {
+                    "file_type": result.file_type if result else "Unknown",
+                    "architecture": result.architecture if result else "Unknown"
                 }
             }
 
@@ -109,10 +109,10 @@ class ProtectionAwareScriptGenerator:
             for detection in result.icp_analysis.all_detections:
                 if detection.name != "Unknown":
                     protections_to_process[detection.name] = {
-                        'source': 'ICP',
-                        'type': detection.type,
-                        'confidence': detection.confidence,
-                        'version': detection.version
+                        "source": "ICP",
+                        "type": detection.type,
+                        "confidence": detection.confidence,
+                        "version": detection.version
                     }
                     # Track highest confidence protection
                     if detection.confidence > highest_confidence:
@@ -121,16 +121,16 @@ class ProtectionAwareScriptGenerator:
 
         # Add other protections from unified analysis
         for protection in result.protections:
-            name = protection.get('name', 'Unknown')
-            if name not in protections_to_process and name != 'Unknown':
+            name = protection.get("name", "Unknown")
+            if name not in protections_to_process and name != "Unknown":
                 protections_to_process[name] = {
-                    'source': protection.get('source', 'Unknown'),
-                    'type': protection.get('type', 'unknown'),
-                    'confidence': protection.get('confidence', 50.0) / 100.0,
-                    'version': protection.get('version', '')
+                    "source": protection.get("source", "Unknown"),
+                    "type": protection.get("type", "unknown"),
+                    "confidence": protection.get("confidence", 50.0) / 100.0,
+                    "version": protection.get("version", "")
                 }
                 # Update primary if higher confidence
-                conf = protection.get('confidence', 50.0) / 100.0
+                conf = protection.get("confidence", 50.0) / 100.0
                 if conf > highest_confidence:
                     highest_confidence = conf
                     primary_protection = name
@@ -138,7 +138,7 @@ class ProtectionAwareScriptGenerator:
         # If no primary protection found, use first one
         if not primary_protection and protections_to_process:
             primary_protection = list(protections_to_process.keys())[0]
-            highest_confidence = protections_to_process[primary_protection]['confidence']
+            highest_confidence = protections_to_process[primary_protection]["confidence"]
 
         # Get protection info from knowledge base
         protection_info = self.kb.get_protection_info(
@@ -150,7 +150,7 @@ class ProtectionAwareScriptGenerator:
 
         for protection_name, details in protections_to_process.items():
             # Get protection-specific scripts
-            protection_key = protection_name.lower().replace('/', '_').replace(' ', '_')
+            protection_key = protection_name.lower().replace("/", "_").replace(" ", "_")
 
             if protection_key in self.script_templates:
                 scripts = self.script_templates[protection_key]
@@ -195,16 +195,16 @@ class ProtectionAwareScriptGenerator:
         approach += f"Using {'ICP engine' if result.icp_analysis else 'unified'} detection."
 
         return {
-            'success': True,
-            'protection_detected': primary_protection or 'Unknown',
-            'confidence': highest_confidence,
-            'script': final_script,
-            'approach': approach,
-            'ai_prompt': ai_prompt,
-            'bypass_techniques': self._get_recommended_techniques(protection_info),
-            'estimated_time': self.kb.estimate_bypass_time(primary_protection, "intermediate") if primary_protection else "Variable",
-            'tools_needed': self.kb.get_tools_for_protection(primary_protection) if primary_protection else [],
-            'die_analysis': result.icp_analysis
+            "success": True,
+            "protection_detected": primary_protection or "Unknown",
+            "confidence": highest_confidence,
+            "script": final_script,
+            "approach": approach,
+            "ai_prompt": ai_prompt,
+            "bypass_techniques": self._get_recommended_techniques(protection_info),
+            "estimated_time": self.kb.estimate_bypass_time(primary_protection, "intermediate") if primary_protection else "Variable",
+            "tools_needed": self.kb.get_tools_for_protection(primary_protection) if primary_protection else [],
+            "die_analysis": result.icp_analysis
         }
 
     def _generate_ai_prompt(self, result, protection_type: str,
@@ -273,8 +273,8 @@ Focus on the most effective approach for this specific protection type.
                 lines.append("\nUnified Analysis:")
             for protection in result.protections:
                 ver_str = f" v{protection.get('version', '')}" if protection.get(
-                    'version') else ""
-                source = protection.get('source', 'Unknown')
+                    "version") else ""
+                source = protection.get("source", "Unknown")
                 lines.append(
                     f"- {protection['name']}{ver_str} ({protection['type']}) [{source}]")
 
@@ -291,12 +291,12 @@ Focus on the most effective approach for this specific protection type.
         techniques = []
         for technique in protection_info.bypass_techniques:
             techniques.append({
-                'name': technique.name,
-                'description': technique.description,
-                'difficulty': technique.difficulty.value,
-                'success_rate': technique.success_rate,
-                'time_estimate': technique.time_estimate,
-                'tools': technique.tools_required
+                "name": technique.name,
+                "description": technique.description,
+                "difficulty": technique.difficulty.value,
+                "success_rate": technique.success_rate,
+                "time_estimate": technique.time_estimate,
+                "tools": technique.tools_required
             })
 
         return techniques
@@ -304,7 +304,7 @@ Focus on the most effective approach for this specific protection type.
     def _get_hasp_scripts(self) -> Dict[str, str]:
         """Sentinel HASP specific scripts"""
         return {
-            'frida': '''// Sentinel HASP Bypass Script
+            "frida": '''// Sentinel HASP Bypass Script
 // Targets: hasp_login, hasp_encrypt, hasp_decrypt
 
 // Hook hasp_login to always return success
@@ -356,7 +356,7 @@ if (hasp_encrypt) {
 
 console.log("[+] Sentinel HASP hooks installed");
 ''',
-            'ghidra': '''// Sentinel HASP Analysis Script for Ghidra
+            "ghidra": '''// Sentinel HASP Analysis Script for Ghidra
 // Identifies HASP API usage and patches validation
 
 import ghidra.app.script.GhidraScript;
@@ -422,7 +422,7 @@ public class SentinelHASPBypass extends GhidraScript {
     def _get_flexlm_scripts(self) -> Dict[str, str]:
         """FlexLM/FlexNet specific scripts"""
         return {
-            'frida': '''// FlexLM/FlexNet License Bypass Script
+            "frida": '''// FlexLM/FlexNet License Bypass Script
 // Targets license checkout and validation
 
 // Hook lc_checkout
@@ -472,7 +472,7 @@ console.log("[+] FlexLM hooks installed");
     def _get_winlicense_scripts(self) -> Dict[str, str]:
         """WinLicense/Themida specific scripts"""
         return {
-            'frida': '''// WinLicense/Themida Analysis Script
+            "frida": '''// WinLicense/Themida Analysis Script
 // Note: This protection uses heavy virtualization
 
 console.warn("[!] WinLicense/Themida detected - Complex protection!");
@@ -527,7 +527,7 @@ console.log("[!] Manual unpacking likely required");
     def _get_steam_scripts(self) -> Dict[str, str]:
         """Steam CEG specific scripts"""
         return {
-            'frida': '''// Steam CEG Bypass Script
+            "frida": '''// Steam CEG Bypass Script
 // Targets Steam API initialization and checks
 
 // Hook SteamAPI_Init
@@ -582,7 +582,7 @@ console.log("[+] Steam CEG bypass hooks installed");
     def _get_vmprotect_scripts(self) -> Dict[str, str]:
         """VMProtect specific scripts"""
         return {
-            'frida': '''// VMProtect Analysis Helper
+            "frida": '''// VMProtect Analysis Helper
 // Note: VMProtect uses heavy virtualization - full bypass is complex
 
 console.warn("[!] VMProtect detected - Extreme protection!");
@@ -651,7 +651,7 @@ console.log("[!] Full devirtualization required for complete bypass");
     def _get_denuvo_scripts(self) -> Dict[str, str]:
         """Denuvo specific scripts"""
         return {
-            'frida': '''// Denuvo Analysis Helper
+            "frida": '''// Denuvo Analysis Helper
 // WARNING: Denuvo is extremely complex protection
 
 console.error("[!!!] DENUVO DETECTED [!!!]");
@@ -699,7 +699,7 @@ console.log("[!] Consider waiting for scene release");
     def _get_ms_activation_scripts(self) -> Dict[str, str]:
         """Microsoft Activation specific scripts"""
         return {
-            'frida': '''// Microsoft Activation Bypass Helper
+            "frida": '''// Microsoft Activation Bypass Helper
 // For educational/testing purposes only
 
 // Software Licensing API hooks
@@ -855,7 +855,7 @@ console.log("[+] Generic bypass hooks installed");
         """Generic analysis script when protection detection fails"""
         script_type_upper = script_type.upper()
 
-        if script_type.lower() == 'frida':
+        if script_type.lower() == "frida":
             return f'''// {script_type_upper} Protection Analysis Script
 // Failed to detect specific protection - running generic analysis
 
@@ -901,16 +901,16 @@ def enhance_ai_script_generation(ai_generator, binary_path: str) -> Dict[str, An
     result = protection_gen.generate_bypass_script(binary_path)
 
     # Use the AI prompt to enhance the script further
-    if hasattr(ai_generator, 'generate_script'):
+    if hasattr(ai_generator, "generate_script"):
         enhanced_script = ai_generator.generate_script(
-            prompt=result['ai_prompt'],
-            base_script=result['script'],
+            prompt=result["ai_prompt"],
+            base_script=result["script"],
             context={
-                'protection': result['protection_detected'],
-                'difficulty': result['difficulty'],
-                'techniques': result['bypass_techniques']
+                "protection": result["protection_detected"],
+                "difficulty": result["difficulty"],
+                "techniques": result["bypass_techniques"]
             }
         )
-        result['enhanced_script'] = enhanced_script
+        result["enhanced_script"] = enhanced_script
 
     return result

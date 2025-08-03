@@ -40,12 +40,12 @@ def analyze_network_apis(pe_binary, network_apis, logger_func=None):
     """
     detected_apis = defaultdict(list)
 
-    if hasattr(pe_binary, 'DIRECTORY_ENTRY_IMPORT'):
+    if hasattr(pe_binary, "DIRECTORY_ENTRY_IMPORT"):
         for entry in pe_binary.DIRECTORY_ENTRY_IMPORT:
             for imp in entry.imports:
                 if not imp.name:
                     continue
-                func_name = imp.name.decode('utf-8', errors='ignore')
+                func_name = imp.name.decode("utf-8", errors="ignore")
 
                 # Categorize APIs
                 for category, apis in network_apis.items():
@@ -77,8 +77,8 @@ def process_network_api_results(detected_apis: Dict[str, List[str]]) -> Dict[str
     }
 
     # Check for SSL usage patterns
-    has_ssl = bool(detected_apis.get('ssl', []))
-    has_network = bool(detected_apis.get('basic', [])) or bool(detected_apis.get('http', []))
+    has_ssl = bool(detected_apis.get("ssl", []))
+    has_network = bool(detected_apis.get("basic", [])) or bool(detected_apis.get("http", []))
 
     results["ssl_usage"] = {
         "has_ssl": has_ssl,
@@ -143,10 +143,10 @@ def get_network_api_categories():
         dict: Dictionary of category -> list of API names
     """
     return {
-        'basic': ['socket', 'WSASocket', 'bind', 'listen', 'accept', 'connect', 'send', 'recv'],
-        'http': ['HttpOpenRequest', 'HttpSendRequest', 'InternetConnect', 'WinHttpOpen'],
-        'ssl': ['SSL_connect', 'SSL_write', 'SSL_read', 'CryptAcquireContext'],
-        'dns': ['gethostbyname', 'getaddrinfo', 'DnsQuery']
+        "basic": ["socket", "WSASocket", "bind", "listen", "accept", "connect", "send", "recv"],
+        "http": ["HttpOpenRequest", "HttpSendRequest", "InternetConnect", "WinHttpOpen"],
+        "ssl": ["SSL_connect", "SSL_write", "SSL_read", "CryptAcquireContext"],
+        "dns": ["gethostbyname", "getaddrinfo", "DnsQuery"]
     }
 
 
@@ -165,8 +165,8 @@ def summarize_network_capabilities(detected_apis):
     }
 
     # Add capability flags
-    summary['has_ssl'] = bool(detected_apis.get('ssl', []))
-    summary['has_network'] = bool(detected_apis.get('basic', [])) or bool(detected_apis.get('http', []))
-    summary['has_dns'] = bool(detected_apis.get('dns', []))
+    summary["has_ssl"] = bool(detected_apis.get("ssl", []))
+    summary["has_network"] = bool(detected_apis.get("basic", [])) or bool(detected_apis.get("http", []))
+    summary["has_dns"] = bool(detected_apis.get("dns", []))
 
     return summary

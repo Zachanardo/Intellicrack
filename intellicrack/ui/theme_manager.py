@@ -85,7 +85,7 @@ class ThemeManager:
         # Try to load from file first
         if os.path.exists(theme_path):
             try:
-                with open(theme_path, 'r', encoding='utf-8') as f:
+                with open(theme_path, "r", encoding="utf-8") as f:
                     return f.read()
             except Exception as e:
                 print(f"Error loading theme file {theme_path}: {e}")

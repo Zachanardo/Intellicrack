@@ -98,11 +98,11 @@ def show_message(message: str, msg_type: MessageType = MessageType.INFO,
 
     # Log the message with context if parent is provided
     parent_context = ""
-    if parent and hasattr(parent, 'objectName'):
+    if parent and hasattr(parent, "objectName"):
         parent_name = parent.objectName()
         if parent_name:
             parent_context = f" (from {parent_name})"
-    elif parent and hasattr(parent, '__class__'):
+    elif parent and hasattr(parent, "__class__"):
         parent_context = f" (from {parent.__class__.__name__})"
 
     # Log the message
@@ -121,12 +121,12 @@ def show_message(message: str, msg_type: MessageType = MessageType.INFO,
     print(f"[{msg_type.value.upper()}] {title}: {message}{parent_info}")
 
     # Store message in parent if it has a message history
-    if parent and hasattr(parent, 'message_history'):
+    if parent and hasattr(parent, "message_history"):
         parent.message_history.append({
-            'type': msg_type.value,
-            'title': title,
-            'message': message,
-            'timestamp': str(type(logger).__module__)  # Simple timestamp placeholder
+            "type": msg_type.value,
+            "title": title,
+            "message": message,
+            "timestamp": str(type(logger).__module__)  # Simple timestamp placeholder
         })
 
 
@@ -146,11 +146,11 @@ def get_user_input(prompt: str, default: str = "",
     """
     # Log the input request with parent context
     parent_context = ""
-    if parent and hasattr(parent, 'objectName'):
+    if parent and hasattr(parent, "objectName"):
         parent_name = parent.objectName()
         if parent_name:
             parent_context = f" (from {parent_name})"
-    elif parent and hasattr(parent, '__class__'):
+    elif parent and hasattr(parent, "__class__"):
         parent_context = f" (from {parent.__class__.__name__})"
 
     logger.info("User input requested: %s%s", title, parent_context)
@@ -159,8 +159,8 @@ def get_user_input(prompt: str, default: str = "",
     # For now, we use console input with parent information
     try:
         # Sanitize prompt to prevent injection
-        safe_prompt = prompt.replace('\n', ' ').replace('\r', ' ')
-        safe_default = default.replace('\n', ' ').replace('\r', ' ') if default else ""
+        safe_prompt = prompt.replace("\n", " ").replace("\r", " ")
+        safe_default = default.replace("\n", " ").replace("\r", " ") if default else ""
 
         # Display context if parent is available
         context_info = f" [{parent.__class__.__name__}]" if parent else ""
@@ -168,19 +168,19 @@ def get_user_input(prompt: str, default: str = "",
         if safe_default:
             user_input = input(f"{title}{context_info} - {safe_prompt} [{safe_default}]: ").strip()
             # Sanitize user input - remove null bytes and newlines
-            sanitized = user_input.replace('\0', '').replace('\n', '').replace('\r', '')
+            sanitized = user_input.replace("\0", "").replace("\n", "").replace("\r", "")
             result = sanitized if sanitized else safe_default
         else:
             user_input = input(f"{title}{context_info} - {safe_prompt}: ").strip()
             # Sanitize user input - remove null bytes and newlines
-            result = user_input.replace('\0', '').replace('\n', '').replace('\r', '')
+            result = user_input.replace("\0", "").replace("\n", "").replace("\r", "")
 
         # Store input history in parent if available
-        if parent and hasattr(parent, 'input_history'):
+        if parent and hasattr(parent, "input_history"):
             parent.input_history.append({
-                'prompt': prompt,
-                'result': result,
-                'title': title
+                "prompt": prompt,
+                "result": result,
+                "title": title
             })
 
         return result
@@ -227,11 +227,11 @@ def confirm_action(message: str, title: str = "Confirm Action",
     logger.debug(f"Console confirmation dialog (parent: {parent is not None})")
     try:
         # Sanitize title and message to prevent injection
-        safe_title = title.replace('\n', ' ').replace('\r', ' ')
-        safe_message = message.replace('\n', ' ').replace('\r', ' ')
+        safe_title = title.replace("\n", " ").replace("\r", " ")
+        safe_message = message.replace("\n", " ").replace("\r", " ")
         response = input(f"{safe_title}: {safe_message} (y/n): ").strip().lower()  # Input validated below
         # Validate response - only accept specific values (y/yes)
-        return response in ('y', 'yes')
+        return response in ("y", "yes")
     except (KeyboardInterrupt, EOFError) as e:
         logger.error("Error in ui_utils: %s", e)
         return False
@@ -266,13 +266,13 @@ def select_from_list(items: List[str], prompt: str = "Select an item",
         if allow_multiple:
             user_input = input("Enter numbers separated by commas (or 'all'): ").strip()
             # Sanitize input
-            selections = user_input.replace('\0', '').replace('\n', '').replace('\r', '')
+            selections = user_input.replace("\0", "").replace("\n", "").replace("\r", "")
 
-            if selections.lower() == 'all':
+            if selections.lower() == "all":
                 return items
 
             selected = []
-            for s in selections.split(','):
+            for s in selections.split(","):
                 try:
                     # Validate that input is a number
                     s_clean = s.strip()
@@ -288,7 +288,7 @@ def select_from_list(items: List[str], prompt: str = "Select an item",
         else:
             user_input = input("Enter number: ").strip()
             # Sanitize and validate input
-            selection = user_input.replace('\0', '').replace('\n', '').replace('\r', '')
+            selection = user_input.replace("\0", "").replace("\n", "").replace("\r", "")
             if not selection.isdigit():
                 return None
             idx = int(selection) - 1
@@ -313,9 +313,9 @@ def create_status_bar_message(message: str, timeout: int = 5000) -> Dict[str, An
         dict: Status bar configuration
     """
     return {
-        'message': message,
-        'timeout': timeout,
-        'timestamp': None  # Will be set when displayed
+        "message": message,
+        "timeout": timeout,
+        "timestamp": None  # Will be set when displayed
     }
 
 
@@ -402,14 +402,14 @@ class UIUpdateQueue:
 
 # Exported functions and classes
 __all__ = [
-    'MessageType',
-    'ProgressTracker',
-    'UIUpdateQueue',
-    'show_message',
-    'get_user_input',
-    'update_progress',
-    'confirm_action',
-    'select_from_list',
-    'create_status_bar_message',
-    'format_table_data',
+    "MessageType",
+    "ProgressTracker",
+    "UIUpdateQueue",
+    "show_message",
+    "get_user_input",
+    "update_progress",
+    "confirm_action",
+    "select_from_list",
+    "create_status_bar_message",
+    "format_table_data",
 ]

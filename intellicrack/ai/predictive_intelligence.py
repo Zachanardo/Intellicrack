@@ -198,8 +198,8 @@ class FeatureExtractor:
             insights = self.learning_engine.get_learning_insights()
 
             # Use operation_type to filter relevant insights
-            if operation_type in insights.get('operation_types', {}):
-                type_specific_insights = insights['operation_types'][operation_type]
+            if operation_type in insights.get("operation_types", {}):
+                type_specific_insights = insights["operation_types"][operation_type]
                 logger.debug(
                     f"Found type-specific insights for {operation_type}")
             else:

@@ -317,37 +317,37 @@ try:
     # Export all utility functions for easy access
     __all__ = [
         # PyQt6 availability flag
-        'PYQT6_AVAILABLE',
+        "PYQT6_AVAILABLE",
         # Core classes
-        'Qt', 'QThread', 'QTimer', 'pyqtSignal',
+        "Qt", "QThread", "QTimer", "pyqtSignal",
         # Geometry classes
-        'QPoint', 'QRect', 'QSize',
+        "QPoint", "QRect", "QSize",
         # GUI classes
-        'QColor', 'QFont', 'QFontMetrics', 'QIcon', 'QKeyEvent', 'QKeySequence',
-        'QMouseEvent', 'QPainter', 'QPaintEvent', 'QPen', 'QPixmap', 'QResizeEvent',
+        "QColor", "QFont", "QFontMetrics", "QIcon", "QKeyEvent", "QKeySequence",
+        "QMouseEvent", "QPainter", "QPaintEvent", "QPen", "QPixmap", "QResizeEvent",
         # Widget classes
-        'QAbstractItemView', 'QAbstractScrollArea', 'QAction', 'QApplication',
-        'QButtonGroup', 'QCheckBox', 'QComboBox', 'QDialog',
-        'QDialogButtonBox', 'QFileDialog', 'QFormLayout', 'QFrame', 'QGridLayout',
-        'QGroupBox', 'QHBoxLayout', 'QHeaderView', 'QInputDialog', 'QLabel',
-        'QLineEdit', 'QListWidget', 'QListWidgetItem', 'QMainWindow', 'QMenu',
-        'QMessageBox', 'QPlainTextEdit', 'QProgressBar', 'QPushButton', 'QRadioButton',
-        'QScrollArea', 'QSizePolicy', 'QSlider', 'QSpacerItem', 'QSpinBox',
-        'QSplashScreen', 'QSplitter', 'QStatusBar', 'QTableWidget', 'QTableWidgetItem',
-        'QTabWidget', 'QTextBrowser', 'QTextEdit', 'QToolBar', 'QTreeWidget',
-        'QTreeWidgetItem', 'QVBoxLayout', 'QWidget', 'QWizard', 'QWizardPage',
+        "QAbstractItemView", "QAbstractScrollArea", "QAction", "QApplication",
+        "QButtonGroup", "QCheckBox", "QComboBox", "QDialog",
+        "QDialogButtonBox", "QFileDialog", "QFormLayout", "QFrame", "QGridLayout",
+        "QGroupBox", "QHBoxLayout", "QHeaderView", "QInputDialog", "QLabel",
+        "QLineEdit", "QListWidget", "QListWidgetItem", "QMainWindow", "QMenu",
+        "QMessageBox", "QPlainTextEdit", "QProgressBar", "QPushButton", "QRadioButton",
+        "QScrollArea", "QSizePolicy", "QSlider", "QSpacerItem", "QSpinBox",
+        "QSplashScreen", "QSplitter", "QStatusBar", "QTableWidget", "QTableWidgetItem",
+        "QTabWidget", "QTextBrowser", "QTextEdit", "QToolBar", "QTreeWidget",
+        "QTreeWidgetItem", "QVBoxLayout", "QWidget", "QWizard", "QWizardPage",
         # Utility functions
-        'create_point', 'create_rect', 'create_size', 'get_text_metrics',
-        'create_icon_from_file', 'create_pixmap', 'create_pen', 'handle_key_event',
-        'handle_mouse_event', 'handle_paint_event', 'handle_resize_event',
-        'create_standard_action', 'create_button_group', 'get_desktop_geometry',
-        'create_frame_with_style', 'prompt_for_input', 'create_context_menu',
-        'create_radio_button_set', 'create_scroll_area_with_widget',
-        'create_slider_with_range', 'create_splash_screen', 'create_toolbar_with_actions',
-        'create_wizard_with_pages', 'create_wizard_page', 'configure_abstract_item_view',
-        'configure_abstract_scroll_area', 'create_main_window_with_statusbar',
-        'create_text_browser_with_html', 'create_standard_dialog_buttons',
-        'create_spacer_item'
+        "create_point", "create_rect", "create_size", "get_text_metrics",
+        "create_icon_from_file", "create_pixmap", "create_pen", "handle_key_event",
+        "handle_mouse_event", "handle_paint_event", "handle_resize_event",
+        "create_standard_action", "create_button_group", "get_desktop_geometry",
+        "create_frame_with_style", "prompt_for_input", "create_context_menu",
+        "create_radio_button_set", "create_scroll_area_with_widget",
+        "create_slider_with_range", "create_splash_screen", "create_toolbar_with_actions",
+        "create_wizard_with_pages", "create_wizard_page", "configure_abstract_item_view",
+        "configure_abstract_scroll_area", "create_main_window_with_statusbar",
+        "create_text_browser_with_html", "create_standard_dialog_buttons",
+        "create_spacer_item"
     ]
 
 except ImportError as e:
@@ -410,7 +410,7 @@ except ImportError as e:
         # Estimate based on typical font sizes
         char_width = 8  # Average character width
         char_height = 16  # Average character height
-        if font and hasattr(font, 'pointSize'):
+        if font and hasattr(font, "pointSize"):
             char_height = font.pointSize() * 1.3
             char_width = char_height * 0.6
 
@@ -418,12 +418,12 @@ except ImportError as e:
         height = char_height
 
         # Handle multiline text
-        lines = text.split('\n')
+        lines = text.split("\n")
         if len(lines) > 1:
             width = max(len(line) * char_width for line in lines)
             height = len(lines) * char_height * 1.2
 
-        return {'width': int(width), 'height': int(height), 'ascent': int(height * 0.8)}
+        return {"width": int(width), "height": int(height), "ascent": int(height * 0.8)}
 
     def create_icon_from_file(path):
         """Create icon for exploit tool UI from file."""
@@ -470,8 +470,8 @@ except ImportError as e:
                 self.style = style
                 self.width = width
                 self.color = color or (0, 0, 0, 255)
-                self.join_style = 'miter'
-                self.cap_style = 'square'
+                self.join_style = "miter"
+                self.cap_style = "square"
             def setStyle(self, style):
                 self.style = style
             def setCapStyle(self, cap):
@@ -488,7 +488,7 @@ except ImportError as e:
         Returns:
             tuple: Default values (0, 0, '') representing key code, modifiers, and text
         """
-        return (0, 0, '')
+        return (0, 0, "")
     def handle_mouse_event(event):
         """Extract mouse information from a mouse event in fallback mode.
 
@@ -506,11 +506,11 @@ except ImportError as e:
 
         try:
             # Get painter and widget dimensions
-            painter = widget.getPainter() if hasattr(widget, 'getPainter') else None
+            painter = widget.getPainter() if hasattr(widget, "getPainter") else None
             if not painter:
                 return
 
-            rect = widget.geometry() if hasattr(widget, 'geometry') else None
+            rect = widget.geometry() if hasattr(widget, "geometry") else None
             if not rect:
                 return
 
@@ -624,7 +624,7 @@ except ImportError as e:
                 self.buttons.append((button, id))
 
                 # Connect button to group
-                if hasattr(button, 'clicked'):
+                if hasattr(button, "clicked"):
                     button.clicked.connect(lambda: self._button_clicked(id))
 
             def checkedId(self):
@@ -637,7 +637,7 @@ except ImportError as e:
                 if self.exclusive:
                     # Uncheck all other buttons
                     for btn, btn_id in self.buttons:
-                        if btn_id != id and hasattr(btn, 'setChecked'):
+                        if btn_id != id and hasattr(btn, "setChecked"):
                             btn.setChecked(False)
 
                 self.checked_id = id
@@ -676,10 +676,10 @@ except ImportError as e:
             def __init__(self, parent=None, style=None):
                 """Initialize frame with optional parent and style."""
                 self.parent = parent
-                self.style = style or 'box'
+                self.style = style or "box"
                 self.line_width = 1
                 self.midline_width = 0
-                self.shadow = 'raised'
+                self.shadow = "raised"
 
             def setFrameStyle(self, style):
                 self.style = style
@@ -770,8 +770,8 @@ except ImportError as e:
                 """Initialize scroll area with optional parent."""
                 self.parent = parent
                 self.widget = None
-                self.horizontal_scrollbar_policy = 'as_needed'
-                self.vertical_scrollbar_policy = 'as_needed'
+                self.horizontal_scrollbar_policy = "as_needed"
+                self.vertical_scrollbar_policy = "as_needed"
 
             def setWidget(self, widget):
                 self.widget = widget
@@ -797,7 +797,7 @@ except ImportError as e:
     def create_slider_with_range(min_val, max_val, orientation=None):
         """Create slider for exploit parameter adjustment."""
         class Slider:
-            def __init__(self, orientation='horizontal', parent=None):
+            def __init__(self, orientation="horizontal", parent=None):
                 """Initialize slider with orientation and optional parent."""
                 self.orientation = orientation
                 self.parent = parent
@@ -837,7 +837,7 @@ except ImportError as e:
                         self.slider.value_changed_callbacks.append(callback)
                 return Signal(self)
 
-        slider = Slider(orientation or 'horizontal')
+        slider = Slider(orientation or "horizontal")
         slider.setMinimum(min_val)
         slider.setMaximum(max_val)
         return slider
@@ -850,7 +850,7 @@ except ImportError as e:
                 self.pixmap = pixmap
                 self.flags = flags
                 self.message = ""
-                self.alignment = 'center'
+                self.alignment = "center"
 
             def show(self):
                 self.visible = True
@@ -874,7 +874,7 @@ except ImportError as e:
                 self.title = title
                 self.parent = parent
                 self.actions = []
-                self.orientation = 'horizontal'
+                self.orientation = "horizontal"
                 self.icon_size = (24, 24)
                 self.movable = True
 

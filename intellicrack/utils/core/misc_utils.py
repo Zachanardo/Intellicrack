@@ -46,7 +46,7 @@ def log_message(msg: str) -> str:
     return f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}"
 
 
-def get_timestamp(format_string: str = '%Y-%m-%d %H:%M:%S') -> str:
+def get_timestamp(format_string: str = "%Y-%m-%d %H:%M:%S") -> str:
     """Get current timestamp as formatted string.
 
     Args:
@@ -68,7 +68,7 @@ def format_bytes(size: int, precision: int = 2) -> str:
     Returns:
         str: Formatted size string (e.g., "1.23 MB")
     """
-    for _unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+    for _unit in ["B", "KB", "MB", "GB", "TB"]:
         if size < 1024.0:
             return f"{size:.{precision}f} {_unit}"
         size /= 1024.0
@@ -105,7 +105,7 @@ def validate_path(path: Union[str, Path], must_exist: bool = True) -> bool:
         return False
 
 
-def sanitize_filename(filename: str, replacement: str = '_') -> str:
+def sanitize_filename(filename: str, replacement: str = "_") -> str:
     """Sanitize a filename by removing invalid characters.
 
     Args:
@@ -122,16 +122,16 @@ def sanitize_filename(filename: str, replacement: str = '_') -> str:
     sanitized = re.sub(invalid_chars, replacement, filename)
 
     # Remove leading/trailing spaces and dots
-    sanitized = sanitized.strip('. ')
+    sanitized = sanitized.strip(". ")
 
     # Ensure filename is not empty
     if not sanitized:
-        sanitized = 'unnamed'
+        sanitized = "unnamed"
 
     return sanitized
 
 
-def truncate_string(text: str, max_length: int = 100, suffix: str = '...') -> str:
+def truncate_string(text: str, max_length: int = 100, suffix: str = "...") -> str:
     """Truncate a string to a maximum length.
 
     Args:
@@ -163,7 +163,7 @@ def safe_str(obj: Any, max_length: int = 100) -> str:
         return truncate_string(result, max_length)
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in misc_utils: %s", e)
-        return '<str_conversion_failed>'
+        return "<str_conversion_failed>"
 
 
 def parse_size_string(size_str: str) -> int:
@@ -179,24 +179,24 @@ def parse_size_string(size_str: str) -> int:
         ValueError: If string cannot be parsed
     """
     units = {
-        'B': 1,
-        'KB': 1024,
-        'MB': 1024**2,
-        'GB': 1024**3,
-        'TB': 1024**4,
-        'PB': 1024**5
+        "B": 1,
+        "KB": 1024,
+        "MB": 1024**2,
+        "GB": 1024**3,
+        "TB": 1024**4,
+        "PB": 1024**5
     }
 
     # Remove spaces and convert to uppercase
     size_str = size_str.strip().upper()
 
     # Match number and unit
-    match = re.match(r'^([\d.]+)\s*([KMGTP]?B)?$', size_str)
+    match = re.match(r"^([\d.]+)\s*([KMGTP]?B)?$", size_str)
     if not match:
         raise ValueError(f"Invalid size string: {size_str}")
 
     number = float(match.group(1))
-    unit = match.group(2) or 'B'
+    unit = match.group(2) or "B"
 
     if unit not in units:
         raise ValueError(f"Unknown unit: {unit}")
@@ -248,17 +248,17 @@ def is_valid_ip_address(ip: str) -> bool:
     """
     # IPv4 pattern
     ipv4_pattern = re.compile(
-        r'^(\d{1,3}\.){3}\d{1,3}$'
+        r"^(\d{1,3}\.){3}\d{1,3}$"
     )
 
     # IPv6 pattern (simplified)
     ipv6_pattern = re.compile(
-        r'^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$'
+        r"^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$"
     )
 
     if ipv4_pattern.match(ip):
         # Validate IPv4 octets
-        octets = ip.split('.')
+        octets = ip.split(".")
         return all(0 <= int(_octet) <= 255 for _octet in octets)
 
     return bool(ipv6_pattern.match(ip))
@@ -283,16 +283,16 @@ def is_valid_port(port: Union[str, int]) -> bool:
 
 # Exported functions
 __all__ = [
-    'log_message',
-    'get_timestamp',
-    'format_bytes',
-    'validate_path',
-    'sanitize_filename',
-    'truncate_string',
-    'safe_str',
-    'parse_size_string',
-    'get_file_extension',
-    'ensure_directory_exists',
-    'is_valid_ip_address',
-    'is_valid_port',
+    "log_message",
+    "get_timestamp",
+    "format_bytes",
+    "validate_path",
+    "sanitize_filename",
+    "truncate_string",
+    "safe_str",
+    "parse_size_string",
+    "get_file_extension",
+    "ensure_directory_exists",
+    "is_valid_ip_address",
+    "is_valid_port",
 ]

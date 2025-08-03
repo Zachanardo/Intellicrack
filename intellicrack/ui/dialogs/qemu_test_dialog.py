@@ -190,17 +190,17 @@ class QEMUTestDialog(QDialog):
         """Handle continue button click."""
         if self.qemu_test_radio.isChecked():
             if self.remember_checkbox.isChecked():
-                self.user_choice = 'always_test'
+                self.user_choice = "always_test"
             else:
-                self.user_choice = 'test_qemu'
+                self.user_choice = "test_qemu"
         else:  # host_run_radio is checked
             if self.remember_checkbox.isChecked():
-                self.user_choice = 'never_test'
+                self.user_choice = "never_test"
             else:
-                self.user_choice = 'run_host'
+                self.user_choice = "run_host"
 
         self.accept()
 
     def get_user_choice(self) -> str:
         """Get the user's choice."""
-        return self.user_choice or 'cancelled'
+        return self.user_choice or "cancelled"

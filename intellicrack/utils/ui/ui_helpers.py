@@ -32,7 +32,7 @@ def check_binary_path_and_warn(app_instance):
     Returns:
         bool: True if binary path exists, False if missing
     """
-    if not hasattr(app_instance, 'binary_path') or not app_instance.binary_path:
+    if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
         try:
             from PyQt6.QtWidgets import QMessageBox
             QMessageBox.warning(app_instance, "No File Selected",
@@ -50,14 +50,14 @@ def emit_log_message(app_instance, message):
         app_instance: Application instance
         message: Message to log
     """
-    if hasattr(app_instance, 'update_output') and hasattr(app_instance.update_output, 'emit'):
+    if hasattr(app_instance, "update_output") and hasattr(app_instance.update_output, "emit"):
         try:
             from ..utils.logger import log_message
             app_instance.update_output.emit(log_message(message))
         except ImportError as e:
             logger.error("Import error in ui_helpers: %s", e)
             app_instance.update_output.emit(message)
-    elif hasattr(app_instance, 'update_output'):
+    elif hasattr(app_instance, "update_output"):
         app_instance.update_output.emit(message)
 
 def show_file_dialog(parent, title, file_filter="HTML Files (*.html);;All Files (*)"):

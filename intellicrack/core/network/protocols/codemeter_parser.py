@@ -209,7 +209,7 @@ class CodeMeterProtocolParser:
             offset = 0
 
             # Check CodeMeter magic signature
-            magic = struct.unpack('<I', data[offset:offset+4])[0]
+            magic = struct.unpack("<I", data[offset:offset+4])[0]
             offset += 4
 
             if magic not in [0x434D4554, 0x57495553, 0x434D5354]:  # "CMET", "WIUS", "CMST"
@@ -217,43 +217,43 @@ class CodeMeterProtocolParser:
                 return None
 
             # Parse header
-            command = struct.unpack('<I', data[offset:offset+4])[0]
+            command = struct.unpack("<I", data[offset:offset+4])[0]
             offset += 4
 
-            request_id = struct.unpack('<I', data[offset:offset+4])[0]
+            request_id = struct.unpack("<I", data[offset:offset+4])[0]
             offset += 4
 
-            firm_code = struct.unpack('<I', data[offset:offset+4])[0]
+            firm_code = struct.unpack("<I", data[offset:offset+4])[0]
             offset += 4
 
-            product_code = struct.unpack('<I', data[offset:offset+4])[0]
+            product_code = struct.unpack("<I", data[offset:offset+4])[0]
             offset += 4
 
-            feature_map = struct.unpack('<I', data[offset:offset+4])[0]
+            feature_map = struct.unpack("<I", data[offset:offset+4])[0]
             offset += 4
 
             # Parse version string
-            version_length = struct.unpack('<H', data[offset:offset+2])[0]
+            version_length = struct.unpack("<H", data[offset:offset+2])[0]
             offset += 2
 
             if offset + version_length > len(data):
                 return None
 
-            version = data[offset:offset+version_length].decode('utf-8', errors='ignore')
+            version = data[offset:offset+version_length].decode("utf-8", errors="ignore")
             offset += version_length
 
             # Parse client ID
-            client_id_length = struct.unpack('<H', data[offset:offset+2])[0]
+            client_id_length = struct.unpack("<H", data[offset:offset+2])[0]
             offset += 2
 
             if offset + client_id_length > len(data):
                 return None
 
-            client_id = data[offset:offset+client_id_length].decode('utf-8', errors='ignore')
+            client_id = data[offset:offset+client_id_length].decode("utf-8", errors="ignore")
             offset += client_id_length
 
             # Parse session context (JSON-like structure)
-            context_length = struct.unpack('<H', data[offset:offset+2])[0]
+            context_length = struct.unpack("<H", data[offset:offset+2])[0]
             offset += 2
 
             session_context = {}
@@ -263,10 +263,10 @@ class CodeMeterProtocolParser:
                 offset += context_length
 
             # Parse challenge data
-            challenge_length = struct.unpack('<H', data[offset:offset+2])[0]
+            challenge_length = struct.unpack("<H", data[offset:offset+2])[0]
             offset += 2
 
-            challenge_data = b''
+            challenge_data = b""
             if challenge_length > 0 and offset + challenge_length <= len(data):
                 challenge_data = data[offset:offset+challenge_length]
                 offset += challenge_length
@@ -303,22 +303,22 @@ class CodeMeterProtocolParser:
         try:
             offset = 0
             while offset < len(data) - 4:
-                key_length = struct.unpack('<H', data[offset:offset+2])[0]
+                key_length = struct.unpack("<H", data[offset:offset+2])[0]
                 offset += 2
 
                 if offset + key_length > len(data):
                     break
 
-                key = data[offset:offset+key_length].decode('utf-8', errors='ignore')
+                key = data[offset:offset+key_length].decode("utf-8", errors="ignore")
                 offset += key_length
 
-                value_length = struct.unpack('<H', data[offset:offset+2])[0]
+                value_length = struct.unpack("<H", data[offset:offset+2])[0]
                 offset += 2
 
                 if offset + value_length > len(data):
                     break
 
-                value = data[offset:offset+value_length].decode('utf-8', errors='ignore')
+                value = data[offset:offset+value_length].decode("utf-8", errors="ignore")
                 offset += value_length
 
                 context[key] = value
@@ -334,8 +334,8 @@ class CodeMeterProtocolParser:
         try:
             offset = 0
             while offset < len(data) - 4:
-                field_type = struct.unpack('<H', data[offset:offset+2])[0]
-                field_length = struct.unpack('<H', data[offset+2:offset+4])[0]
+                field_type = struct.unpack("<H", data[offset:offset+2])[0]
+                field_length = struct.unpack("<H", data[offset+2:offset+4])[0]
                 offset += 4
 
                 if offset + field_length > len(data):
@@ -345,16 +345,16 @@ class CodeMeterProtocolParser:
                 offset += field_length
 
                 if field_type == 0x0001:  # Hostname
-                    additional['hostname'] = field_data.decode('utf-8', errors='ignore')
+                    additional["hostname"] = field_data.decode("utf-8", errors="ignore")
                 elif field_type == 0x0002:  # Process name
-                    additional['process_name'] = field_data.decode('utf-8', errors='ignore')
+                    additional["process_name"] = field_data.decode("utf-8", errors="ignore")
                 elif field_type == 0x0003:  # Process ID
                     if len(field_data) >= 4:
-                        additional['process_id'] = struct.unpack('<I', field_data[:4])[0]
+                        additional["process_id"] = struct.unpack("<I", field_data[:4])[0]
                 elif field_type == 0x0004:  # User context
-                    additional['user_context'] = field_data.decode('utf-8', errors='ignore')
+                    additional["user_context"] = field_data.decode("utf-8", errors="ignore")
                 else:
-                    additional[f'field_{field_type:04X}'] = field_data
+                    additional[f"field_{field_type:04X}"] = field_data
 
         except Exception as e:
             self.logger.debug(f"Error parsing additional data: {e}")
@@ -420,7 +420,7 @@ class CodeMeterProtocolParser:
                 firm_code=request.firm_code,
                 product_code=request.product_code,
                 license_info={},
-                response_data=b'',
+                response_data=b"",
                 container_info={},
                 expiry_data={}
             )
@@ -458,7 +458,7 @@ class CodeMeterProtocolParser:
 
     def _handle_logout(self, request: CodeMeterRequest) -> CodeMeterResponse:
         """Handle CodeMeter logout request"""
-        session_id = request.session_context.get('session_id', '')
+        session_id = request.session_context.get("session_id", "")
 
         if session_id in self.active_sessions:
             del self.active_sessions[session_id]
@@ -472,7 +472,7 @@ class CodeMeterProtocolParser:
             firm_code=request.firm_code,
             product_code=request.product_code,
             license_info={"logout_time": int(time.time())},
-            response_data=b'',
+            response_data=b"",
             container_info={},
             expiry_data={}
         )
@@ -506,7 +506,7 @@ class CodeMeterProtocolParser:
             firm_code=request.firm_code,
             product_code=request.product_code,
             license_info={"authentication": "verified"},
-            response_data=b'\x01',  # Success
+            response_data=b"\x01",  # Success
             container_info={},
             expiry_data={}
         )
@@ -524,7 +524,7 @@ class CodeMeterProtocolParser:
                 "containers_found": 1,
                 "server_running": True
             },
-            response_data=b'',
+            response_data=b"",
             container_info=self.container_info,
             expiry_data={}
         )
@@ -532,7 +532,7 @@ class CodeMeterProtocolParser:
     def _handle_encrypt(self, request: CodeMeterRequest) -> CodeMeterResponse:
         """Handle encryption request"""
         # Simulate encryption (XOR with firm/product code)
-        key = struct.pack('<II', request.firm_code, request.product_code)
+        key = struct.pack("<II", request.firm_code, request.product_code)
         encrypted_data = bytearray()
 
         for i, byte in enumerate(request.challenge_data):
@@ -559,7 +559,7 @@ class CodeMeterProtocolParser:
         # Generate signature hash
         signature = hashlib.sha256(
             request.challenge_data +
-            struct.pack('<II', request.firm_code, request.product_code)
+            struct.pack("<II", request.firm_code, request.product_code)
         ).digest()
 
         return CodeMeterResponse(
@@ -582,7 +582,7 @@ class CodeMeterProtocolParser:
             firm_code=request.firm_code,
             product_code=request.product_code,
             license_info={"verification": "valid"},
-            response_data=b'\x01',  # Valid
+            response_data=b"\x01",  # Valid
             container_info={},
             expiry_data={}
         )
@@ -599,7 +599,7 @@ class CodeMeterProtocolParser:
                 firm_code=request.firm_code,
                 product_code=request.product_code,
                 license_info=product,
-                response_data=b'',
+                response_data=b"",
                 container_info=self.container_info,
                 expiry_data={
                     "expiry_date": product["expiry"],
@@ -613,7 +613,7 @@ class CodeMeterProtocolParser:
                 firm_code=request.firm_code,
                 product_code=request.product_code,
                 license_info={},
-                response_data=b'',
+                response_data=b"",
                 container_info={},
                 expiry_data={}
             )
@@ -626,14 +626,14 @@ class CodeMeterProtocolParser:
             firm_code=request.firm_code,
             product_code=request.product_code,
             license_info={"release_time": int(time.time())},
-            response_data=b'',
+            response_data=b"",
             container_info={},
             expiry_data={}
         )
 
     def _handle_heartbeat(self, request: CodeMeterRequest) -> CodeMeterResponse:
         """Handle heartbeat request"""
-        session_id = request.session_context.get('session_id', '')
+        session_id = request.session_context.get("session_id", "")
 
         if session_id in self.active_sessions:
             self.active_sessions[session_id]["last_heartbeat"] = time.time()
@@ -644,7 +644,7 @@ class CodeMeterProtocolParser:
             firm_code=request.firm_code,
             product_code=request.product_code,
             license_info={"heartbeat_time": int(time.time())},
-            response_data=b'',
+            response_data=b"",
             container_info={},
             expiry_data={}
         )
@@ -657,7 +657,7 @@ class CodeMeterProtocolParser:
             firm_code=request.firm_code,
             product_code=request.product_code,
             license_info={},
-            response_data=b'',
+            response_data=b"",
             container_info=self.container_info,
             expiry_data={}
         )
@@ -681,7 +681,7 @@ class CodeMeterProtocolParser:
             firm_code=request.firm_code,
             product_code=request.product_code,
             license_info={"products": products_list},
-            response_data=b'',
+            response_data=b"",
             container_info=self.container_info,
             expiry_data={}
         )
@@ -712,7 +712,7 @@ class CodeMeterProtocolParser:
 
     def _handle_check_receipt(self, request: CodeMeterRequest) -> CodeMeterResponse:
         """Handle check receipt request"""
-        receipt_id = request.session_context.get('receipt_id', '')
+        receipt_id = request.session_context.get("receipt_id", "")
 
         if receipt_id in self.license_receipts:
             receipt = self.license_receipts[receipt_id]
@@ -722,7 +722,7 @@ class CodeMeterProtocolParser:
                 firm_code=request.firm_code,
                 product_code=request.product_code,
                 license_info=receipt,
-                response_data=b'',
+                response_data=b"",
                 container_info={},
                 expiry_data={}
             )
@@ -733,7 +733,7 @@ class CodeMeterProtocolParser:
                 firm_code=request.firm_code,
                 product_code=request.product_code,
                 license_info={},
-                response_data=b'',
+                response_data=b"",
                 container_info={},
                 expiry_data={}
             )
@@ -747,7 +747,7 @@ class CodeMeterProtocolParser:
             firm_code=request.firm_code,
             product_code=request.product_code,
             license_info={},
-            response_data=b'',
+            response_data=b"",
             container_info={},
             expiry_data={}
         )
@@ -766,37 +766,37 @@ class CodeMeterProtocolParser:
             packet = bytearray()
 
             # Magic signature
-            packet.extend(struct.pack('<I', 0x434D4554))  # "CMET"
+            packet.extend(struct.pack("<I", 0x434D4554))  # "CMET"
 
             # Status code
-            packet.extend(struct.pack('<I', response.status))
+            packet.extend(struct.pack("<I", response.status))
 
             # Request ID
-            packet.extend(struct.pack('<I', response.request_id))
+            packet.extend(struct.pack("<I", response.request_id))
 
             # Firm code
-            packet.extend(struct.pack('<I', response.firm_code))
+            packet.extend(struct.pack("<I", response.firm_code))
 
             # Product code
-            packet.extend(struct.pack('<I', response.product_code))
+            packet.extend(struct.pack("<I", response.product_code))
 
             # License info (serialized as key-value pairs)
             license_data = self._serialize_dict(response.license_info)
-            packet.extend(struct.pack('<H', len(license_data)))
+            packet.extend(struct.pack("<H", len(license_data)))
             packet.extend(license_data)
 
             # Response data
-            packet.extend(struct.pack('<H', len(response.response_data)))
+            packet.extend(struct.pack("<H", len(response.response_data)))
             packet.extend(response.response_data)
 
             # Container info
             container_data = self._serialize_dict(response.container_info)
-            packet.extend(struct.pack('<H', len(container_data)))
+            packet.extend(struct.pack("<H", len(container_data)))
             packet.extend(container_data)
 
             # Expiry data
             expiry_data = self._serialize_dict(response.expiry_data)
-            packet.extend(struct.pack('<H', len(expiry_data)))
+            packet.extend(struct.pack("<H", len(expiry_data)))
             packet.extend(expiry_data)
 
             return bytes(packet)
@@ -804,7 +804,7 @@ class CodeMeterProtocolParser:
         except Exception as e:
             self.logger.error(f"Failed to serialize CodeMeter response: {e}")
             # Return minimal error response
-            return struct.pack('<III', 0x434D4554, response.status, response.request_id)
+            return struct.pack("<III", 0x434D4554, response.status, response.request_id)
 
     def _serialize_dict(self, data: Dict[str, Any]) -> bytes:
         """Serialize dictionary to bytes"""
@@ -812,22 +812,22 @@ class CodeMeterProtocolParser:
 
         for key, value in data.items():
             try:
-                key_bytes = key.encode('utf-8')
+                key_bytes = key.encode("utf-8")
 
                 if isinstance(value, str):
-                    value_bytes = value.encode('utf-8')
+                    value_bytes = value.encode("utf-8")
                 elif isinstance(value, int):
-                    value_bytes = struct.pack('<I', value)
+                    value_bytes = struct.pack("<I", value)
                 elif isinstance(value, list):
-                    value_bytes = str(value).encode('utf-8')
+                    value_bytes = str(value).encode("utf-8")
                 elif isinstance(value, dict):
-                    value_bytes = str(value).encode('utf-8')
+                    value_bytes = str(value).encode("utf-8")
                 else:
-                    value_bytes = str(value).encode('utf-8')
+                    value_bytes = str(value).encode("utf-8")
 
-                serialized.extend(struct.pack('<H', len(key_bytes)))
+                serialized.extend(struct.pack("<H", len(key_bytes)))
                 serialized.extend(key_bytes)
-                serialized.extend(struct.pack('<H', len(value_bytes)))
+                serialized.extend(struct.pack("<H", len(value_bytes)))
                 serialized.extend(value_bytes)
 
             except Exception as e:

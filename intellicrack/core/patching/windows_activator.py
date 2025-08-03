@@ -78,7 +78,7 @@ class WindowsActivator:
             issues.append("WindowsActivator.cmd script not found")
 
         # Check if running on Windows
-        if os.name != 'nt':
+        if os.name != "nt":
             issues.append("Windows activation only supported on Windows")
 
         # Check admin privileges
@@ -97,36 +97,36 @@ class WindowsActivator:
         try:
             # Use slmgr to check activation status
             result = subprocess.run(
-                ['cscript', '//nologo', 'C:\\Windows\\System32\\slmgr.vbs', '/xpr'],
+                ["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/xpr"],
                 capture_output=True,
                 text=True,
                 timeout=30
             , check=False)
 
             status_info = {
-                'status': ActivationStatus.UNKNOWN.value,
-                'raw_output': result.stdout.strip(),
-                'error': result.stderr.strip() if result.stderr else None
+                "status": ActivationStatus.UNKNOWN.value,
+                "raw_output": result.stdout.strip(),
+                "error": result.stderr.strip() if result.stderr else None
             }
 
             if result.returncode == 0:
                 output = result.stdout.lower()
-                if 'permanently activated' in output:
-                    status_info['status'] = ActivationStatus.ACTIVATED.value
-                elif 'grace period' in output:
-                    status_info['status'] = ActivationStatus.GRACE_PERIOD.value
-                elif 'not activated' in output:
-                    status_info['status'] = ActivationStatus.NOT_ACTIVATED.value
+                if "permanently activated" in output:
+                    status_info["status"] = ActivationStatus.ACTIVATED.value
+                elif "grace period" in output:
+                    status_info["status"] = ActivationStatus.GRACE_PERIOD.value
+                elif "not activated" in output:
+                    status_info["status"] = ActivationStatus.NOT_ACTIVATED.value
             else:
-                status_info['status'] = ActivationStatus.ERROR.value
+                status_info["status"] = ActivationStatus.ERROR.value
 
             return status_info
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error checking activation status: %s", e)
             return {
-                'status': ActivationStatus.ERROR.value,
-                'error': str(e)
+                "status": ActivationStatus.ERROR.value,
+                "error": str(e)
             }
 
     def activate_windows(self, method: ActivationMethod = ActivationMethod.HWID) -> Dict[str, any]:
@@ -142,23 +142,23 @@ class WindowsActivator:
         prereq_ok, issues = self.check_prerequisites()
         if not prereq_ok:
             return {
-                'success': False,
-                'error': 'Prerequisites not met',
-                'issues': issues
+                "success": False,
+                "error": "Prerequisites not met",
+                "issues": issues
             }
 
         try:
             # Create command based on method
             if method == ActivationMethod.HWID:
-                cmd_args = [str(self.script_path), '/HWID']
+                cmd_args = [str(self.script_path), "/HWID"]
             elif method == ActivationMethod.KMS38:
-                cmd_args = [str(self.script_path), '/KMS38']
+                cmd_args = [str(self.script_path), "/KMS38"]
             elif method == ActivationMethod.ONLINE_KMS:
-                cmd_args = [str(self.script_path), '/Ohook']
+                cmd_args = [str(self.script_path), "/Ohook"]
             else:
                 return {
-                    'success': False,
-                    'error': f'Unsupported activation method: {method.value}'
+                    "success": False,
+                    "error": f"Unsupported activation method: {method.value}"
                 }
 
             logger.info("Starting Windows activation with method: %s", method.value)
@@ -175,17 +175,17 @@ class WindowsActivator:
             success = result.returncode == 0
 
             activation_result = {
-                'success': success,
-                'method': method.value,
-                'return_code': result.returncode,
-                'stdout': result.stdout,
-                'stderr': result.stderr
+                "success": success,
+                "method": method.value,
+                "return_code": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr
             }
 
             if success:
                 logger.info("Windows activation completed successfully with %s", method.value)
                 # Get updated status
-                activation_result['post_activation_status'] = self.get_activation_status()
+                activation_result["post_activation_status"] = self.get_activation_status()
             else:
                 logger.error("Windows activation failed with %s: %s", method.value, result.stderr)
 
@@ -194,14 +194,14 @@ class WindowsActivator:
         except subprocess.TimeoutExpired:
             logger.error("Windows activation timed out")
             return {
-                'success': False,
-                'error': 'Activation process timed out'
+                "success": False,
+                "error": "Activation process timed out"
             }
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error during Windows activation: %s", e)
             return {
-                'success': False,
-                'error': str(e)
+                "success": False,
+                "error": str(e)
             }
 
     def reset_activation(self) -> Dict[str, any]:
@@ -214,24 +214,24 @@ class WindowsActivator:
         try:
             # Reset activation using slmgr
             result = subprocess.run(
-                ['cscript', '//nologo', 'C:\\Windows\\System32\\slmgr.vbs', '/rearm'],
+                ["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/rearm"],
                 capture_output=True,
                 text=True,
                 timeout=60
             , check=False)
 
             return {
-                'success': result.returncode == 0,
-                'return_code': result.returncode,
-                'stdout': result.stdout,
-                'stderr': result.stderr
+                "success": result.returncode == 0,
+                "return_code": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr
             }
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error resetting activation: %s", e)
             return {
-                'success': False,
-                'error': str(e)
+                "success": False,
+                "error": str(e)
             }
 
     def get_product_key_info(self) -> Dict[str, str]:
@@ -243,23 +243,23 @@ class WindowsActivator:
         """
         try:
             result = subprocess.run(
-                ['cscript', '//nologo', 'C:\\Windows\\System32\\slmgr.vbs', '/dli'],
+                ["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/dli"],
                 capture_output=True,
                 text=True,
                 timeout=30
             , check=False)
 
             return {
-                'success': result.returncode == 0,
-                'product_info': result.stdout.strip(),
-                'error': result.stderr.strip() if result.stderr else None
+                "success": result.returncode == 0,
+                "product_info": result.stdout.strip(),
+                "error": result.stderr.strip() if result.stderr else None
             }
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error getting product key info: %s", e)
             return {
-                'success': False,
-                'error': str(e)
+                "success": False,
+                "error": str(e)
             }
 
     def activate_windows_kms(self) -> Dict[str, any]:
@@ -283,9 +283,9 @@ class WindowsActivator:
         prereq_ok, issues = self.check_prerequisites()
         if not prereq_ok:
             return {
-                'success': False,
-                'error': 'Prerequisites not met for Office activation',
-                'issues': issues
+                "success": False,
+                "error": "Prerequisites not met for Office activation",
+                "issues": issues
             }
 
         try:
@@ -294,8 +294,8 @@ class WindowsActivator:
                 office_version = self._detect_office_version()
                 if not office_version:
                     return {
-                        'success': False,
-                        'error': 'No Microsoft Office installation detected'
+                        "success": False,
+                        "error": "No Microsoft Office installation detected"
                     }
 
             logger.info("Starting Office activation for version: %s", office_version)
@@ -304,29 +304,29 @@ class WindowsActivator:
             result = self._activate_office_c2r(office_version)
 
             # If C2R failed, try MSI method
-            if not result.get('success', False):
+            if not result.get("success", False):
                 logger.info("C2R activation failed, trying MSI method...")
                 msi_result = self._activate_office_msi(office_version)
-                if msi_result.get('success', False):
+                if msi_result.get("success", False):
                     result = msi_result
                 else:
                     # Combine error information
-                    result['msi_error'] = msi_result.get('error', 'MSI activation also failed')
+                    result["msi_error"] = msi_result.get("error", "MSI activation also failed")
 
             # Get Office activation status after attempt
-            if result.get('success', False):
-                result['post_activation_status'] = self._get_office_status()
+            if result.get("success", False):
+                result["post_activation_status"] = self._get_office_status()
                 logger.info("Office activation completed successfully")
             else:
-                logger.error("Office activation failed: %s", result.get('error', 'Unknown error'))
+                logger.error("Office activation failed: %s", result.get("error", "Unknown error"))
 
             return result
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error during Office activation: %s", e)
             return {
-                'success': False,
-                'error': f'Office activation error: {str(e)}'
+                "success": False,
+                "error": f"Office activation error: {str(e)}"
             }
 
     def _detect_office_version(self) -> str:
@@ -356,13 +356,13 @@ class WindowsActivator:
                             if os.path.isdir(item_path):
                                 # Check for Office executables
                                 if any(os.path.exists(os.path.join(item_path, exe))
-                                      for exe in ['WINWORD.EXE', 'EXCEL.EXE', 'POWERPNT.EXE']):
-                                    if 'Office16' in item or '16.0' in item:
-                                        detected_versions.append('2016')
-                                    elif 'Office15' in item or '15.0' in item:
-                                        detected_versions.append('2013')
-                                    elif 'Office14' in item or '14.0' in item:
-                                        detected_versions.append('2010')
+                                      for exe in ["WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE"]):
+                                    if "Office16" in item or "16.0" in item:
+                                        detected_versions.append("2016")
+                                    elif "Office15" in item or "15.0" in item:
+                                        detected_versions.append("2013")
+                                    elif "Office14" in item or "14.0" in item:
+                                        detected_versions.append("2010")
                     except (OSError, PermissionError) as e:
                         logger.error("Error in windows_activator: %s", e)
                         continue
@@ -436,7 +436,7 @@ class WindowsActivator:
             else:
                 cmd_args = [str(office_script), "/C2R", f"/Version:{office_version}"]
 
-            logger.info("Running Office C2R activation: %s", ' '.join(cmd_args))
+            logger.info("Running Office C2R activation: %s", " ".join(cmd_args))
 
             result = subprocess.run(
                 cmd_args,
@@ -449,27 +449,27 @@ class WindowsActivator:
             success = result.returncode == 0
 
             return {
-                'success': success,
-                'method': 'C2R',
-                'office_version': office_version,
-                'return_code': result.returncode,
-                'stdout': result.stdout,
-                'stderr': result.stderr
+                "success": success,
+                "method": "C2R",
+                "office_version": office_version,
+                "return_code": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr
             }
 
         except subprocess.TimeoutExpired as e:
             logger.error("Subprocess timeout in windows_activator: %s", e)
             return {
-                'success': False,
-                'method': 'C2R',
-                'error': 'Office C2R activation timed out'
+                "success": False,
+                "method": "C2R",
+                "error": "Office C2R activation timed out"
             }
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in windows_activator: %s", e)
             return {
-                'success': False,
-                'method': 'C2R',
-                'error': f'Office C2R activation error: {str(e)}'
+                "success": False,
+                "method": "C2R",
+                "error": f"Office C2R activation error: {str(e)}"
             }
 
     def _activate_office_msi(self, office_version: str) -> Dict[str, any]:
@@ -499,9 +499,9 @@ class WindowsActivator:
 
             if not ospp_script:
                 return {
-                    'success': False,
-                    'method': 'MSI',
-                    'error': 'OSPP.VBS script not found - Office may not be installed'
+                    "success": False,
+                    "method": "MSI",
+                    "error": "OSPP.VBS script not found - Office may not be installed"
                 }
 
             # Try to activate using OSPP with generic volume license key
@@ -516,7 +516,7 @@ class WindowsActivator:
 
             # Install the product key
             install_cmd = [
-                'cscript', '//nologo', ospp_script, f'/inpkey:{key}'
+                "cscript", "//nologo", ospp_script, f"/inpkey:{key}"
             ]
 
             logger.info("Installing Office product key for version %s", office_version)
@@ -526,14 +526,14 @@ class WindowsActivator:
 
             if result.returncode != 0:
                 return {
-                    'success': False,
-                    'method': 'MSI',
-                    'error': f'Failed to install product key: {result.stderr}'
+                    "success": False,
+                    "method": "MSI",
+                    "error": f"Failed to install product key: {result.stderr}"
                 }
 
             # Activate the installed key
             activate_cmd = [
-                'cscript', '//nologo', ospp_script, '/act'
+                "cscript", "//nologo", ospp_script, "/act"
             ]
 
             logger.info("Activating Office using MSI method")
@@ -548,28 +548,28 @@ class WindowsActivator:
             success = result.returncode == 0
 
             return {
-                'success': success,
-                'method': 'MSI',
-                'office_version': office_version,
-                'product_key': key,
-                'return_code': result.returncode,
-                'stdout': result.stdout,
-                'stderr': result.stderr
+                "success": success,
+                "method": "MSI",
+                "office_version": office_version,
+                "product_key": key,
+                "return_code": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr
             }
 
         except subprocess.TimeoutExpired as e:
             logger.error("Subprocess timeout in windows_activator: %s", e)
             return {
-                'success': False,
-                'method': 'MSI',
-                'error': 'Office MSI activation timed out'
+                "success": False,
+                "method": "MSI",
+                "error": "Office MSI activation timed out"
             }
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in windows_activator: %s", e)
             return {
-                'success': False,
-                'method': 'MSI',
-                'error': f'Office MSI activation error: {str(e)}'
+                "success": False,
+                "method": "MSI",
+                "error": f"Office MSI activation error: {str(e)}"
             }
 
     def _get_office_status(self) -> Dict[str, str]:
@@ -596,43 +596,43 @@ class WindowsActivator:
 
             if not ospp_script:
                 return {
-                    'status': 'unknown',
-                    'error': 'OSPP.VBS not found'
+                    "status": "unknown",
+                    "error": "OSPP.VBS not found"
                 }
 
             # Check activation status
             result = subprocess.run(
-                ['cscript', '//nologo', ospp_script, '/dstatus'],
+                ["cscript", "//nologo", ospp_script, "/dstatus"],
                 capture_output=True,
                 text=True,
                 timeout=60
             , check=False)
 
             status_info = {
-                'raw_output': result.stdout.strip(),
-                'error': result.stderr.strip() if result.stderr else None
+                "raw_output": result.stdout.strip(),
+                "error": result.stderr.strip() if result.stderr else None
             }
 
             if result.returncode == 0:
                 output = result.stdout.lower()
-                if 'license status: ---licensed---' in output:
-                    status_info['status'] = 'activated'
-                elif 'license status: ---grace---' in output:
-                    status_info['status'] = 'grace_period'
-                elif 'license status: ---notification---' in output:
-                    status_info['status'] = 'notification'
+                if "license status: ---licensed---" in output:
+                    status_info["status"] = "activated"
+                elif "license status: ---grace---" in output:
+                    status_info["status"] = "grace_period"
+                elif "license status: ---notification---" in output:
+                    status_info["status"] = "notification"
                 else:
-                    status_info['status'] = 'not_activated'
+                    status_info["status"] = "not_activated"
             else:
-                status_info['status'] = 'error'
+                status_info["status"] = "error"
 
             return status_info
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error getting Office status: %s", e)
             return {
-                'status': 'error',
-                'error': str(e)
+                "status": "error",
+                "error": str(e)
             }
 
 

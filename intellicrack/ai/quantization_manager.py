@@ -124,7 +124,7 @@ class QuantizationManager:
         # Initialize sharding manager if multi-GPU available
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_info = get_gpu_info()
-            if gpu_info['available'] and gpu_info['info'].get('device_count', 1) > 1:
+            if gpu_info["available"] and gpu_info["info"].get("device_count", 1) > 1:
                 self.sharding_manager = get_sharding_manager()
                 logger.info(
                     f"Multi-GPU sharding enabled with {gpu_info['info']['device_count']} devices")
@@ -208,7 +208,7 @@ class QuantizationManager:
         config_path = model_path / "config.json" if model_path.is_dir() else None
         if config_path and config_path.exists():
             import json
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 config = json.load(f)
                 if "quantization_config" in config:
                     quant_config = config["quantization_config"]
@@ -576,8 +576,8 @@ class QuantizationManager:
         else:
             gpu_info = get_gpu_info() if GPU_AUTOLOADER_AVAILABLE else {}
         return {
-                "cuda_available": gpu_info.get('available', False) if GPU_AUTOLOADER_AVAILABLE else torch.cuda.is_available(),
-                "device_count": gpu_info.get('info', {}).get('device_count', 0) if GPU_AUTOLOADER_AVAILABLE else (torch.cuda.device_count() if torch.cuda.is_available() else 0),
+                "cuda_available": gpu_info.get("available", False) if GPU_AUTOLOADER_AVAILABLE else torch.cuda.is_available(),
+                "device_count": gpu_info.get("info", {}).get("device_count", 0) if GPU_AUTOLOADER_AVAILABLE else (torch.cuda.device_count() if torch.cuda.is_available() else 0),
                 "sharding_available": False,
                 "reason": "Single GPU or no GPU available"
             }
@@ -646,8 +646,8 @@ class QuantizationManager:
 
                         # Replace module
                         parent = model
-                        child_name = name.split('.')[-1]
-                        for part in name.split('.')[:-1]:
+                        child_name = name.split(".")[-1]
+                        for part in name.split(".")[:-1]:
                             parent = getattr(parent, part)
                         setattr(parent, child_name, linear_8bit)
 
@@ -680,8 +680,8 @@ class QuantizationManager:
 
                         # Replace module
                         parent = model
-                        child_name = name.split('.')[-1]
-                        for part in name.split('.')[:-1]:
+                        child_name = name.split(".")[-1]
+                        for part in name.split(".")[:-1]:
                             parent = getattr(parent, part)
                         setattr(parent, child_name, linear_4bit)
 
@@ -865,10 +865,10 @@ class QuantizationManager:
             gpu_autoloader.synchronize()
             # Let the unified system handle memory cleanup
             gpu_info = get_gpu_info()
-            if gpu_info['type'] == 'nvidia_cuda' and torch.cuda.is_available():
+            if gpu_info["type"] == "nvidia_cuda" and torch.cuda.is_available():
                 torch.cuda.empty_cache()
-            elif gpu_info['type'] == 'intel_xpu' and hasattr(torch, 'xpu'):
-                if hasattr(torch.xpu, 'empty_cache'):
+            elif gpu_info["type"] == "intel_xpu" and hasattr(torch, "xpu"):
+                if hasattr(torch.xpu, "empty_cache"):
                     torch.xpu.empty_cache()
         elif torch.cuda.is_available():
             torch.cuda.empty_cache()

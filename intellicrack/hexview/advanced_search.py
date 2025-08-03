@@ -60,8 +60,8 @@ from ..ui.common_imports import (
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'SearchType', 'SearchResult', 'SearchEngine', 'AdvancedSearchDialog',
-    'SearchHistory', 'FindAllDialog', 'ReplaceDialog'
+    "SearchType", "SearchResult", "SearchEngine", "AdvancedSearchDialog",
+    "SearchHistory", "FindAllDialog", "ReplaceDialog"
 ]
 
 
@@ -81,7 +81,7 @@ class SearchResult:
         self.offset = offset
         self.length = length
         self.data = data
-        self.context = context or b''
+        self.context = context or b""
 
     def __str__(self):
         """Return string representation of the search result."""
@@ -90,20 +90,20 @@ class SearchResult:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
-            'offset': self.offset,
-            'length': self.length,
-            'data': self.data.hex(),
-            'context': self.context.hex() if self.context else ''
+            "offset": self.offset,
+            "length": self.length,
+            "data": self.data.hex(),
+            "context": self.context.hex() if self.context else ""
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'SearchResult':
+    def from_dict(cls, data: Dict[str, Any]) -> "SearchResult":
         """Create from dictionary."""
         return cls(
-            offset=data['offset'],
-            length=data['length'],
-            data=bytes.fromhex(data['data']),
-            context=bytes.fromhex(data['context']) if data['context'] else b''
+            offset=data["offset"],
+            length=data["length"],
+            data=bytes.fromhex(data["data"]),
+            context=bytes.fromhex(data["context"]) if data["context"] else b""
         )
 
 
@@ -113,21 +113,21 @@ class SearchHistory:
     def __init__(self, max_entries: int = 50):
         """Initialize the SearchHistory with maximum entries limit."""
         self.max_entries = max_entries
-        self.history_file = Path.home() / '.intellicrack' / 'hex_search_history.json'
+        self.history_file = Path.home() / ".intellicrack" / "hex_search_history.json"
         self.entries: List[Dict[str, Any]] = []
         self.load_history()
 
     def add_search(self, pattern: str, search_type: SearchType, options: Dict[str, Any]):
         """Add a search to history."""
         entry = {
-            'pattern': pattern,
-            'type': search_type.value,
-            'options': options,
-            'timestamp': __import__('time').time()
+            "pattern": pattern,
+            "type": search_type.value,
+            "options": options,
+            "timestamp": __import__("time").time()
         }
 
         # Remove duplicate if exists
-        self.entries = [e for e in self.entries if e['pattern'] != pattern or e['type'] != search_type.value]
+        self.entries = [e for e in self.entries if e["pattern"] != pattern or e["type"] != search_type.value]
 
         # Add to front
         self.entries.insert(0, entry)
@@ -142,17 +142,17 @@ class SearchHistory:
         """Get recent search patterns."""
         filtered_entries = self.entries
         if search_type:
-            filtered_entries = [e for e in self.entries if e['type'] == search_type.value]
+            filtered_entries = [e for e in self.entries if e["type"] == search_type.value]
 
-        return [e['pattern'] for e in filtered_entries[:limit]]
+        return [e["pattern"] for e in filtered_entries[:limit]]
 
     def load_history(self):
         """Load history from file."""
         try:
             if self.history_file.exists():
-                with open(self.history_file, 'r', encoding='utf-8') as f:
+                with open(self.history_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    self.entries = data.get('searches', [])
+                    self.entries = data.get("searches", [])
         except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Could not load search history: %s", e)
             self.entries = []
@@ -161,8 +161,8 @@ class SearchHistory:
         """Save history to file."""
         try:
             self.history_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.history_file, 'w', encoding='utf-8') as f:
-                json.dump({'searches': self.entries}, f, indent=2)
+            with open(self.history_file, "w", encoding="utf-8") as f:
+                json.dump({"searches": self.entries}, f, indent=2)
         except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Could not save search history: %s", e)
 
@@ -224,7 +224,7 @@ class SearchEngine:
         results = []
         file_size = self.file_handler.get_file_size()
         offset = 0
-        overlap_size = len(pattern) if isinstance(pattern, bytes) else len(pattern.encode('utf-8'))
+        overlap_size = len(pattern) if isinstance(pattern, bytes) else len(pattern.encode("utf-8"))
 
         while offset < file_size and len(results) < max_results:
             chunk_size = min(self.chunk_size, file_size - offset)
@@ -274,7 +274,7 @@ class SearchEngine:
 
         # Convert replace pattern to bytes
         if isinstance(replace_pattern, str):
-            replace_bytes = replace_pattern.encode('utf-8')
+            replace_bytes = replace_pattern.encode("utf-8")
         else:
             replace_bytes = replace_pattern
 
@@ -294,7 +294,7 @@ class SearchEngine:
         try:
             if search_type == SearchType.HEX:
                 if isinstance(pattern, str):
-                    hex_clean = pattern.replace(' ', '').replace('-', '')
+                    hex_clean = pattern.replace(" ", "").replace("-", "")
                     return bytes.fromhex(hex_clean)
                 return pattern
 
@@ -302,7 +302,7 @@ class SearchEngine:
                 if isinstance(pattern, bytes):
                     text_pattern = pattern
                 else:
-                    text_pattern = pattern.encode('utf-8')
+                    text_pattern = pattern.encode("utf-8")
 
                 if not case_sensitive:
                     # For case-insensitive text search, we'll handle this during matching
@@ -313,18 +313,18 @@ class SearchEngine:
             elif search_type == SearchType.REGEX:
                 flags = 0 if case_sensitive else re.IGNORECASE
                 if isinstance(pattern, bytes):
-                    pattern = pattern.decode('utf-8', errors='replace')
+                    pattern = pattern.decode("utf-8", errors="replace")
                 return re.compile(pattern, flags)
 
             elif search_type == SearchType.WILDCARD:
                 # Convert wildcard to regex
                 if isinstance(pattern, bytes):
-                    pattern = pattern.decode('utf-8', errors='replace')
+                    pattern = pattern.decode("utf-8", errors="replace")
 
                 # Escape special regex characters except * and ?
                 escaped = re.escape(pattern)
                 # Convert wildcard patterns
-                escaped = escaped.replace(r'\*', '.*').replace(r'\?', '.')
+                escaped = escaped.replace(r"\*", ".*").replace(r"\?", ".")
 
                 flags = 0 if case_sensitive else re.IGNORECASE
                 return re.compile(escaped, flags)
@@ -422,14 +422,14 @@ class SearchEngine:
 
             elif isinstance(compiled_pattern, re.Pattern):
                 # Regex search
-                text_data = chunk_data.decode('utf-8', errors='replace')
+                text_data = chunk_data.decode("utf-8", errors="replace")
                 for match in compiled_pattern.finditer(text_data):
                     start_pos = match.start()
                     end_pos = match.end()
 
                     # Convert character positions to byte positions (approximate)
-                    byte_start = len(text_data[:start_pos].encode('utf-8'))
-                    byte_end = len(text_data[:end_pos].encode('utf-8'))
+                    byte_start = len(text_data[:start_pos].encode("utf-8"))
+                    byte_end = len(text_data[:end_pos].encode("utf-8"))
 
                     if byte_start < len(chunk_data) and byte_end <= len(chunk_data):
                         matched_data = chunk_data[byte_start:byte_end]
@@ -833,9 +833,9 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
 
         # Add to history
         options = {
-            'case_sensitive': self.case_sensitive_check.isChecked(),
-            'whole_words': self.whole_words_check.isChecked(),
-            'direction': 'forward'
+            "case_sensitive": self.case_sensitive_check.isChecked(),
+            "whole_words": self.whole_words_check.isChecked(),
+            "direction": "forward"
         }
         self.search_history.add_search(pattern, search_type, options)
 
@@ -844,9 +844,9 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
             try:
                 result = self.search_engine.search(
                     pattern, search_type,
-                    case_sensitive=options['case_sensitive'],
-                    whole_words=options['whole_words'],
-                    direction='forward'
+                    case_sensitive=options["case_sensitive"],
+                    whole_words=options["whole_words"],
+                    direction="forward"
                 )
 
                 if result:
@@ -875,7 +875,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
                     pattern, search_type,
                     case_sensitive=self.case_sensitive_check.isChecked(),
                     whole_words=self.whole_words_check.isChecked(),
-                    direction='backward'
+                    direction="backward"
                 )
 
                 if result:
@@ -955,8 +955,8 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
         for i, result in enumerate(results):
             self.results_table.setItem(i, 0, QTableWidgetItem(f"0x{result.offset:X}"))
             self.results_table.setItem(i, 1, QTableWidgetItem(str(result.length)))
-            self.results_table.setItem(i, 2, QTableWidgetItem(result.data.hex(' ')[:32] + "..."))
-            self.results_table.setItem(i, 3, QTableWidgetItem(result.context.hex(' ')[:48] + "..."))
+            self.results_table.setItem(i, 2, QTableWidgetItem(result.data.hex(" ")[:32] + "..."))
+            self.results_table.setItem(i, 3, QTableWidgetItem(result.context.hex(" ")[:48] + "..."))
 
     def cancel_search(self):
         """Cancel current search."""
@@ -972,8 +972,8 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
         """Use selected history item."""
         entry = item.data(Qt.UserRole)
         if entry:
-            self.search_pattern_combo.setCurrentText(entry['pattern'])
-            type_index = self.search_type_combo.findText(entry['type'].title())
+            self.search_pattern_combo.setCurrentText(entry["pattern"])
+            type_index = self.search_type_combo.findText(entry["type"].title())
             if type_index >= 0:
                 self.search_type_combo.setCurrentIndex(type_index)
 
@@ -1037,7 +1037,7 @@ class FindAllDialog(QDialog):
         for i, result in enumerate(self.results):
             self.results_table.setItem(i, 0, QTableWidgetItem(f"0x{result.offset:08X}"))
             self.results_table.setItem(i, 1, QTableWidgetItem(result.data.hex() if result.data else ""))
-            ascii_text = ''.join(chr(b) if 32 <= b < 127 else '.' for b in result.data) if result.data else ""
+            ascii_text = "".join(chr(b) if 32 <= b < 127 else "." for b in result.data) if result.data else ""
             self.results_table.setItem(i, 2, QTableWidgetItem(ascii_text))
             self.results_table.setItem(i, 3, QTableWidgetItem(str(result.context_before) + " [MATCH] " + str(result.context_after)))
 

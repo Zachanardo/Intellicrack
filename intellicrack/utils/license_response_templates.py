@@ -28,7 +28,7 @@ from .templates.license_response_templates import (
     get_microsoft_response_templates,
 )
 
-__all__ = ['get_common_license_response', 'get_adobe_response_templates',
-           'get_autodesk_response_templates', 'get_jetbrains_response_templates',
-           'get_microsoft_response_templates', 'get_generic_response_templates',
-           'get_all_response_templates']
+__all__ = ["get_common_license_response", "get_adobe_response_templates",
+           "get_autodesk_response_templates", "get_jetbrains_response_templates",
+           "get_microsoft_response_templates", "get_generic_response_templates",
+           "get_all_response_templates"]

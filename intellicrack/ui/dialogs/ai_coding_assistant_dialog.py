@@ -70,13 +70,13 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
         keyword_format.setColor(QColor(255, 165, 0))  # Orange
         keyword_format.setFontWeight(QFont.Bold)
         keywords = [
-            'def', 'class', 'if', 'elif', 'else', 'for', 'while', 'try',
-            'except', 'finally', 'import', 'from', 'return', 'yield',
-            'lambda', 'with', 'as', 'pass', 'break', 'continue', 'and',
-            'or', 'not', 'in', 'is', 'None', 'True', 'False'
+            "def", "class", "if", "elif", "else", "for", "while", "try",
+            "except", "finally", "import", "from", "return", "yield",
+            "lambda", "with", "as", "pass", "break", "continue", "and",
+            "or", "not", "in", "is", "None", "True", "False"
         ]
         for keyword in keywords:
-            pattern = f'\\b{keyword}\\b'
+            pattern = f"\\b{keyword}\\b"
             self.highlighting_rules.append((re.compile(pattern), keyword_format))
 
         # Strings
@@ -88,17 +88,17 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
         # Comments
         comment_format = QTextCharFormat()
         comment_format.setColor(QColor(128, 128, 128))  # Gray
-        self.highlighting_rules.append((re.compile(r'#.*'), comment_format))
+        self.highlighting_rules.append((re.compile(r"#.*"), comment_format))
 
         # Functions
         function_format = QTextCharFormat()
         function_format.setColor(QColor(100, 149, 237))  # Cornflower blue
-        self.highlighting_rules.append((re.compile(r'\b[A-Za-z_][A-Za-z0-9_]*(?=\()'), function_format))
+        self.highlighting_rules.append((re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*(?=\()"), function_format))
 
         # Numbers
         number_format = QTextCharFormat()
         number_format.setColor(QColor(255, 182, 193))  # Light pink
-        self.highlighting_rules.append((re.compile(r'\b\d+(\.\d+)?\b'), number_format))
+        self.highlighting_rules.append((re.compile(r"\b\d+(\.\d+)?\b"), number_format))
 
     def highlightBlock(self, text):
         """Apply Python syntax highlighting to a block of text."""
@@ -121,13 +121,13 @@ class JavaScriptSyntaxHighlighter(QSyntaxHighlighter):
         keyword_format.setColor(QColor(255, 165, 0))  # Orange
         keyword_format.setFontWeight(QFont.Bold)
         keywords = [
-            'function', 'var', 'let', 'const', 'if', 'else', 'for', 'while',
-            'do', 'switch', 'case', 'default', 'break', 'continue', 'return',
-            'try', 'catch', 'finally', 'throw', 'new', 'this', 'typeof',
-            'instanceof', 'true', 'false', 'null', 'undefined'
+            "function", "var", "let", "const", "if", "else", "for", "while",
+            "do", "switch", "case", "default", "break", "continue", "return",
+            "try", "catch", "finally", "throw", "new", "this", "typeof",
+            "instanceof", "true", "false", "null", "undefined"
         ]
         for keyword in keywords:
-            pattern = f'\\b{keyword}\\b'
+            pattern = f"\\b{keyword}\\b"
             self.highlighting_rules.append((re.compile(pattern), keyword_format))
 
         # Strings
@@ -135,23 +135,23 @@ class JavaScriptSyntaxHighlighter(QSyntaxHighlighter):
         string_format.setColor(QColor(144, 238, 144))  # Light green
         self.highlighting_rules.append((re.compile(r'".*?"'), string_format))
         self.highlighting_rules.append((re.compile(r"'.*?'"), string_format))
-        self.highlighting_rules.append((re.compile(r'`.*?`'), string_format))
+        self.highlighting_rules.append((re.compile(r"`.*?`"), string_format))
 
         # Comments
         comment_format = QTextCharFormat()
         comment_format.setColor(QColor(128, 128, 128))  # Gray
-        self.highlighting_rules.append((re.compile(r'//.*'), comment_format))
-        self.highlighting_rules.append((re.compile(r'/\*.*?\*/'), comment_format))
+        self.highlighting_rules.append((re.compile(r"//.*"), comment_format))
+        self.highlighting_rules.append((re.compile(r"/\*.*?\*/"), comment_format))
 
         # Functions
         function_format = QTextCharFormat()
         function_format.setColor(QColor(100, 149, 237))  # Cornflower blue
-        self.highlighting_rules.append((re.compile(r'\b[A-Za-z_][A-Za-z0-9_]*(?=\()'), function_format))
+        self.highlighting_rules.append((re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*(?=\()"), function_format))
 
         # Numbers
         number_format = QTextCharFormat()
         number_format.setColor(QColor(255, 182, 193))  # Light pink
-        self.highlighting_rules.append((re.compile(r'\b\d+(\.\d+)?\b'), number_format))
+        self.highlighting_rules.append((re.compile(r"\b\d+(\.\d+)?\b"), number_format))
 
     def highlightBlock(self, text):
         """Apply JavaScript syntax highlighting to a block of text."""
@@ -182,19 +182,19 @@ class FileTreeWidget(QTreeWidget):
 
         # Supported file extensions for syntax highlighting
         self.supported_extensions = {
-            '.py': 'python',
-            '.js': 'javascript',
-            '.c': 'c',
-            '.cpp': 'cpp',
-            '.h': 'c',
-            '.hpp': 'cpp',
-            '.java': 'java',
-            '.txt': 'text',
-            '.md': 'markdown',
-            '.json': 'json',
-            '.xml': 'xml',
-            '.html': 'html',
-            '.css': 'css'
+            ".py": "python",
+            ".js": "javascript",
+            ".c": "c",
+            ".cpp": "cpp",
+            ".h": "c",
+            ".hpp": "cpp",
+            ".java": "java",
+            ".txt": "text",
+            ".md": "markdown",
+            ".json": "json",
+            ".xml": "xml",
+            ".html": "html",
+            ".css": "css"
         }
 
     def set_root_directory(self, root_path: str):
@@ -228,7 +228,7 @@ class FileTreeWidget(QTreeWidget):
             items = sorted(directory.iterdir(), key=lambda x: (x.is_file(), x.name.lower()))
 
             for item in items:
-                if item.name.startswith('.'):
+                if item.name.startswith("."):
                     continue  # Skip hidden files
 
                 tree_item = QTreeWidgetItem(parent_item, [item.name])
@@ -330,7 +330,7 @@ class CodeEditor(QPlainTextEdit):
     def load_file(self, file_path: str):
         """Load a file into the editor."""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             self.setPlainText(content)
@@ -355,7 +355,7 @@ class CodeEditor(QPlainTextEdit):
             return False
 
         try:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(self.toPlainText())
 
             self.current_file = file_path
@@ -376,9 +376,9 @@ class CodeEditor(QPlainTextEdit):
 
         file_ext = Path(file_path).suffix.lower()
 
-        if file_ext == '.py':
+        if file_ext == ".py":
             self.syntax_highlighter = PythonSyntaxHighlighter(self.document())
-        elif file_ext == '.js':
+        elif file_ext == ".js":
             self.syntax_highlighter = JavaScriptSyntaxHighlighter(self.document())
         # Add more syntax highlighters as needed
 
@@ -775,7 +775,7 @@ class AICodingAssistantDialog(QDialog):
         # Check if file is already open
         for i in range(self.editor_tabs.count()):
             editor = self.editor_tabs.widget(i)
-            if hasattr(editor, 'current_file') and editor.current_file == file_path:
+            if hasattr(editor, "current_file") and editor.current_file == file_path:
                 self.editor_tabs.setCurrentIndex(i)
                 return
 
@@ -796,7 +796,7 @@ class AICodingAssistantDialog(QDialog):
     def close_tab(self, index: int):
         """Close an editor tab."""
         editor = self.editor_tabs.widget(index)
-        if editor and hasattr(editor, 'is_modified') and editor.is_modified:
+        if editor and hasattr(editor, "is_modified") and editor.is_modified:
             reply = QMessageBox.question(
                 self, "Unsaved Changes",
                 "File has unsaved changes. Save before closing?",
@@ -827,7 +827,7 @@ class AICodingAssistantDialog(QDialog):
         """Save all modified files."""
         for i in range(self.editor_tabs.count()):
             editor = self.editor_tabs.widget(i)
-            if editor and hasattr(editor, 'is_modified') and editor.is_modified:
+            if editor and hasattr(editor, "is_modified") and editor.is_modified:
                 editor.save_file()
 
         self.update_modified_status()
@@ -917,7 +917,7 @@ class AICodingAssistantDialog(QDialog):
             # Handle specific commands first
             if "explain" in message.lower() and context.get("selected_text"):
                 # Create a more specific question with context
-                code_snippet = context['selected_text'][:500]  # Limit code length
+                code_snippet = context["selected_text"][:500]  # Limit code length
                 question = f"Please explain this code:\n```\n{code_snippet}\n```"
                 response = self.ai_tools.ask_question(question)
                 return response
@@ -935,14 +935,14 @@ class AICodingAssistantDialog(QDialog):
 
             elif "optimize" in message.lower() and context.get("selected_text"):
                 # Handle optimization requests
-                code_snippet = context['selected_text'][:500]
+                code_snippet = context["selected_text"][:500]
                 question = f"Please optimize this code:\n```\n{code_snippet}\n```"
                 response = self.ai_tools.ask_question(question)
                 return response
 
             elif "debug" in message.lower() and context.get("selected_text"):
                 # Handle debugging requests
-                code_snippet = context['selected_text'][:500]
+                code_snippet = context["selected_text"][:500]
                 question = f"Help me debug this code:\n```\n{code_snippet}\n```"
                 response = self.ai_tools.ask_question(question)
                 return response
@@ -998,30 +998,30 @@ def example_function():
         file_path = Path(current_editor.current_file)
 
         # Initialize ScriptExecutionManager if not already done
-        if not hasattr(self, 'script_execution_manager'):
+        if not hasattr(self, "script_execution_manager"):
             from ...core.execution import ScriptExecutionManager
             self.script_execution_manager = ScriptExecutionManager(self)
 
         # Determine script type based on file extension
         script_type = None
-        if file_path.suffix == '.py':
-            script_type = 'python'
-        elif file_path.suffix == '.js':
-            script_type = 'frida'
+        if file_path.suffix == ".py":
+            script_type = "python"
+        elif file_path.suffix == ".js":
+            script_type = "frida"
         else:
             QMessageBox.information(self, "Info", f"Don't know how to run {file_path.suffix} files.")
             return
 
         # Read script content
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 script_content = f.read()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to read script: {str(e)}")
             return
 
         # Get target binary if available
-        target_binary = getattr(self, 'target_binary', '') or ''
+        target_binary = getattr(self, "target_binary", "") or ""
 
         # Execute through ScriptExecutionManager
         result = self.script_execution_manager.execute_script(
@@ -1029,17 +1029,17 @@ def example_function():
             script_content=script_content,
             target_binary=target_binary,
             options={
-                'file_path': str(file_path),
-                'from_editor': True
+                "file_path": str(file_path),
+                "from_editor": True
             }
         )
 
         # Show result in chat widget
-        if result.get('success'):
+        if result.get("success"):
             output_msg = f"Script executed successfully: {file_path.name}"
-            if 'output' in result:
+            if "output" in result:
                 output_msg += f"\n\nOutput:\n{result['output']}"
-            if result.get('qemu_tested'):
+            if result.get("qemu_tested"):
                 output_msg += "\n\n[Script was tested in QEMU before execution]"
             self.chat_widget.add_message("System", output_msg)
         else:
@@ -1097,7 +1097,7 @@ def example_function():
 
         file_path = Path(current_editor.current_file) if current_editor.current_file else None
 
-        if file_path and file_path.suffix == '.py':
+        if file_path and file_path.suffix == ".py":
             self.format_python_code(current_editor)
         else:
             QMessageBox.information(self, "Info", "Code formatting not supported for this file type.")
@@ -1108,7 +1108,7 @@ def example_function():
             # Try to format with black
             content = editor.toPlainText()
 
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as temp_file:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as temp_file:
                 temp_file.write(content)
                 temp_file_path = temp_file.name
 
@@ -1121,7 +1121,7 @@ def example_function():
                 )
 
                 if result.returncode == 0:
-                    with open(temp_file_path, 'r') as f:
+                    with open(temp_file_path, "r") as f:
                         formatted_content = f.read()
 
                     editor.setPlainText(formatted_content)
@@ -1156,13 +1156,13 @@ def example_function():
             if file_path:
                 file_ext = Path(file_path).suffix.lower()
                 ext_to_lang = {
-                    '.py': 'python',
-                    '.js': 'javascript',
-                    '.c': 'c',
-                    '.cpp': 'cpp',
-                    '.h': 'c',
-                    '.hpp': 'cpp',
-                    '.java': 'java'
+                    ".py": "python",
+                    ".js": "javascript",
+                    ".c": "c",
+                    ".cpp": "cpp",
+                    ".h": "c",
+                    ".hpp": "cpp",
+                    ".java": "java"
                 }
                 language = ext_to_lang.get(file_ext, "auto")
 
@@ -1205,7 +1205,7 @@ def example_function():
         lines.append("")
 
         # Insights
-        insights = analysis_result.get('insights', [])
+        insights = analysis_result.get("insights", [])
         if insights:
             lines.append("**🔍 Insights:**")
             for insight in insights:
@@ -1213,7 +1213,7 @@ def example_function():
             lines.append("")
 
         # Security Issues
-        security_issues = analysis_result.get('security_issues', [])
+        security_issues = analysis_result.get("security_issues", [])
         if security_issues:
             lines.append("**🔒 Security Issues:**")
             for issue in security_issues:
@@ -1221,7 +1221,7 @@ def example_function():
             lines.append("")
 
         # Suggestions
-        suggestions = analysis_result.get('suggestions', [])
+        suggestions = analysis_result.get("suggestions", [])
         if suggestions:
             lines.append("**💡 Suggestions:**")
             for suggestion in suggestions:
@@ -1229,7 +1229,7 @@ def example_function():
             lines.append("")
 
         # Patterns
-        patterns = analysis_result.get('patterns', [])
+        patterns = analysis_result.get("patterns", [])
         if patterns:
             lines.append("**🎯 Detected Patterns:**")
             for pattern in patterns:
@@ -1237,7 +1237,7 @@ def example_function():
             lines.append("")
 
         # Timestamp
-        timestamp = analysis_result.get('analysis_timestamp', '')
+        timestamp = analysis_result.get("analysis_timestamp", "")
         if timestamp:
             lines.append(f"\n_Analysis performed at: {timestamp}_")
 
@@ -1279,7 +1279,7 @@ def example_function():
 
         if file_path:
             # Create empty file
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write("")
 
             # Refresh file tree

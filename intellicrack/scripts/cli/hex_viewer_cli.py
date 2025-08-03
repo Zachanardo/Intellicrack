@@ -69,13 +69,13 @@ class TerminalHexViewer:
 
         # Color pairs
         self.colors = {
-            'normal': 1,
-            'cursor': 2,
-            'modified': 3,
-            'search': 4,
-            'ascii': 5,
-            'status': 6,
-            'help': 7
+            "normal": 1,
+            "cursor": 2,
+            "modified": 3,
+            "search": 4,
+            "ascii": 5,
+            "status": 6,
+            "help": 7
         }
 
         self._load_file()
@@ -88,7 +88,7 @@ class TerminalHexViewer:
         self.file_size = os.path.getsize(self.filepath)
 
         try:
-            self.file_handle = open(self.filepath, 'r+b')
+            self.file_handle = open(self.filepath, "r+b")
             if MMAP_AVAILABLE and self.file_size > 0:
                 # Use memory mapping for efficient large file handling
                 self.mmap_file = mmap.mmap(self.file_handle.fileno(), 0)
@@ -101,7 +101,7 @@ class TerminalHexViewer:
         except IOError as e:
             # Try read-only mode
             try:
-                with open(self.filepath, 'rb') as f:
+                with open(self.filepath, "rb") as f:
                     self.data = f.read()
                 self.file_handle = None
             except IOError:
@@ -116,13 +116,13 @@ class TerminalHexViewer:
         curses.use_default_colors()
 
         # Define color pairs
-        curses.init_pair(self.colors['normal'], curses.COLOR_WHITE, -1)
-        curses.init_pair(self.colors['cursor'], curses.COLOR_BLACK, curses.COLOR_YELLOW)
-        curses.init_pair(self.colors['modified'], curses.COLOR_RED, -1)
-        curses.init_pair(self.colors['search'], curses.COLOR_BLACK, curses.COLOR_GREEN)
-        curses.init_pair(self.colors['ascii'], curses.COLOR_CYAN, -1)
-        curses.init_pair(self.colors['status'], curses.COLOR_WHITE, curses.COLOR_BLUE)
-        curses.init_pair(self.colors['help'], curses.COLOR_YELLOW, curses.COLOR_BLACK)
+        curses.init_pair(self.colors["normal"], curses.COLOR_WHITE, -1)
+        curses.init_pair(self.colors["cursor"], curses.COLOR_BLACK, curses.COLOR_YELLOW)
+        curses.init_pair(self.colors["modified"], curses.COLOR_RED, -1)
+        curses.init_pair(self.colors["search"], curses.COLOR_BLACK, curses.COLOR_GREEN)
+        curses.init_pair(self.colors["ascii"], curses.COLOR_CYAN, -1)
+        curses.init_pair(self.colors["status"], curses.COLOR_WHITE, curses.COLOR_BLUE)
+        curses.init_pair(self.colors["help"], curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
     def run(self, stdscr):
         """Main application loop."""
@@ -188,7 +188,7 @@ class TerminalHexViewer:
 
         # Draw offset
         offset_str = f"{offset:08X}"
-        self.stdscr.addstr(y, 0, offset_str, curses.color_pair(self.colors['normal']))
+        self.stdscr.addstr(y, 0, offset_str, curses.color_pair(self.colors["normal"]))
 
         # Draw hex bytes
         hex_x = 10
@@ -203,21 +203,21 @@ class TerminalHexViewer:
             # Get byte value (check for modifications first)
             if byte_offset in self.modifications:
                 byte_val = self.modifications[byte_offset]
-                color = self.colors['modified']
+                color = self.colors["modified"]
             else:
                 byte_val = self.data[byte_offset]
-                color = self.colors['normal']
+                color = self.colors["normal"]
 
             # Highlight cursor position
             if byte_offset == self.cursor_offset:
                 if self.edit_mode:
-                    color = self.colors['cursor']
+                    color = self.colors["cursor"]
                 else:
-                    color = self.colors['search']
+                    color = self.colors["search"]
 
             # Highlight search results
             elif byte_offset in [r[0] for r in self.search_results]:
-                color = self.colors['search']
+                color = self.colors["search"]
 
             # Draw hex representation
             hex_str = f"{byte_val:02X}"
@@ -230,13 +230,13 @@ class TerminalHexViewer:
             if 32 <= byte_val <= 126:
                 ascii_char = chr(byte_val)
             else:
-                ascii_char = '.'
+                ascii_char = "."
             ascii_line += ascii_char
 
         # Draw ASCII representation
         if ascii_x < self.screen_width:
             ascii_display = ascii_line[:self.screen_width - ascii_x]
-            self.stdscr.addstr(y, ascii_x, ascii_display, curses.color_pair(self.colors['ascii']))
+            self.stdscr.addstr(y, ascii_x, ascii_display, curses.color_pair(self.colors["ascii"]))
 
     def _draw_status_line(self):
         """Draw status line with current information."""
@@ -260,7 +260,7 @@ class TerminalHexViewer:
 
         try:
             self.stdscr.addstr(self.status_line, 0, status,
-                             curses.color_pair(self.colors['status']) | curses.A_BOLD)
+                             curses.color_pair(self.colors["status"]) | curses.A_BOLD)
         except curses.error:
             pass
 
@@ -278,7 +278,7 @@ class TerminalHexViewer:
         help_text = help_text.ljust(self.screen_width)
 
         try:
-            self.stdscr.addstr(info_line, 0, help_text, curses.color_pair(self.colors['help']))
+            self.stdscr.addstr(info_line, 0, help_text, curses.color_pair(self.colors["help"]))
         except curses.error:
             pass
 
@@ -324,7 +324,7 @@ class TerminalHexViewer:
 
             x = max(0, (self.screen_width - len(line)) // 2)
             try:
-                self.stdscr.addstr(y, x, line, curses.color_pair(self.colors['help']))
+                self.stdscr.addstr(y, x, line, curses.color_pair(self.colors["help"]))
             except curses.error:
                 pass
 
@@ -341,34 +341,34 @@ class TerminalHexViewer:
 
     def _handle_view_input(self, key: int) -> bool:
         """Handle input in view mode."""
-        if key == ord('q'):
+        if key == ord("q"):
             if self.modified:
                 if not self._confirm_exit():
                     return True
             return False
 
-        elif key == ord('e'):
+        elif key == ord("e"):
             self.edit_mode = True
 
         elif key == curses.KEY_F1:
             self.help_visible = True
 
-        elif key == ord('/'):
+        elif key == ord("/"):
             self._start_search()
 
-        elif key == ord('n'):
+        elif key == ord("n"):
             self._next_search_result()
 
-        elif key == ord('p'):
+        elif key == ord("p"):
             self._prev_search_result()
 
-        elif key == ord('g'):
+        elif key == ord("g"):
             self._goto_offset()
 
-        elif key == ord('r'):
+        elif key == ord("r"):
             pass  # Refresh (already done each loop)
 
-        elif key == ord('s'):
+        elif key == ord("s"):
             self._save_changes()
 
         # Navigation
@@ -398,10 +398,10 @@ class TerminalHexViewer:
         if key == 27:  # ESC
             self.edit_mode = False
 
-        elif key == ord('\t'):  # TAB
+        elif key == ord("\t"):  # TAB
             self.hex_edit_mode = not self.hex_edit_mode
 
-        elif key == ord('\n') or key == ord('\r'):  # ENTER
+        elif key == ord("\n") or key == ord("\r"):  # ENTER
             self.edit_mode = False
 
         elif key == curses.KEY_F1:
@@ -499,7 +499,7 @@ class TerminalHexViewer:
             # Search through data
             search_start = 0
             while True:
-                if hasattr(self.data, 'find'):
+                if hasattr(self.data, "find"):
                     pos = self.data.find(pattern_bytes, search_start)
                 else:
                     # Fallback for non-mmap data
@@ -565,7 +565,7 @@ class TerminalHexViewer:
                 self.mmap_file.flush()
             else:
                 # Reopen file and apply changes
-                with open(self.filepath, 'r+b') as f:
+                with open(self.filepath, "r+b") as f:
                     for offset, byte_val in self.modifications.items():
                         f.seek(offset)
                         f.write(bytes([byte_val]))
@@ -609,19 +609,19 @@ class TerminalHexViewer:
         while True:
             key = dialog.getch()
 
-            if key in [ord('y'), ord('Y')]:
+            if key in [ord("y"), ord("Y")]:
                 # Exit without saving
                 curses.reset_prog_mode()
                 self.stdscr.refresh()
                 return True
 
-            elif key in [ord('n'), ord('N'), 27]:  # 27 is ESC
+            elif key in [ord("n"), ord("N"), 27]:  # 27 is ESC
                 # Don't exit
                 curses.reset_prog_mode()
                 self.stdscr.refresh()
                 return False
 
-            elif key in [ord('s'), ord('S')]:
+            elif key in [ord("s"), ord("S")]:
                 # Save and exit
                 self._save_changes()
                 curses.reset_prog_mode()
@@ -652,12 +652,12 @@ class TerminalHexViewer:
                 current_length += len(word) + 1
             else:
                 if current_line:
-                    wrapped_lines.append(' '.join(current_line))
+                    wrapped_lines.append(" ".join(current_line))
                 current_line = [word]
                 current_length = len(word)
 
         if current_line:
-            wrapped_lines.append(' '.join(current_line))
+            wrapped_lines.append(" ".join(current_line))
 
         # Dialog dimensions
         dialog_width = max(30, min(max_msg_width, self.screen_width - 10))
@@ -670,7 +670,7 @@ class TerminalHexViewer:
         dialog.box()
 
         # Draw dialog content
-        dialog.addstr(1, 2, "Error", curses.A_BOLD | curses.color_pair(1) if hasattr(self, 'color_pairs') else curses.A_BOLD)
+        dialog.addstr(1, 2, "Error", curses.A_BOLD | curses.color_pair(1) if hasattr(self, "color_pairs") else curses.A_BOLD)
         dialog.addstr(2, 2, "-" * (dialog_width - 4))
 
         # Display wrapped error message

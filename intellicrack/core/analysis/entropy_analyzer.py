@@ -75,26 +75,26 @@ class EntropyAnalyzer:
             Entropy analysis results
         """
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             overall_entropy = self.calculate_entropy(data)
 
             return {
-                'overall_entropy': overall_entropy,
-                'file_size': len(data),
-                'entropy_classification': self._classify_entropy(overall_entropy),
-                'analysis_status': 'completed'
+                "overall_entropy": overall_entropy,
+                "file_size": len(data),
+                "entropy_classification": self._classify_entropy(overall_entropy),
+                "analysis_status": "completed"
             }
         except Exception as e:
             self.logger.error("Entropy analysis failed: %s", e)
-            return {'error': str(e)}
+            return {"error": str(e)}
 
     def _classify_entropy(self, entropy: float) -> str:
         """Classify entropy level."""
         if entropy >= self.high_entropy_threshold:
-            return 'high'
+            return "high"
         elif entropy >= self.medium_entropy_threshold:
-            return 'medium'
+            return "medium"
         else:
-            return 'low'
+            return "low"

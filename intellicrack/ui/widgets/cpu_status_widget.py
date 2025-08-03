@@ -65,8 +65,8 @@ class CPUMonitorWorker(QObject):
             "cpu_percent_total": psutil.cpu_percent(interval=0.1),
             "cpu_percent_cores": psutil.cpu_percent(interval=0.1, percpu=True),
             "cpu_freq": psutil.cpu_freq(),
-            "cpu_stats": psutil.cpu_stats()._asdict() if hasattr(psutil, 'cpu_stats') else {},
-            "load_average": psutil.getloadavg() if hasattr(psutil, 'getloadavg') else (0, 0, 0),
+            "cpu_stats": psutil.cpu_stats()._asdict() if hasattr(psutil, "cpu_stats") else {},
+            "load_average": psutil.getloadavg() if hasattr(psutil, "getloadavg") else (0, 0, 0),
             "cpu_times": psutil.cpu_times()._asdict(),
             "cpu_times_percent": psutil.cpu_times_percent(interval=0.1)._asdict()
         }
@@ -74,28 +74,28 @@ class CPUMonitorWorker(QObject):
         # Get process info
         try:
             processes = []
-            for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
+            for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
                 try:
                     pinfo = proc.info
-                    if pinfo['cpu_percent'] > 0:
+                    if pinfo["cpu_percent"] > 0:
                         processes.append({
-                            'pid': pinfo['pid'],
-                            'name': pinfo['name'],
-                            'cpu_percent': pinfo['cpu_percent'],
-                            'memory_percent': pinfo['memory_percent']
+                            "pid": pinfo["pid"],
+                            "name": pinfo["name"],
+                            "cpu_percent": pinfo["cpu_percent"],
+                            "memory_percent": pinfo["memory_percent"]
                         })
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
 
             # Sort by CPU usage
-            processes.sort(key=lambda x: x['cpu_percent'], reverse=True)
-            cpu_info['top_processes'] = processes[:10]
+            processes.sort(key=lambda x: x["cpu_percent"], reverse=True)
+            cpu_info["top_processes"] = processes[:10]
 
         except Exception:
-            cpu_info['top_processes'] = []
+            cpu_info["top_processes"] = []
 
         # Get CPU name/model
-        cpu_info['cpu_model'] = self._get_cpu_model()
+        cpu_info["cpu_model"] = self._get_cpu_model()
 
         return cpu_info
 
@@ -108,13 +108,13 @@ class CPUMonitorWorker(QObject):
                 for processor in c.Win32_Processor():
                     return processor.Name
             elif platform.system() == "Linux":
-                with open('/proc/cpuinfo', 'r') as f:
+                with open("/proc/cpuinfo", "r") as f:
                     for line in f:
-                        if line.startswith('model name'):
-                            return line.split(':')[1].strip()
+                        if line.startswith("model name"):
+                            return line.split(":")[1].strip()
             elif platform.system() == "Darwin":
                 import subprocess
-                return subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string']).decode().strip()
+                return subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"]).decode().strip()
         except:
             pass
 
@@ -242,31 +242,31 @@ class CPUStatusWidget(QWidget):
         self.threads_label.setText(f"Threads: {data.get('cpu_count_logical', 0)}")
 
         # Update frequency
-        freq = data.get('cpu_freq')
+        freq = data.get("cpu_freq")
         if freq:
             self.freq_label.setText(f"Frequency: {freq.current:.0f} MHz")
 
         # Update load average
-        load = data.get('load_average', (0, 0, 0))
+        load = data.get("load_average", (0, 0, 0))
         self.load_label.setText(f"Load: {load[0]:.2f}, {load[1]:.2f}, {load[2]:.2f}")
 
         # Update total CPU usage
-        total_cpu = data.get('cpu_percent_total', 0)
+        total_cpu = data.get("cpu_percent_total", 0)
         self.total_cpu_bar.setValue(int(total_cpu))
         self.total_cpu_label.setText(f"{total_cpu:.1f}%")
         self._set_bar_color(self.total_cpu_bar, total_cpu)
 
         # Update per-core usage
-        self.update_core_usage(data.get('cpu_percent_cores', []))
+        self.update_core_usage(data.get("cpu_percent_cores", []))
 
         # Update CPU times
-        times_percent = data.get('cpu_times_percent', {})
+        times_percent = data.get("cpu_times_percent", {})
         for time_type, label in self.time_labels.items():
             value = times_percent.get(time_type, 0)
             label.setText(f"{value:.1f}%")
 
         # Update top processes
-        self.update_processes_table(data.get('top_processes', []))
+        self.update_processes_table(data.get("top_processes", []))
 
     def update_core_usage(self, core_percents: List[float]):
         """Update per-core CPU usage display"""
@@ -299,13 +299,13 @@ class CPUStatusWidget(QWidget):
         self.processes_table.setRowCount(len(processes))
 
         for i, proc in enumerate(processes):
-            self.processes_table.setItem(i, 0, QTableWidgetItem(str(proc['pid'])))
-            self.processes_table.setItem(i, 1, QTableWidgetItem(proc['name']))
+            self.processes_table.setItem(i, 0, QTableWidgetItem(str(proc["pid"])))
+            self.processes_table.setItem(i, 1, QTableWidgetItem(proc["name"]))
 
             cpu_item = QTableWidgetItem(f"{proc['cpu_percent']:.1f}")
-            if proc['cpu_percent'] > 50:
+            if proc["cpu_percent"] > 50:
                 cpu_item.setForeground(QColor(220, 53, 69))
-            elif proc['cpu_percent'] > 25:
+            elif proc["cpu_percent"] > 25:
                 cpu_item.setForeground(QColor(255, 193, 7))
             self.processes_table.setItem(i, 2, cpu_item)
 

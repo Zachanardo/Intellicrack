@@ -67,7 +67,7 @@ def detect_virtualization_protection(binary_path: Optional[str] = None) -> Dict[
         # Check running processes (if possible)
         try:
             import psutil
-            running_processes = [_p.info['name'].lower() for _p in psutil.process_iter(['name']) if _p.info['name']]
+            running_processes = [_p.info["name"].lower() for _p in psutil.process_iter(["name"]) if _p.info["name"]]
 
             for _indicator in vm_indicators:
                 if any(_indicator.lower() in _proc for _proc in running_processes):
@@ -78,7 +78,7 @@ def detect_virtualization_protection(binary_path: Optional[str] = None) -> Dict[
             logger.debug("psutil not available for process checking")
 
         # Check registry for VM artifacts (Windows)
-        if sys.platform == 'win32':
+        if sys.platform == "win32":
             try:
                 import winreg
                 vm_registry_keys = [
@@ -111,7 +111,7 @@ def detect_virtualization_protection(binary_path: Optional[str] = None) -> Dict[
         for _vm_file in vm_files:
             if os.path.exists(_vm_file):
                 try:
-                    with open(_vm_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    with open(_vm_file, "r", encoding="utf-8", errors="ignore") as f:
                         content = f.read().lower()
                         for _indicator in vm_indicators:
                             if _indicator.lower() in content:
@@ -170,7 +170,7 @@ def detect_commercial_protections(binary_path: str) -> Dict[str, Any]:
         }
 
         # Read binary file
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             binary_data = f.read()
 
         # Check for protection signatures
@@ -199,7 +199,7 @@ def detect_commercial_protections(binary_path: str) -> Dict[str, Any]:
                 "VMProtect": [".vmp0", ".vmp1", ".vmp2"],
             }
 
-            section_names = [section.Name.decode('utf-8', errors='ignore').strip('\x00')
+            section_names = [section.Name.decode("utf-8", errors="ignore").strip("\x00")
                            for section in pe.sections]
 
             for protection, sections in protection_sections.items():
@@ -323,13 +323,13 @@ def detect_checksum_verification(binary_path: str) -> Dict[str, Any]:
             b"HashData", b"CheckSum", b"VerifyHash", b"ComputeHash"
         ]
 
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             binary_data = f.read()
 
         for hash_func in hash_functions:
             if hash_func in binary_data:
                 results["checksum_verification_detected"] = True
-                algo_name = hash_func.decode('utf-8', errors='ignore')
+                algo_name = hash_func.decode("utf-8", errors="ignore")
                 if algo_name not in results["algorithms_found"]:
                     results["algorithms_found"].append(algo_name)
                 results["indicators"].append(f"Hash function reference: {algo_name}")
@@ -367,13 +367,13 @@ def detect_self_healing_code(binary_path: str) -> Dict[str, Any]:
             b"mprotect", b"mmap", b"munmap"  # Linux equivalents
         ]
 
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             binary_data = f.read()
 
         for indicator in self_mod_indicators:
             if indicator in binary_data:
                 results["self_healing_detected"] = True
-                func_name = indicator.decode('utf-8', errors='ignore')
+                func_name = indicator.decode("utf-8", errors="ignore")
                 results["indicators"].append(f"Self-modification API: {func_name}")
 
                 if "Protect" in func_name or "mprotect" in func_name:
@@ -413,7 +413,7 @@ def detect_obfuscation(binary_path: str) -> Dict[str, Any]:
         # Calculate entropy to detect obfuscation
         from intellicrack.core.analysis.core_analysis import calculate_entropy
 
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             binary_data = f.read()
 
         entropy = calculate_entropy(binary_data)
@@ -515,13 +515,13 @@ def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
         ]
 
         # Read binary data
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             binary_data = f.read()
 
         # Check for anti-debugging APIs
         for anti_debug_api in anti_debug_apis:
             if anti_debug_api in binary_data:
-                api_name = anti_debug_api.decode('utf-8', errors='ignore')
+                api_name = anti_debug_api.decode("utf-8", errors="ignore")
                 results["api_calls"].append(api_name)
                 results["indicators"].append(f"Anti-debug API found: {api_name}")
                 results["anti_debug_detected"] = True
@@ -543,7 +543,7 @@ def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
         # Check for debugger strings
         for debug_string in debug_strings:
             if debug_string.lower() in binary_data.lower():
-                str_name = debug_string.decode('utf-8', errors='ignore')
+                str_name = debug_string.decode("utf-8", errors="ignore")
                 results["indicators"].append(f"Debugger string found: {str_name}")
                 if "Debugger Name Detection" not in results["techniques"]:
                     results["techniques"].append("Debugger Name Detection")
@@ -551,7 +551,7 @@ def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
 
         # Check for specific x86/x64 anti-debugging instructions
         # INT 3 (CC) - Breakpoint instruction check
-        int3_count = binary_data.count(b'\xCC')
+        int3_count = binary_data.count(b"\xCC")
         if int3_count > 50:  # Unusual number of INT3s
             results["instructions"].append("INT 3 flooding")
             results["indicators"].append(f"High INT3 count: {int3_count}")
@@ -559,7 +559,7 @@ def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
             results["anti_debug_detected"] = True
 
         # INT 2D (anti-debug interrupt)
-        if b'\xCD\x2D' in binary_data:
+        if b"\xCD\x2D" in binary_data:
             results["instructions"].append("INT 2D")
             results["indicators"].append("INT 2D anti-debug interrupt found")
             results["techniques"].append("INT 2D Detection")
@@ -567,8 +567,8 @@ def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
 
         # Check for PEB access patterns (Windows)
         peb_patterns = [
-            b'\x64\xA1\x30\x00\x00\x00',  # mov eax, fs:[30h] - 32-bit PEB
-            b'\x65\x48\x8B\x04\x25\x60\x00\x00\x00',  # mov rax, gs:[60h] - 64-bit PEB
+            b"\x64\xA1\x30\x00\x00\x00",  # mov eax, fs:[30h] - 32-bit PEB
+            b"\x65\x48\x8B\x04\x25\x60\x00\x00\x00",  # mov rax, gs:[60h] - 64-bit PEB
         ]
 
         for peb_pattern in peb_patterns:
@@ -618,7 +618,7 @@ def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
             pe = pefile.PE(binary_path)
 
             # Check TLS callbacks (often used for anti-debugging)
-            if hasattr(pe, 'DIRECTORY_ENTRY_TLS'):
+            if hasattr(pe, "DIRECTORY_ENTRY_TLS"):
                 results["techniques"].append("TLS Callback Detection")
                 results["indicators"].append("TLS callbacks present (common anti-debug location)")
                 results["anti_debug_detected"] = True
@@ -697,13 +697,13 @@ def scan_for_bytecode_protectors(binary_path):
 
         if pe:
             section_names = [
-                pe_section.Name.decode('utf-8', 'ignore').strip('\x00')
+                pe_section.Name.decode("utf-8", "ignore").strip("\x00")
                 for pe_section in pe.sections
             ]
 
             # Check for high entropy sections (common in packed/protected executables)
             for pe_section in pe.sections:
-                section_name = pe_section.Name.decode('utf-8', 'ignore').strip('\x00')
+                section_name = pe_section.Name.decode("utf-8", "ignore").strip("\x00")
                 section_data = pe_section.get_data()
                 entropy = calculate_entropy(section_data)
 
@@ -724,7 +724,7 @@ def scan_for_bytecode_protectors(binary_path):
                 if sig_pattern.lower() in binary_data.lower():
                     detected = True
                     detection_info["detected"] = True
-                    detection_info["signature"] = sig_pattern.decode('utf-8', 'ignore')
+                    detection_info["signature"] = sig_pattern.decode("utf-8", "ignore")
                     break
 
             # Check for specific sections
@@ -738,7 +738,7 @@ def scan_for_bytecode_protectors(binary_path):
                     if pe:
                         matching_section = next(
                             (s for s in pe.sections if sig_section.lower() in s.Name.decode(
-                                'utf-8', 'ignore').strip('\x00').lower()), None)
+                                "utf-8", "ignore").strip("\x00").lower()), None)
                         if matching_section:
                             entropy = calculate_entropy(matching_section.get_data())
                             detection_info["section_entropy"] = entropy
@@ -748,7 +748,7 @@ def scan_for_bytecode_protectors(binary_path):
             # Add detailed detection information based on detected status
             if detected:
                 # Add when the detection happened
-                detection_info["detection_time"] = time.strftime('%Y-%m-%d %H:%M:%S')
+                detection_info["detection_time"] = time.strftime("%Y-%m-%d %H:%M:%S")
 
                 if "detection_stats" not in results:
                     results["detection_stats"] = {}
@@ -778,11 +778,11 @@ def scan_for_bytecode_protectors(binary_path):
             }
 
         # Additional checks for specific protectors
-        if pe and hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+        if pe and hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
             try:
-                import_entries = getattr(pe, 'DIRECTORY_ENTRY_IMPORT', [])
+                import_entries = getattr(pe, "DIRECTORY_ENTRY_IMPORT", [])
                 for entry in import_entries:
-                    dll_name = entry.dll.decode('utf-8', 'ignore').lower()
+                    dll_name = entry.dll.decode("utf-8", "ignore").lower()
                     if "securengine" in dll_name:
                         if "Themida/WinLicense" not in results:
                             results["Themida/WinLicense"] = {"detected": False}
@@ -832,7 +832,7 @@ def detect_tpm_protection(binary_path: str) -> Dict[str, Any]:
     }
 
     try:
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             data = f.read()
 
         tpm_indicators = [
@@ -847,7 +847,7 @@ def detect_tpm_protection(binary_path: str) -> Dict[str, Any]:
         for tpm_indicator in tpm_indicators:
             if tpm_indicator in data:
                 results["tpm_detected"] = True
-                results["indicators"].append(tpm_indicator.decode('utf-8', 'ignore'))
+                results["indicators"].append(tpm_indicator.decode("utf-8", "ignore"))
                 results["confidence"] = "Medium"
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -874,21 +874,21 @@ def detect_self_healing(binary_path: str) -> Dict[str, Any]:
 
 # Export all functions
 __all__ = [
-    'detect_virtualization_protection',
-    'detect_commercial_protections',
-    'run_comprehensive_protection_scan',
-    'generate_checksum',
-    'detect_checksum_verification',
-    'detect_self_healing_code',
-    'detect_obfuscation',
-    'detect_anti_debugging_techniques',
-    'scan_for_bytecode_protectors',
-    'detect_protection_mechanisms',
-    'detect_packing_methods',
-    'detect_all_protections',
-    'detect_anti_debug',
-    'detect_commercial_protectors',
-    'detect_tpm_protection',
-    'detect_anti_debugging',
-    'detect_vm_detection',
+    "detect_virtualization_protection",
+    "detect_commercial_protections",
+    "run_comprehensive_protection_scan",
+    "generate_checksum",
+    "detect_checksum_verification",
+    "detect_self_healing_code",
+    "detect_obfuscation",
+    "detect_anti_debugging_techniques",
+    "scan_for_bytecode_protectors",
+    "detect_protection_mechanisms",
+    "detect_packing_methods",
+    "detect_all_protections",
+    "detect_anti_debug",
+    "detect_commercial_protectors",
+    "detect_tpm_protection",
+    "detect_anti_debugging",
+    "detect_vm_detection",
 ]

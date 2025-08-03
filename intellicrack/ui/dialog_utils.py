@@ -45,7 +45,7 @@ def setup_binary_header(dialog, layout):
     header_group = QGroupBox("Target Binary")
     header_layout = QHBoxLayout(header_group)
 
-    dialog.binary_path_edit = QLineEdit(getattr(dialog, 'binary_path', ''))
+    dialog.binary_path_edit = QLineEdit(getattr(dialog, "binary_path", ""))
     dialog.binary_path_edit.setPlaceholderText("Select target binary file...")
 
     dialog.browse_btn = QPushButton("Browse")

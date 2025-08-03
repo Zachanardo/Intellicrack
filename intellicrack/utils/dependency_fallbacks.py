@@ -140,7 +140,7 @@ def create_numpy_fallback():
             """Convert data to array-like structure."""
             if isinstance(data, list):
                 return data
-            return list(data) if hasattr(data, '__iter__') else [data]
+            return list(data) if hasattr(data, "__iter__") else [data]
 
         @staticmethod
         def zeros(shape):
@@ -271,7 +271,7 @@ def create_pandas_fallback():
             if isinstance(data, dict):
                 self.data = data
             elif isinstance(data, list):
-                self.data = {'column_0': data}
+                self.data = {"column_0": data}
             else:
                 self.data = {}
 
@@ -424,37 +424,37 @@ def initialize_safe_imports():
         logger.info("✅ numpy working correctly - test array shape: %s", test_array.shape)
     except Exception as e:
         logger.warning(f"numpy issue detected: {e}")
-        _module_replacer.replace_module('numpy', create_numpy_fallback)
+        _module_replacer.replace_module("numpy", create_numpy_fallback)
 
     # Test and replace pandas if needed
     try:
         import pandas
-        test_df = pandas.DataFrame({'test': [1, 2, 3]})
+        test_df = pandas.DataFrame({"test": [1, 2, 3]})
         logger.info("✅ pandas working correctly - test df shape: %s", test_df.shape)
     except Exception as e:
         logger.warning(f"pandas issue detected: {e}")
-        _module_replacer.replace_module('pandas', create_pandas_fallback)
+        _module_replacer.replace_module("pandas", create_pandas_fallback)
 
     # Test and replace sklearn if needed
     try:
         logger.info("✅ sklearn working correctly")
     except Exception as e:
         logger.warning(f"sklearn issue detected: {e}")
-        _module_replacer.replace_module('sklearn', create_sklearn_fallback)
-        _module_replacer.replace_module('sklearn.ensemble', lambda: create_sklearn_fallback().ensemble)
-        _module_replacer.replace_module('sklearn.cluster', lambda: create_sklearn_fallback().cluster)
-        _module_replacer.replace_module('sklearn.preprocessing', lambda: create_sklearn_fallback().preprocessing)
+        _module_replacer.replace_module("sklearn", create_sklearn_fallback)
+        _module_replacer.replace_module("sklearn.ensemble", lambda: create_sklearn_fallback().ensemble)
+        _module_replacer.replace_module("sklearn.cluster", lambda: create_sklearn_fallback().cluster)
+        _module_replacer.replace_module("sklearn.preprocessing", lambda: create_sklearn_fallback().preprocessing)
 
     logger.info("Safe import initialization complete")
 
 def get_dependency_status():
     """Get status of all dependencies."""
     status = {
-        'numpy': NUMPY_AVAILABLE,
-        'pandas': PANDAS_AVAILABLE,
-        'sklearn': SKLEARN_AVAILABLE,
-        'lief': LIEF_AVAILABLE,
-        'pyelftools': PYELFTOOLS_AVAILABLE
+        "numpy": NUMPY_AVAILABLE,
+        "pandas": PANDAS_AVAILABLE,
+        "sklearn": SKLEARN_AVAILABLE,
+        "lief": LIEF_AVAILABLE,
+        "pyelftools": PYELFTOOLS_AVAILABLE
     }
 
     working_deps = sum(status.values())

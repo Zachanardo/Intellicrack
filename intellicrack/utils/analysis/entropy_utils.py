@@ -127,8 +127,8 @@ def calculate_frequency_distribution(data: Union[bytes, str]) -> Dict:
     distribution = {}
     for item, count in freq.items():
         distribution[item] = {
-            'count': count,
-            'probability': count / data_len
+            "count": count,
+            "probability": count / data_len
         }
 
     return distribution
@@ -172,15 +172,15 @@ def analyze_entropy_sections(data: bytes, block_size: int = 256) -> Dict:
         if len(block) > 0:
             block_entropy = calculate_entropy(block)
             sections.append({
-                'offset': i,
-                'size': len(block),
-                'entropy': block_entropy,
-                'is_high_entropy': is_high_entropy(block)
+                "offset": i,
+                "size": len(block),
+                "entropy": block_entropy,
+                "is_high_entropy": is_high_entropy(block)
             })
 
     # Calculate statistics
     if sections:
-        entropies = [s['entropy'] for s in sections]
+        entropies = [s["entropy"] for s in sections]
         avg_entropy = sum(entropies) / len(entropies)
         min_entropy = min(entropies)
         max_entropy = max(entropies)
@@ -189,13 +189,13 @@ def analyze_entropy_sections(data: bytes, block_size: int = 256) -> Dict:
         avg_entropy = min_entropy = max_entropy = variance = 0.0
 
     return {
-        'overall_entropy': overall_entropy,
-        'sections': sections,
-        'statistics': {
-            'average_entropy': avg_entropy,
-            'min_entropy': min_entropy,
-            'max_entropy': max_entropy,
-            'variance': variance,
-            'section_count': len(sections)
+        "overall_entropy": overall_entropy,
+        "sections": sections,
+        "statistics": {
+            "average_entropy": avg_entropy,
+            "min_entropy": min_entropy,
+            "max_entropy": max_entropy,
+            "variance": variance,
+            "section_count": len(sections)
         }
     }

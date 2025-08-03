@@ -214,7 +214,7 @@ class EnhancedCLIRunner:
             self.logger.info(f"Network analyzer initialized for {binary_path}")
 
             # Use analyzer to simulate analysis
-            if hasattr(analyzer, 'analyze'):
+            if hasattr(analyzer, "analyze"):
                 self.logger.debug("Starting network traffic analysis")
                 # In a real implementation, we would call analyzer.analyze(binary_path)
 
@@ -231,7 +231,7 @@ class EnhancedCLIRunner:
             # Return analysis results (simulated)
             return {
                 "protocols": ["HTTP", "HTTPS"],
-                "endpoints": [os.environ.get('API_SERVER_URL', 'api.internal'), os.environ.get('LICENSE_SERVER_URL', 'license.internal')],
+                "endpoints": [os.environ.get("API_SERVER_URL", "api.internal"), os.environ.get("LICENSE_SERVER_URL", "license.internal")],
                 "suspicious": False,
                 "analyzer_info": f"Analysis by {type(analyzer).__name__}"
             }
@@ -370,7 +370,7 @@ def main():
         output_path = Prompt.ask("Output file path", default="analysis_results.json")
 
         import json
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(results, f, indent=2, default=str)
 
         console.print(f"\n[green]Results saved to {output_path}[/green]")

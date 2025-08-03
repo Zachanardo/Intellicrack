@@ -69,15 +69,15 @@ class IntellicrackHexProtectionIntegration(QObject):
             # Handle offset parameter for better integration
             if offset is not None:
                 # Try command-line offset support first
-                cmd.extend(['--offset', hex(offset)])
+                cmd.extend(["--offset", hex(offset)])
                 logger.info(f"Attempting to open {file_path} at offset {hex(offset)} in protection viewer")
 
                 # Create offset sync file for advanced integration
                 try:
-                    sync_dir = os.path.join(os.path.dirname(protection_viewer_path), 'sync')
+                    sync_dir = os.path.join(os.path.dirname(protection_viewer_path), "sync")
                     os.makedirs(sync_dir, exist_ok=True)
-                    sync_file = os.path.join(sync_dir, 'initial_offset.txt')
-                    with open(sync_file, 'w') as f:
+                    sync_file = os.path.join(sync_dir, "initial_offset.txt")
+                    with open(sync_file, "w") as f:
                         f.write(f"{offset}\n{hex(offset)}\n{file_path}")
                     logger.debug(f"Created offset sync file: {sync_file}")
                 except (OSError, IOError) as e:
@@ -107,8 +107,8 @@ class IntellicrackHexProtectionIntegration(QObject):
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
                 "extensions", "engines", "protection_viewer", "protection_viewer.exe"
             )
-            sync_dir = os.path.join(os.path.dirname(protection_viewer_path), 'sync')
-            sync_file = os.path.join(sync_dir, 'initial_offset.txt')
+            sync_dir = os.path.join(os.path.dirname(protection_viewer_path), "sync")
+            sync_file = os.path.join(sync_dir, "initial_offset.txt")
             if os.path.exists(sync_file):
                 os.remove(sync_file)
                 logger.debug("Cleaned up offset sync file")
@@ -153,8 +153,8 @@ class IntellicrackHexProtectionIntegration(QObject):
 
             if analysis and analysis.sections:
                 for section in analysis.sections:
-                    name = section.get('name', '')
-                    offset = section.get('offset', 0)
+                    name = section.get("name", "")
+                    offset = section.get("offset", 0)
                     if name and offset:
                         section_offsets[name] = offset
 
@@ -261,7 +261,7 @@ class ProtectionIntegrationWidget(QWidget):
 
     def _open_in_protection_viewer(self):
         """Open current file in protection viewer"""
-        if self.hex_widget and hasattr(self.hex_widget, 'file_path'):
+        if self.hex_widget and hasattr(self.hex_widget, "file_path"):
             file_path = self.hex_widget.file_path
             if file_path:
                 self.integration.open_in_die(file_path)
@@ -273,14 +273,14 @@ class ProtectionIntegrationWidget(QWidget):
 
     def sync_sections_from_die(self):
         """Sync section information from protection viewer"""
-        if self.hex_widget and hasattr(self.hex_widget, 'file_path'):
+        if self.hex_widget and hasattr(self.hex_widget, "file_path"):
             file_path = self.hex_widget.file_path
             if file_path:
                 sections = self.integration.get_section_offsets(file_path)
                 if sections:
                     # Add bookmarks for sections
                     for name, offset in sections.items():
-                        if hasattr(self.hex_widget, 'add_bookmark'):
+                        if hasattr(self.hex_widget, "add_bookmark"):
                             self.hex_widget.add_bookmark(offset, f"Section: {name}")
                     self.info_label.setText(f"Synced {len(sections)} sections from protection viewer")
                 else:

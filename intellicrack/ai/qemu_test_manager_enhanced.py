@@ -165,7 +165,7 @@ Process.enumerateModules().forEach(module => {{{{
         # Write wrapper script to temporary file for execution
         import tempfile
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as script_file:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as script_file:
             script_file.write(wrapper_script)
             script_file.flush()
             script_path = script_file.name
@@ -173,13 +173,13 @@ Process.enumerateModules().forEach(module => {{{{
         try:
             # Execute wrapper script in QEMU with real-time output
             qemu_cmd = [
-                'qemu-system-x86_64',
-                '-snapshot', snapshot_id,
-                '-enable-kvm',
-                '-monitor', 'stdio',
-                '-serial', 'tcp::4444,server,nowait',
-                '-device', 'e1000,netdev=net0',
-                '-netdev', 'user,id=net0,hostfwd=tcp::2222-:22'
+                "qemu-system-x86_64",
+                "-snapshot", snapshot_id,
+                "-enable-kvm",
+                "-monitor", "stdio",
+                "-serial", "tcp::4444,server,nowait",
+                "-device", "e1000,netdev=net0",
+                "-netdev", "user,id=net0,hostfwd=tcp::2222-:22"
             ]
 
             process = subprocess.Popen(
@@ -192,7 +192,7 @@ Process.enumerateModules().forEach(module => {{{{
 
             # Also run the Frida script inside QEMU
             frida_process = subprocess.Popen(
-                ['python3', script_path],
+                ["python3", script_path],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -203,7 +203,7 @@ Process.enumerateModules().forEach(module => {{{{
             import threading
 
             def stream_frida_output():
-                for line in iter(frida_process.stdout.readline, ''):
+                for line in iter(frida_process.stdout.readline, ""):
                     if line:
                         output_callback(f"[FRIDA] {line.strip()}")
 
@@ -213,7 +213,7 @@ Process.enumerateModules().forEach(module => {{{{
             frida_thread.start()
 
             # Stream QEMU output
-            for line in iter(process.stdout.readline, ''):
+            for line in iter(process.stdout.readline, ""):
                 if line:
                     output_callback(f"[QEMU] {line.strip()}")
 
@@ -224,7 +224,7 @@ Process.enumerateModules().forEach(module => {{{{
 
             # Read the detailed data file
             try:
-                with open('/tmp/qemu_test_data.json', 'r') as f:
+                with open("/tmp/qemu_test_data.json", "r") as f:
                     detailed_data = json.load(f)
                     logger.info(f"Loaded execution data: {len(detailed_data.get('api_calls', []))} API calls captured")
             except Exception as e:
@@ -232,14 +232,14 @@ Process.enumerateModules().forEach(module => {{{{
                 detailed_data = {}
 
             return {
-                'success': process.returncode == 0 and frida_process.returncode == 0,
-                'qemu_returncode': process.returncode,
-                'frida_returncode': frida_process.returncode,
-                'detailed_data': detailed_data,
-                'execution_summary': {
-                    'memory_changes': len(detailed_data.get('memory_changes', [])),
-                    'api_calls': len(detailed_data.get('api_calls', [])),
-                    'call_counts': detailed_data.get('call_counts', {})
+                "success": process.returncode == 0 and frida_process.returncode == 0,
+                "qemu_returncode": process.returncode,
+                "frida_returncode": frida_process.returncode,
+                "detailed_data": detailed_data,
+                "execution_summary": {
+                    "memory_changes": len(detailed_data.get("memory_changes", [])),
+                    "api_calls": len(detailed_data.get("api_calls", [])),
+                    "call_counts": detailed_data.get("call_counts", {})
                 }
             }
         finally:
@@ -255,40 +255,40 @@ Process.enumerateModules().forEach(module => {{{{
         import pefile
 
         result = {
-            'platform': 'unknown',
-            'architecture': 'unknown',
-            'dependencies': [],
-            'entry_point': None,
-            'sections': []
+            "platform": "unknown",
+            "architecture": "unknown",
+            "dependencies": [],
+            "entry_point": None,
+            "sections": []
         }
 
         # Use file magic to detect type
         file_type = magic.from_file(binary_path)
 
-        if 'PE32' in file_type:
+        if "PE32" in file_type:
             # Windows binary - analyze with pefile
             pe = pefile.PE(binary_path)
 
-            result['platform'] = 'windows'
-            result['architecture'] = 'x64' if pe.FILE_HEADER.Machine == 0x8664 else 'x86'
-            result['entry_point'] = hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
+            result["platform"] = "windows"
+            result["architecture"] = "x64" if pe.FILE_HEADER.Machine == 0x8664 else "x86"
+            result["entry_point"] = hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
 
             # Get real import data
             for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                dll_name = entry.dll.decode('utf-8')
-                result['dependencies'].append(dll_name)
+                dll_name = entry.dll.decode("utf-8")
+                result["dependencies"].append(dll_name)
 
             # Get real section data
             for section in pe.sections:
-                result['sections'].append({
-                    'name': section.Name.decode('utf-8').strip('\x00'),
-                    'virtual_address': hex(section.VirtualAddress),
-                    'size': section.SizeOfRawData
+                result["sections"].append({
+                    "name": section.Name.decode("utf-8").strip("\x00"),
+                    "virtual_address": hex(section.VirtualAddress),
+                    "size": section.SizeOfRawData
                 })
 
-        elif 'ELF' in file_type:
+        elif "ELF" in file_type:
             # Linux binary
-            result['platform'] = 'linux'
+            result["platform"] = "linux"
             # Parse ELF headers for real data...
 
         return result
@@ -328,7 +328,7 @@ echo "}}"
 
         # Execute and return real metrics
         result = subprocess.run(
-            ['ssh', f'qemu@{self.vm_ip}', monitor_script],
+            ["ssh", f"qemu@{self.vm_ip}", monitor_script],
             capture_output=True,
             text=True
         )

@@ -31,15 +31,15 @@ logger = logging.getLogger("IntellicrackLogger")
 
 # Define what's exported from this module
 __all__ = [
-    'logger',
-    'get_logger',
-    'log_execution_time',
-    'log_exception',
-    'log_method_call',
-    'setup_logger',
-    'configure_logging',
-    'setup_logging',
-    'log_message'
+    "logger",
+    "get_logger",
+    "log_execution_time",
+    "log_exception",
+    "log_method_call",
+    "setup_logger",
+    "configure_logging",
+    "setup_logging",
+    "log_message"
 ]
 
 # Import and re-export from utils.logger without wildcards to avoid issues
@@ -159,8 +159,8 @@ except ImportError:
         if args and isinstance(args[0], str):
             return logging.getLogger(args[0])
         # Apply any configuration from kwargs
-        if 'name' in kwargs:
-            return logging.getLogger(kwargs['name'])
+        if "name" in kwargs:
+            return logging.getLogger(kwargs["name"])
         return logger
 
     def configure_logging(*args, **kwargs):
@@ -184,13 +184,13 @@ except ImportError:
             >>> configure_logging(level='DEBUG', format='%(asctime)s - %(message)s')
         """
         # Apply basic configuration using provided arguments
-        log_level = kwargs.get('level', 'INFO')
+        log_level = kwargs.get("level", "INFO")
         if hasattr(logging, log_level):
             logger.setLevel(getattr(logging, log_level))
         # Configure format if provided
-        if 'format' in kwargs:
+        if "format" in kwargs:
             handler = logging.StreamHandler()
-            handler.setFormatter(logging.Formatter(kwargs['format']))
+            handler.setFormatter(logging.Formatter(kwargs["format"]))
             logger.addHandler(handler)
 
     def setup_logging(*args, **kwargs):
@@ -216,12 +216,12 @@ except ImportError:
             >>> setup_logging(filename='app.log', level='INFO')
         """
         # Setup logging with provided configuration
-        log_file = kwargs.get('filename', args[0] if args else None)
+        log_file = kwargs.get("filename", args[0] if args else None)
         if log_file:
             handler = logging.FileHandler(log_file)
             logger.addHandler(handler)
         # Set level from args or kwargs
-        level = kwargs.get('level', args[1] if len(args) > 1 else 'INFO')
+        level = kwargs.get("level", args[1] if len(args) > 1 else "INFO")
         if hasattr(logging, level):
             logger.setLevel(getattr(logging, level))
 

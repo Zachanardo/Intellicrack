@@ -340,16 +340,16 @@ class DashboardTab(BaseTab):
     def start_monitoring_widgets(self):
         """Start all monitoring widgets after UI is fully loaded"""
         try:
-            if hasattr(self, 'system_monitor') and self.system_monitor:
+            if hasattr(self, "system_monitor") and self.system_monitor:
                 self.system_monitor.start_monitoring()
                 self.log_activity("System monitoring started")
         except Exception as e:
             self.log_activity(f"Warning: Failed to start system monitoring: {str(e)}")
 
         try:
-            if hasattr(self, 'gpu_status') and self.gpu_status:
+            if hasattr(self, "gpu_status") and self.gpu_status:
                 # Setup monitoring first if not already done
-                if not hasattr(self.gpu_status, 'monitor_thread'):
+                if not hasattr(self.gpu_status, "monitor_thread"):
                     self.gpu_status.setup_monitoring()
                 self.gpu_status.start_monitoring()
                 self.log_activity("GPU monitoring started")
@@ -357,9 +357,9 @@ class DashboardTab(BaseTab):
             self.log_activity(f"Warning: Failed to start GPU monitoring: {str(e)}")
 
         try:
-            if hasattr(self, 'cpu_status') and self.cpu_status:
+            if hasattr(self, "cpu_status") and self.cpu_status:
                 # Setup monitoring first if not already done
-                if not hasattr(self.cpu_status, 'monitor_thread'):
+                if not hasattr(self.cpu_status, "monitor_thread"):
                     self.cpu_status.setup_monitoring()
                 self.cpu_status.start_monitoring()
                 self.log_activity("CPU monitoring started")
@@ -404,10 +404,10 @@ class DashboardTab(BaseTab):
                 # Create new project data if file doesn't exist
                 self.current_project = project_name
                 self.project_data = {
-                    'name': project_name,
-                    'files': {},
-                    'created': datetime.now().isoformat(),
-                    'modified': datetime.now().isoformat()
+                    "name": project_name,
+                    "files": {},
+                    "created": datetime.now().isoformat(),
+                    "modified": datetime.now().isoformat()
                 }
                 self.current_project_label.setText(f"Project: {project_name}")
                 self.current_project_label.setStyleSheet("color: #0078d4; padding: 5px; font-weight: bold;")
@@ -421,12 +421,12 @@ class DashboardTab(BaseTab):
             return
 
         # Initialize project data if not exists
-        if not hasattr(self, 'project_data'):
+        if not hasattr(self, "project_data"):
             self.project_data = {
-                'name': self.current_project,
-                'files': {},
-                'created': datetime.now().isoformat(),
-                'modified': datetime.now().isoformat()
+                "name": self.current_project,
+                "files": {},
+                "created": datetime.now().isoformat(),
+                "modified": datetime.now().isoformat()
             }
 
         # Save the project data
@@ -443,7 +443,7 @@ class DashboardTab(BaseTab):
         if project_file:
             try:
                 import json
-                with open(project_file, 'w') as f:
+                with open(project_file, "w") as f:
                     json.dump(self.project_data, f, indent=2)
                 self.log_activity(f"Exported project to: {project_file}")
                 QMessageBox.information(self, "Success", f"Project exported to:\n{project_file}")
@@ -479,8 +479,8 @@ class DashboardTab(BaseTab):
 
     def on_binary_loaded(self, binary_info):
         """Handle binary loaded signal from AppContext"""
-        self.display_binary_info(binary_info['path'])
-        self.add_to_recent_files(binary_info['path'])
+        self.display_binary_info(binary_info["path"])
+        self.add_to_recent_files(binary_info["path"])
         self.log_activity(f"Binary loaded: {binary_info['name']} ({binary_info['size']} bytes)")
 
     def on_analysis_completed(self, analysis_type, results):
@@ -495,9 +495,9 @@ class DashboardTab(BaseTab):
             result_text += f"- Entropy: {results.get('entropy', 0)} ({results.get('entropy_status', 'Unknown')})\n"
 
             # Store in local results
-            if 'file_path' in results:
-                self.analysis_results[results['file_path']] = result_text
-                self.analysis_saved.emit(results['file_path'])
+            if "file_path" in results:
+                self.analysis_results[results["file_path"]] = result_text
+                self.analysis_saved.emit(results["file_path"])
 
             self.log_activity(f"Analysis completed: {analysis_type}")
 
@@ -523,16 +523,16 @@ class DashboardTab(BaseTab):
         ext = os.path.splitext(file_path)[1].lower()
 
         type_map = {
-            '.exe': 'Windows Executable',
-            '.dll': 'Windows Dynamic Library',
-            '.so': 'Linux Shared Object',
-            '.dylib': 'macOS Dynamic Library',
-            '.app': 'macOS Application Bundle',
-            '.bin': 'Binary File',
-            '.elf': 'ELF Executable'
+            ".exe": "Windows Executable",
+            ".dll": "Windows Dynamic Library",
+            ".so": "Linux Shared Object",
+            ".dylib": "macOS Dynamic Library",
+            ".app": "macOS Application Bundle",
+            ".bin": "Binary File",
+            ".elf": "ELF Executable"
         }
 
-        return type_map.get(ext, 'Unknown Binary')
+        return type_map.get(ext, "Unknown Binary")
 
     def quick_analyze_binary(self):
         """Perform quick analysis of the selected binary"""
@@ -704,7 +704,7 @@ class DashboardTab(BaseTab):
 
         if log_file:
             try:
-                with open(log_file, 'w') as f:
+                with open(log_file, "w") as f:
                     f.write(self.activity_log.toPlainText())
                 self.log_activity(f"Activity log saved to: {log_file}")
             except Exception as e:
@@ -715,10 +715,10 @@ class DashboardTab(BaseTab):
         self.file_tree.clear()
 
         # Show real project files
-        if self.current_project and hasattr(self, 'project_data') and 'files' in self.project_data:
-            for file_path, file_info in self.project_data['files'].items():
+        if self.current_project and hasattr(self, "project_data") and "files" in self.project_data:
+            for file_path, file_info in self.project_data["files"].items():
                 # Format size for display
-                size = file_info['size']
+                size = file_info["size"]
                 if size < 1024:
                     size_str = f"{size} B"
                 elif size < 1024 * 1024:
@@ -730,14 +730,14 @@ class DashboardTab(BaseTab):
                 
                 # Format date for display
                 try:
-                    modified_date = datetime.fromisoformat(file_info['modified']).strftime("%Y-%m-%d %H:%M")
+                    modified_date = datetime.fromisoformat(file_info["modified"]).strftime("%Y-%m-%d %H:%M")
                 except:
-                    modified_date = file_info.get('modified', 'Unknown')
+                    modified_date = file_info.get("modified", "Unknown")
                 
                 # Create tree item
                 item = QTreeWidgetItem([
-                    file_info['name'],
-                    file_info.get('type', 'Unknown'),
+                    file_info["name"],
+                    file_info.get("type", "Unknown"),
                     size_str,
                     modified_date
                 ])
@@ -763,14 +763,14 @@ class DashboardTab(BaseTab):
                 
                 # Open file with default system application
                 try:
-                    if os.name == 'nt':  # Windows
+                    if os.name == "nt":  # Windows
                         os.startfile(file_path)
-                    elif os.name == 'posix':  # macOS and Linux
+                    elif os.name == "posix":  # macOS and Linux
                         import subprocess
-                        if sys.platform == 'darwin':  # macOS
-                            subprocess.call(['open', file_path])
+                        if sys.platform == "darwin":  # macOS
+                            subprocess.call(["open", file_path])
                         else:  # Linux
-                            subprocess.call(['xdg-open', file_path])
+                            subprocess.call(["xdg-open", file_path])
                 except Exception as e:
                     self.logger.error(f"Failed to open file: {e}")
                     QMessageBox.critical(self, "Error", f"Failed to open file: {str(e)}")
@@ -794,9 +794,9 @@ class DashboardTab(BaseTab):
 
             if reply == QMessageBox.StandardButton.Yes:
                 # Remove from project data
-                if hasattr(self, 'project_data') and 'files' in self.project_data and file_path in self.project_data['files']:
-                    del self.project_data['files'][file_path]
-                    self.project_data['modified'] = datetime.now().isoformat()
+                if hasattr(self, "project_data") and "files" in self.project_data and file_path in self.project_data["files"]:
+                    del self.project_data["files"][file_path]
+                    self.project_data["modified"] = datetime.now().isoformat()
                     
                     # Save updated project data
                     self._save_project_data()
@@ -810,17 +810,17 @@ class DashboardTab(BaseTab):
     def cleanup(self):
         """Cleanup resources when tab is closed"""
         # Stop system monitoring
-        if hasattr(self, 'system_monitor'):
+        if hasattr(self, "system_monitor"):
             self.system_monitor.stop_monitoring()
             self.log_activity("System monitoring stopped")
 
         # Stop GPU monitoring
-        if hasattr(self, 'gpu_status'):
+        if hasattr(self, "gpu_status"):
             self.gpu_status.stop_monitoring()
             self.log_activity("GPU monitoring stopped")
 
         # Stop CPU monitoring
-        if hasattr(self, 'cpu_status'):
+        if hasattr(self, "cpu_status"):
             self.cpu_status.stop_monitoring()
             self.log_activity("CPU monitoring stopped")
 
@@ -866,9 +866,9 @@ class DashboardTab(BaseTab):
 
         # Check file extension
         supported_extensions = [
-            '.exe', '.dll', '.so', '.dylib', '.elf', '.bin',
-            '.sys', '.drv', '.ocx', '.app', '.apk', '.ipa',
-            '.dex', '.jar', '.class', '.pyc', '.pyd'
+            ".exe", ".dll", ".so", ".dylib", ".elf", ".bin",
+            ".sys", ".drv", ".ocx", ".app", ".apk", ".ipa",
+            ".dex", ".jar", ".class", ".pyc", ".pyd"
         ]
 
         ext = os.path.splitext(file_path)[1].lower()
@@ -912,12 +912,12 @@ class DashboardTab(BaseTab):
             return
 
         # Initialize project data structure if not exists
-        if not hasattr(self, 'project_data'):
+        if not hasattr(self, "project_data"):
             self.project_data = {
-                'name': self.current_project,
-                'files': {},
-                'created': datetime.now().isoformat(),
-                'modified': datetime.now().isoformat()
+                "name": self.current_project,
+                "files": {},
+                "created": datetime.now().isoformat(),
+                "modified": datetime.now().isoformat()
             }
         
         added_count = 0
@@ -926,22 +926,22 @@ class DashboardTab(BaseTab):
                 # Get file metadata
                 stat_info = os.stat(file_path)
                 file_info = {
-                    'path': file_path,
-                    'name': os.path.basename(file_path),
-                    'size': stat_info.st_size,
-                    'modified': datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
-                    'type': self._get_file_type_from_path(file_path),
-                    'added': datetime.now().isoformat()
+                    "path": file_path,
+                    "name": os.path.basename(file_path),
+                    "size": stat_info.st_size,
+                    "modified": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
+                    "type": self._get_file_type_from_path(file_path),
+                    "added": datetime.now().isoformat()
                 }
                 
                 # Add to project data using file path as key
-                self.project_data['files'][file_path] = file_info
+                self.project_data["files"][file_path] = file_info
                 added_count += 1
                 
                 self.log_activity(f"Added to project: {os.path.basename(file_path)}")
         
         # Update project modified time
-        self.project_data['modified'] = datetime.now().isoformat()
+        self.project_data["modified"] = datetime.now().isoformat()
         
         # Save project data to file
         self._save_project_data()
@@ -959,7 +959,7 @@ class DashboardTab(BaseTab):
     
     def _save_project_data(self):
         """Save project data to file"""
-        if not self.current_project or not hasattr(self, 'project_data'):
+        if not self.current_project or not hasattr(self, "project_data"):
             return
         
         # Determine project file path
@@ -970,7 +970,7 @@ class DashboardTab(BaseTab):
         
         try:
             import json
-            with open(project_file, 'w') as f:
+            with open(project_file, "w") as f:
                 json.dump(self.project_data, f, indent=2)
             self.logger.debug(f"Saved project data to {project_file}")
         except Exception as e:
@@ -984,7 +984,7 @@ class DashboardTab(BaseTab):
         if os.path.exists(project_file):
             try:
                 import json
-                with open(project_file, 'r') as f:
+                with open(project_file, "r") as f:
                     self.project_data = json.load(f)
                 self.logger.debug(f"Loaded project data from {project_file}")
                 return True

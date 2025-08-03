@@ -26,7 +26,7 @@ import os
 from collections import OrderedDict
 from typing import Optional
 
-logger = logging.getLogger('Intellicrack.HexView')
+logger = logging.getLogger("Intellicrack.HexView")
 
 # Import large file handler for optimization
 try:
@@ -94,7 +94,7 @@ class ChunkManager:
         self.file_path = file_path
         self.file_size = os.path.getsize(file_path)
         self.chunk_size = chunk_size
-        self.file = open(file_path, 'rb')  # pylint: disable=consider-using-with
+        self.file = open(file_path, "rb")  # pylint: disable=consider-using-with
 
         # Create LRU cache for active chunks
         self.active_chunks = LRUCache(max_size=cache_size)
@@ -105,11 +105,11 @@ class ChunkManager:
         try:
             # Close all memory maps
             for chunk_data in self.active_chunks.cache.values():
-                if hasattr(chunk_data, 'close'):
+                if hasattr(chunk_data, "close"):
                     chunk_data.close()
 
             # Close the file
-            if hasattr(self, 'file') and self.file:
+            if hasattr(self, "file") and self.file:
                 self.file.close()
 
             logger.debug("ChunkManager resources for %s released", self.file_path)
@@ -170,7 +170,7 @@ class ChunkManager:
             # Validate parameters
             if offset < 0 or size <= 0 or offset >= self.file_size:
                 logger.warning("Invalid read parameters: offset=%s, size=%s, file_size=%s", offset, size, self.file_size)
-                return b''
+                return b""
 
             data = bytearray()
             end_offset = min(offset + size, self.file_size)
@@ -195,7 +195,7 @@ class ChunkManager:
                     local_size = min(self.chunk_size - local_offset, end_offset - current_offset)
 
                     # Read from chunk
-                    if hasattr(chunk, 'seek'):
+                    if hasattr(chunk, "seek"):
                         chunk.seek(local_offset)
                         chunk_data = chunk.read(local_size)
                         data.extend(chunk_data)
@@ -224,7 +224,7 @@ class ChunkManager:
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Exception in ChunkManager.read_data: %s", e)
-            return b''
+            return b""
 
 
 class VirtualFileAccess:
@@ -260,7 +260,7 @@ class VirtualFileAccess:
             self.file_size = os.path.getsize(file_path)
 
             # Test if we can open the file directly
-            with open(file_path, 'rb'):
+            with open(file_path, "rb"):
                 pass
 
             # Initialize chunk manager for reading
@@ -270,7 +270,7 @@ class VirtualFileAccess:
             self.write_file = None
             if not read_only:
                 # Open in read+write mode for potential edits
-                self.write_file = open(file_path, 'r+b')  # pylint: disable=consider-using-with
+                self.write_file = open(file_path, "r+b")  # pylint: disable=consider-using-with
 
         except PermissionError:
             # Handle permission errors - create a temp copy
@@ -281,7 +281,7 @@ class VirtualFileAccess:
             import time
 
             # Generate a unique temp file with timestamp and random string
-            random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+            random_suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
             timestamp = int(time.time())
             basename = os.path.basename(file_path)
 
@@ -293,13 +293,13 @@ class VirtualFileAccess:
             try:
                 # First read the original file completely to memory
                 logger.debug("Reading original file into memory: %s", file_path)
-                with open(file_path, 'rb') as src_file:
+                with open(file_path, "rb") as src_file:
                     file_data = src_file.read()
                     logger.debug(f"Read {len(file_data)} bytes from original file")
 
                 # Write the data to the temporary file
                 logger.debug("Writing data to temporary file: %s", self.temp_file_path)
-                with open(self.temp_file_path, 'wb') as temp_file:
+                with open(self.temp_file_path, "wb") as temp_file:
                     temp_file.write(file_data)
                     temp_file.flush()  # Ensure data is written to disk
                     os.fsync(temp_file.fileno())  # Force flush to disk
@@ -389,16 +389,16 @@ class VirtualFileAccess:
         """Clean up resources when the object is destroyed."""
         try:
             # Close large file handler if open
-            if hasattr(self, 'large_file_handler') and self.large_file_handler:
+            if hasattr(self, "large_file_handler") and self.large_file_handler:
                 self.large_file_handler.close()
                 self.large_file_handler = None
 
             # Close write file if open
-            if hasattr(self, 'write_file') and self.write_file:
+            if hasattr(self, "write_file") and self.write_file:
                 self.write_file.close()
 
             # Remove temporary file if created
-            if hasattr(self, 'using_temp_file') and self.using_temp_file and self.temp_file_path:
+            if hasattr(self, "using_temp_file") and self.using_temp_file and self.temp_file_path:
                 if os.path.exists(self.temp_file_path):
                     try:
                         os.remove(self.temp_file_path)
@@ -436,11 +436,11 @@ class VirtualFileAccess:
         # Basic validation
         if offset < 0 or size <= 0:
             logger.warning("Invalid read parameters: offset=%s, size=%s", offset, size)
-            return b''
+            return b""
 
         if offset >= self.file_size:
             logger.warning("Read offset %s beyond file size %s", offset, self.file_size)
-            return b''
+            return b""
 
         # Adjust size to not read beyond file end
         if offset + size > self.file_size:
@@ -480,7 +480,7 @@ class VirtualFileAccess:
             # Force conversion to bytes and ensure we don't return None
             if data is None:
                 logger.error("Data is None after applying edits")
-                return b''
+                return b""
 
             # Make sure we always return bytes, not bytearray or other type
             result = bytes(data)
@@ -491,7 +491,7 @@ class VirtualFileAccess:
         except (OSError, ValueError, RuntimeError) as e:
             logger.error(f"Exception in file_handler.read: {e}", exc_info=True)
             # Return empty data on error
-            return b''
+            return b""
 
     def write(self, offset: int, data: bytes) -> bool:
         """
@@ -636,7 +636,7 @@ class VirtualFileAccess:
                     logger.error("Failed to read data for insert operation at offset %s", offset)
                     return False
             else:
-                remaining_data = b''
+                remaining_data = b""
 
             # Seek to insertion point and write new data
             self.write_file.seek(offset)
@@ -707,7 +707,7 @@ class VirtualFileAccess:
                     logger.error("Failed to read data for delete operation at offset %s", end_offset)
                     return False
             else:
-                remaining_data = b''
+                remaining_data = b""
 
             # Seek to deletion start and write the remaining data
             self.write_file.seek(offset)
@@ -768,7 +768,7 @@ class VirtualFileAccess:
                     return False
 
             # Read entire file and write to new location
-            with open(new_path, 'wb') as new_file:
+            with open(new_path, "wb") as new_file:
                 # Read in chunks to handle large files
                 chunk_size = 1024 * 1024  # 1MB chunks
                 offset = 0

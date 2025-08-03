@@ -531,10 +531,10 @@ class TutorialSystem:
 
         # Add to history
         self.tutorial_history.append({
-            'name': tutorial_name,
-            'completed_steps': self.current_step,
-            'total_steps': len(self.current_tutorial.steps),
-            'quit_time': datetime.now()
+            "name": tutorial_name,
+            "completed_steps": self.current_step,
+            "total_steps": len(self.current_tutorial.steps),
+            "quit_time": datetime.now()
         })
 
         if self.console:
@@ -561,10 +561,10 @@ class TutorialSystem:
 
         # Add to history
         self.tutorial_history.append({
-            'name': tutorial_name,
-            'completed_steps': len(tutorial.steps),
-            'total_steps': len(tutorial.steps),
-            'completion_time': datetime.now()
+            "name": tutorial_name,
+            "completed_steps": len(tutorial.steps),
+            "total_steps": len(tutorial.steps),
+            "completion_time": datetime.now()
         })
 
         # Show completion message
@@ -625,8 +625,8 @@ class TutorialSystem:
 
         # Find most recent incomplete tutorial
         for entry in reversed(self.tutorial_history):
-            if entry['completed_steps'] < entry['total_steps']:
-                tutorial_name = entry['name']
+            if entry["completed_steps"] < entry["total_steps"]:
+                tutorial_name = entry["name"]
                 if tutorial_name in self.tutorials:
                     return self.start_tutorial(tutorial_name)
 
@@ -894,18 +894,18 @@ class TutorialSystem:
         settings = {}
 
         # Get custom settings from user
-        settings['auto_advance'] = Confirm.ask("Enable auto-advance to next step?", default=False)
-        settings['show_hints'] = Confirm.ask("Show hints automatically?", default=True)
+        settings["auto_advance"] = Confirm.ask("Enable auto-advance to next step?", default=False)
+        settings["show_hints"] = Confirm.ask("Show hints automatically?", default=True)
 
         if Confirm.ask("Set custom step timeout?", default=False):
-            settings['step_timeout'] = IntPrompt.ask("Step timeout (seconds)", default=30)
+            settings["step_timeout"] = IntPrompt.ask("Step timeout (seconds)", default=30)
 
         difficulty_filter = Prompt.ask(
             "Filter tutorials by difficulty",
             choices=["all", "beginner", "intermediate", "advanced"],
             default="all"
         )
-        settings['difficulty_filter'] = difficulty_filter
+        settings["difficulty_filter"] = difficulty_filter
 
         return settings
 

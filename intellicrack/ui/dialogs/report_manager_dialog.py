@@ -98,7 +98,7 @@ class ReportGenerationThread(QThread):
             # Create a simple report file
             report_content = self.generate_report_content()
 
-            with open(self.output_path, 'w', encoding='utf-8') as f:
+            with open(self.output_path, "w", encoding="utf-8") as f:
                 f.write(report_content)
 
             self.progress_updated.emit(100)
@@ -193,7 +193,7 @@ class ReportManagerDialog(BaseTemplateDialog):
         self.use_template_btn = None
         self.view_btn = None
         super().__init__(parent)
-        self.reports_dir = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'reports')
+        self.reports_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "reports")
         self.reports = {}
         self.current_report = None
 
@@ -451,13 +451,13 @@ class ReportManagerDialog(BaseTemplateDialog):
                     report_type = "Performance"
 
                 self.reports[_item] = {
-                    'name': _item,
-                    'path': item_path,
-                    'type': report_type,
-                    'created': datetime.fromtimestamp(stat.st_ctime),
-                    'modified': datetime.fromtimestamp(stat.st_mtime),
-                    'size': stat.st_size,
-                    'status': 'Complete'
+                    "name": _item,
+                    "path": item_path,
+                    "type": report_type,
+                    "created": datetime.fromtimestamp(stat.st_ctime),
+                    "modified": datetime.fromtimestamp(stat.st_mtime),
+                    "size": stat.st_size,
+                    "status": "Complete"
                 }
 
     def refresh_report_list(self):
@@ -474,26 +474,26 @@ class ReportManagerDialog(BaseTemplateDialog):
 
         for row, (report_id, report_info) in enumerate(self.reports.items()):
             # Name
-            name_item = QTableWidgetItem(report_info['name'])
+            name_item = QTableWidgetItem(report_info["name"])
             name_item.setData(Qt.UserRole, report_id)
             self.reports_table.setItem(row, 0, name_item)
 
             # Type
-            type_item = QTableWidgetItem(report_info['type'])
+            type_item = QTableWidgetItem(report_info["type"])
             self.reports_table.setItem(row, 1, type_item)
 
             # Created
-            created_str = report_info['created'].strftime('%Y-%m-%d %H:%M')
+            created_str = report_info["created"].strftime("%Y-%m-%d %H:%M")
             created_item = QTableWidgetItem(created_str)
             self.reports_table.setItem(row, 2, created_item)
 
             # Size
-            size_str = self.format_file_size(report_info['size'])
+            size_str = self.format_file_size(report_info["size"])
             size_item = QTableWidgetItem(size_str)
             self.reports_table.setItem(row, 3, size_item)
 
             # Status
-            status_item = QTableWidgetItem(report_info['status'])
+            status_item = QTableWidgetItem(report_info["status"])
             self.reports_table.setItem(row, 4, status_item)
 
             # Actions
@@ -536,10 +536,10 @@ class ReportManagerDialog(BaseTemplateDialog):
             return
 
         report_info = self.reports[report_id]
-        report_path = report_info['path']
+        report_path = report_info["path"]
 
         try:
-            with open(report_path, 'r', encoding='utf-8') as f:
+            with open(report_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # Show first 1000 characters
@@ -569,11 +569,11 @@ class ReportManagerDialog(BaseTemplateDialog):
         
         for report in self.reports:
             # Check type filter
-            if selected_type != "All Types" and report.get('type', '') != selected_type:
+            if selected_type != "All Types" and report.get("type", "") != selected_type:
                 continue
                 
             # Check date range
-            report_date = report.get('date')
+            report_date = report.get("date")
             if report_date:
                 try:
                     # Convert string date to date object if needed
@@ -590,9 +590,9 @@ class ReportManagerDialog(BaseTemplateDialog):
                     
             # Check search text in title and description
             if search_text:
-                title_match = search_text in report.get('title', '').lower()
-                desc_match = search_text in report.get('description', '').lower()
-                target_match = search_text in report.get('target', '').lower()
+                title_match = search_text in report.get("title", "").lower()
+                desc_match = search_text in report.get("description", "").lower()
+                target_match = search_text in report.get("target", "").lower()
                 
                 if not (title_match or desc_match or target_match):
                     continue
@@ -602,7 +602,7 @@ class ReportManagerDialog(BaseTemplateDialog):
         
         # Update report list with filtered results
         for report in filtered_reports:
-            item = QListWidgetItem(report['title'])
+            item = QListWidgetItem(report["title"])
             item.setData(Qt.ItemDataRole.UserRole, report)
             self.report_list.addItem(item)
             
@@ -610,7 +610,7 @@ class ReportManagerDialog(BaseTemplateDialog):
         total = len(self.reports)
         filtered = len(filtered_reports)
         status_text = f"Showing {filtered} of {total} reports"
-        if hasattr(self, 'status_label'):
+        if hasattr(self, "status_label"):
             self.status_label.setText(status_text)
 
     def view_report(self):
@@ -619,7 +619,7 @@ class ReportManagerDialog(BaseTemplateDialog):
             return
 
         report_info = self.reports[self.current_report]
-        report_path = report_info['path']
+        report_path = report_info["path"]
 
         # Try to open with system default application
         try:
@@ -645,7 +645,7 @@ class ReportManagerDialog(BaseTemplateDialog):
             return
 
         report_info = self.reports[self.current_report]
-        original_path = report_info['path']
+        original_path = report_info["path"]
 
         # Create new filename
         base_name = os.path.splitext(self.current_report)[0]
@@ -680,7 +680,7 @@ class ReportManagerDialog(BaseTemplateDialog):
         if reply == QMessageBox.Yes:
             try:
                 report_info = self.reports[self.current_report]
-                os.remove(report_info['path'])
+                os.remove(report_info["path"])
 
                 self.refresh_report_list()
                 self.report_preview.clear()
@@ -742,14 +742,14 @@ class ReportManagerDialog(BaseTemplateDialog):
 
         # Prepare report configuration
         config = {
-            'name': self.report_name_edit.text().strip(),
-            'type': self.report_type_combo.currentText(),
-            'binary_path': self.binary_path_edit.text().strip(),
-            'format': self.output_format_combo.currentText(),
-            'include_screenshots': self.include_screenshots.isChecked(),
-            'include_detailed_logs': self.include_detailed_logs.isChecked(),
-            'include_recommendations': self.include_recommendations.isChecked(),
-            'include_executive_summary': self.include_executive_summary.isChecked()
+            "name": self.report_name_edit.text().strip(),
+            "type": self.report_type_combo.currentText(),
+            "binary_path": self.binary_path_edit.text().strip(),
+            "format": self.output_format_combo.currentText(),
+            "include_screenshots": self.include_screenshots.isChecked(),
+            "include_detailed_logs": self.include_detailed_logs.isChecked(),
+            "include_recommendations": self.include_recommendations.isChecked(),
+            "include_executive_summary": self.include_executive_summary.isChecked()
         }
 
         # Determine output path
@@ -820,7 +820,7 @@ class ReportManagerDialog(BaseTemplateDialog):
         if file_path:
             try:
                 report_info = self.reports[self.current_report]
-                shutil.copy2(report_info['path'], file_path)
+                shutil.copy2(report_info["path"], file_path)
 
                 QMessageBox.information(self, "Success", f"Report exported to: {file_path}")
 
@@ -890,4 +890,4 @@ class ReportManagerDialog(BaseTemplateDialog):
 
 
 # Export for external use
-__all__ = ['ReportManagerDialog', 'ReportGenerationThread']
+__all__ = ["ReportManagerDialog", "ReportGenerationThread"]

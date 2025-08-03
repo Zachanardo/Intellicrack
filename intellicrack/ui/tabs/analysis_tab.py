@@ -479,7 +479,7 @@ class AnalysisTab(BaseTab):
             return
 
         try:
-            with open(self.current_file_path, 'rb') as f:
+            with open(self.current_file_path, "rb") as f:
                 file_data = f.read()
 
             block_size = self.entropy_block_size.value()
@@ -696,13 +696,13 @@ class AnalysisTab(BaseTab):
                     # Format results
                     formatted_results = {
                         "binary": self.current_binary,
-                        "protections": result.get('protections', []),
-                        "packers": result.get('packers', []),
-                        "obfuscation": result.get('obfuscation', {}),
-                        "anti_debug": result.get('anti_debug', []),
-                        "vm_protection": result.get('vm_protection', {}),
-                        "license_checks": result.get('license_checks', []),
-                        "bypass_recommendations": result.get('bypass_recommendations', [])
+                        "protections": result.get("protections", []),
+                        "packers": result.get("packers", []),
+                        "obfuscation": result.get("obfuscation", {}),
+                        "anti_debug": result.get("anti_debug", []),
+                        "vm_protection": result.get("vm_protection", {}),
+                        "license_checks": result.get("license_checks", []),
+                        "bypass_recommendations": result.get("bypass_recommendations", [])
                     }
 
                     # Store results in AppContext
@@ -1049,7 +1049,7 @@ class AnalysisTab(BaseTab):
         self.binary_info_label.setText(f"Binary: {os.path.basename(binary_path)}")
 
         # Reset tab when new binary is loaded
-        if hasattr(self, 'results_tabs'):
+        if hasattr(self, "results_tabs"):
             # Clear existing hex viewer if embedded
             hex_view_tab = None
             for i in range(self.results_tabs.count()):
@@ -1059,7 +1059,7 @@ class AnalysisTab(BaseTab):
 
             if hex_view_tab is not None:
                 widget = self.results_tabs.widget(hex_view_tab)
-                if widget and hasattr(widget, 'hex_viewer'):
+                if widget and hasattr(widget, "hex_viewer"):
                     # Clean up hex viewer
                     widget.hex_viewer.setParent(None)
                     widget.hex_viewer.deleteLater()
@@ -1112,7 +1112,7 @@ class AnalysisTab(BaseTab):
             result_text = "=== Protection Detection Results ===\n\n"
 
             # Display detected protections
-            protections = results.get('protections', [])
+            protections = results.get("protections", [])
             if protections:
                 result_text += "Detected Protections:\n"
                 for protection in protections:
@@ -1123,7 +1123,7 @@ class AnalysisTab(BaseTab):
             result_text += "\n"
 
             # Display packers
-            packers = results.get('packers', [])
+            packers = results.get("packers", [])
             if packers:
                 result_text += "Detected Packers:\n"
                 for packer in packers:
@@ -1134,7 +1134,7 @@ class AnalysisTab(BaseTab):
             result_text += "\n"
 
             # Display anti-debug techniques
-            anti_debug = results.get('anti_debug', [])
+            anti_debug = results.get("anti_debug", [])
             if anti_debug:
                 result_text += "Anti-Debug Techniques:\n"
                 for technique in anti_debug:
@@ -1145,7 +1145,7 @@ class AnalysisTab(BaseTab):
             result_text += "\n"
 
             # Display VM protection info
-            vm_protection = results.get('vm_protection', {})
+            vm_protection = results.get("vm_protection", {})
             if vm_protection:
                 result_text += "VM Protection:\n"
                 for key, value in vm_protection.items():
@@ -1154,7 +1154,7 @@ class AnalysisTab(BaseTab):
             result_text += "\n"
 
             # Display bypass recommendations
-            recommendations = results.get('bypass_recommendations', [])
+            recommendations = results.get("bypass_recommendations", [])
             if recommendations:
                 result_text += "Bypass Recommendations:\n"
                 for rec in recommendations:
@@ -1206,14 +1206,14 @@ class AnalysisTab(BaseTab):
         # Update specific UI elements based on phase
         if phase_name == "static_analysis":
             # Update static results display
-            if hasattr(self, 'static_results_display'):
+            if hasattr(self, "static_results_display"):
                 result_text = f"=== {phase_name} ===\n"
                 result_text += self._format_phase_result(result)
                 self.static_results_display.append(result_text)
 
         elif phase_name == "entropy_analysis":
             # Update entropy results
-            if hasattr(self, 'results_tabs'):
+            if hasattr(self, "results_tabs"):
                 # Find or create entropy tab
                 entropy_tab = None
                 for i in range(self.results_tabs.count()):
@@ -1235,7 +1235,7 @@ class AnalysisTab(BaseTab):
 
         elif phase_name == "structure_analysis":
             # Update structure results
-            if hasattr(self, 'results_tabs'):
+            if hasattr(self, "results_tabs"):
                 # Find or create structure tab
                 structure_tab = None
                 for i in range(self.results_tabs.count()):
@@ -1303,7 +1303,7 @@ class AnalysisTab(BaseTab):
 
         if "overall_entropy" in result:
             text += f"Overall Entropy: {result['overall_entropy']:.4f}\n"
-            if result['overall_entropy'] > 7.0:
+            if result["overall_entropy"] > 7.0:
                 text += "⚠️ High entropy detected - possible packing/encryption\n"
             text += "\n"
 

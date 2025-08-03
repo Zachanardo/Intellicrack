@@ -46,7 +46,7 @@ def add_file_metadata_to_app(app_instance):
     app_instance.timestamp_tracker = timestamp_tracker
 
     # Connect to file loading
-    if hasattr(app_instance, 'binary_path'):
+    if hasattr(app_instance, "binary_path"):
         # Analyze the currently loaded binary
         if app_instance.binary_path:
             metadata = metadata_widget.analyze_file(app_instance.binary_path)
@@ -58,13 +58,13 @@ def add_file_metadata_to_app(app_instance):
             logger.info(f"Modified: {metadata.get('modified', 'Unknown')}")
 
     # Add metadata display to UI if possible
-    if hasattr(app_instance, 'file_info_tab') or hasattr(app_instance, 'tab_widget'):
+    if hasattr(app_instance, "file_info_tab") or hasattr(app_instance, "tab_widget"):
         # Add as a new tab
-        if hasattr(app_instance, 'tab_widget'):
+        if hasattr(app_instance, "tab_widget"):
             app_instance.tab_widget.addTab(metadata_widget, "File Metadata")
 
         # Or add to existing file info area
-        elif hasattr(app_instance, 'file_info_layout'):
+        elif hasattr(app_instance, "file_info_layout"):
             app_instance.file_info_layout.addWidget(metadata_widget)
 
     return metadata_widget, timestamp_tracker
@@ -83,9 +83,9 @@ def update_status_with_timestamp(app_instance, message: str):
 
     timestamped_message = f"[{timestamp}] {message}"
 
-    if hasattr(app_instance, 'update_output'):
+    if hasattr(app_instance, "update_output"):
         app_instance.update_output.emit(timestamped_message)
-    elif hasattr(app_instance, 'status_bar'):
+    elif hasattr(app_instance, "status_bar"):
         app_instance.status_bar.showMessage(timestamped_message)
     else:
         logger.info(timestamped_message)
@@ -98,22 +98,22 @@ def track_binary_modifications(app_instance):
     Args:
         app_instance: Main application instance
     """
-    if not hasattr(app_instance, 'timestamp_tracker'):
+    if not hasattr(app_instance, "timestamp_tracker"):
         from .file_metadata_widget import FileTimestampTracker
         app_instance.timestamp_tracker = FileTimestampTracker()
 
-    if hasattr(app_instance, 'binary_path') and app_instance.binary_path:
+    if hasattr(app_instance, "binary_path") and app_instance.binary_path:
         # Check for modifications
         check_result = app_instance.timestamp_tracker.check_file(app_instance.binary_path)
 
-        if check_result.get('changed', False):
+        if check_result.get("changed", False):
             update_status_with_timestamp(
                 app_instance,
                 f"Binary file modified: {app_instance.binary_path}"
             )
 
             # Update metadata display if available
-            if hasattr(app_instance, 'file_metadata_widget'):
+            if hasattr(app_instance, "file_metadata_widget"):
                 app_instance.file_metadata_widget.refresh_metadata()
 
 
@@ -125,11 +125,11 @@ def display_pe_timestamps(app_instance, pe_file):
         app_instance: Main application instance
         pe_file: pefile.PE object
     """
-    if not hasattr(pe_file, 'FILE_HEADER'):
+    if not hasattr(pe_file, "FILE_HEADER"):
         return
 
     # Get PE timestamp
-    timestamp = getattr(pe_file.FILE_HEADER, 'TimeDateStamp', 0)
+    timestamp = getattr(pe_file.FILE_HEADER, "TimeDateStamp", 0)
 
     if timestamp:
         # Convert to QDateTime
@@ -205,7 +205,7 @@ def get_file_metadata_summary(file_path: str) -> str:
 
 def _format_size(size: int) -> str:
     """Format file size in human-readable format."""
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
         if size < 1024.0:
             return f"{size:.1f}{unit}"
         size /= 1024.0
@@ -225,18 +225,18 @@ def integrate_file_metadata_display(app):
     metadata_widget, timestamp_tracker = add_file_metadata_to_app(app)
 
     # Connect to binary loading events
-    if hasattr(app, 'binary_loaded'):
+    if hasattr(app, "binary_loaded"):
         app.binary_loaded.connect(lambda path: metadata_widget.analyze_file(path))
 
     # Set up periodic modification checking
-    if hasattr(app, 'timer'):
+    if hasattr(app, "timer"):
         # Check for file modifications every 5 seconds
         app.modification_timer = QTimer()
         app.modification_timer.timeout.connect(lambda: track_binary_modifications(app))
         app.modification_timer.start(5000)
 
     # Add status updates with timestamps
-    original_update = app.update_output.emit if hasattr(app, 'update_output') else None
+    original_update = app.update_output.emit if hasattr(app, "update_output") else None
     if original_update:
         def timestamped_update(message):
             update_status_with_timestamp(app, message)

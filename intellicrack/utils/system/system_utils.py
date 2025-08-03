@@ -75,23 +75,23 @@ def get_targetprocess_pid(binary_path: str) -> Optional[int]:
 
     # Find all matching processes (exact and partial)
     try:
-        for proc in psutil.process_iter(['pid', 'name', 'create_time']):
-            if proc.info['name']:
-                proc_name_lower = proc.info['name'].lower()
+        for proc in psutil.process_iter(["pid", "name", "create_time"]):
+            if proc.info["name"]:
+                proc_name_lower = proc.info["name"].lower()
                 # Prioritize exact matches
                 if proc_name_lower == target_name:
                     potential_pids.append({
-                        'pid': proc.info['pid'],
-                        'name': proc.info['name'],
-                        'create_time': proc.info['create_time'],
-                        'match': 'exact'
+                        "pid": proc.info["pid"],
+                        "name": proc.info["name"],
+                        "create_time": proc.info["create_time"],
+                        "match": "exact"
                     })
                 elif target_name in proc_name_lower:
                     potential_pids.append({
-                        'pid': proc.info['pid'],
-                        'name': proc.info['name'],
-                        'create_time': proc.info['create_time'],
-                        'match': 'partial'
+                        "pid": proc.info["pid"],
+                        "name": proc.info["name"],
+                        "create_time": proc.info["create_time"],
+                        "match": "partial"
                     })
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error iterating processes: %s", e)
@@ -102,7 +102,7 @@ def get_targetprocess_pid(binary_path: str) -> Optional[int]:
         return None
 
     # Sort by match type (exact first) and then by creation time (newest first)
-    potential_pids.sort(key=lambda x: (x['match'] != 'exact', -x['create_time']))
+    potential_pids.sort(key=lambda x: (x["match"] != "exact", -x["create_time"]))
 
     if len(potential_pids) == 1:
         pid_info = potential_pids[0]
@@ -110,7 +110,7 @@ def get_targetprocess_pid(binary_path: str) -> Optional[int]:
             f"[PID Finder] Found unique process: {pid_info['name']} "
             f"(PID: {pid_info['pid']}, Match: {pid_info['match']})"
         )
-        return pid_info['pid']
+        return pid_info["pid"]
     else:
         # Multiple processes found - in a library context, just return the first
         # In the full application, this would prompt the user
@@ -118,7 +118,7 @@ def get_targetprocess_pid(binary_path: str) -> Optional[int]:
             f"[PID Finder] Found {len(potential_pids)} potential processes. "
             f"Returning first match."
         )
-        return potential_pids[0]['pid']
+        return potential_pids[0]["pid"]
 
 
 def get_system_info() -> Dict[str, Any]:
@@ -129,23 +129,23 @@ def get_system_info() -> Dict[str, Any]:
         dict: System information including OS, architecture, CPU, memory, etc.
     """
     info = {
-        'platform': platform.system(),
-        'platform_release': platform.release(),
-        'platform_version': platform.version(),
-        'architecture': platform.machine(),
-        'processor': platform.processor(),
-        'python_version': sys.version,
-        'python_implementation': platform.python_implementation(),
+        "platform": platform.system(),
+        "platform_release": platform.release(),
+        "platform_version": platform.version(),
+        "architecture": platform.machine(),
+        "processor": platform.processor(),
+        "python_version": sys.version,
+        "python_implementation": platform.python_implementation(),
     }
 
     # Add psutil information if available
     if psutil:
         try:
-            info['cpu_count'] = psutil.cpu_count()
-            info['cpu_count_logical'] = psutil.cpu_count(logical=True)
-            info['memory_total'] = psutil.virtual_memory().total
-            info['memory_available'] = psutil.virtual_memory().available
-            info['memory_percent'] = psutil.virtual_memory().percent
+            info["cpu_count"] = psutil.cpu_count()
+            info["cpu_count_logical"] = psutil.cpu_count(logical=True)
+            info["memory_total"] = psutil.virtual_memory().total
+            info["memory_available"] = psutil.virtual_memory().available
+            info["memory_percent"] = psutil.virtual_memory().percent
         except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Error getting psutil system info: %s", e)
 
@@ -226,17 +226,17 @@ def run_command(command: Union[str, List[str]], shell: bool = False,
 
 def is_windows() -> bool:
     """Check if running on Windows."""
-    return platform.system().lower() == 'windows'
+    return platform.system().lower() == "windows"
 
 
 def is_linux() -> bool:
     """Check if running on Linux."""
-    return platform.system().lower() == 'linux'
+    return platform.system().lower() == "linux"
 
 
 def is_macos() -> bool:
     """Check if running on macOS."""
-    return platform.system().lower() == 'darwin'
+    return platform.system().lower() == "darwin"
 
 
 def get_process_list() -> List[Dict[str, Any]]:
@@ -247,7 +247,7 @@ def get_process_list() -> List[Dict[str, Any]]:
         list: List of process info dictionaries
     """
     # Use the consolidated process listing function
-    return get_all_processes(['pid', 'name', 'cpu_percent', 'memory_percent'])
+    return get_all_processes(["pid", "name", "cpu_percent", "memory_percent"])
 
 
 def kill_process(pid: int, force: bool = False) -> bool:
@@ -346,7 +346,7 @@ def check_admin_privileges() -> bool:
             return ctypes.windll.shell32.IsUserAnAdmin() != 0
         else:
             # Unix-like systems
-            return hasattr(os, 'geteuid') and getattr(os, 'geteuid', lambda: -1)() == 0
+            return hasattr(os, "geteuid") and getattr(os, "geteuid", lambda: -1)() == 0
     except (OSError, ValueError, RuntimeError) as e:
         logger.warning("Could not check admin privileges: %s", e)
         return False
@@ -378,12 +378,12 @@ def run_as_admin(command: Union[str, List[str]], shell: bool = False) -> bool:
         if is_windows():
             # On Windows, use runas or PowerShell Start-Process -Verb RunAs
             if isinstance(command, list):
-                command = ' '.join(command)
+                command = " ".join(command)
 
             # Use PowerShell to run with elevated privileges
             ps_command = f'Start-Process -FilePath "cmd" -ArgumentList "/c {command}" -Verb RunAs -Wait'
             result = subprocess.run(
-                ['powershell', '-Command', ps_command],
+                ["powershell", "-Command", ps_command],
                 capture_output=True,
                 text=True
             , check=False)
@@ -393,7 +393,7 @@ def run_as_admin(command: Union[str, List[str]], shell: bool = False) -> bool:
             if isinstance(command, str):
                 command = command.split()
 
-            sudo_command = ['sudo'] + command
+            sudo_command = ["sudo"] + command
             result = subprocess.run(sudo_command, capture_output=True, text=True, check=False)
             return result.returncode == 0
 
@@ -457,12 +457,12 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
                     bmpstr = hbmp.GetBitmapBits(True)
 
                     img = Image.frombuffer(
-                        'RGB',
-                        (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
-                        bmpstr, 'raw', 'BGRX', 0, 1
+                        "RGB",
+                        (bmpinfo["bmWidth"], bmpinfo["bmHeight"]),
+                        bmpstr, "raw", "BGRX", 0, 1
                     )
 
-                    img.save(output_path, 'PNG')
+                    img.save(output_path, "PNG")
                     win32gui.DestroyIcon(large[0])
 
                     logger.info("Icon extracted to: %s", output_path)
@@ -479,9 +479,9 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
             pe = pefile.PE(exe_path)
 
             # Look for RT_ICON resources
-            if hasattr(pe, 'DIRECTORY_ENTRY_RESOURCE'):
+            if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
                 for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
-                    if resource_type.name and str(resource_type.name) == 'RT_ICON':
+                    if resource_type.name and str(resource_type.name) == "RT_ICON":
                         for resource_id in resource_type.directory.entries:
                             for resource_lang in resource_id.directory.entries:
                                 data = pe.get_data(
@@ -490,14 +490,14 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
                                 )
 
                                 # Save as ICO file first
-                                ico_path = output_path.replace('.png', '.ico')
-                                with open(ico_path, 'wb') as f:
+                                ico_path = output_path.replace(".png", ".ico")
+                                with open(ico_path, "wb") as f:
                                     f.write(data)
 
                                 # Convert ICO to PNG using PIL
                                 try:
                                     img = Image.open(ico_path)
-                                    img.save(output_path, 'PNG')
+                                    img.save(output_path, "PNG")
                                     os.remove(ico_path)  # Clean up ICO file
                                     logger.info("Icon extracted to: %s", output_path)
                                     return output_path
@@ -514,11 +514,11 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
         if PIL_AVAILABLE:
             try:
                 # Create a simple default icon
-                img = Image.new('RGBA', (64, 64), (100, 100, 100, 255))
+                img = Image.new("RGBA", (64, 64), (100, 100, 100, 255))
                 draw = ImageDraw.Draw(img)
                 draw.rectangle([10, 10, 54, 54], outline=(200, 200, 200), width=2)
                 draw.text((20, 25), "EXE", fill=(255, 255, 255))
-                img.save(output_path, 'PNG')
+                img.save(output_path, "PNG")
                 return output_path
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Failed to create default icon: %s", e)
@@ -544,19 +544,19 @@ def optimize_memory_usage() -> Dict[str, Any]:
     import gc
 
     stats = {
-        'before': {},
-        'after': {},
-        'freed': 0
+        "before": {},
+        "after": {},
+        "freed": 0
     }
 
     # Get initial memory stats
     if psutil:
         mem = psutil.virtual_memory()
-        stats['before'] = {
-            'total': mem.total,
-            'available': mem.available,
-            'percent': mem.percent,
-            'used': mem.used
+        stats["before"] = {
+            "total": mem.total,
+            "available": mem.available,
+            "percent": mem.percent,
+            "used": mem.used
         }
 
     # Force garbage collection
@@ -575,12 +575,12 @@ def optimize_memory_usage() -> Dict[str, Any]:
 
         # Clear functools caches
         import functools
-        if hasattr(functools, 'lru_cache'):
+        if hasattr(functools, "lru_cache"):
             # Clear all lru_cache instances (Python 3.9+)
             cleared_count = 0
             failed_count = 0
             for obj in gc.get_objects():
-                if hasattr(obj, 'cache_clear'):
+                if hasattr(obj, "cache_clear"):
                     try:
                         obj.cache_clear()
                         cleared_count += 1
@@ -595,15 +595,15 @@ def optimize_memory_usage() -> Dict[str, Any]:
     # Get final memory stats
     if psutil:
         mem = psutil.virtual_memory()
-        stats['after'] = {
-            'total': mem.total,
-            'available': mem.available,
-            'percent': mem.percent,
-            'used': mem.used
+        stats["after"] = {
+            "total": mem.total,
+            "available": mem.available,
+            "percent": mem.percent,
+            "used": mem.used
         }
 
         # Calculate freed memory
-        stats['freed'] = stats['before']['used'] - stats['after']['used']
+        stats["freed"] = stats["before"]["used"] - stats["after"]["used"]
         logger.info(f"Memory optimization freed: {stats['freed'] / 1024 / 1024:.2f} MB")
 
     return stats
@@ -611,26 +611,26 @@ def optimize_memory_usage() -> Dict[str, Any]:
 
 # Exported functions
 __all__ = [
-    'get_targetprocess_pid',
-    'get_system_info',
-    'check_dependencies',
-    'run_command',
-    'is_windows',
-    'is_linux',
-    'is_macos',
-    'get_process_list',
-    'kill_process',
-    'get_environment_variable',
-    'set_environment_variable',
-    'get_temp_directory',
-    'get_home_directory',
-    'check_admin_privileges',
-    'is_admin',
-    'run_as_admin',
-    'extract_executable_icon',
-    'optimize_memory_usage',
+    "get_targetprocess_pid",
+    "get_system_info",
+    "check_dependencies",
+    "run_command",
+    "is_windows",
+    "is_linux",
+    "is_macos",
+    "get_process_list",
+    "kill_process",
+    "get_environment_variable",
+    "set_environment_variable",
+    "get_temp_directory",
+    "get_home_directory",
+    "check_admin_privileges",
+    "is_admin",
+    "run_as_admin",
+    "extract_executable_icon",
+    "optimize_memory_usage",
     # Backward compatibility aliases
-    'getprocess_list',
-    'killprocess',
-    'get_target_process_pid',
+    "getprocess_list",
+    "killprocess",
+    "get_target_process_pid",
 ]

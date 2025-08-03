@@ -50,33 +50,33 @@ except ImportError:
     # Fallback if import fails
     def wrapper_run_frida_script(app_instance, parameters):
         """Fallback wrapper for Frida script execution."""
-        logger = __import__('logging').getLogger(__name__)
+        logger = __import__("logging").getLogger(__name__)
         logger.debug(f"Frida wrapper fallback called with app_instance: {app_instance is not None}, parameters: {parameters}")
         return {"success": False, "error": "Frida wrapper not available"}
 
 # Export all imported functions to make them available
 __all__ = [
-    'dispatch_tool',
-    'log_message',
-    'run_external_tool',
-    'run_ghidra_headless',
-    'wrapper_apply_confirmed_patch',
-    'wrapper_attach_target',
-    'wrapper_deep_license_analysis',
-    'wrapper_deep_runtime_monitoring',
-    'wrapper_detach',
-    'wrapper_detect_protections',
-    'wrapper_disassemble_address',
-    'wrapper_find_file',
-    'wrapper_generate_launcher_script',
-    'wrapper_get_cfg',
-    'wrapper_get_file_metadata',
-    'wrapper_get_proposed_patches',
-    'wrapper_launch_target',
-    'wrapper_list_relevant_files',
-    'wrapper_load_binary',
-    'wrapper_propose_patch',
-    'wrapper_read_file_chunk',
-    'wrapper_run_frida_script',
-    'wrapper_run_static_analysis',
+    "dispatch_tool",
+    "log_message",
+    "run_external_tool",
+    "run_ghidra_headless",
+    "wrapper_apply_confirmed_patch",
+    "wrapper_attach_target",
+    "wrapper_deep_license_analysis",
+    "wrapper_deep_runtime_monitoring",
+    "wrapper_detach",
+    "wrapper_detect_protections",
+    "wrapper_disassemble_address",
+    "wrapper_find_file",
+    "wrapper_generate_launcher_script",
+    "wrapper_get_cfg",
+    "wrapper_get_file_metadata",
+    "wrapper_get_proposed_patches",
+    "wrapper_launch_target",
+    "wrapper_list_relevant_files",
+    "wrapper_load_binary",
+    "wrapper_propose_patch",
+    "wrapper_read_file_chunk",
+    "wrapper_run_frida_script",
+    "wrapper_run_static_analysis",
 ]

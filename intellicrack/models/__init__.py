@@ -57,13 +57,13 @@ except ImportError as e:
 
 # Export main interface
 __all__ = [
-    'ModelManager',
-    'VulnerabilityLevel',
-    'SeverityLevel'
+    "ModelManager",
+    "VulnerabilityLevel",
+    "SeverityLevel"
 ]
 
 if get_protection_knowledge_base is not None:
-    __all__.append('get_protection_knowledge_base')
+    __all__.append("get_protection_knowledge_base")
 
 # Log initialization
 

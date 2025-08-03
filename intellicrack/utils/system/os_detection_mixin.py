@@ -42,8 +42,8 @@ class OSDetectionMixin:
 
     def _is_windows(self) -> bool:
         """Check if running on Windows."""
-        return self._detect_os() == 'windows'
+        return self._detect_os() == "windows"
 
     def _is_linux(self) -> bool:
         """Check if running on Linux."""
-        return self._detect_os() == 'linux'
+        return self._detect_os() == "linux"

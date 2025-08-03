@@ -212,41 +212,41 @@ class SmartProgramSelectorDialog(QDialog):
         """Get paths to scan for programs."""
         paths = []
 
-        if sys.platform.startswith('win'):
+        if sys.platform.startswith("win"):
             # Windows paths
-            user_profile = os.environ.get('USERPROFILE', '')
+            user_profile = os.environ.get("USERPROFILE", "")
             if user_profile:
                 paths.extend([
-                    os.path.join(user_profile, 'Desktop'),
-                    os.path.join(user_profile, 'AppData', 'Roaming', 'Microsoft', 'Windows', 'Start Menu', 'Programs')
+                    os.path.join(user_profile, "Desktop"),
+                    os.path.join(user_profile, "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs")
                 ])
             paths.extend([
-                r'C:\Users\Public\Desktop',
-                r'C:\ProgramData\Microsoft\Windows\Start Menu\Programs'
+                r"C:\Users\Public\Desktop",
+                r"C:\ProgramData\Microsoft\Windows\Start Menu\Programs"
             ])
-        elif sys.platform.startswith('linux'):
+        elif sys.platform.startswith("linux"):
             # Linux paths
-            home = os.environ.get('HOME', '')
+            home = os.environ.get("HOME", "")
             if home:
                 paths.extend([
-                    os.path.join(home, 'Desktop'),
-                    os.path.join(home, '.local', 'share', 'applications')
+                    os.path.join(home, "Desktop"),
+                    os.path.join(home, ".local", "share", "applications")
                 ])
             paths.extend([
-                '/usr/share/applications',
-                '/usr/local/share/applications'
+                "/usr/share/applications",
+                "/usr/local/share/applications"
             ])
-        elif sys.platform.startswith('darwin'):
+        elif sys.platform.startswith("darwin"):
             # macOS paths
-            home = os.environ.get('HOME', '')
+            home = os.environ.get("HOME", "")
             if home:
                 paths.extend([
-                    os.path.join(home, 'Desktop'),
-                    os.path.join(home, 'Applications')
+                    os.path.join(home, "Desktop"),
+                    os.path.join(home, "Applications")
                 ])
             paths.extend([
-                '/Applications',
-                '/System/Applications'
+                "/Applications",
+                "/System/Applications"
             ])
 
         # Filter to existing paths

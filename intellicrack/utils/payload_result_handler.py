@@ -54,21 +54,21 @@ class PayloadResultHandler:
             Processed result dictionary
         """
         processed_result = {
-            'timestamp': time.time(),
-            'payload_id': payload_info.get('id', 'unknown'),
-            'payload_type': payload_info.get('type', 'unknown'),
-            'success': result.get('success', False),
-            'output': result.get('output', ''),
-            'error': result.get('error', ''),
-            'execution_time': result.get('execution_time', 0),
-            'target_info': result.get('target_info', {}),
-            'metadata': result.get('metadata', {})
+            "timestamp": time.time(),
+            "payload_id": payload_info.get("id", "unknown"),
+            "payload_type": payload_info.get("type", "unknown"),
+            "success": result.get("success", False),
+            "output": result.get("output", ""),
+            "error": result.get("error", ""),
+            "execution_time": result.get("execution_time", 0),
+            "target_info": result.get("target_info", {}),
+            "metadata": result.get("metadata", {})
         }
 
         self.results_cache.append(processed_result)
 
         # Log result
-        if processed_result['success']:
+        if processed_result["success"]:
             logger.info(f"Payload {processed_result['payload_id']} executed successfully")
         else:
             logger.warning(f"Payload {processed_result['payload_id']} failed: {processed_result['error']}")
@@ -85,7 +85,7 @@ class PayloadResultHandler:
             List of result dictionaries
         """
         if payload_id:
-            return [r for r in self.results_cache if r['payload_id'] == payload_id]
+            return [r for r in self.results_cache if r["payload_id"] == payload_id]
         return self.results_cache.copy()
 
     def clear_results(self):
@@ -109,7 +109,7 @@ class PayloadResultHandler:
         filepath = Path(self.storage_path) / filename
         filepath.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(self.results_cache, f, indent=2)
 
         logger.info(f"Payload results saved to {filepath}")

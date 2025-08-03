@@ -58,7 +58,7 @@ except ImportError as e:
     logger.error("Import error in guided_workflow_wizard: %s", e)
     HAS_PEFILE = False
 
-__all__ = ['GuidedWorkflowWizard']
+__all__ = ["GuidedWorkflowWizard"]
 
 
 class GuidedWorkflowWizard(QWizard):
@@ -85,7 +85,7 @@ class GuidedWorkflowWizard(QWizard):
 
         import intellicrack
         self.base_path = os.path.dirname(os.path.dirname(os.path.dirname(intellicrack.__file__)))
-        icon_path = os.path.join(self.base_path, 'intellicrack', 'assets', 'icon.ico')
+        icon_path = os.path.join(self.base_path, "intellicrack", "assets", "icon.ico")
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 
@@ -129,7 +129,7 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(intro_text)
 
         # Add image if available
-        splash_path = os.path.join(self.base_path, 'intellicrack', 'assets', 'splash.png')
+        splash_path = os.path.join(self.base_path, "intellicrack", "assets", "splash.png")
         if os.path.exists(splash_path):
             image_label = QLabel()
             pixmap = QPixmap(splash_path).scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
@@ -883,7 +883,7 @@ class GuidedWorkflowWizard(QWizard):
             if HAS_PEFILE:
                 try:
                     pe = pefile.PE(file_path)
-                    machine_type = getattr(pe.FILE_HEADER, 'Machine', 0)
+                    machine_type = getattr(pe.FILE_HEADER, "Machine", 0)
 
                     machine_types = {
                         0x014c: "x86 (32-bit)",
@@ -896,7 +896,7 @@ class GuidedWorkflowWizard(QWizard):
 
                     # Try to get timestamp
                     try:
-                        timestamp = getattr(pe.FILE_HEADER, 'TimeDateStamp', 0)
+                        timestamp = getattr(pe.FILE_HEADER, "TimeDateStamp", 0)
                         compile_time = datetime.datetime.fromtimestamp(timestamp)
                         info_text += f"<b>Compiled:</b> {compile_time.strftime('%Y-%m-%d %H:%M:%S')}<br>"
                     except (OSError, ValueError, RuntimeError) as e:
@@ -958,34 +958,34 @@ class GuidedWorkflowWizard(QWizard):
                 self.parent.binary_path = binary_path
 
                 # Emit signals if available
-                if hasattr(self.parent, 'update_output'):
+                if hasattr(self.parent, "update_output"):
                     self.parent.update_output.emit(f"[Wizard] Set binary path: {binary_path}")
 
                 # Load the binary in the UI
-                if hasattr(self.parent, 'load_binary'):
+                if hasattr(self.parent, "load_binary"):
                     self.parent.load_binary(binary_path)
 
                 # Configure analysis options
-                if hasattr(self.parent, 'update_output'):
+                if hasattr(self.parent, "update_output"):
                     self.parent.update_output.emit("[Wizard] Configured analysis options")
 
                 # Start analysis if auto-analyze is enabled
-                if settings["analysis"]["static"] and hasattr(self.parent, 'run_static_analysis'):
-                    if hasattr(self.parent, 'update_output'):
+                if settings["analysis"]["static"] and hasattr(self.parent, "run_static_analysis"):
+                    if hasattr(self.parent, "update_output"):
                         self.parent.update_output.emit("[Wizard] Starting static analysis...")
                     self.parent.run_static_analysis()
 
-                if settings["analysis"]["dynamic"] and hasattr(self.parent, 'run_dynamic_analysis'):
-                    if hasattr(self.parent, 'update_output'):
+                if settings["analysis"]["dynamic"] and hasattr(self.parent, "run_dynamic_analysis"):
+                    if hasattr(self.parent, "update_output"):
                         self.parent.update_output.emit("[Wizard] Starting dynamic analysis...")
                     self.parent.run_dynamic_analysis()
 
                 # Switch to the Analysis tab if available
-                if hasattr(self.parent, 'switch_tab'):
+                if hasattr(self.parent, "switch_tab"):
                     self.parent.switch_tab.emit(1)  # Assuming Analysis tab is index 1
 
                 # Record that the guided workflow has been completed
-                if hasattr(self.parent, 'update_output'):
+                if hasattr(self.parent, "update_output"):
                     self.parent.update_output.emit("[Wizard] Guided workflow completed")
 
                 # Show notification

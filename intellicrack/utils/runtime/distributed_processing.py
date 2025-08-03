@@ -198,7 +198,7 @@ def process_chunk(binary_path: str, chunk_info: Dict[str, Any],
         Dict containing chunk processing results
     """
     try:
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             f.seek(chunk_info["offset"])
             data = f.read(chunk_info["size"])
 
@@ -456,7 +456,7 @@ def run_distributed_pattern_search(binary_path: str, patterns: Optional[List[byt
             for pos in offsets:
                 found_patterns.append({
                     "pattern": pattern.hex(),
-                    "pattern_text": pattern.decode('utf-8', errors='ignore'),
+                    "pattern_text": pattern.decode("utf-8", errors="ignore"),
                     "offset": chunk_info["offset"] + pos,
                     "context_before": data[max(0, pos-10):pos].hex(),
                     "context_after": data[pos+len(pattern):pos+len(pattern)+10].hex()
@@ -526,21 +526,21 @@ def extract_binary_info(binary_path: str) -> Dict[str, Any]:
         import hashlib
         sha256 = hashlib.sha256()
 
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             while chunk := f.read(8192):
                 sha256.update(chunk)
 
         info["sha256"] = sha256.hexdigest()
 
         # Detect format
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             magic = f.read(4)
 
-        if magic[:2] == b'MZ':
+        if magic[:2] == b"MZ":
             info["format"] = "PE"
-        elif magic == b'\x7fELF':
+        elif magic == b"\x7fELF":
             info["format"] = "ELF"
-        elif magic in [b'\xfe\xed\xfa\xce', b'\xce\xfa\xed\xfe']:
+        elif magic in [b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe"]:
             info["format"] = "Mach-O"
         else:
             info["format"] = "Unknown"
@@ -668,7 +668,7 @@ def run_incremental_analysis(binary_path: str, cache_dir: Optional[str] = None,
 
     # Calculate file hash for cache key
     import hashlib
-    with open(binary_path, 'rb') as f:
+    with open(binary_path, "rb") as f:
         file_hash = hashlib.sha256(f.read()).hexdigest()
 
     results["file_hash"] = file_hash
@@ -680,7 +680,7 @@ def run_incremental_analysis(binary_path: str, cache_dir: Optional[str] = None,
     # Load cached results if available and not forcing full analysis
     if os.path.exists(cache_file) and not force_full:
         try:
-            with open(cache_file, 'r', encoding='utf-8') as f:
+            with open(cache_file, "r", encoding="utf-8") as f:
                 cached_data = json.load(f)
 
             # Verify file hasn't changed
@@ -720,7 +720,7 @@ def run_incremental_analysis(binary_path: str, cache_dir: Optional[str] = None,
         }
 
         try:
-            with open(cache_file, 'w', encoding='utf-8') as f:
+            with open(cache_file, "w", encoding="utf-8") as f:
                 json.dump(cache_data, f, indent=2)
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error saving cache: %s", e)
@@ -914,16 +914,16 @@ def _distributed_string_extraction(binary_path: str,
             else:
                 if len(current) >= min_length:
                     strings.append({
-                        'text': ''.join(current),
-                        'offset': chunk_info["offset"] + current_offset
+                        "text": "".join(current),
+                        "offset": chunk_info["offset"] + current_offset
                     })
                 current = []
 
         # Don't forget last string
         if len(current) >= min_length:
             strings.append({
-                'text': ''.join(current),
-                'offset': chunk_info["offset"] + current_offset
+                "text": "".join(current),
+                "offset": chunk_info["offset"] + current_offset
             })
 
         return {
@@ -968,9 +968,9 @@ def _distributed_hash_calculation(binary_path: str,
     # For hash calculation, we need sequential processing
     # but can parallelize multiple hash algorithms
     # Get algorithms from config or use defaults
-    algorithms = config.get('hash_algorithms', ["md5", "sha1", "sha256", "sha512"])
-    chunk_size = config.get('chunk_size', 8192)
-    max_workers = config.get('max_workers', len(algorithms))
+    algorithms = config.get("hash_algorithms", ["md5", "sha1", "sha256", "sha512"])
+    chunk_size = config.get("chunk_size", 8192)
+    max_workers = config.get("max_workers", len(algorithms))
 
     results = {"hashes": {}, "config_used": config}
 
@@ -978,7 +978,7 @@ def _distributed_hash_calculation(binary_path: str,
         """Calculate hash for given algorithm."""
         h = hashlib.new(algo)
 
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             while chunk := f.read(chunk_size):
                 h.update(chunk)
 
@@ -1063,7 +1063,7 @@ def _run_cpu_fallback(task_type: str, data: Any) -> Dict[str, Any]:
         "message": "Processed on CPU",
         "data_info": {
             "type": type(data).__name__,
-            "size": len(data) if hasattr(data, '__len__') else 1
+            "size": len(data) if hasattr(data, "__len__") else 1
         }
     }
 
@@ -1074,7 +1074,7 @@ def _run_cpu_fallback(task_type: str, data: Any) -> Dict[str, Any]:
             data = data.encode()
         result["cpu_hash"] = hashlib.sha256(data).hexdigest()
 
-    elif task_type == "analysis" and hasattr(data, '__len__'):
+    elif task_type == "analysis" and hasattr(data, "__len__"):
         # Basic analysis on CPU
         result["analysis"] = {
             "item_count": len(data),
@@ -1084,9 +1084,9 @@ def _run_cpu_fallback(task_type: str, data: Any) -> Dict[str, Any]:
     elif task_type == "pattern_matching" and isinstance(data, (str, bytes)):
         # Simple pattern matching
         if isinstance(data, bytes):
-            data = data.decode('utf-8', errors='ignore')
+            data = data.decode("utf-8", errors="ignore")
 
-        patterns = ['license', 'trial', 'crack', 'serial', 'key']
+        patterns = ["license", "trial", "crack", "serial", "key"]
         matches = [pattern for pattern in patterns if pattern in data.lower()]
         result["pattern_matches"] = matches
 
@@ -1119,7 +1119,7 @@ def _gpu_pattern_matching(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[
 
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_info = get_gpu_info()
-            if gpu_info['available']:
+            if gpu_info["available"]:
                 gpu_available = True
                 device_str = get_device()
         elif TORCH_AVAILABLE and torch.cuda.is_available():
@@ -1128,8 +1128,8 @@ def _gpu_pattern_matching(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[
 
         if gpu_available:
             # Convert patterns and data to GPU tensors for fast matching
-            patterns = config.get('patterns', [])
-            search_data = data.get('data', b'')
+            patterns = config.get("patterns", [])
+            search_data = data.get("data", b"")
 
             if patterns and search_data:
                 # Simple GPU pattern matching using PyTorch
@@ -1159,26 +1159,26 @@ def _gpu_pattern_matching(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[
             backend = device_str
         else:
             # Fall back to CPU pattern matching
-            patterns = config.get('patterns', [])
-            search_data = data.get('data', b'')
+            patterns = config.get("patterns", [])
+            search_data = data.get("data", b"")
 
             for pattern in patterns:
                 if pattern in search_data:
                     patterns_found += 1
 
-            backend = 'cpu'
+            backend = "cpu"
 
     except ImportError as e:
         logger.error("Import error in distributed_processing: %s", e)
         # No PyTorch, use basic pattern matching
-        patterns = config.get('patterns', [])
-        search_data = data.get('data', b'')
+        patterns = config.get("patterns", [])
+        search_data = data.get("data", b"")
 
         for _pattern in patterns:
             if _pattern in search_data:
                 patterns_found += 1
 
-        backend = 'cpu'
+        backend = "cpu"
 
     return {
         "patterns_found": patterns_found,
@@ -1199,39 +1199,39 @@ def _gpu_crypto_operations(data: Dict[str, Any], config: Dict[str, Any]) -> Dict
     """
     import hashlib
 
-    operation = config.get('operation', 'hash')
-    input_data = data.get('data', b'')
+    operation = config.get("operation", "hash")
+    input_data = data.get("data", b"")
     start_time = time.time()
 
     try:
         # Try GPU acceleration with CuPy
         import cupy as cp
 
-        if operation == 'hash':
+        if operation == "hash":
             # GPU-accelerated hashing (simplified)
             # In practice, would use specialized GPU crypto libraries
             data_gpu = cp.asarray(list(input_data), dtype=cp.uint8)
             # Simple hash computation on GPU
             hash_value = int(cp.sum(data_gpu) % (2**32))
             result = f"{hash_value:08x}"
-            backend = 'cuda'
+            backend = "cuda"
         else:
             # Other crypto operations
             result = hashlib.sha256(input_data).hexdigest()
-            backend = 'cuda'
+            backend = "cuda"
 
     except ImportError as e:
         logger.error("Import error in distributed_processing: %s", e)
         # Fall back to CPU crypto
-        if operation == 'hash':
+        if operation == "hash":
             result = hashlib.sha256(input_data).hexdigest()
-        elif operation == 'aes':
+        elif operation == "aes":
             # Would implement AES here
             result = hashlib.sha256(input_data).hexdigest()
         else:
             result = hashlib.sha256(input_data).hexdigest()
 
-        backend = 'cpu'
+        backend = "cpu"
 
     return {
         "operation": operation,
@@ -1265,19 +1265,19 @@ def _gpu_ml_inference(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str,
         if GPU_AUTOLOADER_AVAILABLE:
             device_str = get_device()
             gpu_info = get_gpu_info()
-            backend = gpu_info.get('gpu_type', device_str)
+            backend = gpu_info.get("gpu_type", device_str)
         elif torch.cuda.is_available():
-            device_str = 'cuda'
-            backend = 'cuda'
+            device_str = "cuda"
+            backend = "cuda"
         else:
-            device_str = 'cpu'
-            backend = 'cpu'
+            device_str = "cpu"
+            backend = "cpu"
 
         device = torch.device(device_str)
 
         # Get model and features
-        model_path = config.get('model_path')
-        features = data.get('features', [])
+        model_path = config.get("model_path")
+        features = data.get("features", [])
 
         if model_path and os.path.exists(model_path) and features:
             # Load model
@@ -1296,7 +1296,7 @@ def _gpu_ml_inference(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str,
             # Run inference
             with torch.no_grad():
                 output = model(features_tensor)
-                if hasattr(output, 'cpu'):
+                if hasattr(output, "cpu"):
                     predictions = output.cpu().numpy().tolist()
                 else:
                     predictions = [output.item()]
@@ -1317,7 +1317,7 @@ def _gpu_ml_inference(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str,
         # Simple fallback prediction
         predictions = [0.5]  # Neutral prediction
         confidence = 0.0
-        backend = 'cpu'
+        backend = "cpu"
 
     return {
         "predictions": predictions,
@@ -1349,29 +1349,29 @@ def run_dask_distributed_analysis(binary_path: str, analysis_func: Callable,
         import dask.bag as db
         from dask.distributed import Client, as_completed
     except ImportError:
-        return {'error': 'Dask not available', 'suggestion': 'Install with: pip install dask[distributed]'}
+        return {"error": "Dask not available", "suggestion": "Install with: pip install dask[distributed]"}
 
     start_time = time.time()
     results = {
-        'framework': 'dask',
-        'binary_path': binary_path,
-        'chunk_size': chunk_size
+        "framework": "dask",
+        "binary_path": binary_path,
+        "chunk_size": chunk_size
     }
 
     try:
         # Read binary data
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             binary_data = f.read()
 
-        results['file_size'] = len(binary_data)
+        results["file_size"] = len(binary_data)
 
         # Convert to Dask array
         data_array = da.from_array(np.frombuffer(binary_data, dtype=np.uint8),
                                   chunks=chunk_size)
 
         # Perform basic analysis on the Dask array
-        results['array_shape'] = data_array.shape
-        results['array_chunks'] = len(data_array.chunks[0])
+        results["array_shape"] = data_array.shape
+        results["array_chunks"] = len(data_array.chunks[0])
 
         if n_partitions is None:
             n_partitions = max(1, len(binary_data) // chunk_size)
@@ -1381,9 +1381,9 @@ def run_dask_distributed_analysis(binary_path: str, analysis_func: Callable,
         for i in range(0, len(binary_data), chunk_size):
             chunk = binary_data[i:i+chunk_size]
             chunks.append({
-                'data': chunk,
-                'offset': i,
-                'size': len(chunk)
+                "data": chunk,
+                "offset": i,
+                "size": len(chunk)
             })
 
         bag = db.from_sequence(chunks, npartitions=n_partitions)
@@ -1392,11 +1392,11 @@ def run_dask_distributed_analysis(binary_path: str, analysis_func: Callable,
         try:
             # Check if a client is already running
             client = Client.current()
-            results['distributed_mode'] = 'existing_client'
+            results["distributed_mode"] = "existing_client"
         except ValueError:
             # No client running, use local scheduler
             client = None
-            results['distributed_mode'] = 'local_threads'
+            results["distributed_mode"] = "local_threads"
 
         # Apply analysis function to each chunk
         if client:
@@ -1404,9 +1404,9 @@ def run_dask_distributed_analysis(binary_path: str, analysis_func: Callable,
             futures = []
             for chunk in chunks:
                 future = client.submit(lambda c: {
-                    'offset': c['offset'],
-                    'size': c['size'],
-                    'result': analysis_func(c['data'])
+                    "offset": c["offset"],
+                    "size": c["size"],
+                    "result": analysis_func(c["data"])
                 }, chunk)
                 futures.append(future)
 
@@ -1417,45 +1417,45 @@ def run_dask_distributed_analysis(binary_path: str, analysis_func: Callable,
                 chunk_results.append(result)
         else:
             # Use local scheduler
-            with dask.config.set(scheduler='threads'):
+            with dask.config.set(scheduler="threads"):
                 analyzed = bag.map(lambda chunk: {
-                    'offset': chunk['offset'],
-                    'size': chunk['size'],
-                    'result': analysis_func(chunk['data'])
+                    "offset": chunk["offset"],
+                    "size": chunk["size"],
+                    "result": analysis_func(chunk["data"])
                 })
 
                 # Compute results
                 chunk_results = analyzed.compute()
 
         # Aggregate results
-        results['chunk_results'] = chunk_results
-        results['num_chunks'] = len(chunk_results)
+        results["chunk_results"] = chunk_results
+        results["num_chunks"] = len(chunk_results)
 
         # Calculate statistics if entropy analysis
-        if chunk_results and 'entropy' in chunk_results[0].get('result', {}):
-            entropies = [r['result']['entropy'] for r in chunk_results]
-            results['entropy_stats'] = {
-                'mean': np.mean(entropies),
-                'std': np.std(entropies),
-                'max': np.max(entropies),
-                'min': np.min(entropies)
+        if chunk_results and "entropy" in chunk_results[0].get("result", {}):
+            entropies = [r["result"]["entropy"] for r in chunk_results]
+            results["entropy_stats"] = {
+                "mean": np.mean(entropies),
+                "std": np.std(entropies),
+                "max": np.max(entropies),
+                "min": np.min(entropies)
             }
 
-        results['processing_time'] = time.time() - start_time
-        results['success'] = True
+        results["processing_time"] = time.time() - start_time
+        results["success"] = True
 
     except Exception as e:
         logger.error(f"Dask distributed analysis error: {e}")
-        results['error'] = str(e)
-        results['success'] = False
+        results["error"] = str(e)
+        results["success"] = False
 
     return results
 
 
 # Celery distributed processing implementation
-def run_celery_distributed_analysis(binary_path: str, task_name: str = 'binary_analysis',
+def run_celery_distributed_analysis(binary_path: str, task_name: str = "binary_analysis",
                                    chunk_size: int = 1024 * 1024,
-                                   queue_name: str = 'intellicrack') -> Dict[str, Any]:
+                                   queue_name: str = "intellicrack") -> Dict[str, Any]:
     """
     Run distributed binary analysis using Celery task queue.
 
@@ -1471,54 +1471,54 @@ def run_celery_distributed_analysis(binary_path: str, task_name: str = 'binary_a
     try:
         from celery import Celery, group
     except ImportError:
-        return {'error': 'Celery not available', 'suggestion': 'Install with: pip install celery'}
+        return {"error": "Celery not available", "suggestion": "Install with: pip install celery"}
 
     start_time = time.time()
     results = {
-        'framework': 'celery',
-        'binary_path': binary_path,
-        'task_name': task_name,
-        'queue_name': queue_name
+        "framework": "celery",
+        "binary_path": binary_path,
+        "task_name": task_name,
+        "queue_name": queue_name
     }
 
     try:
         # Initialize Celery app
-        app = Celery('intellicrack', broker='redis://localhost:6379/0')
+        app = Celery("intellicrack", broker="redis://localhost:6379/0")
 
         # Define task inline
-        @app.task(name=f'intellicrack.{task_name}')
+        @app.task(name=f"intellicrack.{task_name}")
         def analyze_chunk(chunk_data):
             """Analyze a binary chunk."""
             from ..analysis.entropy_utils import calculate_byte_entropy
 
-            entropy = calculate_byte_entropy(chunk_data['data'])
+            entropy = calculate_byte_entropy(chunk_data["data"])
             patterns_found = []
 
             # Search for common patterns
-            patterns = [b'LICENSE', b'TRIAL', b'EXPIRE', b'SERIAL']
+            patterns = [b"LICENSE", b"TRIAL", b"EXPIRE", b"SERIAL"]
             for pattern in patterns:
-                if pattern in chunk_data['data']:
+                if pattern in chunk_data["data"]:
                     patterns_found.append(pattern.decode())
 
             return {
-                'offset': chunk_data['offset'],
-                'size': chunk_data['size'],
-                'entropy': entropy,
-                'patterns': patterns_found
+                "offset": chunk_data["offset"],
+                "size": chunk_data["size"],
+                "entropy": entropy,
+                "patterns": patterns_found
             }
 
         # Read binary and create chunks
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             binary_data = f.read()
 
-        results['file_size'] = len(binary_data)
+        results["file_size"] = len(binary_data)
 
         chunks = []
         for i in range(0, len(binary_data), chunk_size):
             chunk = {
-                'data': binary_data[i:i+chunk_size],
-                'offset': i,
-                'size': min(chunk_size, len(binary_data) - i)
+                "data": binary_data[i:i+chunk_size],
+                "offset": i,
+                "size": min(chunk_size, len(binary_data) - i)
             }
             chunks.append(chunk)
 
@@ -1529,38 +1529,38 @@ def run_celery_distributed_analysis(binary_path: str, task_name: str = 'binary_a
         # Wait for results with timeout
         chunk_results = result.get(timeout=300)  # 5 minute timeout
 
-        results['chunk_results'] = chunk_results
-        results['num_chunks'] = len(chunk_results)
-        results['processing_time'] = time.time() - start_time
-        results['success'] = True
+        results["chunk_results"] = chunk_results
+        results["num_chunks"] = len(chunk_results)
+        results["processing_time"] = time.time() - start_time
+        results["success"] = True
 
         # Aggregate entropy statistics
         if chunk_results:
-            entropies = [r['entropy'] for r in chunk_results]
-            results['entropy_stats'] = {
-                'mean': np.mean(entropies),
-                'max': np.max(entropies),
-                'min': np.min(entropies)
+            entropies = [r["entropy"] for r in chunk_results]
+            results["entropy_stats"] = {
+                "mean": np.mean(entropies),
+                "max": np.max(entropies),
+                "min": np.min(entropies)
             }
 
             # Collect all patterns found
             all_patterns = []
             for r in chunk_results:
-                all_patterns.extend(r.get('patterns', []))
-            results['patterns_found'] = list(set(all_patterns))
+                all_patterns.extend(r.get("patterns", []))
+            results["patterns_found"] = list(set(all_patterns))
 
     except Exception as e:
         logger.error(f"Celery distributed analysis error: {e}")
-        results['error'] = str(e)
-        results['success'] = False
-        results['suggestion'] = "Ensure Celery broker (Redis/RabbitMQ) is running"
+        results["error"] = str(e)
+        results["success"] = False
+        results["suggestion"] = "Ensure Celery broker (Redis/RabbitMQ) is running"
 
     return results
 
 
 # Joblib parallel processing implementation
 def run_joblib_parallel_analysis(binary_path: str, analysis_funcs: List[Callable],
-                               n_jobs: int = -1, backend: str = 'threading') -> Dict[str, Any]:
+                               n_jobs: int = -1, backend: str = "threading") -> Dict[str, Any]:
     """
     Run parallel binary analysis using joblib for multi-core processing.
 
@@ -1577,22 +1577,22 @@ def run_joblib_parallel_analysis(binary_path: str, analysis_funcs: List[Callable
         import joblib
         from joblib import Parallel, delayed
     except ImportError:
-        return {'error': 'Joblib not available', 'suggestion': 'Install with: pip install joblib'}
+        return {"error": "Joblib not available", "suggestion": "Install with: pip install joblib"}
 
     start_time = time.time()
     results = {
-        'framework': 'joblib',
-        'binary_path': binary_path,
-        'backend': backend,
-        'n_jobs': n_jobs if n_jobs != -1 else joblib.cpu_count()
+        "framework": "joblib",
+        "binary_path": binary_path,
+        "backend": backend,
+        "n_jobs": n_jobs if n_jobs != -1 else joblib.cpu_count()
     }
 
     try:
         # Read binary data once
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             binary_data = f.read()
 
-        results['file_size'] = len(binary_data)
+        results["file_size"] = len(binary_data)
 
         # Define analysis tasks
         def run_analysis(func, data, func_name):
@@ -1600,16 +1600,16 @@ def run_joblib_parallel_analysis(binary_path: str, analysis_funcs: List[Callable
             try:
                 result = func(data)
                 return {
-                    'function': func_name,
-                    'success': True,
-                    'result': result,
-                    'execution_time': time.time() - start_time
+                    "function": func_name,
+                    "success": True,
+                    "result": result,
+                    "execution_time": time.time() - start_time
                 }
             except Exception as e:
                 return {
-                    'function': func_name,
-                    'success': False,
-                    'error': str(e)
+                    "function": func_name,
+                    "success": False,
+                    "error": str(e)
                 }
 
         # Run analyses in parallel
@@ -1619,25 +1619,25 @@ def run_joblib_parallel_analysis(binary_path: str, analysis_funcs: List[Callable
                 for func in analysis_funcs
             )
 
-        results['analyses'] = analysis_results
-        results['successful_analyses'] = sum(1 for r in analysis_results if r['success'])
-        results['failed_analyses'] = sum(1 for r in analysis_results if not r['success'])
+        results["analyses"] = analysis_results
+        results["successful_analyses"] = sum(1 for r in analysis_results if r["success"])
+        results["failed_analyses"] = sum(1 for r in analysis_results if not r["success"])
 
         # Aggregate results by type
         aggregated = {}
         for result in analysis_results:
-            if result['success'] and 'result' in result:
-                func_name = result['function']
-                aggregated[func_name] = result['result']
+            if result["success"] and "result" in result:
+                func_name = result["function"]
+                aggregated[func_name] = result["result"]
 
-        results['aggregated_results'] = aggregated
-        results['processing_time'] = time.time() - start_time
-        results['success'] = True
+        results["aggregated_results"] = aggregated
+        results["processing_time"] = time.time() - start_time
+        results["success"] = True
 
     except Exception as e:
         logger.error(f"Joblib parallel analysis error: {e}")
-        results['error'] = str(e)
-        results['success'] = False
+        results["error"] = str(e)
+        results["success"] = False
 
     return results
 
@@ -1662,24 +1662,24 @@ def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096,
 
         from joblib import Parallel, delayed
     except ImportError:
-        return {'error': 'Joblib not available', 'suggestion': 'Install with: pip install joblib'}
+        return {"error": "Joblib not available", "suggestion": "Install with: pip install joblib"}
 
     start_time = time.time()
     results = {
-        'framework': 'joblib_mmap',
-        'binary_path': binary_path,
-        'window_size': window_size,
-        'step_size': step_size
+        "framework": "joblib_mmap",
+        "binary_path": binary_path,
+        "window_size": window_size,
+        "step_size": step_size
     }
 
     try:
         file_size = os.path.getsize(binary_path)
-        results['file_size'] = file_size
+        results["file_size"] = file_size
 
         # Define window analysis function
         def analyze_window(offset, window_size, file_path):
             """Analyze a window of the file using memory mapping."""
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped:
                     # Read window data
                     end = min(offset + window_size, len(mmapped))
@@ -1694,81 +1694,81 @@ def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096,
 
                     # Search for strings
                     ascii_strings = []
-                    current_string = b''
+                    current_string = b""
                     for byte in window_data:
                         if 32 <= byte <= 126:  # Printable ASCII
                             current_string += bytes([byte])
                         else:
                             if len(current_string) >= 4:
-                                ascii_strings.append(current_string.decode('ascii', errors='ignore'))
-                            current_string = b''
+                                ascii_strings.append(current_string.decode("ascii", errors="ignore"))
+                            current_string = b""
 
                     return {
-                        'offset': offset,
-                        'entropy': entropy,
-                        'is_packed': is_packed,
-                        'string_count': len(ascii_strings),
-                        'notable_strings': [s for s in ascii_strings if any(k in s.lower() for k in ['license', 'trial', 'expire'])]
+                        "offset": offset,
+                        "entropy": entropy,
+                        "is_packed": is_packed,
+                        "string_count": len(ascii_strings),
+                        "notable_strings": [s for s in ascii_strings if any(k in s.lower() for k in ["license", "trial", "expire"])]
                     }
 
         # Generate window offsets
         offsets = list(range(0, file_size - window_size + 1, step_size))
 
         # Run parallel analysis
-        with Parallel(n_jobs=n_jobs, backend='threading') as parallel:
+        with Parallel(n_jobs=n_jobs, backend="threading") as parallel:
             window_results = parallel(
                 delayed(analyze_window)(offset, window_size, binary_path)
                 for offset in offsets
             )
 
-        results['window_results'] = window_results
-        results['num_windows'] = len(window_results)
+        results["window_results"] = window_results
+        results["num_windows"] = len(window_results)
 
         # Aggregate statistics
-        entropies = [w['entropy'] for w in window_results]
-        packed_regions = [w for w in window_results if w['is_packed']]
+        entropies = [w["entropy"] for w in window_results]
+        packed_regions = [w for w in window_results if w["is_packed"]]
 
-        results['statistics'] = {
-            'avg_entropy': np.mean(entropies),
-            'max_entropy': np.max(entropies),
-            'min_entropy': np.min(entropies),
-            'packed_regions': len(packed_regions),
-            'packed_percentage': (len(packed_regions) / len(window_results)) * 100
+        results["statistics"] = {
+            "avg_entropy": np.mean(entropies),
+            "max_entropy": np.max(entropies),
+            "min_entropy": np.min(entropies),
+            "packed_regions": len(packed_regions),
+            "packed_percentage": (len(packed_regions) / len(window_results)) * 100
         }
 
         # Collect notable strings
         all_notable_strings = []
         for w in window_results:
-            all_notable_strings.extend(w.get('notable_strings', []))
-        results['notable_strings'] = list(set(all_notable_strings))[:50]  # Top 50 unique
+            all_notable_strings.extend(w.get("notable_strings", []))
+        results["notable_strings"] = list(set(all_notable_strings))[:50]  # Top 50 unique
 
-        results['processing_time'] = time.time() - start_time
-        results['success'] = True
+        results["processing_time"] = time.time() - start_time
+        results["success"] = True
 
     except Exception as e:
         logger.error(f"Joblib mmap analysis error: {e}")
-        results['error'] = str(e)
-        results['success'] = False
+        results["error"] = str(e)
+        results["success"] = False
 
     return results
 
 
 # Export all functions
 __all__ = [
-    'process_binary_chunks',
-    'process_chunk',
-    'process_distributed_results',
-    'run_distributed_analysis',
-    'run_distributed_entropy_analysis',
-    'run_distributed_pattern_search',
-    'extract_binary_info',
-    'extract_binary_features',
-    'run_gpu_accelerator',
-    'run_incremental_analysis',
-    'run_memory_optimized_analysis',
-    'run_pdf_report_generator',
-    'run_dask_distributed_analysis',
-    'run_celery_distributed_analysis',
-    'run_joblib_parallel_analysis',
-    'run_joblib_mmap_analysis'
+    "process_binary_chunks",
+    "process_chunk",
+    "process_distributed_results",
+    "run_distributed_analysis",
+    "run_distributed_entropy_analysis",
+    "run_distributed_pattern_search",
+    "extract_binary_info",
+    "extract_binary_features",
+    "run_gpu_accelerator",
+    "run_incremental_analysis",
+    "run_memory_optimized_analysis",
+    "run_pdf_report_generator",
+    "run_dask_distributed_analysis",
+    "run_celery_distributed_analysis",
+    "run_joblib_parallel_analysis",
+    "run_joblib_mmap_analysis"
 ]

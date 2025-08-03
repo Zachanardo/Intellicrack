@@ -35,7 +35,7 @@ import sys
 from pathlib import Path
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 try:
     from intellicrack.config import CONFIG
@@ -55,7 +55,7 @@ except ImportError as e:
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -78,78 +78,78 @@ Examples:
 
     # Positional arguments
     parser.add_argument(
-        'binary',
-        help='Path to the binary file to analyze'
+        "binary",
+        help="Path to the binary file to analyze"
     )
 
     # Analysis options
-    analysis_group = parser.add_argument_group('Analysis Options')
+    analysis_group = parser.add_argument_group("Analysis Options")
     analysis_group.add_argument(
-        '--comprehensive', '-c',
-        action='store_true',
-        help='Run comprehensive analysis (all modules)'
+        "--comprehensive", "-c",
+        action="store_true",
+        help="Run comprehensive analysis (all modules)"
     )
     analysis_group.add_argument(
-        '--detect-packing', '-p',
-        action='store_true',
-        help='Detect packing and obfuscation'
+        "--detect-packing", "-p",
+        action="store_true",
+        help="Detect packing and obfuscation"
     )
     analysis_group.add_argument(
-        '--vulnerability-scan', '-v',
-        action='store_true',
-        help='Scan for security vulnerabilities'
+        "--vulnerability-scan", "-v",
+        action="store_true",
+        help="Scan for security vulnerabilities"
     )
     analysis_group.add_argument(
-        '--license-analysis', '-l',
-        action='store_true',
-        help='Analyze license protection mechanisms'
+        "--license-analysis", "-l",
+        action="store_true",
+        help="Analyze license protection mechanisms"
     )
     analysis_group.add_argument(
-        '--quick', '-q',
-        action='store_true',
-        help='Quick analysis (basic info only)'
+        "--quick", "-q",
+        action="store_true",
+        help="Quick analysis (basic info only)"
     )
 
     # Output options
-    output_group = parser.add_argument_group('Output Options')
+    output_group = parser.add_argument_group("Output Options")
     output_group.add_argument(
-        '--output', '-o',
-        help='Output file path (default: stdout)'
+        "--output", "-o",
+        help="Output file path (default: stdout)"
     )
     output_group.add_argument(
-        '--format', '-f',
-        choices=['text', 'json', 'pdf', 'html'],
-        default='text',
-        help='Output format (default: text)'
+        "--format", "-f",
+        choices=["text", "json", "pdf", "html"],
+        default="text",
+        help="Output format (default: text)"
     )
     output_group.add_argument(
-        '--verbose', '-V',
-        action='store_true',
-        help='Enable verbose output'
+        "--verbose", "-V",
+        action="store_true",
+        help="Enable verbose output"
     )
     output_group.add_argument(
-        '--quiet',
-        action='store_true',
-        help='Suppress non-essential output'
+        "--quiet",
+        action="store_true",
+        help="Suppress non-essential output"
     )
 
     # Advanced options
-    advanced_group = parser.add_argument_group('Advanced Options')
+    advanced_group = parser.add_argument_group("Advanced Options")
     advanced_group.add_argument(
-        '--config',
-        help='Path to custom configuration file'
+        "--config",
+        help="Path to custom configuration file"
     )
     advanced_group.add_argument(
-        '--timeout',
+        "--timeout",
         type=int,
         default=300,
-        help='Analysis timeout in seconds (default: 300)'
+        help="Analysis timeout in seconds (default: 300)"
     )
     advanced_group.add_argument(
-        '--threads',
+        "--threads",
         type=int,
         default=4,
-        help='Number of analysis threads (default: 4)'
+        help="Number of analysis threads (default: 4)"
     )
 
     return parser.parse_args()
@@ -158,7 +158,7 @@ Examples:
 def load_custom_config(config_path):
     """Load custom configuration from file."""
     try:
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             custom_config = json.load(f)
 
         # Merge with default config
@@ -172,41 +172,41 @@ def load_custom_config(config_path):
 def perform_analysis(binary_path, args):
     """Perform the requested analysis on the binary."""
     results = {
-        'binary': binary_path,
-        'timestamp': str(Path(binary_path).stat().st_mtime),
-        'analyses': {}
+        "binary": binary_path,
+        "timestamp": str(Path(binary_path).stat().st_mtime),
+        "analyses": {}
     }
 
     try:
         if args.comprehensive:
             logger.info("Running comprehensive analysis...")
-            results['analyses']['comprehensive'] = run_comprehensive_analysis(
+            results["analyses"]["comprehensive"] = run_comprehensive_analysis(
                 binary_path,
                 timeout=args.timeout
             )
 
         elif args.quick:
             logger.info("Running quick analysis...")
-            results['analyses']['basic'] = analyze_binary(binary_path)
+            results["analyses"]["basic"] = analyze_binary(binary_path)
 
         else:
             # Run selected analyses
             if args.detect_packing:
                 logger.info("Detecting packing...")
-                results['analyses']['packing'] = run_detect_packing(binary_path)
+                results["analyses"]["packing"] = run_detect_packing(binary_path)
 
             if args.vulnerability_scan:
                 logger.info("Scanning for vulnerabilities...")
-                results['analyses']['vulnerabilities'] = run_vulnerability_scan(binary_path)
+                results["analyses"]["vulnerabilities"] = run_vulnerability_scan(binary_path)
 
             if args.license_analysis:
                 logger.info("Analyzing license mechanisms...")
-                results['analyses']['license'] = run_deep_license_analysis(binary_path)
+                results["analyses"]["license"] = run_deep_license_analysis(binary_path)
 
             # If no specific analysis selected, run basic
             if not any([args.detect_packing, args.vulnerability_scan, args.license_analysis]):
                 logger.info("Running basic analysis...")
-                results['analyses']['basic'] = analyze_binary(binary_path)
+                results["analyses"]["basic"] = analyze_binary(binary_path)
 
     except Exception as e:
         logger.error(f"Analysis failed: {e}")
@@ -220,17 +220,17 @@ def perform_analysis(binary_path, args):
 
 def format_output(results, format_type):
     """Format the analysis results based on the requested format."""
-    if format_type == 'json':
+    if format_type == "json":
         return json.dumps(results, indent=2)
 
-    elif format_type == 'text':
+    elif format_type == "text":
         output = []
         output.append("=== Intellicrack Analysis Report ===")
         output.append(f"Binary: {results['binary']}")
         output.append(f"Timestamp: {results['timestamp']}")
         output.append("")
 
-        for analysis_type, data in results['analyses'].items():
+        for analysis_type, data in results["analyses"].items():
             output.append(f"--- {analysis_type.upper()} ---")
             if isinstance(data, dict):
                 for key, value in data.items():
@@ -239,9 +239,9 @@ def format_output(results, format_type):
                 output.append(str(data))
             output.append("")
 
-        return '\n'.join(output)
+        return "\n".join(output)
 
-    elif format_type in ['pdf', 'html']:
+    elif format_type in ["pdf", "html"]:
         # Use the report generator for PDF/HTML
         return generate_report(
             results,
@@ -255,13 +255,13 @@ def format_output(results, format_type):
 def save_output(output, output_path, format_type):
     """Save the formatted output to a file."""
     try:
-        if format_type == 'pdf':
+        if format_type == "pdf":
             # For PDF, output is already bytes
-            with open(output_path, 'wb') as f:
+            with open(output_path, "wb") as f:
                 f.write(output)
         else:
             # For text/json/html, output is string
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 f.write(output)
 
         logger.info(f"Output saved to {output_path}")
@@ -304,7 +304,7 @@ def main():
     if args.output:
         save_output(output, args.output, args.format)
     else:
-        if args.format == 'pdf':
+        if args.format == "pdf":
             logger.error("PDF output requires --output flag")
             sys.exit(1)
         print(output)
@@ -313,7 +313,7 @@ def main():
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         sys.exit(main())
     except KeyboardInterrupt:

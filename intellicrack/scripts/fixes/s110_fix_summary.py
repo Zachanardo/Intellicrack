@@ -28,20 +28,20 @@ logger = logging.getLogger(__name__)
 
 def count_logger_calls():
     """Count total logger.error calls in the codebase."""
-    project_root = Path('/mnt/c/Intellicrack')
-    intellicrack_dir = project_root / 'intellicrack'
+    project_root = Path("/mnt/c/Intellicrack")
+    intellicrack_dir = project_root / "intellicrack"
 
     total_logger_errors = 0
     files_with_logger = 0
 
     for root, _dirs, files in os.walk(intellicrack_dir):
         for file in files:
-            if file.endswith('.py'):
+            if file.endswith(".py"):
                 file_path = Path(root) / file
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
-                        count = content.count('logger.error(')
+                        count = content.count("logger.error(")
                         if count > 0:
                             total_logger_errors += count
                             files_with_logger += 1

@@ -323,7 +323,7 @@ Process.enumerateModules().forEach(function(module) {
         """Load a plugin file"""
         self.plugin_path = path
         try:
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 content = f.read()
             self.editor.set_code(content)
             self.editor.current_file = path
@@ -343,7 +343,7 @@ Process.enumerateModules().forEach(function(module) {
 
     def on_validation_complete(self, results):
         """Handle validation results"""
-        if results['valid']:
+        if results["valid"]:
             self.run_btn.setEnabled(True)
             self.run_btn.setToolTip("Plugin is valid and ready to run")
         else:
@@ -434,14 +434,14 @@ Process.enumerateModules().forEach(function(module) {
         """Handle stdout from test process"""
         if self.test_process:
             data = self.test_process.readAllStandardOutput()
-            text = data.data().decode('utf-8', errors='replace')
+            text = data.data().decode("utf-8", errors="replace")
             self.test_output.append(text)
 
     def handle_stderr(self):
         """Handle stderr from test process"""
         if self.test_process:
             data = self.test_process.readAllStandardError()
-            text = data.data().decode('utf-8', errors='replace')
+            text = data.data().decode("utf-8", errors="replace")
             self.test_output.append(f"<span style='color: red;'>{text}</span>")
 
     def test_finished(self, exit_code, exit_status):

@@ -111,7 +111,7 @@ class ProtectionDetector:
             List of ProtectionAnalysis results
         """
         results = []
-        extensions = ['.exe', '.dll', '.sys', '.ocx', '.scr', '.com', '.so', '.dylib']
+        extensions = [".exe", ".dll", ".sys", ".ocx", ".scr", ".com", ".so", ".dylib"]
 
         if recursive:
             for root, _dirs, files in os.walk(directory):
@@ -166,12 +166,12 @@ class ProtectionDetector:
         # Convert protections
         for protection in unified_result.protections:
             det_result = DetectionResult(
-                name=protection['name'],
-                version=protection.get('version'),
-                type=self._map_protection_type(protection['type']),
-                confidence=protection.get('confidence', 100.0),
-                details=protection.get('details', {}),
-                bypass_recommendations=protection.get('bypass_recommendations', [])
+                name=protection["name"],
+                version=protection.get("version"),
+                type=self._map_protection_type(protection["type"]),
+                confidence=protection.get("confidence", 100.0),
+                details=protection.get("details", {}),
+                bypass_recommendations=protection.get("bypass_recommendations", [])
             )
             analysis.detections.append(det_result)
 
@@ -187,9 +187,9 @@ class ProtectionDetector:
 
         # Add metadata
         analysis.metadata = {
-            'analysis_time': unified_result.analysis_time,
-            'engines_used': unified_result.engines_used,
-            'confidence_score': unified_result.confidence_score
+            "analysis_time": unified_result.analysis_time,
+            "engines_used": unified_result.engines_used,
+            "confidence_score": unified_result.confidence_score
         }
 
         return analysis
@@ -197,18 +197,18 @@ class ProtectionDetector:
     def _map_protection_type(self, type_str: str) -> ProtectionType:
         """Map string protection type to enum"""
         type_map = {
-            'packer': ProtectionType.PACKER,
-            'protector': ProtectionType.PROTECTOR,
-            'compiler': ProtectionType.COMPILER,
-            'installer': ProtectionType.INSTALLER,
-            'library': ProtectionType.LIBRARY,
-            'overlay': ProtectionType.OVERLAY,
-            'cryptor': ProtectionType.CRYPTOR,
-            'dongle': ProtectionType.DONGLE,
-            'license': ProtectionType.LICENSE,
-            'drm': ProtectionType.DRM,
-            'antidebug': ProtectionType.PROTECTOR,
-            'obfuscator': ProtectionType.PROTECTOR
+            "packer": ProtectionType.PACKER,
+            "protector": ProtectionType.PROTECTOR,
+            "compiler": ProtectionType.COMPILER,
+            "installer": ProtectionType.INSTALLER,
+            "library": ProtectionType.LIBRARY,
+            "overlay": ProtectionType.OVERLAY,
+            "cryptor": ProtectionType.CRYPTOR,
+            "dongle": ProtectionType.DONGLE,
+            "license": ProtectionType.LICENSE,
+            "drm": ProtectionType.DRM,
+            "antidebug": ProtectionType.PROTECTOR,
+            "obfuscator": ProtectionType.PROTECTOR
         }
 
         return type_map.get(type_str.lower(), ProtectionType.UNKNOWN)
@@ -238,10 +238,10 @@ class ProtectionDetector:
                 conf_str = f" [{det.confidence:.0f}%]" if det.confidence < 100 else ""
                 lines.append(f"  • {det.name}{ver_str} ({det.type.value}){conf_str}")
 
-        if 'confidence_score' in analysis.metadata:
+        if "confidence_score" in analysis.metadata:
             lines.append(f"\nOverall Confidence: {analysis.metadata['confidence_score']:.0f}%")
 
-        if 'engines_used' in analysis.metadata:
+        if "engines_used" in analysis.metadata:
             lines.append(f"Analysis Methods: {', '.join(analysis.metadata['engines_used'])}")
 
         return "\n".join(lines)
@@ -347,7 +347,7 @@ if __name__ == "__main__":
         for strategy in strategies:
             print(f"\n{strategy['name']} ({strategy['difficulty']})")
             print(f"  {strategy['description']}")
-            if 'tools' in strategy:
+            if "tools" in strategy:
                 print(f"  Tools: {', '.join(strategy['tools'])}")
     else:
         print("Usage: python protection_detector.py <binary_file>")

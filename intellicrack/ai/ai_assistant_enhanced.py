@@ -386,17 +386,17 @@ You are the autonomous expert - take complete ownership of binary analysis chall
         # Analyze message to determine help topic
         message_lower = message.lower()
 
-        if any(keyword in message_lower for keyword in ['binary', 'pe', 'elf', 'analysis']):
+        if any(keyword in message_lower for keyword in ["binary", "pe", "elf", "analysis"]):
             return "binary_analysis"
-        elif any(keyword in message_lower for keyword in ['network', 'traffic', 'protocol']):
+        elif any(keyword in message_lower for keyword in ["network", "traffic", "protocol"]):
             return "network_analysis"
-        elif any(keyword in message_lower for keyword in ['patch', 'modify', 'crack']):
+        elif any(keyword in message_lower for keyword in ["patch", "modify", "crack"]):
             return "patching"
-        elif any(keyword in message_lower for keyword in ['hex', 'bytes', 'dump']):
+        elif any(keyword in message_lower for keyword in ["hex", "bytes", "dump"]):
             return "hex_editing"
-        elif any(keyword in message_lower for keyword in ['license', 'protection', 'bypass']):
+        elif any(keyword in message_lower for keyword in ["license", "protection", "bypass"]):
             return "license_bypass"
-        elif any(keyword in message_lower for keyword in ['frida', 'script', 'hook']):
+        elif any(keyword in message_lower for keyword in ["frida", "script", "hook"]):
             return "scripting"
         else:
             return "general"
@@ -406,15 +406,15 @@ You are the autonomous expert - take complete ownership of binary analysis chall
         # Analyze message to determine network analysis aspect
         message_lower = message.lower()
 
-        if any(keyword in message_lower for keyword in ['protocol', 'http', 'tcp', 'udp']):
+        if any(keyword in message_lower for keyword in ["protocol", "http", "tcp", "udp"]):
             return "protocol"
-        elif any(keyword in message_lower for keyword in ['traffic', 'capture', 'packet']):
+        elif any(keyword in message_lower for keyword in ["traffic", "capture", "packet"]):
             return "traffic"
-        elif any(keyword in message_lower for keyword in ['license', 'server', 'validation']):
+        elif any(keyword in message_lower for keyword in ["license", "server", "validation"]):
             return "license_server"
-        elif any(keyword in message_lower for keyword in ['firewall', 'security', 'filter']):
+        elif any(keyword in message_lower for keyword in ["firewall", "security", "filter"]):
             return "security"
-        elif any(keyword in message_lower for keyword in ['dns', 'domain', 'resolution']):
+        elif any(keyword in message_lower for keyword in ["dns", "domain", "resolution"]):
             return "dns"
         else:
             return "protocol"
@@ -604,7 +604,7 @@ What security aspect interests you?"""
         if self.cli_interface:
             # Save patch definition to temporary file
             import tempfile
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
                 json.dump(patch_definition, f)
                 patch_file = f.name
 
@@ -657,7 +657,7 @@ What security aspect interests you?"""
             handler = LargeFileHandler(binary_path)
 
             # Parse address (hex or decimal)
-            if address.startswith('0x'):
+            if address.startswith("0x"):
                 addr_int = int(address, 16)
             else:
                 addr_int = int(address)
@@ -669,17 +669,17 @@ What security aspect interests you?"""
             hex_lines = []
             for i in range(0, len(data), 16):
                 chunk = data[i:i+16]
-                hex_part = ' '.join(f'{b:02x}' for b in chunk)
-                ascii_part = ''.join(chr(b) if 32 <= b <=
-                                     126 else '.' for b in chunk)
+                hex_part = " ".join(f"{b:02x}" for b in chunk)
+                ascii_part = "".join(chr(b) if 32 <= b <=
+                                     126 else "." for b in chunk)
                 hex_lines.append(
-                    f'{addr_int + i:08x}: {hex_part:<48} {ascii_part}')
+                    f"{addr_int + i:08x}: {hex_part:<48} {ascii_part}")
 
             return {
                 "status": "success",
                 "address": address,
                 "size": len(data),
-                "hex_dump": '\n'.join(hex_lines),
+                "hex_dump": "\n".join(hex_lines),
                 "raw_data": data.hex()
             }
 
@@ -724,7 +724,7 @@ What security aspect interests you?"""
                 handler = LargeFileHandler(binary_path)
 
                 # Parse address
-                if address.startswith('0x'):
+                if address.startswith("0x"):
                     addr_int = int(address, 16)
                 else:
                     addr_int = int(address)
@@ -1019,7 +1019,7 @@ What security aspect interests you?"""
                 return {"error": f"File not found: {file_path}"}
 
             # Calculate file hash
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 file_hash = hashlib.sha256(f.read()).hexdigest()
 
             # Simulate external service interaction
@@ -1052,7 +1052,7 @@ What security aspect interests you?"""
     def _log_tool_usage(self, message: str):
         """Log tool usage for user visibility."""
         logger.info("[AI Tool] %s", message)
-        if self.cli_interface and hasattr(self.cli_interface, 'update_output'):
+        if self.cli_interface and hasattr(self.cli_interface, "update_output"):
             self.cli_interface.update_output.emit(f"[AI Tool] {message}")
 
 

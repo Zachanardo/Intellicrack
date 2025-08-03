@@ -129,7 +129,7 @@ def format_severity_report(findings: List[Dict]) -> str:
     # Group by severity
     severity_groups = {}
     for finding in findings:
-        severity = finding.get('severity', SeverityLevel.INFO)
+        severity = finding.get("severity", SeverityLevel.INFO)
         if severity not in severity_groups:
             severity_groups[severity] = []
         severity_groups[severity].append(finding)
@@ -147,8 +147,8 @@ def format_severity_report(findings: List[Dict]) -> str:
             report_lines.append("-" * 30)
 
             for i, finding in enumerate(severity_groups[severity][:5], 1):
-                title = finding.get('title', 'Unknown finding')
-                description = finding.get('description', 'No description')
+                title = finding.get("title", "Unknown finding")
+                description = finding.get("description", "No description")
                 report_lines.append(f"{i}. {title}")
                 if len(description) > 80:
                     description = description[:77] + "..."
@@ -163,22 +163,22 @@ def format_severity_report(findings: List[Dict]) -> str:
 def aggregate_severity_stats(findings: List[Dict]) -> Dict:
     """Aggregate severity statistics from findings."""
     stats = {
-        'total_findings': len(findings),
-        'by_severity': {},
-        'risk_distribution': {},
-        'average_risk_score': 0.0
+        "total_findings": len(findings),
+        "by_severity": {},
+        "risk_distribution": {},
+        "average_risk_score": 0.0
     }
 
     total_risk = 0.0
 
     for finding in findings:
-        severity = finding.get('severity', SeverityLevel.INFO)
-        threat = finding.get('threat', ThreatLevel.UNLIKELY)
-        confidence = finding.get('confidence', ConfidenceLevel.MEDIUM)
+        severity = finding.get("severity", SeverityLevel.INFO)
+        threat = finding.get("threat", ThreatLevel.UNLIKELY)
+        confidence = finding.get("confidence", ConfidenceLevel.MEDIUM)
 
         # Count by severity
-        severity_key = severity.value if hasattr(severity, 'value') else str(severity)
-        stats['by_severity'][severity_key] = stats['by_severity'].get(severity_key, 0) + 1
+        severity_key = severity.value if hasattr(severity, "value") else str(severity)
+        stats["by_severity"][severity_key] = stats["by_severity"].get(severity_key, 0) + 1
 
         # Calculate risk score
         risk_score = calculate_risk_score(severity, threat, confidence)
@@ -186,16 +186,16 @@ def aggregate_severity_stats(findings: List[Dict]) -> Dict:
 
         # Categorize risk
         if risk_score >= 7.0:
-            risk_cat = 'high_risk'
+            risk_cat = "high_risk"
         elif risk_score >= 4.0:
-            risk_cat = 'medium_risk'
+            risk_cat = "medium_risk"
         else:
-            risk_cat = 'low_risk'
+            risk_cat = "low_risk"
 
-        stats['risk_distribution'][risk_cat] = stats['risk_distribution'].get(risk_cat, 0) + 1
+        stats["risk_distribution"][risk_cat] = stats["risk_distribution"].get(risk_cat, 0) + 1
 
     if findings:
-        stats['average_risk_score'] = total_risk / len(findings)
+        stats["average_risk_score"] = total_risk / len(findings)
 
     return stats
 
@@ -203,9 +203,9 @@ def aggregate_severity_stats(findings: List[Dict]) -> Dict:
 def prioritize_findings(findings: List[Dict]) -> List[Dict]:
     """Sort findings by priority (risk score)."""
     def get_priority_score(finding):
-        severity = finding.get('severity', SeverityLevel.INFO)
-        threat = finding.get('threat', ThreatLevel.UNLIKELY)
-        confidence = finding.get('confidence', ConfidenceLevel.MEDIUM)
+        severity = finding.get("severity", SeverityLevel.INFO)
+        threat = finding.get("threat", ThreatLevel.UNLIKELY)
+        confidence = finding.get("confidence", ConfidenceLevel.MEDIUM)
         return calculate_risk_score(severity, threat, confidence)
 
     return sorted(findings, key=get_priority_score, reverse=True)
@@ -213,16 +213,16 @@ def prioritize_findings(findings: List[Dict]) -> List[Dict]:
 
 # Export commonly used classes and functions
 __all__ = [
-    'SeverityLevel',
-    'ThreatLevel',
-    'ConfidenceLevel',
-    'get_severity_from_score',
-    'get_threat_from_score',
-    'calculate_risk_score',
-    'get_severity_color',
-    'format_severity_report',
-    'aggregate_severity_stats',
-    'prioritize_findings',
-    'SEVERITY_COLORS',
-    'SEVERITY_SCORES'
+    "SeverityLevel",
+    "ThreatLevel",
+    "ConfidenceLevel",
+    "get_severity_from_score",
+    "get_threat_from_score",
+    "calculate_risk_score",
+    "get_severity_color",
+    "format_severity_report",
+    "aggregate_severity_stats",
+    "prioritize_findings",
+    "SEVERITY_COLORS",
+    "SEVERITY_SCORES"
 ]

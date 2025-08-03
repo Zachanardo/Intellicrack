@@ -43,9 +43,9 @@ class TimingAttackDefense:
         self.logger = logging.getLogger("IntellicrackLogger.TimingAttackDefense")
         self.timing_threads = []
         self.timing_checks = {
-            'rdtsc_available': self._check_rdtsc_availability(),
-            'performance_counter': True,
-            'tick_count': True
+            "rdtsc_available": self._check_rdtsc_availability(),
+            "performance_counter": True,
+            "tick_count": True
         }
 
     def secure_sleep(self, duration: float, callback: Callable = None) -> bool:
@@ -67,13 +67,13 @@ class TimingAttackDefense:
             start_perf = time.perf_counter()
 
             # Platform-specific timing
-            if hasattr(time, 'thread_time'):
+            if hasattr(time, "thread_time"):
                 start_thread_time = time.thread_time()
             else:
                 start_thread_time = None
 
             # Windows-specific timing
-            if self.timing_checks['tick_count']:
+            if self.timing_checks["tick_count"]:
                 start_tick = self._get_tick_count()
             else:
                 start_tick = None
@@ -97,7 +97,7 @@ class TimingAttackDefense:
                 elapsed_perf = time.perf_counter() - start_perf
 
                 # Check thread time if available
-                if start_thread_time is not None and hasattr(time, 'thread_time'):
+                if start_thread_time is not None and hasattr(time, "thread_time"):
                     elapsed_thread = time.thread_time() - start_thread_time
                     thread_drift = abs(elapsed_thread - elapsed_perf)
                     if thread_drift > 0.1:
@@ -253,7 +253,7 @@ class TimingAttackDefense:
         Returns:
             True if timing is normal, False if anomaly detected
         """
-        if not self.timing_checks['rdtsc_available']:
+        if not self.timing_checks["rdtsc_available"]:
             return True  # Can't check, assume normal
 
         try:
@@ -326,7 +326,7 @@ class TimingAttackDefense:
             # This would normally check CPUID for RDTSC support
             # For now, assume available on x86/x64
             import platform
-            return platform.machine().lower() in ['x86', 'x86_64', 'amd64', 'i386', 'i686']
+            return platform.machine().lower() in ["x86", "x86_64", "amd64", "i386", "i686"]
         except:
             return False
 
@@ -334,7 +334,7 @@ class TimingAttackDefense:
         """Get system tick count (Windows)."""
         try:
             import platform
-            if platform.system() == 'Windows':
+            if platform.system() == "Windows":
                 kernel32 = ctypes.windll.kernel32
                 return kernel32.GetTickCount64()
         except Exception as e:
@@ -345,14 +345,14 @@ class TimingAttackDefense:
         """Quick check for debugger presence."""
         try:
             import platform
-            if platform.system() == 'Windows':
+            if platform.system() == "Windows":
                 kernel32 = ctypes.windll.kernel32
                 return bool(kernel32.IsDebuggerPresent())
             else:
                 # Linux: check TracerPid
-                with open('/proc/self/status', 'r') as f:
+                with open("/proc/self/status", "r") as f:
                     for line in f:
-                        if line.startswith('TracerPid:'):
+                        if line.startswith("TracerPid:"):
                             return int(line.split()[1]) != 0
         except Exception as e:
             self.logger.debug(f"Error checking for debugger presence: {e}")

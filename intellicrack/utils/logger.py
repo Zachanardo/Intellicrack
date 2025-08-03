@@ -27,7 +27,7 @@ import sys
 from typing import Any, Callable, TypeVar
 
 # Type variable for decorators
-F = TypeVar('F', bound=Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., Any])
 
 # Module logger
 logger = logging.getLogger(__name__)
@@ -74,14 +74,14 @@ def log_function_call(func: F) -> F:
     def wrapper(*args, **kwargs):
         """Wrapper function for debug logging."""
         # Check if we're already in a logging call to prevent recursion
-        if hasattr(_local, 'in_logger') and _local.in_logger:
+        if hasattr(_local, "in_logger") and _local.in_logger:
             # Just call the function without logging to avoid recursion
             return func(*args, **kwargs)
 
         func_name = func.__qualname__
 
         # Skip logging for certain problematic functions
-        if any(_skip in func_name for _skip in ['__str__', '__repr__', 'as_posix', 'getline', 'getlines']):
+        if any(_skip in func_name for _skip in ["__str__", "__repr__", "as_posix", "getline", "getlines"]):
             return func(*args, **kwargs)
 
         try:
@@ -96,11 +96,11 @@ def log_function_call(func: F) -> F:
                 try:
                     r = repr(obj)
                     if len(r) > max_len:
-                        return r[:max_len] + '...'
+                        return r[:max_len] + "..."
                     return r
                 except (TypeError, ValueError, AttributeError, RecursionError) as e:
                     logger.error("Error in logger: %s", e)
-                    return '<repr_failed>'
+                    return "<repr_failed>"
 
             arg_strs = [f"{name}={safe_repr(value)}" for name, value in zip(arg_names, arg_values, strict=False)]
             if kwargs:
@@ -126,13 +126,13 @@ def log_function_call(func: F) -> F:
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
             # Check if we're already in a logging call to prevent recursion
-            if hasattr(_local, 'in_logger') and _local.in_logger:
+            if hasattr(_local, "in_logger") and _local.in_logger:
                 return await func(*args, **kwargs)
 
             func_name = func.__qualname__
 
             # Skip logging for certain problematic functions
-            if any(_skip in func_name for _skip in ['__str__', '__repr__', 'as_posix', 'getline', 'getlines']):
+            if any(_skip in func_name for _skip in ["__str__", "__repr__", "as_posix", "getline", "getlines"]):
                 return await func(*args, **kwargs)
 
             try:
@@ -146,11 +146,11 @@ def log_function_call(func: F) -> F:
                     try:
                         r = repr(obj)
                         if len(r) > max_len:
-                            return r[:max_len] + '...'
+                            return r[:max_len] + "..."
                         return r
                     except (TypeError, ValueError, AttributeError, RecursionError) as e:
                         logger.error("Error in logger: %s", e)
-                        return '<repr_failed>'
+                        return "<repr_failed>"
 
                 arg_strs = [f"{name}={safe_repr(value)}" for name, value in zip(arg_names, arg_values, strict=False)]
                 if kwargs:
@@ -191,7 +191,7 @@ def log_all_methods(cls):
     return cls
 
 
-def setup_logger(name: str = 'Intellicrack', level: int = logging.INFO,
+def setup_logger(name: str = "Intellicrack", level: int = logging.INFO,
                  log_file: str = None, format_string: str = None) -> logging.Logger:
     """
     Set up a logger with the specified configuration.
@@ -210,7 +210,7 @@ def setup_logger(name: str = 'Intellicrack', level: int = logging.INFO,
 
     # Default format if not specified
     if format_string is None:
-        format_string = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format_string = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
     formatter = logging.Formatter(format_string)
 
@@ -244,9 +244,9 @@ def get_logger(name: str = None) -> logging.Logger:
         # Get the caller's module name
         frame = inspect.currentframe()
         if frame and frame.f_back:
-            name = frame.f_back.f_globals.get('__name__', 'Intellicrack')
+            name = frame.f_back.f_globals.get("__name__", "Intellicrack")
         else:
-            name = 'Intellicrack'
+            name = "Intellicrack"
 
     return logging.getLogger(name)
 
@@ -263,13 +263,13 @@ def configure_logging(level: int = logging.INFO, log_file: str = None,
         enable_comprehensive: Whether to enable comprehensive function logging
     """
     # Set up the root logger
-    setup_logger('Intellicrack', level, log_file, format_string)
+    setup_logger("Intellicrack", level, log_file, format_string)
 
     # Configure comprehensive logging if enabled
     if enable_comprehensive:
         # Set more verbose logging format for comprehensive mode
-        comprehensive_format = '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(funcName)s() - %(message)s'
-        setup_logger('Intellicrack', logging.DEBUG, log_file, comprehensive_format)
+        comprehensive_format = "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(funcName)s() - %(message)s"
+        setup_logger("Intellicrack", logging.DEBUG, log_file, comprehensive_format)
         logging.debug("Comprehensive logging enabled with detailed function tracking")
 
 def setup_logging(level: str = "INFO", log_file: str = None,
@@ -288,7 +288,7 @@ def setup_logging(level: str = "INFO", log_file: str = None,
     # Convert string level to logging constant
     numeric_level = getattr(logging, level.upper(), None)
     if not isinstance(numeric_level, int):
-        raise ValueError(f'Invalid log level: {level}')
+        raise ValueError(f"Invalid log level: {level}")
 
     # Set up handlers
     handlers = []
@@ -297,8 +297,8 @@ def setup_logging(level: str = "INFO", log_file: str = None,
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(numeric_level)
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
     )
     console_handler.setFormatter(formatter)
     handlers.append(console_handler)
@@ -381,16 +381,16 @@ log_method_call = log_function_call
 
 # Exported functions and classes
 __all__ = [
-    'log_function_call',
-    'log_all_methods',
-    'setup_logger',
-    'get_logger',
-    'configure_logging',
-    'setup_logging',
-    'setup_persistent_logging',
-    'log_message',
-    'log_execution_time',
-    'log_exception',
-    'log_method_call',
-    'logger',
+    "log_function_call",
+    "log_all_methods",
+    "setup_logger",
+    "get_logger",
+    "configure_logging",
+    "setup_logging",
+    "setup_persistent_logging",
+    "log_message",
+    "log_execution_time",
+    "log_exception",
+    "log_method_call",
+    "logger",
 ]

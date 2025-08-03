@@ -213,7 +213,7 @@ class AnalysisOrchestrator(QObject):
         try:
             result = {"sections": []}
 
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             # Overall entropy
@@ -272,7 +272,7 @@ class AnalysisOrchestrator(QObject):
         """Perform dynamic analysis if possible"""
         try:
             # Check if dynamic analysis is available
-            if hasattr(self.dynamic_analyzer, 'is_available') and self.dynamic_analyzer.is_available():
+            if hasattr(self.dynamic_analyzer, "is_available") and self.dynamic_analyzer.is_available():
                 return self.dynamic_analyzer.analyze(binary_path)
             else:
                 return {"status": "skipped", "reason": "Dynamic analysis not available"}

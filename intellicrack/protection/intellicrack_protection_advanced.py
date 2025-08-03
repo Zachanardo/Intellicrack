@@ -447,7 +447,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         )
 
         # Parse text output line by line
-        lines = text_output.strip().split('\n')
+        lines = text_output.strip().split("\n")
 
         for line in lines:
             line = line.strip()
@@ -513,7 +513,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
 
             if result.returncode == 0:
-                for line in result.stdout.split('\n'):
+                for line in result.stdout.split("\n"):
                     if line and len(line) < max_length:
                         # Check if string is suspicious
                         is_suspicious = any(pattern.lower() in line.lower()
@@ -539,7 +539,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         try:
             # Use pefile or similar library to calculate imphash
             # This is a placeholder implementation
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 data = f.read(1024)  # Read first 1KB
                 imphash = hashlib.md5(data).hexdigest()
 
@@ -557,7 +557,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         try:
             # This would use ssdeep or similar fuzzy hashing
             # Placeholder implementation using SHA256
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 return hashlib.sha256(f.read()).hexdigest()
         except Exception as e:
             logger.error(f"Error calculating similarity hash: {e}")
@@ -566,7 +566,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
     def _calculate_file_hash(self, file_path: str) -> str:
         """Calculate file hash for caching"""
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 return hashlib.sha256(f.read()).hexdigest()
         except:
             return ""

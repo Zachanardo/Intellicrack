@@ -209,7 +209,7 @@ class PluginStructureValidator:
             Tuple of (success, errors)
         """
         if required_methods is None:
-            required_methods = {'run'}
+            required_methods = {"run"}
 
         errors = []
         found_methods = set()

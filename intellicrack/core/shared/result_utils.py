@@ -39,8 +39,8 @@ class ResultMixin:
             Initialized result dictionary with success=False and error=None
         """
         result = {
-            'success': False,
-            'error': None
+            "success": False,
+            "error": None
         }
         result.update(kwargs)
         return result

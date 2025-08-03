@@ -42,19 +42,19 @@ class APIObfuscator:
 
         # Import resolution techniques
         self.import_resolution_methods = {
-            'hash_resolution': self._resolve_by_hash,
-            'string_encryption': self._resolve_encrypted_strings,
-            'dynamic_loading': self._resolve_dynamic_imports,
-            'api_redirection': self._resolve_redirected_apis,
-            'delayed_loading': self._resolve_delayed_imports
+            "hash_resolution": self._resolve_by_hash,
+            "string_encryption": self._resolve_encrypted_strings,
+            "dynamic_loading": self._resolve_dynamic_imports,
+            "api_redirection": self._resolve_redirected_apis,
+            "delayed_loading": self._resolve_delayed_imports
         }
 
         # API call obfuscation methods
         self.call_obfuscation_methods = {
-            'indirect_calls': self._generate_indirect_calls,
-            'trampoline_calls': self._generate_trampoline_calls,
-            'encrypted_payloads': self._generate_encrypted_payloads,
-            'polymorphic_wrappers': self._generate_polymorphic_wrappers
+            "indirect_calls": self._generate_indirect_calls,
+            "trampoline_calls": self._generate_trampoline_calls,
+            "encrypted_payloads": self._generate_encrypted_payloads,
+            "polymorphic_wrappers": self._generate_polymorphic_wrappers
         }
 
         # Known API hash databases
@@ -71,7 +71,7 @@ class APIObfuscator:
 
         self.logger.info("API obfuscation system initialized")
 
-    def obfuscate_api_calls(self, code: str, method: str = 'hash_lookup') -> str:
+    def obfuscate_api_calls(self, code: str, method: str = "hash_lookup") -> str:
         """
         Obfuscate API calls in code.
 
@@ -91,9 +91,9 @@ class APIObfuscator:
             # This would parse and transform the code
             # For demonstration, return example obfuscated code
 
-            if method == 'hash_lookup':
+            if method == "hash_lookup":
                 return self._generate_hash_lookup_code()
-            elif method == 'dynamic_resolution':
+            elif method == "dynamic_resolution":
                 return self._generate_dynamic_resolution_code()
             else:
                 return code
@@ -102,7 +102,7 @@ class APIObfuscator:
             self.logger.error(f"API obfuscation failed: {e}")
             return code
 
-    def resolve_api(self, dll_name: str, api_name: str, method: str = 'normal') -> Optional[int]:
+    def resolve_api(self, dll_name: str, api_name: str, method: str = "normal") -> Optional[int]:
         """
         Resolve API address using specified method.
 
@@ -123,16 +123,16 @@ class APIObfuscator:
 
             address = None
 
-            if method == 'normal':
+            if method == "normal":
                 address = self._normal_resolve(dll_name, api_name)
-            elif method == 'hash_lookup':
+            elif method == "hash_lookup":
                 api_hash = self._calculate_hash(api_name)
                 address = self._resolve_by_hash(dll_name, api_hash)
-            elif method == 'ordinal_lookup':
+            elif method == "ordinal_lookup":
                 # Default to ordinal 1 if not specified
                 ordinal = 1
                 address = self._resolve_by_ordinal(dll_name, ordinal)
-            elif method == 'dynamic_resolution':
+            elif method == "dynamic_resolution":
                 address = self._dynamic_resolve(dll_name, api_name)
 
             if address:
@@ -149,7 +149,7 @@ class APIObfuscator:
         """Normal API resolution using GetProcAddress."""
         try:
             import platform
-            if platform.system() != 'Windows':
+            if platform.system() != "Windows":
                 return None
 
             kernel32 = ctypes.windll.kernel32
@@ -173,7 +173,7 @@ class APIObfuscator:
         """Resolve API by hash value using advanced anti-analysis techniques."""
         try:
             import platform
-            if platform.system() != 'Windows':
+            if platform.system() != "Windows":
                 return None
 
             # Load DLL and enumerate exports
@@ -238,7 +238,7 @@ class APIObfuscator:
                 name_ptr = h_module + name_rva
 
                 # Read function name
-                name = ctypes.string_at(name_ptr).decode('ascii', errors='ignore')
+                name = ctypes.string_at(name_ptr).decode("ascii", errors="ignore")
 
                 # Calculate hash using multiple algorithms
                 calculated_hashes = [
@@ -264,7 +264,7 @@ class APIObfuscator:
         """Resolve API by ordinal number with anti-analysis evasion."""
         try:
             import platform
-            if platform.system() != 'Windows':
+            if platform.system() != "Windows":
                 return None
 
             kernel32 = ctypes.windll.kernel32
@@ -322,7 +322,7 @@ class APIObfuscator:
                 export_dir_end = export_dir + ctypes.c_uint32.from_address(export_dir + 0x04).value
                 if export_dir <= func_addr < export_dir_end:
                     # This is a forwarded export, need to resolve further
-                    forward_str = ctypes.string_at(func_addr).decode('ascii', errors='ignore')
+                    forward_str = ctypes.string_at(func_addr).decode("ascii", errors="ignore")
                     return self._resolve_forwarded_export(forward_str)
 
                 return func_addr
@@ -356,18 +356,18 @@ class APIObfuscator:
             random.shuffle(indices)
             random.shuffle(api_indices)
 
-            shuffled_dll = ''.join(dll_chars[i] for i in indices)
-            shuffled_api = ''.join(api_chars[i] for i in api_indices)
+            shuffled_dll = "".join(dll_chars[i] for i in indices)
+            shuffled_api = "".join(api_chars[i] for i in api_indices)
 
             # Reconstruct
-            reconstructed_dll = [''] * len(dll_chars)
-            reconstructed_api = [''] * len(api_chars)
+            reconstructed_dll = [""] * len(dll_chars)
+            reconstructed_api = [""] * len(api_chars)
             for i, idx in enumerate(indices):
                 reconstructed_dll[idx] = shuffled_dll[i]
             for i, idx in enumerate(api_indices):
                 reconstructed_api[idx] = shuffled_api[i]
-            reconstructed_dll = ''.join(reconstructed_dll)
-            reconstructed_api = ''.join(reconstructed_api)
+            reconstructed_dll = "".join(reconstructed_dll)
+            reconstructed_api = "".join(reconstructed_api)
 
             # Now resolve normally
             return self._normal_resolve(reconstructed_dll, reconstructed_api)
@@ -406,14 +406,14 @@ class APIObfuscator:
         """Obfuscate string using XOR encryption."""
         key = random.randint(1, 255)
         obfuscated = bytes((ord(c) ^ key) for c in string)
-        return struct.pack('B', key) + obfuscated
+        return struct.pack("B", key) + obfuscated
 
     def _deobfuscate_string(self, data: bytes) -> str:
         """Deobfuscate XOR encrypted string."""
         if len(data) < 2:
             return ""
         key = data[0]
-        return ''.join(chr(b ^ key) for b in data[1:])
+        return "".join(chr(b ^ key) for b in data[1:])
 
     def _djb2_hash(self, string: str) -> int:
         """DJB2 hash algorithm commonly used in malware."""
@@ -435,7 +435,7 @@ class APIObfuscator:
     def _crc32_hash(self, string: str) -> int:
         """CRC32 hash for API name obfuscation."""
         import zlib
-        return zlib.crc32(string.encode('ascii')) & 0xFFFFFFFF
+        return zlib.crc32(string.encode("ascii")) & 0xFFFFFFFF
 
     def _custom_hash(self, string: str) -> int:
         """Custom hash algorithm for advanced evasion."""
@@ -449,11 +449,11 @@ class APIObfuscator:
     def _resolve_forwarded_export(self, forward_str: str) -> Optional[int]:
         """Resolve forwarded exports like 'NTDLL.RtlInitUnicodeString'."""
         try:
-            if '.' not in forward_str:
+            if "." not in forward_str:
                 return None
 
-            dll_name, api_name = forward_str.split('.', 1)
-            dll_name = dll_name + '.dll'
+            dll_name, api_name = forward_str.split(".", 1)
+            dll_name = dll_name + ".dll"
 
             # Use normal resolution for forwarded export
             return self._normal_resolve(dll_name, api_name)
@@ -657,10 +657,10 @@ if (p{api_name}) {{
             # Calculate and store hashes for all algorithms
             for dll_name, api_name in common_apis:
                 hashes = {
-                    'djb2': self._djb2_hash(api_name),
-                    'fnv1a': self._fnv1a_hash(api_name),
-                    'crc32': self._crc32_hash(api_name),
-                    'custom': self._custom_hash(api_name)
+                    "djb2": self._djb2_hash(api_name),
+                    "fnv1a": self._fnv1a_hash(api_name),
+                    "crc32": self._crc32_hash(api_name),
+                    "custom": self._custom_hash(api_name)
                 }
                 
                 for hash_type, hash_value in hashes.items():

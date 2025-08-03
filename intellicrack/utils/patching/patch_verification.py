@@ -239,9 +239,9 @@ def test_patch_and_verify(binary_path: str, patches: List[Dict[str, Any]]) -> Li
             for i, (orig_section, patched_section) in enumerate(
                     zip(original_pe.sections, verification_pe.sections, strict=False)):
                 orig_name = orig_section.Name.decode(
-                    'utf-8', 'ignore').strip('\x00')
+                    "utf-8", "ignore").strip("\x00")
                 patched_name = patched_section.Name.decode(
-                    'utf-8', 'ignore').strip('\x00')
+                    "utf-8", "ignore").strip("\x00")
 
                 if orig_name != patched_name:
                     results.append(
@@ -252,8 +252,8 @@ def test_patch_and_verify(binary_path: str, patches: List[Dict[str, Any]]) -> Li
                         f"Warning: Section {orig_name} size changed: {orig_section.SizeOfRawData} -> {patched_section.SizeOfRawData}")
 
             # Check entry point
-            if hasattr(original_pe, 'OPTIONAL_HEADER') and hasattr(verification_pe, 'OPTIONAL_HEADER'):
-                if hasattr(original_pe.OPTIONAL_HEADER, 'AddressOfEntryPoint') and hasattr(verification_pe.OPTIONAL_HEADER, 'AddressOfEntryPoint'):
+            if hasattr(original_pe, "OPTIONAL_HEADER") and hasattr(verification_pe, "OPTIONAL_HEADER"):
+                if hasattr(original_pe.OPTIONAL_HEADER, "AddressOfEntryPoint") and hasattr(verification_pe.OPTIONAL_HEADER, "AddressOfEntryPoint"):
                     if original_pe.OPTIONAL_HEADER.AddressOfEntryPoint != verification_pe.OPTIONAL_HEADER.AddressOfEntryPoint:
                         results.append(
                             f"Warning: Entry point changed: 0x{original_pe.OPTIONAL_HEADER.AddressOfEntryPoint:X} -> 0x{verification_pe.OPTIONAL_HEADER.AddressOfEntryPoint:X}")
@@ -573,7 +573,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
             candidates.sort(key=lambda x: x.get("confidence", 0), reverse=True)
         elif isinstance(candidates, dict):
             # Convert dict to list if needed
-            candidates = list(candidates.values()) if hasattr(candidates, 'values') else []
+            candidates = list(candidates.values()) if hasattr(candidates, "values") else []
         top_candidates = candidates[:5]  # Limit number of candidates to patch
 
         if not pefile or not Cs or not keystone:
@@ -583,7 +583,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
         else:
             try:
                 pe = pefile.PE(app.binary_path)
-                is_64bit = getattr(pe.FILE_HEADER, 'Machine', 0) == 0x8664
+                is_64bit = getattr(pe.FILE_HEADER, "Machine", 0) == 0x8664
                 mode = CS_MODE_64 if is_64bit else CS_MODE_32
                 arch = keystone.KS_ARCH_X86
                 ks_mode = keystone.KS_MODE_64 if is_64bit else keystone.KS_MODE_32
@@ -595,7 +595,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
 
                 # Get .text section for code analysis
                 text_section = next(
-                    (s for s in pe.sections if b'.text' in s.Name.lower()), None)
+                    (s for s in pe.sections if b".text" in s.Name.lower()), None)
                 if not text_section:
                     app.update_output.emit(log_message(
                         "[License Rewrite] Error: Cannot find .text section."))
@@ -637,8 +637,8 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
                                 code_data[code_offset: code_offset + bytes_to_disassemble], start_addr, count=5))
 
                             bytes_at_addr = code_data[code_offset: code_offset + bytes_to_disassemble] if 0 <= code_offset < len(code_data) else None
-                            disasm_at_addr = '; '.join([f"{i.mnemonic} {i.op_str}" for i in instructions]) if instructions else None
-                            min_patch_size = len(patch_bytes) if 'patch_bytes' in locals() else 6
+                            disasm_at_addr = "; ".join([f"{i.mnemonic} {i.op_str}" for i in instructions]) if instructions else None
+                            min_patch_size = len(patch_bytes) if "patch_bytes" in locals() else 6
 
                             if instructions:
                                 prologue_size = 0
@@ -676,7 +676,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
                                     # Instead of automatically applying NOP fallback, log it as a suggestion
                                     # Check first 3 instructions for conditional jumps
                                     for insn in instructions[:3]:
-                                        if insn.mnemonic.startswith('j') and insn.mnemonic != 'jmp' and insn.size > 0:
+                                        if insn.mnemonic.startswith("j") and insn.mnemonic != "jmp" and insn.size > 0:
                                             nop_patch = bytes([0x90] * insn.size)
                                             suggestion_desc = f"Consider NOPing conditional jump {insn.mnemonic} at 0x{insn.address:X}"
 
@@ -787,15 +787,15 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
                 "[License Rewrite] Checking application state before invoking agent..."))
             app.update_output.emit(log_message(
                 f"[License Rewrite] Has binary_path: {hasattr(app, 'binary_path')}"))
-            if hasattr(app, 'binary_path'):
+            if hasattr(app, "binary_path"):
                 app.update_output.emit(log_message(
                     f"[License Rewrite] Binary path exists: {os.path.exists(app.binary_path) if app.binary_path else False}"))
 
             # Use the existing Automated Patch Agent function
-            original_status = app.analyze_status.text() if hasattr(app, 'analyze_status') else ""
+            original_status = app.analyze_status.text() if hasattr(app, "analyze_status") else ""
 
             # Temporarily save any existing potential patches
-            original_patches = getattr(app, 'potential_patches', None)
+            original_patches = getattr(app, "potential_patches", None)
 
             # Run the automated patch agent which will populate app.potential_patches
             app.update_output.emit(log_message(
@@ -803,7 +803,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
             run_automated_patch_agent(app)
 
             # Check if the automated patch agent generated any patches
-            has_patches = hasattr(app, 'potential_patches') and app.potential_patches
+            has_patches = hasattr(app, "potential_patches") and app.potential_patches
 
             # Compare original patches with new patches if both exist
             if has_patches and original_patches:
@@ -811,8 +811,8 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
                     "[License Rewrite] Comparing original patches with new patches..."))
 
                 # Count how many patches are new vs. previously discovered
-                original_patch_addrs = {p.get('address', 'unknown') for p in original_patches}
-                new_patch_addrs = {p.get('address', 'unknown') for p in app.potential_patches}
+                original_patch_addrs = {p.get("address", "unknown") for p in original_patches}
+                new_patch_addrs = {p.get("address", "unknown") for p in app.potential_patches}
 
                 new_patches_count = len(new_patch_addrs - original_patch_addrs)
                 overlapping_patches = len(new_patch_addrs.intersection(original_patch_addrs))
@@ -842,7 +842,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
                     "[License Rewrite] Automated Patch Agent did not generate any patches"))
 
             # Restore original status (it gets overwritten by the patch agent)
-            if hasattr(app, 'analyze_status'):
+            if hasattr(app, "analyze_status"):
                 app.analyze_status.setText(original_status)
 
         except Exception as e_agent:
@@ -860,7 +860,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
 
         # Mark patches as coming from license rewrite
         for patch in patches:
-            patch['source'] = 'license_rewrite'
+            patch["source"] = "license_rewrite"
 
         # Store patches for application
         app.potential_patches = patches
@@ -879,8 +879,8 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
 
 # Export all patch verification functions
 __all__ = [
-    'verify_patches',
-    'test_patch_and_verify',
-    'apply_parsed_patch_instructions_with_validation',
-    'rewrite_license_functions_with_parsing'
+    "verify_patches",
+    "test_patch_and_verify",
+    "apply_parsed_patch_instructions_with_validation",
+    "rewrite_license_functions_with_parsing"
 ]

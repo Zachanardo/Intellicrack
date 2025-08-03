@@ -4,7 +4,6 @@ Generate vulnerable test binaries for exploit testing.
 Creates binaries with specific vulnerabilities for testing exploitation capabilities.
 """
 
-import os
 import struct
 import subprocess
 from pathlib import Path
@@ -43,13 +42,13 @@ int main(int argc, char *argv[]) {
 """
     
     # Write C source
-    src_path = output_path.with_suffix('.c')
+    src_path = output_path.with_suffix(".c")
     src_path.write_text(c_code)
     
     # Try to compile (Windows with MinGW or MSVC)
     compile_commands = [
-        ['gcc', '-o', str(output_path), str(src_path), '-fno-stack-protector', '-z', 'execstack', '-no-pie'],
-        ['cl', '/Fe:' + str(output_path), str(src_path), '/GS-', '/link', '/DYNAMICBASE:NO', '/NXCOMPAT:NO'],
+        ["gcc", "-o", str(output_path), str(src_path), "-fno-stack-protector", "-z", "execstack", "-no-pie"],
+        ["cl", "/Fe:" + str(output_path), str(src_path), "/GS-", "/link", "/DYNAMICBASE:NO", "/NXCOMPAT:NO"],
     ]
     
     compiled = False
@@ -65,7 +64,7 @@ int main(int argc, char *argv[]) {
     
     if not compiled:
         # Create a pre-compiled vulnerable binary
-        create_precompiled_vulnerable_binary(output_path, 'buffer_overflow')
+        create_precompiled_vulnerable_binary(output_path, "buffer_overflow")
     
     # Clean up source
     if src_path.exists():
@@ -105,13 +104,13 @@ int main(int argc, char *argv[]) {
 }
 """
     
-    src_path = output_path.with_suffix('.c')
+    src_path = output_path.with_suffix(".c")
     src_path.write_text(c_code)
     
     # Try to compile
     compile_commands = [
-        ['gcc', '-o', str(output_path), str(src_path), '-Wno-format-security'],
-        ['cl', '/Fe:' + str(output_path), str(src_path)],
+        ["gcc", "-o", str(output_path), str(src_path), "-Wno-format-security"],
+        ["cl", "/Fe:" + str(output_path), str(src_path)],
     ]
     
     compiled = False
@@ -126,7 +125,7 @@ int main(int argc, char *argv[]) {
             continue
     
     if not compiled:
-        create_precompiled_vulnerable_binary(output_path, 'format_string')
+        create_precompiled_vulnerable_binary(output_path, "format_string")
     
     if src_path.exists():
         src_path.unlink()
@@ -176,13 +175,13 @@ int main(int argc, char *argv[]) {
 }
 """
     
-    src_path = output_path.with_suffix('.c')
+    src_path = output_path.with_suffix(".c")
     src_path.write_text(c_code)
     
     # Compile
     compile_commands = [
-        ['gcc', '-o', str(output_path), str(src_path)],
-        ['cl', '/Fe:' + str(output_path), str(src_path)],
+        ["gcc", "-o", str(output_path), str(src_path)],
+        ["cl", "/Fe:" + str(output_path), str(src_path)],
     ]
     
     compiled = False
@@ -197,7 +196,7 @@ int main(int argc, char *argv[]) {
             continue
     
     if not compiled:
-        create_precompiled_vulnerable_binary(output_path, 'integer_overflow')
+        create_precompiled_vulnerable_binary(output_path, "integer_overflow")
     
     if src_path.exists():
         src_path.unlink()
@@ -259,13 +258,13 @@ int main(int argc, char *argv[]) {
 }
 """
     
-    src_path = output_path.with_suffix('.c')
+    src_path = output_path.with_suffix(".c")
     src_path.write_text(c_code)
     
     # Compile
     compile_commands = [
-        ['gcc', '-o', str(output_path), str(src_path), '-fno-stack-protector'],
-        ['cl', '/Fe:' + str(output_path), str(src_path), '/GS-'],
+        ["gcc", "-o", str(output_path), str(src_path), "-fno-stack-protector"],
+        ["cl", "/Fe:" + str(output_path), str(src_path), "/GS-"],
     ]
     
     compiled = False
@@ -280,7 +279,7 @@ int main(int argc, char *argv[]) {
             continue
     
     if not compiled:
-        create_precompiled_vulnerable_binary(output_path, 'heap_overflow')
+        create_precompiled_vulnerable_binary(output_path, "heap_overflow")
     
     if src_path.exists():
         src_path.unlink()
@@ -336,13 +335,13 @@ int main(int argc, char *argv[]) {
 }
 """
     
-    src_path = output_path.with_suffix('.c')
+    src_path = output_path.with_suffix(".c")
     src_path.write_text(c_code)
     
     # Compile
     compile_commands = [
-        ['gcc', '-o', str(output_path), str(src_path)],
-        ['cl', '/Fe:' + str(output_path), str(src_path)],
+        ["gcc", "-o", str(output_path), str(src_path)],
+        ["cl", "/Fe:" + str(output_path), str(src_path)],
     ]
     
     compiled = False
@@ -357,7 +356,7 @@ int main(int argc, char *argv[]) {
             continue
     
     if not compiled:
-        create_precompiled_vulnerable_binary(output_path, 'race_condition')
+        create_precompiled_vulnerable_binary(output_path, "race_condition")
     
     if src_path.exists():
         src_path.unlink()
@@ -369,34 +368,34 @@ def create_precompiled_vulnerable_binary(output_path: Path, vuln_type: str) -> N
     pe_data = bytearray(8192)
     
     # DOS Header
-    pe_data[0:2] = b'MZ'
-    pe_data[0x3C:0x40] = struct.pack('<I', 0x80)
+    pe_data[0:2] = b"MZ"
+    pe_data[0x3C:0x40] = struct.pack("<I", 0x80)
     
     # PE Signature
-    pe_data[0x80:0x84] = b'PE\x00\x00'
+    pe_data[0x80:0x84] = b"PE\x00\x00"
     
     # COFF Header
-    pe_data[0x84:0x86] = struct.pack('<H', 0x014C)  # Machine (x86)
-    pe_data[0x86:0x88] = struct.pack('<H', 0x0002)  # Number of sections
-    pe_data[0x94:0x96] = struct.pack('<H', 0x00E0)  # Size of optional header
-    pe_data[0x96:0x98] = struct.pack('<H', 0x0102)  # Characteristics
+    pe_data[0x84:0x86] = struct.pack("<H", 0x014C)  # Machine (x86)
+    pe_data[0x86:0x88] = struct.pack("<H", 0x0002)  # Number of sections
+    pe_data[0x94:0x96] = struct.pack("<H", 0x00E0)  # Size of optional header
+    pe_data[0x96:0x98] = struct.pack("<H", 0x0102)  # Characteristics
     
     # Section headers
-    pe_data[0x178:0x180] = b'.text\x00\x00\x00'
-    pe_data[0x1A0:0x1A8] = b'.data\x00\x00\x00'
+    pe_data[0x178:0x180] = b".text\x00\x00\x00"
+    pe_data[0x1A0:0x1A8] = b".data\x00\x00\x00"
     
     # Add vulnerability marker
     marker_offset = 0x1000
-    pe_data[marker_offset:marker_offset+32] = f'VULN_{vuln_type.upper()}\x00'.encode()[:32]
+    pe_data[marker_offset:marker_offset+32] = f"VULN_{vuln_type.upper()}\x00".encode()[:32]
     
     # Add some vulnerable patterns based on type
-    if vuln_type == 'buffer_overflow':
+    if vuln_type == "buffer_overflow":
         # strcpy pattern
         pe_data[0x1100:0x1105] = bytes([0xFF, 0x15, 0x00, 0x20, 0x40])  # call strcpy
-    elif vuln_type == 'format_string':
+    elif vuln_type == "format_string":
         # printf pattern
         pe_data[0x1100:0x1105] = bytes([0xFF, 0x15, 0x10, 0x20, 0x40])  # call printf
-    elif vuln_type == 'heap_overflow':
+    elif vuln_type == "heap_overflow":
         # malloc pattern
         pe_data[0x1100:0x1105] = bytes([0xFF, 0x15, 0x20, 0x20, 0x40])  # call malloc
     
@@ -409,25 +408,25 @@ def generate_all_vulnerable_binaries(output_dir: Path) -> Dict[str, List[Path]]:
     output_dir.mkdir(parents=True, exist_ok=True)
     
     generated_files = {
-        'buffer_overflow': [],
-        'format_string': [],
-        'integer_overflow': [],
-        'heap_overflow': [],
-        'race_condition': []
+        "buffer_overflow": [],
+        "format_string": [],
+        "integer_overflow": [],
+        "heap_overflow": [],
+        "race_condition": []
     }
     
     vulnerabilities = [
-        ('buffer_overflow', create_buffer_overflow_binary),
-        ('format_string', create_format_string_binary),
-        ('integer_overflow', create_integer_overflow_binary),
-        ('heap_overflow', create_heap_overflow_binary),
-        ('race_condition', create_race_condition_binary),
+        ("buffer_overflow", create_buffer_overflow_binary),
+        ("format_string", create_format_string_binary),
+        ("integer_overflow", create_integer_overflow_binary),
+        ("heap_overflow", create_heap_overflow_binary),
+        ("race_condition", create_race_condition_binary),
     ]
     
     for vuln_name, creator in vulnerabilities:
         # Create multiple variants
         for i in range(2):
-            filename = f'{vuln_name}_{i}.exe'
+            filename = f"{vuln_name}_{i}.exe"
             path = output_dir / filename
             creator(path)
             generated_files[vuln_name].append(path)
@@ -438,7 +437,7 @@ def generate_all_vulnerable_binaries(output_dir: Path) -> Dict[str, List[Path]]:
 def main():
     """Main entry point."""
     script_dir = Path(__file__).parent
-    output_dir = script_dir.parent / 'tests' / 'fixtures' / 'vulnerable_samples'
+    output_dir = script_dir.parent / "tests" / "fixtures" / "vulnerable_samples"
     
     print("Generating vulnerable test binaries...")
     print("WARNING: These binaries contain real vulnerabilities for testing only!")
@@ -458,5 +457,5 @@ def main():
     print("\n⚠️  These binaries are INTENTIONALLY VULNERABLE for testing purposes only!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

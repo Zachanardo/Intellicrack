@@ -49,7 +49,7 @@ class IntellicrackConfig:
 
     def __init__(self):
         """Initialize configuration manager."""
-        if hasattr(self, '_initialized'):
+        if hasattr(self, "_initialized"):
             return
 
         self._initialized = True
@@ -59,10 +59,10 @@ class IntellicrackConfig:
 
         # Set up directories
         self.config_dir = self._get_user_config_dir()
-        self.config_file = self.config_dir / 'config.json'
-        self.cache_dir = self.config_dir / 'cache'
-        self.logs_dir = self.config_dir / 'logs'
-        self.output_dir = self.config_dir / 'output'
+        self.config_file = self.config_dir / "config.json"
+        self.cache_dir = self.config_dir / "cache"
+        self.logs_dir = self.config_dir / "logs"
+        self.output_dir = self.config_dir / "output"
 
         # Initialize configuration
         self._ensure_directories_exist()
@@ -71,13 +71,13 @@ class IntellicrackConfig:
     def _get_user_config_dir(self) -> Path:
         """Get platform-appropriate user config directory."""
         if sys.platform == "win32":
-            base = os.environ.get('APPDATA', os.path.expanduser('~'))
-            return Path(base) / 'Intellicrack'
+            base = os.environ.get("APPDATA", os.path.expanduser("~"))
+            return Path(base) / "Intellicrack"
         elif sys.platform == "darwin":
-            return Path.home() / 'Library' / 'Application Support' / 'Intellicrack'
+            return Path.home() / "Library" / "Application Support" / "Intellicrack"
         else:
-            xdg_config = os.environ.get('XDG_CONFIG_HOME', '~/.config')
-            return Path(xdg_config).expanduser() / 'intellicrack'
+            xdg_config = os.environ.get("XDG_CONFIG_HOME", "~/.config")
+            return Path(xdg_config).expanduser() / "intellicrack"
 
     def _ensure_directories_exist(self):
         """Create necessary directories if they don't exist."""
@@ -103,7 +103,7 @@ class IntellicrackConfig:
     def _load_config(self):
         """Load configuration from file."""
         try:
-            with open(self.config_file, 'r', encoding='utf-8') as f:
+            with open(self.config_file, "r", encoding="utf-8") as f:
                 with self._config_lock:
                     self._config = json.load(f)
             logger.info(f"Configuration loaded from {self.config_file}")
@@ -116,19 +116,19 @@ class IntellicrackConfig:
         logger.info("Creating default configuration")
 
         default_config = {
-            'version': '2.0',
-            'created': str(Path().resolve()),
-            'platform': sys.platform,
-            'directories': {
-                'config': str(self.config_dir),
-                'output': str(self.output_dir),
-                'logs': str(self.logs_dir),
-                'cache': str(self.cache_dir),
+            "version": "2.0",
+            "created": str(Path().resolve()),
+            "platform": sys.platform,
+            "directories": {
+                "config": str(self.config_dir),
+                "output": str(self.output_dir),
+                "logs": str(self.logs_dir),
+                "cache": str(self.cache_dir),
             },
-            'tools': {},
-            'preferences': {
-                'log_level': 'INFO',
-                'ui_theme': 'dark',
+            "tools": {},
+            "preferences": {
+                "log_level": "INFO",
+                "ui_theme": "dark",
             },
         }
 
@@ -144,24 +144,24 @@ class IntellicrackConfig:
 
         with self._config_lock:
             self._config = {
-                'version': '2.0',
-                'emergency_mode': True,
-                'directories': {
-                    'config': str(self.config_dir),
-                    'output': str(Path.home()),
-                    'logs': str(Path.home()),
-                    'cache': str(Path.home())
+                "version": "2.0",
+                "emergency_mode": True,
+                "directories": {
+                    "config": str(self.config_dir),
+                    "output": str(Path.home()),
+                    "logs": str(Path.home()),
+                    "cache": str(Path.home())
                 },
-                'tools': {},
-                'preferences': {
-                    'log_level': 'WARNING'
+                "tools": {},
+                "preferences": {
+                    "log_level": "WARNING"
                 }
             }
 
     def _save_config(self):
         """Save configuration to file."""
         try:
-            with open(self.config_file, 'w', encoding='utf-8') as f:
+            with open(self.config_file, "w", encoding="utf-8") as f:
                 with self._config_lock:
                     json.dump(self._config, f, indent=2, sort_keys=True)
             logger.debug(f"Configuration saved to {self.config_file}")
@@ -171,7 +171,7 @@ class IntellicrackConfig:
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value with dot notation support."""
         with self._config_lock:
-            keys = key.split('.')
+            keys = key.split(".")
             value = self._config
 
             try:
@@ -185,7 +185,7 @@ class IntellicrackConfig:
     def set(self, key: str, value: Any, save: bool = True):
         """Set configuration value with dot notation support."""
         with self._config_lock:
-            keys = key.split('.')
+            keys = key.split(".")
             config = self._config
 
             for k in keys[:-1]:
@@ -200,15 +200,15 @@ class IntellicrackConfig:
 
     def get_output_dir(self) -> Path:
         """Get user's preferred output directory."""
-        return Path(self.get('directories.output', self.output_dir))
+        return Path(self.get("directories.output", self.output_dir))
 
     def get_cache_dir(self) -> Path:
         """Get cache directory."""
-        return Path(self.get('directories.cache', self.cache_dir))
+        return Path(self.get("directories.cache", self.cache_dir))
 
     def get_logs_dir(self) -> Path:
         """Get logs directory."""
-        return Path(self.get('directories.logs', self.logs_dir))
+        return Path(self.get("directories.logs", self.logs_dir))
 
 
 # Global instance

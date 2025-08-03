@@ -80,7 +80,7 @@ class TPMProtectionBypass:
 
         # Strategy 3: Patch TPM check instructions
         try:
-            if self.app and hasattr(self.app, 'binary_path') and self.app.binary_path:
+            if self.app and hasattr(self.app, "binary_path") and self.app.binary_path:
                 self._patch_tpm_checks()
                 results["methods_applied"].append("Binary Patching")
         except (OSError, ValueError, RuntimeError) as e:
@@ -205,11 +205,11 @@ class TPMProtectionBypass:
 
         # TPM 2.0 command structure: tag (2) + size (4) + command (4) + parameters
         if len(command_data) < 10:
-            return b'\x00\x00\x00\x00'  # Invalid command
+            return b"\x00\x00\x00\x00"  # Invalid command
 
-        tag = int.from_bytes(command_data[0:2], 'big')
-        size = int.from_bytes(command_data[2:6], 'big')
-        command = int.from_bytes(command_data[6:10], 'big')
+        tag = int.from_bytes(command_data[0:2], "big")
+        size = int.from_bytes(command_data[2:6], "big")
+        command = int.from_bytes(command_data[6:10], "big")
 
         # Validate TPM command structure
         if tag not in [0x8001, 0x8002]:  # Valid TPM tag values
@@ -237,13 +237,13 @@ class TPMProtectionBypass:
         handler = tpm_responses.get(command, self._tpm_default_response)
 
         # Generate response
-        response = handler(command_data[10:] if len(command_data) > 10 else b'')
+        response = handler(command_data[10:] if len(command_data) > 10 else b"")
 
         # Build TPM response structure: tag + size + response_code + response_data
-        response_tag = b'\x80\x01'  # TPM_ST_NO_SESSIONS
-        response_code = b'\x00\x00\x00\x00'  # TPM_RC_SUCCESS
+        response_tag = b"\x80\x01"  # TPM_ST_NO_SESSIONS
+        response_code = b"\x00\x00\x00\x00"  # TPM_RC_SUCCESS
         response_data = response_code + response
-        response_size = (10 + len(response)).to_bytes(4, 'big')
+        response_size = (10 + len(response)).to_bytes(4, "big")
 
         return response_tag + response_size + response_data
 
@@ -252,24 +252,24 @@ class TPMProtectionBypass:
         # Parse capability type from params if provided
         capability_type = None
         if len(params) >= 4:
-            capability_type = int.from_bytes(params[0:4], 'big')
+            capability_type = int.from_bytes(params[0:4], "big")
             self.logger.debug(f"TPM2_GetCapability requested for type: 0x{capability_type:X}")
 
         # Return TPM properties indicating TPM 2.0 with full capabilities
-        capabilities = b'\x00\x00\x00\x01'  # More data: NO
-        capabilities += b'\x00\x00\x00\x06'  # Property count
+        capabilities = b"\x00\x00\x00\x01"  # More data: NO
+        capabilities += b"\x00\x00\x00\x06"  # Property count
         # TPM_PT_FAMILY_INDICATOR
-        capabilities += b'\x00\x00\x01\x00' + b'\x32\x00\x00\x00'
+        capabilities += b"\x00\x00\x01\x00" + b"\x32\x00\x00\x00"
         # TPM_PT_LEVEL
-        capabilities += b'\x00\x00\x01\x01' + b'\x00\x00\x00\x00'
+        capabilities += b"\x00\x00\x01\x01" + b"\x00\x00\x00\x00"
         # TPM_PT_REVISION
-        capabilities += b'\x00\x00\x01\x02' + b'\x00\x00\x01\x38'
+        capabilities += b"\x00\x00\x01\x02" + b"\x00\x00\x01\x38"
         # TPM_PT_MANUFACTURER
-        capabilities += b'\x00\x00\x01\x05' + b'INTC'
+        capabilities += b"\x00\x00\x01\x05" + b"INTC"
         # TPM_PT_VENDOR_STRING
-        capabilities += b'\x00\x00\x01\x06' + b'INTL'
+        capabilities += b"\x00\x00\x01\x06" + b"INTL"
         # TPM_PT_FIRMWARE_VERSION
-        capabilities += b'\x00\x00\x01\x0B' + b'\x00\x02\x00\x00'
+        capabilities += b"\x00\x00\x01\x0B" + b"\x00\x02\x00\x00"
         return capabilities
 
     def _tpm_startup(self, params: bytes) -> bytes:
@@ -277,7 +277,7 @@ class TPMProtectionBypass:
         # Check startup type from params
         startup_type = "CLEAR"
         if len(params) >= 2:
-            type_code = int.from_bytes(params[0:2], 'big')
+            type_code = int.from_bytes(params[0:2], "big")
             if type_code == 0x0000:
                 startup_type = "CLEAR"
             elif type_code == 0x0001:
@@ -285,7 +285,7 @@ class TPMProtectionBypass:
             self.logger.debug(f"TPM2_Startup called with type: {startup_type}")
 
         # TPM already initialized
-        return b''  # Empty response for success
+        return b""  # Empty response for success
 
     def _tpm_get_random(self, params: bytes) -> bytes:
         """Generate TPM2_GetRandom response."""
@@ -293,20 +293,20 @@ class TPMProtectionBypass:
 
         # Extract requested byte count (first 2 bytes of params)
         if len(params) >= 2:
-            count = int.from_bytes(params[0:2], 'big')
+            count = int.from_bytes(params[0:2], "big")
             count = min(count, 32)  # Limit to 32 bytes
         else:
             count = 16
 
         # Generate random bytes
         random_bytes = os.urandom(count)
-        return count.to_bytes(2, 'big') + random_bytes
+        return count.to_bytes(2, "big") + random_bytes
 
     def _tpm_create_primary(self, params: bytes) -> bytes:
         """Generate TPM2_CreatePrimary response."""
         # Parse primary object attributes from params
         if len(params) >= 4:
-            primary_handle = int.from_bytes(params[0:4], 'big')
+            primary_handle = int.from_bytes(params[0:4], "big")
             self.logger.debug(f"TPM2_CreatePrimary for hierarchy: 0x{primary_handle:X}")
 
         # Generate real primary key handle and structure
@@ -314,9 +314,9 @@ class TPMProtectionBypass:
         import struct
 
         # Generate dynamic handle based on hierarchy and entropy
-        handle_seed = primary_handle if 'primary_handle' in locals() else 0x40000001  # TPM_RH_OWNER
+        handle_seed = primary_handle if "primary_handle" in locals() else 0x40000001  # TPM_RH_OWNER
         entropy = secrets.randbelow(0x1000)
-        handle = struct.pack('>I', 0x80000000 + handle_seed + entropy)
+        handle = struct.pack(">I", 0x80000000 + handle_seed + entropy)
 
         # Generate real RSA public key structure
         try:
@@ -332,22 +332,22 @@ class TPMProtectionBypass:
 
             # Extract RSA parameters
             public_numbers = public_key_obj.public_numbers()
-            n = public_numbers.n.to_bytes(256, 'big')  # 2048-bit modulus
-            e = public_numbers.e.to_bytes(4, 'big')    # Exponent
+            n = public_numbers.n.to_bytes(256, "big")  # 2048-bit modulus
+            e = public_numbers.e.to_bytes(4, "big")    # Exponent
 
             # Build TPM2B_PUBLIC structure
-            public_key = struct.pack('>H', len(n) + len(e) + 20)  # Size
-            public_key += b'\x00\x01'  # TPM_ALG_RSA
-            public_key += b'\x00\x0B'  # TPM_ALG_SHA256
-            public_key += struct.pack('>I', 0x00020072)  # Object attributes (sign/decrypt)
-            public_key += b'\x00\x20' + secrets.token_bytes(32)  # Real auth policy digest
-            public_key += struct.pack('>H', 0x0010)  # RSA parameters size
-            public_key += struct.pack('>H', 2048)    # Key bits
+            public_key = struct.pack(">H", len(n) + len(e) + 20)  # Size
+            public_key += b"\x00\x01"  # TPM_ALG_RSA
+            public_key += b"\x00\x0B"  # TPM_ALG_SHA256
+            public_key += struct.pack(">I", 0x00020072)  # Object attributes (sign/decrypt)
+            public_key += b"\x00\x20" + secrets.token_bytes(32)  # Real auth policy digest
+            public_key += struct.pack(">H", 0x0010)  # RSA parameters size
+            public_key += struct.pack(">H", 2048)    # Key bits
             public_key += e  # Exponent
             public_key += n  # Modulus
 
             # Store key for later use
-            if not hasattr(self, '_tpm_keys'):
+            if not hasattr(self, "_tpm_keys"):
                 self._tpm_keys = {}
             self._tpm_keys[handle] = private_key
 
@@ -361,22 +361,22 @@ class TPMProtectionBypass:
         except ImportError as e:
             self.logger.error("Import error in tpm_bypass: %s", e)
             # Fallback without cryptography library
-            public_key = b'\x00\x3A'  # Size
-            public_key += b'\x00\x01'  # TPM_ALG_RSA
-            public_key += b'\x00\x0B'  # TPM_ALG_SHA256
-            public_key += struct.pack('>I', 0x00020072)  # Object attributes
-            public_key += b'\x00\x20' + secrets.token_bytes(32)  # Real random auth policy
-            public_key += b'\x00\x10'  # Parameters size
-            public_key += b'\x08\x00'  # Key bits (2048)
-            public_key += b'\x00\x01\x00\x01'  # Exponent (65537)
+            public_key = b"\x00\x3A"  # Size
+            public_key += b"\x00\x01"  # TPM_ALG_RSA
+            public_key += b"\x00\x0B"  # TPM_ALG_SHA256
+            public_key += struct.pack(">I", 0x00020072)  # Object attributes
+            public_key += b"\x00\x20" + secrets.token_bytes(32)  # Real random auth policy
+            public_key += b"\x00\x10"  # Parameters size
+            public_key += b"\x08\x00"  # Key bits (2048)
+            public_key += b"\x00\x01\x00\x01"  # Exponent (65537)
 
-        return handle + public_key + b'\x00\x00'  # Creation data size (0)
+        return handle + public_key + b"\x00\x00"  # Creation data size (0)
 
     def _tpm_create(self, params: bytes) -> bytes:
         """Generate TPM2_Create response."""
         # Parse parent handle and object type from params
         if len(params) >= 4:
-            parent_handle = int.from_bytes(params[0:4], 'big')
+            parent_handle = int.from_bytes(params[0:4], "big")
             self.logger.debug(f"TPM2_Create with parent handle: 0x{parent_handle:X}")
 
         # Generate real creation data for a key
@@ -385,17 +385,17 @@ class TPMProtectionBypass:
 
         # Generate real encrypted private key data
         private_data_size = 48 + secrets.randbelow(16)  # Variable size
-        private_data = struct.pack('>H', private_data_size)
+        private_data = struct.pack(">H", private_data_size)
         private_data += secrets.token_bytes(private_data_size)  # Real encrypted private key
 
         # Generate real public key data
         public_data_size = 64 + secrets.randbelow(32)
-        public_data = struct.pack('>H', public_data_size)
+        public_data = struct.pack(">H", public_data_size)
         public_data += secrets.token_bytes(public_data_size)  # Real public key structure
 
         # Generate creation data with real values
         creation_data_size = 32
-        creation_data = struct.pack('>H', creation_data_size)
+        creation_data = struct.pack(">H", creation_data_size)
         creation_data += secrets.token_bytes(creation_data_size)  # Real creation data
 
         return private_data + public_data + creation_data
@@ -404,25 +404,25 @@ class TPMProtectionBypass:
         """Generate TPM2_Load response."""
         # Parse parent handle from params
         if len(params) >= 4:
-            parent_handle = int.from_bytes(params[0:4], 'big')
+            parent_handle = int.from_bytes(params[0:4], "big")
             self.logger.debug(f"TPM2_Load into parent: 0x{parent_handle:X}")
 
         # Generate dynamic loaded object handle
         import secrets
         import struct
 
-        parent_handle = int.from_bytes(params[0:4], 'big') if len(params) >= 4 else 0x80000001
+        parent_handle = int.from_bytes(params[0:4], "big") if len(params) >= 4 else 0x80000001
         # Generate unique handle based on parent and entropy
         entropy = secrets.randbelow(0x10000)
         loaded_handle = 0x80000000 + (parent_handle & 0xFF) + entropy
 
-        return struct.pack('>I', loaded_handle)
+        return struct.pack(">I", loaded_handle)
 
     def _tpm_sign(self, params: bytes) -> bytes:
         """Generate TPM2_Sign response."""
         # Parse signing key handle and digest from params
         if len(params) >= 4:
-            key_handle = int.from_bytes(params[0:4], 'big')
+            key_handle = int.from_bytes(params[0:4], "big")
             self.logger.debug(f"TPM2_Sign with key handle: 0x{key_handle:X}")
             # Check if digest is provided
             if len(params) > 4:
@@ -433,12 +433,12 @@ class TPMProtectionBypass:
         import secrets
         import struct
 
-        key_handle_bytes = params[0:4] if len(params) >= 4 else b'\x80\x00\x00\x01'
+        key_handle_bytes = params[0:4] if len(params) >= 4 else b"\x80\x00\x00\x01"
         digest = params[4:36] if len(params) >= 36 else secrets.token_bytes(32)
 
         try:
             # Try to use stored key for signing
-            if hasattr(self, '_tpm_keys') and key_handle_bytes in self._tpm_keys:
+            if hasattr(self, "_tpm_keys") and key_handle_bytes in self._tpm_keys:
                 private_key = self._tpm_keys[key_handle_bytes]
                 from cryptography.hazmat.primitives import hashes
                 from cryptography.hazmat.primitives.asymmetric import padding
@@ -454,9 +454,9 @@ class TPMProtectionBypass:
                 )
 
                 # Build TPM signature structure
-                signature = struct.pack('>H', len(signature_bytes))  # Signature size
-                signature += b'\x00\x14'  # TPM_ALG_RSAPSS
-                signature += b'\x00\x0B'  # TPM_ALG_SHA256
+                signature = struct.pack(">H", len(signature_bytes))  # Signature size
+                signature += b"\x00\x14"  # TPM_ALG_RSAPSS
+                signature += b"\x00\x0B"  # TPM_ALG_SHA256
                 signature += signature_bytes
 
                 return signature
@@ -466,9 +466,9 @@ class TPMProtectionBypass:
 
         # Fallback: generate realistic random signature
         signature_size = 256  # 2048-bit RSA signature
-        signature = struct.pack('>H', signature_size + 4)  # Total size
-        signature += b'\x00\x14'  # TPM_ALG_RSAPSS
-        signature += b'\x00\x0B'  # TPM_ALG_SHA256
+        signature = struct.pack(">H", signature_size + 4)  # Total size
+        signature += b"\x00\x14"  # TPM_ALG_RSAPSS
+        signature += b"\x00\x0B"  # TPM_ALG_SHA256
         signature += secrets.token_bytes(signature_size)  # Random signature data
 
         return signature
@@ -479,31 +479,31 @@ class TPMProtectionBypass:
         pcr_count = 24  # Default to all PCRs
         if len(params) >= 4:
             # Parse PCR selection structure
-            pcr_selection_count = int.from_bytes(params[0:4], 'big')
+            pcr_selection_count = int.from_bytes(params[0:4], "big")
             self.logger.debug(f"TPM2_PCR_Read for {pcr_selection_count} PCR banks")
             if len(params) >= 7 and pcr_selection_count > 0:
                 # Extract PCR bitmap
                 pcr_bitmap = params[6] if len(params) > 6 else 0xFF
-                pcr_count = bin(pcr_bitmap).count('1')
+                pcr_count = bin(pcr_bitmap).count("1")
                 self.logger.debug(f"Reading {pcr_count} PCRs")
 
         # Return PCR values (all zeros for clean state)
-        pcr_update_counter = b'\x00\x00\x00\x01'
-        pcr_selection = b'\x00\x00\x00\x01'  # Count
-        pcr_selection += b'\x00\x0B'  # SHA256
-        pcr_selection += b'\x03'  # Size
-        pcr_selection += b'\xFF\xFF\xFF'  # All PCRs selected
+        pcr_update_counter = b"\x00\x00\x00\x01"
+        pcr_selection = b"\x00\x00\x00\x01"  # Count
+        pcr_selection += b"\x00\x0B"  # SHA256
+        pcr_selection += b"\x03"  # Size
+        pcr_selection += b"\xFF\xFF\xFF"  # All PCRs selected
 
         # Generate realistic PCR values (24 PCRs x 32 bytes each)
         import hashlib
         import secrets
 
-        pcr_count = b'\x00\x00\x00\x18'  # 24 PCRs
-        pcr_values = b''
+        pcr_count = b"\x00\x00\x00\x18"  # 24 PCRs
+        pcr_values = b""
 
         # Simulate realistic PCR states
         for i in range(24):
-            pcr_values += b'\x00\x20'  # Digest size (32 bytes for SHA256)
+            pcr_values += b"\x00\x20"  # Digest size (32 bytes for SHA256)
 
             # Generate realistic PCR values based on PCR purpose
             if i in [0, 1, 2, 3]:  # BIOS/UEFI PCRs
@@ -525,7 +525,7 @@ class TPMProtectionBypass:
                     seed_data = f"PCR_{i}_{secrets.randbelow(1000)}".encode()
                     pcr_value = hashlib.sha256(seed_data).digest()
                 else:
-                    pcr_value = b'\x00' * 32  # Unused PCR
+                    pcr_value = b"\x00" * 32  # Unused PCR
 
             pcr_values += pcr_value
 
@@ -535,17 +535,17 @@ class TPMProtectionBypass:
         """Generate TPM2_PCR_Extend response."""
         # Parse PCR handle and digest from params
         if len(params) >= 4:
-            pcr_handle = int.from_bytes(params[0:4], 'big')
+            pcr_handle = int.from_bytes(params[0:4], "big")
             pcr_index = pcr_handle & 0xFF  # Extract PCR index from handle
             self.logger.debug(f"TPM2_PCR_Extend for PCR[{pcr_index}]")
 
             # Check if digest data is provided
             if len(params) > 4:
-                digest_count = int.from_bytes(params[4:8], 'big') if len(params) >= 8 else 0
+                digest_count = int.from_bytes(params[4:8], "big") if len(params) >= 8 else 0
                 self.logger.debug(f"Extending with {digest_count} digest(s)")
 
         # Return empty response for success
-        return b''
+        return b""
 
     def _tpm_default_response(self, params: bytes) -> bytes:
         """Generate default success response for unknown commands."""
@@ -554,10 +554,10 @@ class TPMProtectionBypass:
             self.logger.debug(f"Unknown TPM command with {len(params)} bytes of parameters")
             # Try to parse common parameter structure
             if len(params) >= 4:
-                first_param = int.from_bytes(params[0:4], 'big')
+                first_param = int.from_bytes(params[0:4], "big")
                 self.logger.debug(f"First parameter: 0x{first_param:X}")
 
-        return b''  # Empty response with success code
+        return b""  # Empty response with success code
 
     def _patch_tpm_calls(self, binary_path: str) -> bool:
         """
@@ -566,7 +566,7 @@ class TPMProtectionBypass:
         self.logger.info(f"Patching TPM calls in {binary_path}")
 
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 binary_data = f.read()
 
             # Extended TPM check patterns with context
@@ -574,29 +574,29 @@ class TPMProtectionBypass:
                 # TPM API call patterns
                 {
                     "name": "Tbsi_Context_Create call",
-                    "pattern": b'\xFF\x15..\x00\x00',  # CALL [Tbsi_Context_Create]
-                    "context": b'Tbsi_Context_Create',
-                    "patch": b'\x31\xC0\x90\x90\x90\x90'  # XOR EAX,EAX; NOP padding
+                    "pattern": b"\xFF\x15..\x00\x00",  # CALL [Tbsi_Context_Create]
+                    "context": b"Tbsi_Context_Create",
+                    "patch": b"\x31\xC0\x90\x90\x90\x90"  # XOR EAX,EAX; NOP padding
                 },
                 {
                     "name": "Tbsi_Submit_Command call",
-                    "pattern": b'\xFF\x15..\x00\x00',  # CALL [Tbsi_Submit_Command]
-                    "context": b'Tbsi_Submit_Command',
-                    "patch": b'\x31\xC0\x90\x90\x90\x90'  # XOR EAX,EAX; NOP padding
+                    "pattern": b"\xFF\x15..\x00\x00",  # CALL [Tbsi_Submit_Command]
+                    "context": b"Tbsi_Submit_Command",
+                    "patch": b"\x31\xC0\x90\x90\x90\x90"  # XOR EAX,EAX; NOP padding
                 },
                 # TPM presence checks
                 {
                     "name": "TPM version check",
-                    "pattern": b'\x83\x3D..\x00\x00\x02',  # CMP [tpm_version], 2
+                    "pattern": b"\x83\x3D..\x00\x00\x02",  # CMP [tpm_version], 2
                     "context": None,
-                    "patch": b'\x90\x90\x90\x90\x90\x90\x90'  # NOP out check
+                    "patch": b"\x90\x90\x90\x90\x90\x90\x90"  # NOP out check
                 },
                 # NCrypt TPM provider checks
                 {
                     "name": "NCrypt TPM provider",
-                    "pattern": b'\x48\x8D\x15..\x00\x00',  # LEA RDX, [TPM_PROVIDER_STRING]
-                    "context": b'Microsoft Platform Crypto Provider',
-                    "patch": b'\x48\x31\xD2\x90\x90\x90\x90'  # XOR RDX, RDX; NOP
+                    "pattern": b"\x48\x8D\x15..\x00\x00",  # LEA RDX, [TPM_PROVIDER_STRING]
+                    "context": b"Microsoft Platform Crypto Provider",
+                    "patch": b"\x48\x31\xD2\x90\x90\x90\x90"  # XOR RDX, RDX; NOP
                 }
             ]
 
@@ -615,7 +615,7 @@ class TPMProtectionBypass:
                     # Check if pattern matches (with wildcards)
                     match = True
                     for i, byte in enumerate(pattern):
-                        if byte != ord('.') and binary_data[offset + i] != byte:
+                        if byte != ord(".") and binary_data[offset + i] != byte:
                             match = False
                             break
 
@@ -652,7 +652,7 @@ class TPMProtectionBypass:
             if patches_applied > 0:
                 # Save patched binary
                 patched_path = binary_path + ".tpm_patched"
-                with open(patched_path, 'wb') as f:
+                with open(patched_path, "wb") as f:
                     f.write(modified_data)
                 self.logger.info(f"Saved patched binary to {patched_path}")
                 self.logger.info(f"Applied {patches_applied} TPM bypass patches")
@@ -669,7 +669,7 @@ class TPMProtectionBypass:
         """
         Patch binary instructions that check for TPM presence.
         """
-        if not self.app or not hasattr(self.app, 'binary_path') or not self.app.binary_path:
+        if not self.app or not hasattr(self.app, "binary_path") or not self.app.binary_path:
             return
 
         # Use the advanced patching method
@@ -953,7 +953,7 @@ class TPMAnalyzer:
 
         # Detect TPM version with separate check
         try:
-            with open(self.binary_path, 'rb') as f:
+            with open(self.binary_path, "rb") as f:
                 data = f.read()
 
             if b"TPM 2.0" in data or b"TPM2" in data:
@@ -1283,10 +1283,10 @@ def tpm_research_tools() -> Dict[str, Any]:
 
 # Export the main classes and functions
 __all__ = [
-    'TPMProtectionBypass',
-    'bypass_tpm_protection',
-    'TPMAnalyzer',
-    'analyze_tpm_protection',
-    'detect_tpm_usage',
-    'tpm_research_tools'
+    "TPMProtectionBypass",
+    "bypass_tpm_protection",
+    "TPMAnalyzer",
+    "analyze_tpm_protection",
+    "detect_tpm_usage",
+    "tpm_research_tools"
 ]

@@ -524,8 +524,8 @@ def get_preset_by_software(software_name: str) -> dict:
             return preset_config
 
         # Check target field
-        if 'target' in preset_config:
-            if software_lower in preset_config['target'].lower():
+        if "target" in preset_config:
+            if software_lower in preset_config["target"].lower():
                 return preset_config
 
     # Default to minimal bypass
@@ -626,10 +626,10 @@ def get_scripts_for_protection(protection_type: str) -> list:
 
 # Export configuration
 __all__ = [
-    'FRIDA_PRESETS',
-    'WIZARD_CONFIGS',
-    'QUICK_TEMPLATES',
-    'get_preset_by_software',
-    'get_wizard_config',
-    'get_scripts_for_protection'
+    "FRIDA_PRESETS",
+    "WIZARD_CONFIGS",
+    "QUICK_TEMPLATES",
+    "get_preset_by_software",
+    "get_wizard_config",
+    "get_scripts_for_protection"
 ]

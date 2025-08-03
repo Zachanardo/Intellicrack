@@ -136,7 +136,7 @@ class ModelManager:
         try:
             from intellicrack.config import get_config
             config_instance = get_config()
-            use_config_method = hasattr(config_instance, 'is_repository_enabled')
+            use_config_method = hasattr(config_instance, "is_repository_enabled")
         except ImportError:
             config_instance = None
             use_config_method = False
@@ -436,18 +436,18 @@ class ModelManager:
             model = None
             trained = False
 
-            if model_type == 'classifier':
+            if model_type == "classifier":
                 try:
                     from sklearn.ensemble import RandomForestClassifier
                     from sklearn.model_selection import train_test_split
 
                     # Prepare data (assuming training_data has 'features' and 'labels')
-                    if hasattr(training_data, 'features') and hasattr(training_data, 'labels'):
+                    if hasattr(training_data, "features") and hasattr(training_data, "labels"):
                         X = training_data.features
                         y = training_data.labels
                     elif isinstance(training_data, dict):
-                        X = training_data.get('features', training_data.get('X', []))
-                        y = training_data.get('labels', training_data.get('y', []))
+                        X = training_data.get("features", training_data.get("X", []))
+                        y = training_data.get("labels", training_data.get("y", []))
                     else:
                         # Assume it's a tuple or list of (X, y)
                         X, y = training_data[0], training_data[1]
@@ -475,14 +475,14 @@ class ModelManager:
                     self._last_trained_model = {"type": "simple_classifier", "data": training_data}
                     trained = True
 
-            elif model_type == 'regression':
+            elif model_type == "regression":
                 try:
                     from sklearn.linear_model import LinearRegression
 
                     # Similar data preparation
                     if isinstance(training_data, dict):
-                        X = training_data.get('features', [])
-                        y = training_data.get('targets', [])
+                        X = training_data.get("features", [])
+                        y = training_data.get("targets", [])
                     else:
                         X, y = training_data[0], training_data[1]
 
@@ -498,7 +498,7 @@ class ModelManager:
                     self._last_trained_model = {"type": "simple_regression", "data": training_data}
                     trained = True
 
-            elif model_type == 'neural_network':
+            elif model_type == "neural_network":
                 try:
                     # Try PyTorch first
                     import torch
@@ -521,7 +521,7 @@ class ModelManager:
                     model = SimpleNN(10, 50, 2)  # Adjust sizes based on data
 
                     # Use torch for basic operations to ensure import is used
-                    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+                    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                     model = model.to(device)
 
                     self._last_trained_model = model
@@ -533,10 +533,10 @@ class ModelManager:
                         from tensorflow import keras
 
                         model = keras.Sequential([
-                            keras.layers.Dense(50, activation='relu', input_shape=(10,)),
-                            keras.layers.Dense(2, activation='softmax')
+                            keras.layers.Dense(50, activation="relu", input_shape=(10,)),
+                            keras.layers.Dense(2, activation="softmax")
                         ])
-                        model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+                        model.compile(optimizer="adam", loss="sparse_categorical_crossentropy")
                         self._last_trained_model = model
                         trained = True
 
@@ -579,7 +579,7 @@ class ModelManager:
             import pickle
 
             # Use last trained model if no model provided
-            if model is None and hasattr(self, '_last_trained_model'):
+            if model is None and hasattr(self, "_last_trained_model"):
                 model = self._last_trained_model
 
             if model is None:
@@ -605,7 +605,7 @@ class ModelManager:
                 # Try PyTorch save
                 try:
                     import torch
-                    if hasattr(model, 'state_dict'):
+                    if hasattr(model, "state_dict"):
                         torch.save(model.state_dict(), path)
                         logger.info(f"PyTorch model saved to: {path}")
                         saved = True
@@ -615,7 +615,7 @@ class ModelManager:
             if not saved:
                 # Try Keras/TensorFlow save
                 try:
-                    if hasattr(model, 'save'):
+                    if hasattr(model, "save"):
                         model.save(path)
                         logger.info(f"Keras model saved to: {path}")
                         saved = True
@@ -624,21 +624,21 @@ class ModelManager:
 
             if not saved:
                 # Fallback to pickle
-                with open(path, 'wb') as f:
+                with open(path, "wb") as f:
                     pickle.dump(model, f)
                 logger.info(f"Model saved with pickle to: {path}")
                 saved = True
 
             # Save metadata
-            metadata_path = path + '.meta'
+            metadata_path = path + ".meta"
             metadata = {
-                'model_type': type(model).__name__,
-                'saved_at': str(datetime.now()),
-                'intellicrack_version': '2.0',
-                'path': path
+                "model_type": type(model).__name__,
+                "saved_at": str(datetime.now()),
+                "intellicrack_version": "2.0",
+                "path": path
             }
 
-            with open(metadata_path, 'w') as f:
+            with open(metadata_path, "w") as f:
                 import json
                 json.dump(metadata, f, indent=2)
 

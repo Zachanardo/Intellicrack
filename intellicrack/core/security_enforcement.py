@@ -14,7 +14,7 @@ from typing import Any, Dict, Union
 # Initialize logger
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
-formatter = logging.Formatter('[%(levelname)s] %(name)s: %(message)s')
+formatter = logging.Formatter("[%(levelname)s] %(name)s: %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
@@ -25,22 +25,22 @@ class SecurityEnforcement:
     def __init__(self):
         """Initialize security enforcement with configuration and tracking state."""
         self.config = self._load_config()
-        self.security_config = self.config.get('security', {})
+        self.security_config = self.config.get("security", {})
         self._original_functions = {}
         self._bypass_security = False  # Emergency bypass flag
 
     def _load_config(self) -> Dict[str, Any]:
         """Load security configuration from intellicrack_config.json"""
         config_paths = [
-            Path(__file__).parent.parent.parent / 'config' / 'intellicrack_config.json',
-            Path.cwd() / 'config' / 'intellicrack_config.json',
-            Path.home() / '.intellicrack' / 'intellicrack_config.json'
+            Path(__file__).parent.parent.parent / "config" / "intellicrack_config.json",
+            Path.cwd() / "config" / "intellicrack_config.json",
+            Path.home() / ".intellicrack" / "intellicrack_config.json"
         ]
 
         for config_path in config_paths:
             if config_path.exists():
                 try:
-                    with open(config_path, 'r') as f:
+                    with open(config_path, "r") as f:
                         return json.load(f)
                 except Exception as e:
                     logger.error(f"Failed to load config from {config_path}: {e}")
@@ -93,10 +93,10 @@ _security = SecurityEnforcement()
 def _secure_subprocess_run(*args, **kwargs):
     """Secure wrapper for subprocess.run"""
     if _security._bypass_security:
-        return _security._original_functions['subprocess.run'](*args, **kwargs)
+        return _security._original_functions["subprocess.run"](*args, **kwargs)
 
-    shell = kwargs.get('shell', False)
-    if shell and not _security.security_config.get('subprocess', {}).get('allow_shell_true', False):
+    shell = kwargs.get("shell", False)
+    if shell and not _security.security_config.get("subprocess", {}).get("allow_shell_true", False):
         logger.warning(f"Blocked subprocess.run with shell=True: {args}")
         raise SecurityError("subprocess.run with shell=True is disabled by security policy")
 
@@ -105,90 +105,90 @@ def _secure_subprocess_run(*args, **kwargs):
 
     # Check whitelist if shell=True is allowed
     if shell:
-        whitelist = _security.security_config.get('subprocess', {}).get('shell_whitelist', [])
-        cmd = args[0] if args else kwargs.get('args', '')
-        cmd_str = cmd if isinstance(cmd, str) else ' '.join(cmd)
+        whitelist = _security.security_config.get("subprocess", {}).get("shell_whitelist", [])
+        cmd = args[0] if args else kwargs.get("args", "")
+        cmd_str = cmd if isinstance(cmd, str) else " ".join(cmd)
 
         if whitelist and not any(allowed in cmd_str for allowed in whitelist):
             logger.warning(f"Command not in whitelist: {cmd_str}")
             raise SecurityError(f"Command not in shell whitelist: {cmd_str}")
 
-    return _security._original_functions['subprocess.run'](*args, **kwargs)
+    return _security._original_functions["subprocess.run"](*args, **kwargs)
 
 def _secure_subprocess_popen(*args, **kwargs):
     """Secure wrapper for subprocess.Popen"""
     if _security._bypass_security:
-        return _security._original_functions['subprocess.Popen'](*args, **kwargs)
+        return _security._original_functions["subprocess.Popen"](*args, **kwargs)
 
-    shell = kwargs.get('shell', False)
-    if shell and not _security.security_config.get('subprocess', {}).get('allow_shell_true', False):
+    shell = kwargs.get("shell", False)
+    if shell and not _security.security_config.get("subprocess", {}).get("allow_shell_true", False):
         logger.warning(f"Blocked subprocess.Popen with shell=True: {args}")
         raise SecurityError("subprocess.Popen with shell=True is disabled by security policy")
 
     logger.debug(f"subprocess.Popen: {args}")
 
     if shell:
-        whitelist = _security.security_config.get('subprocess', {}).get('shell_whitelist', [])
-        cmd = args[0] if args else kwargs.get('args', '')
-        cmd_str = cmd if isinstance(cmd, str) else ' '.join(cmd)
+        whitelist = _security.security_config.get("subprocess", {}).get("shell_whitelist", [])
+        cmd = args[0] if args else kwargs.get("args", "")
+        cmd_str = cmd if isinstance(cmd, str) else " ".join(cmd)
 
         if whitelist and not any(allowed in cmd_str for allowed in whitelist):
             logger.warning(f"Command not in whitelist: {cmd_str}")
             raise SecurityError(f"Command not in shell whitelist: {cmd_str}")
 
-    return _security._original_functions['subprocess.Popen'](*args, **kwargs)
+    return _security._original_functions["subprocess.Popen"](*args, **kwargs)
 
 def _secure_subprocess_call(*args, **kwargs):
     """Secure wrapper for subprocess.call"""
     if _security._bypass_security:
-        return _security._original_functions['subprocess.call'](*args, **kwargs)
+        return _security._original_functions["subprocess.call"](*args, **kwargs)
 
-    shell = kwargs.get('shell', False)
-    if shell and not _security.security_config.get('subprocess', {}).get('allow_shell_true', False):
+    shell = kwargs.get("shell", False)
+    if shell and not _security.security_config.get("subprocess", {}).get("allow_shell_true", False):
         logger.warning(f"Blocked subprocess.call with shell=True: {args}")
         raise SecurityError("subprocess.call with shell=True is disabled by security policy")
 
     logger.debug(f"subprocess.call: {args}")
-    return _security._original_functions['subprocess.call'](*args, **kwargs)
+    return _security._original_functions["subprocess.call"](*args, **kwargs)
 
 def _secure_subprocess_check_call(*args, **kwargs):
     """Secure wrapper for subprocess.check_call"""
     if _security._bypass_security:
-        return _security._original_functions['subprocess.check_call'](*args, **kwargs)
+        return _security._original_functions["subprocess.check_call"](*args, **kwargs)
 
-    shell = kwargs.get('shell', False)
-    if shell and not _security.security_config.get('subprocess', {}).get('allow_shell_true', False):
+    shell = kwargs.get("shell", False)
+    if shell and not _security.security_config.get("subprocess", {}).get("allow_shell_true", False):
         logger.warning(f"Blocked subprocess.check_call with shell=True: {args}")
         raise SecurityError("subprocess.check_call with shell=True is disabled by security policy")
 
     logger.debug(f"subprocess.check_call: {args}")
-    return _security._original_functions['subprocess.check_call'](*args, **kwargs)
+    return _security._original_functions["subprocess.check_call"](*args, **kwargs)
 
 def _secure_subprocess_check_output(*args, **kwargs):
     """Secure wrapper for subprocess.check_output"""
     if _security._bypass_security:
-        return _security._original_functions['subprocess.check_output'](*args, **kwargs)
+        return _security._original_functions["subprocess.check_output"](*args, **kwargs)
 
-    shell = kwargs.get('shell', False)
-    if shell and not _security.security_config.get('subprocess', {}).get('allow_shell_true', False):
+    shell = kwargs.get("shell", False)
+    if shell and not _security.security_config.get("subprocess", {}).get("allow_shell_true", False):
         logger.warning(f"Blocked subprocess.check_output with shell=True: {args}")
         raise SecurityError("subprocess.check_output with shell=True is disabled by security policy")
 
     logger.debug(f"subprocess.check_output: {args}")
-    return _security._original_functions['subprocess.check_output'](*args, **kwargs)
+    return _security._original_functions["subprocess.check_output"](*args, **kwargs)
 
 # Pickle Security
 def _secure_pickle_dump(obj, file, protocol=None, *, fix_imports=True, buffer_callback=None):
     """Secure wrapper for pickle.dump"""
     if _security._bypass_security:
-        return _security._original_functions['pickle.dump'](obj, file, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
+        return _security._original_functions["pickle.dump"](obj, file, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
 
-    if _security.security_config.get('serialization', {}).get('restrict_pickle', True):
+    if _security.security_config.get("serialization", {}).get("restrict_pickle", True):
         logger.warning("Pickle dump attempted with restrict_pickle=True, consider using JSON")
         # Try JSON serialization first
         try:
             import json
-            if hasattr(file, 'write'):
+            if hasattr(file, "write"):
                 json.dump(obj, file)
                 logger.info("Successfully serialized to JSON instead of pickle")
                 return
@@ -198,59 +198,59 @@ def _secure_pickle_dump(obj, file, protocol=None, *, fix_imports=True, buffer_ca
             logger.warning(f"JSON serialization failed, falling back to pickle: {e}")
 
     logger.debug(f"pickle.dump: object type={type(obj).__name__}")
-    return _security._original_functions['pickle.dump'](obj, file, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
+    return _security._original_functions["pickle.dump"](obj, file, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
 
 def _secure_pickle_dumps(obj, protocol=None, *, fix_imports=True, buffer_callback=None):
     """Secure wrapper for pickle.dumps"""
     if _security._bypass_security:
-        return _security._original_functions['pickle.dumps'](obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
+        return _security._original_functions["pickle.dumps"](obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
 
-    if _security.security_config.get('serialization', {}).get('restrict_pickle', True):
+    if _security.security_config.get("serialization", {}).get("restrict_pickle", True):
         logger.warning("Pickle dumps attempted with restrict_pickle=True, consider using JSON")
         try:
             import json
             result = json.dumps(obj)
             logger.info("Successfully serialized to JSON instead of pickle")
-            return result.encode('utf-8')
+            return result.encode("utf-8")
         except (TypeError, ValueError) as e:
             logger.warning(f"JSON serialization failed, falling back to pickle: {e}")
 
     logger.debug(f"pickle.dumps: object type={type(obj).__name__}")
-    return _security._original_functions['pickle.dumps'](obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
+    return _security._original_functions["pickle.dumps"](obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
 
 def _secure_pickle_load(file, *, fix_imports=True, encoding="ASCII", errors="strict", buffers=None):
     """Secure wrapper for pickle.load"""
     if _security._bypass_security:
-        return _security._original_functions['pickle.load'](file, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers)
+        return _security._original_functions["pickle.load"](file, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers)
 
-    if _security.security_config.get('serialization', {}).get('restrict_pickle', True):
+    if _security.security_config.get("serialization", {}).get("restrict_pickle", True):
         logger.warning("Pickle load attempted with restrict_pickle=True, attempting JSON first")
         try:
             import json
-            if hasattr(file, 'read'):
+            if hasattr(file, "read"):
                 file.seek(0)
                 return json.load(file)
             else:
                 raise TypeError("File object required for JSON load")
         except (json.JSONDecodeError, ValueError, TypeError) as e:
             logger.warning(f"JSON deserialization failed, falling back to pickle: {e}")
-            if hasattr(file, 'seek'):
+            if hasattr(file, "seek"):
                 file.seek(0)
 
     logger.warning("Loading pickle data - ensure source is trusted!")
-    return _security._original_functions['pickle.load'](file, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers)
+    return _security._original_functions["pickle.load"](file, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers)
 
 def _secure_pickle_loads(data, *, fix_imports=True, encoding="ASCII", errors="strict", buffers=None):
     """Secure wrapper for pickle.loads"""
     if _security._bypass_security:
-        return _security._original_functions['pickle.loads'](data, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers)
+        return _security._original_functions["pickle.loads"](data, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers)
 
-    if _security.security_config.get('serialization', {}).get('restrict_pickle', True):
+    if _security.security_config.get("serialization", {}).get("restrict_pickle", True):
         logger.warning("Pickle loads attempted with restrict_pickle=True, attempting JSON first")
         try:
             import json
             if isinstance(data, bytes):
-                data_str = data.decode('utf-8')
+                data_str = data.decode("utf-8")
             else:
                 data_str = data
             return json.loads(data_str)
@@ -258,19 +258,19 @@ def _secure_pickle_loads(data, *, fix_imports=True, encoding="ASCII", errors="st
             logger.warning(f"JSON deserialization failed, falling back to pickle: {e}")
 
     logger.warning("Loading pickle data - ensure source is trusted!")
-    return _security._original_functions['pickle.loads'](data, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers)
+    return _security._original_functions["pickle.loads"](data, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers)
 
 # Hashlib Security
 class SecureHash:
     """Secure hash wrapper that enforces algorithm policies"""
 
-    def __init__(self, name, data=b''):
+    def __init__(self, name, data=b""):
         self.name = name
-        allow_md5 = _security.security_config.get('hashing', {}).get('allow_md5_for_security', False)
+        allow_md5 = _security.security_config.get("hashing", {}).get("allow_md5_for_security", False)
 
-        if name.lower() in ['md5'] and not allow_md5 and not _security._bypass_security:
+        if name.lower() in ["md5"] and not allow_md5 and not _security._bypass_security:
             logger.warning("MD5 hash requested but not allowed for security purposes")
-            default_algo = _security.security_config.get('hashing', {}).get('default_algorithm', 'sha256')
+            default_algo = _security.security_config.get("hashing", {}).get("default_algorithm", "sha256")
             logger.info(f"Using {default_algo} instead of MD5")
             name = default_algo
 
@@ -307,37 +307,37 @@ class SecureHash:
     def name(self, value):
         self._name = value
 
-def _secure_hashlib_new(name, data=b'', **kwargs):
+def _secure_hashlib_new(name, data=b"", **kwargs):
     """Secure wrapper for hashlib.new"""
     if _security._bypass_security:
-        return _security._original_functions['hashlib.new'](name, data, **kwargs)
+        return _security._original_functions["hashlib.new"](name, data, **kwargs)
 
-    allow_md5 = _security.security_config.get('hashing', {}).get('allow_md5_for_security', False)
+    allow_md5 = _security.security_config.get("hashing", {}).get("allow_md5_for_security", False)
 
-    if name.lower() in ['md5'] and not allow_md5:
+    if name.lower() in ["md5"] and not allow_md5:
         logger.warning(f"hashlib.new('{name}') requested but not allowed for security")
-        default_algo = _security.security_config.get('hashing', {}).get('default_algorithm', 'sha256')
+        default_algo = _security.security_config.get("hashing", {}).get("default_algorithm", "sha256")
         logger.info(f"Using {default_algo} instead")
         name = default_algo
 
     logger.debug(f"hashlib.new: algorithm={name}")
-    return _security._original_functions['hashlib.new'](name, data, **kwargs)
+    return _security._original_functions["hashlib.new"](name, data, **kwargs)
 
-def _secure_hashlib_md5(data=b'', **kwargs):
+def _secure_hashlib_md5(data=b"", **kwargs):
     """Secure wrapper for hashlib.md5"""
     if _security._bypass_security:
-        return _security._original_functions['hashlib.md5'](data, **kwargs)
+        return _security._original_functions["hashlib.md5"](data, **kwargs)
 
-    allow_md5 = _security.security_config.get('hashing', {}).get('allow_md5_for_security', False)
+    allow_md5 = _security.security_config.get("hashing", {}).get("allow_md5_for_security", False)
 
     if not allow_md5:
         logger.warning("hashlib.md5() requested but not allowed for security")
-        default_algo = _security.security_config.get('hashing', {}).get('default_algorithm', 'sha256')
+        default_algo = _security.security_config.get("hashing", {}).get("default_algorithm", "sha256")
         logger.info(f"Using {default_algo} instead")
         return getattr(hashlib, default_algo)(data, **kwargs)
 
     logger.debug("hashlib.md5: allowed by configuration")
-    return _security._original_functions['hashlib.md5'](data, **kwargs)
+    return _security._original_functions["hashlib.md5"](data, **kwargs)
 
 # File Input Validation
 def validate_file_input(file_path: Union[str, Path], operation: str = "read") -> bool:
@@ -346,13 +346,13 @@ def validate_file_input(file_path: Union[str, Path], operation: str = "read") ->
         return True
 
     file_path = Path(file_path)
-    validation_config = _security.security_config.get('input_validation', {})
+    validation_config = _security.security_config.get("input_validation", {})
 
-    if not validation_config.get('strict_mode', True):
+    if not validation_config.get("strict_mode", True):
         return True
 
     # Check file size if configured
-    max_size = validation_config.get('max_file_size', False)
+    max_size = validation_config.get("max_file_size", False)
     if max_size and isinstance(max_size, (int, float)):
         try:
             file_size = file_path.stat().st_size
@@ -363,7 +363,7 @@ def validate_file_input(file_path: Union[str, Path], operation: str = "read") ->
             pass  # File doesn't exist yet, skip size check
 
     # Check allowed extensions if configured
-    allowed_extensions = validation_config.get('allowed_extensions', False)
+    allowed_extensions = validation_config.get("allowed_extensions", False)
     if allowed_extensions and isinstance(allowed_extensions, list):
         file_ext = file_path.suffix.lower()
         if file_ext not in allowed_extensions:
@@ -373,9 +373,9 @@ def validate_file_input(file_path: Union[str, Path], operation: str = "read") ->
     # Check for path traversal
     try:
         file_path.resolve()
-        if '..' in str(file_path):
+        if ".." in str(file_path):
             logger.warning(f"Potential path traversal detected: {file_path}")
-            if validation_config.get('strict_mode', True):
+            if validation_config.get("strict_mode", True):
                 raise SecurityError("Path traversal not allowed in strict mode")
     except Exception:
         pass
@@ -384,11 +384,11 @@ def validate_file_input(file_path: Union[str, Path], operation: str = "read") ->
     return True
 
 # Secure file operations
-def secure_open(file, mode='r', *args, **kwargs):
+def secure_open(file, mode="r", *args, **kwargs):
     """Secure wrapper for open() with validation"""
-    if 'r' in mode or 'a' in mode:
+    if "r" in mode or "a" in mode:
         validate_file_input(file, "read")
-    if 'w' in mode or 'a' in mode:
+    if "w" in mode or "a" in mode:
         validate_file_input(file, "write")
 
     return open(file, mode, *args, **kwargs)
@@ -396,32 +396,32 @@ def secure_open(file, mode='r', *args, **kwargs):
 # Monkey-patching functions
 def _monkey_patch_subprocess():
     """Apply subprocess security patches"""
-    if 'subprocess.run' not in _security._original_functions:
-        _security._original_functions['subprocess.run'] = subprocess.run
-        _security._original_functions['subprocess.Popen'] = subprocess.Popen
-        _security._original_functions['subprocess.call'] = subprocess.call
-        _security._original_functions['subprocess.check_call'] = subprocess.check_call
-        _security._original_functions['subprocess.check_output'] = subprocess.check_output
+    if "subprocess.run" not in _security._original_functions:
+        _security._original_functions["subprocess.run"] = subprocess.run
+        _security._original_functions["subprocess.Popen"] = subprocess.Popen
+        _security._original_functions["subprocess.call"] = subprocess.call
+        _security._original_functions["subprocess.check_call"] = subprocess.check_call
+        _security._original_functions["subprocess.check_output"] = subprocess.check_output
 
     # Create a subclassable Popen wrapper
-    class SecurePopen(_security._original_functions['subprocess.Popen']):
+    class SecurePopen(_security._original_functions["subprocess.Popen"]):
         """Secure wrapper for subprocess.Popen that can be subclassed"""
         def __init__(self, *args, **kwargs):
             if _security._bypass_security:
                 super().__init__(*args, **kwargs)
                 return
                 
-            shell = kwargs.get('shell', False)
-            if shell and not _security.security_config.get('subprocess', {}).get('allow_shell_true', False):
+            shell = kwargs.get("shell", False)
+            if shell and not _security.security_config.get("subprocess", {}).get("allow_shell_true", False):
                 logger.warning(f"Blocked subprocess.Popen with shell=True: {args}")
                 raise SecurityError("subprocess.Popen with shell=True is disabled by security policy")
 
             logger.debug(f"subprocess.Popen: {args}")
 
             if shell:
-                whitelist = _security.security_config.get('subprocess', {}).get('shell_whitelist', [])
-                cmd = args[0] if args else kwargs.get('args', '')
-                cmd_str = cmd if isinstance(cmd, str) else ' '.join(cmd)
+                whitelist = _security.security_config.get("subprocess", {}).get("shell_whitelist", [])
+                cmd = args[0] if args else kwargs.get("args", "")
+                cmd_str = cmd if isinstance(cmd, str) else " ".join(cmd)
 
                 if whitelist and not any(allowed in cmd_str for allowed in whitelist):
                     logger.warning(f"Command not in whitelist: {cmd_str}")
@@ -439,11 +439,11 @@ def _monkey_patch_subprocess():
 
 def _monkey_patch_pickle():
     """Apply pickle security patches"""
-    if 'pickle.dump' not in _security._original_functions:
-        _security._original_functions['pickle.dump'] = pickle.dump
-        _security._original_functions['pickle.dumps'] = pickle.dumps
-        _security._original_functions['pickle.load'] = pickle.load
-        _security._original_functions['pickle.loads'] = pickle.loads
+    if "pickle.dump" not in _security._original_functions:
+        _security._original_functions["pickle.dump"] = pickle.dump
+        _security._original_functions["pickle.dumps"] = pickle.dumps
+        _security._original_functions["pickle.load"] = pickle.load
+        _security._original_functions["pickle.loads"] = pickle.loads
 
     pickle.dump = _secure_pickle_dump
     pickle.dumps = _secure_pickle_dumps
@@ -454,9 +454,9 @@ def _monkey_patch_pickle():
 
 def _monkey_patch_hashlib():
     """Apply hashlib security patches"""
-    if 'hashlib.new' not in _security._original_functions:
-        _security._original_functions['hashlib.new'] = hashlib.new
-        _security._original_functions['hashlib.md5'] = hashlib.md5
+    if "hashlib.new" not in _security._original_functions:
+        _security._original_functions["hashlib.new"] = hashlib.new
+        _security._original_functions["hashlib.md5"] = hashlib.md5
 
     hashlib.new = _secure_hashlib_new
     hashlib.md5 = _secure_hashlib_md5
@@ -476,11 +476,11 @@ def initialize_security():
         logger.info(f"Security config loaded: {_security.security_config}")
 
         # Set security-related environment variables
-        if _security.security_config.get('sandbox_analysis', True):
-            os.environ['INTELLICRACK_SANDBOX'] = '1'
+        if _security.security_config.get("sandbox_analysis", True):
+            os.environ["INTELLICRACK_SANDBOX"] = "1"
 
-        if not _security.security_config.get('allow_network_access', False):
-            os.environ['INTELLICRACK_NO_NETWORK'] = '1'
+        if not _security.security_config.get("allow_network_access", False):
+            os.environ["INTELLICRACK_NO_NETWORK"] = "1"
 
         logger.info("Security enforcement initialization complete")
 
@@ -495,9 +495,9 @@ def get_security_status() -> Dict[str, Any]:
         "bypass_enabled": _security._bypass_security,
         "config": _security.security_config,
         "patches_applied": {
-            "subprocess": 'subprocess.run' in _security._original_functions,
-            "pickle": 'pickle.dump' in _security._original_functions,
-            "hashlib": 'hashlib.new' in _security._original_functions
+            "subprocess": "subprocess.run" in _security._original_functions,
+            "pickle": "pickle.dump" in _security._original_functions,
+            "hashlib": "hashlib.new" in _security._original_functions
         }
     }
 
@@ -511,11 +511,11 @@ class SecurityError(Exception):
 
 # Export public API
 __all__ = [
-    'SecurityEnforcement',
-    'SecurityError',
-    'initialize_security',
-    'get_security_status',
-    'validate_file_input',
-    'secure_open',
-    '_security'  # For advanced usage
+    "SecurityEnforcement",
+    "SecurityError",
+    "initialize_security",
+    "get_security_status",
+    "validate_file_input",
+    "secure_open",
+    "_security"  # For advanced usage
 ]

@@ -78,23 +78,23 @@ class BaseTab(QWidget):
 
     def log_activity(self, message):
         """Log activity to shared context if available"""
-        if self.shared_context and hasattr(self.shared_context, 'log_activity'):
+        if self.shared_context and hasattr(self.shared_context, "log_activity"):
             self.shared_context.log_activity(message)
 
     @property
     def app_context(self):
         """Get the application context from shared context"""
-        return self.shared_context.get('app_context')
+        return self.shared_context.get("app_context")
 
     @property
     def task_manager(self):
         """Get the task manager from shared context"""
-        return self.shared_context.get('task_manager')
+        return self.shared_context.get("task_manager")
 
     @property
     def main_window(self):
         """Get the main window from shared context"""
-        return self.shared_context.get('main_window')
+        return self.shared_context.get("main_window")
 
     def submit_task(self, task):
         """Submit a task to the task manager"""

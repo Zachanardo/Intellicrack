@@ -21,13 +21,13 @@ from .encryption_manager import EncryptionManager
 from .session_manager import SessionManager
 
 __all__ = [
-    'C2Manager',
-    'C2Server',
-    'C2Client',
-    'BeaconManager',
-    'HttpsProtocol',
-    'DnsProtocol',
-    'TcpProtocol',
-    'EncryptionManager',
-    'SessionManager'
+    "C2Manager",
+    "C2Server",
+    "C2Client",
+    "BeaconManager",
+    "HttpsProtocol",
+    "DnsProtocol",
+    "TcpProtocol",
+    "EncryptionManager",
+    "SessionManager"
 ]

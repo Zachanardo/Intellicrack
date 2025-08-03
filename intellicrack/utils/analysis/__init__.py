@@ -53,4 +53,4 @@ from .pattern_search import (
     search_patterns_in_binary,
 )
 
-__all__ = ['binary_analysis', 'entropy_utils', 'pattern_search', 'analysis_exporter']
+__all__ = ["binary_analysis", "entropy_utils", "pattern_search", "analysis_exporter"]

@@ -75,9 +75,9 @@ class ProtectionAnalysisThread(QThread):
 
             # Check if license protection was detected
             has_license_protection = False
-            if hasattr(analysis, 'detections'):
+            if hasattr(analysis, "detections"):
                 for detection in analysis.detections:
-                    if detection.type.value in ['license', 'dongle', 'drm']:
+                    if detection.type.value in ["license", "dongle", "drm"]:
                         has_license_protection = True
                         break
 
@@ -90,7 +90,7 @@ class ProtectionAnalysisThread(QThread):
 
                     if license_file_results.get("status") == "success":
                         # Add license files to analysis object
-                        if not hasattr(analysis, 'license_files'):
+                        if not hasattr(analysis, "license_files"):
                             analysis.license_files = []
                         analysis.license_files = license_file_results.get("files_found", [])
 
@@ -393,7 +393,7 @@ class IntellicrackProtectionWidget(QWidget):
             summary_lines.append("No protections detected")
 
         # License files
-        if hasattr(analysis, 'license_files') and analysis.license_files:
+        if hasattr(analysis, "license_files") and analysis.license_files:
             summary_lines.append("")
             summary_lines.append(f"License Files Found: {len(analysis.license_files)}")
             for file_info in analysis.license_files[:5]:  # Show up to 5
@@ -416,9 +416,9 @@ class IntellicrackProtectionWidget(QWidget):
         if analysis.sections:
             details_lines.append("Sections:")
             for section in analysis.sections:
-                name = section.get('name', 'Unknown')
-                size = section.get('size', 0)
-                entropy = section.get('entropy', 0)
+                name = section.get("name", "Unknown")
+                size = section.get("size", 0)
+                entropy = section.get("entropy", 0)
                 details_lines.append(f"  • {name}: Size={size}, Entropy={entropy:.2f}")
             details_lines.append("")
 
@@ -520,7 +520,7 @@ class IntellicrackProtectionWidget(QWidget):
                     format_ext
                 )
 
-                with open(file_path, 'w') as f:
+                with open(file_path, "w") as f:
                     f.write(export_data)
 
                 QMessageBox.information(
@@ -588,7 +588,7 @@ class IntellicrackProtectionWidget(QWidget):
                     })
 
             # Add ML results if available
-            if hasattr(self.current_analysis, 'ml_confidence'):
+            if hasattr(self.current_analysis, "ml_confidence"):
                 task_data["ml_results"] = {
                     "confidence": self.current_analysis.ml_confidence,
                     "predictions": task_data["patterns"]
@@ -704,7 +704,7 @@ class IntellicrackProtectionWidget(QWidget):
                     message_lines = [f"Found {len(files_found)} potential license files:\n"]
                     for file_info in files_found[:10]:  # Show up to 10
                         message_lines.append(f"• {file_info['name']} ({file_info.get('size_str', 'Unknown size')})")
-                        if file_info.get('match_type'):
+                        if file_info.get("match_type"):
                             message_lines.append(f"  Type: {file_info['match_type']}")
 
                     if len(files_found) > 10:
@@ -713,7 +713,7 @@ class IntellicrackProtectionWidget(QWidget):
                     QMessageBox.information(self, "License Files Found", "\n".join(message_lines))
 
                     # Update the analysis object
-                    if not hasattr(self.current_analysis, 'license_files'):
+                    if not hasattr(self.current_analysis, "license_files"):
                         self.current_analysis.license_files = []
                     self.current_analysis.license_files = files_found
 

@@ -64,7 +64,7 @@ logger = setup_logger(__name__)
 
 try:
     import matplotlib
-    matplotlib.use('qtagg')
+    matplotlib.use("qtagg")
     from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
     HAS_MATPLOTLIB = True
@@ -459,7 +459,7 @@ def setup_training_tab(parent: Any) -> Optional[Any]:
 
 # Export all functions
 __all__ = [
-    'setup_dataset_tab',
-    'setup_memory_monitor',
-    'setup_training_tab'
+    "setup_dataset_tab",
+    "setup_memory_monitor",
+    "setup_training_tab"
 ]

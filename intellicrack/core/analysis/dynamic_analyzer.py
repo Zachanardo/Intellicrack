@@ -69,9 +69,9 @@ class AdvancedDynamicAnalyzer:
         self.logger.info(f"Running comprehensive dynamic analysis for {self.binary_path}. Payload provided: {bool(payload)}")
 
         analysis_results = {
-            'subprocess_execution': self._subprocess_analysis(),
-            'frida_runtime_analysis': self._frida_runtime_analysis(payload),
-            'process_behavior_analysis': self._process_behavior_analysis()
+            "subprocess_execution": self._subprocess_analysis(),
+            "frida_runtime_analysis": self._frida_runtime_analysis(payload),
+            "process_behavior_analysis": self._process_behavior_analysis()
         }
 
         self.logger.info("Comprehensive dynamic analysis completed.")
@@ -104,17 +104,17 @@ class AdvancedDynamicAnalyzer:
             self.logger.debug("Subprocess result: Success=%s, ReturnCode=%s", result.returncode == 0, result.returncode)
 
             return {
-                'success': result.returncode == 0,
-                'stdout': result.stdout,
-                'stderr': result.stderr,
-                'return_code': result.returncode
+                "success": result.returncode == 0,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "return_code": result.returncode
             }
         except subprocess.TimeoutExpired:
             self.logger.error("Subprocess analysis error: Timeout expired")
-            return {'success': False, 'error': 'Timeout expired'}
+            return {"success": False, "error": "Timeout expired"}
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Subprocess analysis error: %s", e, exc_info=True)
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def _frida_runtime_analysis(self, payload: Optional[bytes] = None) -> Dict[str, Any]:
         """
@@ -133,7 +133,7 @@ class AdvancedDynamicAnalyzer:
         """
         if not FRIDA_AVAILABLE:
             self.logger.error("Frida not available for runtime analysis")
-            return {'success': False, 'error': 'Frida not available'}
+            return {"success": False, "error": "Frida not available"}
 
         pid = None
         session = None
@@ -468,19 +468,19 @@ class AdvancedDynamicAnalyzer:
                 Processes different message types including analysis completion and
                 various activity tracking (file access, registry, network, licensing).
                 """
-                if message['type'] == 'send':
-                    payload_data = message['payload']
-                    msg_type = payload_data.get('type')
+                if message["type"] == "send":
+                    payload_data = message["payload"]
+                    msg_type = payload_data.get("type")
 
-                    if msg_type == 'analysis_complete':
-                        analysis_data.update(payload_data['data'])
-                    elif msg_type in ['file_access', 'registry_access', 'network_activity', 'license_function']:
+                    if msg_type == "analysis_complete":
+                        analysis_data.update(payload_data["data"])
+                    elif msg_type in ["file_access", "registry_access", "network_activity", "license_function"]:
                         if msg_type not in analysis_data:
                             analysis_data[msg_type] = []
-                        analysis_data[msg_type].append(payload_data['data'])
+                        analysis_data[msg_type].append(payload_data["data"])
 
             script = session.create_script(frida_script)
-            script.on('message', on_message)
+            script.on("message", on_message)
             script.load()
 
             # Resume the process and let it run
@@ -489,15 +489,15 @@ class AdvancedDynamicAnalyzer:
 
             self.logger.info("Frida runtime analysis completed successfully")
             return {
-                'success': True,
-                'pid': pid,
-                'analysis_data': analysis_data,
-                'payload_injected': payload is not None
+                "success": True,
+                "pid": pid,
+                "analysis_data": analysis_data,
+                "payload_injected": payload is not None
             }
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Frida runtime analysis error: %s", e, exc_info=True)
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
         finally:
             # Cleanup
             try:
@@ -524,7 +524,7 @@ class AdvancedDynamicAnalyzer:
         """
         if not PSUTIL_AVAILABLE:
             self.logger.error("psutil not available for process behavior analysis")
-            return {'success': False, 'error': 'psutil not available'}
+            return {"success": False, "error": "psutil not available"}
 
         self.logger.info("Starting process behavior analysis for %s", self.binary_path)
 
@@ -542,31 +542,31 @@ class AdvancedDynamicAnalyzer:
             ps_process = psutil.Process(process.pid)
 
             analysis = {
-                'pid': process.pid,
-                'memory_info': dict(ps_process.memory_info()._asdict()),
-                'open_files': [f.path for f in ps_process.open_files()],
-                'connections': [
+                "pid": process.pid,
+                "memory_info": dict(ps_process.memory_info()._asdict()),
+                "open_files": [f.path for f in ps_process.open_files()],
+                "connections": [
                     {
-                        'fd': c.fd,
-                        'family': c.family,
-                        'type': c.type,
-                        'laddr': str(c.laddr),
-                        'raddr': str(c.raddr)
+                        "fd": c.fd,
+                        "family": c.family,
+                        "type": c.type,
+                        "laddr": str(c.laddr),
+                        "raddr": str(c.raddr)
                     } for c in ps_process.connections()
                 ],
-                'threads': ps_process.num_threads()
+                "threads": ps_process.num_threads()
             }
 
             # Terminate process
             process.terminate()
 
-            self.logger.debug("Process behavior analysis result: PID=%s, Memory=%s, Threads=%s", analysis.get('pid'), analysis.get('memory_info'), analysis.get('threads'))
+            self.logger.debug("Process behavior analysis result: PID=%s, Memory=%s, Threads=%s", analysis.get("pid"), analysis.get("memory_info"), analysis.get("threads"))
 
             return analysis
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Process behavior analysis error: %s", e, exc_info=True)
-            return {'error': str(e)}
+            return {"error": str(e)}
 
     def scan_memory_for_keywords(self, keywords: List[str], target_process: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -594,9 +594,9 @@ class AdvancedDynamicAnalyzer:
         except Exception as e:
             self.logger.error(f"Memory scanning error: {e}")
             return {
-                'status': 'error',
-                'error': str(e),
-                'matches': []
+                "status": "error",
+                "error": str(e),
+                "matches": []
             }
 
     def _frida_memory_scan(self, keywords: List[str], target_process: Optional[str] = None) -> Dict[str, Any]:
@@ -623,9 +623,9 @@ class AdvancedDynamicAnalyzer:
                 except Exception as e:
                     logger.error("Exception in dynamic_analyzer: %s", e)
                     return {
-                        'status': 'error',
-                        'error': f'Could not attach to or spawn process: {process_name}',
-                        'matches': []
+                        "status": "error",
+                        "error": f"Could not attach to or spawn process: {process_name}",
+                        "matches": []
                     }
 
             # Frida script for memory scanning
@@ -692,28 +692,28 @@ class AdvancedDynamicAnalyzer:
             """
 
             script = session.create_script(script_code)
-            results = {'matches': [], 'status': 'success', 'scan_count': 0}
+            results = {"matches": [], "status": "success", "scan_count": 0}
 
             def on_message(message, data):
                 if data:
                     self.logger.debug(f"Message data: {len(data)} bytes")
-                if message['type'] == 'send':
-                    payload = message['payload']
-                    if payload['type'] == 'scan_complete':
-                        results['matches'].extend(payload['matches'])
-                        results['scan_count'] = payload['scan_count']
-                    elif payload['type'] == 'error':
+                if message["type"] == "send":
+                    payload = message["payload"]
+                    if payload["type"] == "scan_complete":
+                        results["matches"].extend(payload["matches"])
+                        results["scan_count"] = payload["scan_count"]
+                    elif payload["type"] == "error":
                         self.logger.error(f"Frida script error: {payload['message']}")
-                    elif payload['type'] == 'complete':
-                        results['status'] = 'complete'
+                    elif payload["type"] == "complete":
+                        results["status"] = "complete"
 
-            script.on('message', on_message)
+            script.on("message", on_message)
             script.load()
 
             # Wait for scanning to complete
             timeout = 35  # Give extra time for completion
             start_time = time.time()
-            while time.time() - start_time < timeout and results['status'] != 'complete':
+            while time.time() - start_time < timeout and results["status"] != "complete":
                 time.sleep(1)
 
             script.unload()
@@ -722,13 +722,13 @@ class AdvancedDynamicAnalyzer:
             # Remove duplicates and sort by address
             unique_matches = []
             seen = set()
-            for match in results['matches']:
-                key = (match['address'], match['keyword'])
+            for match in results["matches"]:
+                key = (match["address"], match["keyword"])
                 if key not in seen:
                     seen.add(key)
                     unique_matches.append(match)
 
-            results['matches'] = sorted(unique_matches, key=lambda x: int(x['address'], 16))
+            results["matches"] = sorted(unique_matches, key=lambda x: int(x["address"], 16))
             self.logger.info(f"Frida memory scan found {len(results['matches'])} matches")
 
             return results
@@ -736,9 +736,9 @@ class AdvancedDynamicAnalyzer:
         except Exception as e:
             self.logger.error(f"Frida memory scan error: {e}")
             return {
-                'status': 'error',
-                'error': str(e),
-                'matches': []
+                "status": "error",
+                "error": str(e),
+                "matches": []
             }
 
     def _psutil_memory_scan(self, keywords: List[str], target_process: Optional[str] = None) -> Dict[str, Any]:
@@ -748,9 +748,9 @@ class AdvancedDynamicAnalyzer:
 
             # Find target process
             target_proc = None
-            for proc in psutil.process_iter(['pid', 'name', 'exe']):
+            for proc in psutil.process_iter(["pid", "name", "exe"]):
                 try:
-                    if process_name.lower() in proc.info['name'].lower():
+                    if process_name.lower() in proc.info["name"].lower():
                         target_proc = proc
                         break
                 except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
@@ -766,9 +766,9 @@ class AdvancedDynamicAnalyzer:
                 except Exception as e:
                     logger.error("Exception in dynamic_analyzer: %s", e)
                     return {
-                        'status': 'error',
-                        'error': f'Could not find or start process: {process_name}',
-                        'matches': []
+                        "status": "error",
+                        "error": f"Could not find or start process: {process_name}",
+                        "matches": []
                     }
 
             matches = []
@@ -776,51 +776,51 @@ class AdvancedDynamicAnalyzer:
             # Basic memory information (limited on most systems)
             try:
                 memory_info = target_proc.memory_info()
-                memory_maps = target_proc.memory_maps() if hasattr(target_proc, 'memory_maps') else []
+                memory_maps = target_proc.memory_maps() if hasattr(target_proc, "memory_maps") else []
 
                 # Simulate memory scanning with process environment and command line
-                cmdline = ' '.join(target_proc.cmdline()) if hasattr(target_proc, 'cmdline') else ''
-                environ_vars = list(target_proc.environ().values()) if hasattr(target_proc, 'environ') else []
+                cmdline = " ".join(target_proc.cmdline()) if hasattr(target_proc, "cmdline") else ""
+                environ_vars = list(target_proc.environ().values()) if hasattr(target_proc, "environ") else []
 
-                search_text = (cmdline + ' ' + ' '.join(environ_vars)).lower()
+                search_text = (cmdline + " " + " ".join(environ_vars)).lower()
 
                 for keyword in keywords:
                     if keyword.lower() in search_text:
                         matches.append({
-                            'address': '0x00000000',  # Placeholder address
-                            'keyword': keyword,
-                            'context': f'Found in process environment/cmdline: {keyword}',
-                            'offset': 0,
-                            'region_base': '0x00000000',
-                            'region_size': len(search_text)
+                            "address": "0x00000000",  # Placeholder address
+                            "keyword": keyword,
+                            "context": f"Found in process environment/cmdline: {keyword}",
+                            "offset": 0,
+                            "region_base": "0x00000000",
+                            "region_size": len(search_text)
                         })
 
                 self.logger.info(f"PSUtil memory scan found {len(matches)} matches")
 
                 return {
-                    'status': 'success',
-                    'matches': matches,
-                    'memory_info': {
-                        'rss': memory_info.rss,
-                        'vms': memory_info.vms,
-                        'num_memory_maps': len(memory_maps)
+                    "status": "success",
+                    "matches": matches,
+                    "memory_info": {
+                        "rss": memory_info.rss,
+                        "vms": memory_info.vms,
+                        "num_memory_maps": len(memory_maps)
                     }
                 }
 
             except (psutil.AccessDenied, psutil.NoSuchProcess) as e:
                 logger.error("Error in dynamic_analyzer: %s", e)
                 return {
-                    'status': 'error',
-                    'error': f'Access denied or process not found: {e}',
-                    'matches': []
+                    "status": "error",
+                    "error": f"Access denied or process not found: {e}",
+                    "matches": []
                 }
 
         except Exception as e:
             self.logger.error(f"PSUtil memory scan error: {e}")
             return {
-                'status': 'error',
-                'error': str(e),
-                'matches': []
+                "status": "error",
+                "error": str(e),
+                "matches": []
             }
 
     def _fallback_memory_scan(self, keywords: List[str], target_process: Optional[str] = None) -> Dict[str, Any]:
@@ -834,11 +834,11 @@ class AdvancedDynamicAnalyzer:
             matches = []
 
             # Read and scan the binary file itself
-            with open(self.binary_path, 'rb') as f:
+            with open(self.binary_path, "rb") as f:
                 binary_data = f.read()
 
             # Convert to text for searching
-            binary_text = binary_data.decode('utf-8', errors='ignore').lower()
+            binary_text = binary_data.decode("utf-8", errors="ignore").lower()
 
             for keyword in keywords:
                 keyword_lower = keyword.lower()
@@ -855,12 +855,12 @@ class AdvancedDynamicAnalyzer:
                     context = binary_text[context_start:context_end]
 
                     matches.append({
-                        'address': f'0x{index:08X}',
-                        'keyword': keyword,
-                        'context': context.replace('\x00', '.'),
-                        'offset': index,
-                        'region_base': '0x00000000',
-                        'region_size': len(binary_data)
+                        "address": f"0x{index:08X}",
+                        "keyword": keyword,
+                        "context": context.replace("\x00", "."),
+                        "offset": index,
+                        "region_base": "0x00000000",
+                        "region_size": len(binary_data)
                     })
 
                     offset = index + len(keyword)
@@ -868,17 +868,17 @@ class AdvancedDynamicAnalyzer:
             self.logger.info(f"Fallback memory scan found {len(matches)} matches")
 
             return {
-                'status': 'success',
-                'matches': matches,
-                'scan_type': 'binary_file_analysis'
+                "status": "success",
+                "matches": matches,
+                "scan_type": "binary_file_analysis"
             }
 
         except Exception as e:
             self.logger.error(f"Fallback memory scan error: {e}")
             return {
-                'status': 'error',
-                'error': str(e),
-                'matches': []
+                "status": "error",
+                "error": str(e),
+                "matches": []
             }
 
 
@@ -897,10 +897,10 @@ def run_dynamic_analysis(app, binary_path: Optional[Union[str, Path]] = None,
         Analysis results dictionary
     """
     # Use provided path or get from app
-    path = binary_path or getattr(app, 'binary_path', None)
+    path = binary_path or getattr(app, "binary_path", None)
     if not path:
         app.update_output.emit(log_message("[Dynamic] No binary selected."))
-        return {'error': 'No binary selected'}
+        return {"error": "No binary selected"}
 
     app.update_output.emit(log_message("[Dynamic] Starting dynamic analysis..."))
 
@@ -920,18 +920,18 @@ def run_dynamic_analysis(app, binary_path: Optional[Union[str, Path]] = None,
     app.analyze_results.append("\n=== DYNAMIC ANALYSIS RESULTS ===")
 
     # Subprocess results
-    if 'subprocess_execution' in results:
-        sub_result = results['subprocess_execution']
+    if "subprocess_execution" in results:
+        sub_result = results["subprocess_execution"]
         app.analyze_results.append("\nSubprocess Execution:")
         app.analyze_results.append(f"  Success: {sub_result.get('success', False)}")
-        if sub_result.get('return_code') is not None:
+        if sub_result.get("return_code") is not None:
             app.analyze_results.append(f"  Return Code: {sub_result['return_code']}")
 
     # Frida runtime analysis
-    if 'frida_runtime_analysis' in results:
-        frida_result = results['frida_runtime_analysis']
-        if frida_result.get('success'):
-            analysis_data = frida_result.get('analysis_data', {})
+    if "frida_runtime_analysis" in results:
+        frida_result = results["frida_runtime_analysis"]
+        if frida_result.get("success"):
+            analysis_data = frida_result.get("analysis_data", {})
             app.analyze_results.append("\nRuntime Analysis:")
             app.analyze_results.append(f"  File Operations: {len(analysis_data.get('file_access', []))}")
             app.analyze_results.append(f"  Registry Operations: {len(analysis_data.get('registry_access', []))}")
@@ -939,20 +939,20 @@ def run_dynamic_analysis(app, binary_path: Optional[Union[str, Path]] = None,
             app.analyze_results.append(f"  License Functions: {len(analysis_data.get('license_function', []))}")
 
             # Show some details
-            if analysis_data.get('license_function'):
+            if analysis_data.get("license_function"):
                 app.analyze_results.append("\n  Detected License Functions:")
-                for func in analysis_data['license_function'][:5]:
+                for func in analysis_data["license_function"][:5]:
                     app.analyze_results.append(f"    - {func.get('function', 'Unknown')} in {func.get('module', 'Unknown')}")
 
     # Process behavior
-    if 'process_behavior_analysis' in results:
-        behavior = results['process_behavior_analysis']
-        if 'error' not in behavior:
+    if "process_behavior_analysis" in results:
+        behavior = results["process_behavior_analysis"]
+        if "error" not in behavior:
             app.analyze_results.append("\nProcess Behavior:")
             app.analyze_results.append(f"  PID: {behavior.get('pid', 'Unknown')}")
             app.analyze_results.append(f"  Threads: {behavior.get('threads', 0)}")
-            if behavior.get('memory_info'):
-                mem = behavior['memory_info']
+            if behavior.get("memory_info"):
+                mem = behavior["memory_info"]
                 app.analyze_results.append(f"  Memory RSS: {mem.get('rss', 0) / 1024 / 1024:.2f} MB")
 
     return results
@@ -1051,7 +1051,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> List[str]
 
         # Launch the process
         logs.append("Launching process...")
-        process = subprocess.Popen([binary_path], encoding='utf-8')
+        process = subprocess.Popen([binary_path], encoding="utf-8")
         logs.append(f"Process started with PID {process.pid}")
 
         # Attach Frida

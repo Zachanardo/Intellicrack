@@ -54,14 +54,14 @@ class DefaultLoadingStrategy(ModelLoadingStrategy):
     def should_preload(self, config: LLMConfig) -> bool:
         """Don't preload by default, but allow API models for quick initialization."""
         # API models are quick to initialize and don't consume much local resources
-        if hasattr(config, 'provider') and config.provider.value in ["openai", "anthropic", "ollama"]:
+        if hasattr(config, "provider") and config.provider.value in ["openai", "anthropic", "ollama"]:
             return True
         return False
 
     def get_load_priority(self, config: LLMConfig) -> int:
         """Basic priority based on provider type."""
         # Give API models higher priority since they're faster to initialize
-        if hasattr(config, 'provider'):
+        if hasattr(config, "provider"):
             if config.provider.value in ["openai", "anthropic"]:
                 return 10
             elif config.provider.value in ["ollama", "local_api"]:
@@ -256,7 +256,7 @@ class LazyModelWrapper:
         with self._initialization_lock:
             if self._backend:
                 # Call cleanup method if available
-                if hasattr(self._backend, 'cleanup'):
+                if hasattr(self._backend, "cleanup"):
                     try:
                         self._backend.cleanup()
                     except Exception as e:
@@ -287,7 +287,7 @@ class LazyModelWrapper:
 
         # Try to get actual memory usage if possible
         try:
-            if hasattr(self._backend, 'get_memory_usage'):
+            if hasattr(self._backend, "get_memory_usage"):
                 return self._backend.get_memory_usage()
         except Exception as e:
             logger.debug(f"Could not get memory usage from backend: {e}")

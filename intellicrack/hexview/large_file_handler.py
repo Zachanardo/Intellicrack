@@ -45,8 +45,8 @@ except ImportError as e:
     QThread = object
 
 __all__ = [
-    'LargeFileHandler', 'MemoryStrategy', 'LoadingStrategy',
-    'FileCache', 'MemoryMonitor', 'BackgroundLoader'
+    "LargeFileHandler", "MemoryStrategy", "LoadingStrategy",
+    "FileCache", "MemoryMonitor", "BackgroundLoader"
 ]
 
 
@@ -141,7 +141,7 @@ class FileCache:
 
         # Find region with lowest reference count and oldest access time
         oldest_key = None
-        oldest_time = float('inf')
+        oldest_time = float("inf")
 
         for key, region in self.regions.items():
             if region.ref_count == 0 and region.last_accessed < oldest_time:
@@ -194,10 +194,10 @@ class FileCache:
         """Get cache statistics."""
         with self.lock:
             return {
-                'regions': len(self.regions),
-                'total_memory_mb': self.total_memory / (1024 * 1024),
-                'max_memory_mb': self.config.cache_size_mb,
-                'utilization': self.total_memory / (self.config.cache_size_mb * 1024 * 1024)
+                "regions": len(self.regions),
+                "total_memory_mb": self.total_memory / (1024 * 1024),
+                "max_memory_mb": self.config.cache_size_mb,
+                "utilization": self.total_memory / (self.config.cache_size_mb * 1024 * 1024)
             }
 
 
@@ -306,7 +306,7 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
     def run(self):
         """Main loading loop."""
         try:
-            with open(self.file_path, 'rb') as file:
+            with open(self.file_path, "rb") as file:
                 while not self.should_stop:
                     # Get next load request
                     with self.queue_lock:
@@ -429,7 +429,7 @@ class LargeFileHandler:
     def _init_direct_load(self):
         """Initialize direct loading strategy."""
         try:
-            with open(self.file_path, 'rb') as f:
+            with open(self.file_path, "rb") as f:
                 data = f.read()
 
             # Cache the entire file
@@ -447,7 +447,7 @@ class LargeFileHandler:
     def _init_memory_map(self):
         """Initialize memory mapping strategy."""
         try:
-            self.file_handle = open(self.file_path, 'rb')  # pylint: disable=consider-using-with
+            self.file_handle = open(self.file_path, "rb")  # pylint: disable=consider-using-with
             self.mmap_file = mmap.mmap(
                 self.file_handle.fileno(),
                 length=0,
@@ -479,7 +479,7 @@ class LargeFileHandler:
             Read binary data
         """
         if offset < 0 or size <= 0 or offset >= self.file_size:
-            return b''
+            return b""
 
         # Adjust size to file bounds
         size = min(size, self.file_size - offset)
@@ -507,7 +507,7 @@ class LargeFileHandler:
             self.cache.release_region(region)
             return data
 
-        return b''  # Should not happen with direct loading
+        return b""  # Should not happen with direct loading
 
     def _read_mmap(self, offset: int, size: int) -> bytes:
         """Read using memory mapping."""
@@ -541,7 +541,7 @@ class LargeFileHandler:
             chunk_size = max(size, self.config.chunk_size_mb * 1024 * 1024)
             chunk_offset = (offset // chunk_size) * chunk_size
 
-            with open(self.file_path, 'rb') as f:
+            with open(self.file_path, "rb") as f:
                 f.seek(chunk_offset)
                 chunk_data = f.read(min(chunk_size, self.file_size - chunk_offset))
 
@@ -567,7 +567,7 @@ class LargeFileHandler:
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Streaming read error: %s", e)
 
-        return b''
+        return b""
 
     def _prefetch_chunks(self, next_offset: int):
         """Prefetch chunks for better performance."""
@@ -596,7 +596,7 @@ class LargeFileHandler:
 
             # Clear some cache entries
             cache_stats = self.cache.get_stats()
-            if cache_stats['utilization'] > 0.9:
+            if cache_stats["utilization"] > 0.9:
                 self.cache.clear()
 
             logger.warning(f"Memory pressure detected: {memory_usage:.1%}, "
@@ -614,7 +614,7 @@ class LargeFileHandler:
 
             # Clean unused cache regions
             cache_stats = self.cache.get_stats()
-            if cache_stats.get('utilization', 0) > 0.8:
+            if cache_stats.get("utilization", 0) > 0.8:
                 # Remove least recently used regions
                 removed_count = self.cache.cleanup_old_regions(max_age=60)  # 1 minute
                 if removed_count > 0:
@@ -636,13 +636,13 @@ class LargeFileHandler:
         sequential_ratio = self._calculate_sequential_ratio(recent_patterns)
 
         return {
-            'file_size_mb': self.file_size / (1024 * 1024),
-            'memory_strategy': self.memory_strategy.value,
-            'loading_strategy': self.loading_strategy.value,
-            'cache_stats': cache_stats,
-            'access_patterns': len(self.access_patterns),
-            'sequential_ratio': sequential_ratio,
-            'background_loader_active': self.background_loader is not None and self.background_loader.isAlive() if hasattr(self.background_loader, 'isAlive') else False
+            "file_size_mb": self.file_size / (1024 * 1024),
+            "memory_strategy": self.memory_strategy.value,
+            "loading_strategy": self.loading_strategy.value,
+            "cache_stats": cache_stats,
+            "access_patterns": len(self.access_patterns),
+            "sequential_ratio": sequential_ratio,
+            "background_loader_active": self.background_loader is not None and self.background_loader.isAlive() if hasattr(self.background_loader, "isAlive") else False
         }
 
     def _calculate_sequential_ratio(self, patterns: List[Tuple[int, int, float]]) -> float:
@@ -669,7 +669,7 @@ class LargeFileHandler:
             # Stop background loader
             if self.background_loader:
                 self.background_loader.stop()
-                if hasattr(self.background_loader, 'wait'):
+                if hasattr(self.background_loader, "wait"):
                     self.background_loader.wait()
 
             # Stop memory monitoring

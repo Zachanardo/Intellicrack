@@ -24,4 +24,4 @@ from .binary.pe_common import (
     iterate_pe_imports_with_dll,
 )
 
-__all__ = ['extract_pe_imports', 'iterate_pe_imports_with_dll', 'analyze_pe_import_security']
+__all__ = ["extract_pe_imports", "iterate_pe_imports_with_dll", "analyze_pe_import_security"]

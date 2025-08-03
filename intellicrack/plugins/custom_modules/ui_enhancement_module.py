@@ -99,19 +99,19 @@ class UIConfig:
             string keys and JSON-serializable values
         """
         return {
-            'theme': self.theme.value,
-            'font_family': self.font_family,
-            'font_size': self.font_size,
-            'auto_refresh': self.auto_refresh,
-            'refresh_interval': self.refresh_interval,
-            'max_log_entries': self.max_log_entries,
-            'enable_animations': self.enable_animations,
-            'show_tooltips': self.show_tooltips,
-            'panel_weights': self.panel_weights
+            "theme": self.theme.value,
+            "font_family": self.font_family,
+            "font_size": self.font_size,
+            "auto_refresh": self.auto_refresh,
+            "refresh_interval": self.refresh_interval,
+            "max_log_entries": self.max_log_entries,
+            "enable_animations": self.enable_animations,
+            "show_tooltips": self.show_tooltips,
+            "panel_weights": self.panel_weights
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'UIConfig':
+    def from_dict(cls, data: Dict[str, Any]) -> "UIConfig":
         """Create UIConfig instance from dictionary data.
 
         Deserializes configuration data from a dictionary, typically
@@ -125,15 +125,15 @@ class UIConfig:
             UIConfig instance with settings from the dictionary
         """
         config = cls()
-        config.theme = UITheme(data.get('theme', 'dark'))
-        config.font_family = data.get('font_family', 'Consolas')
-        config.font_size = data.get('font_size', 10)
-        config.auto_refresh = data.get('auto_refresh', True)
-        config.refresh_interval = data.get('refresh_interval', 1000)
-        config.max_log_entries = data.get('max_log_entries', 10000)
-        config.enable_animations = data.get('enable_animations', True)
-        config.show_tooltips = data.get('show_tooltips', True)
-        config.panel_weights = tuple(data.get('panel_weights', [1, 2, 1]))
+        config.theme = UITheme(data.get("theme", "dark"))
+        config.font_family = data.get("font_family", "Consolas")
+        config.font_size = data.get("font_size", 10)
+        config.auto_refresh = data.get("auto_refresh", True)
+        config.refresh_interval = data.get("refresh_interval", 1000)
+        config.max_log_entries = data.get("max_log_entries", 10000)
+        config.enable_animations = data.get("enable_animations", True)
+        config.show_tooltips = data.get("show_tooltips", True)
+        config.panel_weights = tuple(data.get("panel_weights", [1, 2, 1]))
         return config
 
 
@@ -151,13 +151,13 @@ class AnalysisResult:
     def to_dict(self) -> Dict[str, Any]:
         """Convert enhancement result to dictionary representation"""
         return {
-            'target_file': self.target_file,
-            'protection_type': self.protection_type,
-            'confidence': self.confidence,
-            'bypass_methods': self.bypass_methods,
-            'timestamp': self.timestamp.isoformat(),
-            'details': self.details,
-            'generated_scripts': self.generated_scripts
+            "target_file": self.target_file,
+            "protection_type": self.protection_type,
+            "confidence": self.confidence,
+            "bypass_methods": self.bypass_methods,
+            "timestamp": self.timestamp.isoformat(),
+            "details": self.details,
+            "generated_scripts": self.generated_scripts
         }
 
 
@@ -168,18 +168,18 @@ class RealTimeChart:
         """Initialize real-time chart widget with dark theme styling."""
         self.parent = parent
         self.title = title
-        self.figure = Figure(figsize=(8, 4), dpi=100, facecolor='#2d2d2d')
-        self.axis = self.figure.add_subplot(111, facecolor='#2d2d2d')
+        self.figure = Figure(figsize=(8, 4), dpi=100, facecolor="#2d2d2d")
+        self.axis = self.figure.add_subplot(111, facecolor="#2d2d2d")
 
         # Style the plot for dark theme
-        self.axis.tick_params(colors='white')
-        self.axis.xaxis.label.set_color('white')
-        self.axis.yaxis.label.set_color('white')
-        self.axis.title.set_color('white')
-        self.axis.spines['bottom'].set_color('white')
-        self.axis.spines['top'].set_color('white')
-        self.axis.spines['left'].set_color('white')
-        self.axis.spines['right'].set_color('white')
+        self.axis.tick_params(colors="white")
+        self.axis.xaxis.label.set_color("white")
+        self.axis.yaxis.label.set_color("white")
+        self.axis.title.set_color("white")
+        self.axis.spines["bottom"].set_color("white")
+        self.axis.spines["top"].set_color("white")
+        self.axis.spines["left"].set_color("white")
+        self.axis.spines["right"].set_color("white")
 
         self.canvas = FigureCanvasTkAgg(self.figure, parent)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
@@ -211,14 +211,14 @@ class RealTimeChart:
         values = [point[1] for point in self.data_points]
 
         # Plot line
-        self.axis.plot(times, values, color='#00ff41', linewidth=2)
-        self.axis.fill_between(times, values, alpha=0.3, color='#00ff41')
+        self.axis.plot(times, values, color="#00ff41", linewidth=2)
+        self.axis.fill_between(times, values, alpha=0.3, color="#00ff41")
 
         # Styling
-        self.axis.set_title(self.title, color='white', fontsize=12)
-        self.axis.set_xlabel('Time', color='white')
-        self.axis.set_ylabel('Value', color='white')
-        self.axis.grid(True, alpha=0.3, color='white')
+        self.axis.set_title(self.title, color="white", fontsize=12)
+        self.axis.set_xlabel("Time", color="white")
+        self.axis.set_ylabel("Value", color="white")
+        self.axis.grid(True, alpha=0.3, color="white")
 
         # Format time axis
         if len(times) > 1:
@@ -255,7 +255,7 @@ class LogViewer:
         self.search_var = tk.StringVar()
         self.search_entry = ttk.Entry(self.toolbar, textvariable=self.search_var, width=20)
         self.search_entry.pack(side=tk.LEFT, padx=2)
-        self.search_entry.bind('<KeyRelease>', self.on_search)
+        self.search_entry.bind("<KeyRelease>", self.on_search)
 
         # Log level filter
         ttk.Label(self.toolbar, text="Level:").pack(side=tk.LEFT, padx=(10, 2))
@@ -264,7 +264,7 @@ class LogViewer:
                                        values=["ALL", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
                                        width=10, state="readonly")
         self.level_combo.pack(side=tk.LEFT, padx=2)
-        self.level_combo.bind('<<ComboboxSelected>>', self.on_filter_change)
+        self.level_combo.bind("<<ComboboxSelected>>", self.on_filter_change)
 
         # Clear button
         self.clear_btn = ttk.Button(self.toolbar, text="Clear", command=self.clear_logs)
@@ -282,10 +282,10 @@ class LogViewer:
             self.text_frame,
             wrap=tk.WORD,
             font=(config.font_family, config.font_size),
-            bg='#1e1e1e',
-            fg='#ffffff',
-            insertbackground='#ffffff',
-            selectbackground='#264f78'
+            bg="#1e1e1e",
+            fg="#ffffff",
+            insertbackground="#ffffff",
+            selectbackground="#264f78"
         )
         self.text_widget.pack(fill=tk.BOTH, expand=True)
 
@@ -302,10 +302,10 @@ class LogViewer:
         """Add log entry"""
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         entry = {
-            'timestamp': timestamp,
-            'level': level,
-            'source': source,
-            'message': message
+            "timestamp": timestamp,
+            "level": level,
+            "source": source,
+            "message": message
         }
 
         self.log_entries.append(entry)
@@ -325,15 +325,15 @@ class LogViewer:
 
         for entry in self.log_entries:
             # Apply filters
-            if level_filter != "ALL" and entry['level'] != level_filter:
+            if level_filter != "ALL" and entry["level"] != level_filter:
                 continue
 
-            if search_term and search_term not in entry['message'].lower():
+            if search_term and search_term not in entry["message"].lower():
                 continue
 
             # Format entry
             line = f"[{entry['timestamp']}] "
-            if entry['source']:
+            if entry["source"]:
                 line += f"{entry['source']}: "
             line += f"{entry['level']}: {entry['message']}\n"
 
@@ -343,7 +343,7 @@ class LogViewer:
             end_pos = self.text_widget.index(tk.END + "-1c")
 
             # Apply level tag
-            self.text_widget.tag_add(entry['level'], start_pos, end_pos)
+            self.text_widget.tag_add(entry["level"], start_pos, end_pos)
 
             # Highlight search terms
             if search_term:
@@ -363,8 +363,8 @@ class LogViewer:
                 break
 
             # Calculate actual positions
-            line_start = int(start_pos.split('.')[0])
-            char_start = int(start_pos.split('.')[1])
+            line_start = int(start_pos.split(".")[0])
+            char_start = int(start_pos.split(".")[1])
 
             highlight_start = f"{line_start}.{char_start + idx}"
             highlight_end = f"{line_start}.{char_start + idx + len(search_term)}"
@@ -394,10 +394,10 @@ class LogViewer:
 
         if filename:
             try:
-                with open(filename, 'w', encoding='utf-8') as f:
+                with open(filename, "w", encoding="utf-8") as f:
                     for entry in self.log_entries:
                         line = f"[{entry['timestamp']}] "
-                        if entry['source']:
+                        if entry["source"]:
                             line += f"{entry['source']}: "
                         line += f"{entry['level']}: {entry['message']}\n"
                         f.write(line)
@@ -426,7 +426,7 @@ class ProgressTracker:
         self.progress_bar = ttk.Progressbar(
             self.frame,
             variable=self.progress_var,
-            mode='determinate',
+            mode="determinate",
             length=300
         )
         self.progress_bar.pack(padx=10, pady=5)
@@ -571,7 +571,7 @@ class FileExplorerPanel:
         self.path_var = tk.StringVar(value=str(self.current_path))
         self.path_entry = ttk.Entry(self.toolbar, textvariable=self.path_var)
         self.path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
-        self.path_entry.bind('<Return>', self.on_path_change)
+        self.path_entry.bind("<Return>", self.on_path_change)
 
         # Browse button
         self.browse_btn = ttk.Button(self.toolbar, text="Browse", command=self.browse_folder)
@@ -583,18 +583,18 @@ class FileExplorerPanel:
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=2)
 
         # Tree widget with scrollbars
-        self.tree = ttk.Treeview(tree_frame, columns=('size', 'modified', 'type'), show='tree headings')
+        self.tree = ttk.Treeview(tree_frame, columns=("size", "modified", "type"), show="tree headings")
 
         # Configure columns
-        self.tree.heading('#0', text='Name')
-        self.tree.heading('size', text='Size')
-        self.tree.heading('modified', text='Modified')
-        self.tree.heading('type', text='Type')
+        self.tree.heading("#0", text="Name")
+        self.tree.heading("size", text="Size")
+        self.tree.heading("modified", text="Modified")
+        self.tree.heading("type", text="Type")
 
-        self.tree.column('#0', width=200)
-        self.tree.column('size', width=100)
-        self.tree.column('modified', width=150)
-        self.tree.column('type', width=100)
+        self.tree.column("#0", width=200)
+        self.tree.column("size", width=100)
+        self.tree.column("modified", width=150)
+        self.tree.column("type", width=100)
 
         # Scrollbars
         v_scroll = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.tree.yview)
@@ -603,17 +603,17 @@ class FileExplorerPanel:
         self.tree.configure(yscrollcommand=v_scroll.set, xscrollcommand=h_scroll.set)
 
         # Pack widgets
-        self.tree.grid(row=0, column=0, sticky='nsew')
-        v_scroll.grid(row=0, column=1, sticky='ns')
-        h_scroll.grid(row=1, column=0, sticky='ew')
+        self.tree.grid(row=0, column=0, sticky="nsew")
+        v_scroll.grid(row=0, column=1, sticky="ns")
+        h_scroll.grid(row=1, column=0, sticky="ew")
 
         tree_frame.grid_rowconfigure(0, weight=1)
         tree_frame.grid_columnconfigure(0, weight=1)
 
         # Bind events
-        self.tree.bind('<Double-1>', self.on_double_click)
-        self.tree.bind('<Button-3>', self.on_right_click)
-        self.tree.bind('<<TreeviewSelect>>', self.on_selection_change)
+        self.tree.bind("<Double-1>", self.on_double_click)
+        self.tree.bind("<Button-3>", self.on_right_click)
+        self.tree.bind("<<TreeviewSelect>>", self.on_selection_change)
 
     def create_status_bar(self):
         """Create status bar"""
@@ -669,22 +669,22 @@ class FileExplorerPanel:
                     modified = datetime.fromtimestamp(item.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
 
                     tree_item = self.tree.insert(
-                        '', 'end',
+                        "", "end",
                         text=f"{icon} {item.name}",
                         values=(size, modified, item_type),
-                        tags=('directory' if item.is_dir() else 'file',)
+                        tags=("directory" if item.is_dir() else "file",)
                     )
 
                     # Store path in item
-                    self.tree.set(tree_item, 'path', str(item))
+                    self.tree.set(tree_item, "path", str(item))
 
                     # Track items for further processing
                     items.append({
-                        'tree_item': tree_item,
-                        'path': item,
-                        'is_dir': item.is_dir(),
-                        'name': item.name,
-                        'size': size
+                        "tree_item": tree_item,
+                        "path": item,
+                        "is_dir": item.is_dir(),
+                        "name": item.name,
+                        "size": size
                     })
 
                 except (PermissionError, OSError):
@@ -715,22 +715,22 @@ class FileExplorerPanel:
             total_size = 0
 
             for item in items:
-                if not item['is_dir'] and item['path'].suffix:
-                    ext = item['path'].suffix.lower()
+                if not item["is_dir"] and item["path"].suffix:
+                    ext = item["path"].suffix.lower()
                     file_types[ext] = file_types.get(ext, 0) + 1
 
                     # Calculate total size if available
                     try:
-                        if item['path'].exists():
-                            total_size += item['path'].stat().st_size
+                        if item["path"].exists():
+                            total_size += item["path"].stat().st_size
                     except (OSError, PermissionError):
                         pass
 
             # Store analysis for tooltips and future reference
             self._directory_analysis = {
-                'file_types': file_types,
-                'total_size': total_size,
-                'item_count': len(items)
+                "file_types": file_types,
+                "total_size": total_size,
+                "item_count": len(items)
             }
 
     def get_file_icon(self, file_path: Path) -> str:
@@ -738,33 +738,33 @@ class FileExplorerPanel:
         suffix = file_path.suffix.lower()
 
         icons = {
-            '.exe': '⚙️',
-            '.dll': '🔧',
-            '.sys': '⚡',
-            '.bin': '💾',
-            '.bat': '📋',
-            '.cmd': '📋',
-            '.ps1': '💠',
-            '.py': '🐍',
-            '.js': '🟨',
-            '.jar': '☕',
-            '.zip': '📦',
-            '.rar': '📦',
-            '.7z': '📦',
-            '.pdf': '📄',
-            '.txt': '📄',
-            '.log': '📋',
-            '.json': '⚙️',
-            '.xml': '⚙️',
-            '.cfg': '⚙️',
-            '.ini': '⚙️'
+            ".exe": "⚙️",
+            ".dll": "🔧",
+            ".sys": "⚡",
+            ".bin": "💾",
+            ".bat": "📋",
+            ".cmd": "📋",
+            ".ps1": "💠",
+            ".py": "🐍",
+            ".js": "🟨",
+            ".jar": "☕",
+            ".zip": "📦",
+            ".rar": "📦",
+            ".7z": "📦",
+            ".pdf": "📄",
+            ".txt": "📄",
+            ".log": "📋",
+            ".json": "⚙️",
+            ".xml": "⚙️",
+            ".cfg": "⚙️",
+            ".ini": "⚙️"
         }
 
-        return icons.get(suffix, '📄')
+        return icons.get(suffix, "📄")
 
     def format_file_size(self, size: int) -> str:
         """Format file size in human readable format"""
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        for unit in ["B", "KB", "MB", "GB", "TB"]:
             if size < 1024.0:
                 return f"{size:.1f} {unit}"
             size /= 1024.0
@@ -773,7 +773,7 @@ class FileExplorerPanel:
     def on_double_click(self, event):
         """Handle double-click on tree item"""
         item = self.tree.selection()[0]
-        item_path = Path(self.tree.set(item, 'path'))
+        item_path = Path(self.tree.set(item, "path"))
 
         if item_path.is_dir():
             self.current_path = item_path
@@ -793,7 +793,7 @@ class FileExplorerPanel:
         """Handle selection change"""
         selection = self.tree.selection()
         if selection:
-            item_path = Path(self.tree.set(selection[0], 'path'))
+            item_path = Path(self.tree.set(selection[0], "path"))
             self.status_label.config(text=str(item_path))
 
     def on_path_change(self, event):
@@ -829,7 +829,7 @@ class FileExplorerPanel:
         """Analyze selected file"""
         selection = self.tree.selection()
         if selection:
-            item_path = Path(self.tree.set(selection[0], 'path'))
+            item_path = Path(self.tree.set(selection[0], "path"))
             if item_path.is_file():
                 self.analyze_file(item_path)
 
@@ -841,7 +841,7 @@ class FileExplorerPanel:
         """Generate scripts for selected file"""
         selection = self.tree.selection()
         if selection:
-            item_path = Path(self.tree.set(selection[0], 'path'))
+            item_path = Path(self.tree.set(selection[0], "path"))
             if item_path.is_file():
                 self.ui_controller.generate_scripts(str(item_path))
 
@@ -849,7 +849,7 @@ class FileExplorerPanel:
         """Open location in system explorer"""
         selection = self.tree.selection()
         if selection:
-            item_path = Path(self.tree.set(selection[0], 'path'))
+            item_path = Path(self.tree.set(selection[0], "path"))
 
             if sys.platform == "win32":
                 os.startfile(str(item_path.parent))
@@ -862,7 +862,7 @@ class FileExplorerPanel:
         """Copy file path to clipboard"""
         selection = self.tree.selection()
         if selection:
-            item_path = Path(self.tree.set(selection[0], 'path'))
+            item_path = Path(self.tree.set(selection[0], "path"))
             self.parent.clipboard_clear()
             self.parent.clipboard_append(str(item_path))
 
@@ -870,7 +870,7 @@ class FileExplorerPanel:
         """Show file properties dialog"""
         selection = self.tree.selection()
         if selection:
-            item_path = Path(self.tree.set(selection[0], 'path'))
+            item_path = Path(self.tree.set(selection[0], "path"))
             self.ui_controller.show_file_properties(item_path)
 
 
@@ -912,7 +912,7 @@ class AnalysisViewerPanel:
         self.file_info_text = scrolledtext.ScrolledText(
             info_frame, height=4, wrap=tk.WORD,
             font=(self.config.font_family, self.config.font_size),
-            bg='#1e1e1e', fg='#ffffff'
+            bg="#1e1e1e", fg="#ffffff"
         )
         self.file_info_text.pack(fill=tk.X, padx=5, pady=5)
 
@@ -924,17 +924,17 @@ class AnalysisViewerPanel:
         details_frame = ttk.Frame(protection_frame)
         details_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Label(details_frame, text="Protection Type:").grid(row=0, column=0, sticky='w', padx=5)
-        self.protection_type_label = ttk.Label(details_frame, text="Unknown", font=(self.config.font_family, self.config.font_size, 'bold'))
-        self.protection_type_label.grid(row=0, column=1, sticky='w', padx=5)
+        ttk.Label(details_frame, text="Protection Type:").grid(row=0, column=0, sticky="w", padx=5)
+        self.protection_type_label = ttk.Label(details_frame, text="Unknown", font=(self.config.font_family, self.config.font_size, "bold"))
+        self.protection_type_label.grid(row=0, column=1, sticky="w", padx=5)
 
-        ttk.Label(details_frame, text="Confidence:").grid(row=1, column=0, sticky='w', padx=5)
+        ttk.Label(details_frame, text="Confidence:").grid(row=1, column=0, sticky="w", padx=5)
         self.confidence_label = ttk.Label(details_frame, text="0%")
-        self.confidence_label.grid(row=1, column=1, sticky='w', padx=5)
+        self.confidence_label.grid(row=1, column=1, sticky="w", padx=5)
 
         # Confidence progress bar
-        self.confidence_progress = ttk.Progressbar(details_frame, mode='determinate', length=200)
-        self.confidence_progress.grid(row=1, column=2, sticky='w', padx=5)
+        self.confidence_progress = ttk.Progressbar(details_frame, mode="determinate", length=200)
+        self.confidence_progress.grid(row=1, column=2, sticky="w", padx=5)
 
         # Bypass methods
         bypass_frame = ttk.LabelFrame(protection_frame, text="Recommended Bypass Methods")
@@ -943,8 +943,8 @@ class AnalysisViewerPanel:
         self.bypass_listbox = tk.Listbox(
             bypass_frame,
             font=(self.config.font_family, self.config.font_size),
-            bg='#1e1e1e', fg='#ffffff',
-            selectbackground='#264f78'
+            bg="#1e1e1e", fg="#ffffff",
+            selectbackground="#264f78"
         )
         self.bypass_listbox.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
@@ -961,11 +961,11 @@ class AnalysisViewerPanel:
         left_frame = ttk.LabelFrame(paned, text="Analysis Results")
         paned.add(left_frame, weight=1)
 
-        self.details_tree = ttk.Treeview(left_frame, columns=('value',), show='tree headings')
-        self.details_tree.heading('#0', text='Property')
-        self.details_tree.heading('value', text='Value')
-        self.details_tree.column('#0', width=200)
-        self.details_tree.column('value', width=300)
+        self.details_tree = ttk.Treeview(left_frame, columns=("value",), show="tree headings")
+        self.details_tree.heading("#0", text="Property")
+        self.details_tree.heading("value", text="Value")
+        self.details_tree.column("#0", width=200)
+        self.details_tree.column("value", width=300)
 
         tree_scroll = ttk.Scrollbar(left_frame, orient=tk.VERTICAL, command=self.details_tree.yview)
         self.details_tree.configure(yscrollcommand=tree_scroll.set)
@@ -980,12 +980,12 @@ class AnalysisViewerPanel:
         self.details_text = scrolledtext.ScrolledText(
             right_frame, wrap=tk.WORD,
             font=(self.config.font_family, self.config.font_size),
-            bg='#1e1e1e', fg='#ffffff'
+            bg="#1e1e1e", fg="#ffffff"
         )
         self.details_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # Bind tree selection
-        self.details_tree.bind('<<TreeviewSelect>>', self.on_details_select)
+        self.details_tree.bind("<<TreeviewSelect>>", self.on_details_select)
 
     def create_visualization_tab(self):
         """Create visualization tab"""
@@ -1003,7 +1003,7 @@ class AnalysisViewerPanel:
                                  values=["Confidence Over Time", "Protection Distribution", "Bypass Success Rate"],
                                  state="readonly")
         chart_combo.pack(side=tk.LEFT, padx=5)
-        chart_combo.bind('<<ComboboxSelected>>', self.update_visualization)
+        chart_combo.bind("<<ComboboxSelected>>", self.update_visualization)
 
         # Chart frame
         chart_frame = ttk.Frame(self.viz_frame)
@@ -1025,20 +1025,20 @@ class AnalysisViewerPanel:
 
         # History tree
         self.history_tree = ttk.Treeview(self.history_frame,
-                                       columns=('file', 'protection', 'confidence', 'timestamp'),
-                                       show='tree headings')
+                                       columns=("file", "protection", "confidence", "timestamp"),
+                                       show="tree headings")
 
-        self.history_tree.heading('#0', text='#')
-        self.history_tree.heading('file', text='File')
-        self.history_tree.heading('protection', text='Protection')
-        self.history_tree.heading('confidence', text='Confidence')
-        self.history_tree.heading('timestamp', text='Timestamp')
+        self.history_tree.heading("#0", text="#")
+        self.history_tree.heading("file", text="File")
+        self.history_tree.heading("protection", text="Protection")
+        self.history_tree.heading("confidence", text="Confidence")
+        self.history_tree.heading("timestamp", text="Timestamp")
 
-        self.history_tree.column('#0', width=50)
-        self.history_tree.column('file', width=300)
-        self.history_tree.column('protection', width=150)
-        self.history_tree.column('confidence', width=100)
-        self.history_tree.column('timestamp', width=150)
+        self.history_tree.column("#0", width=50)
+        self.history_tree.column("file", width=300)
+        self.history_tree.column("protection", width=150)
+        self.history_tree.column("confidence", width=100)
+        self.history_tree.column("timestamp", width=150)
 
         history_scroll = ttk.Scrollbar(self.history_frame, orient=tk.VERTICAL, command=self.history_tree.yview)
         self.history_tree.configure(yscrollcommand=history_scroll.set)
@@ -1047,7 +1047,7 @@ class AnalysisViewerPanel:
         history_scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Double-click to view details
-        self.history_tree.bind('<Double-1>', self.on_history_double_click)
+        self.history_tree.bind("<Double-1>", self.on_history_double_click)
 
     def update_analysis(self, result: AnalysisResult):
         """Update analysis display with new results"""
@@ -1079,15 +1079,15 @@ class AnalysisViewerPanel:
         # Protection details
         self.protection_type_label.config(text=result.protection_type)
         self.confidence_label.config(text=f"{result.confidence:.1f}%")
-        self.confidence_progress['value'] = result.confidence
+        self.confidence_progress["value"] = result.confidence
 
         # Color code confidence
         if result.confidence >= 80:
-            color = '#00ff00'  # Green
+            color = "#00ff00"  # Green
         elif result.confidence >= 60:
-            color = '#ffaa00'  # Orange
+            color = "#ffaa00"  # Orange
         else:
-            color = '#ff4444'  # Red
+            color = "#ff4444"  # Red
 
         self.confidence_label.config(foreground=color)
 
@@ -1106,16 +1106,16 @@ class AnalysisViewerPanel:
         details = result.details
 
         for category, data in details.items():
-            cat_item = self.details_tree.insert('', 'end', text=category, values=('',))
+            cat_item = self.details_tree.insert("", "end", text=category, values=("",))
 
             if isinstance(data, dict):
                 for key, value in data.items():
-                    self.details_tree.insert(cat_item, 'end', text=key, values=(str(value),))
+                    self.details_tree.insert(cat_item, "end", text=key, values=(str(value),))
             elif isinstance(data, list):
                 for i, item in enumerate(data):
-                    self.details_tree.insert(cat_item, 'end', text=f"Item {i+1}", values=(str(item),))
+                    self.details_tree.insert(cat_item, "end", text=f"Item {i+1}", values=(str(item),))
             else:
-                self.details_tree.set(cat_item, 'value', str(data))
+                self.details_tree.set(cat_item, "value", str(data))
 
         # Expand all items
         for item in self.details_tree.get_children():
@@ -1141,7 +1141,7 @@ class AnalysisViewerPanel:
                     protection_counts[prot_name] = protection_counts.get(prot_name, 0) + 1
             
             # Add historical protections if available
-            if hasattr(self, 'analysis_history'):
+            if hasattr(self, "analysis_history"):
                 for analysis in self.analysis_history:
                     if analysis.protections:
                         for protection in analysis.protections:
@@ -1158,23 +1158,23 @@ class AnalysisViewerPanel:
                 
         elif chart_type == "Bypass Success Rate":
             # Calculate bypass success rate from tracked data
-            bypass_stats = {'Successful': 0, 'Failed': 0, 'Partial': 0}
+            bypass_stats = {"Successful": 0, "Failed": 0, "Partial": 0}
             
             # Check current analysis for bypass recommendations
             if self.current_analysis and self.current_analysis.bypass_recommendations:
                 for recommendation in self.current_analysis.bypass_recommendations:
                     # Estimate success based on confidence
                     if recommendation.confidence >= 0.8:
-                        bypass_stats['Successful'] += 1
+                        bypass_stats["Successful"] += 1
                     elif recommendation.confidence >= 0.5:
-                        bypass_stats['Partial'] += 1
+                        bypass_stats["Partial"] += 1
                     else:
-                        bypass_stats['Failed'] += 1
+                        bypass_stats["Failed"] += 1
             
             # Add historical bypass data if available
-            if hasattr(self, 'bypass_history'):
+            if hasattr(self, "bypass_history"):
                 for result in self.bypass_history:
-                    bypass_stats[result['status']] = bypass_stats.get(result['status'], 0) + 1
+                    bypass_stats[result["status"]] = bypass_stats.get(result["status"], 0) + 1
             
             # Update chart with success rate data
             if sum(bypass_stats.values()) > 0:
@@ -1188,13 +1188,13 @@ class AnalysisViewerPanel:
         """Add analysis result to history"""
         item_count = len(self.history_tree.get_children()) + 1
 
-        self.history_tree.insert('', 'end',
+        self.history_tree.insert("", "end",
                                text=str(item_count),
                                values=(
                                    Path(result.target_file).name,
                                    result.protection_type,
                                    f"{result.confidence:.1f}%",
-                                   result.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                                   result.timestamp.strftime("%Y-%m-%d %H:%M:%S")
                                ))
 
         # Auto-scroll to latest
@@ -1209,8 +1209,8 @@ class AnalysisViewerPanel:
             item = selection[0]
 
             # Get item details
-            item_text = self.details_tree.item(item, 'text')
-            item_value = self.details_tree.item(item, 'values')[0] if self.details_tree.item(item, 'values') else ''
+            item_text = self.details_tree.item(item, "text")
+            item_value = self.details_tree.item(item, "values")[0] if self.details_tree.item(item, "values") else ""
 
             # Show in details text
             details_content = f"Property: {item_text}\n"
@@ -1222,8 +1222,8 @@ class AnalysisViewerPanel:
             if children:
                 details_content += "\nSub-properties:\n"
                 for child in children:
-                    child_text = self.details_tree.item(child, 'text')
-                    child_value = self.details_tree.item(child, 'values')[0] if self.details_tree.item(child, 'values') else ''
+                    child_text = self.details_tree.item(child, "text")
+                    child_value = self.details_tree.item(child, "values")[0] if self.details_tree.item(child, "values") else ""
                     details_content += f"  {child_text}: {child_value}\n"
 
             self.details_text.delete(1.0, tk.END)
@@ -1235,7 +1235,7 @@ class AnalysisViewerPanel:
         if selection:
             # Load historical analysis details
             item = self.history_tree.item(selection[0])
-            values = item['values']
+            values = item["values"]
             
             if len(values) >= 4:
                 file_name = values[0]
@@ -1253,13 +1253,13 @@ class AnalysisViewerPanel:
                 detail_frame.pack(fill=tk.BOTH, expand=True)
                 
                 # Add details
-                ttk.Label(detail_frame, text=f"File: {file_name}", font=('TkDefaultFont', 10, 'bold')).pack(anchor='w', pady=5)
-                ttk.Label(detail_frame, text=f"Protection Type: {protection_type}").pack(anchor='w', pady=2)
-                ttk.Label(detail_frame, text=f"Confidence: {confidence}%").pack(anchor='w', pady=2)
-                ttk.Label(detail_frame, text=f"Analyzed: {timestamp}").pack(anchor='w', pady=2)
+                ttk.Label(detail_frame, text=f"File: {file_name}", font=("TkDefaultFont", 10, "bold")).pack(anchor="w", pady=5)
+                ttk.Label(detail_frame, text=f"Protection Type: {protection_type}").pack(anchor="w", pady=2)
+                ttk.Label(detail_frame, text=f"Confidence: {confidence}%").pack(anchor="w", pady=2)
+                ttk.Label(detail_frame, text=f"Analyzed: {timestamp}").pack(anchor="w", pady=2)
                 
                 # Add text area for detailed info
-                ttk.Label(detail_frame, text="Analysis Details:", font=('TkDefaultFont', 9, 'bold')).pack(anchor='w', pady=(10, 5))
+                ttk.Label(detail_frame, text="Analysis Details:", font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(10, 5))
                 
                 detail_text = tk.Text(detail_frame, height=15, width=70, wrap=tk.WORD)
                 detail_text.pack(fill=tk.BOTH, expand=True, pady=5)
@@ -1277,7 +1277,7 @@ class AnalysisViewerPanel:
                 detail_info += f"Analysis Timestamp: {timestamp}\n\n"
                 
                 # Add more details if stored in history
-                if hasattr(self, 'analysis_history_details'):
+                if hasattr(self, "analysis_history_details"):
                     history_key = f"{file_name}_{timestamp}"
                     if history_key in self.analysis_history_details:
                         detail_info += "Detailed Analysis:\n"
@@ -1286,8 +1286,8 @@ class AnalysisViewerPanel:
                     detail_info += "Detailed analysis data not available for this historical entry.\n"
                     detail_info += "Future analyses will store complete details."
                 
-                detail_text.insert('1.0', detail_info)
-                detail_text.config(state='disabled')
+                detail_text.insert("1.0", detail_info)
+                detail_text.config(state="disabled")
                 
                 # Add close button
                 ttk.Button(detail_frame, text="Close", command=detail_window.destroy).pack(pady=10)
@@ -1309,22 +1309,22 @@ class AnalysisViewerPanel:
             try:
                 items = []
                 for item in self.history_tree.get_children():
-                    values = self.history_tree.item(item, 'values')
+                    values = self.history_tree.item(item, "values")
                     items.append({
-                        'file': values[0],
-                        'protection': values[1],
-                        'confidence': values[2],
-                        'timestamp': values[3]
+                        "file": values[0],
+                        "protection": values[1],
+                        "confidence": values[2],
+                        "timestamp": values[3]
                     })
 
-                if filename.endswith('.json'):
-                    with open(filename, 'w', encoding='utf-8') as f:
+                if filename.endswith(".json"):
+                    with open(filename, "w", encoding="utf-8") as f:
                         json.dump(items, f, indent=2)
                 else:
                     # CSV format
                     import csv
-                    with open(filename, 'w', newline='', encoding='utf-8') as f:
-                        writer = csv.DictWriter(f, fieldnames=['file', 'protection', 'confidence', 'timestamp'])
+                    with open(filename, "w", newline="", encoding="utf-8") as f:
+                        writer = csv.DictWriter(f, fieldnames=["file", "protection", "confidence", "timestamp"])
                         writer.writeheader()
                         writer.writerows(items)
 
@@ -1369,20 +1369,20 @@ class ScriptGeneratorPanel:
         control_frame.pack(fill=tk.X, padx=5, pady=5)
 
         # Target process
-        ttk.Label(control_frame, text="Target Process:").grid(row=0, column=0, sticky='w', padx=5, pady=2)
+        ttk.Label(control_frame, text="Target Process:").grid(row=0, column=0, sticky="w", padx=5, pady=2)
         self.frida_process_var = tk.StringVar()
         process_entry = ttk.Entry(control_frame, textvariable=self.frida_process_var, width=30)
-        process_entry.grid(row=0, column=1, sticky='w', padx=5, pady=2)
+        process_entry.grid(row=0, column=1, sticky="w", padx=5, pady=2)
 
         ttk.Button(control_frame, text="Browse", command=self.browse_process).grid(row=0, column=2, padx=5, pady=2)
 
         # Script type
-        ttk.Label(control_frame, text="Script Type:").grid(row=1, column=0, sticky='w', padx=5, pady=2)
+        ttk.Label(control_frame, text="Script Type:").grid(row=1, column=0, sticky="w", padx=5, pady=2)
         self.frida_type_var = tk.StringVar(value="License Bypass")
         type_combo = ttk.Combobox(control_frame, textvariable=self.frida_type_var,
                                 values=["License Bypass", "API Hook", "Memory Patch", "Crypto Hook", "Custom"],
                                 state="readonly")
-        type_combo.grid(row=1, column=1, sticky='w', padx=5, pady=2)
+        type_combo.grid(row=1, column=1, sticky="w", padx=5, pady=2)
 
         # Generate button
         ttk.Button(control_frame, text="Generate Script", command=self.generate_frida_script).grid(row=1, column=2, padx=5, pady=2)
@@ -1394,8 +1394,8 @@ class ScriptGeneratorPanel:
         self.frida_editor = scrolledtext.ScrolledText(
             editor_frame, wrap=tk.NONE,
             font=(self.config.font_family, self.config.font_size),
-            bg='#1e1e1e', fg='#ffffff',
-            insertbackground='#ffffff'
+            bg="#1e1e1e", fg="#ffffff",
+            insertbackground="#ffffff"
         )
         self.frida_editor.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
@@ -1421,20 +1421,20 @@ class ScriptGeneratorPanel:
         control_frame.pack(fill=tk.X, padx=5, pady=5)
 
         # Target binary
-        ttk.Label(control_frame, text="Target Binary:").grid(row=0, column=0, sticky='w', padx=5, pady=2)
+        ttk.Label(control_frame, text="Target Binary:").grid(row=0, column=0, sticky="w", padx=5, pady=2)
         self.ghidra_binary_var = tk.StringVar()
         binary_entry = ttk.Entry(control_frame, textvariable=self.ghidra_binary_var, width=30)
-        binary_entry.grid(row=0, column=1, sticky='w', padx=5, pady=2)
+        binary_entry.grid(row=0, column=1, sticky="w", padx=5, pady=2)
 
         ttk.Button(control_frame, text="Browse", command=self.browse_binary).grid(row=0, column=2, padx=5, pady=2)
 
         # Script type
-        ttk.Label(control_frame, text="Script Type:").grid(row=1, column=0, sticky='w', padx=5, pady=2)
+        ttk.Label(control_frame, text="Script Type:").grid(row=1, column=0, sticky="w", padx=5, pady=2)
         self.ghidra_type_var = tk.StringVar(value="License Analysis")
         type_combo = ttk.Combobox(control_frame, textvariable=self.ghidra_type_var,
                                 values=["License Analysis", "Crypto Detection", "Packer Analysis", "Key Generation", "Custom"],
                                 state="readonly")
-        type_combo.grid(row=1, column=1, sticky='w', padx=5, pady=2)
+        type_combo.grid(row=1, column=1, sticky="w", padx=5, pady=2)
 
         # Generate button
         ttk.Button(control_frame, text="Generate Script", command=self.generate_ghidra_script).grid(row=1, column=2, padx=5, pady=2)
@@ -1446,8 +1446,8 @@ class ScriptGeneratorPanel:
         self.ghidra_editor = scrolledtext.ScrolledText(
             editor_frame, wrap=tk.NONE,
             font=(self.config.font_family, self.config.font_size),
-            bg='#1e1e1e', fg='#ffffff',
-            insertbackground='#ffffff'
+            bg="#1e1e1e", fg="#ffffff",
+            insertbackground="#ffffff"
         )
         self.ghidra_editor.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
@@ -1472,20 +1472,20 @@ class ScriptGeneratorPanel:
         control_frame.pack(fill=tk.X, padx=5, pady=5)
 
         # Target binary
-        ttk.Label(control_frame, text="Target Binary:").grid(row=0, column=0, sticky='w', padx=5, pady=2)
+        ttk.Label(control_frame, text="Target Binary:").grid(row=0, column=0, sticky="w", padx=5, pady=2)
         self.r2_binary_var = tk.StringVar()
         binary_entry = ttk.Entry(control_frame, textvariable=self.r2_binary_var, width=30)
-        binary_entry.grid(row=0, column=1, sticky='w', padx=5, pady=2)
+        binary_entry.grid(row=0, column=1, sticky="w", padx=5, pady=2)
 
         ttk.Button(control_frame, text="Browse", command=self.browse_r2_binary).grid(row=0, column=2, padx=5, pady=2)
 
         # Script type
-        ttk.Label(control_frame, text="Script Type:").grid(row=1, column=0, sticky='w', padx=5, pady=2)
+        ttk.Label(control_frame, text="Script Type:").grid(row=1, column=0, sticky="w", padx=5, pady=2)
         self.r2_type_var = tk.StringVar(value="License Analysis")
         type_combo = ttk.Combobox(control_frame, textvariable=self.r2_type_var,
                                 values=["License Analysis", "Keygen Assistant", "Patch Generation", "Analysis Script", "Custom"],
                                 state="readonly")
-        type_combo.grid(row=1, column=1, sticky='w', padx=5, pady=2)
+        type_combo.grid(row=1, column=1, sticky="w", padx=5, pady=2)
 
         # Generate button
         ttk.Button(control_frame, text="Generate Script", command=self.generate_r2_script).grid(row=1, column=2, padx=5, pady=2)
@@ -1497,8 +1497,8 @@ class ScriptGeneratorPanel:
         self.r2_editor = scrolledtext.ScrolledText(
             editor_frame, wrap=tk.NONE,
             font=(self.config.font_family, self.config.font_size),
-            bg='#1e1e1e', fg='#ffffff',
-            insertbackground='#ffffff'
+            bg="#1e1e1e", fg="#ffffff",
+            insertbackground="#ffffff"
         )
         self.r2_editor.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
@@ -1527,7 +1527,7 @@ class ScriptGeneratorPanel:
                                 values=["Python", "PowerShell", "Batch", "Bash", "JavaScript", "C++"],
                                 state="readonly")
         lang_combo.pack(side=tk.LEFT, padx=5, pady=5)
-        lang_combo.bind('<<ComboboxSelected>>', self.on_language_change)
+        lang_combo.bind("<<ComboboxSelected>>", self.on_language_change)
 
         # Script editor
         editor_frame = ttk.LabelFrame(custom_frame, text="Script Editor")
@@ -1536,8 +1536,8 @@ class ScriptGeneratorPanel:
         self.custom_editor = scrolledtext.ScrolledText(
             editor_frame, wrap=tk.NONE,
             font=(self.config.font_family, self.config.font_size),
-            bg='#1e1e1e', fg='#ffffff',
-            insertbackground='#ffffff'
+            bg="#1e1e1e", fg="#ffffff",
+            insertbackground="#ffffff"
         )
         self.custom_editor.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
@@ -1566,7 +1566,7 @@ class ScriptGeneratorPanel:
         ]
 
         # Bind highlighting
-        text_widget.bind('<KeyRelease>', lambda e: self.highlight_syntax(text_widget, js_keywords))
+        text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, js_keywords))
 
     def setup_java_syntax_highlighting(self, text_widget):
         """Setup Java syntax highlighting"""
@@ -1583,7 +1583,7 @@ class ScriptGeneratorPanel:
             "throw", "throws", "new", "this", "super", "true", "false", "null"
         ]
 
-        text_widget.bind('<KeyRelease>', lambda e: self.highlight_syntax(text_widget, java_keywords))
+        text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, java_keywords))
 
     def setup_python_syntax_highlighting(self, text_widget):
         """Setup Python syntax highlighting"""
@@ -1599,7 +1599,7 @@ class ScriptGeneratorPanel:
             "with", "lambda", "yield", "global", "nonlocal", "True", "False", "None"
         ]
 
-        text_widget.bind('<KeyRelease>', lambda e: self.highlight_syntax(text_widget, python_keywords))
+        text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, python_keywords))
 
     def highlight_syntax(self, text_widget, keywords):
         """Basic syntax highlighting"""
@@ -1634,14 +1634,14 @@ class ScriptGeneratorPanel:
                 start = f"{end_pos}+1c"
 
         # Highlight comments
-        lines = content.split('\n')
+        lines = content.split("\n")
         for i, line in enumerate(lines):
-            if '//' in line:  # JavaScript style
-                comment_start = line.find('//')
+            if "//" in line:  # JavaScript style
+                comment_start = line.find("//")
                 if comment_start >= 0:
                     text_widget.tag_add("comment", f"{i+1}.{comment_start}", f"{i+1}.end")
-            elif '#' in line:  # Python style
-                comment_start = line.find('#')
+            elif "#" in line:  # Python style
+                comment_start = line.find("#")
                 if comment_start >= 0:
                     text_widget.tag_add("comment", f"{i+1}.{comment_start}", f"{i+1}.end")
 
@@ -1730,10 +1730,10 @@ class ScriptGeneratorPanel:
         """Add script to history"""
         timestamp = datetime.now()
         self.script_history.append({
-            'platform': platform,
-            'type': script_type,
-            'content': content,
-            'timestamp': timestamp
+            "platform": platform,
+            "type": script_type,
+            "content": content,
+            "timestamp": timestamp
         })
 
     def on_language_change(self, event=None):
@@ -1833,7 +1833,7 @@ class ScriptGeneratorPanel:
 
         if filename:
             try:
-                with open(filename, 'w', encoding='utf-8') as f:
+                with open(filename, "w", encoding="utf-8") as f:
                     f.write(script)
                 messagebox.showinfo("Save", f"Script saved to {filename}")
             except Exception as e:
@@ -1861,7 +1861,7 @@ class ScriptGeneratorPanel:
 
         if filename:
             try:
-                with open(filename, 'r', encoding='utf-8') as f:
+                with open(filename, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 editor.delete(1.0, tk.END)
@@ -1911,9 +1911,9 @@ class UIEnhancementModule:
         """Setup logging configuration"""
         logging.basicConfig(
             level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             handlers=[
-                logging.FileHandler('intellicrack_ui.log'),
+                logging.FileHandler("intellicrack_ui.log"),
                 logging.StreamHandler()
             ]
         )
@@ -1925,7 +1925,7 @@ class UIEnhancementModule:
 
         if config_file.exists():
             try:
-                with open(config_file, 'r', encoding='utf-8') as f:
+                with open(config_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 return UIConfig.from_dict(data)
             except Exception as e:
@@ -1938,7 +1938,7 @@ class UIEnhancementModule:
         config_file = Path("ui_config.json")
 
         try:
-            with open(config_file, 'w', encoding='utf-8') as f:
+            with open(config_file, "w", encoding="utf-8") as f:
                 json.dump(self.config.to_dict(), f, indent=2)
         except Exception as e:
             self.logger.error(f"Failed to save config: {e}")
@@ -1957,53 +1957,53 @@ class UIEnhancementModule:
     def apply_dark_theme(self):
         """Apply dark theme"""
         style = ttk.Style()
-        style.theme_use('clam')
+        style.theme_use("clam")
 
         # Configure colors
-        style.configure('.', background='#2d2d2d', foreground='#ffffff')
-        style.configure('TFrame', background='#2d2d2d')
-        style.configure('TLabel', background='#2d2d2d', foreground='#ffffff')
-        style.configure('TButton', background='#404040', foreground='#ffffff')
-        style.configure('TEntry', background='#404040', foreground='#ffffff', insertcolor='#ffffff')
-        style.configure('TCombobox', background='#404040', foreground='#ffffff')
-        style.configure('TNotebook', background='#2d2d2d')
-        style.configure('TNotebook.Tab', background='#404040', foreground='#ffffff')
-        style.configure('Treeview', background='#1e1e1e', foreground='#ffffff')
-        style.configure('Treeview.Heading', background='#404040', foreground='#ffffff')
+        style.configure(".", background="#2d2d2d", foreground="#ffffff")
+        style.configure("TFrame", background="#2d2d2d")
+        style.configure("TLabel", background="#2d2d2d", foreground="#ffffff")
+        style.configure("TButton", background="#404040", foreground="#ffffff")
+        style.configure("TEntry", background="#404040", foreground="#ffffff", insertcolor="#ffffff")
+        style.configure("TCombobox", background="#404040", foreground="#ffffff")
+        style.configure("TNotebook", background="#2d2d2d")
+        style.configure("TNotebook.Tab", background="#404040", foreground="#ffffff")
+        style.configure("Treeview", background="#1e1e1e", foreground="#ffffff")
+        style.configure("Treeview.Heading", background="#404040", foreground="#ffffff")
 
         # Configure root
-        self.root.configure(bg='#2d2d2d')
+        self.root.configure(bg="#2d2d2d")
 
     def apply_light_theme(self):
         """Apply light theme"""
         style = ttk.Style()
-        style.theme_use('default')
+        style.theme_use("default")
 
     def apply_high_contrast_theme(self):
         """Apply high contrast theme"""
         style = ttk.Style()
-        style.theme_use('clam')
+        style.theme_use("clam")
 
-        style.configure('.', background='#000000', foreground='#ffffff')
-        style.configure('TFrame', background='#000000')
-        style.configure('TLabel', background='#000000', foreground='#ffffff')
-        style.configure('TButton', background='#ffffff', foreground='#000000')
-        style.configure('TEntry', background='#ffffff', foreground='#000000')
+        style.configure(".", background="#000000", foreground="#ffffff")
+        style.configure("TFrame", background="#000000")
+        style.configure("TLabel", background="#000000", foreground="#ffffff")
+        style.configure("TButton", background="#ffffff", foreground="#000000")
+        style.configure("TEntry", background="#ffffff", foreground="#000000")
 
-        self.root.configure(bg='#000000')
+        self.root.configure(bg="#000000")
 
     def apply_cyberpunk_theme(self):
         """Apply cyberpunk theme"""
         style = ttk.Style()
-        style.theme_use('clam')
+        style.theme_use("clam")
 
-        style.configure('.', background='#0a0a0a', foreground='#00ff41')
-        style.configure('TFrame', background='#0a0a0a')
-        style.configure('TLabel', background='#0a0a0a', foreground='#00ff41')
-        style.configure('TButton', background='#1a1a1a', foreground='#00ff41')
-        style.configure('TEntry', background='#1a1a1a', foreground='#00ff41', insertcolor='#00ff41')
+        style.configure(".", background="#0a0a0a", foreground="#00ff41")
+        style.configure("TFrame", background="#0a0a0a")
+        style.configure("TLabel", background="#0a0a0a", foreground="#00ff41")
+        style.configure("TButton", background="#1a1a1a", foreground="#00ff41")
+        style.configure("TEntry", background="#1a1a1a", foreground="#00ff41", insertcolor="#00ff41")
 
-        self.root.configure(bg='#0a0a0a')
+        self.root.configure(bg="#0a0a0a")
 
     def create_main_interface(self):
         """Create the main three-panel interface"""
@@ -2089,10 +2089,10 @@ class UIEnhancementModule:
         help_menu.add_command(label="About", command=self.show_about)
 
         # Bind keyboard shortcuts
-        self.root.bind('<Control-o>', lambda e: self.open_file())
-        self.root.bind('<Control-O>', lambda e: self.open_folder())
-        self.root.bind('<Control-q>', lambda e: self.exit_application())
-        self.root.bind('<F5>', lambda e: self.refresh_current_view())
+        self.root.bind("<Control-o>", lambda e: self.open_file())
+        self.root.bind("<Control-O>", lambda e: self.open_folder())
+        self.root.bind("<Control-q>", lambda e: self.exit_application())
+        self.root.bind("<F5>", lambda e: self.refresh_current_view())
 
     def create_status_bar(self):
         """Create status bar"""
@@ -2176,7 +2176,7 @@ class UIEnhancementModule:
         }
 
         self.state_label.config(text=self.analysis_state.value.title())
-        if hasattr(self.state_label, 'configure'):
+        if hasattr(self.state_label, "configure"):
             try:
                 self.state_label.configure(foreground=state_colors.get(self.analysis_state, "#ffffff"))
             except:
@@ -2227,7 +2227,7 @@ class UIEnhancementModule:
 
             # Generate bypass recommendations
             bypass_methods = []
-            if hasattr(classification_result, 'protection_type'):
+            if hasattr(classification_result, "protection_type"):
                 if "VMProtect" in classification_result.protection_type:
                     bypass_methods.append("VM Protection Unwrapper")
                 if "Dongle" in classification_result.protection_type:
@@ -2240,11 +2240,11 @@ class UIEnhancementModule:
             # Create analysis result
             result = AnalysisResult(
                 target_file=file_path,
-                protection_type=getattr(classification_result, 'protection_type', 'Unknown'),
-                confidence=getattr(classification_result, 'confidence', 0.0) * 100,
+                protection_type=getattr(classification_result, "protection_type", "Unknown"),
+                confidence=getattr(classification_result, "confidence", 0.0) * 100,
                 bypass_methods=bypass_methods,
                 timestamp=datetime.now(),
-                details=getattr(classification_result, 'details', {})
+                details=getattr(classification_result, "details", {})
             )
 
             # Update UI in main thread
@@ -2292,7 +2292,7 @@ class UIEnhancementModule:
         """Generate Frida script"""
         try:
             # Use core engine to generate script
-            if hasattr(self, 'core_engine'):
+            if hasattr(self, "core_engine"):
                 return self.core_engine.generate_frida_script(target, script_type)
             else:
                 # Fallback template
@@ -2304,7 +2304,7 @@ class UIEnhancementModule:
     def generate_ghidra_script(self, target: str, script_type: str) -> str:
         """Generate Ghidra script"""
         try:
-            if hasattr(self, 'core_engine'):
+            if hasattr(self, "core_engine"):
                 return self.core_engine.generate_ghidra_script(target, script_type)
             else:
                 return self._get_ghidra_template(target, script_type)
@@ -2315,7 +2315,7 @@ class UIEnhancementModule:
     def generate_r2_script(self, target: str, script_type: str) -> str:
         """Generate Radare2 script"""
         try:
-            if hasattr(self, 'core_engine'):
+            if hasattr(self, "core_engine"):
                 return self.core_engine.generate_r2_script(target, script_type)
             else:
                 return self._get_r2_template(target, script_type)
@@ -2640,37 +2640,37 @@ if __name__ == "__main__":
         pref_notebook.add(general_frame, text="General")
 
         # Theme selection
-        ttk.Label(general_frame, text="Theme:").grid(row=0, column=0, sticky='w', padx=5, pady=5)
+        ttk.Label(general_frame, text="Theme:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
         theme_var = tk.StringVar(value=self.config.theme.value)
         theme_combo = ttk.Combobox(general_frame, textvariable=theme_var,
                                  values=[theme.value for theme in UITheme],
                                  state="readonly")
-        theme_combo.grid(row=0, column=1, sticky='w', padx=5, pady=5)
+        theme_combo.grid(row=0, column=1, sticky="w", padx=5, pady=5)
 
         # Font settings
-        ttk.Label(general_frame, text="Font Family:").grid(row=1, column=0, sticky='w', padx=5, pady=5)
+        ttk.Label(general_frame, text="Font Family:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
         font_var = tk.StringVar(value=self.config.font_family)
         font_combo = ttk.Combobox(general_frame, textvariable=font_var,
                                 values=["Consolas", "Courier New", "Monaco", "DejaVu Sans Mono"],
                                 state="readonly")
-        font_combo.grid(row=1, column=1, sticky='w', padx=5, pady=5)
+        font_combo.grid(row=1, column=1, sticky="w", padx=5, pady=5)
 
-        ttk.Label(general_frame, text="Font Size:").grid(row=2, column=0, sticky='w', padx=5, pady=5)
+        ttk.Label(general_frame, text="Font Size:").grid(row=2, column=0, sticky="w", padx=5, pady=5)
         font_size_var = tk.IntVar(value=self.config.font_size)
         font_size_spin = ttk.Spinbox(general_frame, from_=8, to=20, textvariable=font_size_var)
-        font_size_spin.grid(row=2, column=1, sticky='w', padx=5, pady=5)
+        font_size_spin.grid(row=2, column=1, sticky="w", padx=5, pady=5)
 
         # Auto-refresh settings
         auto_refresh_var = tk.BooleanVar(value=self.config.auto_refresh)
         auto_refresh_check = ttk.Checkbutton(general_frame, text="Enable auto-refresh",
                                            variable=auto_refresh_var)
-        auto_refresh_check.grid(row=3, column=0, columnspan=2, sticky='w', padx=5, pady=5)
+        auto_refresh_check.grid(row=3, column=0, columnspan=2, sticky="w", padx=5, pady=5)
 
-        ttk.Label(general_frame, text="Refresh Interval (ms):").grid(row=4, column=0, sticky='w', padx=5, pady=5)
+        ttk.Label(general_frame, text="Refresh Interval (ms):").grid(row=4, column=0, sticky="w", padx=5, pady=5)
         refresh_var = tk.IntVar(value=self.config.refresh_interval)
         refresh_spin = ttk.Spinbox(general_frame, from_=500, to=10000, increment=500,
                                  textvariable=refresh_var)
-        refresh_spin.grid(row=4, column=1, sticky='w', padx=5, pady=5)
+        refresh_spin.grid(row=4, column=1, sticky="w", padx=5, pady=5)
 
         # Button frame
         button_frame = ttk.Frame(pref_window)

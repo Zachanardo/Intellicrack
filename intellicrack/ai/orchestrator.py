@@ -216,14 +216,14 @@ class AIEventBus:
                             sub["callback"](data, source_component)
                         except (OSError, ValueError, RuntimeError) as e:
                             logger.error(
-                                "Error in subscriber %s: %s", sub['component'], e)
+                                "Error in subscriber %s: %s", sub["component"], e)
 
                     threading.Thread(target=lambda: call_subscriber(
                         _subscriber), daemon=True).start()
 
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error calling subscriber %s: %s",
-                                 _subscriber['component'], e)
+                                 _subscriber["component"], e)
 
     def unsubscribe(self, event_type: str, component_name: str) -> None:
         """Unsubscribe a component from an event type."""
@@ -350,7 +350,7 @@ class AIOrchestrator:
     def _on_analysis_complete(self, data: Dict[str, Any], source: str):
         """Handle analysis completion events."""
         logger.info("Analysis complete from %s: %s",
-                    source, data.get('task_id', 'unknown'))
+                    source, data.get("task_id", "unknown"))
 
         # Update shared context with results
         if "results" in data:
@@ -371,12 +371,12 @@ class AIOrchestrator:
     def _on_model_loaded(self, data: Dict[str, Any], source: str):
         """Handle model loading events."""
         logger.info("Model loaded in %s: %s", source,
-                    data.get('model_name', 'unknown'))
+                    data.get("model_name", "unknown"))
 
     def _on_error_occurred(self, data: Dict[str, Any], source: str):
         """Handle error events."""
         logger.error("Error in %s: %s", source,
-                     data.get('error', 'unknown error'))
+                     data.get("error", "unknown error"))
 
     def _escalate_to_complex_analysis(self, ml_data: Dict[str, Any]):
         """Escalate low-confidence ML results to complex LLM analysis."""
@@ -601,10 +601,10 @@ class AIOrchestrator:
             if self.model_manager and self.ai_assistant:
                 try:
                     # Use AI assistant for complex analysis
-                    if hasattr(self.ai_assistant, 'analyze_binary_complex'):
+                    if hasattr(self.ai_assistant, "analyze_binary_complex"):
                         llm_results = self.ai_assistant.analyze_binary_complex(
                             binary_path, ml_results)
-                    elif hasattr(self.ai_assistant, 'analyze_binary'):
+                    elif hasattr(self.ai_assistant, "analyze_binary"):
                         llm_results = self.ai_assistant.analyze_binary(
                             binary_path)
                     else:
@@ -630,10 +630,10 @@ class AIOrchestrator:
         # License analysis typically requires LLM reasoning
         if self.ai_assistant:
             try:
-                if hasattr(self.ai_assistant, 'analyze_license_patterns'):
+                if hasattr(self.ai_assistant, "analyze_license_patterns"):
                     license_results = self.ai_assistant.analyze_license_patterns(
                         task.input_data)
-                elif hasattr(self.ai_assistant, 'analyze_license'):
+                elif hasattr(self.ai_assistant, "analyze_license"):
                     license_results = self.ai_assistant.analyze_license(
                         task.input_data)
                 else:
@@ -660,10 +660,10 @@ class AIOrchestrator:
         # Use hex bridge for binary-specific analysis
         if self.hex_bridge:
             try:
-                if hasattr(self.hex_bridge, 'analyze_binary_patterns'):
+                if hasattr(self.hex_bridge, "analyze_binary_patterns"):
                     hex_results = self.hex_bridge.analyze_binary_patterns(
                         binary_path)
-                elif hasattr(self.hex_bridge, 'analyze_binary'):
+                elif hasattr(self.hex_bridge, "analyze_binary"):
                     hex_results = self.hex_bridge.analyze_binary(binary_path)
                 else:
                     raise AttributeError("No binary analysis method available")
@@ -677,7 +677,7 @@ class AIOrchestrator:
         # ML feature analysis functionality has been removed
 
         # Add AI-enhanced complex binary analysis
-        if self.ai_assistant and hasattr(self.ai_assistant, 'analyze_binary_complex'):
+        if self.ai_assistant and hasattr(self.ai_assistant, "analyze_binary_complex"):
             try:
                 # Prepare ML results for AI analysis
                 ml_results_for_ai = {
@@ -698,7 +698,7 @@ class AIOrchestrator:
                     binary_path, ml_results_for_ai
                 )
 
-                if ai_complex_results and not ai_complex_results.get('error'):
+                if ai_complex_results and not ai_complex_results.get("error"):
                     result_data["ai_complex_analysis"] = ai_complex_results
                     components_used.append("ai_assistant_complex")
                     confidence = max(confidence, ai_complex_results.get("confidence", 0.0))
@@ -758,10 +758,10 @@ class AIOrchestrator:
         # Fallback to AI assistant if LLM not available
         elif self.ai_assistant:
             try:
-                if hasattr(self.ai_assistant, 'perform_reasoning'):
+                if hasattr(self.ai_assistant, "perform_reasoning"):
                     reasoning_results = self.ai_assistant.perform_reasoning(
                         task.input_data)
-                elif hasattr(self.ai_assistant, 'analyze_complex'):
+                elif hasattr(self.ai_assistant, "analyze_complex"):
                     reasoning_results = self.ai_assistant.analyze_complex(
                         task.input_data)
                 else:
@@ -780,10 +780,10 @@ class AIOrchestrator:
         recommendations = []
 
         # Look for common recommendation patterns
-        lines = content.split('\n')
+        lines = content.split("\n")
         for _line in lines:
             line = _line.strip()
-            if any(_keyword in line.lower() for _keyword in ['recommend', 'suggest', 'should', 'consider']):
+            if any(_keyword in line.lower() for _keyword in ["recommend", "suggest", "should", "consider"]):
                 if len(line) > 20 and len(line) < 200:  # Reasonable length
                     recommendations.append(line)
 

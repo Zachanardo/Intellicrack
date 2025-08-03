@@ -353,7 +353,7 @@ class IntellicrackProtectionCore:
         }
 
         # Add entropy info if available
-        if hasattr(icp_result, 'metadata') and icp_result.metadata:
+        if hasattr(icp_result, "metadata") and icp_result.metadata:
             analysis.metadata.update(icp_result.metadata)
 
         return analysis
@@ -449,23 +449,23 @@ class IntellicrackProtectionCore:
         """Legacy fallback parser for text output (kept for compatibility)"""
         analysis = ProtectionAnalysis(file_path=file_path, file_type="PE", architecture="Unknown")
 
-        lines = output.strip().split('\n')
+        lines = output.strip().split("\n")
         for line in lines:
             line = line.strip()
             if not line:
                 continue
 
             # Parse detection lines (format: "Type: Name(Version)")
-            if ':' in line:
-                parts = line.split(':', 1)
+            if ":" in line:
+                parts = line.split(":", 1)
                 if len(parts) == 2:
                     det_type = parts[0].strip()
                     det_info = parts[1].strip()
 
                     # Extract name and version
-                    if '(' in det_info and ')' in det_info:
-                        name = det_info[:det_info.index('(')].strip()
-                        version = det_info[det_info.index('(')+1:det_info.index(')')].strip()
+                    if "(" in det_info and ")" in det_info:
+                        name = det_info[:det_info.index("(")].strip()
+                        version = det_info[det_info.index("(")+1:det_info.index(")")].strip()
                     else:
                         name = det_info
                         version = None
@@ -561,7 +561,7 @@ class IntellicrackProtectionCore:
             List of ProtectionAnalysis results
         """
         results = []
-        extensions = ['.exe', '.dll', '.sys', '.ocx', '.scr', '.com']
+        extensions = [".exe", ".dll", ".sys", ".ocx", ".scr", ".com"]
 
         if recursive:
             for root, _dirs, files in os.walk(directory):

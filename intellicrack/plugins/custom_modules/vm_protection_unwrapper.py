@@ -93,14 +93,14 @@ class VMContext:
         if not self.registers:
             # Initialize x86 registers
             self.registers = {
-                'EAX': 0, 'EBX': 0, 'ECX': 0, 'EDX': 0,
-                'ESI': 0, 'EDI': 0, 'ESP': 0x1000, 'EBP': 0x1000,
-                'EIP': 0
+                "EAX": 0, "EBX": 0, "ECX": 0, "EDX": 0,
+                "ESI": 0, "EDI": 0, "ESP": 0x1000, "EBP": 0x1000,
+                "EIP": 0
             }
 
         if not self.flags:
             self.flags = {
-                'ZF': False, 'CF': False, 'SF': False, 'OF': False
+                "ZF": False, "CF": False, "SF": False, "OF": False
             }
 
 
@@ -116,16 +116,16 @@ class VMProtectHandler:
         # Version signatures
         signatures = {
             ProtectionType.VMPROTECT_1X: [
-                b'\x60\x8B\x04\x24\x8B\x4C\x24\x04',  # Version 1.x signature
-                b'\x55\x8B\xEC\x60\x8B\x45\x08'
+                b"\x60\x8B\x04\x24\x8B\x4C\x24\x04",  # Version 1.x signature
+                b"\x55\x8B\xEC\x60\x8B\x45\x08"
             ],
             ProtectionType.VMPROTECT_2X: [
-                b'\x68\x00\x00\x00\x00\x8F\x04\x24',  # Version 2.x signature
-                b'\x8B\x44\x24\x04\x50\x8B\x44\x24\x08'
+                b"\x68\x00\x00\x00\x00\x8F\x04\x24",  # Version 2.x signature
+                b"\x8B\x44\x24\x04\x50\x8B\x44\x24\x08"
             ],
             ProtectionType.VMPROTECT_3X: [
-                b'\x8B\x44\x24\x04\x8B\x4C\x24\x08',  # Version 3.x signature
-                b'\x48\x8B\x44\x24\x08\x48\x8B\x4C\x24\x10'
+                b"\x8B\x44\x24\x04\x8B\x4C\x24\x08",  # Version 3.x signature
+                b"\x48\x8B\x44\x24\x08\x48\x8B\x4C\x24\x10"
             ]
         }
 
@@ -150,7 +150,7 @@ class VMProtectHandler:
     def _vmprotect_1x_key_schedule(self, key: bytes) -> List[int]:
         """VMProtect 1.x key schedule"""
         schedule = []
-        key_ints = struct.unpack('<4I', key[:16])
+        key_ints = struct.unpack("<4I", key[:16])
 
         for i in range(44):  # 44 round keys
             if i < 4:
@@ -169,7 +169,7 @@ class VMProtectHandler:
     def _vmprotect_2x_key_schedule(self, key: bytes) -> List[int]:
         """VMProtect 2.x key schedule (more complex)"""
         schedule = []
-        key_ints = struct.unpack('<8I', key[:32])
+        key_ints = struct.unpack("<8I", key[:32])
 
         # More complex key expansion
         for i in range(60):
@@ -189,12 +189,12 @@ class VMProtectHandler:
     def _vmprotect_3x_key_schedule(self, key: bytes) -> List[int]:
         """VMProtect 3.x key schedule (most complex)"""
         schedule = []
-        key_data = key[:64] if len(key) >= 64 else key.ljust(64, b'\x00')
+        key_data = key[:64] if len(key) >= 64 else key.ljust(64, b"\x00")
 
         # Initialize with SHA-256 like expansion
         for i in range(64):
             if i < 16:
-                w = struct.unpack('<I', key_data[i*4:(i+1)*4])[0]
+                w = struct.unpack("<I", key_data[i*4:(i+1)*4])[0]
             else:
                 s0 = self._sigma0(schedule[i-15])
                 s1 = self._sigma1(schedule[i-2])
@@ -242,10 +242,10 @@ class VMProtectHandler:
         for i in range(0, len(data), 16):
             block = data[i:i+16]
             if len(block) < 16:
-                block = block.ljust(16, b'\x00')
+                block = block.ljust(16, b"\x00")
 
             # AES-like decryption rounds
-            state = list(struct.unpack('<4I', block))
+            state = list(struct.unpack("<4I", block))
 
             # Initial round
             for j in range(4):
@@ -267,7 +267,7 @@ class VMProtectHandler:
             for j in range(4):
                 state[j] ^= key_schedule[40 + j]
 
-            result.extend(struct.pack('<4I', *state))
+            result.extend(struct.pack("<4I", *state))
 
         return bytes(result)
 
@@ -378,12 +378,12 @@ class VMEmulator:
 
         if vm_type in [VMInstructionType.MEMORY, VMInstructionType.ARITHMETIC]:
             if offset + 4 < len(vm_data):
-                operand = struct.unpack('<I', vm_data[offset+1:offset+5])[0]
+                operand = struct.unpack("<I", vm_data[offset+1:offset+5])[0]
                 operands.append(operand)
                 size = 5
         elif vm_type == VMInstructionType.CONTROL_FLOW:
             if offset + 4 < len(vm_data):
-                target = struct.unpack('<I', vm_data[offset+1:offset+5])[0]
+                target = struct.unpack("<I", vm_data[offset+1:offset+5])[0]
                 operands.append(target)
                 size = 5
 
@@ -425,12 +425,12 @@ class VMEmulator:
                 self.context.stack.append(instruction.operands[0])
             else:
                 # Push register
-                self.context.stack.append(self.context.registers.get('EAX', 0))
+                self.context.stack.append(self.context.registers.get("EAX", 0))
 
         elif "POP" in instruction.mnemonic:
             if self.context.stack:
                 value = self.context.stack.pop()
-                self.context.registers['EAX'] = value
+                self.context.registers["EAX"] = value
 
         return True
 
@@ -456,8 +456,8 @@ class VMEmulator:
         self.context.stack.append(result)
 
         # Update flags
-        self.context.flags['ZF'] = (result == 0)
-        self.context.flags['SF'] = ((result & 0x80000000) != 0)
+        self.context.flags["ZF"] = (result == 0)
+        self.context.flags["SF"] = ((result & 0x80000000) != 0)
 
         return True
 
@@ -497,15 +497,15 @@ class VMEmulator:
         if "LOAD" in instruction.mnemonic:
             if self.context.stack:
                 address = self.context.stack.pop()
-                value = self.context.memory.get(address, b'\x00\x00\x00\x00')
-                int_value = struct.unpack('<I', value[:4])[0]
+                value = self.context.memory.get(address, b"\x00\x00\x00\x00")
+                int_value = struct.unpack("<I", value[:4])[0]
                 self.context.stack.append(int_value)
 
         elif "STORE" in instruction.mnemonic:
             if len(self.context.stack) >= 2:
                 address = self.context.stack.pop()
                 value = self.context.stack.pop()
-                self.context.memory[address] = struct.pack('<I', value)
+                self.context.memory[address] = struct.pack("<I", value)
 
         return True
 
@@ -513,25 +513,25 @@ class VMEmulator:
         """Execute control flow operations"""
         if "JMP" in instruction.mnemonic:
             if instruction.operands:
-                self.context.registers['EIP'] = instruction.operands[0]
+                self.context.registers["EIP"] = instruction.operands[0]
 
         elif "JZ" in instruction.mnemonic or "JE" in instruction.mnemonic:
-            if self.context.flags.get('ZF', False) and instruction.operands:
-                self.context.registers['EIP'] = instruction.operands[0]
+            if self.context.flags.get("ZF", False) and instruction.operands:
+                self.context.registers["EIP"] = instruction.operands[0]
 
         elif "JNZ" in instruction.mnemonic or "JNE" in instruction.mnemonic:
-            if not self.context.flags.get('ZF', False) and instruction.operands:
-                self.context.registers['EIP'] = instruction.operands[0]
+            if not self.context.flags.get("ZF", False) and instruction.operands:
+                self.context.registers["EIP"] = instruction.operands[0]
 
         elif "CALL" in instruction.mnemonic:
             if instruction.operands:
                 # Push return address
-                self.context.stack.append(self.context.registers['EIP'])
-                self.context.registers['EIP'] = instruction.operands[0]
+                self.context.stack.append(self.context.registers["EIP"])
+                self.context.registers["EIP"] = instruction.operands[0]
 
         elif "RET" in instruction.mnemonic:
             if self.context.stack:
-                self.context.registers['EIP'] = self.context.stack.pop()
+                self.context.registers["EIP"] = self.context.stack.pop()
 
         return True
 
@@ -546,7 +546,7 @@ class VMEmulator:
                     self.context.registers[dest] = src
                 else:
                     # Fallback to EAX if destination is not a valid register
-                    self.context.registers['EAX'] = src
+                    self.context.registers["EAX"] = src
 
         elif "XCHG" in instruction.mnemonic:
             if len(self.context.stack) >= 2:
@@ -570,29 +570,29 @@ class VMAnalyzer:
         """Load VM detection patterns"""
         return {
             ProtectionType.VMPROTECT_1X: [
-                b'\x60\x8B\x04\x24',  # VM entry pattern
-                b'\x8B\x4C\x24\x04\x8B\x54\x24\x08',
-                b'\x55\x8B\xEC\x60'
+                b"\x60\x8B\x04\x24",  # VM entry pattern
+                b"\x8B\x4C\x24\x04\x8B\x54\x24\x08",
+                b"\x55\x8B\xEC\x60"
             ],
             ProtectionType.VMPROTECT_2X: [
-                b'\x68\x00\x00\x00\x00\x8F\x04\x24',
-                b'\x8B\x44\x24\x04\x50',
-                b'\x8B\x44\x24\x08\x8B\x4C\x24\x0C'
+                b"\x68\x00\x00\x00\x00\x8F\x04\x24",
+                b"\x8B\x44\x24\x04\x50",
+                b"\x8B\x44\x24\x08\x8B\x4C\x24\x0C"
             ],
             ProtectionType.VMPROTECT_3X: [
-                b'\x8B\x44\x24\x04\x8B\x4C\x24\x08',
-                b'\x48\x8B\x44\x24\x08',
-                b'\x48\x8B\x4C\x24\x10'
+                b"\x8B\x44\x24\x04\x8B\x4C\x24\x08",
+                b"\x48\x8B\x44\x24\x08",
+                b"\x48\x8B\x4C\x24\x10"
             ],
             ProtectionType.THEMIDA: [
-                b'\x55\x8B\xEC\x83\xEC\x10\x53\x56\x57',
-                b'\x60\x9C\x33\xC0\x50\x9C',
-                b'\x8B\x45\x08\x8B\x4D\x0C'
+                b"\x55\x8B\xEC\x83\xEC\x10\x53\x56\x57",
+                b"\x60\x9C\x33\xC0\x50\x9C",
+                b"\x8B\x45\x08\x8B\x4D\x0C"
             ],
             ProtectionType.CODE_VIRTUALIZER: [
-                b'\x55\x8B\xEC\x81\xEC\x00\x04\x00\x00',
-                b'\x60\x9C\x33\xDB\x53',
-                b'\x8B\x45\x08\x8B\x55\x0C'
+                b"\x55\x8B\xEC\x81\xEC\x00\x04\x00\x00",
+                b"\x60\x9C\x33\xDB\x53",
+                b"\x8B\x45\x08\x8B\x55\x0C"
             ]
         }
 
@@ -655,28 +655,28 @@ class VMAnalyzer:
                            entry_point: int) -> Dict[str, Any]:
         """Analyze VM structure"""
         analysis = {
-            'entry_point': entry_point,
-            'vm_code_sections': [],
-            'handler_table': None,
-            'key_schedule': None,
-            'statistics': {}
+            "entry_point": entry_point,
+            "vm_code_sections": [],
+            "handler_table": None,
+            "key_schedule": None,
+            "statistics": {}
         }
 
         # Look for handler table
         handler_table_offset = self._find_handler_table(vm_data, entry_point)
         if handler_table_offset:
-            analysis['handler_table'] = handler_table_offset
+            analysis["handler_table"] = handler_table_offset
 
         # Extract VM code sections
         vm_sections = self._extract_vm_sections(vm_data, entry_point)
-        analysis['vm_code_sections'] = vm_sections
+        analysis["vm_code_sections"] = vm_sections
 
         # Calculate statistics
-        analysis['statistics'] = {
-            'total_size': len(vm_data),
-            'entry_points_found': 1,
-            'estimated_vm_code_size': sum(len(section['data']) for section in vm_sections),
-            'entropy': self._calculate_entropy(vm_data)
+        analysis["statistics"] = {
+            "total_size": len(vm_data),
+            "entry_points_found": 1,
+            "estimated_vm_code_size": sum(len(section["data"]) for section in vm_sections),
+            "entropy": self._calculate_entropy(vm_data)
         }
 
         return analysis
@@ -692,7 +692,7 @@ class VMAnalyzer:
                 potential_table = vm_data[i:i+64]
 
                 # Check if it looks like a table of 32-bit addresses
-                addresses = struct.unpack('<16I', potential_table)
+                addresses = struct.unpack("<16I", potential_table)
 
                 # Heuristic: addresses should be in reasonable range
                 valid_addresses = sum(1 for addr in addresses
@@ -719,11 +719,11 @@ class VMAnalyzer:
                 section_data = vm_data[section_start:section_end]
 
                 sections.append({
-                    'offset': section_start,
-                    'size': section_end - section_start,
-                    'data': section_data,
-                    'entropy': self._calculate_entropy(section_data),
-                    'type': self._classify_section(section_data)
+                    "offset": section_start,
+                    "size": section_end - section_start,
+                    "data": section_data,
+                    "entropy": self._calculate_entropy(section_data),
+                    "type": self._classify_section(section_data)
                 })
 
                 current_offset = section_end
@@ -748,7 +748,7 @@ class VMAnalyzer:
                 chunk = vm_data[i:i+16]
 
                 # Check for null section
-                if chunk == b'\x00' * 16:
+                if chunk == b"\x00" * 16:
                     return i
 
                 # Check for repeated patterns
@@ -775,19 +775,19 @@ class VMProtectionUnwrapper:
 
         try:
             # Load file
-            with open(input_file, 'rb') as f:
+            with open(input_file, "rb") as f:
                 binary_data = f.read()
 
             # Detect protection
             protection_type = self.analyzer.detect_vm_protection(binary_data)
-            self.stats['protection_types_detected'][protection_type] += 1
+            self.stats["protection_types_detected"][protection_type] += 1
 
             # Find entry points
             entry_points = self.analyzer.find_vm_entry_points(binary_data, protection_type)
 
             if not entry_points:
                 self.logger.warning("No VM entry points found")
-                return {'success': False, 'error': 'No entry points found'}
+                return {"success": False, "error": "No entry points found"}
 
             # Analyze VM structure
             vm_analysis = self.analyzer.analyze_vm_structure(binary_data, entry_points[0])
@@ -799,34 +799,34 @@ class VMProtectionUnwrapper:
             reconstructed = self._reconstruct_original_code(unwrapped_data, vm_analysis)
 
             # Save result
-            with open(output_file, 'wb') as f:
+            with open(output_file, "wb") as f:
                 f.write(reconstructed)
 
             elapsed_time = time.time() - start_time
 
             result = {
-                'success': True,
-                'protection_type': protection_type.value,
-                'entry_points': len(entry_points),
-                'vm_sections': len(vm_analysis['vm_code_sections']),
-                'original_size': len(binary_data),
-                'unwrapped_size': len(reconstructed),
-                'processing_time': elapsed_time,
-                'statistics': vm_analysis['statistics']
+                "success": True,
+                "protection_type": protection_type.value,
+                "entry_points": len(entry_points),
+                "vm_sections": len(vm_analysis["vm_code_sections"]),
+                "original_size": len(binary_data),
+                "unwrapped_size": len(reconstructed),
+                "processing_time": elapsed_time,
+                "statistics": vm_analysis["statistics"]
             }
 
-            self.stats['successful_unwraps'] += 1
+            self.stats["successful_unwraps"] += 1
             self.logger.info(f"Successfully unwrapped {input_file}")
 
             return result
 
         except Exception as e:
             self.logger.error(f"Error unwrapping {input_file}: {e}")
-            self.stats['failed_unwraps'] += 1
-            return {'success': False, 'error': str(e)}
+            self.stats["failed_unwraps"] += 1
+            return {"success": False, "error": str(e)}
 
         finally:
-            self.stats['files_processed'] += 1
+            self.stats["files_processed"] += 1
 
     def _unwrap_vm_sections(self, binary_data: bytes, vm_analysis: Dict[str, Any],
                           protection_type: ProtectionType) -> List[bytes]:
@@ -846,8 +846,8 @@ class VMProtectionUnwrapper:
         # Extract encryption key (heuristic)
         key = self._extract_encryption_key(binary_data, vm_analysis, protection_type)
 
-        for section in vm_analysis['vm_code_sections']:
-            section_data = section['data']
+        for section in vm_analysis["vm_code_sections"]:
+            section_data = section["data"]
 
             try:
                 if protection_type == ProtectionType.THEMIDA:
@@ -869,7 +869,7 @@ class VMProtectionUnwrapper:
         # This is a simplified key extraction
         # Real implementation would use more sophisticated techniques
 
-        entry_point = vm_analysis['entry_point']
+        entry_point = vm_analysis["entry_point"]
 
         # Look for key material near entry point
         search_start = max(0, entry_point - 0x100)
@@ -945,7 +945,7 @@ class VMProtectionUnwrapper:
             ks = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_32)
         except:
             # Fallback: return NOP instructions
-            return b'\x90' * len(vm_instructions)
+            return b"\x90" * len(vm_instructions)
 
         for instruction in vm_instructions:
             try:
@@ -1054,35 +1054,35 @@ class VMProtectionUnwrapper:
             try:
                 output_file = output_path / f"{file_path.stem}_unwrapped{file_path.suffix}"
                 result = self.unwrap_file(str(file_path), str(output_file))
-                result['input_file'] = str(file_path)
-                result['output_file'] = str(output_file)
+                result["input_file"] = str(file_path)
+                result["output_file"] = str(output_file)
                 results.append(result)
 
             except Exception as e:
                 self.logger.error(f"Error processing {file_path}: {e}")
                 results.append({
-                    'input_file': str(file_path),
-                    'success': False,
-                    'error': str(e)
+                    "input_file": str(file_path),
+                    "success": False,
+                    "error": str(e)
                 })
 
         # Summary
-        successful = sum(1 for r in results if r.get('success'))
+        successful = sum(1 for r in results if r.get("success"))
 
         return {
-            'total_files': len(results),
-            'successful': successful,
-            'failed': len(results) - successful,
-            'results': results,
-            'statistics': self.stats
+            "total_files": len(results),
+            "successful": successful,
+            "failed": len(results) - successful,
+            "results": results,
+            "statistics": self.stats
         }
 
     def get_statistics(self) -> Dict[str, Any]:
         """Get unwrapper statistics"""
         return {
-            'stats': self.stats.copy(),
-            'supported_protections': [pt.value for pt in ProtectionType],
-            'detection_patterns': len(self.analyzer.patterns)
+            "stats": self.stats.copy(),
+            "supported_protections": [pt.value for pt in ProtectionType],
+            "detection_patterns": len(self.analyzer.patterns)
         }
 
 
@@ -1090,11 +1090,11 @@ def main():
     """Example usage"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='VM Protection Unwrapper')
-    parser.add_argument('input', help='Input file or directory')
-    parser.add_argument('output', help='Output file or directory')
-    parser.add_argument('--batch', action='store_true', help='Batch mode for directories')
-    parser.add_argument('--stats', action='store_true', help='Show statistics')
+    parser = argparse.ArgumentParser(description="VM Protection Unwrapper")
+    parser.add_argument("input", help="Input file or directory")
+    parser.add_argument("output", help="Output file or directory")
+    parser.add_argument("--batch", action="store_true", help="Batch mode for directories")
+    parser.add_argument("--stats", action="store_true", help="Show statistics")
 
     args = parser.parse_args()
 
@@ -1112,17 +1112,17 @@ def main():
             print(f"Failed: {results['failed']}")
 
             # Show detailed results
-            for result in results['results']:
-                status = "✓" if result.get('success') else "✗"
+            for result in results["results"]:
+                status = "✓" if result.get("success") else "✗"
                 print(f"{status} {Path(result['input_file']).name}")
-                if not result.get('success'):
+                if not result.get("success"):
                     print(f"  Error: {result.get('error', 'Unknown error')}")
 
         else:
             print(f"Unwrapping {args.input} -> {args.output}")
             result = unwrapper.unwrap_file(args.input, args.output)
 
-            if result['success']:
+            if result["success"]:
                 print("✓ Unwrapping successful!")
                 print(f"  Protection: {result['protection_type']}")
                 print(f"  Original size: {result['original_size']:,} bytes")

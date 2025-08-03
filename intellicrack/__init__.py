@@ -56,12 +56,12 @@ try:
 
     # Log GPU status only if logger is configured
     gpu_info = get_gpu_info()
-    if gpu_info['gpu_available']:
+    if gpu_info["gpu_available"]:
         import sys
         # Get the actual device for logging
         device = get_device()
         # Check if we're in interactive mode (REPL) vs script mode
-        if not hasattr(sys, 'ps1'):  # Not in interactive mode
+        if not hasattr(sys, "ps1"):  # Not in interactive mode
             # Store device info for later use
             _default_device = device
         else:
@@ -69,7 +69,7 @@ try:
             _default_device = device
 except Exception:
     # Silently continue without GPU - application will fall back to CPU
-    _default_device = 'cpu'
+    _default_device = "cpu"
 
 # Setup logging after imports
 logger = logging.getLogger(__name__)
@@ -82,7 +82,7 @@ if _config:
         logger.warning("Configuration validation failed - using defaults")
 
     # Check if repositories are enabled for model management
-    if _config.is_repository_enabled('model_repository'):
+    if _config.is_repository_enabled("model_repository"):
         logger.info("Model repository is enabled")
 
     # Get and validate Ghidra path for reverse engineering integration
@@ -92,8 +92,8 @@ if _config:
 
     # Update configuration with runtime defaults if needed
     runtime_config = {
-        'initialized': True,  # Mark configuration as initialized
-        'version': __version__  # Store current version for compatibility checks
+        "initialized": True,  # Mark configuration as initialized
+        "version": __version__  # Store current version for compatibility checks
     }
     _config.update(runtime_config)
 
@@ -239,20 +239,20 @@ def get_default_device():
 
 
 __all__ = [
-    'CONFIG',
-    'IntellicrackApp',
-    'main',
-    'core',
-    'ai',
-    'utils',
-    'ui',
-    'plugins',
-    'hexview',
-    'get_version',
-    'create_app',
-    'run_app',
-    'get_default_device',
-    '__version__',
-    '__author__',
-    '__license__'
+    "CONFIG",
+    "IntellicrackApp",
+    "main",
+    "core",
+    "ai",
+    "utils",
+    "ui",
+    "plugins",
+    "hexview",
+    "get_version",
+    "create_app",
+    "run_app",
+    "get_default_device",
+    "__version__",
+    "__author__",
+    "__license__"
 ]

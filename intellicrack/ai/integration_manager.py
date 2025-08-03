@@ -65,20 +65,20 @@ except ImportError:
             # Analyze script content for basic validation
             script_info = {}
             if script:
-                script_info['length'] = len(script)
-                script_info['type'] = 'frida' if 'Java.perform' in script else 'unknown'
+                script_info["length"] = len(script)
+                script_info["type"] = "frida" if "Java.perform" in script else "unknown"
 
             return {
-                'success': False,
-                'output': f'QEMU testing not available (fallback mode) - Script: {script_info}',
-                'errors': 'QEMUTestManager not properly initialized',
-                'exit_code': 1,
-                'results': {
-                    'simulated': True,
-                    'fallback': True,
-                    'script_analyzed': script_info,
-                    'target': target_binary,
-                    'config': vm_config
+                "success": False,
+                "output": f"QEMU testing not available (fallback mode) - Script: {script_info}",
+                "errors": "QEMUTestManager not properly initialized",
+                "exit_code": 1,
+                "results": {
+                    "simulated": True,
+                    "fallback": True,
+                    "script_analyzed": script_info,
+                    "target": target_binary,
+                    "config": vm_config
                 }
             }
 
@@ -497,7 +497,7 @@ class IntegrationManager:
 
         for task_id, task in completed_tasks.items():
             results[task_id] = task.result
-            if hasattr(task.result, 'artifacts'):
+            if hasattr(task.result, "artifacts"):
                 artifacts[task_id] = task.result.artifacts
 
         for task_id, task in failed_tasks.items():

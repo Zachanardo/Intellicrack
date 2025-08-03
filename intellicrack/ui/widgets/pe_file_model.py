@@ -185,7 +185,7 @@ class PEFileModel(BinaryFileModel):
 
         for section in self.pe.sections:
             section_info = SectionInfo(
-                name=section.Name.decode('utf-8', errors='ignore').rstrip('\x00'),
+                name=section.Name.decode("utf-8", errors="ignore").rstrip("\x00"),
                 virtual_address=section.VirtualAddress,
                 virtual_size=section.Misc_VirtualSize,
                 raw_offset=section.PointerToRawData,
@@ -202,7 +202,7 @@ class PEFileModel(BinaryFileModel):
     def _calculate_section_entropy(self, section: SectionInfo) -> float:
         """Calculate entropy for a section"""
         try:
-            with open(self.file_path, 'rb') as f:
+            with open(self.file_path, "rb") as f:
                 f.seek(section.raw_offset)
                 data = f.read(min(section.raw_size, 8192))  # Sample for performance
 
@@ -236,17 +236,17 @@ class PEFileModel(BinaryFileModel):
         """Parse PE imports"""
         self.imports = []
 
-        if not hasattr(self.pe, 'DIRECTORY_ENTRY_IMPORT'):
+        if not hasattr(self.pe, "DIRECTORY_ENTRY_IMPORT"):
             return
 
         try:
             for entry in self.pe.DIRECTORY_ENTRY_IMPORT:  # pylint: disable=no-member
-                dll_name = entry.dll.decode('utf-8', errors='ignore')
+                dll_name = entry.dll.decode("utf-8", errors="ignore")
 
                 for imp in entry.imports:
                     import_info = ImportInfo(
                         dll_name=dll_name,
-                        function_name=imp.name.decode('utf-8', errors='ignore') if imp.name else f"Ordinal_{imp.ordinal}",
+                        function_name=imp.name.decode("utf-8", errors="ignore") if imp.name else f"Ordinal_{imp.ordinal}",
                         ordinal=imp.ordinal,
                         address=imp.address,
                         hint=imp.hint
@@ -260,16 +260,16 @@ class PEFileModel(BinaryFileModel):
         """Parse PE exports"""
         self.exports = []
 
-        if not hasattr(self.pe, 'DIRECTORY_ENTRY_EXPORT'):
+        if not hasattr(self.pe, "DIRECTORY_ENTRY_EXPORT"):
             return
 
         try:
             for exp in self.pe.DIRECTORY_ENTRY_EXPORT.symbols:  # pylint: disable=no-member
                 export_info = ExportInfo(
-                    function_name=exp.name.decode('utf-8', errors='ignore') if exp.name else f"Ordinal_{exp.ordinal}",
+                    function_name=exp.name.decode("utf-8", errors="ignore") if exp.name else f"Ordinal_{exp.ordinal}",
                     ordinal=exp.ordinal,
                     address=exp.address,
-                    forwarder=exp.forwarder.decode('utf-8', errors='ignore') if exp.forwarder else None
+                    forwarder=exp.forwarder.decode("utf-8", errors="ignore") if exp.forwarder else None
                 )
                 self.exports.append(export_info)
 
@@ -347,7 +347,7 @@ class PEFileModel(BinaryFileModel):
             self.structures.append(section_struct)
 
         # Data Directories
-        if hasattr(self.pe, 'OPTIONAL_HEADER') and hasattr(self.pe.OPTIONAL_HEADER, 'DATA_DIRECTORY'):
+        if hasattr(self.pe, "OPTIONAL_HEADER") and hasattr(self.pe.OPTIONAL_HEADER, "DATA_DIRECTORY"):
             # pylint: disable=no-member
             for i, directory in enumerate(self.pe.OPTIONAL_HEADER.DATA_DIRECTORY):
                 if directory.VirtualAddress and directory.Size:
@@ -478,11 +478,11 @@ def create_file_model(file_path: str) -> Optional[BinaryFileModel]:
     """Factory function to create appropriate file model"""
     try:
         # Check file format
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             header = f.read(4)
 
         # Check for PE format (MZ signature)
-        if header[:2] == b'MZ':
+        if header[:2] == b"MZ":
             return PEFileModel(file_path)
 
         # Future: Add ELF support

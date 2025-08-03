@@ -36,9 +36,9 @@ from .file_resolution import file_resolver
 logger = logging.getLogger(__name__)
 
 # Platform detection
-IS_WINDOWS = sys.platform.startswith('win')
-IS_LINUX = sys.platform.startswith('linux')
-IS_MACOS = sys.platform.startswith('darwin')
+IS_WINDOWS = sys.platform.startswith("win")
+IS_LINUX = sys.platform.startswith("linux")
+IS_MACOS = sys.platform.startswith("darwin")
 
 # Windows registry imports
 if IS_WINDOWS:
@@ -81,31 +81,31 @@ class ProgramDiscoveryEngine:
 
     # Common executable directories for different platforms
     COMMON_EXECUTABLE_DIRS = {
-        'windows': [
-            r'C:\Program Files',
-            r'C:\Program Files (x86)',
-            r'C:\ProgramData',
-            r'C:\Windows\System32',
-            r'C:\Windows\SysWOW64',
-            r'C:\Users\{username}\AppData\Local',
-            r'C:\Users\{username}\AppData\Roaming',
+        "windows": [
+            r"C:\Program Files",
+            r"C:\Program Files (x86)",
+            r"C:\ProgramData",
+            r"C:\Windows\System32",
+            r"C:\Windows\SysWOW64",
+            r"C:\Users\{username}\AppData\Local",
+            r"C:\Users\{username}\AppData\Roaming",
         ],
-        'linux': [
-            '/usr/bin',
-            '/usr/local/bin',
-            '/opt',
-            '/snap',
-            '/usr/share',
-            '/home/{username}/.local/bin',
-            '/home/{username}/bin',
+        "linux": [
+            "/usr/bin",
+            "/usr/local/bin",
+            "/opt",
+            "/snap",
+            "/usr/share",
+            "/home/{username}/.local/bin",
+            "/home/{username}/bin",
         ],
-        'macos': [
-            '/Applications',
-            '/System/Applications',
-            '/usr/local/bin',
-            '/opt',
-            '/Users/{username}/Applications',
-            '/Users/{username}/.local/bin',
+        "macos": [
+            "/Applications",
+            "/System/Applications",
+            "/usr/local/bin",
+            "/opt",
+            "/Users/{username}/Applications",
+            "/Users/{username}/.local/bin",
         ]
     }
 
@@ -120,50 +120,50 @@ class ProgramDiscoveryEngine:
     # Priority targets for analysis (higher score = higher priority)
     ANALYSIS_PRIORITIES = {
         # Security and protection software
-        'antivirus': 10,
-        'firewall': 10,
-        'vpn': 10,
-        'security': 10,
+        "antivirus": 10,
+        "firewall": 10,
+        "vpn": 10,
+        "security": 10,
 
         # Development tools
-        'debugger': 9,
-        'disassembler': 9,
-        'decompiler': 9,
-        'hex editor': 9,
-        'ida': 9,
-        'ghidra': 9,
-        'radare2': 9,
-        'x64dbg': 9,
-        'ollydbg': 9,
+        "debugger": 9,
+        "disassembler": 9,
+        "decompiler": 9,
+        "hex editor": 9,
+        "ida": 9,
+        "ghidra": 9,
+        "radare2": 9,
+        "x64dbg": 9,
+        "ollydbg": 9,
 
         # Commercial software with licensing
-        'adobe': 8,
-        'autodesk': 8,
-        'microsoft office': 8,
-        'solidworks': 8,
-        'matlab': 8,
-        'vmware': 8,
-        'virtualbox': 8,
+        "adobe": 8,
+        "autodesk": 8,
+        "microsoft office": 8,
+        "solidworks": 8,
+        "matlab": 8,
+        "vmware": 8,
+        "virtualbox": 8,
 
         # Games and entertainment
-        'steam': 7,
-        'game': 7,
-        'unity': 7,
-        'unreal': 7,
+        "steam": 7,
+        "game": 7,
+        "unity": 7,
+        "unreal": 7,
 
         # Common applications
-        'browser': 6,
-        'chrome': 6,
-        'firefox': 6,
-        'edge': 6,
+        "browser": 6,
+        "chrome": 6,
+        "firefox": 6,
+        "edge": 6,
 
         # System utilities
-        'system': 5,
-        'utility': 5,
-        'tool': 5,
+        "system": 5,
+        "utility": 5,
+        "tool": 5,
 
         # Default priority
-        'default': 3
+        "default": 3
     }
 
     def __init__(self, cache_file: Optional[str] = None):
@@ -179,9 +179,9 @@ class ProgramDiscoveryEngine:
 
     def _get_default_cache_file(self) -> str:
         """Get default cache file path."""
-        cache_dir = Path.home() / '.intellicrack'
+        cache_dir = Path.home() / ".intellicrack"
         cache_dir.mkdir(exist_ok=True)
-        return str(cache_dir / 'program_discovery_cache.json')
+        return str(cache_dir / "program_discovery_cache.json")
 
     def analyze_program_from_path(self, program_path: str) -> Optional[ProgramInfo]:
         """
@@ -234,12 +234,12 @@ class ProgramDiscoveryEngine:
                 publisher=publisher,
                 install_location=str(install_location),
                 executable_paths=[str(executable_path)] if executable_path else [],
-                icon_path=folder_analysis.get('icon_path'),
+                icon_path=folder_analysis.get("icon_path"),
                 uninstall_string=None,
                 install_date=None,
-                estimated_size=folder_analysis.get('total_size', 0),
-                architecture=folder_analysis.get('architecture', 'Unknown'),
-                file_types=folder_analysis.get('file_types', []),
+                estimated_size=folder_analysis.get("total_size", 0),
+                architecture=folder_analysis.get("architecture", "Unknown"),
+                file_types=folder_analysis.get("file_types", []),
                 description=f"Program analyzed from path: {program_path}",
                 registry_key=None,
                 discovery_method="path_analysis",
@@ -274,7 +274,7 @@ class ProgramDiscoveryEngine:
             for file_path in search_path.iterdir():
                 if file_path.is_file():
                     # Check if it's a shortcut or executable
-                    if file_path.suffix.lower() in ['.lnk', '.url', '.exe', '.app']:
+                    if file_path.suffix.lower() in [".lnk", ".url", ".exe", ".app"]:
                         # Resolve the file path
                         resolved_path, metadata = file_resolver.resolve_file_path(file_path)
 
@@ -308,17 +308,17 @@ class ProgramDiscoveryEngine:
 
         # Get platform-specific directories
         if IS_WINDOWS:
-            dirs = self.COMMON_EXECUTABLE_DIRS['windows']
+            dirs = self.COMMON_EXECUTABLE_DIRS["windows"]
         elif IS_LINUX:
-            dirs = self.COMMON_EXECUTABLE_DIRS['linux']
+            dirs = self.COMMON_EXECUTABLE_DIRS["linux"]
         elif IS_MACOS:
-            dirs = self.COMMON_EXECUTABLE_DIRS['macos']
+            dirs = self.COMMON_EXECUTABLE_DIRS["macos"]
         else:
             return programs
 
         # Replace username placeholder
-        username = os.environ.get('USER', os.environ.get('USERNAME', 'user'))
-        dirs = [d.replace('{username}', username) for d in dirs]
+        username = os.environ.get("USER", os.environ.get("USERNAME", "user"))
+        dirs = [d.replace("{username}", username) for d in dirs]
 
         for dir_path in dirs:
             if os.path.exists(dir_path):
@@ -336,7 +336,7 @@ class ProgramDiscoveryEngine:
             return None
 
         # Common executable patterns
-        exe_patterns = ['*.exe', '*.app', '*.bin'] if IS_WINDOWS else ['*']
+        exe_patterns = ["*.exe", "*.app", "*.bin"] if IS_WINDOWS else ["*"]
 
         # Look for executables in order of priority
         for pattern in exe_patterns:
@@ -357,12 +357,12 @@ class ProgramDiscoveryEngine:
     def _analyze_installation_folder(self, folder_path: Path) -> Dict[str, any]:
         """Analyze program installation folder for metadata."""
         analysis = {
-            'total_size': 0,
-            'file_types': [],
-            'architecture': 'Unknown',
-            'icon_path': None,
-            'has_licensing': False,
-            'licensing_files': []
+            "total_size": 0,
+            "file_types": [],
+            "architecture": "Unknown",
+            "icon_path": None,
+            "has_licensing": False,
+            "licensing_files": []
         }
 
         try:
@@ -373,7 +373,7 @@ class ProgramDiscoveryEngine:
             total_size = 0
 
             # Analyze files in folder
-            for file_path in folder_path.rglob('*'):
+            for file_path in folder_path.rglob("*"):
                 if file_path.is_file():
                     try:
                         file_size = file_path.stat().st_size
@@ -384,43 +384,43 @@ class ProgramDiscoveryEngine:
                             file_extensions.add(file_path.suffix.lower())
 
                         # Look for icon files
-                        if file_path.suffix.lower() in ['.ico', '.png', '.jpg', '.svg']:
-                            if not analysis['icon_path']:
-                                analysis['icon_path'] = str(file_path)
+                        if file_path.suffix.lower() in [".ico", ".png", ".jpg", ".svg"]:
+                            if not analysis["icon_path"]:
+                                analysis["icon_path"] = str(file_path)
 
                         # Look for licensing files using comprehensive patterns
                         filename_lower = file_path.name.lower()
                         licensing_indicators = [
                             # Common licensing terms
-                            'license', 'licence', 'eula', 'terms', 'agreement', 'copyright',
-                            'legal', 'rights', 'disclaimer', 'activation', 'serial', 'key',
-                            'keyfile', 'authenticate', 'register', 'unlock', 'crack', 'patch',
-                            'keygen', 'dongle', 'hasp', 'sentinel', 'flexlm', 'safenet',
-                            'token', 'permit', 'grant', 'cert', 'sig', 'fingerprint',
-                            'expire', 'timeout', 'protected', 'secured', 'locked'
+                            "license", "licence", "eula", "terms", "agreement", "copyright",
+                            "legal", "rights", "disclaimer", "activation", "serial", "key",
+                            "keyfile", "authenticate", "register", "unlock", "crack", "patch",
+                            "keygen", "dongle", "hasp", "sentinel", "flexlm", "safenet",
+                            "token", "permit", "grant", "cert", "sig", "fingerprint",
+                            "expire", "timeout", "protected", "secured", "locked"
                         ]
 
                         if any(pattern in filename_lower for pattern in licensing_indicators):
-                            analysis['has_licensing'] = True
-                            analysis['licensing_files'].append(str(file_path))
+                            analysis["has_licensing"] = True
+                            analysis["licensing_files"].append(str(file_path))
 
                         # Also check for suspicious file extensions
-                        elif file_path.suffix.lower() in ['.lic', '.license', '.key', '.dat', '.bin']:
-                            analysis['has_licensing'] = True
-                            analysis['licensing_files'].append(str(file_path))
+                        elif file_path.suffix.lower() in [".lic", ".license", ".key", ".dat", ".bin"]:
+                            analysis["has_licensing"] = True
+                            analysis["licensing_files"].append(str(file_path))
 
                         # Determine architecture from executables
-                        if file_path.suffix.lower() in ['.exe', '.dll']:
+                        if file_path.suffix.lower() in [".exe", ".dll"]:
                             arch = self._get_pe_architecture(file_path)
-                            if arch != 'Unknown':
-                                analysis['architecture'] = arch
+                            if arch != "Unknown":
+                                analysis["architecture"] = arch
 
                     except (OSError, PermissionError) as e:
                         logger.error("Error in program_discovery: %s", e)
                         continue
 
-            analysis['total_size'] = total_size
-            analysis['file_types'] = list(file_extensions)
+            analysis["total_size"] = total_size
+            analysis["file_types"] = list(file_extensions)
 
         except Exception as e:
             self.logger.debug(f"Error analyzing folder {folder_path}: {e}")
@@ -431,41 +431,41 @@ class ProgramDiscoveryEngine:
         """Get architecture from PE file."""
         try:
             import struct
-            with open(pe_path, 'rb') as f:
+            with open(pe_path, "rb") as f:
                 # Read DOS header
                 dos_header = f.read(64)
                 if len(dos_header) < 60:
-                    return 'Unknown'
+                    return "Unknown"
 
                 # Get PE header offset
-                pe_offset = struct.unpack('<I', dos_header[60:64])[0]
+                pe_offset = struct.unpack("<I", dos_header[60:64])[0]
                 f.seek(pe_offset)
 
                 # Read PE signature and file header
                 pe_sig = f.read(4)
-                if pe_sig != b'PE\x00\x00':
-                    return 'Unknown'
+                if pe_sig != b"PE\x00\x00":
+                    return "Unknown"
 
                 file_header = f.read(20)
                 if len(file_header) < 20:
-                    return 'Unknown'
+                    return "Unknown"
 
                 # Extract machine type
-                machine_type = struct.unpack('<H', file_header[0:2])[0]
+                machine_type = struct.unpack("<H", file_header[0:2])[0]
 
                 # Map machine type to architecture
                 arch_map = {
-                    0x014c: 'x86',     # IMAGE_FILE_MACHINE_I386
-                    0x8664: 'x64',     # IMAGE_FILE_MACHINE_AMD64
-                    0x01c0: 'ARM',     # IMAGE_FILE_MACHINE_ARM
-                    0xaa64: 'ARM64',   # IMAGE_FILE_MACHINE_ARM64
+                    0x014c: "x86",     # IMAGE_FILE_MACHINE_I386
+                    0x8664: "x64",     # IMAGE_FILE_MACHINE_AMD64
+                    0x01c0: "ARM",     # IMAGE_FILE_MACHINE_ARM
+                    0xaa64: "ARM64",   # IMAGE_FILE_MACHINE_ARM64
                 }
 
-                return arch_map.get(machine_type, 'Unknown')
+                return arch_map.get(machine_type, "Unknown")
 
         except Exception as e:
             logger.error("Exception in program_discovery: %s", e)
-            return 'Unknown'
+            return "Unknown"
 
     def _get_windows_version_info(self, exe_path: Path) -> Tuple[str, str]:
         """Get version and publisher info from Windows executable."""
@@ -480,13 +480,13 @@ class ProgramDiscoveryEngine:
                     self.logger.error("Import error in program_discovery: %s", e)
                     return "Unknown", "Unknown"
 
-                string_info = version_info.get('StringFileInfo', {})
+                string_info = version_info.get("StringFileInfo", {})
                 if string_info:
                     first_key = list(string_info.keys())[0]
                     string_table = string_info[first_key]
-                    publisher = string_table.get('CompanyName', 'Unknown')
+                    publisher = string_table.get("CompanyName", "Unknown")
                 else:
-                    publisher = 'Unknown'
+                    publisher = "Unknown"
 
                 return version, publisher
         except Exception as e:
@@ -498,12 +498,12 @@ class ProgramDiscoveryEngine:
         """Get version and publisher info from Unix executable."""
         try:
             # Try to get version from --version flag
-            result = subprocess.run([str(exe_path), '--version'],
+            result = subprocess.run([str(exe_path), "--version"],
                                   capture_output=True, text=True, timeout=5)
             if result.returncode == 0 and result.stdout:
-                version_line = result.stdout.split('\n')[0]
+                version_line = result.stdout.split("\n")[0]
                 # Extract version number if present
-                version_match = re.search(r'(\d+\.\d+\.\d+)', version_line)
+                version_match = re.search(r"(\d+\.\d+\.\d+)", version_line)
                 if version_match:
                     return version_match.group(1), "Unknown"
         except Exception as e:
@@ -521,7 +521,7 @@ class ProgramDiscoveryEngine:
             if keyword in program_name_lower or keyword in install_path_lower:
                 return priority
 
-        return self.ANALYSIS_PRIORITIES['default']
+        return self.ANALYSIS_PRIORITIES["default"]
 
     def _get_windows_programs(self) -> List[ProgramInfo]:
         """Get Windows programs from registry."""
@@ -545,7 +545,7 @@ class ProgramDiscoveryEngine:
         # Try different package managers
         try:
             # Debian/Ubuntu - dpkg
-            result = subprocess.run(['dpkg', '-l'], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(["dpkg", "-l"], capture_output=True, text=True, timeout=30)
             if result.returncode == 0:
                 programs.extend(self._parse_dpkg_output(result.stdout))
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
@@ -553,7 +553,7 @@ class ProgramDiscoveryEngine:
 
         try:
             # Red Hat/CentOS - rpm
-            result = subprocess.run(['rpm', '-qa'], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(["rpm", "-qa"], capture_output=True, text=True, timeout=30)
             if result.returncode == 0:
                 programs.extend(self._parse_rpm_output(result.stdout))
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
@@ -565,16 +565,16 @@ class ProgramDiscoveryEngine:
         """Get macOS programs from Applications folder."""
         programs = []
 
-        app_dirs = ['/Applications', '/System/Applications']
-        user_home = os.path.expanduser('~')
+        app_dirs = ["/Applications", "/System/Applications"]
+        user_home = os.path.expanduser("~")
         if user_home:
-            app_dirs.append(os.path.join(user_home, 'Applications'))
+            app_dirs.append(os.path.join(user_home, "Applications"))
 
         for app_dir in app_dirs:
             if os.path.exists(app_dir):
                 try:
                     for item in os.listdir(app_dir):
-                        if item.endswith('.app'):
+                        if item.endswith(".app"):
                             app_path = os.path.join(app_dir, item)
                             program = self.analyze_program_from_path(app_path)
                             if program:
@@ -589,13 +589,13 @@ class ProgramDiscoveryEngine:
         """Parse dpkg output to extract program information."""
         programs = []
 
-        for line in output.split('\n')[5:]:  # Skip header lines
-            if line.startswith('ii'):  # Installed packages
+        for line in output.split("\n")[5:]:  # Skip header lines
+            if line.startswith("ii"):  # Installed packages
                 parts = line.split()
                 if len(parts) >= 4:
                     name = parts[1]
                     version = parts[2]
-                    description = ' '.join(parts[3:])
+                    description = " ".join(parts[3:])
 
                     programs.append(ProgramInfo(
                         name=name,
@@ -623,10 +623,10 @@ class ProgramDiscoveryEngine:
         """Parse rpm output to extract program information."""
         programs = []
 
-        for line in output.split('\n'):
+        for line in output.split("\n"):
             if line.strip():
                 # Parse RPM package name
-                match = re.match(r'^(.+?)-([^-]+)-([^-]+)\.(.+)$', line.strip())
+                match = re.match(r"^(.+?)-([^-]+)-([^-]+)\.(.+)$", line.strip())
                 if match:
                     name = match.group(1)
                     version = match.group(2)
@@ -703,7 +703,7 @@ class ProgramDiscoveryEngine:
                 architecture = "Unknown"
                 if install_location and os.path.exists(install_location):
                     folder_analysis = self._analyze_installation_folder(Path(install_location))
-                    architecture = folder_analysis.get('architecture', 'Unknown')
+                    architecture = folder_analysis.get("architecture", "Unknown")
 
                 # Find executable paths
                 executable_paths = []
@@ -713,7 +713,7 @@ class ProgramDiscoveryEngine:
                         executable_paths.append(str(main_exe))
 
                 program_info = ProgramInfo(
-                    name=display_name.lower().replace(' ', '_'),
+                    name=display_name.lower().replace(" ", "_"),
                     display_name=display_name,
                     version=version,
                     publisher=publisher,
@@ -750,9 +750,9 @@ class ProgramDiscoveryEngine:
     def _is_system_component(self, display_name: str, subkey_name: str) -> bool:
         """Check if a program is a system component."""
         system_indicators = [
-            'microsoft visual c++', 'microsoft .net', 'windows',
-            'update', 'kb', 'hotfix', 'security update',
-            'service pack', 'redistributable', 'runtime'
+            "microsoft visual c++", "microsoft .net", "windows",
+            "update", "kb", "hotfix", "security update",
+            "service pack", "redistributable", "runtime"
         ]
 
         name_lower = display_name.lower()
@@ -780,11 +780,11 @@ class ProgramDiscoveryEngine:
         """Load cached program data."""
         try:
             if os.path.exists(self.cache_file):
-                with open(self.cache_file, 'r') as f:
+                with open(self.cache_file, "r") as f:
                     cache_data = json.load(f)
 
-                self.last_scan_time = cache_data.get('last_scan_time')
-                programs_data = cache_data.get('programs', {})
+                self.last_scan_time = cache_data.get("last_scan_time")
+                programs_data = cache_data.get("programs", {})
 
                 # Convert dictionaries back to ProgramInfo objects
                 for key, program_dict in programs_data.items():
@@ -799,11 +799,11 @@ class ProgramDiscoveryEngine:
         """Save program data to cache."""
         try:
             cache_data = {
-                'last_scan_time': self.last_scan_time,
-                'programs': {key: asdict(program) for key, program in self.programs_cache.items()}
+                "last_scan_time": self.last_scan_time,
+                "programs": {key: asdict(program) for key, program in self.programs_cache.items()}
             }
 
-            with open(self.cache_file, 'w') as f:
+            with open(self.cache_file, "w") as f:
                 json.dump(cache_data, f, indent=2)
 
         except Exception as e:

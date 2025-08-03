@@ -547,7 +547,7 @@ class ChartGenerator:
         # Add nodes for each exploit type with stats-based sizing
         for exploit_type in ExploitType:
             # Use stats to determine node size based on usage frequency
-            usage_count = stats.get('exploit_types', {}).get(
+            usage_count = stats.get("exploit_types", {}).get(
                 exploit_type.value, 0)
             node_size = min(1.0 + (usage_count * 0.1),
                             3.0)  # Scale based on usage
@@ -826,7 +826,7 @@ class DashboardManager:
         }
 
         try:
-            with open(export_path, 'w') as f:
+            with open(export_path, "w") as f:
                 json.dump(export_data, f, indent=2)
             return True
         except Exception as e:

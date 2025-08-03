@@ -43,7 +43,7 @@ memory_allocated = None
 memory_reserved = None
 
 # Security configuration for pickle
-PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
+PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 
 def secure_pickle_dump(obj, file_path):
     """Securely dump object with integrity check."""
@@ -54,7 +54,7 @@ def secure_pickle_dump(obj, file_path):
     mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
 
     # Write MAC + data
-    with open(file_path, 'wb') as f:
+    with open(file_path, "wb") as f:
         f.write(mac)
         f.write(data)
 
@@ -65,15 +65,15 @@ class RestrictedUnpickler(pickle.Unpickler):
         """Override find_class to restrict allowed classes."""
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
-            'numpy', 'numpy.core.multiarray', 'numpy.core.numeric',
-            'pandas', 'pandas.core.frame', 'pandas.core.series',
-            'sklearn', 'torch', 'tensorflow',
-            '__builtin__', 'builtins',
-            'collections', 'collections.abc'
+            "numpy", "numpy.core.multiarray", "numpy.core.numeric",
+            "pandas", "pandas.core.frame", "pandas.core.series",
+            "sklearn", "torch", "tensorflow",
+            "__builtin__", "builtins",
+            "collections", "collections.abc"
         }
 
         # Allow model classes from our own modules
-        if module.startswith('intellicrack.'):
+        if module.startswith("intellicrack."):
             return super().find_class(module, name)
 
         # Check if module is in allowed list
@@ -85,7 +85,7 @@ class RestrictedUnpickler(pickle.Unpickler):
 
 def secure_pickle_load(file_path):
     """Securely load object with integrity verification and restricted unpickling."""
-    with open(file_path, 'rb') as f:
+    with open(file_path, "rb") as f:
         # Read MAC
         stored_mac = f.read(32)  # SHA256 produces 32 bytes
         data = f.read()
@@ -198,7 +198,7 @@ class ModelCacheManager:
             return {}
 
         try:
-            with open(self.disk_index_file, 'r') as f:
+            with open(self.disk_index_file, "r") as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load disk cache index: {e}")
@@ -210,7 +210,7 @@ class ModelCacheManager:
             return
 
         try:
-            with open(self.disk_index_file, 'w') as f:
+            with open(self.disk_index_file, "w") as f:
                 json.dump(self.disk_index, f, indent=2, default=str)
         except Exception as e:
             logger.error(f"Failed to save disk cache index: {e}")
@@ -228,25 +228,25 @@ class ModelCacheManager:
 
         try:
             # For PyTorch models
-            if hasattr(model, 'parameters'):
+            if hasattr(model, "parameters"):
                 for param in model.parameters():
-                    if hasattr(param, 'nelement') and hasattr(param, 'element_size'):
+                    if hasattr(param, "nelement") and hasattr(param, "element_size"):
                         total_size += param.nelement() * param.element_size()
-                    elif hasattr(param, 'data'):
-                        if hasattr(param.data, 'nbytes'):
+                    elif hasattr(param, "data"):
+                        if hasattr(param.data, "nbytes"):
                             total_size += param.data.nbytes
                         else:
                             # Estimate based on shape and dtype
                             total_size += param.data.numel() * param.data.element_size()
 
             # For TensorFlow models
-            elif hasattr(model, 'variables'):
+            elif hasattr(model, "variables"):
                 for var in model.variables:
-                    if hasattr(var, 'numpy'):
+                    if hasattr(var, "numpy"):
                         total_size += var.numpy().nbytes
 
             # For ONNX models (rough estimate)
-            elif hasattr(model, 'graph'):
+            elif hasattr(model, "graph"):
                 # Estimate based on graph complexity
                 total_size = 100 * 1024 * 1024  # 100MB default
 
@@ -353,11 +353,11 @@ class ModelCacheManager:
         """
         # Auto-detect model type
         if model_type == "auto":
-            if hasattr(model, 'forward') and hasattr(model, 'parameters'):
+            if hasattr(model, "forward") and hasattr(model, "parameters"):
                 model_type = "pytorch"
-            elif hasattr(model, 'predict') and hasattr(model, 'variables'):
+            elif hasattr(model, "predict") and hasattr(model, "variables"):
                 model_type = "tensorflow"
-            elif hasattr(model, 'run'):
+            elif hasattr(model, "run"):
                 model_type = "onnx"
             else:
                 model_type = "unknown"
@@ -374,9 +374,9 @@ class ModelCacheManager:
         device = "cpu"
         if GPU_AUTOLOADER_AVAILABLE:
             device = get_device()
-        elif hasattr(model, 'device'):
+        elif hasattr(model, "device"):
             device = str(model.device)
-        elif hasattr(model, 'module') and hasattr(model.module, 'device'):
+        elif hasattr(model, "module") and hasattr(model.module, "device"):
             device = str(model.module.device)
 
         # Create cache entry
@@ -485,7 +485,7 @@ class ModelCacheManager:
             }
 
             metadata_path = model_dir / "metadata.json"
-            with open(metadata_path, 'w') as f:
+            with open(metadata_path, "w") as f:
                 json.dump(metadata, f, indent=2)
 
             # Update index
@@ -522,7 +522,7 @@ class ModelCacheManager:
 
             # Load metadata
             metadata_path = model_dir / "metadata.json"
-            with open(metadata_path, 'r') as f:
+            with open(metadata_path, "r") as f:
                 metadata = json.load(f)
 
             # Load model

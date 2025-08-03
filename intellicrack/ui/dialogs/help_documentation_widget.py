@@ -39,7 +39,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-__all__ = ['HelpDocumentationWidget']
+__all__ = ["HelpDocumentationWidget"]
 
 
 class HelpDocumentationWidget(QWidget):

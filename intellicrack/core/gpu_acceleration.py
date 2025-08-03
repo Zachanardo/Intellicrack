@@ -87,11 +87,11 @@ class GPUAccelerator:
             try:
                 device = cp.cuda.Device()
                 info = {
-                    'name': device.name.decode(),
-                    'compute_capability': device.compute_capability,
-                    'memory_total': device.mem_info[1],
-                    'memory_free': device.mem_info[0],
-                    'multiprocessor_count': device.attributes['MultiProcessorCount']
+                    "name": device.name.decode(),
+                    "compute_capability": device.compute_capability,
+                    "memory_total": device.mem_info[1],
+                    "memory_free": device.mem_info[0],
+                    "multiprocessor_count": device.attributes["MultiProcessorCount"]
                 }
             except Exception as e:
                 logger.error(f"Failed to get CuPy device info: {e}")
@@ -101,10 +101,10 @@ class GPUAccelerator:
                 device = cuda.Device(0)
                 attributes = device.get_attributes()
                 info = {
-                    'name': device.name(),
-                    'compute_capability': device.compute_capability(),
-                    'memory_total': device.total_memory(),
-                    'multiprocessor_count': attributes[cuda.device_attribute.MULTIPROCESSOR_COUNT]
+                    "name": device.name(),
+                    "compute_capability": device.compute_capability(),
+                    "memory_total": device.total_memory(),
+                    "multiprocessor_count": attributes[cuda.device_attribute.MULTIPROCESSOR_COUNT]
                 }
             except Exception as e:
                 logger.error(f"Failed to get PyCUDA device info: {e}")
@@ -113,10 +113,10 @@ class GPUAccelerator:
             try:
                 device = numba_cuda.get_current_device()
                 info = {
-                    'name': device.name.decode(),
-                    'compute_capability': device.compute_capability,
-                    'memory_total': device.get_memory_info()[1],
-                    'memory_free': device.get_memory_info()[0]
+                    "name": device.name.decode(),
+                    "compute_capability": device.compute_capability,
+                    "memory_total": device.get_memory_info()[1],
+                    "memory_free": device.get_memory_info()[0]
                 }
             except Exception as e:
                 logger.error(f"Failed to get Numba device info: {e}")
@@ -145,8 +145,8 @@ class GPUAccelerator:
         else:
             result = self._cpu_pattern_search(data, pattern)
 
-        result['execution_time'] = time.time() - start_time
-        result['framework'] = self.framework
+        result["execution_time"] = time.time() - start_time
+        result["framework"] = self.framework
         return result
 
     def _cupy_pattern_search(self, data: bytes, pattern: bytes) -> Dict[str, Any]:
@@ -182,7 +182,7 @@ class GPUAccelerator:
             '''
 
             # Compile kernel
-            kernel = cp.RawKernel(kernel_code, 'pattern_match')
+            kernel = cp.RawKernel(kernel_code, "pattern_match")
 
             # Allocate result arrays
             matches = cp.zeros(1, dtype=cp.int32)
@@ -200,9 +200,9 @@ class GPUAccelerator:
             positions = match_positions[:min(match_count, 1000)].get().tolist()
 
             return {
-                'match_count': match_count,
-                'positions': positions,
-                'method': 'cupy_kernel'
+                "match_count": match_count,
+                "positions": positions,
+                "method": "cupy_kernel"
             }
 
         except Exception as e:
@@ -250,9 +250,9 @@ class GPUAccelerator:
             positions = d_positions.copy_to_host()[:min(match_count, 1000)].tolist()
 
             return {
-                'match_count': match_count,
-                'positions': positions,
-                'method': 'numba_cuda'
+                "match_count": match_count,
+                "positions": positions,
+                "method": "numba_cuda"
             }
 
         except Exception as e:
@@ -317,9 +317,9 @@ class GPUAccelerator:
             positions = positions_gpu.get()[:min(match_count, 1000)].tolist()
 
             return {
-                'match_count': match_count,
-                'positions': positions,
-                'method': 'pycuda'
+                "match_count": match_count,
+                "positions": positions,
+                "method": "pycuda"
             }
 
         except Exception as e:
@@ -340,9 +340,9 @@ class GPUAccelerator:
                 break
 
         return {
-            'match_count': len(positions),
-            'positions': positions,
-            'method': 'cpu'
+            "match_count": len(positions),
+            "positions": positions,
+            "method": "cpu"
         }
 
     def entropy_calculation(self, data: bytes, block_size: int = 1024) -> Dict[str, Any]:
@@ -365,8 +365,8 @@ class GPUAccelerator:
         else:
             result = self._cpu_entropy(data, block_size)
 
-        result['execution_time'] = time.time() - start_time
-        result['framework'] = self.framework
+        result["execution_time"] = time.time() - start_time
+        result["framework"] = self.framework
         return result
 
     def _cupy_entropy(self, data: bytes, block_size: int) -> Dict[str, Any]:
@@ -390,11 +390,11 @@ class GPUAccelerator:
                 entropies.append(float(entropy.get()))
 
             return {
-                'block_entropies': entropies,
-                'average_entropy': np.mean(entropies),
-                'max_entropy': np.max(entropies),
-                'min_entropy': np.min(entropies),
-                'method': 'cupy'
+                "block_entropies": entropies,
+                "average_entropy": np.mean(entropies),
+                "max_entropy": np.max(entropies),
+                "min_entropy": np.min(entropies),
+                "method": "cupy"
             }
 
         except Exception as e:
@@ -444,11 +444,11 @@ class GPUAccelerator:
             entropies = d_entropies.copy_to_host().tolist()
 
             return {
-                'block_entropies': entropies,
-                'average_entropy': np.mean(entropies),
-                'max_entropy': np.max(entropies),
-                'min_entropy': np.min(entropies),
-                'method': 'numba_cuda'
+                "block_entropies": entropies,
+                "average_entropy": np.mean(entropies),
+                "max_entropy": np.max(entropies),
+                "min_entropy": np.min(entropies),
+                "method": "numba_cuda"
             }
 
         except Exception as e:
@@ -474,11 +474,11 @@ class GPUAccelerator:
             entropies.append(entropy)
 
         return {
-            'block_entropies': entropies,
-            'average_entropy': np.mean(entropies) if entropies else 0,
-            'max_entropy': np.max(entropies) if entropies else 0,
-            'min_entropy': np.min(entropies) if entropies else 0,
-            'method': 'cpu'
+            "block_entropies": entropies,
+            "average_entropy": np.mean(entropies) if entropies else 0,
+            "max_entropy": np.max(entropies) if entropies else 0,
+            "min_entropy": np.min(entropies) if entropies else 0,
+            "method": "cpu"
         }
 
     def hash_computation(self, data: bytes, algorithms: List[str] = None) -> Dict[str, Any]:
@@ -493,26 +493,26 @@ class GPUAccelerator:
             Dictionary with hash values
         """
         if algorithms is None:
-            algorithms = ['crc32', 'adler32']
+            algorithms = ["crc32", "adler32"]
 
         start_time = time.time()
         results = {}
 
         for algo in algorithms:
-            if algo == 'crc32' and self.framework == "cupy" and CUPY_AVAILABLE:
+            if algo == "crc32" and self.framework == "cupy" and CUPY_AVAILABLE:
                 results[algo] = self._cupy_crc32(data)
             else:
                 # CPU fallback for now
                 import zlib
-                if algo == 'crc32':
-                    results[algo] = format(zlib.crc32(data) & 0xffffffff, '08x')
-                elif algo == 'adler32':
-                    results[algo] = format(zlib.adler32(data) & 0xffffffff, '08x')
+                if algo == "crc32":
+                    results[algo] = format(zlib.crc32(data) & 0xffffffff, "08x")
+                elif algo == "adler32":
+                    results[algo] = format(zlib.adler32(data) & 0xffffffff, "08x")
 
         return {
-            'hashes': results,
-            'execution_time': time.time() - start_time,
-            'framework': self.framework
+            "hashes": results,
+            "execution_time": time.time() - start_time,
+            "framework": self.framework
         }
 
     def _cupy_crc32(self, data: bytes) -> str:
@@ -541,12 +541,12 @@ class GPUAccelerator:
                 crc = crc_table[(crc ^ byte) & 0xFF] ^ (crc >> 8)
 
             result = int((crc ^ 0xFFFFFFFF).get())
-            return format(result & 0xffffffff, '08x')
+            return format(result & 0xffffffff, "08x")
 
         except Exception as e:
             logger.error(f"CuPy CRC32 failed: {e}")
             import zlib
-            return format(zlib.crc32(data) & 0xffffffff, '08x')
+            return format(zlib.crc32(data) & 0xffffffff, "08x")
 
 
 # Global accelerator instance

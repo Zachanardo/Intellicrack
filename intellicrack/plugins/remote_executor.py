@@ -39,7 +39,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 
-__all__ = ['RemotePluginExecutor']
+__all__ = ["RemotePluginExecutor"]
 
 
 class RemotePluginExecutor:
@@ -63,7 +63,7 @@ class RemotePluginExecutor:
         self.logger = logging.getLogger(__name__)
 
         # Security: Shared secret for HMAC validation (should be configured securely)
-        secret = get_secret('INTELLICRACK_REMOTE_SECRET', None)
+        secret = get_secret("INTELLICRACK_REMOTE_SECRET", None)
         if not secret:
             # Generate a random secret if not configured
             import secrets
@@ -71,7 +71,7 @@ class RemotePluginExecutor:
             # Try to store it for future use
             from ..utils.secrets_manager import store_secret
             try:
-                store_secret('INTELLICRACK_REMOTE_SECRET', secret)
+                store_secret("INTELLICRACK_REMOTE_SECRET", secret)
                 self.logger.info("Generated and stored new secure remote execution secret")
             except Exception as e:
                 self.logger.warning(f"Could not store generated secret: {e}")
@@ -90,23 +90,23 @@ class RemotePluginExecutor:
         try:
             # Try JSON serialization
             json_str = json.dumps(data)
-            return base64.b64encode(json_str.encode('utf-8')).decode('ascii')
+            return base64.b64encode(json_str.encode("utf-8")).decode("ascii")
         except (TypeError, ValueError):
             # Convert non-serializable objects to string representation
             self.logger.debug(f"Converting non-JSON-serializable data to string: {type(data)}")
             # Attempt to make data JSON-serializable
-            if hasattr(data, '__dict__'):
+            if hasattr(data, "__dict__"):
                 # Convert objects to their dict representation
                 try:
                     json_str = json.dumps(data.__dict__)
-                    return base64.b64encode(json_str.encode('utf-8')).decode('ascii')
+                    return base64.b64encode(json_str.encode("utf-8")).decode("ascii")
                 except:
                     pass
             # Last resort: convert to string
             json_str = json.dumps(str(data))
-            return base64.b64encode(json_str.encode('utf-8')).decode('ascii')
+            return base64.b64encode(json_str.encode("utf-8")).decode("ascii")
 
-    def _deserialize_safe(self, encoded_data: str, expected_type: str = 'json') -> Any:
+    def _deserialize_safe(self, encoded_data: str, expected_type: str = "json") -> Any:
         """
         Safely deserialize data - only JSON allowed for security.
 
@@ -117,13 +117,13 @@ class RemotePluginExecutor:
         Returns:
             Deserialized data
         """
-        if expected_type != 'json':
+        if expected_type != "json":
             raise ValueError(f"Unsupported serialization type: {expected_type}. Only JSON is allowed for security.")
 
         decoded = base64.b64decode(encoded_data)
 
         try:
-            return json.loads(decoded.decode('utf-8'))
+            return json.loads(decoded.decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError) as e:
             self.logger.error(f"Failed to deserialize as JSON: {e}")
             raise ValueError("Invalid JSON data")
@@ -143,11 +143,11 @@ class RemotePluginExecutor:
         """
         try:
             # Read plugin file
-            with open(plugin_path, 'rb') as f:
+            with open(plugin_path, "rb") as f:
                 plugin_code = f.read()
 
             # Encode plugin code and arguments
-            encoded_plugin = base64.b64encode(plugin_code).decode('utf-8')
+            encoded_plugin = base64.b64encode(plugin_code).decode("utf-8")
             encoded_args = self._serialize_safe(args)
             encoded_kwargs = self._serialize_safe(kwargs)
 
@@ -162,7 +162,7 @@ class RemotePluginExecutor:
 
             # Add HMAC signature for authentication
             request_json = json.dumps(request, sort_keys=True)
-            signature = hmac.new(self.shared_secret, request_json.encode('utf-8'), hashlib.sha256).hexdigest()
+            signature = hmac.new(self.shared_secret, request_json.encode("utf-8"), hashlib.sha256).hexdigest()
             request["signature"] = signature
 
             # Connect to remote server
@@ -172,11 +172,11 @@ class RemotePluginExecutor:
                 s.connect((self.remote_host, self.remote_port))
 
                 # Send request
-                request_data = json.dumps(request).encode('utf-8') + b'\n'
+                request_data = json.dumps(request).encode("utf-8") + b"\n"
                 s.sendall(request_data)
 
                 # Receive response
-                response = b''
+                response = b""
                 while True:
                     data = s.recv(4096)
                     if not data:
@@ -184,11 +184,11 @@ class RemotePluginExecutor:
                     response += data
 
                     # Check for end of response
-                    if response.endswith(b'\n'):
+                    if response.endswith(b"\n"):
                         break
 
             # Parse response
-            response_data = json.loads(response.decode('utf-8'))
+            response_data = json.loads(response.decode("utf-8"))
 
             if response_data.get("status") == "success":
                 # Decode results safely
@@ -242,7 +242,7 @@ class RemotePluginExecutor:
                 client_socket.settimeout(60)
 
                 # Receive request
-                request_data = b''
+                request_data = b""
                 while True:
                     data = client_socket.recv(4096)
                     if not data:
@@ -250,32 +250,32 @@ class RemotePluginExecutor:
                     request_data += data
 
                     # Check for end of request
-                    if request_data.endswith(b'\n'):
+                    if request_data.endswith(b"\n"):
                         break
 
                 # Parse request
-                request = json.loads(request_data.decode('utf-8'))
+                request = json.loads(request_data.decode("utf-8"))
 
                 # Verify HMAC signature (if present)
                 signature = request.pop("signature", None)
                 if signature:
                     # Get shared secret
-                    secret = get_secret('INTELLICRACK_REMOTE_SECRET', None)
+                    secret = get_secret("INTELLICRACK_REMOTE_SECRET", None)
                     if not secret:
                         logger.error("No remote execution secret configured - rejecting request")
                         response = {"status": "error", "error": "Server not configured"}
-                        client_socket.sendall(json.dumps(response).encode('utf-8') + b'\n')
+                        client_socket.sendall(json.dumps(response).encode("utf-8") + b"\n")
                         return
                     shared_secret = secret.encode()
 
                     # Verify signature
                     request_json = json.dumps(request, sort_keys=True)
-                    expected_sig = hmac.new(shared_secret, request_json.encode('utf-8'), hashlib.sha256).hexdigest()
+                    expected_sig = hmac.new(shared_secret, request_json.encode("utf-8"), hashlib.sha256).hexdigest()
 
                     if not hmac.compare_digest(signature, expected_sig):
                         logger.error("Invalid HMAC signature in request")
                         response = {"status": "error", "error": "Authentication failed"}
-                        client_socket.sendall(json.dumps(response).encode('utf-8') + b'\n')
+                        client_socket.sendall(json.dumps(response).encode("utf-8") + b"\n")
                         return
 
                 # Extract plugin code and arguments
@@ -291,11 +291,11 @@ class RemotePluginExecutor:
                 except Exception as e:
                     logger.error("Failed to deserialize arguments: %s", e)
                     response = {"status": "error", "error": f"Deserialization failed: {e}"}
-                    client_socket.sendall(json.dumps(response).encode('utf-8') + b'\n')
+                    client_socket.sendall(json.dumps(response).encode("utf-8") + b"\n")
                     return
 
                 # Write plugin code to temporary file
-                with tempfile.NamedTemporaryFile(suffix='.py', delete=False) as f:
+                with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
                     plugin_path = f.name
                     f.write(plugin_code)
 
@@ -354,7 +354,7 @@ class RemotePluginExecutor:
                         sys.path.remove(plugin_dir)
 
                 # Send response
-                response_data = json.dumps(response).encode('utf-8') + b'\n'
+                response_data = json.dumps(response).encode("utf-8") + b"\n"
                 client_socket.sendall(response_data)
 
             except (OSError, ValueError, RuntimeError) as e:
@@ -366,7 +366,7 @@ class RemotePluginExecutor:
                         "status": "error",
                         "error": str(e)
                     }
-                    response_data = json.dumps(response).encode('utf-8') + b'\n'
+                    response_data = json.dumps(response).encode("utf-8") + b"\n"
                     client_socket.sendall(response_data)
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error in remote_executor: %s", e)

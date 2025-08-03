@@ -436,10 +436,10 @@ class BatchAnalysisWidget(QWidget):
         # Define file extensions for each filter
         extensions = {
             "All Files": None,
-            "PE Files (*.exe, *.dll)": ['.exe', '.dll', '.sys', '.scr'],
-            "Archives (*.zip, *.rar)": ['.zip', '.rar', '.7z', '.tar', '.gz'],
-            "Scripts (*.js, *.py)": ['.js', '.py', '.vbs', '.ps1', '.bat'],
-            "Documents (*.pdf, *.doc)": ['.pdf', '.doc', '.docx', '.rtf']
+            "PE Files (*.exe, *.dll)": [".exe", ".dll", ".sys", ".scr"],
+            "Archives (*.zip, *.rar)": [".zip", ".rar", ".7z", ".tar", ".gz"],
+            "Scripts (*.js, *.py)": [".js", ".py", ".vbs", ".ps1", ".bat"],
+            "Documents (*.pdf, *.doc)": [".pdf", ".doc", ".docx", ".rtf"]
         }
 
         target_extensions = extensions.get(filter_type)
@@ -557,22 +557,22 @@ class BatchAnalysisWidget(QWidget):
         """Export results to CSV file"""
         import csv
 
-        with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
+        with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
 
             # Write header
             writer.writerow([
-                'File Name', 'File Path', 'Size (bytes)', 'Status', 'File Type',
-                'Architecture', 'Is Packed', 'Is Protected', 'Protection Count',
-                'ICP Detections', 'Confidence Score', 'Entropy', 'Analysis Time (s)',
-                'Protections', 'Error Message'
+                "File Name", "File Path", "Size (bytes)", "Status", "File Type",
+                "Architecture", "Is Packed", "Is Protected", "Protection Count",
+                "ICP Detections", "Confidence Score", "Entropy", "Analysis Time (s)",
+                "Protections", "Error Message"
             ])
 
             # Write data
             for result in self.results:
                 protection_names = []
                 if result.protections:
-                    protection_names = [p.get('name', 'Unknown') for p in result.protections]
+                    protection_names = [p.get("name", "Unknown") for p in result.protections]
 
                 writer.writerow([
                     os.path.basename(result.file_path),
@@ -588,7 +588,7 @@ class BatchAnalysisWidget(QWidget):
                     f"{result.confidence_score:.2f}",
                     f"{result.entropy:.2f}",
                     f"{result.analysis_time:.2f}",
-                    '; '.join(protection_names),
+                    "; ".join(protection_names),
                     result.error_message
                 ])
 
@@ -740,7 +740,7 @@ class BatchAnalysisWidget(QWidget):
                 protections_text += f"   Type: {prot.get('type', 'Unknown')}\n"
                 protections_text += f"   Source: {prot.get('source', 'Unknown')}\n"
                 protections_text += f"   Confidence: {prot.get('confidence', 0):.1f}%\n"
-                if prot.get('version'):
+                if prot.get("version"):
                     protections_text += f"   Version: {prot['version']}\n"
                 protections_text += "\n"
         else:
@@ -780,13 +780,13 @@ class BatchAnalysisWidget(QWidget):
         avg_confidence = sum(r.confidence_score for r in self.results if r.success) / successful if successful > 0 else 0
 
         return {
-            'total_files': total,
-            'successful': successful,
-            'failed': failed,
-            'protected': protected,
-            'packed': packed,
-            'clean': successful - protected - packed,
-            'average_analysis_time': avg_time,
-            'average_confidence': avg_confidence,
-            'success_rate': (successful / total) * 100 if total > 0 else 0
+            "total_files": total,
+            "successful": successful,
+            "failed": failed,
+            "protected": protected,
+            "packed": packed,
+            "clean": successful - protected - packed,
+            "average_analysis_time": avg_time,
+            "average_confidence": avg_confidence,
+            "success_rate": (successful / total) * 100 if total > 0 else 0
         }

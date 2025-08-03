@@ -41,13 +41,13 @@ class ASLRBypass(MitigationBypassBase):
     def _initialize_techniques(self) -> None:
         """Initialize ASLR bypass techniques."""
         self.techniques = [
-            'information_leak',
-            'ret2libc_bruteforce',
-            'partial_overwrite',
-            'heap_spray',
-            'got_overwrite',
-            'stack_pivoting',
-            'return_to_plt'
+            "information_leak",
+            "ret2libc_bruteforce",
+            "partial_overwrite",
+            "heap_spray",
+            "got_overwrite",
+            "stack_pivoting",
+            "return_to_plt"
         ]
 
     def get_recommended_technique(self, binary_info: Dict[str, Any]) -> str:
@@ -75,10 +75,10 @@ class ASLRBypass(MitigationBypassBase):
                 try:
                     # Parse the provided address and use it as a starting point
                     base_addr = int(leak_address, 16) if isinstance(leak_address, str) else leak_address
-                    leaked_addresses['provided_leak'] = {
-                        'address': hex(base_addr),
-                        'type': 'user_provided',
-                        'confidence': 0.9
+                    leaked_addresses["provided_leak"] = {
+                        "address": hex(base_addr),
+                        "type": "user_provided",
+                        "confidence": 0.9
                     }
                     # Calculate likely base addresses from the leaked address
                     potential_bases = self._calculate_base_from_leak(base_addr)
@@ -237,7 +237,7 @@ class ASLRBypass(MitigationBypassBase):
             )
 
             stdout, stderr = process.communicate(input=payload, timeout=5)
-            output = stdout.decode(errors='ignore') + stderr.decode(errors='ignore')
+            output = stdout.decode(errors="ignore") + stderr.decode(errors="ignore")
 
             # Extract addresses from output
             leaked_addresses = {}
@@ -245,7 +245,7 @@ class ASLRBypass(MitigationBypassBase):
             if source["type"] == "format_string":
                 # Parse format string output for addresses
                 import re
-                hex_pattern = re.compile(r'[0-9a-fA-F]{8,16}')
+                hex_pattern = re.compile(r"[0-9a-fA-F]{8,16}")
                 matches = hex_pattern.findall(output)
 
                 for i, match in enumerate(matches[:10]):  # First 10 leaked values
@@ -272,10 +272,10 @@ class ASLRBypass(MitigationBypassBase):
 
         for i, alignment in enumerate(alignments):
             base_addr = leaked_addr & ~(alignment - 1)
-            potential_bases[f'base_align_{alignment:x}'] = {
-                'address': hex(base_addr),
-                'type': f'calculated_base_{alignment:x}',
-                'confidence': 0.7 - (i * 0.1)  # Higher confidence for smaller alignments
+            potential_bases[f"base_align_{alignment:x}"] = {
+                "address": hex(base_addr),
+                "type": f"calculated_base_{alignment:x}",
+                "confidence": 0.7 - (i * 0.1)  # Higher confidence for smaller alignments
             }
 
         return potential_bases
@@ -316,7 +316,7 @@ class ASLRBypass(MitigationBypassBase):
 
         try:
             # Analyze binary for function pointers, vtables, etc.
-            with open(target_binary, 'rb') as f:
+            with open(target_binary, "rb") as f:
                 binary_data = f.read(8192)  # First 8KB
 
             # Look for potential function pointers (typical patterns)
@@ -423,20 +423,20 @@ class ASLRBypass(MitigationBypassBase):
         try:
             # Method 1: Check if the binary is 32-bit or 64-bit to validate address range
             if os.path.exists(target_binary):
-                with open(target_binary, 'rb') as f:
+                with open(target_binary, "rb") as f:
                     # Read ELF header
                     f.seek(0)
                     magic = f.read(4)
 
-                    if magic == b'\x7fELF':
+                    if magic == b"\x7fELF":
                         # Read architecture (32-bit or 64-bit)
                         f.seek(4)
                         arch = f.read(1)
 
-                        if arch == b'\x01':  # 32-bit
+                        if arch == b"\x01":  # 32-bit
                             # 32-bit libc typically in 0xb7xxxxxx range
                             valid_range = (0xb7000000 <= suspected_base <= 0xb8000000)
-                        elif arch == b'\x02':  # 64-bit
+                        elif arch == b"\x02":  # 64-bit
                             # 64-bit libc typically in 0x7fxxxxxxxxxx range
                             valid_range = (0x7f0000000000 <= suspected_base <= 0x800000000000)
                         else:
@@ -457,17 +457,17 @@ class ASLRBypass(MitigationBypassBase):
                         for offset in common_offsets:
                             test_addr = suspected_base + offset
                             # Verify the address is within reasonable bounds
-                            if arch == b'\x01' and test_addr > 0xffffffff:
+                            if arch == b"\x01" and test_addr > 0xffffffff:
                                 return False
 
                         # Method 3: Check if the binary imports libc functions
                         # This helps validate that we're dealing with a dynamically linked binary
                         binary_content = f.read(8192)  # Read first 8KB
                         has_libc_imports = (
-                            b'libc.so' in binary_content or
-                            b'GLIBC' in binary_content or
-                            b'printf' in binary_content or
-                            b'malloc' in binary_content
+                            b"libc.so" in binary_content or
+                            b"GLIBC" in binary_content or
+                            b"printf" in binary_content or
+                            b"malloc" in binary_content
                         )
 
                         if not has_libc_imports:
@@ -480,7 +480,7 @@ class ASLRBypass(MitigationBypassBase):
                         # Not an ELF file, try Windows PE
                         f.seek(0)
                         dos_header = f.read(2)
-                        if dos_header == b'MZ':
+                        if dos_header == b"MZ":
                             # Windows binary - different address ranges
                             # NTDLL/KERNEL32 typically in 0x7ffxxxxx range
                             return 0x70000000 <= suspected_base <= 0x80000000
@@ -556,11 +556,11 @@ class ASLRBypass(MitigationBypassBase):
         """Check if binary has format string vulnerability."""
         # Quick heuristic check
         try:
-            with open(target_binary, 'rb') as f:
+            with open(target_binary, "rb") as f:
                 data = f.read(8192)
 
             # Look for format string patterns
-            return b'printf' in data or b'sprintf' in data or b'fprintf' in data
+            return b"printf" in data or b"sprintf" in data or b"fprintf" in data
         except Exception as e:
             self.logger.debug(f"Failed to check format string vulnerability: {e}")
             return False
@@ -568,11 +568,11 @@ class ASLRBypass(MitigationBypassBase):
     def _has_stack_leak_potential(self, target_binary: str) -> bool:
         """Check if binary has potential for stack information leak."""
         try:
-            with open(target_binary, 'rb') as f:
+            with open(target_binary, "rb") as f:
                 data = f.read(8192)
 
             # Look for functions that might leak stack data
-            return b'gets' in data or b'strcpy' in data or b'memcpy' in data
+            return b"gets" in data or b"strcpy" in data or b"memcpy" in data
         except Exception as e:
             self.logger.debug(f"Failed to check stack leak potential: {e}")
             return False
@@ -580,11 +580,11 @@ class ASLRBypass(MitigationBypassBase):
     def _has_uaf_potential(self, target_binary: str) -> bool:
         """Check if binary has use-after-free potential."""
         try:
-            with open(target_binary, 'rb') as f:
+            with open(target_binary, "rb") as f:
                 data = f.read(8192)
 
             # Look for heap-related functions
-            return b'malloc' in data or b'free' in data or b'realloc' in data
+            return b"malloc" in data or b"free" in data or b"realloc" in data
         except Exception as e:
             self.logger.debug(f"Failed to check use-after-free potential: {e}")
             return False
@@ -653,4 +653,4 @@ class ASLRBypass(MitigationBypassBase):
             return "easy"
 
 
-__all__ = ['ASLRBypass']
+__all__ = ["ASLRBypass"]

@@ -72,7 +72,7 @@ class PluginValidator:
         from ...utils.validation.import_validator import PluginStructureValidator
         # Plugin editor checks for both 'run' and 'get_metadata' methods
         return PluginStructureValidator.validate_structure_from_code(
-            code, {'run', 'get_metadata'}
+            code, {"run", "get_metadata"}
         )
 
     @staticmethod
@@ -235,7 +235,7 @@ class PluginEditor(QWidget):
 
         if file_path:
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path, "r") as f:
                     content = f.read()
 
                 self.editor.setPlainText(content)
@@ -243,9 +243,9 @@ class PluginEditor(QWidget):
                 self.file_label.setText(os.path.basename(file_path))
 
                 # Auto-detect syntax
-                if file_path.endswith('.js'):
+                if file_path.endswith(".js"):
                     self.syntax_combo.setCurrentText("JavaScript")
-                elif file_path.endswith('.py'):
+                elif file_path.endswith(".py"):
                     self.syntax_combo.setCurrentText("Python")
 
                 self.status_bar.showMessage(f"Opened {file_path}")
@@ -267,7 +267,7 @@ class PluginEditor(QWidget):
             self.current_file = file_path
 
         try:
-            with open(self.current_file, 'w') as f:
+            with open(self.current_file, "w") as f:
                 f.write(self.editor.toPlainText())
 
             self.file_label.setText(os.path.basename(self.current_file))
@@ -343,9 +343,9 @@ class PluginEditor(QWidget):
 
         # Emit validation results
         results = {
-            'valid': syntax_valid and self.validation_list.count() == 1,
-            'errors': syntax_errors + (structure_errors if syntax_valid else []),
-            'warnings': import_warnings if syntax_valid else []
+            "valid": syntax_valid and self.validation_list.count() == 1,
+            "errors": syntax_errors + (structure_errors if syntax_valid else []),
+            "warnings": import_warnings if syntax_valid else []
         }
         self.validationComplete.emit(results)
 

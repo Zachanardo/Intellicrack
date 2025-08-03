@@ -36,7 +36,7 @@ except ImportError as e:
     logger.error("Import error in binary_similarity_search: %s", e)
     HAS_PEFILE = False
 
-__all__ = ['BinarySimilaritySearch']
+__all__ = ["BinarySimilaritySearch"]
 
 
 class BinarySimilaritySearch:
@@ -163,13 +163,13 @@ class BinarySimilaritySearch:
                     pe = pefile.PE(binary_path)
 
                     # Extract basic PE information
-                    features["machine"] = getattr(pe.FILE_HEADER, 'Machine', 0)
-                    features["timestamp"] = getattr(pe.FILE_HEADER, 'TimeDateStamp', 0)
-                    features["characteristics"] = getattr(pe.FILE_HEADER, 'Characteristics', 0)
+                    features["machine"] = getattr(pe.FILE_HEADER, "Machine", 0)
+                    features["timestamp"] = getattr(pe.FILE_HEADER, "TimeDateStamp", 0)
+                    features["characteristics"] = getattr(pe.FILE_HEADER, "Characteristics", 0)
 
                     # Extract section information
                     for _section in pe.sections:
-                        section_name = _section.Name.decode('utf-8', 'ignore').strip("\x00")
+                        section_name = _section.Name.decode("utf-8", "ignore").strip("\x00")
                         section_info = {
                             "name": section_name,
                             "virtual_address": _section.VirtualAddress,
@@ -180,19 +180,19 @@ class BinarySimilaritySearch:
                         features["sections"].append(section_info)
 
                     # Extract import information
-                    if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+                    if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                         for _entry in pe.DIRECTORY_ENTRY_IMPORT:
-                            dll_name = _entry.dll.decode('utf-8', 'ignore')
+                            dll_name = _entry.dll.decode("utf-8", "ignore")
                             for _imp in _entry.imports:
                                 if _imp.name:
-                                    imp_name = _imp.name.decode('utf-8', 'ignore')
+                                    imp_name = _imp.name.decode("utf-8", "ignore")
                                     features["imports"].append(f"{dll_name}:{imp_name}")
 
                     # Extract export information
-                    if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
+                    if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
                         for _exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
                             if _exp.name:
-                                exp_name = _exp.name.decode('utf-8', 'ignore')
+                                exp_name = _exp.name.decode("utf-8", "ignore")
                                 features["exports"].append(exp_name)
 
                     # Extract strings (basic implementation)
@@ -274,25 +274,25 @@ class BinarySimilaritySearch:
             similarity_scores = {}
 
             # 1. Structural Similarity Analysis
-            similarity_scores['structural'] = self._calculate_structural_similarity(features1, features2)
+            similarity_scores["structural"] = self._calculate_structural_similarity(features1, features2)
 
             # 2. Content Similarity Analysis
-            similarity_scores['content'] = self._calculate_content_similarity(features1, features2)
+            similarity_scores["content"] = self._calculate_content_similarity(features1, features2)
 
             # 3. Statistical Similarity Analysis
-            similarity_scores['statistical'] = self._calculate_statistical_similarity(features1, features2)
+            similarity_scores["statistical"] = self._calculate_statistical_similarity(features1, features2)
 
             # 4. Advanced Algorithm-based Similarity
-            similarity_scores['advanced'] = self._calculate_advanced_similarity(features1, features2)
+            similarity_scores["advanced"] = self._calculate_advanced_similarity(features1, features2)
 
             # 5. Fuzzy Hash Similarity (if available)
-            similarity_scores['fuzzy'] = self._calculate_fuzzy_hash_similarity(features1, features2)
+            similarity_scores["fuzzy"] = self._calculate_fuzzy_hash_similarity(features1, features2)
 
             # 6. Control Flow Similarity
-            similarity_scores['control_flow'] = self._calculate_control_flow_similarity(features1, features2)
+            similarity_scores["control_flow"] = self._calculate_control_flow_similarity(features1, features2)
 
             # 7. Opcode Sequence Similarity
-            similarity_scores['opcode'] = self._calculate_opcode_similarity(features1, features2)
+            similarity_scores["opcode"] = self._calculate_opcode_similarity(features1, features2)
 
             # Calculate weighted overall similarity with adaptive weights
             weights = self._calculate_adaptive_weights(features1, features2)
@@ -628,24 +628,24 @@ class BinarySimilaritySearch:
     def _calculate_adaptive_weights(self, features1: Dict[str, Any], features2: Dict[str, Any]) -> Dict[str, float]:
         """Calculate adaptive weights based on feature availability and quality."""
         weights = {
-            'structural': 0.25,
-            'content': 0.20,
-            'statistical': 0.15,
-            'advanced': 0.15,
-            'fuzzy': 0.10,
-            'control_flow': 0.10,
-            'opcode': 0.05
+            "structural": 0.25,
+            "content": 0.20,
+            "statistical": 0.15,
+            "advanced": 0.15,
+            "fuzzy": 0.10,
+            "control_flow": 0.10,
+            "opcode": 0.05
         }
 
         try:
             # Adjust weights based on feature richness
             if len(features1.get("imports", [])) > 50 and len(features2.get("imports", [])) > 50:
-                weights['structural'] += 0.1
-                weights['opcode'] += 0.05
+                weights["structural"] += 0.1
+                weights["opcode"] += 0.05
 
             if len(features1.get("strings", [])) > 30 and len(features2.get("strings", [])) > 30:
-                weights['content'] += 0.1
-                weights['fuzzy'] += 0.05
+                weights["content"] += 0.1
+                weights["fuzzy"] += 0.05
 
             # Normalize weights to sum to 1.0
             total_weight = sum(weights.values())
@@ -665,13 +665,13 @@ class BinarySimilaritySearch:
 
             # Weight APIs by criticality (security, crypto, system calls)
             critical_apis = {
-                'kernel32.dll': 1.5,
-                'ntdll.dll': 1.5,
-                'advapi32.dll': 1.3,
-                'crypt32.dll': 1.4,
-                'wininet.dll': 1.2,
-                'user32.dll': 1.0,
-                'shell32.dll': 1.1
+                "kernel32.dll": 1.5,
+                "ntdll.dll": 1.5,
+                "advapi32.dll": 1.3,
+                "crypt32.dll": 1.4,
+                "wininet.dll": 1.2,
+                "user32.dll": 1.0,
+                "shell32.dll": 1.1
             }
 
             weighted_score = 0.0
@@ -682,7 +682,7 @@ class BinarySimilaritySearch:
             common_imports = set1.intersection(set2)
 
             for imp in set1.union(set2):
-                dll = imp.split(':')[0] if ':' in imp else 'unknown'
+                dll = imp.split(":")[0] if ":" in imp else "unknown"
                 weight = critical_apis.get(dll, 1.0)
                 total_weight += weight
 
@@ -712,7 +712,7 @@ class BinarySimilaritySearch:
             if char1 and char2:
                 # Calculate bit-wise similarity
                 xor_diff = char1 ^ char2
-                bit_diff = bin(xor_diff).count('1')
+                bit_diff = bin(xor_diff).count("1")
                 max_bits = max(char1.bit_length(), char2.bit_length())
                 char_similarity = 1.0 - (bit_diff / max_bits) if max_bits > 0 else 1.0
                 similarity_scores.append(char_similarity)

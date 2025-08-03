@@ -107,11 +107,11 @@ class TerminalDashboard:
 
         # Dashboard components
         self.components = {
-            'system': True,
-            'analysis': True,
-            'session': True,
-            'recent_activity': True,
-            'quick_stats': True
+            "system": True,
+            "analysis": True,
+            "session": True,
+            "recent_activity": True,
+            "quick_stats": True
         }
 
         # Activity log
@@ -146,9 +146,9 @@ class TerminalDashboard:
         """
         timestamp = datetime.now().strftime("%H:%M:%S")
         activity = {
-            'timestamp': timestamp,
-            'message': message,
-            'level': level
+            "timestamp": timestamp,
+            "message": message,
+            "level": level
         }
 
         self.activity_log.append(activity)
@@ -195,7 +195,7 @@ class TerminalDashboard:
             self.system_metrics.memory_percent = psutil.virtual_memory().percent
 
             # Disk usage
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             self.system_metrics.disk_usage = (disk.used / disk.total) * 100
 
             # Network I/O
@@ -346,16 +346,16 @@ class TerminalDashboard:
         else:
             content_lines = []
             for activity in self.activity_log[-8:]:  # Show last 8 activities
-                timestamp = activity['timestamp']
-                message = activity['message']
-                level = activity['level']
+                timestamp = activity["timestamp"]
+                message = activity["message"]
+                level = activity["level"]
 
                 # Color code by level
-                if level == 'error':
+                if level == "error":
                     line = f"[red]{timestamp}[/red] {message}"
-                elif level == 'warning':
+                elif level == "warning":
                     line = f"[yellow]{timestamp}[/yellow] {message}"
-                elif level == 'success':
+                elif level == "success":
                     line = f"[green]{timestamp}[/green] {message}"
                 else:
                     line = f"[dim]{timestamp}[/dim] {message}"
@@ -555,7 +555,7 @@ Memory: {'🟢' if self.system_metrics.memory_percent < 80 else '🟡' if self.s
 
         try:
             while True:
-                os.system('cls' if os.name == 'nt' else 'clear')
+                os.system("cls" if os.name == "nt" else "clear")
 
                 print("=" * 60)
                 print("           INTELLICRACK TERMINAL DASHBOARD")

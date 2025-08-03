@@ -112,7 +112,7 @@ class WindowsAPIHooker:
                 self.original_functions[func_addr] = bytes(original_bytes)
 
             # Create hook code: xor eax, eax; ret (always return 0)
-            hook_code = b'\x33\xC0\xC3'  # xor eax,eax; ret
+            hook_code = b"\x33\xC0\xC3"  # xor eax,eax; ret
 
             # Make memory writable
             old_protect = ctypes.c_ulong()
@@ -159,7 +159,7 @@ class WindowsAPIHooker:
 
             # Hook code: zero out the result and return success
             # mov dword ptr [edx], 0; xor eax, eax; ret
-            hook_code = b'\xC7\x02\x00\x00\x00\x00\x33\xC0\xC3'
+            hook_code = b"\xC7\x02\x00\x00\x00\x00\x33\xC0\xC3"
 
             old_protect = ctypes.c_ulong()
             self.kernel32.VirtualProtect(
@@ -223,7 +223,7 @@ class WindowsAPIHooker:
                 return False
 
             # Hook to just return without doing anything
-            hook_code = b'\xC3'  # ret
+            hook_code = b"\xC3"  # ret
 
             old_protect = ctypes.c_ulong()
             self.kernel32.VirtualProtect(
@@ -563,12 +563,12 @@ class HardwareDebugProtector:
             # Save original values
             if not self.saved_context:
                 self.saved_context = {
-                    'Dr0': context.Dr0,
-                    'Dr1': context.Dr1,
-                    'Dr2': context.Dr2,
-                    'Dr3': context.Dr3,
-                    'Dr6': context.Dr6,
-                    'Dr7': context.Dr7
+                    "Dr0": context.Dr0,
+                    "Dr1": context.Dr1,
+                    "Dr2": context.Dr2,
+                    "Dr3": context.Dr3,
+                    "Dr6": context.Dr6,
+                    "Dr7": context.Dr7
                 }
 
             # Clear debug registers
@@ -596,12 +596,12 @@ class HardwareDebugProtector:
             context = self.get_thread_context()
             if context:
                 return {
-                    'Dr0': context.Dr0,
-                    'Dr1': context.Dr1,
-                    'Dr2': context.Dr2,
-                    'Dr3': context.Dr3,
-                    'Dr6': context.Dr6,
-                    'Dr7': context.Dr7
+                    "Dr0": context.Dr0,
+                    "Dr1": context.Dr1,
+                    "Dr2": context.Dr2,
+                    "Dr3": context.Dr3,
+                    "Dr6": context.Dr6,
+                    "Dr7": context.Dr7
                 }
         except Exception as e:
             self.logger.error(f"Failed to monitor debug registers: {e}")
@@ -618,12 +618,12 @@ class HardwareDebugProtector:
             if not context:
                 return False
 
-            context.Dr0 = self.saved_context['Dr0']
-            context.Dr1 = self.saved_context['Dr1']
-            context.Dr2 = self.saved_context['Dr2']
-            context.Dr3 = self.saved_context['Dr3']
-            context.Dr6 = self.saved_context['Dr6']
-            context.Dr7 = self.saved_context['Dr7']
+            context.Dr0 = self.saved_context["Dr0"]
+            context.Dr1 = self.saved_context["Dr1"]
+            context.Dr2 = self.saved_context["Dr2"]
+            context.Dr3 = self.saved_context["Dr3"]
+            context.Dr6 = self.saved_context["Dr6"]
+            context.Dr7 = self.saved_context["Dr7"]
 
             thread_handle = self.kernel32.GetCurrentThread()
 
@@ -656,7 +656,7 @@ class TimingNormalizer:
         for _ in range(1000):
             self.kernel32.GetTickCount()
         end = time.perf_counter()
-        self.baseline_times['GetTickCount'] = (end - start) / 1000
+        self.baseline_times["GetTickCount"] = (end - start) / 1000
 
         # QueryPerformanceCounter timing
         start = time.perf_counter()
@@ -666,7 +666,7 @@ class TimingNormalizer:
             self.kernel32.QueryPerformanceFrequency(ctypes.byref(freq))
             self.kernel32.QueryPerformanceCounter(ctypes.byref(counter))
         end = time.perf_counter()
-        self.baseline_times['QueryPerformanceCounter'] = (end - start) / 1000
+        self.baseline_times["QueryPerformanceCounter"] = (end - start) / 1000
 
         self.logger.info(f"Baseline times: {self.baseline_times}")
 
@@ -733,25 +733,25 @@ class MemoryPatcher:
         # Common anti-debug patterns
         self.patterns = {
             # IsDebuggerPresent patterns
-            'IsDebuggerPresent_call': [
-                b'\\xFF\\x15',  # call dword ptr [addr]
-                b'\\xFF\\x25',  # jmp dword ptr [addr]
+            "IsDebuggerPresent_call": [
+                b"\\xFF\\x15",  # call dword ptr [addr]
+                b"\\xFF\\x25",  # jmp dword ptr [addr]
             ],
 
             # INT 3 breakpoint detection
-            'int3_detection': [
-                b'\\xCC',  # int 3
+            "int3_detection": [
+                b"\\xCC",  # int 3
             ],
 
             # Debug trap flag
-            'trap_flag': [
-                b'\\x9C\\x58\\x25\\x00\\x01\\x00\\x00',  # pushfd; pop eax; and eax, 100h
+            "trap_flag": [
+                b"\\x9C\\x58\\x25\\x00\\x01\\x00\\x00",  # pushfd; pop eax; and eax, 100h
             ],
 
             # VM detection patterns
-            'vm_detection': [
-                b'\\x0F\\x01\\x0D\\x00\\x00\\x00\\x00',  # sidt
-                b'\\x0F\\x01\\x4D\\x00',  # sgdt
+            "vm_detection": [
+                b"\\x0F\\x01\\x0D\\x00\\x00\\x00\\x00",  # sidt
+                b"\\x0F\\x01\\x4D\\x00",  # sgdt
             ]
         }
 
@@ -825,9 +825,9 @@ class MemoryPatcher:
 
             if success:
                 self.patches_applied.append({
-                    'address': address,
-                    'size': len(new_bytes),
-                    'timestamp': time.time()
+                    "address": address,
+                    "size": len(new_bytes),
+                    "timestamp": time.time()
                 })
                 return True
 
@@ -838,12 +838,12 @@ class MemoryPatcher:
 
     def patch_int3_instructions(self, address: int) -> bool:
         """Replace INT 3 with NOP"""
-        return self.patch_memory_location(address, b'\x90')  # NOP
+        return self.patch_memory_location(address, b"\x90")  # NOP
 
     def patch_isdebuggerpresent_calls(self, address: int) -> bool:
         """Patch IsDebuggerPresent calls to return 0"""
         # Replace with: xor eax, eax; nop
-        return self.patch_memory_location(address, b'\x33\xC0\x90')
+        return self.patch_memory_location(address, b"\x33\xC0\x90")
 
     def scan_and_patch_module(self, module_name: str) -> List[str]:
         """Scan and patch a specific module"""
@@ -881,10 +881,10 @@ class MemoryPatcher:
             # Apply patches
             patched_count = 0
             for pattern_name, address in patterns:
-                if pattern_name == 'int3_detection':
+                if pattern_name == "int3_detection":
                     if self.patch_int3_instructions(address):
                         patched_count += 1
-                elif pattern_name == 'IsDebuggerPresent_call':
+                elif pattern_name == "IsDebuggerPresent_call":
                     if self.patch_isdebuggerpresent_calls(address):
                         patched_count += 1
 
@@ -941,17 +941,17 @@ class ExceptionHandler:
                 # Check for common anti-debug exception patterns
                 exception_str = str(exception_info).lower()
 
-                if 'debug' in exception_str or 'breakpoint' in exception_str:
+                if "debug" in exception_str or "breakpoint" in exception_str:
                     self.logger.info(f"Anti-debug exception detected: {exception_info}")
                     # Mask debugging-related exceptions
                     return 0  # EXCEPTION_CONTINUE_EXECUTION
 
-                elif 'single_step' in exception_str or 'trap' in exception_str:
+                elif "single_step" in exception_str or "trap" in exception_str:
                     self.logger.info(f"Single-step/trap exception: {exception_info}")
                     # Continue execution to bypass step detection
                     return 0  # EXCEPTION_CONTINUE_EXECUTION
 
-                elif 'access_violation' in exception_str:
+                elif "access_violation" in exception_str:
                     self.logger.warning(f"Access violation detected: {exception_info}")
                     # Let access violations through normally
                     return 1  # EXCEPTION_EXECUTE_HANDLER
@@ -1046,7 +1046,7 @@ class EnvironmentSanitizer:
         ]
 
         try:
-            running_processes = [p.name().lower() for p in psutil.process_iter(['name'])]
+            running_processes = [p.name().lower() for p in psutil.process_iter(["name"])]
 
             for debugger in debugger_names:
                 if debugger in running_processes:
@@ -1160,24 +1160,24 @@ class TargetAnalyzer:
         techniques = []
 
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 # Read DOS header
                 dos_header = f.read(64)
-                if len(dos_header) < 64 or dos_header[:2] != b'MZ':
+                if len(dos_header) < 64 or dos_header[:2] != b"MZ":
                     return techniques
 
                 # Get PE offset
-                pe_offset = struct.unpack('<I', dos_header[60:64])[0]
+                pe_offset = struct.unpack("<I", dos_header[60:64])[0]
                 f.seek(pe_offset)
 
                 # Read PE header
                 pe_signature = f.read(4)
-                if pe_signature != b'PE\x00\x00':
+                if pe_signature != b"PE\x00\x00":
                     return techniques
 
                 # Analyze characteristics
                 f.seek(pe_offset + 4 + 18)  # File header + characteristics offset
-                characteristics = struct.unpack('<H', f.read(2))[0]
+                characteristics = struct.unpack("<H", f.read(2))[0]
 
                 # Check for debugging info stripped
                 if characteristics & 0x0200:  # IMAGE_FILE_DEBUG_STRIPPED
@@ -1197,16 +1197,16 @@ class TargetAnalyzer:
         try:
             # This would parse the import table
             # For now, check for common anti-debug APIs in the file
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 content = f.read()
 
                 debug_apis = [
-                    b'IsDebuggerPresent',
-                    b'CheckRemoteDebuggerPresent',
-                    b'NtQueryInformationProcess',
-                    b'OutputDebugString',
-                    b'GetTickCount',
-                    b'QueryPerformanceCounter'
+                    b"IsDebuggerPresent",
+                    b"CheckRemoteDebuggerPresent",
+                    b"NtQueryInformationProcess",
+                    b"OutputDebugString",
+                    b"GetTickCount",
+                    b"QueryPerformanceCounter"
                 ]
 
                 for api in debug_apis:
@@ -1215,7 +1215,7 @@ class TargetAnalyzer:
                         break
 
                 # Check for timing-related imports
-                timing_apis = [b'GetTickCount', b'QueryPerformanceCounter', b'timeGetTime']
+                timing_apis = [b"GetTickCount", b"QueryPerformanceCounter", b"timeGetTime"]
                 if any(api in content for api in timing_apis):
                     techniques.append(AntiDebugTechnique.TIMING_CHECKS)
 
@@ -1282,10 +1282,10 @@ class TargetAnalyzer:
     def analyze_target(self, file_path: Optional[str] = None) -> Dict[str, Any]:
         """Perform comprehensive target analysis"""
         analysis_results = {
-            'techniques_detected': [],
-            'vm_environment': False,
-            'risk_level': 'low',
-            'recommended_bypasses': []
+            "techniques_detected": [],
+            "vm_environment": False,
+            "risk_level": "low",
+            "recommended_bypasses": []
         }
 
         try:
@@ -1294,27 +1294,27 @@ class TargetAnalyzer:
                 pe_techniques = self.analyze_pe_headers(file_path)
                 import_techniques = self.analyze_imports(file_path)
 
-                analysis_results['techniques_detected'].extend(pe_techniques)
-                analysis_results['techniques_detected'].extend(import_techniques)
+                analysis_results["techniques_detected"].extend(pe_techniques)
+                analysis_results["techniques_detected"].extend(import_techniques)
 
             # Runtime analysis
             runtime_techniques = self.analyze_runtime_behavior()
-            analysis_results['techniques_detected'].extend(runtime_techniques)
+            analysis_results["techniques_detected"].extend(runtime_techniques)
 
             # VM detection
-            analysis_results['vm_environment'] = self.detect_vm_environment()
+            analysis_results["vm_environment"] = self.detect_vm_environment()
 
             # Remove duplicates
-            analysis_results['techniques_detected'] = list(set(analysis_results['techniques_detected']))
+            analysis_results["techniques_detected"] = list(set(analysis_results["techniques_detected"]))
 
             # Determine risk level
-            num_techniques = len(analysis_results['techniques_detected'])
+            num_techniques = len(analysis_results["techniques_detected"])
             if num_techniques >= 6:
-                analysis_results['risk_level'] = 'high'
+                analysis_results["risk_level"] = "high"
             elif num_techniques >= 3:
-                analysis_results['risk_level'] = 'medium'
+                analysis_results["risk_level"] = "medium"
             else:
-                analysis_results['risk_level'] = 'low'
+                analysis_results["risk_level"] = "low"
 
             # Recommend bypasses
             technique_bypass_map = {
@@ -1326,9 +1326,9 @@ class TargetAnalyzer:
                 AntiDebugTechnique.PROCESS_ENVIRONMENT: "Environment sanitization"
             }
 
-            for technique in analysis_results['techniques_detected']:
+            for technique in analysis_results["techniques_detected"]:
                 if technique in technique_bypass_map:
-                    analysis_results['recommended_bypasses'].append(
+                    analysis_results["recommended_bypasses"].append(
                         technique_bypass_map[technique]
                     )
 
@@ -1366,28 +1366,28 @@ class AntiAntiDebugSuite:
         self.active_bypasses = set()
         self.bypass_history = []
         self.statistics = {
-            'bypasses_attempted': 0,
-            'bypasses_successful': 0,
-            'targets_analyzed': 0,
-            'uptime': time.time()
+            "bypasses_attempted": 0,
+            "bypasses_successful": 0,
+            "targets_analyzed": 0,
+            "uptime": time.time()
         }
 
         # Configuration
         self.config = {
-            'auto_apply_bypasses': True,
-            'selective_bypasses': True,
-            'stealth_mode': True,
-            'log_level': 'INFO'
+            "auto_apply_bypasses": True,
+            "selective_bypasses": True,
+            "stealth_mode": True,
+            "log_level": "INFO"
         }
 
     def analyze_target(self, file_path: Optional[str] = None) -> Dict[str, Any]:
         """Analyze target and recommend bypasses"""
-        self.statistics['targets_analyzed'] += 1
+        self.statistics["targets_analyzed"] += 1
         return self.target_analyzer.analyze_target(file_path)
 
     def apply_bypass(self, technique: AntiDebugTechnique) -> BypassOperation:
         """Apply specific bypass technique"""
-        self.statistics['bypasses_attempted'] += 1
+        self.statistics["bypasses_attempted"] += 1
 
         operation = BypassOperation(
             technique=technique,
@@ -1436,7 +1436,7 @@ class AntiAntiDebugSuite:
                 operation.details = f"No implementation for {technique.value}"
 
             if operation.result == BypassResult.SUCCESS:
-                self.statistics['bypasses_successful'] += 1
+                self.statistics["bypasses_successful"] += 1
                 self.active_bypasses.add(technique)
 
         except Exception as e:
@@ -1452,7 +1452,7 @@ class AntiAntiDebugSuite:
         """Apply bypasses based on target analysis"""
         operations = []
 
-        detected_techniques = target_analysis.get('techniques_detected', [])
+        detected_techniques = target_analysis.get("techniques_detected", [])
 
         if not detected_techniques:
             # Apply basic bypasses if no specific techniques detected
@@ -1486,11 +1486,11 @@ class AntiAntiDebugSuite:
     def monitor_bypasses(self) -> Dict[str, Any]:
         """Monitor status of active bypasses"""
         status = {
-            'active_bypasses': list(self.active_bypasses),
-            'bypass_count': len(self.active_bypasses),
-            'hardware_registers': self.hw_protector.monitor_debug_registers(),
-            'statistics': self.statistics.copy(),
-            'uptime_seconds': time.time() - self.statistics['uptime']
+            "active_bypasses": list(self.active_bypasses),
+            "bypass_count": len(self.active_bypasses),
+            "hardware_registers": self.hw_protector.monitor_debug_registers(),
+            "statistics": self.statistics.copy(),
+            "uptime_seconds": time.time() - self.statistics["uptime"]
         }
 
         return status
@@ -1537,26 +1537,26 @@ class AntiAntiDebugSuite:
         failed_bypasses = [op for op in self.bypass_history if op.result == BypassResult.FAILED]
 
         report = {
-            'summary': {
-                'total_bypasses_attempted': len(self.bypass_history),
-                'successful_bypasses': len(successful_bypasses),
-                'failed_bypasses': len(failed_bypasses),
-                'currently_active': len(self.active_bypasses),
-                'success_rate': len(successful_bypasses) / len(self.bypass_history) * 100 if self.bypass_history else 0
+            "summary": {
+                "total_bypasses_attempted": len(self.bypass_history),
+                "successful_bypasses": len(successful_bypasses),
+                "failed_bypasses": len(failed_bypasses),
+                "currently_active": len(self.active_bypasses),
+                "success_rate": len(successful_bypasses) / len(self.bypass_history) * 100 if self.bypass_history else 0
             },
-            'active_bypasses': [bypass.value for bypass in self.active_bypasses],
-            'bypass_history': [
+            "active_bypasses": [bypass.value for bypass in self.active_bypasses],
+            "bypass_history": [
                 {
-                    'technique': op.technique.value,
-                    'result': op.result.value,
-                    'details': op.details,
-                    'timestamp': op.timestamp,
-                    'error': op.error
+                    "technique": op.technique.value,
+                    "result": op.result.value,
+                    "details": op.details,
+                    "timestamp": op.timestamp,
+                    "error": op.error
                 }
                 for op in self.bypass_history
             ],
-            'statistics': self.statistics,
-            'configuration': self.config
+            "statistics": self.statistics,
+            "configuration": self.config
         }
 
         return report
@@ -1566,7 +1566,7 @@ class AntiAntiDebugSuite:
         try:
             report = self.get_report()
 
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 json.dump(report, f, indent=2, default=str)
 
             self.logger.info(f"Report exported to {output_file}")
@@ -1583,10 +1583,10 @@ class AntiAntiDebugSuite:
             try:
                 command = input("\nADB> ").strip().lower()
 
-                if command == 'quit' or command == 'exit':
+                if command == "quit" or command == "exit":
                     break
 
-                elif command == 'analyze':
+                elif command == "analyze":
                     file_path = input("Target file path (optional): ").strip()
                     if not file_path:
                         file_path = None
@@ -1595,21 +1595,21 @@ class AntiAntiDebugSuite:
                     print("\nTarget Analysis:")
                     print(f"  Risk Level: {analysis['risk_level']}")
                     print(f"  Techniques Detected: {len(analysis['techniques_detected'])}")
-                    for technique in analysis['techniques_detected']:
+                    for technique in analysis["techniques_detected"]:
                         print(f"    - {technique.value}")
                     print(f"  VM Environment: {analysis['vm_environment']}")
 
-                elif command == 'bypass':
+                elif command == "bypass":
                     print("\nBypass Options:")
                     print("1. Selective (based on analysis)")
                     print("2. All bypasses")
 
                     choice = input("Choice (1-2): ").strip()
 
-                    if choice == '1':
+                    if choice == "1":
                         analysis = self.analyze_target()
                         operations = self.apply_selective_bypasses(analysis)
-                    elif choice == '2':
+                    elif choice == "2":
                         operations = self.apply_all_bypasses()
                     else:
                         print("Invalid choice")
@@ -1620,22 +1620,22 @@ class AntiAntiDebugSuite:
                         status = "✓" if op.result == BypassResult.SUCCESS else "✗"
                         print(f"  {status} {op.technique.value}: {op.details}")
 
-                elif command == 'monitor':
+                elif command == "monitor":
                     status = self.monitor_bypasses()
                     print("\nBypass Status:")
                     print(f"  Active Bypasses: {status['bypass_count']}")
-                    for bypass in status['active_bypasses']:
+                    for bypass in status["active_bypasses"]:
                         print(f"    - {bypass.value}")
                     print(f"  Uptime: {status['uptime_seconds']:.1f} seconds")
                     print(f"  Statistics: {status['statistics']}")
 
-                elif command == 'remove':
+                elif command == "remove":
                     results = self.remove_bypasses()
                     print("\nRemoval Results:")
                     for result in results:
                         print(f"  {result}")
 
-                elif command == 'report':
+                elif command == "report":
                     report = self.get_report()
                     print("\nBypass Report:")
                     print(f"  Success Rate: {report['summary']['success_rate']:.1f}%")
@@ -1643,12 +1643,12 @@ class AntiAntiDebugSuite:
                     print(f"  Currently Active: {report['summary']['currently_active']}")
 
                     export = input("Export to file? (y/n): ").strip().lower()
-                    if export == 'y':
+                    if export == "y":
                         filename = input("Filename: ").strip()
                         if filename:
                             self.export_report(filename)
 
-                elif command == 'help':
+                elif command == "help":
                     print("\nAvailable commands:")
                     print("  analyze  - Analyze target for anti-debug techniques")
                     print("  bypass   - Apply bypass techniques")
@@ -1673,14 +1673,14 @@ def main():
     """Example usage and CLI interface"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='Anti-Anti-Debug Suite')
-    parser.add_argument('--analyze', metavar='FILE', help='Analyze target file')
-    parser.add_argument('--bypass', choices=['selective', 'all'], help='Apply bypasses')
-    parser.add_argument('--interactive', action='store_true', help='Run interactive mode')
-    parser.add_argument('--monitor', action='store_true', help='Monitor bypass status')
-    parser.add_argument('--remove', action='store_true', help='Remove all bypasses')
-    parser.add_argument('--report', metavar='FILE', help='Export report to file')
-    parser.add_argument('--verbose', action='store_true', help='Verbose logging')
+    parser = argparse.ArgumentParser(description="Anti-Anti-Debug Suite")
+    parser.add_argument("--analyze", metavar="FILE", help="Analyze target file")
+    parser.add_argument("--bypass", choices=["selective", "all"], help="Apply bypasses")
+    parser.add_argument("--interactive", action="store_true", help="Run interactive mode")
+    parser.add_argument("--monitor", action="store_true", help="Monitor bypass status")
+    parser.add_argument("--remove", action="store_true", help="Remove all bypasses")
+    parser.add_argument("--report", metavar="FILE", help="Export report to file")
+    parser.add_argument("--verbose", action="store_true", help="Verbose logging")
 
     args = parser.parse_args()
 
@@ -1688,7 +1688,7 @@ def main():
     log_level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(
         level=log_level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     # Initialize suite
@@ -1709,7 +1709,7 @@ def main():
             print(f"  Recommended Bypasses: {', '.join(analysis['recommended_bypasses'])}")
 
         elif args.bypass:
-            if args.bypass == 'selective':
+            if args.bypass == "selective":
                 print("Applying selective bypasses...")
                 analysis = suite.analyze_target()
                 operations = suite.apply_selective_bypasses(analysis)
@@ -1727,7 +1727,7 @@ def main():
         elif args.monitor:
             status = suite.monitor_bypasses()
             print(f"Active Bypasses: {status['bypass_count']}")
-            for bypass in status['active_bypasses']:
+            for bypass in status["active_bypasses"]:
                 print(f"  - {bypass.value}")
 
         elif args.remove:

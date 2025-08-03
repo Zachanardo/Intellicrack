@@ -116,4 +116,4 @@ class BaseTemplateDialog(QDialog):
         super().__init__(parent)
 
 
-__all__ = ['BinarySelectionDialog', 'BaseTemplateDialog']
+__all__ = ["BinarySelectionDialog", "BaseTemplateDialog"]

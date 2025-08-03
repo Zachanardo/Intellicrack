@@ -173,7 +173,7 @@ class UILayoutHelpers:
         Returns:
             The widget (for method chaining)
         """
-        if hasattr(layout, 'addStretch'):
+        if hasattr(layout, "addStretch"):
             layout.addStretch()
         widget.setLayout(layout)
         return widget
@@ -188,11 +188,11 @@ class UILayoutHelpers:
             label_text: Text for the label
             widget: Widget to add as the field
         """
-        if hasattr(layout, 'addRow'):
+        if hasattr(layout, "addRow"):
             layout.addRow(label_text, widget)
         else:
             # Fallback for non-form layouts
-            if hasattr(layout, 'addWidget'):
+            if hasattr(layout, "addWidget"):
                 layout.addWidget(widget)
 
     @staticmethod
@@ -210,4 +210,4 @@ class UILayoutHelpers:
 
 
 # Export main class
-__all__ = ['UILayoutHelpers']
+__all__ = ["UILayoutHelpers"]

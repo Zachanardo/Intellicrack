@@ -52,14 +52,14 @@ class BinaryPatcherPlugin:
 
         # Example: Find specific byte patterns
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
                 # Look for common patterns
-                if b'\x90\x90\x90\x90' in data:
+                if b"\x90\x90\x90\x90" in data:
                     results.append("Found NOP sled - potential patch location")
 
-                if b'\x55\x8b\xec' in data:
+                if b"\x55\x8b\xec" in data:
                     results.append("Found function prologue - patchable")
 
         except Exception as e:
@@ -81,7 +81,7 @@ class BinaryPatcherPlugin:
             return results
 
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = bytearray(f.read())
 
             original_size = len(data)
@@ -90,10 +90,10 @@ class BinaryPatcherPlugin:
             # Defensive patch: NOP out license check jumps (common protection research)
             # Pattern: JZ/JNZ instructions that might be license checks
             license_check_patterns = [
-                b'\x74\x0c',  # JZ short +12
-                b'\x75\x0c',  # JNZ short +12
-                b'\x74\x0a',  # JZ short +10
-                b'\x75\x0a',  # JNZ short +10
+                b"\x74\x0c",  # JZ short +12
+                b"\x75\x0c",  # JNZ short +12
+                b"\x74\x0a",  # JZ short +10
+                b"\x75\x0a",  # JNZ short +10
             ]
 
             for pattern in license_check_patterns:
@@ -105,9 +105,9 @@ class BinaryPatcherPlugin:
 
                     # Validate this looks like a license check area
                     context = data[max(0, offset-10):offset+20]
-                    if b'license' in context.lower() or b'trial' in context.lower():
+                    if b"license" in context.lower() or b"trial" in context.lower():
                         # NOP out the conditional jump (defensive research technique)
-                        data[offset:offset+len(pattern)] = b'\x90' * len(pattern)
+                        data[offset:offset+len(pattern)] = b"\x90" * len(pattern)
                         patches_applied += 1
                         results.append(f"Patched potential license check at offset 0x{offset:x}")
 
@@ -115,12 +115,12 @@ class BinaryPatcherPlugin:
 
             # Defensive patch: Remove trial period checks
             trial_patterns = [
-                b'trial',
-                b'TRIAL',
-                b'Trial',
-                b'demo',
-                b'DEMO',
-                b'Demo'
+                b"trial",
+                b"TRIAL",
+                b"Trial",
+                b"demo",
+                b"DEMO",
+                b"Demo"
             ]
 
             for pattern in trial_patterns:
@@ -139,7 +139,7 @@ class BinaryPatcherPlugin:
                     # If it looks like a trial message, neutralize it
                     if any(c == 0 or (32 <= c <= 126) for c in context):
                         # Replace with spaces to maintain string structure
-                        data[offset:offset+len(pattern)] = b' ' * len(pattern)
+                        data[offset:offset+len(pattern)] = b" " * len(pattern)
                         patches_applied += 1
                         results.append(f"Neutralized trial text at offset 0x{offset:x}")
 
@@ -152,7 +152,7 @@ class BinaryPatcherPlugin:
 
             if patches_applied > 0:
                 # Write patched file
-                with open(binary_path, 'wb') as f:
+                with open(binary_path, "wb") as f:
                     f.write(data)
 
                 results.append(f"Successfully applied {patches_applied} patches")

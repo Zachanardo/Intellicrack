@@ -19,7 +19,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import logging
 import os
 
 from PyQt6.QtCore import QDateTime
@@ -94,33 +93,33 @@ class PluginDialogBase(QDialog):
         plugin_dir = os.path.dirname(plugin_path)
         
         # Initialize plugin state tracking
-        if not hasattr(self, '_loaded_plugins'):
+        if not hasattr(self, "_loaded_plugins"):
             self._loaded_plugins = {}
         
         # Store plugin information
         self._loaded_plugins[plugin_path] = {
-            'name': plugin_name,
-            'directory': plugin_dir,
-            'loaded_at': QDateTime.currentDateTime(),
-            'status': 'loaded'
+            "name": plugin_name,
+            "directory": plugin_dir,
+            "loaded_at": QDateTime.currentDateTime(),
+            "status": "loaded"
         }
         
         # Update window title to reflect loaded plugin
         current_title = self.windowTitle()
-        if ' - ' not in current_title:
+        if " - " not in current_title:
             self.setWindowTitle(f"{current_title} - {plugin_name}")
         else:
             # Replace existing plugin name in title
-            base_title = current_title.split(' - ')[0]
+            base_title = current_title.split(" - ")[0]
             self.setWindowTitle(f"{base_title} - {plugin_name}")
         
         # Enable any plugin-dependent UI elements
-        if hasattr(self, 'plugin_dependent_widgets'):
+        if hasattr(self, "plugin_dependent_widgets"):
             for widget in self.plugin_dependent_widgets:
                 widget.setEnabled(True)
         
         # Emit custom signal if available
-        if hasattr(self, 'plugin_loaded_signal'):
+        if hasattr(self, "plugin_loaded_signal"):
             self.plugin_loaded_signal.emit(plugin_path)
         
         # Log successful plugin loading

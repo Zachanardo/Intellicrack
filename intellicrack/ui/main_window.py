@@ -390,74 +390,74 @@ class IntellicrackMainWindow(QMainWindow):
         menubar = self.menuBar()
 
         # File menu
-        file_menu = menubar.addMenu('File')
+        file_menu = menubar.addMenu("File")
 
-        open_action = QAction('Open Binary...', self)
-        open_action.setShortcut('Ctrl+O')
+        open_action = QAction("Open Binary...", self)
+        open_action.setShortcut("Ctrl+O")
         open_action.triggered.connect(self._browse_for_file)
         file_menu.addAction(open_action)
 
-        program_selector_action = QAction('Program Selector...', self)
-        program_selector_action.setShortcut('Ctrl+Shift+O')
+        program_selector_action = QAction("Program Selector...", self)
+        program_selector_action.setShortcut("Ctrl+Shift+O")
         program_selector_action.triggered.connect(self._show_program_selector)
         file_menu.addAction(program_selector_action)
 
         file_menu.addSeparator()
 
-        export_action = QAction('Export Analysis Results...', self)
-        export_action.setShortcut('Ctrl+Shift+E')
+        export_action = QAction("Export Analysis Results...", self)
+        export_action.setShortcut("Ctrl+Shift+E")
         export_action.triggered.connect(self._export_analysis_results)
         file_menu.addAction(export_action)
 
         file_menu.addSeparator()
 
-        exit_action = QAction('Exit', self)
-        exit_action.setShortcut('Ctrl+Q')
+        exit_action = QAction("Exit", self)
+        exit_action.setShortcut("Ctrl+Q")
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
         # Analysis menu
-        analysis_menu = menubar.addMenu('Analysis')
+        analysis_menu = menubar.addMenu("Analysis")
 
-        analyze_action = QAction('Analyze Binary', self)
-        analyze_action.setShortcut('F5')
+        analyze_action = QAction("Analyze Binary", self)
+        analyze_action.setShortcut("F5")
         analyze_action.triggered.connect(self._run_analysis)
         analysis_menu.addAction(analyze_action)
 
-        vulnerability_action = QAction('Scan Vulnerabilities', self)
-        vulnerability_action.setShortcut('F6')
+        vulnerability_action = QAction("Scan Vulnerabilities", self)
+        vulnerability_action.setShortcut("F6")
         vulnerability_action.triggered.connect(self._scan_vulnerabilities)
         analysis_menu.addAction(vulnerability_action)
 
         analysis_menu.addSeparator()
 
-        protection_action = QAction('Analyze Protection', self)
-        protection_action.setShortcut('F7')
+        protection_action = QAction("Analyze Protection", self)
+        protection_action.setShortcut("F7")
         protection_action.triggered.connect(self._analyze_current_protection)
         analysis_menu.addAction(protection_action)
 
         # Tools menu
-        tools_menu = menubar.addMenu('Tools')
+        tools_menu = menubar.addMenu("Tools")
 
-        generate_report_action = QAction('Generate Report...', self)
-        generate_report_action.setShortcut('Ctrl+R')
+        generate_report_action = QAction("Generate Report...", self)
+        generate_report_action.setShortcut("Ctrl+R")
         generate_report_action.triggered.connect(self._generate_report)
         tools_menu.addAction(generate_report_action)
 
-        generate_script_action = QAction('Generate Bypass Script...', self)
-        generate_script_action.setShortcut('Ctrl+B')
+        generate_script_action = QAction("Generate Bypass Script...", self)
+        generate_script_action.setShortcut("Ctrl+B")
         generate_script_action.triggered.connect(self._generate_bypass_script_menu)
         tools_menu.addAction(generate_script_action)
 
         tools_menu.addSeparator()
 
-        signature_editor_action = QAction('ICP Signature Editor...', self)
-        signature_editor_action.setShortcut('Ctrl+E')
+        signature_editor_action = QAction("ICP Signature Editor...", self)
+        signature_editor_action.setShortcut("Ctrl+E")
         signature_editor_action.triggered.connect(self._open_signature_editor)
         tools_menu.addAction(signature_editor_action)
 
-        export_results_action = QAction('Export Results...', self)
-        export_results_action.setShortcut('Ctrl+Shift+X')
+        export_results_action = QAction("Export Results...", self)
+        export_results_action.setShortcut("Ctrl+Shift+X")
         export_results_action.triggered.connect(self._export_analysis_results)
         tools_menu.addAction(export_results_action)
 
@@ -466,7 +466,7 @@ class IntellicrackMainWindow(QMainWindow):
         # Set window icon if available
         import intellicrack
         base_path = os.path.dirname(os.path.dirname(intellicrack.__file__))
-        icon_path = os.path.join(base_path, 'intellicrack', 'assets', 'icon.ico')
+        icon_path = os.path.join(base_path, "intellicrack", "assets", "icon.ico")
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 
@@ -543,17 +543,17 @@ class IntellicrackMainWindow(QMainWindow):
             result = show_program_selector(self)
 
             if result:
-                program_info = result['program_info']
-                installation_folder = result['installation_folder']
-                licensing_files = result['licensing_files']
-                auto_analyze = result['auto_analyze']
+                program_info = result["program_info"]
+                installation_folder = result["installation_folder"]
+                licensing_files = result["licensing_files"]
+                auto_analyze = result["auto_analyze"]
 
                 self.logger.info(f"Selected program: {program_info['display_name']}")
 
                 # Update UI with selected program
-                if program_info.get('executable_paths'):
+                if program_info.get("executable_paths"):
                     # Use the first executable path as the binary to analyze
-                    selected_executable = program_info['executable_paths'][0]
+                    selected_executable = program_info["executable_paths"][0]
                     self.binary_path = selected_executable
                     self.file_path_label.setText(f"{program_info['display_name']} ({os.path.basename(selected_executable)})")
                     self.file_path_label.setToolTip(f"Program: {program_info['display_name']}\nPath: {selected_executable}\nInstall Location: {installation_folder}")
@@ -637,7 +637,7 @@ Licensing Files Found: {len(licensing_files)}"""
             # Run analysis
             analysis_results = self.binary_analyzer.analyze_binary(self.binary_path)
 
-            if 'error' in analysis_results:
+            if "error" in analysis_results:
                 self.update_output.emit(f"Error: {analysis_results['error']}")
             else:
                 self._display_analysis_results(analysis_results)
@@ -655,7 +655,7 @@ Licensing Files Found: {len(licensing_files)}"""
                     }
 
                     # Extract protection detections if available
-                    if hasattr(self, 'protection_results') and self.protection_results:
+                    if hasattr(self, "protection_results") and self.protection_results:
                         ml_results["predictions"] = self.protection_results
 
                     # Run AI complex analysis
@@ -665,21 +665,21 @@ Licensing Files Found: {len(licensing_files)}"""
                     )
 
                     # Display AI analysis results
-                    if ai_analysis and not ai_analysis.get('error'):
+                    if ai_analysis and not ai_analysis.get("error"):
                         self.update_output.emit(f"AI Confidence: {ai_analysis.get('confidence', 0.0):.2%}")
 
-                        if ai_analysis.get('findings'):
+                        if ai_analysis.get("findings"):
                             self.update_output.emit("\nFindings:")
-                            for finding in ai_analysis['findings']:
+                            for finding in ai_analysis["findings"]:
                                 self.update_output.emit(f"  • {finding}")
 
-                        if ai_analysis.get('recommendations'):
+                        if ai_analysis.get("recommendations"):
                             self.update_output.emit("\nRecommendations:")
-                            for rec in ai_analysis['recommendations']:
+                            for rec in ai_analysis["recommendations"]:
                                 self.update_output.emit(f"  → {rec}")
 
-                        if ai_analysis.get('ml_integration'):
-                            ml_info = ai_analysis['ml_integration']
+                        if ai_analysis.get("ml_integration"):
+                            ml_info = ai_analysis["ml_integration"]
                             self.update_output.emit(f"\nML Integration Confidence: {ml_info.get('ml_confidence', 0.0):.2%}")
 
                 except Exception as e:
@@ -746,20 +746,20 @@ Licensing Files Found: {len(licensing_files)}"""
         result_text = "=== ANALYSIS RESULTS ===\\n"
         result_text += f"Format: {results.get('format', 'Unknown')}\\n"
 
-        if 'machine' in results:
+        if "machine" in results:
             result_text += f"Machine: {results['machine']}\\n"
 
-        if 'timestamp' in results:
+        if "timestamp" in results:
             result_text += f"Timestamp: {results['timestamp']}\\n"
 
-        if 'sections' in results:
+        if "sections" in results:
             result_text += f"\\nSections ({len(results['sections'])}):\\n"
-            for _section in results['sections'][:10]:  # Limit to first 10
+            for _section in results["sections"][:10]:  # Limit to first 10
                 result_text += f"  {_section.get('name', 'Unknown')}: {_section.get('virtual_size', 'N/A')} bytes\\n"
 
-        if 'imports' in results:
+        if "imports" in results:
             result_text += f"\\nImports ({len(results['imports'])}):\\n"
-            for _imp in results['imports'][:5]:  # Limit to first 5
+            for _imp in results["imports"][:5]:  # Limit to first 5
                 result_text += f"  {_imp.get('dll', 'Unknown')}: {len(_imp.get('functions', []))} functions\\n"
 
         self.results_display.setPlainText(result_text)
@@ -789,7 +789,7 @@ Licensing Files Found: {len(licensing_files)}"""
 
         if file_path:
             try:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(self.results_display.toPlainText())
 
                 QMessageBox.information(self, "Success", f"Results exported to {file_path}")
@@ -826,7 +826,7 @@ Licensing Files Found: {len(licensing_files)}"""
             generator = ProtectionAwareScriptGenerator()
             result = generator.generate_bypass_script(file_path, "frida")
 
-            if result['success']:
+            if result["success"]:
                 # Show script in a dialog or new tab
                 msg = f"Generated {protection_type} bypass script:\n\n"
                 msg += f"Approach: {result['approach']}\n"
@@ -837,7 +837,7 @@ Licensing Files Found: {len(licensing_files)}"""
                 # Copy script to clipboard
                 from PyQt6.QtWidgets import QApplication
                 clipboard = QApplication.clipboard()
-                clipboard.setText(result['script'])
+                clipboard.setText(result["script"])
 
                 QMessageBox.information(self, "Bypass Script Generated", msg)
             else:
@@ -883,7 +883,7 @@ Licensing Files Found: {len(licensing_files)}"""
     def _on_bypass_requested(self, file_path: str, protection_data: Dict[str, Any]):
         """Handle bypass script generation request."""
         self.logger.info(f"Bypass requested for: {protection_data['name']}")
-        self._generate_bypass_script(file_path, protection_data['type'])
+        self._generate_bypass_script(file_path, protection_data["type"])
 
     def _on_script_ready(self, script_data: dict):
         """Handle script generation completion."""
@@ -915,7 +915,7 @@ Licensing Files Found: {len(licensing_files)}"""
         self.results_display.append(result_text)
 
         # Trigger ICP analysis when unified analysis completes
-        if hasattr(self, 'binary_path') and self.binary_path:
+        if hasattr(self, "binary_path") and self.binary_path:
             self.icp_widget.analyze_file(self.binary_path)
 
     def _on_icp_protection_selected(self, detection):
@@ -971,16 +971,16 @@ Licensing Files Found: {len(licensing_files)}"""
             analysis_results = None
 
             # Try to get results from the orchestrator
-            if hasattr(self, 'analysis_orchestrator') and self.analysis_orchestrator:
+            if hasattr(self, "analysis_orchestrator") and self.analysis_orchestrator:
                 results = self.analysis_orchestrator.get_current_results()
                 if results:
                     analysis_results = {
-                        "file_info": getattr(results, 'file_info', {}),
-                        "icp_analysis": getattr(results, 'icp_analysis', None),
-                        "protections": getattr(results, 'protections', []),
-                        "file_type": getattr(results, 'file_type', 'Unknown'),
-                        "architecture": getattr(results, 'architecture', 'Unknown'),
-                        "is_protected": getattr(results, 'is_protected', False)
+                        "file_info": getattr(results, "file_info", {}),
+                        "icp_analysis": getattr(results, "icp_analysis", None),
+                        "protections": getattr(results, "protections", []),
+                        "file_type": getattr(results, "file_type", "Unknown"),
+                        "architecture": getattr(results, "architecture", "Unknown"),
+                        "is_protected": getattr(results, "is_protected", False)
                     }
 
             # Open export dialog
@@ -997,4 +997,4 @@ Licensing Files Found: {len(licensing_files)}"""
 
 
 # Export the main window class
-__all__ = ['IntellicrackMainWindow']
+__all__ = ["IntellicrackMainWindow"]

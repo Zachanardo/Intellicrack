@@ -116,14 +116,14 @@ class CodeAnalyzer:
         programming languages for code analysis.
         """
         self.supported_extensions = {
-            '.py': 'python',
-            '.js': 'javascript',
-            '.ts': 'typescript',
-            '.java': 'java',
-            '.cpp': 'cpp',
-            '.c': 'c',
-            '.h': 'c',
-            '.hpp': 'cpp'
+            ".py": "python",
+            ".js": "javascript",
+            ".ts": "typescript",
+            ".java": "java",
+            ".cpp": "cpp",
+            ".c": "c",
+            ".h": "c",
+            ".hpp": "cpp"
         }
 
     def analyze_file(self, file_path: str) -> CodeContext:
@@ -133,7 +133,7 @@ class CodeAnalyzer:
             content = None
             try:
                 from .ai_file_tools import get_ai_file_tools
-                ai_file_tools = get_ai_file_tools(getattr(self, 'app_instance', None))
+                ai_file_tools = get_ai_file_tools(getattr(self, "app_instance", None))
                 file_data = ai_file_tools.read_file(file_path, purpose="Code analysis for intelligent modification")
                 if file_data.get("status") == "success" and file_data.get("content"):
                     content = file_data["content"]
@@ -142,15 +142,15 @@ class CodeAnalyzer:
 
             # Fallback to direct file reading if AIFileTools not available
             if content is None:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
             file_ext = Path(file_path).suffix.lower()
-            language = self.supported_extensions.get(file_ext, 'unknown')
+            language = self.supported_extensions.get(file_ext, "unknown")
 
-            if language == 'python':
+            if language == "python":
                 return self._analyze_python_file(file_path, content)
-            elif language in ['javascript', 'typescript']:
+            elif language in ["javascript", "typescript"]:
                 return self._analyze_js_file(file_path, content)
             else:
                 return self._analyze_generic_file(file_path, content, language)
@@ -223,17 +223,17 @@ class CodeAnalyzer:
         imports = re.findall(import_pattern, content)
 
         # Function patterns
-        function_pattern = r'(?:function\s+(\w+)|(\w+)\s*[:=]\s*(?:function|\([^)]*\)\s*=>))'
+        function_pattern = r"(?:function\s+(\w+)|(\w+)\s*[:=]\s*(?:function|\([^)]*\)\s*=>))"
         function_matches = re.findall(function_pattern, content)
         functions = [match[0] or match[1]
                      for match in function_matches if match[0] or match[1]]
 
         # Class patterns
-        class_pattern = r'class\s+(\w+)'
+        class_pattern = r"class\s+(\w+)"
         classes = re.findall(class_pattern, content)
 
         # Variable patterns
-        var_pattern = r'(?:var|let|const)\s+(\w+)'
+        var_pattern = r"(?:var|let|const)\s+(\w+)"
         variables = re.findall(var_pattern, content)
 
         return CodeContext(
@@ -252,9 +252,9 @@ class CodeAnalyzer:
         """Generic analysis for unsupported file types."""
         # Basic function detection
         function_patterns = {
-            'c': r'(?:\w+\s+)*(\w+)\s*\([^)]*\)\s*\{',
-            'cpp': r'(?:\w+\s+)*(\w+)\s*\([^)]*\)\s*\{',
-            'java': r'(?:public|private|protected)?\s*(?:static)?\s*\w+\s+(\w+)\s*\([^)]*\)'
+            "c": r"(?:\w+\s+)*(\w+)\s*\([^)]*\)\s*\{",
+            "cpp": r"(?:\w+\s+)*(\w+)\s*\([^)]*\)\s*\{",
+            "java": r"(?:public|private|protected)?\s*(?:static)?\s*\w+\s+(\w+)\s*\([^)]*\)"
         }
 
         functions = []
@@ -292,18 +292,18 @@ class CodeAnalyzer:
         """Extract external dependencies from imports."""
         # Filter out standard library and relative imports
         standard_libs = {
-            'os', 'sys', 'json', 'time', 'datetime', 'pathlib', 're',
-            'collections', 'itertools', 'functools', 'typing', 'enum'
+            "os", "sys", "json", "time", "datetime", "pathlib", "re",
+            "collections", "itertools", "functools", "typing", "enum"
         }
 
         dependencies = []
         for imp in imports:
-            if '.' in imp:
-                base = imp.split('.')[0]
+            if "." in imp:
+                base = imp.split(".")[0]
             else:
                 base = imp
 
-            if base not in standard_libs and not imp.startswith('.'):
+            if base not in standard_libs and not imp.startswith("."):
                 dependencies.append(base)
 
         return list(set(dependencies))
@@ -326,7 +326,7 @@ class DiffGenerator:
             lineterm=""
         )
 
-        return ''.join(diff)
+        return "".join(diff)
 
     def generate_side_by_side_diff(self, original: str, modified: str) -> Dict[str, Any]:
         """Generate side-by-side diff data."""
@@ -341,7 +341,7 @@ class DiffGenerator:
         }
 
         for tag, i1, i2, j1, j2 in differ.get_opcodes():
-            if tag == 'equal':
+            if tag == "equal":
                 for i in range(i1, i2):
                     diff_data["original_lines"].append({
                         "line_number": i + 1,
@@ -354,7 +354,7 @@ class DiffGenerator:
                         "type": "unchanged"
                     })
 
-            elif tag == 'delete':
+            elif tag == "delete":
                 for i in range(i1, i2):
                     diff_data["original_lines"].append({
                         "line_number": i + 1,
@@ -362,7 +362,7 @@ class DiffGenerator:
                         "type": "deleted"
                     })
 
-            elif tag == 'insert':
+            elif tag == "insert":
                 for j in range(j1, j2):
                     diff_data["modified_lines"].append({
                         "line_number": j + 1,
@@ -370,7 +370,7 @@ class DiffGenerator:
                         "type": "added"
                     })
 
-            elif tag == 'replace':
+            elif tag == "replace":
                 for i in range(i1, i2):
                     diff_data["original_lines"].append({
                         "line_number": i + 1,
@@ -384,7 +384,7 @@ class DiffGenerator:
                         "type": "modified"
                     })
 
-            if tag != 'equal':
+            if tag != "equal":
                 diff_data["changes"].append({
                     "type": tag,
                     "original_start": i1,
@@ -407,11 +407,11 @@ class DiffGenerator:
         modifications = 0
 
         for tag, i1, i2, j1, j2 in differ.get_opcodes():
-            if tag == 'delete':
+            if tag == "delete":
                 deletions += i2 - i1
-            elif tag == 'insert':
+            elif tag == "insert":
                 additions += j2 - j1
-            elif tag == 'replace':
+            elif tag == "replace":
                 modifications += max(i2 - i1, j2 - j1)
 
         return {
@@ -612,7 +612,7 @@ Requirements:
         try:
             # Extract JSON from response
             json_match = re.search(
-                r'```json\s*(\{.*?\})\s*```', response, re.DOTALL)
+                r"```json\s*(\{.*?\})\s*```", response, re.DOTALL)
             if not json_match:
                 # Try to find JSON without code blocks
                 json_match = re.search(
@@ -789,7 +789,7 @@ Requirements:
             content = None
             try:
                 from .ai_file_tools import get_ai_file_tools
-                ai_file_tools = get_ai_file_tools(getattr(self, 'app_instance', None))
+                ai_file_tools = get_ai_file_tools(getattr(self, "app_instance", None))
                 file_data = ai_file_tools.read_file(file_path, purpose="Read file for applying code modifications")
                 if file_data.get("status") == "success" and file_data.get("content"):
                     content = file_data["content"]
@@ -798,7 +798,7 @@ Requirements:
 
             # Fallback to direct file reading if AIFileTools not available
             if content is None:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
             lines = content.splitlines()
@@ -822,8 +822,8 @@ Requirements:
                 lines[start_idx:end_idx] = new_lines
 
             # Write modified content back to file
-            modified_content = '\n'.join(lines)
-            with open(file_path, 'w', encoding='utf-8') as f:
+            modified_content = "\n".join(lines)
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(modified_content)
 
             logger.info(f"Applied {len(changes)} changes to {file_path}")

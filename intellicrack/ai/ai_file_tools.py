@@ -37,8 +37,8 @@ from ..ui.common_imports import (
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['AIFileTools', 'FileSearchTool',
-           'FileReadTool', 'create_approval_dialog']
+__all__ = ["AIFileTools", "FileSearchTool",
+           "FileReadTool", "create_approval_dialog"]
 
 
 class FileApprovalDialog(QDialog):
@@ -171,7 +171,7 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
                     dirs.clear()  # Don't descend further
 
             # Log results
-            if self.app_instance and hasattr(self.app_instance, 'update_output'):
+            if self.app_instance and hasattr(self.app_instance, "update_output"):
                 self.app_instance.update_output.emit(
                     f"[AI File Search] Found {len(results['files_found'])} license-related files"
                 )
@@ -250,14 +250,14 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
             encoding = "utf-8"
 
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
             except UnicodeDecodeError as e:
                 logger.error("UnicodeDecodeError in ai_file_tools: %s", e)
                 # Try common encodings
-                for _enc in ['latin-1', 'cp1252', 'ascii']:
+                for _enc in ["latin-1", "cp1252", "ascii"]:
                     try:
-                        with open(file_path, 'r', encoding=_enc) as f:
+                        with open(file_path, "r", encoding=_enc) as f:
                             content = f.read()
                             encoding = _enc
                             break
@@ -268,7 +268,7 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
 
             if content is None:
                 # Read as binary if text fails
-                with open(file_path, 'rb') as f:
+                with open(file_path, "rb") as f:
                     binary_content = f.read()
                 content = f"[Binary file - {len(binary_content)} bytes]"
                 encoding = "binary"
@@ -283,7 +283,7 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
             }
 
             # Log the read operation
-            if self.app_instance and hasattr(self.app_instance, 'update_output'):
+            if self.app_instance and hasattr(self.app_instance, "update_output"):
                 self.app_instance.update_output.emit(
                     f"[AI File Read] Read {file_path.name} ({file_size:,} bytes)"
                 )

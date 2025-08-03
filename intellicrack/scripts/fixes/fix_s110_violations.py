@@ -28,13 +28,13 @@ from typing import List, Tuple
 def has_logger_import(lines: List[str]) -> Tuple[bool, str]:
     """Check if file has logger import and return the logger name."""
     for line in lines[:50]:  # Check first 50 lines
-        if 'from intellicrack.logger import logger' in line:
-            return True, 'logger'
-        if 'self.logger' in line:
-            return True, 'self.logger'
-        if re.match(r'^logger\s*=', line.strip()):
-            return True, 'logger'
-    return False, ''
+        if "from intellicrack.logger import logger" in line:
+            return True, "logger"
+        if "self.logger" in line:
+            return True, "self.logger"
+        if re.match(r"^logger\s*=", line.strip()):
+            return True, "logger"
+    return False, ""
 
 def get_logger_for_context(lines: List[str], line_num: int) -> str:
     """Determine the appropriate logger based on context."""
@@ -42,19 +42,19 @@ def get_logger_for_context(lines: List[str], line_num: int) -> str:
     for i in range(max(0, line_num - 20), line_num):
         if i < len(lines):
             line = lines[i]
-            if re.match(r'^\s*def\s+\w+\s*\(self', line):
-                return 'self.logger'
-            if re.match(r'^\s*class\s+\w+', line):
+            if re.match(r"^\s*def\s+\w+\s*\(self", line):
+                return "self.logger"
+            if re.match(r"^\s*class\s+\w+", line):
                 # We're in a class, likely need self.logger
-                return 'self.logger'
+                return "self.logger"
 
     # Default to module logger
-    return 'logger'
+    return "logger"
 
 def fix_exception_blocks(file_path: Path) -> Tuple[bool, int]:
     """Fix exception blocks without logger calls."""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
     except:
         return False, 0
@@ -68,23 +68,23 @@ def fix_exception_blocks(file_path: Path) -> Tuple[bool, int]:
         stripped = line.strip()
 
         # Skip empty lines and comments
-        if not stripped or stripped.startswith('#'):
+        if not stripped or stripped.startswith("#"):
             i += 1
             continue
 
         # Check if this is an except block
-        match = re.match(r'^(\s*)except\s+(.+?):\s*$', line)
+        match = re.match(r"^(\s*)except\s+(.+?):\s*$", line)
         if match:
             indent = match.group(1)
             exception_info = match.group(2)
 
             # Parse exception type and variable
-            if ' as ' in exception_info:
-                exception_type, exception_var = exception_info.split(' as ', 1)
+            if " as " in exception_info:
+                exception_type, exception_var = exception_info.split(" as ", 1)
                 exception_var = exception_var.strip()
             else:
                 exception_type = exception_info
-                exception_var = 'e'
+                exception_var = "e"
                 # Update the except line to include 'as e'
                 lines[i] = f"{indent}except {exception_type} as {exception_var}:\n"
 
@@ -100,7 +100,7 @@ def fix_exception_blocks(file_path: Path) -> Tuple[bool, int]:
                 if next_stripped and next_indent <= len(indent):
                     break
 
-                if 'logger' in next_line or 'logging' in next_line:
+                if "logger" in next_line or "logging" in next_line:
                     has_logger = True
                     break
                 j += 1
@@ -110,19 +110,19 @@ def fix_exception_blocks(file_path: Path) -> Tuple[bool, int]:
                 logger_name = get_logger_for_context(lines, i)
 
                 # Determine appropriate message based on exception type
-                if exception_type == 'ImportError':
+                if exception_type == "ImportError":
                     message = f"Import error in {file_path.name}"
-                elif exception_type == 'FileNotFoundError':
+                elif exception_type == "FileNotFoundError":
                     message = f"File not found in {file_path.name}"
-                elif exception_type == 'KeyError':
+                elif exception_type == "KeyError":
                     message = f"Key error in {file_path.name}"
-                elif exception_type == 'ValueError':
+                elif exception_type == "ValueError":
                     message = f"Value error in {file_path.name}"
-                elif exception_type == 'TypeError':
+                elif exception_type == "TypeError":
                     message = f"Type error in {file_path.name}"
-                elif exception_type == 'AttributeError':
+                elif exception_type == "AttributeError":
                     message = f"Attribute error in {file_path.name}"
-                elif exception_type in ['Exception', 'BaseException']:
+                elif exception_type in ["Exception", "BaseException"]:
                     message = f"Error in {file_path.name}"
                 else:
                     message = f"{exception_type} in {file_path.name}"
@@ -132,7 +132,7 @@ def fix_exception_blocks(file_path: Path) -> Tuple[bool, int]:
 
                 # Find where to insert the logger line
                 insert_pos = i + 1
-                if insert_pos < len(lines) and lines[insert_pos].strip() == '':
+                if insert_pos < len(lines) and lines[insert_pos].strip() == "":
                     # If next line is empty, replace it
                     lines[insert_pos] = logger_line
                 else:
@@ -149,17 +149,17 @@ def fix_exception_blocks(file_path: Path) -> Tuple[bool, int]:
             # Add logger import at the top
             import_added = False
             for i, line in enumerate(lines):
-                if line.strip() and not line.startswith('#'):
-                    lines.insert(i, 'from intellicrack.logger import logger\n')
+                if line.strip() and not line.startswith("#"):
+                    lines.insert(i, "from intellicrack.logger import logger\n")
                     import_added = True
                     break
 
             if not import_added:
-                lines.insert(0, 'from intellicrack.logger import logger\n')
+                lines.insert(0, "from intellicrack.logger import logger\n")
 
     # Write back if changes were made
     if lines != original_lines:
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.writelines(lines)
         return True, fixes_made
 
@@ -181,14 +181,14 @@ def main():
     else:
         # Fix all files with most violations first
         files_to_fix = [
-            'intellicrack/ui/main_app.py',
-            'intellicrack/scripts/cli/interactive_mode.py',
-            'intellicrack/core/c2/c2_client.py',
-            'intellicrack/core/exploitation/privilege_escalation.py',
-            'intellicrack/core/exploitation/lateral_movement.py',
+            "intellicrack/ui/main_app.py",
+            "intellicrack/scripts/cli/interactive_mode.py",
+            "intellicrack/core/c2/c2_client.py",
+            "intellicrack/core/exploitation/privilege_escalation.py",
+            "intellicrack/core/exploitation/lateral_movement.py",
         ]
 
-        project_root = Path('/mnt/c/Intellicrack')
+        project_root = Path("/mnt/c/Intellicrack")
 
         for file_rel_path in files_to_fix:
             file_path = project_root / file_rel_path

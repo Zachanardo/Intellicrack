@@ -94,17 +94,17 @@ class KeygenWorker(QThread):
 
         result = generate_license_key(
             self.binary_path,
-            algorithm=self.kwargs.get('algorithm', 'auto'),
-            format_type=self.kwargs.get('format_type', 'auto'),
-            custom_length=self.kwargs.get('custom_length'),
-            validation_check=self.kwargs.get('validation_check', False)
+            algorithm=self.kwargs.get("algorithm", "auto"),
+            format_type=self.kwargs.get("format_type", "auto"),
+            custom_length=self.kwargs.get("custom_length"),
+            validation_check=self.kwargs.get("validation_check", False)
         )
         self.key_generated.emit(result)
 
     def _generate_batch_keys(self):
         """Generate multiple license keys."""
 
-        count = self.kwargs.get('count', 10)
+        count = self.kwargs.get("count", 10)
         keys = []
 
         for _i in range(count):
@@ -115,22 +115,22 @@ class KeygenWorker(QThread):
                 from ...utils.exploitation import generate_license_key
                 result = generate_license_key(
                     self.binary_path,
-                    algorithm=self.kwargs.get('algorithm', 'auto'),
-                    format_type=self.kwargs.get('format_type', 'auto'),
-                    custom_length=self.kwargs.get('custom_length'),
+                    algorithm=self.kwargs.get("algorithm", "auto"),
+                    format_type=self.kwargs.get("format_type", "auto"),
+                    custom_length=self.kwargs.get("custom_length"),
                     validation_check=False  # Skip validation for batch to speed up
                 )
-                result['batch_id'] = _i + 1
+                result["batch_id"] = _i + 1
                 keys.append(result)
                 self.batch_progress.emit(_i + 1, count)
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in keygen_dialog: %s", e)
                 keys.append({
-                    'batch_id': _i + 1,
-                    'key': '',
-                    'error': str(e),
-                    'algorithm': self.kwargs.get('algorithm', 'auto'),
-                    'format': self.kwargs.get('format_type', 'auto')
+                    "batch_id": _i + 1,
+                    "key": "",
+                    "error": str(e),
+                    "algorithm": self.kwargs.get("algorithm", "auto"),
+                    "format": self.kwargs.get("format_type", "auto")
                 })
 
         self.batch_completed.emit(keys)
@@ -143,9 +143,9 @@ class KeygenWorker(QThread):
         format_type = _detect_key_format(self.binary_path)
 
         result = {
-            'algorithm': algorithm,
-            'format': format_type,
-            'analysis': analysis
+            "algorithm": algorithm,
+            "format": format_type,
+            "analysis": analysis
         }
         self.key_generated.emit(result)
 
@@ -482,29 +482,29 @@ class KeygenDialog(BinarySelectionDialog):
         self.current_analysis = result
 
         # Update UI with detected values
-        if 'algorithm' in result:
+        if "algorithm" in result:
             algo_map = {
-                'simple': 'Simple',
-                'formatted': 'Formatted',
-                'rsa': 'RSA',
-                'aes': 'AES',
-                'checksum': 'Checksum',
-                'hardware': 'Hardware-Locked'
+                "simple": "Simple",
+                "formatted": "Formatted",
+                "rsa": "RSA",
+                "aes": "AES",
+                "checksum": "Checksum",
+                "hardware": "Hardware-Locked"
             }
-            algo_text = algo_map.get(result['algorithm'], 'Simple')
+            algo_text = algo_map.get(result["algorithm"], "Simple")
 
             # Update combo boxes
             self.algorithm_combo.setCurrentText(algo_text)
             self.batch_algorithm_combo.setCurrentText(algo_text)
 
-        if 'format' in result:
+        if "format" in result:
             format_map = {
-                'alphanumeric': 'Alphanumeric',
-                'formatted': 'Formatted',
-                'hex': 'Hex',
-                'base64': 'Base64'
+                "alphanumeric": "Alphanumeric",
+                "formatted": "Formatted",
+                "hex": "Hex",
+                "base64": "Base64"
             }
-            format_text = format_map.get(result['format'], 'Alphanumeric')
+            format_text = format_map.get(result["format"], "Alphanumeric")
 
             self.format_combo.setCurrentText(format_text)
             self.batch_format_combo.setCurrentText(format_text)
@@ -527,33 +527,33 @@ class KeygenDialog(BinarySelectionDialog):
         text += f"Detected Algorithm: {result.get('algorithm', 'unknown').upper()}\n"
         text += f"Detected Format: {result.get('format', 'unknown').upper()}\n\n"
 
-        if 'analysis' in result:
-            analysis = result['analysis']
+        if "analysis" in result:
+            analysis = result["analysis"]
 
             text += f"Detection Confidence: {analysis.get('confidence', 0):.1%}\n\n"
 
-            if analysis.get('detected_algorithms'):
+            if analysis.get("detected_algorithms"):
                 text += "Detected Algorithms:\n"
-                for _algo in analysis['detected_algorithms']:
+                for _algo in analysis["detected_algorithms"]:
                     text += f"  • {_algo}\n"
                 text += "\n"
 
-            if analysis.get('patterns_found'):
+            if analysis.get("patterns_found"):
                 text += "Patterns Found:\n"
-                for pattern, count in analysis['patterns_found'].items():
+                for pattern, count in analysis["patterns_found"].items():
                     text += f"  • {pattern}: {count} occurrences\n"
                 text += "\n"
 
-            if analysis.get('entropy_analysis'):
-                entropy = analysis['entropy_analysis'].get('entropy', 0)
+            if analysis.get("entropy_analysis"):
+                entropy = analysis["entropy_analysis"].get("entropy", 0)
                 text += f"File Entropy: {entropy:.2f}\n"
                 if entropy > 7.5:
                     text += "  → High entropy detected, likely encrypted/packed\n"
                 text += "\n"
 
-            if analysis.get('string_analysis'):
+            if analysis.get("string_analysis"):
                 text += "License-related Strings Found:\n"
-                for _string_type in analysis['string_analysis']:
+                for _string_type in analysis["string_analysis"]:
                     text += f"  • {_string_type}\n"
                 text += "\n"
 
@@ -570,25 +570,25 @@ class KeygenDialog(BinarySelectionDialog):
 
         # Get configuration
         algorithm_map = {
-            'Auto-Detect': 'auto',
-            'Simple': 'simple',
-            'Formatted': 'formatted',
-            'RSA': 'rsa',
-            'AES': 'aes',
-            'Checksum': 'checksum',
-            'Hardware-Locked': 'hardware'
+            "Auto-Detect": "auto",
+            "Simple": "simple",
+            "Formatted": "formatted",
+            "RSA": "rsa",
+            "AES": "aes",
+            "Checksum": "checksum",
+            "Hardware-Locked": "hardware"
         }
 
         format_map = {
-            'Auto-Detect': 'auto',
-            'Alphanumeric': 'alphanumeric',
-            'Formatted': 'formatted',
-            'Hex': 'hex',
-            'Base64': 'base64'
+            "Auto-Detect": "auto",
+            "Alphanumeric": "alphanumeric",
+            "Formatted": "formatted",
+            "Hex": "hex",
+            "Base64": "base64"
         }
 
-        algorithm = algorithm_map.get(self.algorithm_combo.currentText(), 'auto')
-        format_type = format_map.get(self.format_combo.currentText(), 'auto')
+        algorithm = algorithm_map.get(self.algorithm_combo.currentText(), "auto")
+        format_type = format_map.get(self.format_combo.currentText(), "auto")
         custom_length = None if self.length_spin.value() == 8 else self.length_spin.value()
         validation_check = self.validation_check.isChecked()
 
@@ -607,14 +607,14 @@ class KeygenDialog(BinarySelectionDialog):
     def on_single_key_generated(self, result):
         """Handle single key generation completion."""
         # Display the key
-        self.key_display.setPlainText(result.get('key', 'Error generating key'))
+        self.key_display.setPlainText(result.get("key", "Error generating key"))
 
         # Display detailed results
         results_text = self.format_single_key_results(result)
         self.results_display.setPlainText(results_text)
 
         # Store for potential copying and saving
-        self.last_generated_key = result.get('key', '')
+        self.last_generated_key = result.get("key", "")
         self.last_generated_result = result
 
         # Enable save button if key was generated successfully
@@ -632,27 +632,27 @@ class KeygenDialog(BinarySelectionDialog):
         text += f"Algorithm Used: {result.get('algorithm', 'unknown').upper()}\n"
         text += f"Format Used: {result.get('format', 'unknown').upper()}\n\n"
 
-        if 'validation' in result and result['validation']['tested']:
-            validation = result['validation']
+        if "validation" in result and result["validation"]["tested"]:
+            validation = result["validation"]
             text += "Validation Results:\n"
             text += f"  Valid: {'YES' if validation['valid'] else 'NO'}\n"
             text += f"  Confidence: {validation['confidence']:.1%}\n"
             text += f"  Method: {validation['method']}\n"
 
-            if validation.get('notes'):
+            if validation.get("notes"):
                 text += "  Notes:\n"
-                for _note in validation['notes']:
+                for _note in validation["notes"]:
                     text += f"    • {_note}\n"
             text += "\n"
 
-        if 'analysis' in result:
-            analysis = result['analysis']
+        if "analysis" in result:
+            analysis = result["analysis"]
             text += f"Detection Confidence: {analysis.get('confidence', 0):.1%}\n"
 
-            if analysis.get('detected_algorithms'):
+            if analysis.get("detected_algorithms"):
                 text += f"Detected Algorithms: {', '.join(analysis['detected_algorithms'])}\n"
 
-        if 'error' in result:
+        if "error" in result:
             text += f"\nError: {result['error']}\n"
 
         return text
@@ -687,40 +687,40 @@ class KeygenDialog(BinarySelectionDialog):
 
             # Generate filename with timestamp
             timestamp = int(time.time())
-            algorithm = getattr(self, 'last_generated_result', {}).get('algorithm', 'unknown')
+            algorithm = getattr(self, "last_generated_result", {}).get("algorithm", "unknown")
             filename = f"{binary_name}_{algorithm}_{timestamp}.key"
 
             file_path = os.path.join(save_dir, filename)
 
             # Prepare content to save
-            result = getattr(self, 'last_generated_result', {})
+            result = getattr(self, "last_generated_result", {})
             content = "# License Key Generated by Intellicrack Professional Keygen\n"
             content += f"# Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n"
             content += f"# Binary: {os.path.basename(self.binary_path) if self.binary_path else 'N/A'}\n"
             content += f"# Algorithm: {result.get('algorithm', 'unknown')}\n"
             content += f"# Format: {result.get('format', 'unknown')}\n"
 
-            if 'analysis' in result:
-                analysis = result['analysis']
+            if "analysis" in result:
+                analysis = result["analysis"]
                 content += f"# Detection Confidence: {analysis.get('confidence', 0):.1%}\n"
-                if analysis.get('detected_algorithms'):
+                if analysis.get("detected_algorithms"):
                     content += f"# Detected Algorithms: {', '.join(analysis['detected_algorithms'])}\n"
 
             content += f"\n# License Key:\n{self.last_generated_key}\n"
 
             # Add validation info if available
-            if 'validation' in result and result['validation']['tested']:
-                validation = result['validation']
+            if "validation" in result and result["validation"]["tested"]:
+                validation = result["validation"]
                 content += "\n# Validation Results:\n"
                 content += f"# Valid: {'YES' if validation['valid'] else 'NO'}\n"
                 content += f"# Confidence: {validation['confidence']:.1%}\n"
                 content += f"# Method: {validation['method']}\n"
-                if validation.get('notes'):
-                    for _note in validation['notes']:
+                if validation.get("notes"):
+                    for _note in validation["notes"]:
                         content += f"# Note: {_note}\n"
 
             # Save the file
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
 
             self.status_label.setText(f"Key saved to generated_keys/{filename}")
@@ -777,25 +777,25 @@ class KeygenDialog(BinarySelectionDialog):
 
         # Get configuration
         algorithm_map = {
-            'Auto-Detect': 'auto',
-            'Simple': 'simple',
-            'Formatted': 'formatted',
-            'RSA': 'rsa',
-            'AES': 'aes',
-            'Checksum': 'checksum',
-            'Hardware-Locked': 'hardware'
+            "Auto-Detect": "auto",
+            "Simple": "simple",
+            "Formatted": "formatted",
+            "RSA": "rsa",
+            "AES": "aes",
+            "Checksum": "checksum",
+            "Hardware-Locked": "hardware"
         }
 
         format_map = {
-            'Auto-Detect': 'auto',
-            'Alphanumeric': 'alphanumeric',
-            'Formatted': 'formatted',
-            'Hex': 'hex',
-            'Base64': 'base64'
+            "Auto-Detect": "auto",
+            "Alphanumeric": "alphanumeric",
+            "Formatted": "formatted",
+            "Hex": "hex",
+            "Base64": "base64"
         }
 
-        algorithm = algorithm_map.get(self.batch_algorithm_combo.currentText(), 'auto')
-        format_type = format_map.get(self.batch_format_combo.currentText(), 'auto')
+        algorithm = algorithm_map.get(self.batch_algorithm_combo.currentText(), "auto")
+        format_type = format_map.get(self.batch_format_combo.currentText(), "auto")
 
         # Start worker thread
         self.worker = KeygenWorker(
@@ -823,20 +823,20 @@ class KeygenDialog(BinarySelectionDialog):
 
         for i, key_data in enumerate(keys):
             # ID
-            self.batch_table.setItem(i, 0, QTableWidgetItem(str(key_data.get('batch_id', i+1))))
+            self.batch_table.setItem(i, 0, QTableWidgetItem(str(key_data.get("batch_id", i+1))))
 
             # Key
-            key_text = key_data.get('key', 'Error')
+            key_text = key_data.get("key", "Error")
             self.batch_table.setItem(i, 1, QTableWidgetItem(key_text))
 
             # Algorithm
-            self.batch_table.setItem(i, 2, QTableWidgetItem(key_data.get('algorithm', 'unknown')))
+            self.batch_table.setItem(i, 2, QTableWidgetItem(key_data.get("algorithm", "unknown")))
 
             # Format
-            self.batch_table.setItem(i, 3, QTableWidgetItem(key_data.get('format', 'unknown')))
+            self.batch_table.setItem(i, 3, QTableWidgetItem(key_data.get("format", "unknown")))
 
             # Status
-            if 'error' in key_data:
+            if "error" in key_data:
                 status = "Error"
                 status_item = QTableWidgetItem(status)
                 status_item.setBackground(QColor(255, 200, 200))  # Light red
@@ -892,28 +892,28 @@ class KeygenDialog(BinarySelectionDialog):
 
         if file_path:
             try:
-                if file_path.endswith('.json'):
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                if file_path.endswith(".json"):
+                    with open(file_path, "w", encoding="utf-8") as f:
                         json.dump(self.generated_keys, f, indent=2)
-                elif file_path.endswith('.csv'):
+                elif file_path.endswith(".csv"):
                     import csv
-                    with open(file_path, 'w', newline='', encoding='utf-8') as f:
+                    with open(file_path, "w", newline="", encoding="utf-8") as f:
                         writer = csv.writer(f)
-                        writer.writerow(['ID', 'Key', 'Algorithm', 'Format', 'Status'])
+                        writer.writerow(["ID", "Key", "Algorithm", "Format", "Status"])
                         for _key_data in self.generated_keys:
                             writer.writerow([
-                                _key_data.get('batch_id', ''),
-                                _key_data.get('key', ''),
-                                _key_data.get('algorithm', ''),
-                                _key_data.get('format', ''),
-                                'Error' if 'error' in _key_data else 'Generated'
+                                _key_data.get("batch_id", ""),
+                                _key_data.get("key", ""),
+                                _key_data.get("algorithm", ""),
+                                _key_data.get("format", ""),
+                                "Error" if "error" in _key_data else "Generated"
                             ])
                 else:  # txt
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.write(f"License Keys Generated from: {os.path.basename(self.binary_path)}\n")
                         f.write("=" * 60 + "\n\n")
                         for _key_data in self.generated_keys:
-                            if 'error' not in _key_data:
+                            if "error" not in _key_data:
                                 f.write(f"{_key_data.get('key', '')}\n")
 
                 self.status_label.setText(f"Keys exported to {os.path.basename(file_path)}")
@@ -929,7 +929,7 @@ class KeygenDialog(BinarySelectionDialog):
             QMessageBox.warning(self, "Warning", "Please enter some existing keys to analyze.")
             return
 
-        keys = [_key.strip() for _key in keys_text.split('\n') if _key.strip()]
+        keys = [_key.strip() for _key in keys_text.split("\n") if _key.strip()]
 
         try:
             from ...utils.exploitation import analyze_existing_keys
@@ -941,20 +941,20 @@ class KeygenDialog(BinarySelectionDialog):
 
             analysis_text += f"Total Keys Analyzed: {analysis['count']}\n\n"
 
-            if analysis.get('formats'):
+            if analysis.get("formats"):
                 analysis_text += "Format Distribution:\n"
-                for fmt, count in analysis['formats'].items():
-                    percentage = (count / analysis['count']) * 100
+                for fmt, count in analysis["formats"].items():
+                    percentage = (count / analysis["count"]) * 100
                     analysis_text += f"  • {fmt.title()}: {count} ({percentage:.1f}%)\n"
                 analysis_text += "\n"
 
-            if analysis.get('patterns'):
+            if analysis.get("patterns"):
                 analysis_text += "Length Statistics:\n"
                 analysis_text += f"  • Average Length: {analysis['patterns'].get('avg_length', 0):.1f}\n"
                 analysis_text += f"  • Min Length: {analysis['patterns'].get('min_length', 0)}\n"
                 analysis_text += f"  • Max Length: {analysis['patterns'].get('max_length', 0)}\n\n"
 
-            if analysis.get('recommendations'):
+            if analysis.get("recommendations"):
                 analysis_text += "Recommendations for Key Generation:\n"
                 analysis_text += f"  • Suggested Format: {analysis['recommendations'].get('format', 'alphanumeric').title()}\n"
                 analysis_text += f"  • Suggested Length: {analysis['recommendations'].get('length', 25)}\n"

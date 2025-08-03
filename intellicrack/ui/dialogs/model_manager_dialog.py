@@ -113,12 +113,12 @@ class ModelDownloadThread(QThread):
             response = requests.get(self.model_url, stream=True)
             response.raise_for_status()
 
-            total_size = int(response.headers.get('content-length', 0))
+            total_size = int(response.headers.get("content-length", 0))
             downloaded = 0
 
             model_path = gguf_manager.models_directory / self.model_name
 
-            with open(model_path, 'wb') as f:
+            with open(model_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if self.is_cancelled:
                         self.log_message.emit(f"Download cancelled: {self.model_name}")
@@ -655,12 +655,12 @@ Server URL: {gguf_manager.get_server_url()}"""
 
         # Security: Validate URL to prevent SSRF attacks
         allowed_domains = [
-            'huggingface.co',
-            'github.com',
-            'raw.githubusercontent.com',
-            'ollama.ai',
-            'anthropic.com',
-            'openai.com'
+            "huggingface.co",
+            "github.com",
+            "raw.githubusercontent.com",
+            "ollama.ai",
+            "anthropic.com",
+            "openai.com"
         ]
 
         try:
@@ -668,7 +668,7 @@ Server URL: {gguf_manager.get_server_url()}"""
             parsed = urlparse(url)
 
             # Check if URL is using HTTPS
-            if parsed.scheme != 'https':
+            if parsed.scheme != "https":
                 QMessageBox.warning(self, "Security Warning",
                     "Only HTTPS URLs are allowed for security reasons.")
                 return
@@ -677,7 +677,7 @@ Server URL: {gguf_manager.get_server_url()}"""
             domain_allowed = False
             for allowed_domain in allowed_domains:
                 if parsed.hostname and (parsed.hostname == allowed_domain or
-                                      parsed.hostname.endswith('.' + allowed_domain)):
+                                      parsed.hostname.endswith("." + allowed_domain)):
                     domain_allowed = True
                     break
 
@@ -693,8 +693,8 @@ Server URL: {gguf_manager.get_server_url()}"""
 
         # Extract model name from URL
         model_name = Path(url).name
-        if not model_name.endswith('.gguf'):
-            model_name += '.gguf'
+        if not model_name.endswith(".gguf"):
+            model_name += ".gguf"
 
         self.download_model(url, model_name)
         self.custom_url_input.clear()
@@ -766,7 +766,7 @@ Server URL: {gguf_manager.get_server_url()}"""
 
         try:
             import flask
-            flask_version = getattr(flask, '__version__', 'unknown')
+            flask_version = getattr(flask, "__version__", "unknown")
             deps_status.append(f"✓ Flask available (v{flask_version})")
         except ImportError as e:
             logger.error("Import error in model_manager_dialog: %s", e)
@@ -774,7 +774,7 @@ Server URL: {gguf_manager.get_server_url()}"""
 
         try:
             import llama_cpp
-            llama_version = getattr(llama_cpp, '__version__', 'unknown')
+            llama_version = getattr(llama_cpp, "__version__", "unknown")
             deps_status.append(f"✓ llama-cpp-python available (v{llama_version})")
         except ImportError as e:
             logger.error("Import error in model_manager_dialog: %s", e)
@@ -782,7 +782,7 @@ Server URL: {gguf_manager.get_server_url()}"""
 
         try:
             import requests
-            requests_version = getattr(requests, '__version__', 'unknown')
+            requests_version = getattr(requests, "__version__", "unknown")
             deps_status.append(f"✓ requests available (v{requests_version})")
         except ImportError as e:
             logger.error("Import error in model_manager_dialog: %s", e)

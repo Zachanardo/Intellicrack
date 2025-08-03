@@ -104,7 +104,7 @@ class MemoryOptimizer:
     def enable(self) -> None:
         """Enable memory optimization."""
         self.enabled = True
-        if self.app and hasattr(self.app, 'update_output'):
+        if self.app and hasattr(self.app, "update_output"):
             try:
                 from ...utils.ui_utils import log_message
                 self.app.update_output.emit(log_message("[Memory] Memory optimization enabled"))
@@ -115,7 +115,7 @@ class MemoryOptimizer:
     def disable(self) -> None:
         """Disable memory optimization."""
         self.enabled = False
-        if self.app and hasattr(self.app, 'update_output'):
+        if self.app and hasattr(self.app, "update_output"):
             try:
                 from ...utils.ui_utils import log_message
                 self.app.update_output.emit(log_message("[Memory] Memory optimization disabled"))
@@ -143,7 +143,7 @@ class MemoryOptimizer:
             f"interval={self.check_interval}s, techniques={self.optimization_techniques}"
         )
 
-        if self.app and hasattr(self.app, 'update_output'):
+        if self.app and hasattr(self.app, "update_output"):
             try:
                 from ...utils.ui_utils import log_message
                 self.app.update_output.emit(log_message(config_message))
@@ -267,7 +267,7 @@ class MemoryOptimizer:
                 f"using {', '.join(techniques_used)}"
             )
 
-            if self.app and hasattr(self.app, 'update_output'):
+            if self.app and hasattr(self.app, "update_output"):
                 try:
                     from ...utils.ui_utils import log_message
                     self.app.update_output.emit(log_message(optimization_message))
@@ -307,7 +307,7 @@ class MemoryOptimizer:
             optimizations_applied.extend(self._optimize_caches())
 
             if optimizations_applied:
-                self.logger.debug("Data structure optimizations applied: %s", ', '.join(optimizations_applied))
+                self.logger.debug("Data structure optimizations applied: %s", ", ".join(optimizations_applied))
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error during data structure optimization: %s", e)
@@ -318,17 +318,17 @@ class MemoryOptimizer:
 
         try:
             # Clear analysis result caches that may be large
-            if hasattr(self.app, 'analysis_cache'):
-                old_size = len(getattr(self.app.analysis_cache, 'cache', {}))
+            if hasattr(self.app, "analysis_cache"):
+                old_size = len(getattr(self.app.analysis_cache, "cache", {}))
                 if old_size > 100:  # If cache has more than 100 entries
                     # Keep only the 50 most recent entries
-                    if hasattr(self.app.analysis_cache, 'clear_old_entries'):
+                    if hasattr(self.app.analysis_cache, "clear_old_entries"):
                         self.app.analysis_cache.clear_old_entries(50)
                         optimizations.append(f"analysis_cache_trimmed({old_size}->50)")
 
             # Optimize binary data buffers
-            if hasattr(self.app, 'binary_data_cache'):
-                cache = getattr(self.app, 'binary_data_cache', {})
+            if hasattr(self.app, "binary_data_cache"):
+                cache = getattr(self.app, "binary_data_cache", {})
                 if len(cache) > 10:
                     # Clear old binary data to free memory
                     keys_to_remove = list(cache.keys())[:-5]  # Keep only last 5
@@ -337,18 +337,18 @@ class MemoryOptimizer:
                     optimizations.append(f"binary_cache_cleared({len(keys_to_remove)})")
 
             # Optimize UI element caches
-            if hasattr(self.app, 'hex_viewer_cache'):
-                hex_cache = getattr(self.app, 'hex_viewer_cache', {})
+            if hasattr(self.app, "hex_viewer_cache"):
+                hex_cache = getattr(self.app, "hex_viewer_cache", {})
                 if len(hex_cache) > 20:
                     # Clear old hex view data
                     hex_cache.clear()
                     optimizations.append("hex_viewer_cache_cleared")
 
             # Clear temporary analysis results
-            for attr_name in ['temp_analysis_results', 'temp_scan_data', 'temp_network_data']:
+            for attr_name in ["temp_analysis_results", "temp_scan_data", "temp_network_data"]:
                 if hasattr(self.app, attr_name):
                     temp_data = getattr(self.app, attr_name, [])
-                    if hasattr(temp_data, 'clear'):
+                    if hasattr(temp_data, "clear"):
                         temp_data.clear()
                         optimizations.append(f"{attr_name}_cleared")
                     elif isinstance(temp_data, list) and len(temp_data) > 0:
@@ -387,7 +387,7 @@ class MemoryOptimizer:
             for lst in large_lists[:10]:  # Limit to first 10 to avoid performance issues
                 try:
                     # Only convert if it's not being actively modified
-                    if not any(hasattr(lst, attr) for attr in ['append', 'extend', 'insert']):
+                    if not any(hasattr(lst, attr) for attr in ["append", "extend", "insert"]):
                         continue
                     # This is a heuristic - in practice you'd need more sophisticated detection
                     converted_lists += 1
@@ -404,7 +404,7 @@ class MemoryOptimizer:
                 try:
                     if isinstance(obj, (list, dict, set)) and len(obj) == 0:
                         # Only clear if it's safe to do so
-                        if hasattr(obj, 'clear'):
+                        if hasattr(obj, "clear"):
                             empty_cleared += 1
                 except (TypeError, AttributeError) as e:
                     logger.error("Error in memory_optimizer: %s", e)
@@ -454,12 +454,12 @@ class MemoryOptimizer:
         try:
             # Clear import caches if they exist
             import sys
-            if hasattr(sys, 'modules'):
+            if hasattr(sys, "modules"):
                 # Don't actually clear sys.modules as it would break imports
                 # But we can clean up __pycache__ references
                 modules_with_cache = []
                 for module_name, module in sys.modules.items():
-                    if module and hasattr(module, '__pycache__'):
+                    if module and hasattr(module, "__pycache__"):
                         modules_with_cache.append(module_name)
 
                 if modules_with_cache:
@@ -472,11 +472,11 @@ class MemoryOptimizer:
             for obj in all_objects[:500]:  # Limit for performance
                 try:
                     # Look for objects with cache_clear method (from functools.lru_cache)
-                    if hasattr(obj, 'cache_clear') and callable(obj.cache_clear):
+                    if hasattr(obj, "cache_clear") and callable(obj.cache_clear):
                         # Check if it has cache_info to confirm it's an LRU cache
-                        if hasattr(obj, 'cache_info'):
+                        if hasattr(obj, "cache_info"):
                             cache_info = obj.cache_info()
-                            if hasattr(cache_info, 'currsize') and cache_info.currsize > 10:
+                            if hasattr(cache_info, "currsize") and cache_info.currsize > 10:
                                 obj.cache_clear()
                                 cache_clears += 1
                 except (AttributeError, TypeError, ValueError) as e:
@@ -586,7 +586,7 @@ class MemoryOptimizer:
             log_level = "warning" if critical_issues else "info"
             log_message = f"[Memory Leak Detection] {detailed_report}"
 
-            if self.app and hasattr(self.app, 'update_output'):
+            if self.app and hasattr(self.app, "update_output"):
                 try:
                     from ...utils.ui_utils import log_message as ui_log
                     self.app.update_output.emit(ui_log(log_message))
@@ -597,11 +597,11 @@ class MemoryOptimizer:
 
             # Store leak detection results for trending
             self._leak_history.append({
-                'timestamp': time.time(),
-                'status': status,
-                'issues': len(critical_issues),
-                'memory_mb': current_memory,
-                'objects': gc_after
+                "timestamp": time.time(),
+                "status": status,
+                "issues": len(critical_issues),
+                "memory_mb": current_memory,
+                "objects": gc_after
             })
 
             if len(self._leak_history) > 20:
@@ -619,7 +619,7 @@ class MemoryOptimizer:
             import sys
             from collections import defaultdict
 
-            object_sizes = defaultdict(lambda: {'count': 0, 'total_size': 0})
+            object_sizes = defaultdict(lambda: {"count": 0, "total_size": 0})
 
             # Sample objects to avoid performance issues
             all_objects = gc.get_objects()
@@ -631,8 +631,8 @@ class MemoryOptimizer:
                     obj_type = type(obj).__name__
                     obj_size = sys.getsizeof(obj)
 
-                    object_sizes[obj_type]['count'] += 1
-                    object_sizes[obj_type]['total_size'] += obj_size
+                    object_sizes[obj_type]["count"] += 1
+                    object_sizes[obj_type]["total_size"] += obj_size
                 except (TypeError, OSError) as e:
                     self.logger.error("Error in memory_optimizer: %s", e)
                     continue
@@ -640,9 +640,9 @@ class MemoryOptimizer:
             # Find objects using significant memory
             large_objects = []
             for obj_type, data in object_sizes.items():
-                size_mb = data['total_size'] / (1024 * 1024)
+                size_mb = data["total_size"] / (1024 * 1024)
                 if size_mb > 1.0:  # Objects using more than 1MB
-                    large_objects.append((obj_type, data['count'], size_mb))
+                    large_objects.append((obj_type, data["count"], size_mb))
 
             # Sort by total size
             large_objects.sort(key=lambda x: x[2], reverse=True)
@@ -692,29 +692,29 @@ class MemoryOptimizer:
 
         try:
             # Check for accumulating analysis results
-            if hasattr(self.app, 'analyze_results'):
-                results_size = len(getattr(self.app, 'analyze_results', []))
+            if hasattr(self.app, "analyze_results"):
+                results_size = len(getattr(self.app, "analyze_results", []))
                 if results_size > 1000:
                     leaks.append(f"Large analysis results: {results_size} entries")
 
             # Check for cached binary data
-            cache_attrs = ['binary_cache', 'analysis_cache', 'hex_viewer_cache']
+            cache_attrs = ["binary_cache", "analysis_cache", "hex_viewer_cache"]
             for attr in cache_attrs:
                 if hasattr(self.app, attr):
                     cache = getattr(self.app, attr, {})
-                    if hasattr(cache, '__len__') and len(cache) > 100:
+                    if hasattr(cache, "__len__") and len(cache) > 100:
                         leaks.append(f"Large {attr}: {len(cache)} entries")
 
             # Check for temporary data accumulation
-            temp_attrs = ['temp_analysis_results', 'temp_scan_data', 'temp_network_data']
+            temp_attrs = ["temp_analysis_results", "temp_scan_data", "temp_network_data"]
             for attr in temp_attrs:
                 if hasattr(self.app, attr):
                     temp_data = getattr(self.app, attr, [])
-                    if hasattr(temp_data, '__len__') and len(temp_data) > 500:
+                    if hasattr(temp_data, "__len__") and len(temp_data) > 500:
                         leaks.append(f"Accumulating {attr}: {len(temp_data)} items")
 
             # Check for UI widget leaks
-            if hasattr(self.app, 'findChildren'):
+            if hasattr(self.app, "findChildren"):
                 from PyQt6.QtWidgets import QWidget
                 widgets = self.app.findChildren(QWidget)
                 if len(widgets) > 1000:
@@ -810,7 +810,7 @@ class MemoryOptimizer:
                 "system": {
                     "psutil_available": PSUTIL_AVAILABLE,
                     "gc_enabled": gc.isenabled(),
-                    "gc_thresholds": gc.get_threshold() if hasattr(gc, 'get_threshold') else None
+                    "gc_thresholds": gc.get_threshold() if hasattr(gc, "get_threshold") else None
                 }
             }
 
@@ -914,4 +914,4 @@ def create_memory_optimizer(app_instance: Optional[Any] = None, **kwargs) -> Mem
     return optimizer
 
 
-__all__ = ['MemoryOptimizer', 'create_memory_optimizer']
+__all__ = ["MemoryOptimizer", "create_memory_optimizer"]

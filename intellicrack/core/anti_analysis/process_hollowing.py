@@ -52,65 +52,65 @@ except ImportError as e:
 class STARTUPINFO(ctypes.Structure):
     """Windows STARTUPINFO structure."""
     _fields_ = [
-        ('cb', ctypes.wintypes.DWORD),
-        ('lpReserved', ctypes.wintypes.LPWSTR),
-        ('lpDesktop', ctypes.wintypes.LPWSTR),
-        ('lpTitle', ctypes.wintypes.LPWSTR),
-        ('dwX', ctypes.wintypes.DWORD),
-        ('dwY', ctypes.wintypes.DWORD),
-        ('dwXSize', ctypes.wintypes.DWORD),
-        ('dwYSize', ctypes.wintypes.DWORD),
-        ('dwXCountChars', ctypes.wintypes.DWORD),
-        ('dwYCountChars', ctypes.wintypes.DWORD),
-        ('dwFillAttribute', ctypes.wintypes.DWORD),
-        ('dwFlags', ctypes.wintypes.DWORD),
-        ('wShowWindow', ctypes.wintypes.WORD),
-        ('cbReserved2', ctypes.wintypes.WORD),
-        ('lpReserved2', ctypes.wintypes.LPVOID),
-        ('hStdInput', ctypes.wintypes.HANDLE),
-        ('hStdOutput', ctypes.wintypes.HANDLE),
-        ('hStdError', ctypes.wintypes.HANDLE)
+        ("cb", ctypes.wintypes.DWORD),
+        ("lpReserved", ctypes.wintypes.LPWSTR),
+        ("lpDesktop", ctypes.wintypes.LPWSTR),
+        ("lpTitle", ctypes.wintypes.LPWSTR),
+        ("dwX", ctypes.wintypes.DWORD),
+        ("dwY", ctypes.wintypes.DWORD),
+        ("dwXSize", ctypes.wintypes.DWORD),
+        ("dwYSize", ctypes.wintypes.DWORD),
+        ("dwXCountChars", ctypes.wintypes.DWORD),
+        ("dwYCountChars", ctypes.wintypes.DWORD),
+        ("dwFillAttribute", ctypes.wintypes.DWORD),
+        ("dwFlags", ctypes.wintypes.DWORD),
+        ("wShowWindow", ctypes.wintypes.WORD),
+        ("cbReserved2", ctypes.wintypes.WORD),
+        ("lpReserved2", ctypes.wintypes.LPVOID),
+        ("hStdInput", ctypes.wintypes.HANDLE),
+        ("hStdOutput", ctypes.wintypes.HANDLE),
+        ("hStdError", ctypes.wintypes.HANDLE)
     ]
 
 
 class PROCESS_INFORMATION(ctypes.Structure):
     """Windows PROCESS_INFORMATION structure."""
     _fields_ = [
-        ('hProcess', ctypes.wintypes.HANDLE),
-        ('hThread', ctypes.wintypes.HANDLE),
-        ('dwProcessId', ctypes.wintypes.DWORD),
-        ('dwThreadId', ctypes.wintypes.DWORD)
+        ("hProcess", ctypes.wintypes.HANDLE),
+        ("hThread", ctypes.wintypes.HANDLE),
+        ("dwProcessId", ctypes.wintypes.DWORD),
+        ("dwThreadId", ctypes.wintypes.DWORD)
     ]
 
 
 class CONTEXT(ctypes.Structure):
     """Windows CONTEXT structure for x86."""
     _fields_ = [
-        ('ContextFlags', ctypes.c_ulong),
-        ('Dr0', ctypes.c_ulong),
-        ('Dr1', ctypes.c_ulong),
-        ('Dr2', ctypes.c_ulong),
-        ('Dr3', ctypes.c_ulong),
-        ('Dr6', ctypes.c_ulong),
-        ('Dr7', ctypes.c_ulong),
-        ('FloatSave', ctypes.c_byte * 112),
-        ('SegGs', ctypes.c_ulong),
-        ('SegFs', ctypes.c_ulong),
-        ('SegEs', ctypes.c_ulong),
-        ('SegDs', ctypes.c_ulong),
-        ('Edi', ctypes.c_ulong),
-        ('Esi', ctypes.c_ulong),
-        ('Ebx', ctypes.c_ulong),
-        ('Edx', ctypes.c_ulong),
-        ('Ecx', ctypes.c_ulong),
-        ('Eax', ctypes.c_ulong),
-        ('Ebp', ctypes.c_ulong),
-        ('Eip', ctypes.c_ulong),
-        ('SegCs', ctypes.c_ulong),
-        ('EFlags', ctypes.c_ulong),
-        ('Esp', ctypes.c_ulong),
-        ('SegSs', ctypes.c_ulong),
-        ('ExtendedRegisters', ctypes.c_byte * 512)
+        ("ContextFlags", ctypes.c_ulong),
+        ("Dr0", ctypes.c_ulong),
+        ("Dr1", ctypes.c_ulong),
+        ("Dr2", ctypes.c_ulong),
+        ("Dr3", ctypes.c_ulong),
+        ("Dr6", ctypes.c_ulong),
+        ("Dr7", ctypes.c_ulong),
+        ("FloatSave", ctypes.c_byte * 112),
+        ("SegGs", ctypes.c_ulong),
+        ("SegFs", ctypes.c_ulong),
+        ("SegEs", ctypes.c_ulong),
+        ("SegDs", ctypes.c_ulong),
+        ("Edi", ctypes.c_ulong),
+        ("Esi", ctypes.c_ulong),
+        ("Ebx", ctypes.c_ulong),
+        ("Edx", ctypes.c_ulong),
+        ("Ecx", ctypes.c_ulong),
+        ("Eax", ctypes.c_ulong),
+        ("Ebp", ctypes.c_ulong),
+        ("Eip", ctypes.c_ulong),
+        ("SegCs", ctypes.c_ulong),
+        ("EFlags", ctypes.c_ulong),
+        ("Esp", ctypes.c_ulong),
+        ("SegSs", ctypes.c_ulong),
+        ("ExtendedRegisters", ctypes.c_byte * 512)
     ]
 
 
@@ -127,30 +127,30 @@ class ProcessHollowing:
         """Initialize the process hollowing engine with supported target processes."""
         self.logger = logging.getLogger("IntellicrackLogger.ProcessHollowing")
         self.supported_targets = {
-            'svchost.exe': {
-                'path': 'C:\\\\Windows\\\\System32\\\\svchost.exe',
-                'args': '-k netsvcs',
-                'suitable_for': ['service', 'network']
+            "svchost.exe": {
+                "path": "C:\\\\Windows\\\\System32\\\\svchost.exe",
+                "args": "-k netsvcs",
+                "suitable_for": ["service", "network"]
             },
-            'explorer.exe': {
-                'path': 'C:\\\\Windows\\\\explorer.exe',
-                'args': '',
-                'suitable_for': ['gui', 'user_interaction']
+            "explorer.exe": {
+                "path": "C:\\\\Windows\\\\explorer.exe",
+                "args": "",
+                "suitable_for": ["gui", "user_interaction"]
             },
-            'notepad.exe': {
-                'path': 'C:\\\\Windows\\\\System32\\\\notepad.exe',
-                'args': '',
-                'suitable_for': ['simple', 'test']
+            "notepad.exe": {
+                "path": "C:\\\\Windows\\\\System32\\\\notepad.exe",
+                "args": "",
+                "suitable_for": ["simple", "test"]
             },
-            'calc.exe': {
-                'path': 'C:\\\\Windows\\\\System32\\\\calc.exe',
-                'args': '',
-                'suitable_for': ['simple', 'test']
+            "calc.exe": {
+                "path": "C:\\\\Windows\\\\System32\\\\calc.exe",
+                "args": "",
+                "suitable_for": ["simple", "test"]
             },
-            'dllhost.exe': {
-                'path': 'C:\\\\Windows\\\\System32\\\\dllhost.exe',
-                'args': '/Processid:{E10F6C3A-F1AE-4ADC-AA9D-2FE65525666E}',
-                'suitable_for': ['com', 'background']
+            "dllhost.exe": {
+                "path": "C:\\\\Windows\\\\System32\\\\dllhost.exe",
+                "args": "/Processid:{E10F6C3A-F1AE-4ADC-AA9D-2FE65525666E}",
+                "suitable_for": ["com", "background"]
             }
         }
 
@@ -170,11 +170,11 @@ class ProcessHollowing:
             Success status and details
         """
         result = {
-            'success': False,
-            'pid': 0,
-            'base_address': 0,
-            'entry_point': 0,
-            'error': None
+            "success": False,
+            "pid": 0,
+            "base_address": 0,
+            "entry_point": 0,
+            "error": None
         }
 
         try:
@@ -182,7 +182,7 @@ class ProcessHollowing:
 
             # Validate payload
             if not self._is_valid_pe(payload):
-                result['error'] = "Invalid PE payload"
+                result["error"] = "Invalid PE payload"
                 return False, result
 
             # Get target process info
@@ -192,31 +192,31 @@ class ProcessHollowing:
                 target_path = target_process
                 target_args = ""
             else:
-                target_path = target_info['path']
-                target_args = target_info['args']
+                target_path = target_info["path"]
+                target_args = target_info["args"]
 
             # Create suspended process
             process_info = self._create_suspended_process(target_path, target_args)
             if not process_info:
-                result['error'] = "Failed to create suspended process"
+                result["error"] = "Failed to create suspended process"
                 return False, result
 
-            result['pid'] = process_info['pid']
+            result["pid"] = process_info["pid"]
 
             # Hollow the process
             success = self._perform_hollowing(process_info, payload, payload_entry_point)
 
             if success:
-                result['success'] = True
-                result['base_address'] = process_info.get('base_address', 0)
-                result['entry_point'] = process_info.get('entry_point', 0)
+                result["success"] = True
+                result["base_address"] = process_info.get("base_address", 0)
+                result["entry_point"] = process_info.get("entry_point", 0)
 
                 # Resume process
                 self._resume_process(process_info)
 
                 self.logger.info(f"Process hollowing successful: PID {result['pid']}")
             else:
-                result['error'] = "Hollowing operation failed"
+                result["error"] = "Hollowing operation failed"
                 # Terminate the suspended process
                 self._terminate_process(process_info)
 
@@ -224,7 +224,7 @@ class ProcessHollowing:
 
         except Exception as e:
             self.logger.error(f"Process hollowing failed: {e}")
-            result['error'] = str(e)
+            result["error"] = str(e)
             return False, result
 
     def _is_valid_pe(self, data: bytes) -> bool:
@@ -233,16 +233,16 @@ class ProcessHollowing:
             return False
 
         # Check DOS header
-        if data[:2] != b'MZ':
+        if data[:2] != b"MZ":
             return False
 
         # Get PE header offset
-        pe_offset = struct.unpack('<I', data[0x3C:0x40])[0]
+        pe_offset = struct.unpack("<I", data[0x3C:0x40])[0]
         if pe_offset + 4 > len(data):
             return False
 
         # Check PE signature
-        if data[pe_offset:pe_offset+4] != b'PE\x00\x00':
+        if data[pe_offset:pe_offset+4] != b"PE\x00\x00":
             return False
 
         return True
@@ -251,7 +251,7 @@ class ProcessHollowing:
         """Create a suspended process."""
         try:
             import platform
-            if platform.system() != 'Windows':
+            if platform.system() != "Windows":
                 return None
 
             kernel32 = ctypes.windll.kernel32
@@ -264,7 +264,7 @@ class ProcessHollowing:
             # Create suspended process
             command_line = f'"{path}"'
             if args:
-                command_line += f' {args}'
+                command_line += f" {args}"
 
             success = kernel32.CreateProcessW(
                 None,  # lpApplicationName
@@ -281,10 +281,10 @@ class ProcessHollowing:
 
             if success:
                 return {
-                    'process_handle': pi.hProcess,
-                    'thread_handle': pi.hThread,
-                    'pid': pi.dwProcessId,
-                    'tid': pi.dwThreadId
+                    "process_handle": pi.hProcess,
+                    "thread_handle": pi.hThread,
+                    "pid": pi.dwProcessId,
+                    "tid": pi.dwThreadId
                 }
 
         except Exception as e:
@@ -299,7 +299,7 @@ class ProcessHollowing:
         """Perform the actual hollowing operation."""
         try:
             import platform
-            if platform.system() != 'Windows':
+            if platform.system() != "Windows":
                 return False
 
             kernel32 = ctypes.windll.kernel32
@@ -309,8 +309,8 @@ class ProcessHollowing:
             _ = ntdll.NtUnmapViewOfSection  # Reference to avoid unused variable warning
 
             # Get process handle
-            h_process = process_info['process_handle']
-            h_thread = process_info['thread_handle']
+            h_process = process_info["process_handle"]
+            h_thread = process_info["thread_handle"]
 
             # Get thread context to find image base
             ctx = CONTEXT()
@@ -327,13 +327,13 @@ class ProcessHollowing:
             # NtUnmapViewOfSection
 
             # Allocate memory for new image
-            pe_header_offset = struct.unpack('<I', payload[0x3C:0x40])[0]
+            pe_header_offset = struct.unpack("<I", payload[0x3C:0x40])[0]
 
             # Get image size from PE header using the offset
             try:
                 # Read SizeOfImage from PE header (at offset pe_header_offset + 0x50)
                 image_size_bytes = payload[pe_header_offset + 0x50:pe_header_offset + 0x54]
-                image_size = struct.unpack('<I', image_size_bytes)[0] if len(image_size_bytes) == 4 else 0x10000
+                image_size = struct.unpack("<I", image_size_bytes)[0] if len(image_size_bytes) == 4 else 0x10000
             except:
                 image_size = 0x10000  # Default size
 
@@ -372,8 +372,8 @@ class ProcessHollowing:
                 self.logger.error("Failed to set thread context")
                 return False
 
-            process_info['base_address'] = new_image_base
-            process_info['entry_point'] = new_entry_point
+            process_info["base_address"] = new_image_base
+            process_info["entry_point"] = new_entry_point
 
             return True
 
@@ -385,11 +385,11 @@ class ProcessHollowing:
         """Resume the hollowed process."""
         try:
             import platform
-            if platform.system() != 'Windows':
+            if platform.system() != "Windows":
                 return False
 
             kernel32 = ctypes.windll.kernel32
-            result = kernel32.ResumeThread(process_info['thread_handle'])
+            result = kernel32.ResumeThread(process_info["thread_handle"])
 
             return result != -1
 
@@ -401,11 +401,11 @@ class ProcessHollowing:
         """Terminate a process."""
         try:
             import platform
-            if platform.system() != 'Windows':
+            if platform.system() != "Windows":
                 return False
 
             kernel32 = ctypes.windll.kernel32
-            return bool(kernel32.TerminateProcess(process_info['process_handle'], 1))
+            return bool(kernel32.TerminateProcess(process_info["process_handle"], 1))
 
         except Exception as e:
             self.logger.error(f"Failed to terminate process: {e}")

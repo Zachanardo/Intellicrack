@@ -144,21 +144,21 @@ def create_binary_selection_header(parent_layout: Any,
     if not HAS_PYQT:
         return {}
 
-    widgets = {'extra_buttons': {}}
+    widgets = {"extra_buttons": {}}
 
     header_group = QGroupBox("Target Binary")
     header_layout = QHBoxLayout(header_group)
-    widgets['group'] = header_group
+    widgets["group"] = header_group
 
     if show_label:
         header_layout.addWidget(QLabel("Binary Path:"))
 
     path_edit = QLineEdit(binary_path)
     path_edit.setPlaceholderText("Select target binary file...")
-    widgets['path_edit'] = path_edit
+    widgets["path_edit"] = path_edit
 
     browse_btn = QPushButton("Browse")
-    widgets['browse_btn'] = browse_btn
+    widgets["browse_btn"] = browse_btn
 
     header_layout.addWidget(path_edit)
     header_layout.addWidget(browse_btn)
@@ -167,7 +167,7 @@ def create_binary_selection_header(parent_layout: Any,
     if extra_buttons:
         from .ui_button_common import add_extra_buttons
         buttons = add_extra_buttons(header_layout, extra_buttons, widgets)
-        widgets['extra_buttons'].update(buttons)
+        widgets["extra_buttons"].update(buttons)
 
     parent_layout.addWidget(header_group)
     return widgets

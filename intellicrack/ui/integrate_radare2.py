@@ -55,7 +55,7 @@ def add_radare2_to_intellicrack_app(app_instance) -> bool:
             logger.info("Radare2 integration completed successfully")
 
             # Add success notification to app if possible
-            if hasattr(app_instance, 'update_output'):
+            if hasattr(app_instance, "update_output"):
                 app_instance.update_output.emit(
                     "[Radare2 Integration] Successfully integrated advanced radare2 analysis capabilities!"
                 )
@@ -69,7 +69,7 @@ def add_radare2_to_intellicrack_app(app_instance) -> bool:
             logger.error("Radare2 integration failed")
 
             # Add failure notification
-            if hasattr(app_instance, 'update_output'):
+            if hasattr(app_instance, "update_output"):
                 app_instance.update_output.emit(
                     "[Radare2 Integration] Failed to integrate radare2 functionality. Check logs for details."
                 )
@@ -80,7 +80,7 @@ def add_radare2_to_intellicrack_app(app_instance) -> bool:
         logger.error(f"Integration failed with exception: {e}")
 
         # Add error notification
-        if hasattr(app_instance, 'update_output'):
+        if hasattr(app_instance, "update_output"):
             app_instance.update_output.emit(
                 f"[Radare2 Integration] Integration failed: {e}"
             )
@@ -109,23 +109,23 @@ def integrate_with_main_app():
         if app:
             # Look for IntellicrackApp in top-level widgets
             for widget in app.topLevelWidgets():
-                if hasattr(widget, '__class__') and 'IntellicrackApp' in str(type(widget)):
+                if hasattr(widget, "__class__") and "IntellicrackApp" in str(type(widget)):
                     main_app = widget
                     break
 
         # Method 2: Check global variables (if app stores itself globally)
         if not main_app:
             import __main__
-            if hasattr(__main__, 'app') and hasattr(__main__.app, '__class__'):
-                if 'IntellicrackApp' in str(type(__main__.app)):
+            if hasattr(__main__, "app") and hasattr(__main__.app, "__class__"):
+                if "IntellicrackApp" in str(type(__main__.app)):
                     main_app = __main__.app
 
         # Method 3: Check sys.modules for app instance
         if not main_app:
             for _, module in sys.modules.items():
-                if hasattr(module, 'app'):
+                if hasattr(module, "app"):
                     app_candidate = module.app
-                    if hasattr(app_candidate, '__class__') and 'IntellicrackApp' in str(type(app_candidate)):
+                    if hasattr(app_candidate, "__class__") and "IntellicrackApp" in str(type(app_candidate)):
                         main_app = app_candidate
                         break
 
@@ -185,11 +185,11 @@ def show_integration_status(app_instance=None) -> dict:
 
         # Add app-specific status if provided
         if app_instance:
-            status['app_type'] = str(type(app_instance))
-            status['has_tab_widget'] = hasattr(app_instance, 'tab_widget')
-            status['has_menu_bar'] = hasattr(app_instance, 'menuBar')
-            status['has_r2_ui_manager'] = hasattr(app_instance, 'r2_ui_manager')
-            status['has_r2_widget'] = hasattr(app_instance, 'r2_widget')
+            status["app_type"] = str(type(app_instance))
+            status["has_tab_widget"] = hasattr(app_instance, "tab_widget")
+            status["has_menu_bar"] = hasattr(app_instance, "menuBar")
+            status["has_r2_ui_manager"] = hasattr(app_instance, "r2_ui_manager")
+            status["has_r2_widget"] = hasattr(app_instance, "r2_widget")
 
         return status
 
@@ -261,11 +261,11 @@ def example_standalone_app():
 
 
 __all__ = [
-    'add_radare2_to_intellicrack_app',
-    'integrate_with_main_app',
-    'create_standalone_radare2_app',
-    'show_integration_status',
-    'example_manual_integration',
-    'example_automatic_integration',
-    'example_standalone_app'
+    "add_radare2_to_intellicrack_app",
+    "integrate_with_main_app",
+    "create_standalone_radare2_app",
+    "show_integration_status",
+    "example_manual_integration",
+    "example_automatic_integration",
+    "example_standalone_app"
 ]

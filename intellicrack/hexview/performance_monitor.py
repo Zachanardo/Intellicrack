@@ -44,7 +44,7 @@ from ..ui.common_imports import (
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['PerformanceMonitor', 'PerformanceWidget']
+__all__ = ["PerformanceMonitor", "PerformanceWidget"]
 
 
 class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
@@ -329,7 +329,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
                 return
 
             # Store in history
-            stats['timestamp'] = time.time()
+            stats["timestamp"] = time.time()
             self.stats_history.append(stats)
             if len(self.stats_history) > self.max_history:
                 self.stats_history = self.stats_history[-self.max_history:]
@@ -353,21 +353,21 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
         """Update the overview tab."""
         # File information
         self.file_size_label.setText(f"{stats.get('file_size_mb', 0):.1f} MB")
-        self.memory_strategy_label.setText(stats.get('memory_strategy', 'N/A'))
-        self.loading_strategy_label.setText(stats.get('loading_strategy', 'N/A'))
+        self.memory_strategy_label.setText(stats.get("memory_strategy", "N/A"))
+        self.loading_strategy_label.setText(stats.get("loading_strategy", "N/A"))
 
         # Performance metrics
         self.sequential_ratio_label.setText(f"{stats.get('sequential_ratio', 0):.1%}")
 
         # Status
-        if stats.get('file_size_mb', 0) > 50:
+        if stats.get("file_size_mb", 0) > 50:
             self.optimization_status.setText("Large file optimization active")
             self.optimization_status.setStyleSheet("color: green; font-weight: bold;")
         else:
             self.optimization_status.setText("Standard file handling")
             self.optimization_status.setStyleSheet("color: blue;")
 
-        loader_active = stats.get('background_loader_active', False)
+        loader_active = stats.get("background_loader_active", False)
         self.background_loader_status.setText(
             f"Background loader: {'Active' if loader_active else 'Inactive'}"
         )
@@ -377,10 +377,10 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
 
     def update_memory_tab(self, stats: Dict[str, Any]):
         """Update the memory tab."""
-        cache_stats = stats.get('cache_stats', {})
+        cache_stats = stats.get("cache_stats", {})
 
-        memory_used = cache_stats.get('total_memory_mb', 0)
-        memory_limit = cache_stats.get('max_memory_mb', 0)
+        memory_used = cache_stats.get("total_memory_mb", 0)
+        memory_limit = cache_stats.get("max_memory_mb", 0)
 
         self.memory_used_label.setText(f"{memory_used:.1f} MB")
         self.memory_limit_label.setText(f"{memory_limit:.1f} MB")
@@ -402,11 +402,11 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
 
     def update_cache_tab(self, stats: Dict[str, Any]):
         """Update the cache tab."""
-        cache_stats = stats.get('cache_stats', {})
+        cache_stats = stats.get("cache_stats", {})
 
-        regions = cache_stats.get('regions', 0)
-        memory_mb = cache_stats.get('total_memory_mb', 0)
-        utilization = cache_stats.get('utilization', 0) * 100
+        regions = cache_stats.get("regions", 0)
+        memory_mb = cache_stats.get("total_memory_mb", 0)
+        utilization = cache_stats.get("utilization", 0) * 100
 
         self.cache_regions_label.setText(str(regions))
         self.cache_memory_label.setText(f"{memory_mb:.1f} MB")
@@ -417,8 +417,8 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
         """Update the access patterns tab."""
         # This would require more detailed access pattern tracking
         # For now, just show basic statistics
-        access_patterns = stats.get('access_patterns', 0)
-        sequential_ratio = stats.get('sequential_ratio', 0)
+        access_patterns = stats.get("access_patterns", 0)
+        sequential_ratio = stats.get("sequential_ratio", 0)
 
         total_patterns = max(1, access_patterns)
         sequential_count = int(total_patterns * sequential_ratio)
@@ -437,7 +437,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
             if not stats:
                 return
 
-            sequential_ratio = stats.get('sequential_ratio', 0)
+            sequential_ratio = stats.get("sequential_ratio", 0)
 
             if sequential_ratio > 0.7:
                 # Mostly sequential access
@@ -493,13 +493,13 @@ class PerformanceMonitor:
         if not stats:
             return {}
 
-        cache_stats = stats.get('cache_stats', {})
+        cache_stats = stats.get("cache_stats", {})
 
         return {
-            'file_size_mb': stats.get('file_size_mb', 0),
-            'memory_strategy': stats.get('memory_strategy', 'unknown'),
-            'cache_memory_mb': cache_stats.get('total_memory_mb', 0),
-            'cache_utilization': cache_stats.get('utilization', 0),
-            'sequential_ratio': stats.get('sequential_ratio', 0),
-            'optimization_active': stats.get('file_size_mb', 0) > 50
+            "file_size_mb": stats.get("file_size_mb", 0),
+            "memory_strategy": stats.get("memory_strategy", "unknown"),
+            "cache_memory_mb": cache_stats.get("total_memory_mb", 0),
+            "cache_utilization": cache_stats.get("utilization", 0),
+            "sequential_ratio": stats.get("sequential_ratio", 0),
+            "optimization_active": stats.get("file_size_mb", 0) > 50
         }

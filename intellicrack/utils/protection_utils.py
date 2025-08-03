@@ -273,72 +273,72 @@ def detect_protection_mechanisms(binary_path: str) -> Dict[str, Any]:
         Dictionary with detected protection information
     """
     protections = {
-        'packer': None,
-        'obfuscation': False,
-        'anti_debug': False,
-        'vm_detection': False,
-        'hardware_fingerprinting': False,
-        'time_checks': False,
-        'network_validation': False,
-        'details': []
+        "packer": None,
+        "obfuscation": False,
+        "anti_debug": False,
+        "vm_detection": False,
+        "hardware_fingerprinting": False,
+        "time_checks": False,
+        "network_validation": False,
+        "details": []
     }
 
     try:
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             data = f.read(8192)  # Read first 8KB for quick analysis
 
         # Simple heuristic checks
-        if b'UPX' in data:
-            protections['packer'] = 'UPX'
-            protections['details'].append('UPX packer detected')
+        if b"UPX" in data:
+            protections["packer"] = "UPX"
+            protections["details"].append("UPX packer detected")
 
-        if b'VMProtect' in data or b'vmprotect' in data.lower():
-            protections['packer'] = 'VMProtect'
-            protections['details'].append('VMProtect detected')
+        if b"VMProtect" in data or b"vmprotect" in data.lower():
+            protections["packer"] = "VMProtect"
+            protections["details"].append("VMProtect detected")
 
-        if b'Themida' in data or b'themida' in data.lower():
-            protections['packer'] = 'Themida'
-            protections['details'].append('Themida protection detected')
+        if b"Themida" in data or b"themida" in data.lower():
+            protections["packer"] = "Themida"
+            protections["details"].append("Themida protection detected")
 
         # Anti-debug indicators
-        debug_strings = [b'IsDebuggerPresent', b'CheckRemoteDebuggerPresent', b'NtQueryInformationProcess']
+        debug_strings = [b"IsDebuggerPresent", b"CheckRemoteDebuggerPresent", b"NtQueryInformationProcess"]
         for debug_str in debug_strings:
             if debug_str in data:
-                protections['anti_debug'] = True
-                protections['details'].append(f'Anti-debug API detected: {debug_str.decode()}')
+                protections["anti_debug"] = True
+                protections["details"].append(f"Anti-debug API detected: {debug_str.decode()}")
                 break
 
         # VM detection indicators
-        vm_strings = [b'VMware', b'VirtualBox', b'QEMU', b'Xen']
+        vm_strings = [b"VMware", b"VirtualBox", b"QEMU", b"Xen"]
         for vm_str in vm_strings:
             if vm_str in data:
-                protections['vm_detection'] = True
-                protections['details'].append(f'VM detection string found: {vm_str.decode()}')
+                protections["vm_detection"] = True
+                protections["details"].append(f"VM detection string found: {vm_str.decode()}")
 
         # Hardware fingerprinting
-        hw_strings = [b'GetVolumeInformation', b'GetSystemInfo', b'GetComputerName']
+        hw_strings = [b"GetVolumeInformation", b"GetSystemInfo", b"GetComputerName"]
         for hw_str in hw_strings:
             if hw_str in data:
-                protections['hardware_fingerprinting'] = True
-                protections['details'].append(f'Hardware fingerprinting API: {hw_str.decode()}')
+                protections["hardware_fingerprinting"] = True
+                protections["details"].append(f"Hardware fingerprinting API: {hw_str.decode()}")
 
         # Time-based checks
-        time_strings = [b'GetTickCount', b'GetSystemTime', b'QueryPerformanceCounter']
+        time_strings = [b"GetTickCount", b"GetSystemTime", b"QueryPerformanceCounter"]
         for time_str in time_strings:
             if time_str in data:
-                protections['time_checks'] = True
-                protections['details'].append(f'Time-based check API: {time_str.decode()}')
+                protections["time_checks"] = True
+                protections["details"].append(f"Time-based check API: {time_str.decode()}")
 
         # Network validation
-        net_strings = [b'InternetOpen', b'HttpSendRequest', b'WinHttpOpen']
+        net_strings = [b"InternetOpen", b"HttpSendRequest", b"WinHttpOpen"]
         for net_str in net_strings:
             if net_str in data:
-                protections['network_validation'] = True
-                protections['details'].append(f'Network validation API: {net_str.decode()}')
+                protections["network_validation"] = True
+                protections["details"].append(f"Network validation API: {net_str.decode()}")
 
     except Exception as e:
         logger.debug(f"Protection detection failed: {e}")
-        protections['details'].append(f'Detection error: {e}')
+        protections["details"].append(f"Detection error: {e}")
 
     return protections
 
@@ -355,43 +355,43 @@ def generate_bypass_strategy(protections: Dict[str, Any]) -> List[str]:
     """
     strategies = []
 
-    if protections.get('packer'):
-        packer = protections['packer']
+    if protections.get("packer"):
+        packer = protections["packer"]
         strategies.append(f"Unpack {packer} protection first")
 
-        if packer == 'UPX':
+        if packer == "UPX":
             strategies.append("Use 'upx -d' to decompress UPX packed binary")
-        elif packer == 'VMProtect':
+        elif packer == "VMProtect":
             strategies.append("Consider VMProtect-specific unpacking tools")
-        elif packer == 'Themida':
+        elif packer == "Themida":
             strategies.append("Use Themida unpacker or generic unpackers")
 
-    if protections.get('anti_debug'):
+    if protections.get("anti_debug"):
         strategies.append("Implement anti-debug bypass hooks")
         strategies.append("Hook IsDebuggerPresent and NtQueryInformationProcess")
         strategies.append("Consider using hardware breakpoints instead of software breakpoints")
 
-    if protections.get('vm_detection'):
+    if protections.get("vm_detection"):
         strategies.append("Use VM evasion techniques")
         strategies.append("Modify VM artifacts to appear as physical machine")
         strategies.append("Hook VM detection APIs")
 
-    if protections.get('hardware_fingerprinting'):
+    if protections.get("hardware_fingerprinting"):
         strategies.append("Implement hardware fingerprint spoofing")
         strategies.append("Hook GetVolumeInformation and GetSystemInfo")
         strategies.append("Use consistent fake hardware IDs")
 
-    if protections.get('time_checks'):
+    if protections.get("time_checks"):
         strategies.append("Implement time manipulation hooks")
         strategies.append("Hook GetTickCount and time-related APIs")
         strategies.append("Consider time acceleration techniques")
 
-    if protections.get('network_validation'):
+    if protections.get("network_validation"):
         strategies.append("Set up local license server emulation")
         strategies.append("Hook network APIs to redirect requests")
         strategies.append("Analyze network protocol for proper responses")
 
-    if not any(protections.get(key) for key in ['packer', 'anti_debug', 'vm_detection', 'hardware_fingerprinting', 'time_checks', 'network_validation']):
+    if not any(protections.get(key) for key in ["packer", "anti_debug", "vm_detection", "hardware_fingerprinting", "time_checks", "network_validation"]):
         strategies.append("No major protections detected - standard patching may be sufficient")
         strategies.append("Focus on license validation logic analysis")
 
@@ -417,11 +417,11 @@ def create_custom_hook_script(hook_config: Dict[str, Any]) -> str:
     ]
 
     # Process function hooks
-    if 'functions' in hook_config:
-        for func_config in hook_config['functions']:
-            module_name = func_config.get('module', 'kernel32.dll')
-            function_name = func_config.get('name')
-            hook_type = func_config.get('type', 'log')  # log, block, modify
+    if "functions" in hook_config:
+        for func_config in hook_config["functions"]:
+            module_name = func_config.get("module", "kernel32.dll")
+            function_name = func_config.get("name")
+            hook_type = func_config.get("type", "log")  # log, block, modify
 
             if not function_name:
                 continue
@@ -436,11 +436,11 @@ def create_custom_hook_script(hook_config: Dict[str, Any]) -> str:
                 f"            console.log('[Custom] {function_name} called');",
             ])
 
-            if hook_type == 'block':
+            if hook_type == "block":
                 script_lines.extend([
                     "            this.block = true;",
                 ])
-            elif hook_type == 'modify':
+            elif hook_type == "modify":
                 script_lines.extend([
                     "            // Custom modification logic here",
                     "            this.modify = true;",
@@ -451,14 +451,14 @@ def create_custom_hook_script(hook_config: Dict[str, Any]) -> str:
                 "        onLeave: function(retval) {",
             ])
 
-            if hook_type == 'block':
+            if hook_type == "block":
                 script_lines.extend([
                     "            if (this.block) {",
                     f"                console.log('[Custom] Blocking {function_name}');",
                     "                retval.replace(ptr(0));",
                     "            }",
                 ])
-            elif hook_type == 'modify':
+            elif hook_type == "modify":
                 script_lines.extend([
                     "            if (this.modify) {",
                     f"                console.log('[Custom] Modifying {function_name} result');",
@@ -476,11 +476,11 @@ def create_custom_hook_script(hook_config: Dict[str, Any]) -> str:
             ])
 
     # Process memory patches
-    if 'memory_patches' in hook_config:
-        for patch in hook_config['memory_patches']:
-            address = patch.get('address')
-            original = patch.get('original', '')
-            replacement = patch.get('replacement', '')
+    if "memory_patches" in hook_config:
+        for patch in hook_config["memory_patches"]:
+            address = patch.get("address")
+            original = patch.get("original", "")
+            replacement = patch.get("replacement", "")
 
             if address:
                 script_lines.extend([
@@ -528,10 +528,10 @@ def emulate_hardware_dongle(config: Dict[str, Any]) -> Dict[str, Any]:
     logger.info("Generating hardware dongle emulation configuration")
 
     # Extract configuration parameters
-    dongle_type = config.get('type', 'generic')
-    vendor_id = config.get('vendor_id', '0x0529')  # Aladdin HASP default
-    product_id = config.get('product_id', '0x0001')
-    serial_number = config.get('serial', 'EMULATED_001')
+    dongle_type = config.get("type", "generic")
+    vendor_id = config.get("vendor_id", "0x0529")  # Aladdin HASP default
+    product_id = config.get("product_id", "0x0001")
+    serial_number = config.get("serial", "EMULATED_001")
 
     emulation_result = {
         "dongle_id": serial_number,
@@ -547,16 +547,16 @@ def emulate_hardware_dongle(config: Dict[str, Any]) -> Dict[str, Any]:
     }
 
     # Configure based on dongle type
-    if dongle_type.lower() == 'hasp':
-        emulation_result['features'] = ['feature1', 'feature2', 'feature3', 'unlimited_users']
-        emulation_result['responses'] = {
-            'get_version': b'\x04\x00\x00\x00',  # Version 4
-            'get_id': serial_number.encode(),
-            'is_present': b'\x01',  # Present
-            'check_license': b'\x01\x00\x00\x00',  # Valid
-            'get_memory': b'\x00' * 112  # 112 bytes of memory
+    if dongle_type.lower() == "hasp":
+        emulation_result["features"] = ["feature1", "feature2", "feature3", "unlimited_users"]
+        emulation_result["responses"] = {
+            "get_version": b"\x04\x00\x00\x00",  # Version 4
+            "get_id": serial_number.encode(),
+            "is_present": b"\x01",  # Present
+            "check_license": b"\x01\x00\x00\x00",  # Valid
+            "get_memory": b"\x00" * 112  # 112 bytes of memory
         }
-        emulation_result['implementation']['script'] = """
+        emulation_result["implementation"]["script"] = """
 // HASP Dongle Emulation
 Interceptor.attach(Module.findExportByName(null, 'hasp_login'), {
     onLeave: function(retval) {
@@ -566,14 +566,14 @@ Interceptor.attach(Module.findExportByName(null, 'hasp_login'), {
 });
 """
 
-    elif dongle_type.lower() == 'sentinel':
-        emulation_result['features'] = ['feature_a', 'feature_b', 'pro_license']
-        emulation_result['responses'] = {
-            'slm_login': 0,  # Success
-            'slm_get_info': {'version': '7.0', 'features': 0xFFFF},
-            'slm_check_license': 0  # Valid
+    elif dongle_type.lower() == "sentinel":
+        emulation_result["features"] = ["feature_a", "feature_b", "pro_license"]
+        emulation_result["responses"] = {
+            "slm_login": 0,  # Success
+            "slm_get_info": {"version": "7.0", "features": 0xFFFF},
+            "slm_check_license": 0  # Valid
         }
-        emulation_result['implementation']['script'] = """
+        emulation_result["implementation"]["script"] = """
 // Sentinel Dongle Emulation
 Interceptor.attach(Module.findExportByName(null, 'SLM_LoginEasy'), {
     onLeave: function(retval) {
@@ -583,14 +583,14 @@ Interceptor.attach(Module.findExportByName(null, 'SLM_LoginEasy'), {
 });
 """
 
-    elif dongle_type.lower() == 'wibu':
-        emulation_result['features'] = ['codemeter', 'network_license', 'time_unlimited']
-        emulation_result['responses'] = {
-            'cm_login': 0,
-            'cm_get_license': {'valid': True, 'expiry': '2099-12-31'},
-            'cm_check': 0
+    elif dongle_type.lower() == "wibu":
+        emulation_result["features"] = ["codemeter", "network_license", "time_unlimited"]
+        emulation_result["responses"] = {
+            "cm_login": 0,
+            "cm_get_license": {"valid": True, "expiry": "2099-12-31"},
+            "cm_check": 0
         }
-        emulation_result['implementation']['script'] = """
+        emulation_result["implementation"]["script"] = """
 // CodeMeter Dongle Emulation
 Interceptor.attach(Module.findExportByName(null, 'CmGetLicenseInfo'), {
     onLeave: function(retval) {
@@ -602,27 +602,27 @@ Interceptor.attach(Module.findExportByName(null, 'CmGetLicenseInfo'), {
 
     else:
         # Generic dongle emulation
-        emulation_result['features'] = ['basic', 'standard', 'pro']
-        emulation_result['responses'] = {
-            'check': True,
-            'validate': 0,
-            'get_features': 0xFFFFFFFF
+        emulation_result["features"] = ["basic", "standard", "pro"]
+        emulation_result["responses"] = {
+            "check": True,
+            "validate": 0,
+            "get_features": 0xFFFFFFFF
         }
 
     # Add memory emulation
-    emulation_result['memory_map'] = {
-        '0x0000': b'DONGLE_OK',
-        '0x0008': serial_number.encode()[:16].ljust(16, b'\x00'),
-        '0x0018': b'\xFF' * 8,  # Feature flags
-        '0x0020': b'\x00' * 32  # User data area
+    emulation_result["memory_map"] = {
+        "0x0000": b"DONGLE_OK",
+        "0x0008": serial_number.encode()[:16].ljust(16, b"\x00"),
+        "0x0018": b"\xFF" * 8,  # Feature flags
+        "0x0020": b"\x00" * 32  # User data area
     }
 
     # Add advanced features
-    emulation_result['advanced'] = {
-        'usb_emulation': vendor_id != '0x0000',
-        'network_emulation': False,
-        'time_based_features': False,
-        'encryption_support': True
+    emulation_result["advanced"] = {
+        "usb_emulation": vendor_id != "0x0000",
+        "network_emulation": False,
+        "time_based_features": False,
+        "encryption_support": True
     }
 
     logger.info(f"Hardware dongle emulation configured for {dongle_type}")
@@ -647,7 +647,7 @@ def generate_hwid_spoof_config(target_hwid: str) -> Dict[str, Any]:
     import uuid
 
     # Parse target HWID or generate components
-    if len(target_hwid) == 36 and '-' in target_hwid:
+    if len(target_hwid) == 36 and "-" in target_hwid:
         # UUID format
         hwid_uuid = target_hwid
     else:
@@ -735,15 +735,15 @@ if __name__ == "__main__":
     }
 
     # Add restoration information
-    config['restoration'] = {
-        'backup_location': 'hwid_backup.reg',
-        'restore_script': """
+    config["restoration"] = {
+        "backup_location": "hwid_backup.reg",
+        "restore_script": """
 # HWID Restoration Script
 import subprocess
 subprocess.run(['reg', 'import', 'hwid_backup.reg'])
 print("Original HWID restored")
 """,
-        'verification_command': 'wmic csproduct get UUID'
+        "verification_command": "wmic csproduct get UUID"
     }
 
     logger.info("HWID spoof configuration generated")
@@ -777,73 +777,73 @@ def generate_time_bomb_defuser(binary_path: str) -> Dict[str, Any]:
 
     try:
         # Read binary for analysis
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             binary_data = f.read()
 
         # Common time-related API patterns
         time_apis = {
-            b'GetSystemTime': 'System time check',
-            b'GetLocalTime': 'Local time check',
-            b'GetTickCount': 'Uptime check',
-            b'GetTickCount64': 'Extended uptime check',
-            b'QueryPerformanceCounter': 'High-resolution time check',
-            b'time': 'C runtime time check',
-            b'_time64': '64-bit time check',
-            b'GetFileTime': 'File timestamp check',
-            b'CompareFileTime': 'Time comparison'
+            b"GetSystemTime": "System time check",
+            b"GetLocalTime": "Local time check",
+            b"GetTickCount": "Uptime check",
+            b"GetTickCount64": "Extended uptime check",
+            b"QueryPerformanceCounter": "High-resolution time check",
+            b"time": "C runtime time check",
+            b"_time64": "64-bit time check",
+            b"GetFileTime": "File timestamp check",
+            b"CompareFileTime": "Time comparison"
         }
 
         # Search for time-related APIs
         for api, description in time_apis.items():
             if api in binary_data:
-                config['time_checks_found'] += 1
+                config["time_checks_found"] += 1
                 offset = binary_data.find(api)
 
-                config['analysis_results'][api.decode()] = {
-                    'offset': hex(offset),
-                    'description': description,
-                    'severity': 'high' if b'Compare' in api else 'medium'
+                config["analysis_results"][api.decode()] = {
+                    "offset": hex(offset),
+                    "description": description,
+                    "severity": "high" if b"Compare" in api else "medium"
                 }
 
                 # Generate hook point
-                config['hook_points'].append({
-                    'api': api.decode(),
-                    'module': 'kernel32.dll' if b'Get' in api else 'msvcrt.dll',
-                    'strategy': 'return_fixed_value'
+                config["hook_points"].append({
+                    "api": api.decode(),
+                    "module": "kernel32.dll" if b"Get" in api else "msvcrt.dll",
+                    "strategy": "return_fixed_value"
                 })
 
         # Look for date comparison patterns
         date_patterns = [
-            (b'\x07\xE5', '2021'),  # Year 2021 in hex
-            (b'\x07\xE6', '2022'),
-            (b'\x07\xE7', '2023'),
-            (b'\x07\xE8', '2024'),
-            (b'\x07\xE9', '2025')
+            (b"\x07\xE5", "2021"),  # Year 2021 in hex
+            (b"\x07\xE6", "2022"),
+            (b"\x07\xE7", "2023"),
+            (b"\x07\xE8", "2024"),
+            (b"\x07\xE9", "2025")
         ]
 
         for pattern, year in date_patterns:
             if pattern in binary_data:
                 offset = binary_data.find(pattern)
-                config['analysis_results'][f'year_{year}'] = {
-                    'offset': hex(offset),
-                    'description': f'Hardcoded year {year} found',
-                    'severity': 'critical'
+                config["analysis_results"][f"year_{year}"] = {
+                    "offset": hex(offset),
+                    "description": f"Hardcoded year {year} found",
+                    "severity": "critical"
                 }
 
                 # Generate patch to change year to 2099
-                config['patches'].append({
-                    'offset': hex(offset),
-                    'original': pattern.hex(),
-                    'replacement': b'\x07\xF3'.hex(),  # 2099
-                    'description': f'Change year {year} to 2099'
+                config["patches"].append({
+                    "offset": hex(offset),
+                    "original": pattern.hex(),
+                    "replacement": b"\x07\xF3".hex(),  # 2099
+                    "description": f"Change year {year} to 2099"
                 })
 
         # Generate defusal strategies based on findings
-        if config['time_checks_found'] > 0:
-            config['defusal_strategy'] = 'comprehensive_time_bypass'
+        if config["time_checks_found"] > 0:
+            config["defusal_strategy"] = "comprehensive_time_bypass"
 
             # Add Frida script for runtime bypass
-            config['frida_script'] = """
+            config["frida_script"] = """
 // Time Bomb Defuser Script
 console.log('[TimeBomb] Starting time manipulation...');
 
@@ -894,16 +894,16 @@ if (time_func) {
 """
 
         # Add recommendations
-        if config['time_checks_found'] > 3:
-            config['recommendations'].append("Multiple time checks detected - comprehensive bypass recommended")
+        if config["time_checks_found"] > 3:
+            config["recommendations"].append("Multiple time checks detected - comprehensive bypass recommended")
 
-        if any('critical' in result.get('severity', '') for result in config['analysis_results'].values()):
-            config['recommendations'].append("Critical time bomb detected - immediate patching required")
+        if any("critical" in result.get("severity", "") for result in config["analysis_results"].values()):
+            config["recommendations"].append("Critical time bomb detected - immediate patching required")
 
-        if config['patches']:
-            config['recommendations'].append(f"Apply {len(config['patches'])} binary patches for permanent fix")
+        if config["patches"]:
+            config["recommendations"].append(f"Apply {len(config['patches'])} binary patches for permanent fix")
 
-        config['recommendations'].extend([
+        config["recommendations"].extend([
             "Use Frida script for runtime bypass without modifying binary",
             "Consider system date manipulation as alternative approach",
             "Monitor for additional time checks during runtime"
@@ -911,8 +911,8 @@ if (time_func) {
 
     except Exception as e:
         logger.error(f"Time bomb analysis failed: {e}")
-        config['error'] = str(e)
-        config['recommendations'].append("Manual analysis required")
+        config["error"] = str(e)
+        config["recommendations"].append("Manual analysis required")
 
     logger.info(f"Found {config['time_checks_found']} time checks")
     return config
@@ -935,45 +935,45 @@ def generate_telemetry_blocker(app_name: str) -> Dict[str, Any]:
 
     # Common telemetry domains by application
     telemetry_domains = {
-        'default': [
-            'telemetry.microsoft.com',
-            'telemetry.adobe.com',
-            'analytics.google.com',
-            'metrics.*.com',
-            'tracking.*.com',
-            'stats.*.com',
-            'dc.services.visualstudio.com',
-            'vortex.data.microsoft.com'
+        "default": [
+            "telemetry.microsoft.com",
+            "telemetry.adobe.com",
+            "analytics.google.com",
+            "metrics.*.com",
+            "tracking.*.com",
+            "stats.*.com",
+            "dc.services.visualstudio.com",
+            "vortex.data.microsoft.com"
         ],
-        'adobe': [
-            'lm.licenses.adobe.com',
-            'activate.adobe.com',
-            'practivate.adobe.com',
-            'ereg.adobe.com',
-            'wip.adobe.com',
-            'adobeereg.com',
-            'Adobelm.com',
-            'hlrcv.stage.adobe.com'
+        "adobe": [
+            "lm.licenses.adobe.com",
+            "activate.adobe.com",
+            "practivate.adobe.com",
+            "ereg.adobe.com",
+            "wip.adobe.com",
+            "adobeereg.com",
+            "Adobelm.com",
+            "hlrcv.stage.adobe.com"
         ],
-        'microsoft': [
-            'telemetry.microsoft.com',
-            'vortex.data.microsoft.com',
-            'settings-win.data.microsoft.com',
-            'watson.microsoft.com',
-            'umwatson.events.data.microsoft.com',
-            'sqm.microsoft.com'
+        "microsoft": [
+            "telemetry.microsoft.com",
+            "vortex.data.microsoft.com",
+            "settings-win.data.microsoft.com",
+            "watson.microsoft.com",
+            "umwatson.events.data.microsoft.com",
+            "sqm.microsoft.com"
         ],
-        'autodesk': [
-            'autodesk.com/adsk/servlet',
-            'planet9.autodesk.com',
-            'registeronce.autodesk.com',
-            'api.autodesk.com'
+        "autodesk": [
+            "autodesk.com/adsk/servlet",
+            "planet9.autodesk.com",
+            "registeronce.autodesk.com",
+            "api.autodesk.com"
         ]
     }
 
     # Determine which domains to block
     app_lower = app_name.lower()
-    blocked_domains = telemetry_domains.get('default', []).copy()
+    blocked_domains = telemetry_domains.get("default", []).copy()
 
     for key, domains in telemetry_domains.items():
         if key in app_lower:
@@ -999,40 +999,40 @@ def generate_telemetry_blocker(app_name: str) -> Dict[str, Any]:
 
     # Generate hosts file entries
     for domain in blocked_domains:
-        config['hosts_entries'].append(f"0.0.0.0 {domain}")
-        config['hosts_entries'].append(f"::0 {domain}")  # IPv6
+        config["hosts_entries"].append(f"0.0.0.0 {domain}")
+        config["hosts_entries"].append(f"::0 {domain}")  # IPv6
 
     # Generate firewall rules (Windows netsh format)
-    config['firewall_rules'] = [
+    config["firewall_rules"] = [
         {
-            'name': f'Block_{app_name}_Telemetry_Out',
-            'direction': 'out',
-            'action': 'block',
-            'program': f'%ProgramFiles%\\{app_name}\\*.exe',
-            'command': f'netsh advfirewall firewall add rule name="Block {app_name} Telemetry" dir=out action=block program="%ProgramFiles%\\{app_name}\\*.exe" enable=yes'
+            "name": f"Block_{app_name}_Telemetry_Out",
+            "direction": "out",
+            "action": "block",
+            "program": f"%ProgramFiles%\\{app_name}\\*.exe",
+            "command": f'netsh advfirewall firewall add rule name="Block {app_name} Telemetry" dir=out action=block program="%ProgramFiles%\\{app_name}\\*.exe" enable=yes'
         },
         {
-            'name': f'Block_{app_name}_Analytics',
-            'direction': 'out',
-            'action': 'block',
-            'protocol': 'tcp',
-            'remoteport': '443,80',
-            'command': f'netsh advfirewall firewall add rule name="Block {app_name} Analytics" dir=out action=block protocol=tcp remoteport=443,80 enable=yes'
+            "name": f"Block_{app_name}_Analytics",
+            "direction": "out",
+            "action": "block",
+            "protocol": "tcp",
+            "remoteport": "443,80",
+            "command": f'netsh advfirewall firewall add rule name="Block {app_name} Analytics" dir=out action=block protocol=tcp remoteport=443,80 enable=yes'
         }
     ]
 
     # Add domain-specific firewall rules
     for domain in blocked_domains[:10]:  # Limit to 10 most important
-        config['firewall_rules'].append({
-            'name': f'Block_{domain.replace(".", "_")}',
-            'direction': 'out',
-            'action': 'block',
-            'remoteip': domain,
-            'command': f'netsh advfirewall firewall add rule name="Block {domain}" dir=out action=block remoteip={domain} enable=yes'
+        config["firewall_rules"].append({
+            "name": f'Block_{domain.replace(".", "_")}',
+            "direction": "out",
+            "action": "block",
+            "remoteip": domain,
+            "command": f'netsh advfirewall firewall add rule name="Block {domain}" dir=out action=block remoteip={domain} enable=yes'
         })
 
     # Generate Frida script for runtime blocking
-    config['frida_script'] = f"""
+    config["frida_script"] = f"""
 // Telemetry Blocking Script for {app_name}
 console.log('[Telemetry] Starting telemetry blocker...');
 
@@ -1102,7 +1102,7 @@ console.log('[Telemetry] Telemetry blocker active');
 """
 
     # Add batch script for easy setup
-    config['setup_script'] = f"""@echo off
+    config["setup_script"] = f"""@echo off
 echo Setting up telemetry blocker for {app_name}...
 
 :: Add hosts entries
@@ -1121,7 +1121,7 @@ pause
 """
 
     # Add removal script
-    config['removal_script'] = f"""@echo off
+    config["removal_script"] = f"""@echo off
 echo Removing telemetry blocker for {app_name}...
 
 :: Remove firewall rules
@@ -1169,13 +1169,13 @@ def calculate_entropy(data: bytes) -> float:
 
 # Export commonly used functions
 __all__ = [
-    'inject_comprehensive_api_hooks',
-    'detect_protection_mechanisms',
-    'generate_bypass_strategy',
-    'create_custom_hook_script',
-    'emulate_hardware_dongle',
-    'generate_hwid_spoof_config',
-    'generate_time_bomb_defuser',
-    'generate_telemetry_blocker',
-    'calculate_entropy'
+    "inject_comprehensive_api_hooks",
+    "detect_protection_mechanisms",
+    "generate_bypass_strategy",
+    "create_custom_hook_script",
+    "emulate_hardware_dongle",
+    "generate_hwid_spoof_config",
+    "generate_time_bomb_defuser",
+    "generate_telemetry_blocker",
+    "calculate_entropy"
 ]

@@ -37,7 +37,7 @@ except ImportError as e:
     logger.error("Import error in memory_loader: %s", e)
     HAS_PSUTIL = False
 
-__all__ = ['MemoryOptimizedBinaryLoader']
+__all__ = ["MemoryOptimizedBinaryLoader"]
 
 
 class MemoryOptimizedBinaryLoader:
@@ -59,8 +59,8 @@ class MemoryOptimizedBinaryLoader:
         """
         self.config = config or {}
         self.logger = logging.getLogger(__name__)
-        self.chunk_size = self.config.get('chunk_size', 1024 * 1024)  # 1MB chunks
-        self.max_memory = self.config.get('max_memory', 1024 * 1024 * 1024)  # 1GB max
+        self.chunk_size = self.config.get("chunk_size", 1024 * 1024)  # 1MB chunks
+        self.max_memory = self.config.get("max_memory", 1024 * 1024 * 1024)  # 1GB max
         self.current_file: Optional[object] = None
         self.file_size = 0
         self.mapped_file: Optional[mmap.mmap] = None
@@ -85,7 +85,7 @@ class MemoryOptimizedBinaryLoader:
             self.close()
 
             # Open file (closed in self.close() method)
-            self.current_file = open(file_path, 'rb')  # pylint: disable=consider-using-with
+            self.current_file = open(file_path, "rb")  # pylint: disable=consider-using-with
             self.file_size = os.path.getsize(file_path)
 
             # Memory map the file
@@ -241,12 +241,12 @@ class MemoryOptimizedBinaryLoader:
             return {}
 
         return {
-            'file_size': self.file_size,
-            'formatted_size': self._format_size(self.file_size),
-            'chunk_size': self.chunk_size,
-            'cached_sections': len(self.section_cache),
-            'memory_usage': self.get_memory_usage(),
-            'formatted_memory': self._format_size(self.get_memory_usage())
+            "file_size": self.file_size,
+            "formatted_size": self._format_size(self.file_size),
+            "chunk_size": self.chunk_size,
+            "cached_sections": len(self.section_cache),
+            "memory_usage": self.get_memory_usage(),
+            "formatted_memory": self._format_size(self.get_memory_usage())
         }
 
     def calculate_entropy(self, data: Union[bytes, None] = None) -> float:
@@ -330,7 +330,7 @@ def create_memory_loader(chunk_size: int = 1024 * 1024, max_memory: int = 1024 *
         Configured MemoryOptimizedBinaryLoader instance
     """
     config = {
-        'chunk_size': chunk_size,
-        'max_memory': max_memory
+        "chunk_size": chunk_size,
+        "max_memory": max_memory
     }
     return MemoryOptimizedBinaryLoader(config)

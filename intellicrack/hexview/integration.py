@@ -75,7 +75,7 @@ except ImportError as e:
         _args, _kwargs = args, kwargs  # Store for potential future use
         return {"error": "AI bridge not available"}
 
-logger = logging.getLogger('Intellicrack.HexView')
+logger = logging.getLogger("Intellicrack.HexView")
 
 # Tool registry for hex viewer AI tools
 TOOL_REGISTRY = {}
@@ -326,7 +326,7 @@ def integrate_enhanced_hex_viewer(app_instance):
     """
     try:
         # Check if already integrated to prevent duplicates
-        if hasattr(app_instance, '_hex_viewer_integrated'):
+        if hasattr(app_instance, "_hex_viewer_integrated"):
             logger.info("Enhanced hex viewer already integrated - skipping")
             return True
 

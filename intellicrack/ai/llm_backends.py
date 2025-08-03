@@ -59,7 +59,7 @@ except ImportError as e:
 try:
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
     import os
-    os.environ['MKL_THREADING_LAYER'] = 'GNU'
+    os.environ["MKL_THREADING_LAYER"] = "GNU"
 
     import tensorflow as tf
     HAS_TENSORFLOW = True
@@ -212,7 +212,7 @@ class OpenAIBackend(LLMBackend):
 
             if not self.config.api_key:
                 # Try secrets manager (checks env vars, keychain, encrypted storage)
-                api_key = get_secret('OPENAI_API_KEY')
+                api_key = get_secret("OPENAI_API_KEY")
                 if not api_key:
                     logger.error("OpenAI API key not provided")
                     return False
@@ -309,7 +309,7 @@ class AnthropicBackend(LLMBackend):
 
             if not self.config.api_key:
                 # Try secrets manager (checks env vars, keychain, encrypted storage)
-                api_key = get_secret('ANTHROPIC_API_KEY')
+                api_key = get_secret("ANTHROPIC_API_KEY")
                 if not api_key:
                     logger.error("Anthropic API key not provided")
                     return False
@@ -364,7 +364,7 @@ class AnthropicBackend(LLMBackend):
 
             return LLMResponse(
                 content=response.content[0].text if response.content else "",
-                tool_calls=getattr(response, 'tool_calls', None),
+                tool_calls=getattr(response, "tool_calls", None),
                 finish_reason=response.stop_reason,
                 model=response.model
             )
@@ -440,7 +440,7 @@ class LlamaCppBackend(LLMBackend):
                 stop=["</s>", "<|im_end|>", "<|end|>"]
             )
 
-            content = response['choices'][0]['text'].strip()
+            content = response["choices"][0]["text"].strip()
 
             # Handle tool calls if tools are available (basic implementation)
             tool_calls = None
@@ -450,7 +450,7 @@ class LlamaCppBackend(LLMBackend):
             return LLMResponse(
                 content=content,
                 tool_calls=tool_calls,
-                finish_reason=response['choices'][0]['finish_reason'],
+                finish_reason=response["choices"][0]["finish_reason"],
                 model=self.config.model_name
             )
 
@@ -484,8 +484,8 @@ class LlamaCppBackend(LLMBackend):
 
         # Look for function call patterns
         for _tool in tools:
-            tool_name = _tool['name']
-            pattern = rf'{tool_name}\((.*?)\)'
+            tool_name = _tool["name"]
+            pattern = rf"{tool_name}\((.*?)\)"
             matches = re.finditer(pattern, content, re.DOTALL)
 
             for _match in matches:
@@ -528,7 +528,7 @@ class OllamaBackend(LLMBackend):
         """
         super().__init__(config)
         self.base_url = config.api_base or get_secret(
-            'OLLAMA_API_BASE', 'http://localhost:11434')
+            "OLLAMA_API_BASE", "http://localhost:11434")
 
     def initialize(self) -> bool:
         """Initialize Ollama connection."""
@@ -658,14 +658,14 @@ class LocalGGUFBackend(LLMBackend):
                     # Extract model parameters from config
                     model_params = {
                         "context_length": self.config.context_length,
-                        "gpu_layers": getattr(self.config, 'gpu_layers', 0),
-                        "threads": getattr(self.config, 'threads', None),
-                        "batch_size": getattr(self.config, 'batch_size', 512),
+                        "gpu_layers": getattr(self.config, "gpu_layers", 0),
+                        "threads": getattr(self.config, "threads", None),
+                        "batch_size": getattr(self.config, "batch_size", 512),
                         "temperature": self.config.temperature
                     }
 
                     # Filter out custom params if they exist
-                    if hasattr(self.config, 'custom_params') and self.config.custom_params:
+                    if hasattr(self.config, "custom_params") and self.config.custom_params:
                         model_params.update(self.config.custom_params)
 
                     if not self.gguf_manager.server.load_model(self.config.model_path, **model_params):
@@ -948,7 +948,7 @@ class PyTorchLLMBackend(LLMBackend):
 
             # Decode response
             response = self.tokenizer.decode(
-                outputs[0][inputs['input_ids'].shape[-1]:], skip_special_tokens=True)
+                outputs[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True)
 
             return LLMResponse(
                 content=response,
@@ -1007,7 +1007,7 @@ class TensorFlowLLMBackend(LLMBackend):
                 return False
 
             # Check GPU availability
-            gpus = tf.config.list_physical_devices('GPU')
+            gpus = tf.config.list_physical_devices("GPU")
             if gpus:
                 logger.info("Using GPU for TensorFlow model: %s", gpus[0])
             else:
@@ -1030,7 +1030,7 @@ class TensorFlowLLMBackend(LLMBackend):
                         self.config.model_path)
             else:
                 # .h5 file
-                if self.config.model_path.endswith('.h5'):
+                if self.config.model_path.endswith(".h5"):
                     if not self.config.model_name:
                         logger.error(
                             "Model name required for loading .h5 files")
@@ -1124,7 +1124,7 @@ class TensorFlowLLMBackend(LLMBackend):
         try:
             if not HAS_TENSORFLOW:
                 raise RuntimeError("TensorFlow is not installed")
-            if tf is not None and hasattr(tf, 'keras'):
+            if tf is not None and hasattr(tf, "keras"):
                 # pylint: disable=no-member
                 tf.keras.backend.clear_session()
         except Exception as e:
@@ -1156,7 +1156,7 @@ class ONNXLLMBackend(LLMBackend):
                 return False
 
             # Create inference session
-            providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+            providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
             self.session = ort.InferenceSession(
                 self.config.model_path, providers=providers)
 
@@ -1424,7 +1424,7 @@ class SafetensorsBackend(LLMBackend):
 
             # Decode response
             response = self.tokenizer.decode(
-                outputs[0][inputs['input_ids'].shape[-1]:], skip_special_tokens=True)
+                outputs[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True)
 
             return LLMResponse(
                 content=response,
@@ -1488,7 +1488,7 @@ class GPTQBackend(LLMBackend):
             if GPU_AUTOLOADER_AVAILABLE:
                 device_str = get_device()
                 gpu_info = get_gpu_info()
-                if not gpu_info['available'] or device_str == "cpu":
+                if not gpu_info["available"] or device_str == "cpu":
                     logger.error("GPTQ models require GPU")
                     return False
                 self.device = torch.device(device_str)
@@ -1659,12 +1659,12 @@ class HuggingFaceLocalBackend(LLMBackend):
             # Check model size and available memory
             model_size = sum(os.path.getsize(os.path.join(self.config.model_path, f))
                              for f in os.listdir(self.config.model_path)
-                             if f.endswith(('.bin', '.safetensors')))
+                             if f.endswith((".bin", ".safetensors")))
 
             logger.info("Model size: %.2f GB", model_size / 1e9)
 
             # Load with appropriate strategy
-            gpu_available = (GPU_AUTOLOADER_AVAILABLE and get_gpu_info()['available']) or torch.cuda.is_available()
+            gpu_available = (GPU_AUTOLOADER_AVAILABLE and get_gpu_info()["available"]) or torch.cuda.is_available()
             if model_size > 10e9 and gpu_available:
                 # Large model - use device_map
                 self.model = AutoModelForCausalLM.from_pretrained(
@@ -1790,7 +1790,7 @@ class HuggingFaceLocalBackend(LLMBackend):
 
             # Decode response
             response = self.tokenizer.decode(
-                outputs[0][inputs['input_ids'].shape[-1]:], skip_special_tokens=True)
+                outputs[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True)
 
             return LLMResponse(
                 content=response,

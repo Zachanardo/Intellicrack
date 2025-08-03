@@ -50,7 +50,7 @@ import numpy as np
 from sklearn.cluster import DBSCAN
 
 # Security configuration for pickle
-PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
+PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 
 class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe classes."""
@@ -59,15 +59,15 @@ class RestrictedUnpickler(pickle.Unpickler):
         """Override find_class to restrict allowed classes."""
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
-            'numpy', 'numpy.core.multiarray', 'numpy.core.numeric',
-            'pandas', 'pandas.core.frame', 'pandas.core.series',
-            'sklearn', 'torch', 'tensorflow',
-            '__builtin__', 'builtins',
-            'collections', 'collections.abc'
+            "numpy", "numpy.core.multiarray", "numpy.core.numeric",
+            "pandas", "pandas.core.frame", "pandas.core.series",
+            "sklearn", "torch", "tensorflow",
+            "__builtin__", "builtins",
+            "collections", "collections.abc"
         }
         
         # Allow model classes from our own modules
-        if module.startswith('intellicrack.'):
+        if module.startswith("intellicrack."):
             return super().find_class(module, name)
             
         # Check if module is in allowed list
@@ -150,7 +150,7 @@ class PatternGene:
         data = f"{self.type.value}_{self.pattern_data}_{time.time()}"
         return hashlib.sha256(data.encode()).hexdigest()[:16]
 
-    def mutate(self, mutation_type: MutationType, mutation_rate: float = 0.1) -> 'PatternGene':
+    def mutate(self, mutation_type: MutationType, mutation_rate: float = 0.1) -> "PatternGene":
         """Create mutated copy of this gene"""
         mutated_data = self._apply_mutation(self.pattern_data, mutation_type, mutation_rate)
 
@@ -291,7 +291,7 @@ class PatternGene:
 
         return opcode_list
 
-    def crossover(self, other: 'PatternGene', crossover_point: Optional[int] = None) -> Tuple['PatternGene', 'PatternGene']:
+    def crossover(self, other: "PatternGene", crossover_point: Optional[int] = None) -> Tuple["PatternGene", "PatternGene"]:
         """Perform crossover with another gene"""
         if self.type != other.type:
             # Can't crossover different types
@@ -672,7 +672,7 @@ class PatternMatcher:
             return 0.0
 
         try:
-            text = data.decode('utf-8', errors='ignore')
+            text = data.decode("utf-8", errors="ignore")
             regex = self.compiled_patterns[pattern.id]
 
             matches = regex.findall(text)
@@ -687,7 +687,7 @@ class PatternMatcher:
     def _match_api_sequence(self, data: bytes, pattern: List[str]) -> float:
         """Match API call sequence"""
         # Extract API calls from data (simplified)
-        text = data.decode('utf-8', errors='ignore')
+        text = data.decode("utf-8", errors="ignore")
 
         # Look for API names in data
         found_apis = []
@@ -708,20 +708,20 @@ class PatternMatcher:
         # Simple heuristic matching based on common opcode byte patterns
         # In real implementation, this would use a disassembler like Capstone
         opcode_bytes = {
-            'mov': [0x89, 0x8B, 0x8A, 0x88, 0xB8, 0xB9, 0xBA, 0xBB],
-            'push': [0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x68],
-            'pop': [0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F],
-            'call': [0xE8, 0xFF],
-            'jmp': [0xE9, 0xEB, 0xFF],
-            'je': [0x74, 0x0F, 0x84],
-            'jne': [0x75, 0x0F, 0x85],
-            'cmp': [0x39, 0x3B, 0x38, 0x3A, 0x83],
-            'test': [0x85, 0x84, 0xF7],
-            'xor': [0x31, 0x33, 0x30, 0x32],
-            'add': [0x01, 0x03, 0x00, 0x02, 0x83],
-            'sub': [0x29, 0x2B, 0x28, 0x2A, 0x83],
-            'ret': [0xC3, 0xC2],
-            'nop': [0x90]
+            "mov": [0x89, 0x8B, 0x8A, 0x88, 0xB8, 0xB9, 0xBA, 0xBB],
+            "push": [0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x68],
+            "pop": [0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F],
+            "call": [0xE8, 0xFF],
+            "jmp": [0xE9, 0xEB, 0xFF],
+            "je": [0x74, 0x0F, 0x84],
+            "jne": [0x75, 0x0F, 0x85],
+            "cmp": [0x39, 0x3B, 0x38, 0x3A, 0x83],
+            "test": [0x85, 0x84, 0xF7],
+            "xor": [0x31, 0x33, 0x30, 0x32],
+            "add": [0x01, 0x03, 0x00, 0x02, 0x83],
+            "sub": [0x29, 0x2B, 0x28, 0x2A, 0x83],
+            "ret": [0xC3, 0xC2],
+            "nop": [0x90]
         }
 
         matches = 0
@@ -792,11 +792,11 @@ class PatternEvolutionTracker:
 
         # Statistics
         self.stats = {
-            'generations': 0,
-            'total_patterns': 0,
-            'best_fitness': 0.0,
-            'detections': 0,
-            'false_positives': 0
+            "generations": 0,
+            "total_patterns": 0,
+            "best_fitness": 0.0,
+            "detections": 0,
+            "false_positives": 0
         }
 
         # Initialize populations
@@ -950,7 +950,7 @@ class PatternEvolutionTracker:
             # Update population
             self.populations[ptype] = new_population
 
-        self.stats['generations'] += 1
+        self.stats["generations"] += 1
         self._notify_observers()
 
     def _evaluate_fitness(self, pattern: PatternGene) -> float:
@@ -974,7 +974,7 @@ class PatternEvolutionTracker:
         elif pattern.type == PatternType.STRING_PATTERN:
             # Regex complexity as a proxy for pattern sophistication
             if isinstance(pattern.pattern_data, str):
-                regex_features = ['[', ']', '*', '+', '?', '|', '(', ')']
+                regex_features = ["[", "]", "*", "+", "?", "|", "(", ")"]
                 feature_count = sum(pattern.pattern_data.count(f) for f in regex_features)
                 complexity_score = min(1.0, feature_count / 10.0)
 
@@ -988,7 +988,7 @@ class PatternEvolutionTracker:
         generation_bonus = min(0.3, pattern.generation * 0.01)
 
         # Factor in previous fitness if available
-        historical_fitness = getattr(pattern, 'fitness', 0.0)
+        historical_fitness = getattr(pattern, "fitness", 0.0)
 
         # Combine scores with weights
         final_fitness = (complexity_score * 0.5 +
@@ -1012,9 +1012,9 @@ class PatternEvolutionTracker:
             pattern_types = list(PatternType)
 
         results = {
-            'detections': [],
-            'confidence': 0.0,
-            'patterns_matched': []
+            "detections": [],
+            "confidence": 0.0,
+            "patterns_matched": []
         }
 
         for ptype in pattern_types:
@@ -1023,23 +1023,23 @@ class PatternEvolutionTracker:
             for pattern_id, confidence in matches:
                 pattern = self.storage.load_pattern(pattern_id)
                 if pattern:
-                    results['detections'].append({
-                        'pattern_id': pattern_id,
-                        'type': ptype.value,
-                        'confidence': confidence,
-                        'generation': pattern.generation,
-                        'pattern_data': str(pattern.pattern_data)[:100]  # Preview
+                    results["detections"].append({
+                        "pattern_id": pattern_id,
+                        "type": ptype.value,
+                        "confidence": confidence,
+                        "generation": pattern.generation,
+                        "pattern_data": str(pattern.pattern_data)[:100]  # Preview
                     })
-                    results['patterns_matched'].append(pattern_id)
+                    results["patterns_matched"].append(pattern_id)
 
         # Overall confidence
-        if results['detections']:
-            results['confidence'] = max(d['confidence'] for d in results['detections'])
+        if results["detections"]:
+            results["confidence"] = max(d["confidence"] for d in results["detections"])
 
         # Update Q-learning agent
         self._update_q_learning(data, results)
 
-        self.stats['detections'] += 1
+        self.stats["detections"] += 1
 
         return results
 
@@ -1049,10 +1049,10 @@ class PatternEvolutionTracker:
         state = self._extract_state_features(data)
 
         # Action: which patterns to apply
-        action = len(results['patterns_matched'])  # Simplified
+        action = len(results["patterns_matched"])  # Simplified
 
         # Reward based on detection confidence
-        reward = results['confidence'] * 10
+        reward = results["confidence"] * 10
 
         # Store experience
         self.q_agent.remember(state, action, reward, state, done=True)
@@ -1077,10 +1077,10 @@ class PatternEvolutionTracker:
             features.append(0)
 
         # String features
-        text = data.decode('utf-8', errors='ignore')
-        features.append(text.count('license'))
-        features.append(text.count('serial'))
-        features.append(text.count('key'))
+        text = data.decode("utf-8", errors="ignore")
+        features.append(text.count("license"))
+        features.append(text.count("serial"))
+        features.append(text.count("key"))
 
         # Pad to state size
         while len(features) < 50:
@@ -1101,7 +1101,7 @@ class PatternEvolutionTracker:
         else:
             self.storage.update_metrics(pattern_id, tp=0, fp=1, tn=0, fn=0,
                                       detection_time_ms=detection_time_ms)
-            self.stats['false_positives'] += 1
+            self.stats["false_positives"] += 1
 
         # Reload pattern with updated fitness
         updated_pattern = self.storage.load_pattern(pattern_id)
@@ -1137,53 +1137,53 @@ class PatternEvolutionTracker:
         for ptype in types_to_export:
             for pattern in self.populations[ptype]:
                 pattern_dict = {
-                    'id': pattern.id,
-                    'type': pattern.type.value,
-                    'pattern_data': str(pattern.pattern_data),
-                    'fitness': pattern.fitness,
-                    'generation': pattern.generation,
-                    'parent_ids': pattern.parent_ids,
-                    'mutation_history': [m.value for m in pattern.mutation_history]
+                    "id": pattern.id,
+                    "type": pattern.type.value,
+                    "pattern_data": str(pattern.pattern_data),
+                    "fitness": pattern.fitness,
+                    "generation": pattern.generation,
+                    "parent_ids": pattern.parent_ids,
+                    "mutation_history": [m.value for m in pattern.mutation_history]
                 }
                 patterns_data.append(pattern_dict)
 
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump({
-                'patterns': patterns_data,
-                'stats': self.stats,
-                'timestamp': time.time()
+                "patterns": patterns_data,
+                "stats": self.stats,
+                "timestamp": time.time()
             }, f, indent=2)
 
         self.logger.info(f"Exported {len(patterns_data)} patterns to {output_file}")
 
     def import_patterns(self, input_file: str):
         """Import patterns from JSON file"""
-        with open(input_file, 'r') as f:
+        with open(input_file, "r") as f:
             data = json.load(f)
 
         imported_count = 0
 
-        for pattern_data in data.get('patterns', []):
+        for pattern_data in data.get("patterns", []):
             try:
                 # Reconstruct pattern
-                pattern_type = PatternType(pattern_data['type'])
+                pattern_type = PatternType(pattern_data["type"])
 
                 # Parse pattern data based on type
                 if pattern_type == PatternType.BYTE_SEQUENCE:
-                    pattern_data_parsed = bytes.fromhex(pattern_data['pattern_data'])
+                    pattern_data_parsed = bytes.fromhex(pattern_data["pattern_data"])
                 elif pattern_type in [PatternType.API_SEQUENCE, PatternType.OPCODE_SEQUENCE]:
-                    pattern_data_parsed = eval(pattern_data['pattern_data'])  # List
+                    pattern_data_parsed = eval(pattern_data["pattern_data"])  # List
                 else:
-                    pattern_data_parsed = pattern_data['pattern_data']  # String
+                    pattern_data_parsed = pattern_data["pattern_data"]  # String
 
                 pattern = PatternGene(
-                    id=pattern_data['id'],
+                    id=pattern_data["id"],
                     type=pattern_type,
                     pattern_data=pattern_data_parsed,
-                    fitness=pattern_data['fitness'],
-                    generation=pattern_data['generation'],
-                    parent_ids=pattern_data['parent_ids'],
-                    mutation_history=[MutationType(m) for m in pattern_data['mutation_history']]
+                    fitness=pattern_data["fitness"],
+                    generation=pattern_data["generation"],
+                    parent_ids=pattern_data["parent_ids"],
+                    mutation_history=[MutationType(m) for m in pattern_data["mutation_history"]]
                 )
 
                 # Save to storage
@@ -1216,9 +1216,9 @@ class PatternEvolutionTracker:
         for ptype in PatternType:
             population = self.populations[ptype]
             if population:
-                stats[f'{ptype.value}_count'] = len(population)
-                stats[f'{ptype.value}_avg_fitness'] = np.mean([p.fitness for p in population])
-                stats[f'{ptype.value}_best_fitness'] = max(p.fitness for p in population)
+                stats[f"{ptype.value}_count"] = len(population)
+                stats[f"{ptype.value}_avg_fitness"] = np.mean([p.fitness for p in population])
+                stats[f"{ptype.value}_best_fitness"] = max(p.fitness for p in population)
 
         return stats
 
@@ -1273,12 +1273,12 @@ def main():
     """Example usage"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='Pattern Evolution Tracker')
-    parser.add_argument('--evolve', type=int, help='Run N evolution generations')
-    parser.add_argument('--detect', help='Detect patterns in file')
-    parser.add_argument('--export', help='Export patterns to file')
-    parser.add_argument('--import', dest='import_file', help='Import patterns from file')
-    parser.add_argument('--stats', action='store_true', help='Show statistics')
+    parser = argparse.ArgumentParser(description="Pattern Evolution Tracker")
+    parser.add_argument("--evolve", type=int, help="Run N evolution generations")
+    parser.add_argument("--detect", help="Detect patterns in file")
+    parser.add_argument("--export", help="Export patterns to file")
+    parser.add_argument("--import", dest="import_file", help="Import patterns from file")
+    parser.add_argument("--stats", action="store_true", help="Show statistics")
 
     args = parser.parse_args()
 
@@ -1298,7 +1298,7 @@ def main():
 
         if args.detect:
             print(f"Detecting patterns in {args.detect}...")
-            with open(args.detect, 'rb') as f:
+            with open(args.detect, "rb") as f:
                 data = f.read()
 
             results = tracker.detect(data)
@@ -1306,7 +1306,7 @@ def main():
             print(f"  Confidence: {results['confidence']:.3f}")
             print(f"  Patterns matched: {len(results['patterns_matched'])}")
 
-            for detection in results['detections']:
+            for detection in results["detections"]:
                 print(f"  - {detection['type']}: {detection['confidence']:.3f} "
                       f"(gen {detection['generation']})")
 

@@ -86,8 +86,8 @@ class PipelineThread(QThread):
                 return wrapper
 
             # Wrap each stage method
-            for stage in self.pipeline.pipeline_config['stages']:
-                method_name = f'run_{stage}_stage'
+            for stage in self.pipeline.pipeline_config["stages"]:
+                method_name = f"run_{stage}_stage"
                 if hasattr(self.pipeline, method_name):
                     original_method = getattr(self.pipeline, method_name)
                     wrapped_method = run_stage_wrapper(stage, original_method)
@@ -177,7 +177,7 @@ class CICDDialog(PluginDialogBase):
         stages_layout = QVBoxLayout(stages_group)
 
         # Create stage widgets
-        stages = ['validate', 'test', 'quality', 'security', 'build', 'deploy']
+        stages = ["validate", "test", "quality", "security", "build", "deploy"]
         for stage in stages:
             stage_widget = self.create_stage_widget(stage)
             self.stage_widgets[stage] = stage_widget
@@ -387,23 +387,23 @@ class CICDDialog(PluginDialogBase):
 
         config_path = os.path.join(
             os.path.dirname(self.plugin_path),
-            '.intellicrack-ci.yml'
+            ".intellicrack-ci.yml"
         )
 
         if os.path.exists(config_path):
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 config = yaml.safe_load(f)
         else:
             # Default config
             config = {
-                'version': '1.0',
-                'stages': ['validate', 'test', 'quality', 'security', 'build', 'deploy'],
-                'validate': {'enabled': True},
-                'test': {'enabled': True, 'coverage_threshold': 80},
-                'quality': {'enabled': True},
-                'security': {'enabled': True},
-                'build': {'enabled': True},
-                'deploy': {'enabled': True}
+                "version": "1.0",
+                "stages": ["validate", "test", "quality", "security", "build", "deploy"],
+                "validate": {"enabled": True},
+                "test": {"enabled": True, "coverage_threshold": 80},
+                "quality": {"enabled": True},
+                "security": {"enabled": True},
+                "build": {"enabled": True},
+                "deploy": {"enabled": True}
             }
 
         # Populate tree
@@ -442,10 +442,10 @@ class CICDDialog(PluginDialogBase):
         # Save to file
         config_path = os.path.join(
             os.path.dirname(self.plugin_path),
-            '.intellicrack-ci.yml'
+            ".intellicrack-ci.yml"
         )
 
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             yaml.dump(config, f, default_flow_style=False)
 
         QMessageBox.information(self, "Saved", "Configuration saved successfully!")
@@ -467,8 +467,8 @@ class CICDDialog(PluginDialogBase):
                 # Leaf node
                 value = item.text(1)
                 # Try to parse value
-                if value.lower() in ['true', 'false']:
-                    return value.lower() == 'true'
+                if value.lower() in ["true", "false"]:
+                    return value.lower() == "true"
                 try:
                     return int(value)
                 except ValueError as e:
@@ -500,7 +500,7 @@ class CICDDialog(PluginDialogBase):
             if self.plugin_path:
                 config_path = os.path.join(
                     os.path.dirname(self.plugin_path),
-                    '.intellicrack-ci.yml'
+                    ".intellicrack-ci.yml"
                 )
                 if os.path.exists(config_path):
                     os.remove(config_path)
@@ -518,15 +518,15 @@ class CICDDialog(PluginDialogBase):
 
         # Find report files
         for file in os.listdir(report_dir):
-            if file.startswith('pipeline_report_') and file.endswith('.json'):
-                timestamp = file.replace('pipeline_report_', '').replace('.json', '')
+            if file.startswith("pipeline_report_") and file.endswith(".json"):
+                timestamp = file.replace("pipeline_report_", "").replace(".json", "")
 
                 # Load report to get status
-                with open(os.path.join(report_dir, file), 'r') as f:
+                with open(os.path.join(report_dir, file), "r") as f:
                     report = json.load(f)
 
-                status = report.get('overall_status', 'unknown')
-                icon = "✅" if status == 'success' else "❌"
+                status = report.get("overall_status", "unknown")
+                icon = "✅" if status == "success" else "❌"
 
                 item = QListWidgetItem(f"{icon} {timestamp}")
                 item.setData(Qt.UserRole, os.path.join(report_dir, file))
@@ -537,13 +537,13 @@ class CICDDialog(PluginDialogBase):
         report_path = item.data(Qt.UserRole)
 
         # Also check for text report
-        text_path = report_path.replace('.json', '.txt')
+        text_path = report_path.replace(".json", ".txt")
 
         if os.path.exists(text_path):
-            with open(text_path, 'r') as f:
+            with open(text_path, "r") as f:
                 self.report_viewer.setPlainText(f.read())
         else:
-            with open(report_path, 'r') as f:
+            with open(report_path, "r") as f:
                 report = json.load(f)
                 self.report_viewer.setPlainText(json.dumps(report, indent=2))
 
@@ -561,7 +561,7 @@ class CICDDialog(PluginDialogBase):
         )
 
         if file_path:
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write(content)
 
             QMessageBox.information(self, "Exported", f"Report exported to:\n{file_path}")
@@ -571,7 +571,7 @@ class CICDDialog(PluginDialogBase):
         if not self.plugin_path:
             return
 
-        plugin_name = os.path.basename(self.plugin_path).replace('.py', '').replace('.js', '')
+        plugin_name = os.path.basename(self.plugin_path).replace(".py", "").replace(".js", "")
 
         # Generate workflow
         workflow = GitHubActionsGenerator.generate_workflow(plugin_name)
@@ -588,16 +588,16 @@ class CICDDialog(PluginDialogBase):
 
         # Ask where to save
         plugin_dir = os.path.dirname(self.plugin_path)
-        workflows_dir = os.path.join(plugin_dir, '.github', 'workflows')
+        workflows_dir = os.path.join(plugin_dir, ".github", "workflows")
 
         # Create directory
         os.makedirs(workflows_dir, exist_ok=True)
 
         # Save workflow
-        plugin_name = os.path.basename(self.plugin_path).replace('.py', '').replace('.js', '')
+        plugin_name = os.path.basename(self.plugin_path).replace(".py", "").replace(".js", "")
         workflow_path = os.path.join(workflows_dir, f"{plugin_name}-ci.yml")
 
-        with open(workflow_path, 'w') as f:
+        with open(workflow_path, "w") as f:
             f.write(workflow)
 
         QMessageBox.information(
@@ -650,7 +650,7 @@ class CICDDialog(PluginDialogBase):
         if self.pipeline_thread and self.pipeline_thread.isRunning():
             self.pipeline_thread.terminate()
             self.console_output.append("\n⏹️ Pipeline stopped by user")
-            self.on_pipeline_finished({'overall_status': 'cancelled'})
+            self.on_pipeline_finished({"overall_status": "cancelled"})
 
     def on_stage_started(self, stage: str):
         """Handle stage started"""
@@ -671,7 +671,7 @@ class CICDDialog(PluginDialogBase):
 
     def on_stage_completed(self, stage: str, result: Dict[str, Any]):
         """Handle stage completed"""
-        success = result.get('success', False)
+        success = result.get("success", False)
 
         if stage in self.stage_widgets:
             widget = self.stage_widgets[stage]
@@ -679,13 +679,13 @@ class CICDDialog(PluginDialogBase):
             widget.progress.setVisible(False)
 
             # Update result label
-            if stage == 'test' and 'coverage' in result:
+            if stage == "test" and "coverage" in result:
                 widget.result_label.setText(f"Coverage: {result['coverage']}%")
-            elif stage == 'quality' and 'metrics' in result:
-                complexity = result['metrics'].get('complexity', 0)
+            elif stage == "quality" and "metrics" in result:
+                complexity = result["metrics"].get("complexity", 0)
                 widget.result_label.setText(f"Complexity: {complexity}")
-            elif stage == 'security' and 'vulnerabilities' in result:
-                vuln_count = len(result.get('vulnerabilities', []))
+            elif stage == "security" and "vulnerabilities" in result:
+                vuln_count = len(result.get("vulnerabilities", []))
                 widget.result_label.setText(f"Issues: {vuln_count}")
 
             # Update style
@@ -712,9 +712,9 @@ class CICDDialog(PluginDialogBase):
         self.progress_bar.setValue(completed)
 
         # Log errors
-        if not success and result.get('errors'):
+        if not success and result.get("errors"):
             self.console_output.append(f"  ❌ Errors in {stage}:")
-            for error in result['errors']:
+            for error in result["errors"]:
                 self.console_output.append(f"    - {error}")
 
     def on_log_message(self, message: str):
@@ -729,8 +729,8 @@ class CICDDialog(PluginDialogBase):
         self.progress_bar.setVisible(False)
 
         # Show summary
-        status = results.get('overall_status', 'unknown')
-        if status == 'success':
+        status = results.get("overall_status", "unknown")
+        if status == "success":
             self.console_output.append("\n✅ Pipeline completed successfully!")
         else:
             self.console_output.append(f"\n❌ Pipeline failed with status: {status}")
@@ -744,4 +744,4 @@ class CICDDialog(PluginDialogBase):
     def on_pipeline_error(self, error: str):
         """Handle pipeline error"""
         self.console_output.append(f"\n❌ Pipeline error: {error}")
-        self.on_pipeline_finished({'overall_status': 'error'})
+        self.on_pipeline_finished({"overall_status": "error"})

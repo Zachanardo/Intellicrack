@@ -65,8 +65,8 @@ def _get_tool_search_paths(tool_name: str) -> List[str]:
     paths = []
     system = platform.system().lower()
 
-    if tool_name.lower() == 'ghidra':
-        if system == 'windows':
+    if tool_name.lower() == "ghidra":
+        if system == "windows":
             paths.extend([
                 r"C:\ghidra\ghidraRun.bat",
                 r"C:\Program Files\ghidra\ghidraRun.bat",
@@ -76,7 +76,7 @@ def _get_tool_search_paths(tool_name: str) -> List[str]:
                 r"E:\ghidra\ghidraRun.bat"
             ])
             # Add version-specific paths
-            for version in ['10.4', '10.3', '10.2', '10.1', '10.0', '9.2']:
+            for version in ["10.4", "10.3", "10.2", "10.1", "10.0", "9.2"]:
                 paths.extend([
                     rf"C:\ghidra_{version}_PUBLIC\ghidraRun.bat",
                     rf"C:\Program Files\ghidra_{version}_PUBLIC\ghidraRun.bat"
@@ -90,8 +90,8 @@ def _get_tool_search_paths(tool_name: str) -> List[str]:
                 "/Applications/ghidra/ghidraRun"
             ])
 
-    elif tool_name.lower() == 'radare2' or tool_name.lower() == 'r2':
-        if system == 'windows':
+    elif tool_name.lower() == "radare2" or tool_name.lower() == "r2":
+        if system == "windows":
             paths.extend([
                 r"C:\radare2\bin\radare2.exe",
                 r"C:\Program Files\radare2\bin\radare2.exe",
@@ -105,8 +105,8 @@ def _get_tool_search_paths(tool_name: str) -> List[str]:
                 "/opt/radare2/bin/radare2"
             ])
 
-    elif tool_name.lower() == 'ida' or tool_name.lower() == 'ida64':
-        if system == 'windows':
+    elif tool_name.lower() == "ida" or tool_name.lower() == "ida64":
+        if system == "windows":
             paths.extend([
                 r"C:\Program Files\IDA Pro 7.7\ida64.exe",
                 r"C:\Program Files\IDA Pro 7.6\ida64.exe",
@@ -120,8 +120,8 @@ def _get_tool_search_paths(tool_name: str) -> List[str]:
                 "/usr/local/ida/ida64"
             ])
 
-    elif tool_name.lower() == 'x64dbg':
-        if system == 'windows':
+    elif tool_name.lower() == "x64dbg":
+        if system == "windows":
             paths.extend([
                 r"C:\x64dbg\x64dbg.exe",
                 r"C:\Program Files\x64dbg\x64dbg.exe",
@@ -129,31 +129,31 @@ def _get_tool_search_paths(tool_name: str) -> List[str]:
                 r"C:\Tools\x64dbg\x64dbg.exe"
             ])
 
-    elif tool_name.lower() == 'ollydbg':
-        if system == 'windows':
+    elif tool_name.lower() == "ollydbg":
+        if system == "windows":
             paths.extend([
                 r"C:\OllyDbg\OllyDbg.exe",
                 r"C:\Program Files\OllyDbg\OllyDbg.exe",
                 r"C:\Program Files (x86)\OllyDbg\OllyDbg.exe"
             ])
 
-    elif tool_name.lower() == 'windbg':
-        if system == 'windows':
+    elif tool_name.lower() == "windbg":
+        if system == "windows":
             paths.extend([
                 r"C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\windbg.exe",
                 r"C:\Program Files\Windows Kits\10\Debuggers\x64\windbg.exe",
                 r"C:\WinDbg\windbg.exe"
             ])
 
-    elif tool_name.lower() == 'gdb':
-        if system != 'windows':
+    elif tool_name.lower() == "gdb":
+        if system != "windows":
             paths.extend([
                 "/usr/bin/gdb",
                 "/usr/local/bin/gdb"
             ])
 
-    elif tool_name.lower() == 'objdump':
-        if system == 'windows':
+    elif tool_name.lower() == "objdump":
+        if system == "windows":
             paths.extend([
                 r"C:\mingw64\bin\objdump.exe",
                 r"C:\msys64\mingw64\bin\objdump.exe"
@@ -164,8 +164,8 @@ def _get_tool_search_paths(tool_name: str) -> List[str]:
                 "/usr/local/bin/objdump"
             ])
 
-    elif tool_name.lower() == 'strings':
-        if system == 'windows':
+    elif tool_name.lower() == "strings":
+        if system == "windows":
             paths.extend([
                 r"C:\SysinternalsSuite\strings.exe",
                 r"C:\Program Files\SysinternalsSuite\strings.exe"
@@ -176,8 +176,8 @@ def _get_tool_search_paths(tool_name: str) -> List[str]:
                 "/usr/local/bin/strings"
             ])
 
-    elif tool_name.lower() == 'hexdump' or tool_name.lower() == 'xxd':
-        if system != 'windows':
+    elif tool_name.lower() == "hexdump" or tool_name.lower() == "xxd":
+        if system != "windows":
             paths.extend([
                 "/usr/bin/hexdump",
                 "/usr/bin/xxd",
@@ -196,8 +196,8 @@ def find_all_tools() -> Dict[str, Optional[str]]:
         Dictionary mapping tool names to their paths (or None if not found)
     """
     tools = [
-        'ghidra', 'radare2', 'ida', 'ida64', 'x64dbg', 'ollydbg', 'windbg',
-        'gdb', 'objdump', 'strings', 'hexdump', 'xxd'
+        "ghidra", "radare2", "ida", "ida64", "x64dbg", "ollydbg", "windbg",
+        "gdb", "objdump", "strings", "hexdump", "xxd"
     ]
 
     results = {}
@@ -217,45 +217,45 @@ def get_common_installation_paths() -> Dict[str, List[str]]:
     system = platform.system().lower()
     paths = {}
 
-    if system == 'windows':
+    if system == "windows":
         paths.update({
-            'program_files': [
+            "program_files": [
                 r"C:\Program Files",
                 r"C:\Program Files (x86)"
             ],
-            'tools': [
+            "tools": [
                 r"C:\Tools",
                 r"C:\Utils",
                 r"C:\Software"
             ],
-            'dev_tools': [
+            "dev_tools": [
                 r"C:\msys64",
                 r"C:\mingw64",
                 r"C:\cygwin64"
             ],
-            'portable': [
+            "portable": [
                 r"C:\PortableApps",
                 r"D:\PortableApps"
             ]
         })
     else:
         paths.update({
-            'bin': [
+            "bin": [
                 "/usr/bin",
                 "/usr/local/bin",
                 "/opt/bin"
             ],
-            'opt': [
+            "opt": [
                 "/opt",
                 "/usr/local/opt"
             ],
-            'applications': [
-                "/Applications" if system == 'darwin' else "/usr/share/applications"
+            "applications": [
+                "/Applications" if system == "darwin" else "/usr/share/applications"
             ],
-            'home': [
+            "home": [
                 os.path.expanduser("~/bin"),
                 os.path.expanduser("~/tools"),
-                os.path.expanduser("~/Applications") if system == 'darwin' else os.path.expanduser("~/.local/bin")
+                os.path.expanduser("~/Applications") if system == "darwin" else os.path.expanduser("~/.local/bin")
             ]
         })
 
@@ -273,9 +273,9 @@ def find_python_installations() -> List[Dict[str, str]]:
 
     # Check current Python
     current_python = {
-        'path': os.path.abspath(sys.executable),
-        'version': platform.python_version(),
-        'type': 'current'
+        "path": os.path.abspath(sys.executable),
+        "version": platform.python_version(),
+        "type": "current"
     }
     installations.append(current_python)
 
@@ -283,7 +283,7 @@ def find_python_installations() -> List[Dict[str, str]]:
     system = platform.system().lower()
     search_paths = []
 
-    if system == 'windows':
+    if system == "windows":
         search_paths.extend([
             r"C:\Python*\python.exe",
             r"C:\Program Files\Python*\python.exe",
@@ -306,14 +306,14 @@ def find_python_installations() -> List[Dict[str, str]]:
                 try:
                     # Get version
                     import subprocess
-                    result = subprocess.run([path, '--version'],
+                    result = subprocess.run([path, "--version"],
                                           capture_output=True, text=True, timeout=5)
-                    version = result.stdout.strip().split()[-1] if result.returncode == 0 else 'unknown'
+                    version = result.stdout.strip().split()[-1] if result.returncode == 0 else "unknown"
 
                     installation = {
-                        'path': os.path.abspath(path),
-                        'version': version,
-                        'type': 'system'
+                        "path": os.path.abspath(path),
+                        "version": version,
+                        "type": "system"
                     }
 
                     # Avoid duplicates
@@ -337,34 +337,34 @@ def find_java_installations() -> List[Dict[str, str]]:
     system = platform.system().lower()
 
     # Check JAVA_HOME
-    java_home = os.environ.get('JAVA_HOME')
+    java_home = os.environ.get("JAVA_HOME")
     if java_home and os.path.exists(java_home):
-        java_exe = os.path.join(java_home, 'bin', 'java.exe' if system == 'windows' else 'java')
+        java_exe = os.path.join(java_home, "bin", "java.exe" if system == "windows" else "java")
         if os.path.exists(java_exe):
             installations.append({
-                'path': java_exe,
-                'java_home': java_home,
-                'type': 'JAVA_HOME'
+                "path": java_exe,
+                "java_home": java_home,
+                "type": "JAVA_HOME"
             })
 
     # Check PATH
-    java_path = shutil.which('java')
+    java_path = shutil.which("java")
     if java_path:
         installations.append({
-            'path': java_path,
-            'java_home': os.path.dirname(os.path.dirname(java_path)),
-            'type': 'PATH'
+            "path": java_path,
+            "java_home": os.path.dirname(os.path.dirname(java_path)),
+            "type": "PATH"
         })
 
     # Common Java installation paths
     search_paths = []
-    if system == 'windows':
+    if system == "windows":
         search_paths.extend([
             r"C:\Program Files\Java\*\bin\java.exe",
             r"C:\Program Files (x86)\Java\*\bin\java.exe",
             r"C:\Program Files\Eclipse Adoptium\*\bin\java.exe"
         ])
-    elif system == 'darwin':
+    elif system == "darwin":
         search_paths.extend([
             "/Library/Java/JavaVirtualMachines/*/Contents/Home/bin/java",
             "/System/Library/Java/JavaVirtualMachines/*/Contents/Home/bin/java"
@@ -381,9 +381,9 @@ def find_java_installations() -> List[Dict[str, str]]:
             if os.path.isfile(path) and os.access(path, os.X_OK):
                 java_home = os.path.dirname(os.path.dirname(path))
                 installation = {
-                    'path': os.path.abspath(path),
-                    'java_home': java_home,
-                    'type': 'system'
+                    "path": os.path.abspath(path),
+                    "java_home": java_home,
+                    "type": "system"
                 }
 
                 # Avoid duplicates
@@ -418,7 +418,7 @@ def validate_tool_path(tool_path: str) -> Tuple[bool, str]:
     return True, "Tool path is valid"
 
 
-def get_tool_version(tool_path: str, version_arg: str = '--version') -> Optional[str]:
+def get_tool_version(tool_path: str, version_arg: str = "--version") -> Optional[str]:
     """
     Get the version of a tool.
 
@@ -436,11 +436,11 @@ def get_tool_version(tool_path: str, version_arg: str = '--version') -> Optional
 
         if result.returncode == 0:
             # Extract version from output (first line usually contains version)
-            first_line = result.stdout.strip().split('\n')[0]
+            first_line = result.stdout.strip().split("\n")[0]
             return first_line
         else:
             # Some tools output version to stderr
-            first_line = result.stderr.strip().split('\n')[0]
+            first_line = result.stderr.strip().split("\n")[0]
             return first_line if first_line else None
 
     except Exception as e:
@@ -467,10 +467,10 @@ def create_tool_shortcuts(tools_dict: Dict[str, str], shortcuts_dir: str) -> boo
             if not tool_path or not os.path.exists(tool_path):
                 continue
 
-            if system == 'windows':
+            if system == "windows":
                 # Create batch file wrapper on Windows
                 shortcut_path = os.path.join(shortcuts_dir, f"{tool_name}.bat")
-                with open(shortcut_path, 'w') as f:
+                with open(shortcut_path, "w") as f:
                     f.write(f'@echo off\n"{tool_path}" %*\n')
             else:
                 # Create symlink on Unix systems
@@ -497,19 +497,19 @@ def discover_analysis_environments() -> Dict[str, Dict[str, str]]:
 
     # Check for virtual machines
     vm_indicators = {
-        'vmware': ['vmware', 'vmtoolsd'],
-        'virtualbox': ['vboxservice', 'vboxtray'],
-        'qemu': ['qemu-ga'],
-        'xen': ['xenservice']
+        "vmware": ["vmware", "vmtoolsd"],
+        "virtualbox": ["vboxservice", "vboxtray"],
+        "qemu": ["qemu-ga"],
+        "xen": ["xenservice"]
     }
 
     for vm_type, processes in vm_indicators.items():
         for process in processes:
             if shutil.which(process):
-                environments[f'vm_{vm_type}'] = {
-                    'type': 'virtual_machine',
-                    'platform': vm_type,
-                    'indicator': process
+                environments[f"vm_{vm_type}"] = {
+                    "type": "virtual_machine",
+                    "platform": vm_type,
+                    "indicator": process
                 }
                 break
 
@@ -518,24 +518,24 @@ def discover_analysis_environments() -> Dict[str, Dict[str, str]]:
     available_tools = {name: path for name, path in analysis_tools.items() if path}
 
     if available_tools:
-        environments['analysis_tools'] = {
-            'type': 'analysis_environment',
-            'tools': available_tools
+        environments["analysis_tools"] = {
+            "type": "analysis_environment",
+            "tools": available_tools
         }
 
     # Check for development environments
     dev_indicators = {
-        'visual_studio': 'devenv.exe' if platform.system() == 'Windows' else None,
-        'vscode': 'code',
-        'intellij': 'idea',
-        'eclipse': 'eclipse'
+        "visual_studio": "devenv.exe" if platform.system() == "Windows" else None,
+        "vscode": "code",
+        "intellij": "idea",
+        "eclipse": "eclipse"
     }
 
     for env_name, executable in dev_indicators.items():
         if executable and shutil.which(executable):
-            environments[f'dev_{env_name}'] = {
-                'type': 'development_environment',
-                'executable': executable
+            environments[f"dev_{env_name}"] = {
+                "type": "development_environment",
+                "executable": executable
             }
 
     return environments
@@ -543,13 +543,13 @@ def discover_analysis_environments() -> Dict[str, Dict[str, str]]:
 
 # Export commonly used functions
 __all__ = [
-    'find_tool',
-    'find_all_tools',
-    'get_common_installation_paths',
-    'find_python_installations',
-    'find_java_installations',
-    'validate_tool_path',
-    'get_tool_version',
-    'create_tool_shortcuts',
-    'discover_analysis_environments'
+    "find_tool",
+    "find_all_tools",
+    "get_common_installation_paths",
+    "find_python_installations",
+    "find_java_installations",
+    "validate_tool_path",
+    "get_tool_version",
+    "create_tool_shortcuts",
+    "discover_analysis_environments"
 ]

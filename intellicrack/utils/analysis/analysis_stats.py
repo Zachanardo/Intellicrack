@@ -54,7 +54,7 @@ class AnalysisStatsGenerator:
 
     @staticmethod
     def count_by_attribute(items: List[Dict[str, Any]], attribute: str,
-                          default_value: str = 'unknown') -> Dict[str, int]:
+                          default_value: str = "unknown") -> Dict[str, int]:
         """
         Count items by a specific attribute.
 

@@ -148,19 +148,19 @@ def get_frida_bypass_wizard():
     return FridaBypassWizard
 
 __all__ = [
-    'analysis',
-    'network',
-    'patching',
-    'processing',
-    'protection_bypass',
-    'reporting',
-    'exploitation',
-    'vulnerability_research',
-    'security_enforcement',
-    'EXPLOITATION_MODULES_AVAILABLE',
-    'SECURITY_ENFORCEMENT_AVAILABLE',
-    'get_frida_manager',
-    'get_frida_presets',
-    'get_frida_bypass_wizard',
-    'FRIDA_MODULES_AVAILABLE'
+    "analysis",
+    "network",
+    "patching",
+    "processing",
+    "protection_bypass",
+    "reporting",
+    "exploitation",
+    "vulnerability_research",
+    "security_enforcement",
+    "EXPLOITATION_MODULES_AVAILABLE",
+    "SECURITY_ENFORCEMENT_AVAILABLE",
+    "get_frida_manager",
+    "get_frida_presets",
+    "get_frida_bypass_wizard",
+    "FRIDA_MODULES_AVAILABLE"
 ]

@@ -272,7 +272,7 @@ class RuntimeMonitor:
 
         # Look for matching adaptation rules
         for rule_id, rule in self.adaptation_rules.items():
-            if rule.get('metric_pattern') and metric_name in rule.get('metric_pattern', ''):
+            if rule.get("metric_pattern") and metric_name in rule.get("metric_pattern", ""):
                 logger.info(
                     f"Triggering adaptation rule {rule_id} for {metric_name}")
                 self._execute_adaptation_rule(rule_id, metric_name, value)
@@ -282,14 +282,14 @@ class RuntimeMonitor:
             logger.debug(f"No adaptation rules found for metric {metric_name}")
 
         # Store anomaly in history for analysis
-        if not hasattr(self, 'anomaly_history'):
+        if not hasattr(self, "anomaly_history"):
             self.anomaly_history = []
 
         self.anomaly_history.append({
-            'timestamp': time.time(),
-            'metric': metric_name,
-            'value': value,
-            'adaptation_triggered': adaptation_triggered
+            "timestamp": time.time(),
+            "metric": metric_name,
+            "value": value,
+            "adaptation_triggered": adaptation_triggered
         })
 
     def _execute_adaptation_rule(self, rule_id: str, metric_name: str, value: float):
@@ -300,21 +300,21 @@ class RuntimeMonitor:
                 logger.error(f"Adaptation rule {rule_id} not found")
                 return
 
-            action_type = rule.get('action_type', 'log')
+            action_type = rule.get("action_type", "log")
             logger.info(
                 f"Executing adaptation rule {rule_id}: {action_type} for {metric_name}={value}")
 
             # Execute the adaptation action
-            if action_type == 'adjust_threshold':
+            if action_type == "adjust_threshold":
                 # Adjust anomaly detection threshold
                 if metric_name in self.anomaly_detectors:
                     detector = self.anomaly_detectors[metric_name]
-                    if hasattr(detector, 'threshold'):
+                    if hasattr(detector, "threshold"):
                         detector.threshold *= rule.get(
-                            'threshold_multiplier', 1.1)
+                            "threshold_multiplier", 1.1)
                         logger.info(
                             f"Adjusted threshold for {metric_name} to {detector.threshold}")
-            elif action_type == 'restart_component':
+            elif action_type == "restart_component":
                 # Signal component restart (would be handled by higher-level system)
                 logger.warning(
                     f"Component restart requested for {metric_name} anomaly")

@@ -475,7 +475,7 @@ class OptimizationManager:
             ]
         }
 
-        with open(file_path, 'w') as f:
+        with open(file_path, "w") as f:
             json.dump(config_data, f, indent=2)
 
         logger.info(f"Optimization config exported to {file_path}")
@@ -483,7 +483,7 @@ class OptimizationManager:
     def import_config(self, file_path: Path):
         """Import optimization configuration."""
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path, "r") as f:
                 config_data = json.load(f)
 
             # Update configuration

@@ -327,7 +327,7 @@ class LoRAAdapterManager:
             save_path.mkdir(parents=True, exist_ok=True)
 
             # Save adapter
-            if hasattr(model, 'save_pretrained'):
+            if hasattr(model, "save_pretrained"):
                 model.save_pretrained(
                     str(save_path),
                     adapter_name=adapter_name,
@@ -387,7 +387,7 @@ class LoRAAdapterManager:
         Returns:
             List of adapter names
         """
-        if hasattr(model, 'peft_config'):
+        if hasattr(model, "peft_config"):
             return list(model.peft_config.keys())
         return []
 
@@ -402,7 +402,7 @@ class LoRAAdapterManager:
             True if successful, False otherwise
         """
         try:
-            if hasattr(model, 'set_adapter'):
+            if hasattr(model, "set_adapter"):
                 model.set_adapter(adapter_name)
                 logger.info(f"Activated adapter: {adapter_name}")
                 return True
@@ -433,7 +433,7 @@ class LoRAAdapterManager:
             True if successful, False otherwise
         """
         try:
-            if not hasattr(model, 'add_weighted_adapter'):
+            if not hasattr(model, "add_weighted_adapter"):
                 logger.error("Model does not support adapter merging")
                 return False
 
@@ -489,7 +489,7 @@ class LoRAAdapterManager:
                 )
 
             # Compare important parameters
-            params_to_compare = ['r', 'lora_alpha', 'lora_dropout', 'target_modules', 'task_type']
+            params_to_compare = ["r", "lora_alpha", "lora_dropout", "target_modules", "task_type"]
 
             for param in params_to_compare:
                 val1 = getattr(config1, param, None)
@@ -501,16 +501,16 @@ class LoRAAdapterManager:
                     )
 
                     # Some differences don't affect compatibility
-                    if param in ['r', 'lora_alpha']:
+                    if param in ["r", "lora_alpha"]:
                         # Different ranks/alphas are still compatible for merging
                         pass
-                    elif param == 'target_modules':
+                    elif param == "target_modules":
                         # Different target modules are incompatible
                         results["compatible"] = False
 
             # Extract details for both configs
             for attr in dir(config1):
-                if not attr.startswith('_'):
+                if not attr.startswith("_"):
                     try:
                         val = getattr(config1, attr)
                         if not callable(val):
@@ -519,7 +519,7 @@ class LoRAAdapterManager:
                         pass
 
             for attr in dir(config2):
-                if not attr.startswith('_'):
+                if not attr.startswith("_"):
                     try:
                         val = getattr(config2, attr)
                         if not callable(val):
@@ -598,7 +598,7 @@ class LoRAAdapterManager:
         config_path = adapter_path / "adapter_config.json"
         if config_path.exists():
             try:
-                with open(config_path, 'r') as f:
+                with open(config_path, "r") as f:
                     info["config"] = json.load(f)
 
                 # Try to parse as PeftConfig if PEFT is available
@@ -607,7 +607,7 @@ class LoRAAdapterManager:
                         peft_config = PeftConfig.from_json_file(str(config_path))
                         info["peft_config"] = peft_config
                         info["adapter_type"] = peft_config.peft_type
-                        if hasattr(peft_config, 'target_modules'):
+                        if hasattr(peft_config, "target_modules"):
                             info["target_modules"] = peft_config.target_modules
                         logger.debug(f"Loaded PeftConfig for adapter: {adapter_path}")
                     except Exception as e:
@@ -651,7 +651,7 @@ class LoRAAdapterManager:
             results["warnings"].append("PEFT not available for full validation")
             # Basic JSON validation only
             try:
-                with open(config_path, 'r') as f:
+                with open(config_path, "r") as f:
                     config_data = json.load(f)
                 results["config_details"] = config_data
                 results["valid"] = True
@@ -664,26 +664,26 @@ class LoRAAdapterManager:
             peft_config = PeftConfig.from_json_file(str(config_path))
 
             # Check required fields
-            if not hasattr(peft_config, 'peft_type'):
+            if not hasattr(peft_config, "peft_type"):
                 results["errors"].append("Missing peft_type in config")
             else:
                 results["config_details"]["peft_type"] = peft_config.peft_type
 
-            if hasattr(peft_config, 'r'):
+            if hasattr(peft_config, "r"):
                 results["config_details"]["rank"] = peft_config.r
                 if peft_config.r > 64:
                     results["warnings"].append(f"Very high LoRA rank ({peft_config.r}) may use excessive memory")
 
-            if hasattr(peft_config, 'target_modules'):
+            if hasattr(peft_config, "target_modules"):
                 results["config_details"]["target_modules"] = peft_config.target_modules
                 if not peft_config.target_modules:
                     results["warnings"].append("No target modules specified")
 
-            if hasattr(peft_config, 'task_type'):
+            if hasattr(peft_config, "task_type"):
                 results["config_details"]["task_type"] = str(peft_config.task_type)
 
             # Validate model compatibility if base model is specified
-            if hasattr(peft_config, 'base_model_name_or_path'):
+            if hasattr(peft_config, "base_model_name_or_path"):
                 results["config_details"]["base_model"] = peft_config.base_model_name_or_path
 
             results["valid"] = len(results["errors"]) == 0

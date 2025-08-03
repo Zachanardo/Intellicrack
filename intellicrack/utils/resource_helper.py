@@ -37,19 +37,19 @@ def get_resource_path(resource_path: str) -> str:
         Absolute path to the resource file
     """
     # Handle different installation scenarios
-    if hasattr(sys, '_MEIPASS'):
+    if hasattr(sys, "_MEIPASS"):
         # PyInstaller frozen app
         base_path = sys._MEIPASS
-        return os.path.join(base_path, 'intellicrack', resource_path.replace('/', os.sep))
+        return os.path.join(base_path, "intellicrack", resource_path.replace("/", os.sep))
 
     # Normal Python environment
     import intellicrack
     package_dir = os.path.dirname(intellicrack.__file__)
 
     # If we're in a development environment, go up one level
-    if os.path.basename(os.path.dirname(package_dir)) == 'intellicrack':
+    if os.path.basename(os.path.dirname(package_dir)) == "intellicrack":
         base_path = os.path.dirname(package_dir)
     else:
         base_path = os.path.dirname(package_dir)
 
-    return os.path.join(base_path, 'intellicrack', resource_path.replace('/', os.sep))
+    return os.path.join(base_path, "intellicrack", resource_path.replace("/", os.sep))

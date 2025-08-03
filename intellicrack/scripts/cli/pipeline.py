@@ -60,7 +60,7 @@ class PipelineData:
         }, default=str)
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'PipelineData':
+    def from_json(cls, json_str: str) -> "PipelineData":
         """Create from JSON string"""
         data = json.loads(json_str)
         return cls(
@@ -131,7 +131,7 @@ class PipelineStage(ABC):
         if isinstance(input_data.content, (str, Path)):
             try:
                 path_str = str(input_data.content)
-                if '..' in path_str or path_str.startswith('/etc/') or path_str.startswith('/root/'):
+                if ".." in path_str or path_str.startswith("/etc/") or path_str.startswith("/root/"):
                     return False
             except (AttributeError, TypeError):
                 pass
@@ -374,7 +374,7 @@ class OutputStage(PipelineStage):
         """Process output stage."""
         if self.output_path:
             # Write to file
-            with open(self.output_path, 'w') as f:
+            with open(self.output_path, "w") as f:
                 if input_data.format == "json":
                     json.dump(input_data.content, f, indent=2, default=str)
                 else:
@@ -404,7 +404,7 @@ class Pipeline:
         self.stages: List[PipelineStage] = []
         self.console = Console()
 
-    def add_stage(self, stage: PipelineStage) -> 'Pipeline':
+    def add_stage(self, stage: PipelineStage) -> "Pipeline":
         """Add a stage to the pipeline"""
         self.stages.append(stage)
         return self
@@ -456,7 +456,7 @@ def parse_pipeline_command(command: str) -> Pipeline:
         raise ValueError("Pipeline command too long")
 
     # Check for suspicious patterns
-    suspicious_patterns = ['exec', 'eval', '__import__', 'compile', 'globals', 'locals']
+    suspicious_patterns = ["exec", "eval", "__import__", "compile", "globals", "locals"]
     command_lower = command.lower()
     for pattern in suspicious_patterns:
         if pattern in command_lower:
@@ -512,7 +512,7 @@ def parse_pipeline_command(command: str) -> Pipeline:
                 try:
                     path = Path(output_path).resolve()
                     # Prevent writing to sensitive locations
-                    sensitive_dirs = ['/etc', '/root', '/bin', '/sbin', '/usr/bin', '/usr/sbin']
+                    sensitive_dirs = ["/etc", "/root", "/bin", "/sbin", "/usr/bin", "/usr/sbin"]
                     path_str = str(path)
                     for sensitive_dir in sensitive_dirs:
                         if path_str.startswith(sensitive_dir):
@@ -597,7 +597,7 @@ Examples:
                 chunk = sys.stdin.read(1024)  # Read in chunks
                 if not chunk:
                     break
-                bytes_read += len(chunk.encode('utf-8'))
+                bytes_read += len(chunk.encode("utf-8"))
                 if bytes_read > max_stdin_size:
                     console.print("[red]Stdin input too large (max 10MB)[/red]")
                     return

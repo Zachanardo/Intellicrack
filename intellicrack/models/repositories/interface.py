@@ -114,7 +114,7 @@ class ModelInfo:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ModelInfo':
+    def from_dict(cls, data: Dict[str, Any]) -> "ModelInfo":
         """Create a ModelInfo instance from a dictionary."""
         return cls(
             model_id=data.get("model_id", ""),

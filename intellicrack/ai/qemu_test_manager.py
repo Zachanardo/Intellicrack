@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import os
+import platform
 import shutil
 import socket
 import subprocess
@@ -102,8 +103,8 @@ class QEMUTestManager:
         self.logger = logging.getLogger(__name__ + ".QEMUTestManager")
         self.snapshots = {}
         self.base_images = {
-            'windows': self._get_windows_base_image(),
-            'linux': self._get_linux_base_image()
+            "windows": self._get_windows_base_image(),
+            "linux": self._get_linux_base_image()
         }
         self.qemu_executable = self._find_qemu_executable()
         self.working_dir = Path(tempfile.gettempdir()) / \
@@ -146,7 +147,7 @@ class QEMUTestManager:
                 import platform
                 import shutil
                 
-                if platform.system() == 'Windows':
+                if platform.system() == "Windows":
                     # Windows system binaries
                     windows_binaries = [
                         "C:\Windows\System32\notepad.exe",
@@ -174,7 +175,7 @@ class QEMUTestManager:
                     
                     # Also check using which command
                     if not test_binaries:
-                        for cmd in ['echo', 'cat', 'id', 'whoami', 'hostname']:
+                        for cmd in ["echo", "cat", "id", "whoami", "hostname"]:
                             path = shutil.which(cmd)
                             if path:
                                 test_binaries.append(path)
@@ -190,12 +191,12 @@ class QEMUTestManager:
                     # Create a minimal test binary
                     test_binary_path = os.path.join(
                         self.working_dir, "test.exe")
-                    with open(test_binary_path, 'wb') as f:
+                    with open(test_binary_path, "wb") as f:
                         # Minimal PE header for Windows
                         f.write(
-                            b'MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff\x00\x00')
+                            b"MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff\x00\x00")
                         f.write(
-                            b'\xb8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+                            b"\xb8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")
                     binary_to_use = test_binary_path
 
                 self.qemu_emulator = QEMUSystemEmulator(
@@ -210,8 +211,8 @@ class QEMUTestManager:
         """Initialize or load SSH keys for VM access."""
         try:
             # Get or generate SSH key from secrets manager
-            ssh_private_key = get_secret('QEMU_SSH_PRIVATE_KEY')
-            ssh_public_key = get_secret('QEMU_SSH_PUBLIC_KEY')
+            ssh_private_key = get_secret("QEMU_SSH_PRIVATE_KEY")
+            ssh_public_key = get_secret("QEMU_SSH_PUBLIC_KEY")
 
             if not ssh_private_key or not ssh_public_key:
                 logger.info("Generating new SSH key pair for QEMU VMs")
@@ -228,16 +229,16 @@ class QEMUTestManager:
                 ssh_public_key = f"ssh-rsa {key.get_base64()} intellicrack@qemu"
 
                 # Store in secrets manager
-                set_secret('QEMU_SSH_PRIVATE_KEY', ssh_private_key)
-                set_secret('QEMU_SSH_PUBLIC_KEY', ssh_public_key)
+                set_secret("QEMU_SSH_PRIVATE_KEY", ssh_private_key)
+                set_secret("QEMU_SSH_PUBLIC_KEY", ssh_public_key)
 
                 # Log credential access
-                log_credential_access('SSH_KEY', 'QEMU VM access key generation', success=True)
+                log_credential_access("SSH_KEY", "QEMU VM access key generation", success=True)
 
                 logger.info("SSH key pair generated and stored securely")
             else:
                 logger.info("Loaded existing SSH keys from secrets manager")
-                log_credential_access('SSH_KEY', 'QEMU VM access key retrieval', success=True)
+                log_credential_access("SSH_KEY", "QEMU VM access key retrieval", success=True)
 
             # Parse the private key for use
             self.master_ssh_key = RSAKey.from_private_key(StringIO(ssh_private_key))
@@ -245,7 +246,7 @@ class QEMUTestManager:
 
         except Exception as e:
             logger.error(f"Failed to initialize SSH keys: {e}")
-            log_credential_access('SSH_KEY', 'QEMU VM access key initialization', success=False)
+            log_credential_access("SSH_KEY", "QEMU VM access key initialization", success=False)
             # Generate and persist key as recovery mechanism
             logger.warning("Failed to access secrets manager, generating recovery key")
             self.master_ssh_key = RSAKey.generate(2048)
@@ -253,19 +254,19 @@ class QEMUTestManager:
             
             # Try to save recovery key to local secure storage
             try:
-                recovery_key_path = self.working_dir / '.ssh' / 'qemu_recovery_key'
+                recovery_key_path = self.working_dir / ".ssh" / "qemu_recovery_key"
                 recovery_key_path.parent.mkdir(parents=True, exist_ok=True)
                 
                 # Save private key
-                with open(recovery_key_path, 'w', encoding='utf-8') as f:
+                with open(recovery_key_path, "w", encoding="utf-8") as f:
                     self.master_ssh_key.write_private_key(f)
                 
                 # Set secure permissions (Unix only)
-                if platform.system() != 'Windows':
+                if platform.system() != "Windows":
                     os.chmod(recovery_key_path, 0o600)
                 
                 # Save public key
-                with open(recovery_key_path.with_suffix('.pub'), 'w', encoding='utf-8') as f:
+                with open(recovery_key_path.with_suffix(".pub"), "w", encoding="utf-8") as f:
                     f.write(self.ssh_public_key)
                 
                 logger.info(f"Recovery SSH key saved to {recovery_key_path}")
@@ -274,8 +275,8 @@ class QEMUTestManager:
                 try:
                     private_key_str = StringIO()
                     self.master_ssh_key.write_private_key(private_key_str)
-                    set_secret('QEMU_SSH_PRIVATE_KEY', private_key_str.getvalue())
-                    set_secret('QEMU_SSH_PUBLIC_KEY', self.ssh_public_key)
+                    set_secret("QEMU_SSH_PRIVATE_KEY", private_key_str.getvalue())
+                    set_secret("QEMU_SSH_PUBLIC_KEY", self.ssh_public_key)
                     logger.info("Recovery key successfully saved to secrets manager")
                 except:
                     pass  # Continue with local recovery key
@@ -340,9 +341,9 @@ class QEMUTestManager:
 
                     # Connect using our SSH key
                     client.connect(
-                        hostname='localhost',
+                        hostname="localhost",
                         port=snapshot.ssh_port,
-                        username='test',
+                        username="test",
                         pkey=self.master_ssh_key,
                         timeout=self.ssh_timeout,
                         banner_timeout=self.ssh_timeout,
@@ -402,15 +403,15 @@ class QEMUTestManager:
             return False
 
         breaker = self.ssh_circuit_breaker[vm_name]
-        if not breaker['open']:
+        if not breaker["open"]:
             return False
 
         # Check if timeout has expired
-        time_since_failure = (datetime.now() - breaker['last_failure']).total_seconds()
+        time_since_failure = (datetime.now() - breaker["last_failure"]).total_seconds()
         if time_since_failure > self.circuit_breaker_timeout:
             # Try to close circuit
-            breaker['open'] = False
-            breaker['failures'] = 0
+            breaker["open"] = False
+            breaker["failures"] = 0
             logger.info(f"Circuit breaker closed for {vm_name} after timeout")
             return False
 
@@ -420,26 +421,26 @@ class QEMUTestManager:
         """Record a connection failure for circuit breaker."""
         if vm_name not in self.ssh_circuit_breaker:
             self.ssh_circuit_breaker[vm_name] = {
-                'failures': 0,
-                'last_failure': datetime.now(),
-                'open': False
+                "failures": 0,
+                "last_failure": datetime.now(),
+                "open": False
             }
 
         breaker = self.ssh_circuit_breaker[vm_name]
-        breaker['failures'] += 1
-        breaker['last_failure'] = datetime.now()
+        breaker["failures"] += 1
+        breaker["last_failure"] = datetime.now()
 
-        if breaker['failures'] >= self.circuit_breaker_threshold:
-            breaker['open'] = True
+        if breaker["failures"] >= self.circuit_breaker_threshold:
+            breaker["open"] = True
             logger.warning(f"Circuit breaker opened for {vm_name} after {breaker['failures']} failures")
 
     def _reset_circuit_breaker(self, vm_name: str):
         """Reset circuit breaker on successful connection."""
         if vm_name in self.ssh_circuit_breaker:
             self.ssh_circuit_breaker[vm_name] = {
-                'failures': 0,
-                'last_failure': datetime.now(),
-                'open': False
+                "failures": 0,
+                "last_failure": datetime.now(),
+                "open": False
             }
 
     def _close_ssh_connection(self, snapshot: QEMUSnapshot):
@@ -541,7 +542,7 @@ class QEMUTestManager:
                     f"VM started successfully for snapshot: {snapshot.snapshot_id}")
 
                 # Log VM operation
-                log_vm_operation('start', snapshot.vm_name, success=True)
+                log_vm_operation("start", snapshot.vm_name, success=True)
 
                 # Wait for VM to be ready
                 self._wait_for_vm_ready(snapshot)
@@ -549,12 +550,12 @@ class QEMUTestManager:
                 stdout, stderr = process.communicate()
                 logger.debug(f"VM startup stdout: {stdout.decode()}")
                 logger.error(f"Failed to start VM: {stderr.decode()}")
-                log_vm_operation('start', snapshot.vm_name, success=False, error=stderr.decode())
+                log_vm_operation("start", snapshot.vm_name, success=False, error=stderr.decode())
                 raise RuntimeError(f"VM startup failed: {stderr.decode()}")
 
         except Exception as e:
             logger.error(f"Error starting VM: {e}")
-            log_vm_operation('start', snapshot.vm_name, success=False, error=str(e))
+            log_vm_operation("start", snapshot.vm_name, success=False, error=str(e))
             raise
 
     def _wait_for_vm_ready(self, snapshot: QEMUSnapshot, timeout: int = 60):
@@ -569,7 +570,7 @@ class QEMUTestManager:
                 try:
                     # Test command execution
                     result = self._execute_command_in_vm(snapshot, "echo ready", timeout=5)
-                    if result['exit_code'] == 0 and "ready" in result['stdout']:
+                    if result["exit_code"] == 0 and "ready" in result["stdout"]:
                         logger.info(f"VM is ready: {snapshot.snapshot_id}")
 
                         # Inject SSH public key for future connections
@@ -598,7 +599,7 @@ class QEMUTestManager:
 
             # Ensure remote directory exists
             remote_dir = os.path.dirname(remote_path)
-            if remote_dir and remote_dir != '/':
+            if remote_dir and remote_dir != "/":
                 try:
                     sftp.stat(remote_dir)
                 except FileNotFoundError:
@@ -606,7 +607,7 @@ class QEMUTestManager:
                     self._execute_command_in_vm(snapshot, f"mkdir -p {remote_dir}")
 
             # Write content directly to remote file
-            with sftp.file(remote_path, 'w') as remote_file:
+            with sftp.file(remote_path, "w") as remote_file:
                 remote_file.write(content)
 
             sftp.close()
@@ -629,7 +630,7 @@ class QEMUTestManager:
 
             # Ensure remote directory exists
             remote_dir = os.path.dirname(remote_path)
-            if remote_dir and remote_dir != '/':
+            if remote_dir and remote_dir != "/":
                 try:
                     sftp.stat(remote_dir)
                 except FileNotFoundError:
@@ -671,8 +672,8 @@ class QEMUTestManager:
             exit_code = stdout.channel.recv_exit_status()
 
             # Read output
-            stdout_data = stdout.read().decode('utf-8', errors='replace')
-            stderr_data = stderr.read().decode('utf-8', errors='replace')
+            stdout_data = stdout.read().decode("utf-8", errors="replace")
+            stderr_data = stderr.read().decode("utf-8", errors="replace")
 
             return {
                 "exit_code": exit_code,
@@ -803,7 +804,7 @@ class QEMUTestManager:
             pid_file = self.working_dir / f"{snapshot_id}.pid"
             if pid_file.exists():
                 try:
-                    with open(pid_file, 'r') as f:
+                    with open(pid_file, "r") as f:
                         pid = int(f.read().strip())
 
                     os.kill(pid, 15)  # SIGTERM
@@ -837,13 +838,13 @@ class QEMUTestManager:
                 logger.debug(f"Could not release VM resource: {e}")
 
             # Log VM operation
-            log_vm_operation('stop', snapshot.vm_name, success=True)
+            log_vm_operation("stop", snapshot.vm_name, success=True)
 
             logger.info(f"Snapshot cleanup complete: {snapshot_id}")
 
         except Exception as e:
             logger.error(f"Error during snapshot cleanup: {e}")
-            log_vm_operation('stop', snapshot.vm_name, success=False, error=str(e))
+            log_vm_operation("stop", snapshot.vm_name, success=False, error=str(e))
 
     def _stop_vm_for_snapshot(self, snapshot: QEMUSnapshot):
         """Stop VM for a specific snapshot."""
@@ -982,8 +983,8 @@ class QEMUTestManager:
             try:
                 # Create 1GB qcow2 image
                 subprocess.run([
-                    'qemu-img', 'create', '-f', 'qcow2',
-                    str(test_image_path), '1G'
+                    "qemu-img", "create", "-f", "qcow2",
+                    str(test_image_path), "1G"
                 ], check=True)
                 
                 # Create minimal bootable image with busybox
@@ -995,11 +996,11 @@ class QEMUTestManager:
                 if not kernel_path.exists():
                     # Use Alpine Linux kernel for minimal footprint
                     kernel_url = "https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_64/netboot/vmlinuz-lts"
-                    subprocess.run(['curl', '-L', '-o', str(kernel_path), kernel_url], check=True)
+                    subprocess.run(["curl", "-L", "-o", str(kernel_path), kernel_url], check=True)
                 
                 if not initrd_path.exists():
                     initrd_url = "https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_64/netboot/initramfs-lts"
-                    subprocess.run(['curl', '-L', '-o', str(initrd_path), initrd_url], check=True)
+                    subprocess.run(["curl", "-L", "-o", str(initrd_path), initrd_url], check=True)
                 
                 # Store kernel/initrd paths for boot configuration
                 self._linux_kernel = str(kernel_path)
@@ -1014,13 +1015,13 @@ class QEMUTestManager:
 
     def _detect_os_type(self, binary_path: str) -> str:
         """Detect operating system type from binary."""
-        if binary_path.lower().endswith(('.exe', '.dll')):
-            return 'windows'
-        elif binary_path.lower().endswith(('.so', '.elf')):
-            return 'linux'
+        if binary_path.lower().endswith((".exe", ".dll")):
+            return "windows"
+        elif binary_path.lower().endswith((".so", ".elf")):
+            return "linux"
         else:
             # Default to windows for unknown types
-            return 'windows'
+            return "windows"
 
     def create_snapshot(self, binary_path: str) -> str:
         """Create a QEMU snapshot for testing."""
@@ -1049,18 +1050,16 @@ class QEMUTestManager:
             if Path(binary_path).exists():
                 target_binary = shared_dir / Path(binary_path).name
                 shutil.copy2(binary_path, target_binary)
-        else:
-            # Binary not found - this is a critical error
-            raise FileNotFoundError(
-                f"Target binary not found: {binary_path}\n"
-                f"Please provide a valid path to an executable file.\n"
-                f"Common paths:\n"
-                f"  Windows: C:\Windows\System32\*.exe
-"
-                f"  Linux: /usr/bin/*, /bin/*
-"
-                f"  Custom: Provide full path to your target binary"
-            )
+            else:
+                # Binary not found - this is a critical error
+                raise FileNotFoundError(
+                    f"Target binary not found: {binary_path}\n"
+                    f"Please provide a valid path to an executable file.\n"
+                    f"Common paths:\n"
+                    f"  Windows: C:\\Windows\\System32\\*.exe\n"
+                    f"  Linux: /usr/bin/*, /bin/*\n"
+                    f"  Custom: Provide full path to your target binary"
+                )
 
             # Create snapshot object
             snapshot = QEMUSnapshot(
@@ -1271,10 +1270,10 @@ fi
             runtime_ms = int((time.time() - start_time) * 1000)
 
             return ExecutionResult(
-                success=result['exit_code'] == 0,
-                output=result['stdout'],
-                error=result['stderr'],
-                exit_code=result['exit_code'],
+                success=result["exit_code"] == 0,
+                output=result["stdout"],
+                error=result["stderr"],
+                exit_code=result["exit_code"],
                 runtime_ms=runtime_ms
             )
 
@@ -1347,10 +1346,10 @@ fi
             runtime_ms = int((time.time() - start_time) * 1000)
 
             return ExecutionResult(
-                success=result['exit_code'] == 0,
-                output=result['stdout'],
-                error=result['stderr'],
-                exit_code=result['exit_code'],
+                success=result["exit_code"] == 0,
+                output=result["stdout"],
+                error=result["stderr"],
+                exit_code=result["exit_code"],
                 runtime_ms=runtime_ms
             )
 
@@ -1370,7 +1369,7 @@ fi
         logger.info(f"Executing script in VM {snapshot.vm_name} via SSH")
 
         # Create temporary script file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False) as f:
             f.write(script_content)
             local_script = f.name
 
@@ -1382,7 +1381,7 @@ fi
 
             # Make script executable
             chmod_result = self._execute_command_in_vm(snapshot, f"chmod +x {remote_script}")
-            if chmod_result['exit_code'] != 0:
+            if chmod_result["exit_code"] != 0:
                 logger.error(f"Failed to make script executable: {chmod_result['stderr']}")
 
             # Execute script
@@ -1396,9 +1395,9 @@ fi
         except Exception as e:
             logger.error(f"Failed to execute script in VM: {e}")
             return {
-                'exit_code': -1,
-                'stdout': "",
-                'stderr': f"VM execution error: {str(e)}"
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": f"VM execution error: {str(e)}"
             }
         finally:
             # Clean up local temp file
@@ -1850,10 +1849,10 @@ exit 0
             runtime_ms = int((time.time() - start_time) * 1000)
 
             return ExecutionResult(
-                success=result['exit_code'] == 0,
-                output=result['stdout'],
-                error=result['stderr'],
-                exit_code=result['exit_code'],
+                success=result["exit_code"] == 0,
+                output=result["stdout"],
+                error=result["stderr"],
+                exit_code=result["exit_code"],
                 runtime_ms=runtime_ms
             )
 
@@ -1915,7 +1914,7 @@ exit 0
                     original_size = os.path.getsize(snapshot.disk_path)
 
                     # Skip non-qcow2 images
-                    if not snapshot.disk_path.endswith('.qcow2'):
+                    if not snapshot.disk_path.endswith(".qcow2"):
                         warning = f"Skipping non-qcow2 snapshot: {snapshot_id}"
                         optimization_results["warnings"].append(warning)
                         continue

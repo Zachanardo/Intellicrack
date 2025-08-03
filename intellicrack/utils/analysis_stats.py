@@ -112,29 +112,29 @@ class AnalysisStatsGenerator:
 
             if not values:
                 return {
-                    'count': 0,
-                    'min': 0.0,
-                    'max': 0.0,
-                    'avg': 0.0,
-                    'sum': 0.0
+                    "count": 0,
+                    "min": 0.0,
+                    "max": 0.0,
+                    "avg": 0.0,
+                    "sum": 0.0
                 }
 
             return {
-                'count': len(values),
-                'min': float(min(values)),
-                'max': float(max(values)),
-                'avg': float(sum(values) / len(values)),
-                'sum': float(sum(values))
+                "count": len(values),
+                "min": float(min(values)),
+                "max": float(max(values)),
+                "avg": float(sum(values) / len(values)),
+                "sum": float(sum(values))
             }
 
         except Exception as e:
             logger.debug(f"Numeric stats calculation failed: {e}")
             return {
-                'count': 0,
-                'min': 0.0,
-                'max': 0.0,
-                'avg': 0.0,
-                'sum': 0.0
+                "count": 0,
+                "min": 0.0,
+                "max": 0.0,
+                "avg": 0.0,
+                "sum": 0.0
             }
 
     @staticmethod
@@ -211,8 +211,8 @@ class AnalysisStatsGenerator:
 
     @staticmethod
     def generate_time_series_stats(items: List[Dict[str, Any]],
-                                 time_attribute: str = 'timestamp',
-                                 value_attribute: str = 'value',
+                                 time_attribute: str = "timestamp",
+                                 value_attribute: str = "value",
                                  interval_seconds: int = 3600) -> Dict[str, Any]:
         """
         Generate time series statistics.
@@ -250,25 +250,25 @@ class AnalysisStatsGenerator:
 
                 if numeric_values:
                     time_series[bucket_time] = {
-                        'count': len(numeric_values),
-                        'min': min(numeric_values),
-                        'max': max(numeric_values),
-                        'avg': sum(numeric_values) / len(numeric_values),
-                        'sum': sum(numeric_values)
+                        "count": len(numeric_values),
+                        "min": min(numeric_values),
+                        "max": max(numeric_values),
+                        "avg": sum(numeric_values) / len(numeric_values),
+                        "sum": sum(numeric_values)
                     }
 
             return {
-                'interval_seconds': interval_seconds,
-                'total_buckets': len(time_series),
-                'data': time_series
+                "interval_seconds": interval_seconds,
+                "total_buckets": len(time_series),
+                "data": time_series
             }
 
         except Exception as e:
             logger.debug(f"Time series stats generation failed: {e}")
             return {
-                'interval_seconds': interval_seconds,
-                'total_buckets': 0,
-                'data': {}
+                "interval_seconds": interval_seconds,
+                "total_buckets": 0,
+                "data": {}
             }
 
     @staticmethod
@@ -392,7 +392,7 @@ class AnalysisStatsGenerator:
 
     @staticmethod
     def detect_outliers(values: List[Union[int, float]],
-                       method: str = 'iqr') -> List[int]:
+                       method: str = "iqr") -> List[int]:
         """
         Detect outliers in a list of numeric values.
 
@@ -409,7 +409,7 @@ class AnalysisStatsGenerator:
 
             outlier_indices = []
 
-            if method == 'iqr':
+            if method == "iqr":
                 # Interquartile Range method
                 sorted_values = sorted(values)
                 n = len(sorted_values)
@@ -428,7 +428,7 @@ class AnalysisStatsGenerator:
                     if value < lower_bound or value > upper_bound:
                         outlier_indices.append(i)
 
-            elif method == 'zscore':
+            elif method == "zscore":
                 # Z-score method
                 mean_val = sum(values) / len(values)
                 variance = sum((x - mean_val) ** 2 for x in values) / len(values)
@@ -514,25 +514,25 @@ class PerformanceTracker:
 
                 if operation_name not in self.metrics:
                     self.metrics[operation_name] = {
-                        'total_time': 0.0,
-                        'total_items': 0,
-                        'call_count': 0,
-                        'avg_time_per_call': 0.0,
-                        'avg_time_per_item': 0.0
+                        "total_time": 0.0,
+                        "total_items": 0,
+                        "call_count": 0,
+                        "avg_time_per_call": 0.0,
+                        "avg_time_per_item": 0.0
                     }
 
-                self.metrics[operation_name]['total_time'] += duration
-                self.metrics[operation_name]['total_items'] += item_count
-                self.metrics[operation_name]['call_count'] += 1
+                self.metrics[operation_name]["total_time"] += duration
+                self.metrics[operation_name]["total_items"] += item_count
+                self.metrics[operation_name]["call_count"] += 1
 
                 # Update averages
-                call_count = self.metrics[operation_name]['call_count']
-                total_time = self.metrics[operation_name]['total_time']
-                total_items = self.metrics[operation_name]['total_items']
+                call_count = self.metrics[operation_name]["call_count"]
+                total_time = self.metrics[operation_name]["total_time"]
+                total_items = self.metrics[operation_name]["total_items"]
 
-                self.metrics[operation_name]['avg_time_per_call'] = total_time / call_count
+                self.metrics[operation_name]["avg_time_per_call"] = total_time / call_count
                 if total_items > 0:
-                    self.metrics[operation_name]['avg_time_per_item'] = total_time / total_items
+                    self.metrics[operation_name]["avg_time_per_item"] = total_time / total_items
 
                 del self.start_times[operation_name]
 
@@ -551,6 +551,6 @@ class PerformanceTracker:
 
 # Export commonly used classes and functions
 __all__ = [
-    'AnalysisStatsGenerator',
-    'PerformanceTracker'
+    "AnalysisStatsGenerator",
+    "PerformanceTracker"
 ]

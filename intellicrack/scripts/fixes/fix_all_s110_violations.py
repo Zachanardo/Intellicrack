@@ -32,13 +32,13 @@ logger = logging.getLogger(__name__)
 def has_logger_import(lines: List[str]) -> Tuple[bool, str]:
     """Check if file has logger import and return the logger name."""
     for line in lines[:50]:  # Check first 50 lines
-        if 'from intellicrack.logger import logger' in line:
-            return True, 'logger'
-        if 'self.logger' in line:
-            return True, 'self.logger'
-        if re.match(r'^logger\s*=', line.strip()):
-            return True, 'logger'
-    return False, ''
+        if "from intellicrack.logger import logger" in line:
+            return True, "logger"
+        if "self.logger" in line:
+            return True, "self.logger"
+        if re.match(r"^logger\s*=", line.strip()):
+            return True, "logger"
+    return False, ""
 
 def get_logger_for_context(lines: List[str], line_num: int) -> str:
     """Determine the appropriate logger based on context."""
@@ -46,56 +46,56 @@ def get_logger_for_context(lines: List[str], line_num: int) -> str:
     for i in range(max(0, line_num - 20), line_num):
         if i < len(lines):
             line = lines[i]
-            if re.match(r'^\s*def\s+\w+\s*\(self', line):
-                return 'self.logger'
-            if re.match(r'^\s*class\s+\w+', line):
+            if re.match(r"^\s*def\s+\w+\s*\(self", line):
+                return "self.logger"
+            if re.match(r"^\s*class\s+\w+", line):
                 # We're in a class, likely need self.logger
-                return 'self.logger'
+                return "self.logger"
 
     # Default to module logger
-    return 'logger'
+    return "logger"
 
 def get_appropriate_message(exception_type: str, file_name: str) -> str:
     """Get appropriate error message based on exception type."""
-    base_name = os.path.basename(file_name).replace('.py', '')
+    base_name = os.path.basename(file_name).replace(".py", "")
 
     messages = {
-        'ImportError': f"Import error in {base_name}",
-        'FileNotFoundError': f"File not found in {base_name}",
-        'KeyError': f"Key error in {base_name}",
-        'ValueError': f"Value error in {base_name}",
-        'TypeError': f"Type error in {base_name}",
-        'AttributeError': f"Attribute error in {base_name}",
-        'IndexError': f"Index error in {base_name}",
-        'ZeroDivisionError': f"Division by zero in {base_name}",
-        'NameError': f"Name error in {base_name}",
-        'RuntimeError': f"Runtime error in {base_name}",
-        'OSError': f"OS error in {base_name}",
-        'IOError': f"IO error in {base_name}",
-        'PermissionError': f"Permission error in {base_name}",
-        'ConnectionError': f"Connection error in {base_name}",
-        'TimeoutError': f"Timeout error in {base_name}",
-        'JSONDecodeError': f"JSON decode error in {base_name}",
-        'subprocess.CalledProcessError': f"Subprocess error in {base_name}",
-        'subprocess.TimeoutExpired': f"Subprocess timeout in {base_name}",
-        'socket.error': f"Socket error in {base_name}",
-        'psutil.NoSuchProcess': f"No such process in {base_name}",
-        'psutil.AccessDenied': f"Access denied in {base_name}",
+        "ImportError": f"Import error in {base_name}",
+        "FileNotFoundError": f"File not found in {base_name}",
+        "KeyError": f"Key error in {base_name}",
+        "ValueError": f"Value error in {base_name}",
+        "TypeError": f"Type error in {base_name}",
+        "AttributeError": f"Attribute error in {base_name}",
+        "IndexError": f"Index error in {base_name}",
+        "ZeroDivisionError": f"Division by zero in {base_name}",
+        "NameError": f"Name error in {base_name}",
+        "RuntimeError": f"Runtime error in {base_name}",
+        "OSError": f"OS error in {base_name}",
+        "IOError": f"IO error in {base_name}",
+        "PermissionError": f"Permission error in {base_name}",
+        "ConnectionError": f"Connection error in {base_name}",
+        "TimeoutError": f"Timeout error in {base_name}",
+        "JSONDecodeError": f"JSON decode error in {base_name}",
+        "subprocess.CalledProcessError": f"Subprocess error in {base_name}",
+        "subprocess.TimeoutExpired": f"Subprocess timeout in {base_name}",
+        "socket.error": f"Socket error in {base_name}",
+        "psutil.NoSuchProcess": f"No such process in {base_name}",
+        "psutil.AccessDenied": f"Access denied in {base_name}",
     }
 
     # Handle composite exceptions
-    if ',' in exception_type:
+    if "," in exception_type:
         return f"Error in {base_name}"
 
     # Extract base exception type
-    base_exception = exception_type.split()[0].strip('()')
+    base_exception = exception_type.split()[0].strip("()")
 
     return messages.get(base_exception, f"{base_exception} in {base_name}")
 
 def fix_exception_blocks(file_path: Path) -> Tuple[bool, int]:
     """Fix exception blocks without logger calls."""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
     except:
         return False, 0
@@ -109,23 +109,23 @@ def fix_exception_blocks(file_path: Path) -> Tuple[bool, int]:
         stripped = line.strip()
 
         # Skip empty lines and comments
-        if not stripped or stripped.startswith('#'):
+        if not stripped or stripped.startswith("#"):
             i += 1
             continue
 
         # Check if this is an except block
-        match = re.match(r'^(\s*)except\s+(.+?):\s*$', line)
+        match = re.match(r"^(\s*)except\s+(.+?):\s*$", line)
         if match:
             indent = match.group(1)
             exception_info = match.group(2)
 
             # Parse exception type and variable
-            if ' as ' in exception_info:
-                exception_type, exception_var = exception_info.split(' as ', 1)
+            if " as " in exception_info:
+                exception_type, exception_var = exception_info.split(" as ", 1)
                 exception_var = exception_var.strip()
             else:
                 exception_type = exception_info
-                exception_var = 'e'
+                exception_var = "e"
                 # Update the except line to include 'as e'
                 lines[i] = f"{indent}except {exception_type} as {exception_var}:\n"
 
@@ -141,7 +141,7 @@ def fix_exception_blocks(file_path: Path) -> Tuple[bool, int]:
                 if next_stripped and next_indent <= len(indent):
                     break
 
-                if 'logger' in next_line or 'logging' in next_line:
+                if "logger" in next_line or "logging" in next_line:
                     has_logger = True
                     break
                 j += 1
@@ -158,7 +158,7 @@ def fix_exception_blocks(file_path: Path) -> Tuple[bool, int]:
 
                 # Find where to insert the logger line
                 insert_pos = i + 1
-                if insert_pos < len(lines) and lines[insert_pos].strip() == '':
+                if insert_pos < len(lines) and lines[insert_pos].strip() == "":
                     # If next line is empty, replace it
                     lines[insert_pos] = logger_line
                 else:
@@ -175,19 +175,19 @@ def fix_exception_blocks(file_path: Path) -> Tuple[bool, int]:
             # Add logger import at the top after other imports
             import_added = False
             for i, line in enumerate(lines):
-                if line.strip() and not line.startswith('#') and not line.startswith('from') and not line.startswith('import'):
+                if line.strip() and not line.startswith("#") and not line.startswith("from") and not line.startswith("import"):
                     # Insert before first non-import line
-                    lines.insert(i, 'from intellicrack.logger import logger\n\n')
+                    lines.insert(i, "from intellicrack.logger import logger\n\n")
                     import_added = True
                     break
 
             if not import_added:
                 # If no suitable place found, add at the beginning
-                lines.insert(0, 'from intellicrack.logger import logger\n\n')
+                lines.insert(0, "from intellicrack.logger import logger\n\n")
 
     # Write back if changes were made
     if lines != original_lines:
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.writelines(lines)
         return True, fixes_made
 
@@ -198,17 +198,17 @@ def process_file(file_path: Path) -> Dict[str, any]:
     try:
         fixed, count = fix_exception_blocks(file_path)
         return {
-            'path': str(file_path),
-            'fixed': fixed,
-            'count': count,
-            'error': None
+            "path": str(file_path),
+            "fixed": fixed,
+            "count": count,
+            "error": None
         }
     except Exception as e:
         return {
-            'path': str(file_path),
-            'fixed': False,
-            'count': 0,
-            'error': str(e)
+            "path": str(file_path),
+            "fixed": False,
+            "count": 0,
+            "error": str(e)
         }
 
 def find_files_with_exceptions(root_dir: Path) -> List[Path]:
@@ -216,12 +216,12 @@ def find_files_with_exceptions(root_dir: Path) -> List[Path]:
     files = []
     for root, _dirs, filenames in os.walk(root_dir):
         for filename in filenames:
-            if filename.endswith('.py'):
+            if filename.endswith(".py"):
                 file_path = Path(root) / filename
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
-                        if 'except' in content:
+                        if "except" in content:
                             files.append(file_path)
                 except Exception as e:
                     logger.debug(f"Failed to check file {file_path}: {e}")
@@ -229,8 +229,8 @@ def find_files_with_exceptions(root_dir: Path) -> List[Path]:
 
 def main():
     """Main function to fix all S110 violations."""
-    project_root = Path('/mnt/c/Intellicrack')
-    intellicrack_dir = project_root / 'intellicrack'
+    project_root = Path("/mnt/c/Intellicrack")
+    intellicrack_dir = project_root / "intellicrack"
 
     print("Finding files with exception handling...")
     files_to_process = find_files_with_exceptions(intellicrack_dir)
@@ -248,11 +248,11 @@ def main():
 
         for future in as_completed(futures):
             result = future.result()
-            if result['fixed']:
+            if result["fixed"]:
                 total_fixed += 1
-                total_violations += result['count']
+                total_violations += result["count"]
                 print(f"Fixed {result['count']} violations in {result['path']}")
-            elif result['error']:
+            elif result["error"]:
                 errors.append(result)
 
     elapsed_time = time.time() - start_time

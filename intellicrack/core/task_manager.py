@@ -136,8 +136,8 @@ class CallableTask(BaseTask):
         # If the function expects a task parameter, pass self
         import inspect
         sig = inspect.signature(self.func)
-        if 'task' in sig.parameters:
-            self.kwargs['task'] = self
+        if "task" in sig.parameters:
+            self.kwargs["task"] = self
 
         return self.func(*self.args, **self.kwargs)
 
@@ -269,11 +269,11 @@ class TaskManager(QObject):
 
             # Add to history
             history_entry = {
-                'task_id': task_id,
-                'description': task.description,
-                'started_at': task._started_at.isoformat() if task._started_at else None,
-                'finished_at': task._finished_at.isoformat() if task._finished_at else None,
-                'cancelled': task._is_cancelled
+                "task_id": task_id,
+                "description": task.description,
+                "started_at": task._started_at.isoformat() if task._started_at else None,
+                "finished_at": task._finished_at.isoformat() if task._finished_at else None,
+                "cancelled": task._is_cancelled
             }
             self._task_history.append(history_entry)
 

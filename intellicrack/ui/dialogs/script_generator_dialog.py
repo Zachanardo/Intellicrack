@@ -75,11 +75,11 @@ class PythonHighlighter(QSyntaxHighlighter):
         keyword_format.setColor(QColor(128, 0, 255))
         keyword_format.setFontWeight(QFont.Bold)
         keywords = [
-            'def', 'class', 'if', 'else', 'elif', 'while', 'for',
-            'try', 'except', 'import', 'from', 'return', 'with'
+            "def", "class", "if", "else", "elif", "while", "for",
+            "try", "except", "import", "from", "return", "with"
         ]
         for _keyword in keywords:
-            pattern = f'\\b{_keyword}\\b'
+            pattern = f"\\b{_keyword}\\b"
             self.highlighting_rules.append((pattern, keyword_format))
 
         # Strings
@@ -91,7 +91,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         # Comments
         comment_format = QTextCharFormat()
         comment_format.setColor(QColor(128, 128, 128))
-        self.highlighting_rules.append(('#.*', comment_format))
+        self.highlighting_rules.append(("#.*", comment_format))
 
     def highlightBlock(self, text):
         """Highlight a block of text."""
@@ -141,13 +141,13 @@ class ScriptGeneratorWorker(QThread):
 
             # Prepare protection info
             protection_info = {
-                'type': self.kwargs.get('protection_type', 'license'),
-                'methods': self.kwargs.get('methods', ['patch']),
-                'target_platform': 'frida' if self.kwargs.get('language') == 'javascript' else 'python'
+                "type": self.kwargs.get("protection_type", "license"),
+                "methods": self.kwargs.get("methods", ["patch"]),
+                "target_platform": "frida" if self.kwargs.get("language") == "javascript" else "python"
             }
 
             # Generate script using AI
-            if self.kwargs.get('language') == 'javascript':
+            if self.kwargs.get("language") == "javascript":
                 result = self.ai_generator.generate_frida_script(
                     self.binary_path,
                     protection_info
@@ -168,8 +168,8 @@ class ScriptGeneratorWorker(QThread):
 
             result = generate_bypass_script(
                 self.binary_path,
-                protection_type=self.kwargs.get('protection_type', 'license'),
-                language=self.kwargs.get('language', 'python')
+                protection_type=self.kwargs.get("protection_type", "license"),
+                language=self.kwargs.get("language", "python")
             )
             self.script_generated.emit(result)
 
@@ -178,9 +178,9 @@ class ScriptGeneratorWorker(QThread):
         from ...utils.exploitation import generate_exploit
 
         result = generate_exploit(
-            vulnerability=self.kwargs.get('exploit_type', 'buffer_overflow'),
-            target_arch=self.kwargs.get('target_arch', 'x86'),
-            payload_type=self.kwargs.get('payload_type', 'shellcode')
+            vulnerability=self.kwargs.get("exploit_type", "buffer_overflow"),
+            target_arch=self.kwargs.get("target_arch", "x86"),
+            payload_type=self.kwargs.get("payload_type", "shellcode")
         )
         self.script_generated.emit(result)
 
@@ -190,7 +190,7 @@ class ScriptGeneratorWorker(QThread):
 
         result = generate_exploit_strategy(
             self.binary_path,
-            vulnerability_type=self.kwargs.get('vulnerability_type', 'buffer_overflow')
+            vulnerability_type=self.kwargs.get("vulnerability_type", "buffer_overflow")
         )
         self.script_generated.emit(result)
 
@@ -581,29 +581,29 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             methods.append("registry")
 
         return {
-            'language': self.bypass_language.currentText().lower(),
-            'methods': methods,
-            'output_format': self.bypass_output.currentText().lower()
+            "language": self.bypass_language.currentText().lower(),
+            "methods": methods,
+            "output_format": self.bypass_output.currentText().lower()
         }
 
     def get_exploit_config(self):
         """Get exploit script configuration."""
         return {
-            'exploit_type': self.exploit_type.currentText().lower().replace(' ', '_'),
-            'target_function': self.target_function.text(),
-            'payload_type': self.payload_type.currentText().lower(),
-            'include_anti_detection': self.exploit_advanced.isChecked()
+            "exploit_type": self.exploit_type.currentText().lower().replace(" ", "_"),
+            "target_function": self.target_function.text(),
+            "payload_type": self.payload_type.currentText().lower(),
+            "include_anti_detection": self.exploit_advanced.isChecked()
         }
 
     def get_strategy_config(self):
         """Get strategy configuration."""
         return {
-            'strategy_type': self.strategy_type.currentText().lower().replace(' ', '_'),
-            'analysis_depth': self.analysis_depth.currentText().lower(),
-            'include_recon': self.include_recon.isChecked(),
-            'include_analysis': self.include_analysis.isChecked(),
-            'include_exploitation': self.include_exploitation.isChecked(),
-            'include_persistence': self.include_persistence.isChecked()
+            "strategy_type": self.strategy_type.currentText().lower().replace(" ", "_"),
+            "analysis_depth": self.analysis_depth.currentText().lower(),
+            "include_recon": self.include_recon.isChecked(),
+            "include_analysis": self.include_analysis.isChecked(),
+            "include_exploitation": self.include_exploitation.isChecked(),
+            "include_persistence": self.include_persistence.isChecked()
         }
 
     def on_script_generated(self, result):
@@ -611,15 +611,15 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
         self.generated_scripts[self.script_type_combo.currentText()] = result
 
         # Display script
-        script_content = result.get('script', result.get('strategy', 'No script generated'))
+        script_content = result.get("script", result.get("strategy", "No script generated"))
         self.script_display.setPlainText(script_content)
 
         # Display documentation
-        doc_content = result.get('documentation', result.get('description', 'No documentation available'))
+        doc_content = result.get("documentation", result.get("description", "No documentation available"))
         self.doc_display.setPlainText(doc_content)
 
         # Display template if available
-        template_content = result.get('template', 'No template available')
+        template_content = result.get("template", "No template available")
         self.template_display.setPlainText(template_content)
 
         self.status_label.setText("Script generated successfully")
@@ -667,7 +667,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
 
         if file_path:
             try:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(script_content)
                 self.status_label.setText(f"Script saved to {os.path.basename(file_path)}")
             except (OSError, ValueError, RuntimeError) as e:
@@ -700,7 +700,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             # Determine language based on script type or content
             script_type = self.script_type_combo.currentText()
             # Check if bypass_language exists and use it, otherwise detect from content
-            if hasattr(self, 'bypass_language') and self.bypass_language.isVisible():
+            if hasattr(self, "bypass_language") and self.bypass_language.isVisible():
                 language = "javascript" if "javascript" in self.bypass_language.currentText().lower() else "python"
             else:
                 # Auto-detect language from script type and content
@@ -762,7 +762,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
         lines.append("")
 
         # Insights
-        insights = analysis_result.get('insights', [])
+        insights = analysis_result.get("insights", [])
         if insights:
             lines.append("Insights:")
             for insight in insights:
@@ -770,7 +770,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             lines.append("")
 
         # Security Issues
-        security_issues = analysis_result.get('security_issues', [])
+        security_issues = analysis_result.get("security_issues", [])
         if security_issues:
             lines.append("SECURITY ISSUES:")
             for issue in security_issues:
@@ -778,7 +778,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             lines.append("")
 
         # Suggestions
-        suggestions = analysis_result.get('suggestions', [])
+        suggestions = analysis_result.get("suggestions", [])
         if suggestions:
             lines.append("Suggestions:")
             for suggestion in suggestions:
@@ -786,7 +786,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             lines.append("")
 
         # Patterns
-        patterns = analysis_result.get('patterns', [])
+        patterns = analysis_result.get("patterns", [])
         if patterns:
             lines.append("Detected Patterns:")
             for pattern in patterns:
@@ -794,7 +794,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             lines.append("")
 
         # Timestamp
-        timestamp = analysis_result.get('analysis_timestamp', '')
+        timestamp = analysis_result.get("analysis_timestamp", "")
         if timestamp:
             lines.append(f"\nAnalysis performed at: {timestamp}")
 

@@ -93,4 +93,4 @@ class HookCategory(Enum):
     MONITORING = "monitoring" # Passive monitoring hooks (lowest priority)
 
 
-__all__ = ['ProtectionType', 'HookCategory']
+__all__ = ["ProtectionType", "HookCategory"]

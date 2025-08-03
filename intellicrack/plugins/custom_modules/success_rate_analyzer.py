@@ -52,7 +52,7 @@ from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.linear_model import BayesianRidge
 from sklearn.preprocessing import StandardScaler
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 
 
 class EventType(Enum):
@@ -416,7 +416,7 @@ class StatisticalTester:
     @staticmethod
     def mann_whitney_u_test(group1: List[float], group2: List[float]) -> Dict[str, float]:
         """Mann-Whitney U test for comparing two independent groups"""
-        statistic, p_value = stats.mannwhitneyu(group1, group2, alternative='two-sided')
+        statistic, p_value = stats.mannwhitneyu(group1, group2, alternative="two-sided")
 
         return {
             "u_statistic": statistic,
@@ -649,9 +649,9 @@ class MLPredictor:
     def __init__(self):
         """Initialize machine learning predictor with ensemble models and feature scaling."""
         self.models = {
-            'random_forest': RandomForestRegressor(n_estimators=100, random_state=42),
-            'gradient_boosting': GradientBoostingRegressor(n_estimators=100, random_state=42),
-            'bayesian_ridge': BayesianRidge()
+            "random_forest": RandomForestRegressor(n_estimators=100, random_state=42),
+            "gradient_boosting": GradientBoostingRegressor(n_estimators=100, random_state=42),
+            "bayesian_ridge": BayesianRidge()
         }
         self.scaler = StandardScaler()
         self.is_trained = False
@@ -715,8 +715,8 @@ class MLPredictor:
             targets.append(success_rate)
 
         self.feature_names = [
-            'total_count', 'avg_duration', 'hour_of_day', 'day_of_week',
-            'num_categories', 'num_components', 'dominant_category_ratio', 'dominant_component_ratio'
+            "total_count", "avg_duration", "hour_of_day", "day_of_week",
+            "num_categories", "num_components", "dominant_category_ratio", "dominant_component_ratio"
         ]
 
         return np.array(features), np.array(targets)
@@ -765,7 +765,7 @@ class MLPredictor:
         # Ensemble prediction (average)
         if predictions:
             ensemble_pred = np.mean(list(predictions.values()))
-            predictions['ensemble'] = ensemble_pred
+            predictions["ensemble"] = ensemble_pred
 
         return predictions
 
@@ -778,7 +778,7 @@ class ReportGenerator:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
 
-    def generate_comprehensive_report(self, analyzer: 'SuccessRateAnalyzer') -> str:
+    def generate_comprehensive_report(self, analyzer: "SuccessRateAnalyzer") -> str:
         """Generate comprehensive PDF report"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_path = self.output_dir / f"intellicrack_success_analysis_{timestamp}.pdf"
@@ -791,28 +791,28 @@ class ReportGenerator:
             component_stats = analyzer.get_component_statistics()
             if component_stats:
                 components = list(component_stats.keys())
-                success_rates = [stats['success_rate'] for stats in component_stats.values()]
+                success_rates = [stats["success_rate"] for stats in component_stats.values()]
 
                 ax1.bar(range(len(components)), success_rates)
-                ax1.set_title('Success Rates by Component')
-                ax1.set_xlabel('Component')
-                ax1.set_ylabel('Success Rate')
+                ax1.set_title("Success Rates by Component")
+                ax1.set_xlabel("Component")
+                ax1.set_ylabel("Success Rate")
                 ax1.set_xticks(range(len(components)))
-                ax1.set_xticklabels(components, rotation=45, ha='right')
+                ax1.set_xticklabels(components, rotation=45, ha="right")
                 ax1.set_ylim(0, 1)
 
             # Success rates by protection category
             category_stats = analyzer.get_category_statistics()
             if category_stats:
                 categories = list(category_stats.keys())
-                cat_success_rates = [stats['success_rate'] for stats in category_stats.values()]
+                cat_success_rates = [stats["success_rate"] for stats in category_stats.values()]
 
                 ax2.bar(range(len(categories)), cat_success_rates)
-                ax2.set_title('Success Rates by Protection Category')
-                ax2.set_xlabel('Protection Category')
-                ax2.set_ylabel('Success Rate')
+                ax2.set_title("Success Rates by Protection Category")
+                ax2.set_xlabel("Protection Category")
+                ax2.set_ylabel("Success Rate")
                 ax2.set_xticks(range(len(categories)))
-                ax2.set_xticklabels(categories, rotation=45, ha='right')
+                ax2.set_xticklabels(categories, rotation=45, ha="right")
                 ax2.set_ylim(0, 1)
 
             # Trend over time
@@ -824,23 +824,23 @@ class ReportGenerator:
                 days = list(daily_success.keys())
                 rates = list(daily_success.values())
 
-                ax3.plot(days, rates, marker='o')
-                ax3.set_title('Success Rate Trend (30 Days)')
-                ax3.set_xlabel('Days Ago')
-                ax3.set_ylabel('Success Rate')
+                ax3.plot(days, rates, marker="o")
+                ax3.set_title("Success Rate Trend (30 Days)")
+                ax3.set_xlabel("Days Ago")
+                ax3.set_ylabel("Success Rate")
                 ax3.set_ylim(0, 1)
                 ax3.grid(True, alpha=0.3)
 
             # Distribution of event durations
             durations = [event.duration for event in recent_events if event.duration > 0]
             if durations:
-                ax4.hist(durations, bins=20, alpha=0.7, edgecolor='black')
-                ax4.set_title('Distribution of Analysis Durations')
-                ax4.set_xlabel('Duration (seconds)')
-                ax4.set_ylabel('Frequency')
+                ax4.hist(durations, bins=20, alpha=0.7, edgecolor="black")
+                ax4.set_title("Distribution of Analysis Durations")
+                ax4.set_xlabel("Duration (seconds)")
+                ax4.set_ylabel("Frequency")
 
             plt.tight_layout()
-            pdf.savefig(fig, bbox_inches='tight')
+            pdf.savefig(fig, bbox_inches="tight")
             plt.close()
 
             # Page 2: Statistical Analysis
@@ -849,29 +849,29 @@ class ReportGenerator:
             # Confidence intervals
             if component_stats:
                 components = list(component_stats.keys())
-                means = [stats['success_rate'] for stats in component_stats.values()]
-                ci_lower = [stats['confidence_interval'][0] for stats in component_stats.values()]
-                ci_upper = [stats['confidence_interval'][1] for stats in component_stats.values()]
+                means = [stats["success_rate"] for stats in component_stats.values()]
+                ci_lower = [stats["confidence_interval"][0] for stats in component_stats.values()]
+                ci_upper = [stats["confidence_interval"][1] for stats in component_stats.values()]
 
                 x_pos = range(len(components))
                 ax1.errorbar(x_pos, means, yerr=[np.array(means) - ci_lower, ci_upper - np.array(means)],
-                           fmt='o', capsize=5, capthick=2)
-                ax1.set_title('Success Rates with 95% Confidence Intervals')
-                ax1.set_xlabel('Component')
-                ax1.set_ylabel('Success Rate')
+                           fmt="o", capsize=5, capthick=2)
+                ax1.set_title("Success Rates with 95% Confidence Intervals")
+                ax1.set_xlabel("Component")
+                ax1.set_ylabel("Success Rate")
                 ax1.set_xticks(x_pos)
-                ax1.set_xticklabels(components, rotation=45, ha='right')
+                ax1.set_xticklabels(components, rotation=45, ha="right")
                 ax1.set_ylim(0, 1)
                 ax1.grid(True, alpha=0.3)
 
             # Survival analysis if available
-            if hasattr(analyzer, 'survival_analyzer') and analyzer.survival_analyzer.survival_data:
+            if hasattr(analyzer, "survival_analyzer") and analyzer.survival_analyzer.survival_data:
                 times, survival_probs = analyzer.survival_analyzer.kaplan_meier_estimate()
                 if times:
-                    ax2.step(times, survival_probs, where='post')
-                    ax2.set_title('Kaplan-Meier Survival Curve')
-                    ax2.set_xlabel('Time (hours)')
-                    ax2.set_ylabel('Survival Probability')
+                    ax2.step(times, survival_probs, where="post")
+                    ax2.set_title("Kaplan-Meier Survival Curve")
+                    ax2.set_xlabel("Time (hours)")
+                    ax2.set_ylabel("Survival Probability")
                     ax2.set_ylim(0, 1)
                     ax2.grid(True, alpha=0.3)
 
@@ -879,27 +879,27 @@ class ReportGenerator:
             if len(component_stats) > 2:
                 correlation_data = self._prepare_correlation_data(analyzer)
                 if correlation_data is not None:
-                    im = ax3.imshow(correlation_data, cmap='coolwarm', vmin=-1, vmax=1)
-                    ax3.set_title('Component Success Rate Correlations')
+                    im = ax3.imshow(correlation_data, cmap="coolwarm", vmin=-1, vmax=1)
+                    ax3.set_title("Component Success Rate Correlations")
                     plt.colorbar(im, ax=ax3)
 
             # Prediction accuracy if ML models available
-            if hasattr(analyzer, 'ml_predictor') and analyzer.ml_predictor.is_trained:
+            if hasattr(analyzer, "ml_predictor") and analyzer.ml_predictor.is_trained:
                 predictions = analyzer.ml_predictor.predict(recent_events)
                 if predictions:
                     pred_names = list(predictions.keys())
                     pred_values = list(predictions.values())
 
                     ax4.bar(range(len(pred_names)), pred_values)
-                    ax4.set_title('ML Model Predictions')
-                    ax4.set_xlabel('Model')
-                    ax4.set_ylabel('Predicted Success Rate')
+                    ax4.set_title("ML Model Predictions")
+                    ax4.set_xlabel("Model")
+                    ax4.set_ylabel("Predicted Success Rate")
                     ax4.set_xticks(range(len(pred_names)))
-                    ax4.set_xticklabels(pred_names, rotation=45, ha='right')
+                    ax4.set_xticklabels(pred_names, rotation=45, ha="right")
                     ax4.set_ylim(0, 1)
 
             plt.tight_layout()
-            pdf.savefig(fig, bbox_inches='tight')
+            pdf.savefig(fig, bbox_inches="tight")
             plt.close()
 
         return str(report_path)
@@ -921,7 +921,7 @@ class ReportGenerator:
 
         return daily_success
 
-    def _prepare_correlation_data(self, analyzer: 'SuccessRateAnalyzer') -> Optional[np.ndarray]:
+    def _prepare_correlation_data(self, analyzer: "SuccessRateAnalyzer") -> Optional[np.ndarray]:
         """Prepare correlation matrix data"""
         try:
             component_stats = analyzer.get_component_statistics()
@@ -1256,7 +1256,7 @@ class SuccessRateAnalyzer:
                     for e in events
                 ]
 
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 json.dump(data, f, indent=2)
 
             return output_file
@@ -1268,17 +1268,17 @@ class SuccessRateAnalyzer:
             component_stats = self.get_component_statistics()
 
             import csv
-            with open(output_file, 'w', newline='') as f:
+            with open(output_file, "w", newline="") as f:
                 writer = csv.writer(f)
-                writer.writerow(['Component', 'Success Rate', 'Confidence Lower', 'Confidence Upper', 'Sample Size'])
+                writer.writerow(["Component", "Success Rate", "Confidence Lower", "Confidence Upper", "Sample Size"])
 
                 for component, stats in component_stats.items():
                     writer.writerow([
                         component,
-                        stats['success_rate'],
-                        stats['confidence_interval'][0],
-                        stats['confidence_interval'][1],
-                        stats['sample_size']
+                        stats["success_rate"],
+                        stats["confidence_interval"][0],
+                        stats["confidence_interval"][1],
+                        stats["sample_size"]
                     ])
 
             return output_file
@@ -1321,8 +1321,8 @@ def track_success(event_type: EventType, protection_category: ProtectionCategory
                 # Determine outcome based on result
                 if isinstance(result, bool):
                     outcome = OutcomeType.SUCCESS if result else OutcomeType.FAILURE
-                elif isinstance(result, dict) and 'success' in result:
-                    outcome = OutcomeType.SUCCESS if result['success'] else OutcomeType.FAILURE
+                elif isinstance(result, dict) and "success" in result:
+                    outcome = OutcomeType.SUCCESS if result["success"] else OutcomeType.FAILURE
                 else:
                     outcome = OutcomeType.SUCCESS  # Assume success if no exception
 
@@ -1361,7 +1361,7 @@ if __name__ == "__main__":
     # Simulate some events
     print("Simulating analysis events...")
 
-    components = ['neural_network_detector', 'pattern_evolution_tracker', 'hardware_dongle_emulator']
+    components = ["neural_network_detector", "pattern_evolution_tracker", "hardware_dongle_emulator"]
     categories = [ProtectionCategory.SERIAL_KEY, ProtectionCategory.DONGLE, ProtectionCategory.VM_PROTECTION]
 
     import random
@@ -1372,9 +1372,9 @@ if __name__ == "__main__":
         category = random.choice(categories)
 
         # Simulate varying success rates by component
-        if component == 'neural_network_detector':
+        if component == "neural_network_detector":
             success_prob = 0.85
-        elif component == 'pattern_evolution_tracker':
+        elif component == "pattern_evolution_tracker":
             success_prob = 0.75
         else:
             success_prob = 0.65
@@ -1418,7 +1418,7 @@ if __name__ == "__main__":
     # Component comparison
     print("\nComponent Comparison:")
     comparison = analyzer.compare_success_rates(components[0], components[1])
-    if 'error' not in comparison:
+    if "error" not in comparison:
         print(f"  {comparison['component1']['name']} vs {comparison['component2']['name']}")
         print(f"  Success rates: {comparison['component1']['success_rate']:.3f} vs "
               f"{comparison['component2']['success_rate']:.3f}")

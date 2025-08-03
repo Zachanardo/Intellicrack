@@ -199,7 +199,7 @@ class FlexLMProtocolParser:
             offset = 0
 
             # Check for FlexLM magic number (varies by version)
-            magic = struct.unpack('>I', data[offset:offset+4])[0]
+            magic = struct.unpack(">I", data[offset:offset+4])[0]
             offset += 4
 
             if magic not in [0x464C4558, 0x4C4D5F56, 0x46584C4D]:  # "FLEX", "LM_V", "FXLM"
@@ -207,16 +207,16 @@ class FlexLMProtocolParser:
                 return None
 
             # Parse header fields
-            command = struct.unpack('>H', data[offset:offset+2])[0]
+            command = struct.unpack(">H", data[offset:offset+2])[0]
             offset += 2
 
-            version = struct.unpack('>H', data[offset:offset+2])[0]
+            version = struct.unpack(">H", data[offset:offset+2])[0]
             offset += 2
 
-            sequence = struct.unpack('>I', data[offset:offset+4])[0]
+            sequence = struct.unpack(">I", data[offset:offset+4])[0]
             offset += 4
 
-            length = struct.unpack('>I', data[offset:offset+4])[0]
+            length = struct.unpack(">I", data[offset:offset+4])[0]
             offset += 4
 
             if len(data) < length:
@@ -244,10 +244,10 @@ class FlexLMProtocolParser:
 
             # Parse remaining numeric fields
             if offset + 8 <= len(data):
-                pid = struct.unpack('>I', data[offset:offset+4])[0]
+                pid = struct.unpack(">I", data[offset:offset+4])[0]
                 offset += 4
 
-                checkout_time = struct.unpack('>I', data[offset:offset+4])[0]
+                checkout_time = struct.unpack(">I", data[offset:offset+4])[0]
                 offset += 4
             else:
                 pid = 0
@@ -283,10 +283,10 @@ class FlexLMProtocolParser:
     def _parse_string_field(self, data: bytes, offset: int) -> str:
         """Parse null-terminated string from data"""
         try:
-            end = data.find(b'\x00', offset)
+            end = data.find(b"\x00", offset)
             if end == -1:
                 end = len(data)
-            return data[offset:end].decode('utf-8', errors='ignore')
+            return data[offset:end].decode("utf-8", errors="ignore")
         except (UnicodeDecodeError, IndexError, Exception) as e:
             self.logger.error("Error in flexlm_parser: %s", e)
             return ""
@@ -297,8 +297,8 @@ class FlexLMProtocolParser:
         try:
             offset = 0
             while offset < len(data) - 4:
-                field_type = struct.unpack('>H', data[offset:offset+2])[0]
-                field_length = struct.unpack('>H', data[offset+2:offset+4])[0]
+                field_type = struct.unpack(">H", data[offset:offset+2])[0]
+                field_length = struct.unpack(">H", data[offset+2:offset+4])[0]
                 offset += 4
 
                 if offset + field_length > len(data):
@@ -309,15 +309,15 @@ class FlexLMProtocolParser:
 
                 # Parse common field types
                 if field_type == 0x0001:  # Host ID
-                    additional['hostid'] = field_data.hex()
+                    additional["hostid"] = field_data.hex()
                 elif field_type == 0x0002:  # Encryption info
-                    additional['encryption'] = field_data
+                    additional["encryption"] = field_data
                 elif field_type == 0x0003:  # Vendor data
-                    additional['vendor_data'] = field_data
+                    additional["vendor_data"] = field_data
                 elif field_type == 0x0004:  # License path
-                    additional['license_path'] = field_data.decode('utf-8', errors='ignore')
+                    additional["license_path"] = field_data.decode("utf-8", errors="ignore")
                 else:
-                    additional[f'field_{field_type:04X}'] = field_data
+                    additional[f"field_{field_type:04X}"] = field_data
 
         except Exception as e:
             self.logger.debug(f"Error parsing additional data: {e}")
@@ -561,10 +561,10 @@ class FlexLMProtocolParser:
     def _generate_checkout_key(self, request: FlexLMRequest, feature_info: Dict[str, Any]) -> str:
         """Generate checkout key for license"""
         # Incorporate feature information into key generation
-        feature_version = feature_info.get('version', '1.0')
-        feature_type = feature_info.get('type', 'standard')
-        feature_limit = feature_info.get('user_limit', 1)
-        vendor_string = feature_info.get('vendor_string', 'INTELLICRACK')
+        feature_version = feature_info.get("version", "1.0")
+        feature_type = feature_info.get("type", "standard")
+        feature_limit = feature_info.get("user_limit", 1)
+        vendor_string = feature_info.get("vendor_string", "INTELLICRACK")
 
         # Create comprehensive key data incorporating feature details
         data = (f"{request.hostname}:{request.username}:{request.feature}:"
@@ -575,12 +575,12 @@ class FlexLMProtocolParser:
         key = hashlib.sha256(data.encode()).hexdigest()[:32].upper()
 
         # Add feature-specific prefix for debugging
-        if feature_type == 'premium':
-            key = 'P' + key[1:]
-        elif feature_type == 'trial':
-            key = 'T' + key[1:]
+        if feature_type == "premium":
+            key = "P" + key[1:]
+        elif feature_type == "trial":
+            key = "T" + key[1:]
         else:
-            key = 'S' + key[1:]  # Standard
+            key = "S" + key[1:]  # Standard
 
         return key
 
@@ -599,32 +599,32 @@ class FlexLMProtocolParser:
             packet = bytearray()
 
             # Magic number
-            packet.extend(struct.pack('>I', 0x464C4558))  # "FLEX"
+            packet.extend(struct.pack(">I", 0x464C4558))  # "FLEX"
 
             # Status code
-            packet.extend(struct.pack('>H', response.status))
+            packet.extend(struct.pack(">H", response.status))
 
             # Sequence number
-            packet.extend(struct.pack('>I', response.sequence))
+            packet.extend(struct.pack(">I", response.sequence))
 
             # Server version
-            server_version_bytes = response.server_version.encode('utf-8') + b'\x00'
+            server_version_bytes = response.server_version.encode("utf-8") + b"\x00"
             packet.extend(server_version_bytes)
 
             # Feature name
-            feature_bytes = response.feature.encode('utf-8') + b'\x00'
+            feature_bytes = response.feature.encode("utf-8") + b"\x00"
             packet.extend(feature_bytes)
 
             # Expiry date
-            expiry_bytes = response.expiry_date.encode('utf-8') + b'\x00'
+            expiry_bytes = response.expiry_date.encode("utf-8") + b"\x00"
             packet.extend(expiry_bytes)
 
             # License key
-            key_bytes = response.license_key.encode('utf-8') + b'\x00'
+            key_bytes = response.license_key.encode("utf-8") + b"\x00"
             packet.extend(key_bytes)
 
             # Server ID
-            server_id_bytes = response.server_id.encode('utf-8') + b'\x00'
+            server_id_bytes = response.server_id.encode("utf-8") + b"\x00"
             packet.extend(server_id_bytes)
 
             # Additional data
@@ -634,14 +634,14 @@ class FlexLMProtocolParser:
 
             # Update length field (insert at position 6)
             length = len(packet)
-            packet[6:6] = struct.pack('>I', length)
+            packet[6:6] = struct.pack(">I", length)
 
             return bytes(packet)
 
         except Exception as e:
             self.logger.error(f"Failed to serialize FlexLM response: {e}")
             # Return minimal error response
-            return struct.pack('>IHI', 0x464C4558, 0x03, response.sequence) + b'\x00'
+            return struct.pack(">IHI", 0x464C4558, 0x03, response.sequence) + b"\x00"
 
     def _serialize_additional_data(self, data: Dict[str, Any]) -> bytes:
         """Serialize additional data fields"""
@@ -650,17 +650,17 @@ class FlexLMProtocolParser:
         for key, value in data.items():
             try:
                 if isinstance(value, str):
-                    value_bytes = value.encode('utf-8')
+                    value_bytes = value.encode("utf-8")
                 elif isinstance(value, int):
-                    value_bytes = struct.pack('>I', value)
+                    value_bytes = struct.pack(">I", value)
                 elif isinstance(value, bytes):
                     value_bytes = value
                 else:
-                    value_bytes = str(value).encode('utf-8')
+                    value_bytes = str(value).encode("utf-8")
 
                 # Field header: type (2 bytes) + length (2 bytes)
                 field_type = hash(key) & 0xFFFF  # Simple hash for field type
-                serialized.extend(struct.pack('>HH', field_type, len(value_bytes)))
+                serialized.extend(struct.pack(">HH", field_type, len(value_bytes)))
                 serialized.extend(value_bytes)
 
             except Exception as e:

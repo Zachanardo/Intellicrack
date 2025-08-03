@@ -25,4 +25,4 @@ from .tools.ghidra_script_manager import (
     get_script_manager,
 )
 
-__all__ = ['GhidraScript', 'GhidraScriptManager', 'get_script_manager', 'add_script_directory']
+__all__ = ["GhidraScript", "GhidraScriptManager", "get_script_manager", "add_script_directory"]

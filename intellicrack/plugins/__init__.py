@@ -134,9 +134,9 @@ except ImportError as e:
                             package="intellicrack.plugins"
                         )
                         loaded_plugins[plugin_file.stem] = {
-                            'type': 'python',
-                            'module': module,
-                            'path': str(plugin_file)
+                            "type": "python",
+                            "module": module,
+                            "path": str(plugin_file)
                         }
                         logger.info("Loaded Python plugin: %s", plugin_file.stem)
                     except Exception as exc:
@@ -146,19 +146,19 @@ except ImportError as e:
         if FRIDA_SCRIPTS_DIR.exists():
             for script_file in FRIDA_SCRIPTS_DIR.glob("*.js"):
                 loaded_plugins[script_file.stem] = {
-                    'type': 'frida',
-                    'path': str(script_file)
+                    "type": "frida",
+                    "path": str(script_file)
                 }
                 logger.info("Found Frida script: %s", script_file.stem)
 
         # Register Ghidra scripts
         if GHIDRA_SCRIPTS_DIR.exists():
-            for ext in ['*.java', '*.py']:
+            for ext in ["*.java", "*.py"]:
                 for script_file in GHIDRA_SCRIPTS_DIR.glob(ext):
                     loaded_plugins[script_file.stem] = {
-                        'type': 'ghidra',
-                        'path': str(script_file),
-                        'language': 'java' if ext == '*.java' else 'python'
+                        "type": "ghidra",
+                        "path": str(script_file),
+                        "language": "java" if ext == "*.java" else "python"
                     }
                     logger.info("Found Ghidra script: %s", script_file.stem)
 
@@ -231,14 +231,14 @@ except ImportError as e:
 
 # Define package exports
 __all__ = [
-    'load_plugin',
-    'list_plugins',
-    'get_frida_script',
-    'get_ghidra_script',
-    'CUSTOM_MODULES_DIR',
-    'FRIDA_SCRIPTS_DIR',
-    'GHIDRA_SCRIPTS_DIR',
-    'RemotePluginExecutor',
+    "load_plugin",
+    "list_plugins",
+    "get_frida_script",
+    "get_ghidra_script",
+    "CUSTOM_MODULES_DIR",
+    "FRIDA_SCRIPTS_DIR",
+    "GHIDRA_SCRIPTS_DIR",
+    "RemotePluginExecutor",
 ] + PLUGIN_SYSTEM_EXPORTS
 
 # Package metadata

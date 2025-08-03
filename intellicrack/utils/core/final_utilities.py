@@ -222,14 +222,14 @@ def monitor_memory(process_name: Optional[str] = None,
     try:
         if process_name:
             # Monitor specific process
-            for proc in psutil.process_iter(['pid', 'name', 'memory_info']):
-                if proc.info['name'] == process_name:
-                    memory_info = proc.info['memory_info']
+            for proc in psutil.process_iter(["pid", "name", "memory_info"]):
+                if proc.info["name"] == process_name:
+                    memory_info = proc.info["memory_info"]
                     memory_mb = memory_info.rss / 1024 / 1024
 
                     return {
                         "process": process_name,
-                        "pid": proc.info['pid'],
+                        "pid": proc.info["pid"],
                         "memory_mb": memory_mb,
                         "threshold_exceeded": memory_mb > threshold_mb,
                         "virtual_memory_mb": memory_info.vms / 1024 / 1024
@@ -286,7 +286,7 @@ def compute_binary_hash(binary_path: str, algorithm: str = "sha256") -> Optional
     """
     try:
         hash_obj = hashlib.new(algorithm)
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             while chunk := f.read(8192):
                 hash_obj.update(chunk)
         return hash_obj.hexdigest()
@@ -312,7 +312,7 @@ def compute_section_hashes(binary_path: str) -> Dict[str, str]:
         pe = pefile.PE(binary_path)
 
         for section in pe.sections:
-            section_name = section.Name.decode('utf-8').rstrip('\x00')
+            section_name = section.Name.decode("utf-8").rstrip("\x00")
             section_data = section.get_data()
             section_hash = hashlib.sha256(section_data).hexdigest()
             section_hashes[section_name] = section_hash
@@ -369,20 +369,20 @@ def get_file_icon(file_path: str) -> Optional[str]:
     ext = Path(file_path).suffix.lower()
 
     icon_map = {
-        '.exe': 'application-x-executable',
-        '.dll': 'application-x-sharedlib',
-        '.so': 'application-x-sharedlib',
-        '.py': 'text-x-python',
-        '.js': 'text-x-javascript',
-        '.json': 'application-json',
-        '.txt': 'text-plain',
-        '.pdf': 'application-pdf',
-        '.zip': 'application-zip',
-        '.rar': 'application-x-rar',
-        '.7z': 'application-x-7z-compressed'
+        ".exe": "application-x-executable",
+        ".dll": "application-x-sharedlib",
+        ".so": "application-x-sharedlib",
+        ".py": "text-x-python",
+        ".js": "text-x-javascript",
+        ".json": "application-json",
+        ".txt": "text-plain",
+        ".pdf": "application-pdf",
+        ".zip": "application-zip",
+        ".rar": "application-x-rar",
+        ".7z": "application-x-7z-compressed"
     }
 
-    return icon_map.get(ext, 'application-octet-stream')
+    return icon_map.get(ext, "application-octet-stream")
 
 
 def get_resource_type(file_path: str) -> str:
@@ -397,20 +397,20 @@ def get_resource_type(file_path: str) -> str:
     """
     ext = Path(file_path).suffix.lower()
 
-    if ext in ['.exe', '.dll', '.so', '.dylib']:
-        return 'binary'
-    elif ext in ['.py', '.js', '.java', '.c', '.cpp', '.h']:
-        return 'source'
-    elif ext in ['.txt', '.md', '.rst', '.log']:
-        return 'text'
-    elif ext in ['.json', '.xml', '.yaml', '.yml']:
-        return 'config'
-    elif ext in ['.jpg', '.png', '.gif', '.bmp']:
-        return 'image'
-    elif ext in ['.zip', '.rar', '.7z', '.tar', '.gz']:
-        return 'archive'
+    if ext in [".exe", ".dll", ".so", ".dylib"]:
+        return "binary"
+    elif ext in [".py", ".js", ".java", ".c", ".cpp", ".h"]:
+        return "source"
+    elif ext in [".txt", ".md", ".rst", ".log"]:
+        return "text"
+    elif ext in [".json", ".xml", ".yaml", ".yml"]:
+        return "config"
+    elif ext in [".jpg", ".png", ".gif", ".bmp"]:
+        return "image"
+    elif ext in [".zip", ".rar", ".7z", ".tar", ".gz"]:
+        return "archive"
     else:
-        return 'unknown'
+        return "unknown"
 
 
 def cache_analysis_results(key: str, results: Dict[str, Any],
@@ -430,10 +430,10 @@ def cache_analysis_results(key: str, results: Dict[str, Any],
         os.makedirs(cache_dir, exist_ok=True)
         cache_file = os.path.join(cache_dir, f"{key}.json")
 
-        with open(cache_file, 'w', encoding='utf-8') as f:
+        with open(cache_file, "w", encoding="utf-8") as f:
             json.dump({
-                'timestamp': time.time(),
-                'results': results
+                "timestamp": time.time(),
+                "results": results
             }, f)
 
         return True
@@ -476,7 +476,7 @@ def get_captured_requests(limit: int = 100) -> List[Dict[str, Any]]:
         captured_requests.extend(system_requests)
 
         # 5. Sort by timestamp (most recent first) and apply limit
-        captured_requests.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
+        captured_requests.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
         captured_requests = captured_requests[:limit]
 
         # 6. Enhance requests with additional analysis
@@ -508,10 +508,10 @@ def _get_protocol_handler_requests(limit: int) -> List[Dict[str, Any]]:
     try:
         # Check if protocol handlers are active and have captured data
         protocol_modules = [
-            'license_protocol_handler',
-            'cloud_license_hooker',
-            'ssl_interceptor',
-            'traffic_analyzer'
+            "license_protocol_handler",
+            "cloud_license_hooker",
+            "ssl_interceptor",
+            "traffic_analyzer"
         ]
 
         for module_name in protocol_modules:
@@ -521,7 +521,7 @@ def _get_protocol_handler_requests(limit: int) -> List[Dict[str, Any]]:
                 # that maintain request histories
 
                 # Simulate getting requests from active handlers
-                if module_name == 'license_protocol_handler':
+                if module_name == "license_protocol_handler":
                     # FlexLM requests
                     request_list.extend([
                         {
@@ -530,7 +530,7 @@ def _get_protocol_handler_requests(limit: int) -> List[Dict[str, Any]]:
                             "type": "license_checkout",
                             "protocol": "FlexLM",
                             "src_ip": "192.168.1.100",
-                            "dst_ip": os.environ.get('LICENSE_SERVER_HOST', 'license.internal'),
+                            "dst_ip": os.environ.get("LICENSE_SERVER_HOST", "license.internal"),
                             "dst_port": 27000 + i,
                             "request_data": f"CHECKOUT feature_{i} HOST=client VERSION=1.0",
                             "response_data": f"GRANT feature_{i} 1.0 permanent",
@@ -540,7 +540,7 @@ def _get_protocol_handler_requests(limit: int) -> List[Dict[str, Any]]:
                             "bytes_received": 38 + i
                         } for i in range(min(3, limit // 4))
                     ])
-                elif module_name == 'cloud_license_hooker':
+                elif module_name == "cloud_license_hooker":
                     # Cloud license API requests
                     request_list.extend([
                         {
@@ -645,14 +645,14 @@ def _get_cached_capture_requests(limit: int) -> List[Dict[str, Any]]:
         for cache_file in cache_locations:
             if os.path.exists(cache_file):
                 try:
-                    with open(cache_file, 'r', encoding='utf-8') as f:
+                    with open(cache_file, "r", encoding="utf-8") as f:
                         cached_data = json.load(f)
 
                     # Validate and process cached requests
                     for item in cached_data:
-                        if isinstance(item, dict) and 'timestamp' in item:
+                        if isinstance(item, dict) and "timestamp" in item:
                             # Add source information
-                            item['source'] = f"Cache_File_{os.path.basename(cache_file)}"
+                            item["source"] = f"Cache_File_{os.path.basename(cache_file)}"
                             request_list.append(item)
 
                     if len(request_list) >= limit:
@@ -686,12 +686,12 @@ def _get_system_network_requests(limit: int) -> List[Dict[str, Any]]:
 
     try:
         # Use system tools to capture recent network activity
-        if hasattr(psutil, 'net_connections'):
+        if hasattr(psutil, "net_connections"):
             try:
-                connections = psutil.net_connections(kind='inet')
+                connections = psutil.net_connections(kind="inet")
 
                 for i, conn in enumerate(connections[:limit]):
-                    if conn.status == 'ESTABLISHED' and conn.raddr:
+                    if conn.status == "ESTABLISHED" and conn.raddr:
                         request_list.append({
                             "timestamp": time.time() - (i * 10),
                             "source": "System_Monitor",
@@ -711,12 +711,12 @@ def _get_system_network_requests(limit: int) -> List[Dict[str, Any]]:
                 pass
 
         # Add process-specific network activity
-        if hasattr(psutil, 'Process'):
+        if hasattr(psutil, "Process"):
             try:
                 current_process = psutil.Process()
                 for child in current_process.children(recursive=True)[:5]:
                     try:
-                        connections = child.connections(kind='inet')
+                        connections = child.connections(kind="inet")
                         for conn in connections[:2]:
                             if conn.raddr:
                                 request_list.append({
@@ -823,27 +823,27 @@ def _enhance_request_metadata(request: Dict[str, Any]) -> None:
     """
     try:
         # Add geolocation info for IP addresses
-        dst_ip = request.get('dst_ip', '')
-        if dst_ip and dst_ip != 'unknown':
-            request['geolocation'] = _get_ip_geolocation(dst_ip)
+        dst_ip = request.get("dst_ip", "")
+        if dst_ip and dst_ip != "unknown":
+            request["geolocation"] = _get_ip_geolocation(dst_ip)
 
         # Add protocol analysis
-        protocol = request.get('protocol', '').lower()
-        request['protocol_analysis'] = _analyze_protocol(protocol, request)
+        protocol = request.get("protocol", "").lower()
+        request["protocol_analysis"] = _analyze_protocol(protocol, request)
 
         # Add security assessment
-        request['security_flags'] = _assess_request_security(request)
+        request["security_flags"] = _assess_request_security(request)
 
         # Add timing analysis
-        request['timing_analysis'] = _analyze_request_timing(request)
+        request["timing_analysis"] = _analyze_request_timing(request)
 
         # Add size analysis
-        bytes_sent = request.get('bytes_sent', 0)
-        bytes_received = request.get('bytes_received', 0)
-        request['data_analysis'] = {
-            'total_bytes': bytes_sent + bytes_received,
-            'ratio': bytes_received / bytes_sent if bytes_sent > 0 else 0,
-            'size_category': _categorize_data_size(bytes_sent + bytes_received)
+        bytes_sent = request.get("bytes_sent", 0)
+        bytes_received = request.get("bytes_received", 0)
+        request["data_analysis"] = {
+            "total_bytes": bytes_sent + bytes_received,
+            "ratio": bytes_received / bytes_sent if bytes_sent > 0 else 0,
+            "size_category": _categorize_data_size(bytes_sent + bytes_received)
         }
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
@@ -862,18 +862,18 @@ def _get_ip_geolocation(ip: str) -> Dict[str, Any]:
     """
     """Get basic geolocation info for IP address."""
     # Simple heuristic-based geolocation
-    if ip.startswith('192.168.') or ip.startswith('10.') or ip.startswith('172.'):
-        return {'type': 'private', 'location': 'local_network'}
-    elif ip.startswith('127.'):
-        return {'type': 'loopback', 'location': 'localhost'}
+    if ip.startswith("192.168.") or ip.startswith("10.") or ip.startswith("172."):
+        return {"type": "private", "location": "local_network"}
+    elif ip.startswith("127."):
+        return {"type": "loopback", "location": "localhost"}
     else:
         # For public IPs, provide basic info
         ip_hash = hash(ip) % 1000
-        countries = ['US', 'CA', 'GB', 'DE', 'FR', 'JP', 'AU', 'NL']
+        countries = ["US", "CA", "GB", "DE", "FR", "JP", "AU", "NL"]
         return {
-            'type': 'public',
-            'country': countries[ip_hash % len(countries)],
-            'estimated': True
+            "type": "public",
+            "country": countries[ip_hash % len(countries)],
+            "estimated": True
         }
 
 
@@ -889,21 +889,21 @@ def _analyze_protocol(protocol: str, request: Dict[str, Any]) -> Dict[str, Any]:
         Dictionary containing protocol analysis results
     """
     """Analyze protocol-specific characteristics."""
-    analysis = {'protocol': protocol}
+    analysis = {"protocol": protocol}
 
-    if protocol in ['http', 'https']:
-        analysis['web_protocol'] = True
-        analysis['encrypted'] = protocol == 'https'
+    if protocol in ["http", "https"]:
+        analysis["web_protocol"] = True
+        analysis["encrypted"] = protocol == "https"
         # Check for common license-related endpoints
-        request_data = request.get('request_data', '')
-        if any(term in request_data.lower() for term in ['license', 'auth', 'activate', 'validate']):
-            analysis['license_related'] = True
-    elif protocol == 'tcp':
-        analysis['connection_oriented'] = True
-        analysis['reliable'] = True
-    elif protocol == 'udp':
-        analysis['connectionless'] = True
-        analysis['unreliable'] = True
+        request_data = request.get("request_data", "")
+        if any(term in request_data.lower() for term in ["license", "auth", "activate", "validate"]):
+            analysis["license_related"] = True
+    elif protocol == "tcp":
+        analysis["connection_oriented"] = True
+        analysis["reliable"] = True
+    elif protocol == "udp":
+        analysis["connectionless"] = True
+        analysis["unreliable"] = True
 
     return analysis
 
@@ -922,27 +922,27 @@ def _assess_request_security(request: Dict[str, Any]) -> List[str]:
     flags = []
 
     # Check for encrypted protocols
-    protocol = request.get('protocol', '').lower()
-    if protocol in ['https', 'ssl', 'tls']:
-        flags.append('encrypted')
-    elif protocol in ['http', 'ftp', 'telnet']:
-        flags.append('unencrypted')
+    protocol = request.get("protocol", "").lower()
+    if protocol in ["https", "ssl", "tls"]:
+        flags.append("encrypted")
+    elif protocol in ["http", "ftp", "telnet"]:
+        flags.append("unencrypted")
 
     # Check for license-related activity
-    request_data = request.get('request_data', '').lower()
-    response_data = request.get('response_data', '').lower()
+    request_data = request.get("request_data", "").lower()
+    response_data = request.get("response_data", "").lower()
 
-    if any(term in request_data + response_data for term in ['license', 'key', 'activate', 'validate']):
-        flags.append('license_related')
+    if any(term in request_data + response_data for term in ["license", "key", "activate", "validate"]):
+        flags.append("license_related")
 
     # Check for suspicious patterns
-    if 'crack' in request_data + response_data:
-        flags.append('suspicious_content')
+    if "crack" in request_data + response_data:
+        flags.append("suspicious_content")
 
     # Check for large data transfers
-    total_bytes = request.get('bytes_sent', 0) + request.get('bytes_received', 0)
+    total_bytes = request.get("bytes_sent", 0) + request.get("bytes_received", 0)
     if total_bytes > 10000:
-        flags.append('large_transfer')
+        flags.append("large_transfer")
 
     return flags
 
@@ -958,14 +958,14 @@ def _analyze_request_timing(request: Dict[str, Any]) -> Dict[str, Any]:
         Dictionary containing timing analysis results
     """
     """Analyze timing characteristics of the request."""
-    timestamp = request.get('timestamp', time.time())
+    timestamp = request.get("timestamp", time.time())
     age_seconds = time.time() - timestamp
 
     return {
-        'age_seconds': age_seconds,
-        'age_category': _categorize_age(age_seconds),
-        'hour_of_day': int((timestamp % 86400) // 3600),
-        'is_recent': age_seconds < 300  # Less than 5 minutes
+        "age_seconds": age_seconds,
+        "age_category": _categorize_age(age_seconds),
+        "hour_of_day": int((timestamp % 86400) // 3600),
+        "is_recent": age_seconds < 300  # Less than 5 minutes
     }
 
 
@@ -981,15 +981,15 @@ def _categorize_data_size(size_bytes: int) -> str:
     """
     """Categorize data transfer size."""
     if size_bytes < 100:
-        return 'tiny'
+        return "tiny"
     elif size_bytes < 1024:
-        return 'small'
+        return "small"
     elif size_bytes < 10240:
-        return 'medium'
+        return "medium"
     elif size_bytes < 102400:
-        return 'large'
+        return "large"
     else:
-        return 'very_large'
+        return "very_large"
 
 
 def _categorize_age(age_seconds: float) -> str:
@@ -1004,15 +1004,15 @@ def _categorize_age(age_seconds: float) -> str:
     """
     """Categorize the age of a request."""
     if age_seconds < 60:
-        return 'very_recent'
+        return "very_recent"
     elif age_seconds < 300:
-        return 'recent'
+        return "recent"
     elif age_seconds < 3600:
-        return 'within_hour'
+        return "within_hour"
     elif age_seconds < 86400:
-        return 'within_day'
+        return "within_day"
     else:
-        return 'old'
+        return "old"
 
 
 def force_memory_cleanup() -> Dict[str, Any]:
@@ -1259,9 +1259,9 @@ def hash_func(data: Any, algorithm: str = "sha256") -> str:
     if isinstance(data, bytes):
         hash_data = data
     elif isinstance(data, str):
-        hash_data = data.encode('utf-8')
+        hash_data = data.encode("utf-8")
     else:
-        hash_data = json.dumps(data, sort_keys=True).encode('utf-8')
+        hash_data = json.dumps(data, sort_keys=True).encode("utf-8")
 
     hash_obj = hashlib.new(algorithm)
     hash_obj.update(hash_data)
@@ -1282,7 +1282,7 @@ def export_metrics(metrics: Dict[str, Any], output_path: str) -> bool:
         True if successfully exported, False otherwise
     """
     try:
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(metrics, f, indent=2)
         return True
     except (OSError, ValueError, RuntimeError) as e:
@@ -1327,7 +1327,7 @@ def submit_report(report_data: Dict[str, Any],
         # 4. Handle additional delivery methods if configured
         additional_results = _handle_additional_delivery_methods(validated_report, report_id)
         if additional_results:
-            submission_result['additional_deliveries'] = additional_results
+            submission_result["additional_deliveries"] = additional_results
 
         # 5. Create audit trail and logging
         _create_submission_audit_trail(submission_result, submission_metadata)
@@ -1341,7 +1341,7 @@ def submit_report(report_data: Dict[str, Any],
         }
 
         logger.info("Report submission completed: %s (ID: %s)",
-                   submission_result.get('status', 'unknown'), report_id)
+                   submission_result.get("status", "unknown"), report_id)
 
         return final_result
 
@@ -1460,7 +1460,7 @@ def _submit_to_remote_endpoint(report_data: Dict[str, Any], endpoint: str, repor
     """Submit report to remote endpoint with comprehensive handling."""
     try:
         # Parse endpoint URL
-        if not endpoint.startswith(('http://', 'https://')):
+        if not endpoint.startswith(("http://", "https://")):
             endpoint = f"https://{endpoint}"
 
         # Prepare submission data
@@ -1481,8 +1481,8 @@ def _submit_to_remote_endpoint(report_data: Dict[str, Any], endpoint: str, repor
 
                 # Set timeout and headers
                 headers = {
-                    'Content-Type': 'application/json',
-                    'User-Agent': 'Intellicrack/1.0'
+                    "Content-Type": "application/json",
+                    "User-Agent": "Intellicrack/1.0"
                 }
 
                 try:
@@ -1550,7 +1550,7 @@ def _submit_to_local_storage(report_data: Dict[str, Any], report_id: str) -> Dic
         # 1. JSON format (primary)
         json_path = os.path.join(reports_dir, f"{report_id}.json")
         try:
-            with open(json_path, 'w', encoding='utf-8') as f:
+            with open(json_path, "w", encoding="utf-8") as f:
                 json.dump(report_data, f, indent=2, ensure_ascii=False)
             formats_saved.append({"format": "json", "path": json_path, "size": os.path.getsize(json_path)})
         except (OSError, ValueError) as e:
@@ -1559,7 +1559,7 @@ def _submit_to_local_storage(report_data: Dict[str, Any], report_id: str) -> Dic
         # 2. Human-readable text format
         txt_path = os.path.join(reports_dir, f"{report_id}.txt")
         try:
-            with open(txt_path, 'w', encoding='utf-8') as f:
+            with open(txt_path, "w", encoding="utf-8") as f:
                 f.write(_format_report_as_text(report_data))
             formats_saved.append({"format": "text", "path": txt_path, "size": os.path.getsize(txt_path)})
         except (OSError, ValueError) as e:
@@ -1631,13 +1631,13 @@ def _handle_additional_delivery_methods(report_data: Dict[str, Any], report_id: 
 def _attempt_email_delivery(report_data: Dict[str, Any], report_id: str) -> Optional[Dict[str, Any]]:
     """Attempt to deliver report via email."""
     # Check for email configuration
-    email_config = os.environ.get('INTELLICRACK_EMAIL_CONFIG')
+    email_config = os.environ.get("INTELLICRACK_EMAIL_CONFIG")
     if not email_config:
         return None
 
     try:
         # Parse email configuration (expected format: smtp_host:port:username:password:recipient)
-        config_parts = email_config.split(':')
+        config_parts = email_config.split(":")
         if len(config_parts) < 5:
             logger.warning("Invalid email configuration format")
             return None
@@ -1652,13 +1652,13 @@ def _attempt_email_delivery(report_data: Dict[str, Any], report_id: str) -> Opti
 
             # Create message
             msg = MIMEMultipart()
-            msg['From'] = username
-            msg['To'] = recipient
-            msg['Subject'] = f"Intellicrack Report {report_id}"
+            msg["From"] = username
+            msg["To"] = recipient
+            msg["Subject"] = f"Intellicrack Report {report_id}"
 
             # Add report as attachment
             body = json.dumps(report_data, indent=2)
-            msg.attach(MIMEText(body, 'plain'))
+            msg.attach(MIMEText(body, "plain"))
 
             # Send email
             with smtplib.SMTP(smtp_host, int(smtp_port)) as server:
@@ -1698,27 +1698,27 @@ def _attempt_email_delivery(report_data: Dict[str, Any], report_id: str) -> Opti
 def _attempt_cloud_storage(report_data: Dict[str, Any], report_id: str) -> Optional[Dict[str, Any]]:
     """Attempt to store report in cloud storage."""
     # Check for cloud storage configuration
-    cloud_config = os.environ.get('INTELLICRACK_CLOUD_CONFIG')
+    cloud_config = os.environ.get("INTELLICRACK_CLOUD_CONFIG")
     if not cloud_config:
         return None
 
     try:
         # Parse cloud configuration
         config = json.loads(cloud_config)
-        provider = config.get('provider', 'aws_s3').lower()
+        provider = config.get("provider", "aws_s3").lower()
 
-        if provider == 'aws_s3':
+        if provider == "aws_s3":
             # Try AWS S3 upload
             try:
                 import boto3
 
-                s3 = boto3.client('s3',
-                    aws_access_key_id=config.get('access_key'),
-                    aws_secret_access_key=config.get('secret_key'),
-                    region_name=config.get('region', 'us-east-1')
+                s3 = boto3.client("s3",
+                    aws_access_key_id=config.get("access_key"),
+                    aws_secret_access_key=config.get("secret_key"),
+                    region_name=config.get("region", "us-east-1")
                 )
 
-                bucket = config.get('bucket', 'intellicrack-reports')
+                bucket = config.get("bucket", "intellicrack-reports")
                 key = f"reports/{report_id}.json"
 
                 # Upload the report
@@ -1726,7 +1726,7 @@ def _attempt_cloud_storage(report_data: Dict[str, Any], report_id: str) -> Optio
                     Bucket=bucket,
                     Key=key,
                     Body=json.dumps(report_data, indent=2),
-                    ContentType='application/json'
+                    ContentType="application/json"
                 )
 
                 return {
@@ -1756,13 +1756,13 @@ def _attempt_cloud_storage(report_data: Dict[str, Any], report_id: str) -> Optio
                     "message": f"Failed to upload to AWS S3: {e}"
                 }
 
-        elif provider == 'azure':
+        elif provider == "azure":
             # Try Azure Blob Storage upload
             try:
                 from azure.storage.blob import BlobServiceClient
 
-                connection_string = config.get('connection_string')
-                container = config.get('container', 'intellicrack-reports')
+                connection_string = config.get("connection_string")
+                container = config.get("container", "intellicrack-reports")
                 blob_name = f"reports/{report_id}.json"
 
                 blob_service = BlobServiceClient.from_connection_string(connection_string)
@@ -1772,7 +1772,7 @@ def _attempt_cloud_storage(report_data: Dict[str, Any], report_id: str) -> Optio
                 blob_client.upload_blob(
                     json.dumps(report_data, indent=2),
                     overwrite=True,
-                    content_settings={'content_type': 'application/json'}
+                    content_settings={"content_type": "application/json"}
                 )
 
                 return {
@@ -1829,21 +1829,21 @@ def _attempt_cloud_storage(report_data: Dict[str, Any], report_id: str) -> Optio
 def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Optional[Dict[str, Any]]:
     """Attempt to store report in database."""
     # Check for database configuration
-    db_config = os.environ.get('INTELLICRACK_DB_CONFIG')
+    db_config = os.environ.get("INTELLICRACK_DB_CONFIG")
     if not db_config:
         return None
 
     try:
         # Parse database configuration
         config = json.loads(db_config)
-        db_type = config.get('type', 'sqlite').lower()
+        db_type = config.get("type", "sqlite").lower()
 
-        if db_type == 'sqlite':
+        if db_type == "sqlite":
             # SQLite database storage
             try:
                 import sqlite3
 
-                db_path = config.get('path', 'intellicrack_reports.db')
+                db_path = config.get("path", "intellicrack_reports.db")
                 conn = sqlite3.connect(db_path)
                 cursor = conn.cursor()
 
@@ -1861,7 +1861,7 @@ def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Op
                                (report_id,
                                 time.time(),
                                 json.dumps(report_data),
-                                json.dumps(report_data.get('report_metadata', {}))))
+                                json.dumps(report_data.get("report_metadata", {}))))
 
                 conn.commit()
                 conn.close()
@@ -1885,17 +1885,17 @@ def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Op
                     "message": f"Failed to store in SQLite: {e}"
                 }
 
-        elif db_type == 'postgresql':
+        elif db_type == "postgresql":
             # PostgreSQL database storage
             try:
                 import psycopg2
 
                 conn = psycopg2.connect(
-                    host=config.get('host', 'localhost'),
-                    port=config.get('port', 5432),
-                    database=config.get('database', 'intellicrack'),
-                    user=config.get('user'),
-                    password=config.get('password')
+                    host=config.get("host", "localhost"),
+                    port=config.get("port", 5432),
+                    database=config.get("database", "intellicrack"),
+                    user=config.get("user"),
+                    password=config.get("password")
                 )
                 cursor = conn.cursor()
 
@@ -1917,7 +1917,7 @@ def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Op
                                (report_id,
                                 time.time(),
                                 json.dumps(report_data),
-                                json.dumps(report_data.get('report_metadata', {}))))
+                                json.dumps(report_data.get("report_metadata", {}))))
 
                 conn.commit()
                 conn.close()
@@ -1926,7 +1926,7 @@ def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Op
                     "method": "database",
                     "status": "success",
                     "database": "postgresql",
-                    "host": config.get('host', 'localhost'),
+                    "host": config.get("host", "localhost"),
                     "record_id": report_id,
                     "message": "Report stored in PostgreSQL database"
                 }
@@ -1949,23 +1949,23 @@ def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Op
                     "message": f"Failed to store in PostgreSQL: {e}"
                 }
 
-        elif db_type == 'mongodb':
+        elif db_type == "mongodb":
             # MongoDB database storage
             try:
                 import pymongo
 
-                client = pymongo.MongoClient(config.get('connection_string', 'mongodb://localhost:27017/'))
-                db = client[config.get('database', 'intellicrack')]
-                collection = db[config.get('collection', 'analysis_reports')]
+                client = pymongo.MongoClient(config.get("connection_string", "mongodb://localhost:27017/"))
+                db = client[config.get("database", "intellicrack")]
+                collection = db[config.get("collection", "analysis_reports")]
 
                 # Insert or update report
                 collection.replace_one(
-                    {'_id': report_id},
+                    {"_id": report_id},
                     {
-                        '_id': report_id,
-                        'timestamp': time.time(),
-                        'report_data': report_data,
-                        'metadata': report_data.get('report_metadata', {})
+                        "_id": report_id,
+                        "timestamp": time.time(),
+                        "report_data": report_data,
+                        "metadata": report_data.get("report_metadata", {})
                     },
                     upsert=True
                 )
@@ -1976,7 +1976,7 @@ def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Op
                     "method": "database",
                     "status": "success",
                     "database": "mongodb",
-                    "collection": config.get('collection', 'analysis_reports'),
+                    "collection": config.get("collection", "analysis_reports"),
                     "record_id": report_id,
                     "message": "Report stored in MongoDB"
                 }
@@ -2038,9 +2038,9 @@ def _generate_report_summary(report_data: Dict[str, Any]) -> Dict[str, Any]:
         summary["data_types"][key] = type(value).__name__
 
         # Check for common patterns
-        if key.lower() in ['error', 'errors', 'exception']:
+        if key.lower() in ["error", "errors", "exception"]:
             summary["has_errors"] = True
-        elif key.lower() in ['results', 'findings', 'output']:
+        elif key.lower() in ["results", "findings", "output"]:
             summary["has_results"] = True
 
     return summary
@@ -2051,7 +2051,7 @@ def _sanitize_report_data(report_data: Dict[str, Any]) -> Dict[str, Any]:
     sanitized = report_data.copy()
 
     # Remove or mask sensitive keys
-    sensitive_patterns = ['password', 'key', 'token', 'secret', 'credential']
+    sensitive_patterns = ["password", "key", "token", "secret", "credential"]
 
     def sanitize_dict(data):
         if isinstance(data, dict):
@@ -2132,7 +2132,7 @@ def _save_report_as_csv(report_data: Dict[str, Any], csv_path: str) -> bool:
             if isinstance(value, list) and value:
                 if isinstance(value[0], dict):
                     # List of dictionaries - perfect for CSV
-                    with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+                    with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
                         if value:
                             fieldnames = list(value[0].keys())
                             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -2142,9 +2142,9 @@ def _save_report_as_csv(report_data: Dict[str, Any], csv_path: str) -> bool:
                     return True
 
         # If no suitable tabular data found, create summary CSV
-        with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+        with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(['Section', 'Type', 'Summary'])
+            writer.writerow(["Section", "Type", "Summary"])
 
             for key, value in content.items():
                 summary = str(value)[:100] + "..." if len(str(value)) > 100 else str(value)
@@ -2163,10 +2163,10 @@ def _create_report_archive(report_id: str, formats_saved: List[Dict[str, Any]], 
     try:
         import tarfile
 
-        with tarfile.open(archive_path, 'w:gz') as tar:
+        with tarfile.open(archive_path, "w:gz") as tar:
             for format_info in formats_saved:
-                if format_info['format'] != 'archive':  # Don't include the archive itself
-                    file_path = format_info['path']
+                if format_info["format"] != "archive":  # Don't include the archive itself
+                    file_path = format_info["path"]
                     if os.path.exists(file_path):
                         arcname = os.path.basename(file_path)
                         tar.add(file_path, arcname=arcname)
@@ -2198,7 +2198,7 @@ def _create_submission_audit_trail(submission_result: Dict[str, Any], metadata: 
         from intellicrack.utils.core.plugin_paths import get_reports_dir
         audit_file = get_reports_dir() / "audit.log"
         try:
-            with open(audit_file, 'a', encoding='utf-8') as f:
+            with open(audit_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(audit_entry) + "\n")
         except OSError as e:
             logger.error("OS error in final_utilities: %s", e)
@@ -2333,8 +2333,8 @@ def load_dataset_preview(dataset_path: str, limit: int = 10) -> List[Dict[str, A
         List of dataset items for preview
     """
     try:
-        with open(dataset_path, 'r', encoding='utf-8') as f:
-            if dataset_path.endswith('.jsonl'):
+        with open(dataset_path, "r", encoding="utf-8") as f:
+            if dataset_path.endswith(".jsonl"):
                 # JSON Lines format
                 preview = []
                 for i, line in enumerate(f):
@@ -2514,7 +2514,7 @@ def do_GET(request_handler: Any) -> None:
         request_handler: HTTP request handler object
     """
     request_handler.send_response(200)
-    request_handler.send_header('Content-type', 'text/html')
+    request_handler.send_header("Content-type", "text/html")
     request_handler.end_headers()
     request_handler.wfile.write(b"Intellicrack Server Running")
 

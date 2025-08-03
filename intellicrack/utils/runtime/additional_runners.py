@@ -146,7 +146,7 @@ def run_comprehensive_analysis(binary_path: str, output_dir: Optional[str] = Non
     # Save results to file
     results_file = os.path.join(output_dir, "comprehensive_analysis.json")
     try:
-        with open(results_file, 'w', encoding='utf-8') as f:
+        with open(results_file, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2, default=str)
         results["results_file"] = results_file
     except (OSError, ValueError, RuntimeError) as e:
@@ -430,7 +430,7 @@ def run_ghidra_analysis_gui(binary_path: str, ghidra_path: Optional[str] = None)
 
             # Launch Ghidra
             cmd = [ghidra_run, binary_path]
-            subprocess.Popen(cmd, encoding='utf-8')
+            subprocess.Popen(cmd, encoding="utf-8")
 
             results["launched"] = True
             results["project_dir"] = project_dir
@@ -745,7 +745,7 @@ def validate_dataset(dataset_path: str, dataset_type: str = "binary") -> Dict[st
         if dataset_type == "binary":
             # Validate binary dataset
             if os.path.isdir(dataset_path):
-                files = [f for f in os.listdir(dataset_path) if f.endswith(('.exe', '.dll', '.so', '.dylib'))]
+                files = [f for f in os.listdir(dataset_path) if f.endswith((".exe", ".dll", ".so", ".dylib"))]
                 results["file_count"] = len(files)
 
                 if len(files) == 0:
@@ -757,7 +757,7 @@ def validate_dataset(dataset_path: str, dataset_type: str = "binary") -> Dict[st
         elif dataset_type == "json":
             # Validate JSON dataset
             if os.path.isfile(dataset_path):
-                with open(dataset_path, 'r', encoding='utf-8') as f:
+                with open(dataset_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
 
                 results["record_count"] = len(data) if isinstance(data, list) else 1
@@ -795,7 +795,7 @@ def verify_hash(file_path: str, expected_hash: str,
     try:
         h = hashlib.new(algorithm)
 
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             while chunk := f.read(8192):
                 h.update(chunk)
 
@@ -862,7 +862,7 @@ def compute_file_hash(file_path: str, algorithm: str = "sha256") -> str:
     """
     h = hashlib.new(algorithm)
 
-    with open(file_path, 'rb') as f:
+    with open(file_path, "rb") as f:
         while chunk := f.read(8192):
             h.update(chunk)
 
@@ -933,13 +933,13 @@ console.log("Sample Frida script loaded");
     try:
         # Create Python plugin
         python_file = os.path.join(plugin_dir, "sample_plugin.py")
-        with open(python_file, 'w', encoding='utf-8') as f:
+        with open(python_file, "w", encoding="utf-8") as f:
             f.write(python_plugin)
         results["plugins_created"].append(python_file)
 
         # Create Frida script
         frida_file = os.path.join(plugin_dir, "sample_frida.js")
-        with open(frida_file, 'w', encoding='utf-8') as f:
+        with open(frida_file, "w", encoding="utf-8") as f:
             f.write(frida_script)
         results["plugins_created"].append(frida_file)
 
@@ -972,11 +972,11 @@ def load_ai_model(model_path: str, model_type: str = "auto") -> Dict[str, Any]:
     try:
         if model_type == "auto":
             # Detect model type by extension
-            if model_path.endswith('.pt') or model_path.endswith('.pth'):
+            if model_path.endswith(".pt") or model_path.endswith(".pth"):
                 model_type = "pytorch"
-            elif model_path.endswith('.h5') or model_path.endswith('.keras'):
+            elif model_path.endswith(".h5") or model_path.endswith(".keras"):
                 model_type = "tensorflow"
-            elif model_path.endswith('.pkl') or model_path.endswith('.joblib'):
+            elif model_path.endswith(".pkl") or model_path.endswith(".joblib"):
                 model_type = "sklearn"
 
         results["detected_type"] = model_type
@@ -992,7 +992,7 @@ def load_ai_model(model_path: str, model_type: str = "auto") -> Dict[str, Any]:
             results["loaded"] = True
             results["model_info"] = {
                 "type": type(model).__name__,
-                "features": getattr(model, 'n_features_in_', 'unknown')
+                "features": getattr(model, "n_features_in_", "unknown")
             }
 
         else:
@@ -1020,9 +1020,9 @@ def get_target_process_pid(process_name: str) -> Optional[int]:
         return None
 
     try:
-        for proc in psutil.process_iter(['pid', 'name']):
-            if process_name.lower() in proc.info['name'].lower():
-                return proc.info['pid']
+        for proc in psutil.process_iter(["pid", "name"]):
+            if process_name.lower() in proc.info["name"].lower():
+                return proc.info["pid"]
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error getting process PID: %s", e)
@@ -1139,7 +1139,7 @@ def _detect_linux_usb_dongles() -> List[Dict[str, Any]]:
         # Use lsusb to list USB devices
         result = subprocess.run(["lsusb"], capture_output=True, text=True, timeout=5)
         if result.returncode == 0:
-            for line in result.stdout.split('\n'):
+            for line in result.stdout.split("\n"):
                 if line.strip():
                     line_lower = line.lower()
                     if any(keyword in line_lower for keyword in
@@ -1176,18 +1176,18 @@ def _detect_dongle_processes() -> List[Dict[str, Any]]:
             "sentinel", "wibukey", "cryptkey", "securikey", "rockey"
         ]
 
-        for proc in psutil.process_iter(['pid', 'name', 'exe']):
+        for proc in psutil.process_iter(["pid", "name", "exe"]):
             try:
-                proc_name = proc.info['name'].lower() if proc.info['name'] else ""
-                proc_exe = proc.info['exe'].lower() if proc.info['exe'] else ""
+                proc_name = proc.info["name"].lower() if proc.info["name"] else ""
+                proc_exe = proc.info["exe"].lower() if proc.info["exe"] else ""
 
                 if any(dongle_proc in proc_name or dongle_proc in proc_exe
                       for dongle_proc in dongle_processes):
                     processes.append({
                         "type": "dongle_process",
-                        "pid": proc.info['pid'],
-                        "name": proc.info['name'],
-                        "exe": proc.info['exe'],
+                        "pid": proc.info["pid"],
+                        "name": proc.info["name"],
+                        "exe": proc.info["exe"],
                         "confidence": 0.9
                     })
 
@@ -1276,7 +1276,7 @@ def _detect_linux_dongle_drivers() -> List[Dict[str, Any]]:
         # Check loaded kernel modules
         result = subprocess.run(["lsmod"], capture_output=True, text=True, timeout=5)
         if result.returncode == 0:
-            for line in result.stdout.split('\n')[1:]:  # Skip header
+            for line in result.stdout.split("\n")[1:]:  # Skip header
                 if line.strip():
                     module_name = line.split()[0].lower()
                     if any(pattern in module_name for pattern in
@@ -1355,7 +1355,7 @@ def _detect_network_dongles() -> List[Dict[str, Any]]:
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(1)
-                result = sock.connect_ex(('localhost', port))
+                result = sock.connect_ex(("localhost", port))
                 if result == 0:
                     network_dongles.append({
                         "type": "network_dongle",
@@ -1705,16 +1705,16 @@ def _verify_static_analysis(binary_path: str) -> Dict[str, Any]:
 
         # Check 2: Look for common crack signatures in binary
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 binary_data = f.read(min(file_size, 1024 * 1024))  # Read first 1MB
 
             # Look for patterns indicating successful patching
             crack_patterns = [
-                b'\x90\x90\x90',  # NOP sleds
-                b'\xEB',          # JMP instructions
-                b'\xB0\x01',      # MOV AL, 1
-                b'\x31\xC0',      # XOR EAX, EAX
-                b'\xC3'           # RET
+                b"\x90\x90\x90",  # NOP sleds
+                b"\xEB",          # JMP instructions
+                b"\xB0\x01",      # MOV AL, 1
+                b"\x31\xC0",      # XOR EAX, EAX
+                b"\xC3"           # RET
             ]
 
             patterns_found = 0
@@ -1879,14 +1879,14 @@ def _verify_protection_bypass(binary_path: str) -> Dict[str, Any]:
 
         # Protection 1: Check for debugger detection bypass
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 binary_data = f.read(min(1024*1024, 1000000))  # Read first 1MB
 
             # Look for common anti-debug patterns that should be NOPed
             anti_debug_patterns = [
-                b'IsDebuggerPresent',
-                b'CheckRemoteDebuggerPresent',
-                b'NtQueryInformationProcess'
+                b"IsDebuggerPresent",
+                b"CheckRemoteDebuggerPresent",
+                b"NtQueryInformationProcess"
             ]
 
             debug_protection_found = sum(1 for pattern in anti_debug_patterns if pattern in binary_data)
@@ -1903,7 +1903,7 @@ def _verify_protection_bypass(binary_path: str) -> Dict[str, Any]:
 
         # Protection 2: Check for VM detection bypass
         try:
-            vm_patterns = [b'VMware', b'VirtualBox', b'QEMU', b'Xen']
+            vm_patterns = [b"VMware", b"VirtualBox", b"QEMU", b"Xen"]
             vm_detection_found = sum(1 for pattern in vm_patterns if pattern in binary_data)
 
             if vm_detection_found == 0:
@@ -1918,7 +1918,7 @@ def _verify_protection_bypass(binary_path: str) -> Dict[str, Any]:
 
         # Protection 3: Check for integrity checks bypass
         try:
-            integrity_patterns = [b'CRC', b'checksum', b'hash', b'MD5', b'SHA']
+            integrity_patterns = [b"CRC", b"checksum", b"hash", b"MD5", b"SHA"]
             integrity_checks_found = sum(1 for pattern in integrity_patterns if pattern in binary_data)
 
             # If integrity checks are found but binary still runs, they may be bypassed
@@ -1961,14 +1961,14 @@ def _verify_license_bypass(binary_path: str) -> Dict[str, Any]:
 
         # Check 1: Look for hardcoded success returns
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 binary_data = f.read(min(1024*1024, 1000000))
 
             # Look for patterns indicating license bypass
             bypass_patterns = [
-                b'\xB0\x01\xC3',    # MOV AL, 1; RET (return true)
-                b'\x31\xC0\x40\xC3', # XOR EAX, EAX; INC EAX; RET (return 1)
-                b'\xB8\x01\x00\x00\x00\xC3'  # MOV EAX, 1; RET
+                b"\xB0\x01\xC3",    # MOV AL, 1; RET (return true)
+                b"\x31\xC0\x40\xC3", # XOR EAX, EAX; INC EAX; RET (return 1)
+                b"\xB8\x01\x00\x00\x00\xC3"  # MOV EAX, 1; RET
             ]
 
             bypass_patterns_found = sum(1 for pattern in bypass_patterns if pattern in binary_data)
@@ -1985,7 +1985,7 @@ def _verify_license_bypass(binary_path: str) -> Dict[str, Any]:
 
         # Check 2: Look for NOPed license checks
         try:
-            nop_sequences = binary_data.count(b'\x90\x90\x90')  # Three or more NOPs
+            nop_sequences = binary_data.count(b"\x90\x90\x90")  # Three or more NOPs
 
             if nop_sequences > 10:  # Threshold for significant NOPing
                 result["license_checks"].append(f"Found {nop_sequences} NOP sequences (potential NOPed license checks)")
@@ -2002,7 +2002,7 @@ def _verify_license_bypass(binary_path: str) -> Dict[str, Any]:
 
         # Check 3: License string analysis
         try:
-            license_strings = [b'license', b'trial', b'demo', b'activation', b'serial']
+            license_strings = [b"license", b"trial", b"demo", b"activation", b"serial"]
             license_refs_found = sum(1 for string in license_strings if string in binary_data)
 
             if license_refs_found > 0:
@@ -2057,17 +2057,17 @@ def _verify_patch_integrity(binary_path: str) -> Dict[str, Any]:
 
         # Check 2: File format integrity
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 header = f.read(512)
 
             # Check for valid executable headers
-            if header.startswith(b'MZ'):  # PE header
+            if header.startswith(b"MZ"):  # PE header
                 result["integrity_checks"].append("Valid PE executable header detected")
                 result["confidence"] += 0.3
-            elif header.startswith(b'\x7fELF'):  # ELF header
+            elif header.startswith(b"\x7fELF"):  # ELF header
                 result["integrity_checks"].append("Valid ELF executable header detected")
                 result["confidence"] += 0.3
-            elif header[:4] in [b'\xfe\xed\xfa\xce', b'\xfe\xed\xfa\xcf']:  # Mach-O
+            elif header[:4] in [b"\xfe\xed\xfa\xce", b"\xfe\xed\xfa\xcf"]:  # Mach-O
                 result["integrity_checks"].append("Valid Mach-O executable header detected")
                 result["confidence"] += 0.3
             else:
@@ -2082,10 +2082,10 @@ def _verify_patch_integrity(binary_path: str) -> Dict[str, Any]:
             import platform
             system = platform.system()
 
-            if system == "Windows" and binary_path.lower().endswith('.exe'):
+            if system == "Windows" and binary_path.lower().endswith(".exe"):
                 result["integrity_checks"].append("File extension matches platform")
                 result["confidence"] += 0.1
-            elif system != "Windows" and not binary_path.lower().endswith('.exe'):
+            elif system != "Windows" and not binary_path.lower().endswith(".exe"):
                 result["integrity_checks"].append("File format appropriate for platform")
                 result["confidence"] += 0.1
 
@@ -2095,7 +2095,7 @@ def _verify_patch_integrity(binary_path: str) -> Dict[str, Any]:
 
         # Check 4: Calculate file hash for future reference
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 file_hash = hashlib.sha256(f.read()).hexdigest()
 
             result["integrity_checks"].append(f"File hash calculated: {file_hash[:16]}...")
@@ -2339,7 +2339,7 @@ def _parse_tool_output(tool_name: str, output: str) -> Dict[str, Any]:
     parsed = {}
 
     if tool_name == "strings":
-        lines = output.strip().split('\n')
+        lines = output.strip().split("\n")
         parsed["string_count"] = len(lines)
         parsed["samples"] = lines[:20]
 
@@ -2593,7 +2593,7 @@ def run_weak_crypto_detection(binary_path: str) -> Dict[str, Any]:
         for pattern, matches in pattern_results.get("matches", {}).items():
             if matches:
                 weak_algorithms.append({
-                    "algorithm": pattern.decode('utf-8', errors='ignore'),
+                    "algorithm": pattern.decode("utf-8", errors="ignore"),
                     "occurrences": len(matches)
                 })
 
@@ -2736,35 +2736,35 @@ def run_ml_similarity_search(binary_path: str, database: Optional[str] = None) -
 
 # Export all functions
 __all__ = [
-    'run_comprehensive_analysis',
-    'run_deep_license_analysis',
-    'run_detect_packing',
-    'run_analysis',
-    'run_autonomous_crack',
-    'run_full_autonomous_mode',
-    'run_ghidra_analysis_gui',
-    'run_incremental_analysis_ui',
-    'run_deep_cfg_analysis',
-    'run_external_tool',
-    'run_windows_activator',
-    'check_adobe_licensex_status',
-    'run_adobe_licensex_manually',
-    'validate_dataset',
-    'verify_hash',
-    'run_external_command',
-    'compute_file_hash',
-    'create_sample_plugins',
-    'load_ai_model',
-    'get_target_process_pid',
-    'detect_hardware_dongles',
-    'run_vulnerability_scan',
-    'run_cfg_analysis',
-    'run_rop_gadget_finder',
-    'run_section_analysis',
-    'run_import_export_analysis',
-    'run_weak_crypto_detection',
-    'run_ml_vulnerability_prediction',
-    'run_generate_patch_suggestions',
-    'run_multi_format_analysis',
-    'run_ml_similarity_search'
+    "run_comprehensive_analysis",
+    "run_deep_license_analysis",
+    "run_detect_packing",
+    "run_analysis",
+    "run_autonomous_crack",
+    "run_full_autonomous_mode",
+    "run_ghidra_analysis_gui",
+    "run_incremental_analysis_ui",
+    "run_deep_cfg_analysis",
+    "run_external_tool",
+    "run_windows_activator",
+    "check_adobe_licensex_status",
+    "run_adobe_licensex_manually",
+    "validate_dataset",
+    "verify_hash",
+    "run_external_command",
+    "compute_file_hash",
+    "create_sample_plugins",
+    "load_ai_model",
+    "get_target_process_pid",
+    "detect_hardware_dongles",
+    "run_vulnerability_scan",
+    "run_cfg_analysis",
+    "run_rop_gadget_finder",
+    "run_section_analysis",
+    "run_import_export_analysis",
+    "run_weak_crypto_detection",
+    "run_ml_vulnerability_prediction",
+    "run_generate_patch_suggestions",
+    "run_multi_format_analysis",
+    "run_ml_similarity_search"
 ]

@@ -35,7 +35,7 @@ from .integration import (
     register_hex_viewer_ai_tools,
 )
 
-logger = logging.getLogger('Intellicrack.HexView')
+logger = logging.getLogger("Intellicrack.HexView")
 
 
 # File operations

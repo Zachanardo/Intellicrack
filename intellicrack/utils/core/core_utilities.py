@@ -203,7 +203,7 @@ def run_cli_mode(args) -> int:
         # Save results if output specified
         if args.output and results:
             output_file = f"{args.output}/intellicrack_results.json"
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(results, f, indent=2, default=str)
             print(f"\nResults saved to: {output_file}")
 
@@ -230,7 +230,7 @@ def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> D
     logger.info("Dispatching tool: %s", tool_name)
 
     # Update UI if available
-    if app_instance and hasattr(app_instance, 'update_output'):
+    if app_instance and hasattr(app_instance, "update_output"):
         app_instance.update_output.emit(
             f"[Tool Dispatch] Attempting to dispatch tool: {tool_name}"
         )
@@ -251,7 +251,7 @@ def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> D
             "suggestions": suggestions
         }
 
-        if app_instance and hasattr(app_instance, 'update_output'):
+        if app_instance and hasattr(app_instance, "update_output"):
             app_instance.update_output.emit(
                 f"[Tool Dispatch] ERROR: {error_msg}"
             )
@@ -266,8 +266,8 @@ def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> D
         result = tool_func(app_instance, parameters)
 
         # Update UI with result
-        if app_instance and hasattr(app_instance, 'update_output'):
-            status = result.get('status', 'unknown')
+        if app_instance and hasattr(app_instance, "update_output"):
+            status = result.get("status", "unknown")
             app_instance.update_output.emit(
                 f"[Tool Dispatch] Tool '{tool_name}' executed. Status: {status}"
             )
@@ -282,7 +282,7 @@ def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> D
         logger.error(error_trace)
 
         # Update UI with error
-        if app_instance and hasattr(app_instance, 'update_output'):
+        if app_instance and hasattr(app_instance, "update_output"):
             app_instance.update_output.emit(f"[Tool Dispatch] ERROR: {error_msg}")
             app_instance.update_output.emit(error_trace)
 
@@ -387,8 +387,8 @@ def on_message(message: Dict[str, Any], data: Any = None) -> None:
         message: Message from Frida script
         data: Additional data (usually binary)
     """
-    if message['type'] == 'send':
-        payload = message.get('payload', {})
+    if message["type"] == "send":
+        payload = message.get("payload", {})
 
         # Log the message
         logger.info("[Frida] %s", payload)
@@ -400,16 +400,16 @@ def on_message(message: Dict[str, Any], data: Any = None) -> None:
 
         # Handle specific message types
         if isinstance(payload, dict):
-            msg_type = payload.get('type')
+            msg_type = payload.get("type")
 
-            if msg_type == 'license_check':
+            if msg_type == "license_check":
                 logger.info(f"License check detected: {payload.get('details', {})}")
-            elif msg_type == 'api_call':
+            elif msg_type == "api_call":
                 logger.info(f"API call intercepted: {payload.get('function', 'unknown')}")
-            elif msg_type == 'error':
+            elif msg_type == "error":
                 logger.error(f"Frida error: {payload.get('error', 'unknown')}")
 
-    elif message['type'] == 'error':
+    elif message["type"] == "error":
         logger.error(f"[Frida Error] {message.get('description', 'Unknown error')}")
         logger.error(f"Stack: {message.get('stack', 'No stack trace')}")
 
@@ -559,15 +559,15 @@ except (OSError, ValueError, RuntimeError) as e:
 
 # Export all functions
 __all__ = [
-    'main',
-    'dispatch_tool',
-    'register_tool',
-    'register_default_tools',
-    'on_message',
-    'register',
-    'retrieve_few_shot_examples',
-    'deep_runtime_monitoring',
-    'run_gui_mode',
-    'run_cli_mode',
-    'TOOL_REGISTRY'
+    "main",
+    "dispatch_tool",
+    "register_tool",
+    "register_default_tools",
+    "on_message",
+    "register",
+    "retrieve_few_shot_examples",
+    "deep_runtime_monitoring",
+    "run_gui_mode",
+    "run_cli_mode",
+    "TOOL_REGISTRY"
 ]

@@ -189,28 +189,28 @@ class AutodeskLicensingParser:
         """
         try:
             # Parse HTTP headers and body
-            lines = http_data.split('\r\n')
+            lines = http_data.split("\r\n")
             if not lines:
                 return None
 
             # Parse request line
             request_line = lines[0]
-            if not any(method in request_line for method in ['POST', 'GET', 'PUT']):
+            if not any(method in request_line for method in ["POST", "GET", "PUT"]):
                 return None
 
             # Parse headers
             headers = {}
             body_start = 0
             for i, line in enumerate(lines[1:], 1):
-                if line == '':
+                if line == "":
                     body_start = i + 1
                     break
-                if ':' in line:
-                    key, value = line.split(':', 1)
+                if ":" in line:
+                    key, value = line.split(":", 1)
                     headers[key.strip().lower()] = value.strip()
 
             # Parse body
-            body = '\r\n'.join(lines[body_start:]) if body_start < len(lines) else ''
+            body = "\r\n".join(lines[body_start:]) if body_start < len(lines) else ""
             request_data = {}
 
             if body:
@@ -225,16 +225,16 @@ class AutodeskLicensingParser:
             request_type = self._determine_request_type(request_line, headers, request_data)
 
             # Extract Autodesk-specific fields
-            product_key = self._extract_field(request_data, headers, ['product_key', 'productKey', 'product_code'])
-            installation_id = self._extract_field(request_data, headers, ['installation_id', 'installationId', 'install_id'])
-            machine_id = self._extract_field(request_data, headers, ['machine_id', 'machineId', 'computer_id'])
-            user_id = self._extract_field(request_data, headers, ['user_id', 'userId', 'adsk_user_id'])
-            activation_id = self._extract_field(request_data, headers, ['activation_id', 'activationId', 'license_id'])
-            license_method = self._extract_field(request_data, headers, ['license_method', 'licenseMethod', 'method'])
-            auth_token = self._extract_field(request_data, headers, ['authorization', 'x-ads-token', 'bearer_token'])
+            product_key = self._extract_field(request_data, headers, ["product_key", "productKey", "product_code"])
+            installation_id = self._extract_field(request_data, headers, ["installation_id", "installationId", "install_id"])
+            machine_id = self._extract_field(request_data, headers, ["machine_id", "machineId", "computer_id"])
+            user_id = self._extract_field(request_data, headers, ["user_id", "userId", "adsk_user_id"])
+            activation_id = self._extract_field(request_data, headers, ["activation_id", "activationId", "license_id"])
+            license_method = self._extract_field(request_data, headers, ["license_method", "licenseMethod", "method"])
+            auth_token = self._extract_field(request_data, headers, ["authorization", "x-ads-token", "bearer_token"])
 
             # Remove 'Bearer ' prefix if present
-            if auth_token and auth_token.startswith('Bearer '):
+            if auth_token and auth_token.startswith("Bearer "):
                 auth_token = auth_token[7:]
 
             # Extract platform information
@@ -242,15 +242,15 @@ class AutodeskLicensingParser:
 
             request = AutodeskRequest(
                 request_type=request_type,
-                product_key=product_key or '',
-                installation_id=installation_id or '',
-                machine_id=machine_id or '',
-                user_id=user_id or '',
-                activation_id=activation_id or '',
-                license_method=license_method or 'standalone',
+                product_key=product_key or "",
+                installation_id=installation_id or "",
+                machine_id=machine_id or "",
+                user_id=user_id or "",
+                activation_id=activation_id or "",
+                license_method=license_method or "standalone",
                 request_data=request_data,
                 headers=headers,
-                auth_token=auth_token or '',
+                auth_token=auth_token or "",
                 platform_info=platform_info
             )
 
@@ -267,77 +267,77 @@ class AutodeskLicensingParser:
         request_line_lower = request_line.lower()
 
         # Analyze headers for additional context
-        user_agent = headers.get('User-Agent', '').lower()
-        content_type = headers.get('Content-Type', '').lower()
-        x_autodesk_version = headers.get('X-Autodesk-Version', '')
-        authorization = headers.get('Authorization', '')
+        user_agent = headers.get("User-Agent", "").lower()
+        content_type = headers.get("Content-Type", "").lower()
+        x_autodesk_version = headers.get("X-Autodesk-Version", "")
+        authorization = headers.get("Authorization", "")
 
         # Autodesk-specific header analysis
-        is_autocad = 'autocad' in user_agent or 'acad' in user_agent
-        is_inventor = 'inventor' in user_agent
-        is_maya = 'maya' in user_agent
-        is_3dsmax = '3dsmax' in user_agent or 'max' in user_agent
-        is_fusion360 = 'fusion' in user_agent
-        is_oauth = authorization.startswith('Bearer') or 'oauth' in authorization.lower()
+        is_autocad = "autocad" in user_agent or "acad" in user_agent
+        is_inventor = "inventor" in user_agent
+        is_maya = "maya" in user_agent
+        is_3dsmax = "3dsmax" in user_agent or "max" in user_agent
+        is_fusion360 = "fusion" in user_agent
+        is_oauth = authorization.startswith("Bearer") or "oauth" in authorization.lower()
 
         # Check URL patterns
-        if '/activate' in request_line_lower or '/activation' in request_line_lower:
-            if 'application/x-amf' in content_type or 'application/octet-stream' in content_type:
-                return 'legacy_activation'
+        if "/activate" in request_line_lower or "/activation" in request_line_lower:
+            if "application/x-amf" in content_type or "application/octet-stream" in content_type:
+                return "legacy_activation"
             elif is_oauth:
-                return 'oauth_activation'
+                return "oauth_activation"
             elif is_fusion360:
-                return 'fusion360_activation'
+                return "fusion360_activation"
             else:
-                return 'activation'
-        elif '/validate' in request_line_lower or '/validation' in request_line_lower:
+                return "activation"
+        elif "/validate" in request_line_lower or "/validation" in request_line_lower:
             if x_autodesk_version:
-                return f'validation_v{x_autodesk_version}'
-            return 'validation'
-        elif '/deactivate' in request_line_lower or '/deactivation' in request_line_lower:
-            return 'deactivation'
-        elif '/entitlement' in request_line_lower:
-            return 'entitlement'
-        elif '/heartbeat' in request_line_lower or '/ping' in request_line_lower:
-            return 'heartbeat'
-        elif '/register' in request_line_lower or '/registration' in request_line_lower:
-            return 'registration'
-        elif '/subscription' in request_line_lower:
-            return 'subscription'
-        elif '/usage' in request_line_lower:
-            return 'feature_usage'
-        elif '/transfer' in request_line_lower:
-            return 'license_transfer'
-        elif '/offline' in request_line_lower:
-            return 'offline_activation'
-        elif '/network' in request_line_lower:
-            return 'network_license'
-        elif '/borrow' in request_line_lower:
-            return 'borrowing'
+                return f"validation_v{x_autodesk_version}"
+            return "validation"
+        elif "/deactivate" in request_line_lower or "/deactivation" in request_line_lower:
+            return "deactivation"
+        elif "/entitlement" in request_line_lower:
+            return "entitlement"
+        elif "/heartbeat" in request_line_lower or "/ping" in request_line_lower:
+            return "heartbeat"
+        elif "/register" in request_line_lower or "/registration" in request_line_lower:
+            return "registration"
+        elif "/subscription" in request_line_lower:
+            return "subscription"
+        elif "/usage" in request_line_lower:
+            return "feature_usage"
+        elif "/transfer" in request_line_lower:
+            return "license_transfer"
+        elif "/offline" in request_line_lower:
+            return "offline_activation"
+        elif "/network" in request_line_lower:
+            return "network_license"
+        elif "/borrow" in request_line_lower:
+            return "borrowing"
 
         # Check data content
-        action = data.get('action', data.get('request_type', data.get('operation', '')))
+        action = data.get("action", data.get("request_type", data.get("operation", "")))
         if action:
             return action.lower()
 
         # Check for specific Autodesk API endpoints
-        if '/api/auth/authenticate' in request_line_lower:
-            return 'activation'
-        elif '/api/license/validate' in request_line_lower:
-            return 'validation'
-        elif '/api/entitlements' in request_line_lower:
-            return 'entitlement'
+        if "/api/auth/authenticate" in request_line_lower:
+            return "activation"
+        elif "/api/license/validate" in request_line_lower:
+            return "validation"
+        elif "/api/entitlements" in request_line_lower:
+            return "entitlement"
 
         # Refine request type based on detected Autodesk product
-        base_type = 'validation'  # default
+        base_type = "validation"  # default
         if is_autocad:
-            return f'{base_type}_autocad'
+            return f"{base_type}_autocad"
         elif is_inventor:
-            return f'{base_type}_inventor'
+            return f"{base_type}_inventor"
         elif is_maya:
-            return f'{base_type}_maya'
+            return f"{base_type}_maya"
         elif is_3dsmax:
-            return f'{base_type}_3dsmax'
+            return f"{base_type}_3dsmax"
 
         # Default to validation
         return base_type
@@ -362,23 +362,23 @@ class AutodeskLicensingParser:
         platform_info = {}
 
         # Extract from User-Agent header
-        user_agent = headers.get('user-agent', '')
+        user_agent = headers.get("user-agent", "")
         if user_agent:
-            platform_info['user_agent'] = user_agent
-            if 'Windows' in user_agent:
-                platform_info['os'] = 'Windows'
-            elif 'macOS' in user_agent or 'Mac OS' in user_agent:
-                platform_info['os'] = 'macOS'
-            elif 'Linux' in user_agent:
-                platform_info['os'] = 'Linux'
+            platform_info["user_agent"] = user_agent
+            if "Windows" in user_agent:
+                platform_info["os"] = "Windows"
+            elif "macOS" in user_agent or "Mac OS" in user_agent:
+                platform_info["os"] = "macOS"
+            elif "Linux" in user_agent:
+                platform_info["os"] = "Linux"
 
         # Extract from request data
         platform_info.update({
-            'language': data.get('language', data.get('locale', 'en-US')),
-            'timezone': data.get('timezone', 'UTC'),
-            'screen_resolution': data.get('screen_resolution', '1920x1080'),
-            'processor_count': data.get('processor_count', 4),
-            'memory_total': data.get('memory_total', 8192)
+            "language": data.get("language", data.get("locale", "en-US")),
+            "timezone": data.get("timezone", "UTC"),
+            "screen_resolution": data.get("screen_resolution", "1920x1080"),
+            "processor_count": data.get("processor_count", 4),
+            "memory_total": data.get("memory_total", 8192)
         })
 
         return platform_info
@@ -387,10 +387,10 @@ class AutodeskLicensingParser:
         """Parse form-encoded data"""
         data = {}
         try:
-            pairs = body.split('&')
+            pairs = body.split("&")
             for pair in pairs:
-                if '=' in pair:
-                    key, value = pair.split('=', 1)
+                if "=" in pair:
+                    key, value = pair.split("=", 1)
                     data[key] = value
         except (ValueError, AttributeError, Exception) as e:
             self.logger.error("Error in autodesk_parser: %s", e)
@@ -409,35 +409,35 @@ class AutodeskLicensingParser:
         """
         self.logger.info(f"Generating response for Autodesk {request.request_type} request")
 
-        if request.request_type == 'activation':
+        if request.request_type == "activation":
             return self._handle_activation(request)
-        elif request.request_type == 'validation':
+        elif request.request_type == "validation":
             return self._handle_validation(request)
-        elif request.request_type == 'deactivation':
+        elif request.request_type == "deactivation":
             return self._handle_deactivation(request)
-        elif request.request_type == 'entitlement':
+        elif request.request_type == "entitlement":
             return self._handle_entitlement(request)
-        elif request.request_type == 'heartbeat':
+        elif request.request_type == "heartbeat":
             return self._handle_heartbeat(request)
-        elif request.request_type == 'registration':
+        elif request.request_type == "registration":
             return self._handle_registration(request)
-        elif request.request_type == 'subscription':
+        elif request.request_type == "subscription":
             return self._handle_subscription(request)
-        elif request.request_type == 'feature_usage':
+        elif request.request_type == "feature_usage":
             return self._handle_feature_usage(request)
-        elif request.request_type == 'license_transfer':
+        elif request.request_type == "license_transfer":
             return self._handle_license_transfer(request)
-        elif request.request_type == 'offline_activation':
+        elif request.request_type == "offline_activation":
             return self._handle_offline_activation(request)
-        elif request.request_type == 'network_license':
+        elif request.request_type == "network_license":
             return self._handle_network_license(request)
-        elif request.request_type == 'borrowing':
+        elif request.request_type == "borrowing":
             return self._handle_borrowing(request)
         else:
             return self._handle_unknown_request(request)
     def _handle_activation(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle Autodesk product activation"""
-        product_key = request.product_key or 'UNKNOWN'
+        product_key = request.product_key or "UNKNOWN"
 
         # Validate product
         if product_key not in self.AUTODESK_PRODUCTS:
@@ -614,7 +614,7 @@ class AutodeskLicensingParser:
 
     def _handle_entitlement(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle entitlement verification"""
-        user_id = request.user_id or 'anonymous'
+        user_id = request.user_id or "anonymous"
 
         # Generate or retrieve entitlement data
         entitlement_key = f"{user_id}:{request.product_key}"
@@ -646,14 +646,14 @@ class AutodeskLicensingParser:
     def _handle_heartbeat(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle license heartbeat"""
         # Extract heartbeat context from request
-        product_key = request.product_key or 'UNKNOWN'
-        license_method = request.license_data.get('license_method', 'standalone')
-        session_id = request.activation_data.get('session_id', str(uuid.uuid4()))
+        product_key = request.product_key or "UNKNOWN"
+        license_method = request.license_data.get("license_method", "standalone")
+        session_id = request.activation_data.get("session_id", str(uuid.uuid4()))
 
         # Determine heartbeat interval based on license type
-        if license_method == 'network':
+        if license_method == "network":
             heartbeat_interval = 1800  # 30 minutes for network licenses
-        elif 'subscription' in str(request.license_data.get('license_type', '')):
+        elif "subscription" in str(request.license_data.get("license_type", "")):
             heartbeat_interval = 900   # 15 minutes for subscription
         else:
             heartbeat_interval = 3600  # 1 hour for standalone
@@ -704,7 +704,7 @@ class AutodeskLicensingParser:
         )
     def _handle_subscription(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle subscription status check"""
-        user_id = request.user_id or 'anonymous'
+        user_id = request.user_id or "anonymous"
         logger.debug(f"Processing subscription request for user: {user_id}")
 
         subscription_data = {
@@ -737,10 +737,10 @@ class AutodeskLicensingParser:
     def _handle_feature_usage(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle feature usage reporting"""
         # Extract usage information from request
-        features_used = request.license_data.get('features_used', [])
-        session_duration = request.activation_data.get('session_duration', 0)
-        product_version = request.license_data.get('product_version', '2024')
-        user_id = request.activation_data.get('user_id', 'anonymous')
+        features_used = request.license_data.get("features_used", [])
+        session_duration = request.activation_data.get("session_duration", 0)
+        product_version = request.license_data.get("product_version", "2024")
+        user_id = request.activation_data.get("user_id", "anonymous")
 
         # Process feature usage analytics
         usage_summary = {
@@ -849,7 +849,7 @@ class AutodeskLicensingParser:
     def _handle_borrowing(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle license borrowing"""
         borrow_id = str(uuid.uuid4()).upper()
-        borrow_period = int(request.request_data.get('borrow_days', 7))
+        borrow_period = int(request.request_data.get("borrow_days", 7))
 
         return AutodeskResponse(
             status="success",
@@ -904,7 +904,7 @@ class AutodeskLicensingParser:
             "issued_at": int(time.time()),
             "expires_at": int(time.time() + 86400)  # 24 hours
         }
-        token_json = json.dumps(token_data, separators=(',', ':'))
+        token_json = json.dumps(token_data, separators=(",", ":"))
         token_b64 = base64.b64encode(token_json.encode()).decode()
 
         # Generate signature

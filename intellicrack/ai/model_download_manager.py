@@ -127,7 +127,7 @@ class ModelDownloadManager:
         """Load cached metadata."""
         if self.metadata_file.exists():
             try:
-                with open(self.metadata_file, 'r') as f:
+                with open(self.metadata_file, "r") as f:
                     return json.load(f)
             except Exception as e:
                 logger.error(f"Failed to load metadata: {e}")
@@ -136,7 +136,7 @@ class ModelDownloadManager:
     def _save_metadata(self):
         """Save metadata to cache."""
         try:
-            with open(self.metadata_file, 'w') as f:
+            with open(self.metadata_file, "w") as f:
                 json.dump(self.metadata, f, indent=2, default=str)
         except Exception as e:
             logger.error(f"Failed to save metadata: {e}")
@@ -287,16 +287,16 @@ class ModelDownloadManager:
             # Extract useful information from the card
             card_data = {
                 "content": card.content,
-                "data": card.data.to_dict() if hasattr(card.data, 'to_dict') else {},
+                "data": card.data.to_dict() if hasattr(card.data, "to_dict") else {},
                 "metadata": {
-                    "tags": getattr(card.data, 'tags', []),
-                    "license": getattr(card.data, 'license', None),
-                    "language": getattr(card.data, 'language', []),
-                    "datasets": getattr(card.data, 'datasets', []),
-                    "metrics": getattr(card.data, 'metrics', []),
-                    "model_type": getattr(card.data, 'model_type', None),
-                    "pipeline_tag": getattr(card.data, 'pipeline_tag', None),
-                    "library_name": getattr(card.data, 'library_name', None),
+                    "tags": getattr(card.data, "tags", []),
+                    "license": getattr(card.data, "license", None),
+                    "language": getattr(card.data, "language", []),
+                    "datasets": getattr(card.data, "datasets", []),
+                    "metrics": getattr(card.data, "metrics", []),
+                    "model_type": getattr(card.data, "model_type", None),
+                    "pipeline_tag": getattr(card.data, "pipeline_tag", None),
+                    "library_name": getattr(card.data, "library_name", None),
                 }
             }
 

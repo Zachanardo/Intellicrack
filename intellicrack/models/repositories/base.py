@@ -70,7 +70,7 @@ class CacheManager:
         """Load the cache index from disk."""
         if os.path.exists(self.index_file):
             try:
-                with open(self.index_file, 'r') as f:
+                with open(self.index_file, "r") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError) as e:
                 logger.warning(f"Failed to load cache index: {e}")
@@ -80,7 +80,7 @@ class CacheManager:
     def _save_index(self):
         """Save the cache index to disk."""
         try:
-            with open(self.index_file, 'w') as f:
+            with open(self.index_file, "w") as f:
                 json.dump(self.cache_index, f, indent=2)
         except IOError as e:
             logger.warning(f"Failed to save cache index: {e}")
@@ -105,7 +105,7 @@ class CacheManager:
             return None
 
         entry = self.cache_index[key]
-        expiry_time = entry.get('expiry_time', 0)
+        expiry_time = entry.get("expiry_time", 0)
 
         # Check if the entry has expired
         if expiry_time < time.time():
@@ -118,7 +118,7 @@ class CacheManager:
             return None
 
         try:
-            with open(cache_file, 'r') as f:
+            with open(cache_file, "r") as f:
                 data = json.load(f)
                 return data
         except (json.JSONDecodeError, IOError) as e:
@@ -148,14 +148,14 @@ class CacheManager:
         cache_file = self._get_cache_file_path(key)
 
         try:
-            with open(cache_file, 'w') as f:
+            with open(cache_file, "w") as f:
                 json.dump(value, f)
 
             self.cache_index[key] = {
-                'file': cache_file,
-                'expiry_time': expiry_time,
-                'created_time': time.time(),
-                'size': os.path.getsize(cache_file)
+                "file": cache_file,
+                "expiry_time": expiry_time,
+                "created_time": time.time(),
+                "size": os.path.getsize(cache_file)
             }
 
             self._save_index()
@@ -188,7 +188,7 @@ class CacheManager:
         current_time = time.time()
         expired_keys = [
             key for key, entry in self.cache_index.items()
-            if entry.get('expiry_time', 0) < current_time
+            if entry.get("expiry_time", 0) < current_time
         ]
 
         for key in expired_keys:
@@ -205,7 +205,7 @@ class CacheManager:
             Current size in megabytes
         """
         total_size = sum(
-            entry.get('size', 0) for entry in self.cache_index.values()
+            entry.get("size", 0) for entry in self.cache_index.values()
         )
         return total_size / (1024 * 1024)  # Convert bytes to MB
 
@@ -217,7 +217,7 @@ class CacheManager:
         # Sort entries by creation time (oldest first)
         sorted_entries = sorted(
             self.cache_index.items(),
-            key=lambda x: x[1].get('created_time', 0)
+            key=lambda x: x[1].get("created_time", 0)
         )
 
         # Remove entries until we're under the limit
@@ -361,7 +361,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
             download_dir: Directory for downloaded models
         """
         self.repository_name = repository_name
-        self.api_endpoint = api_endpoint.rstrip('/')
+        self.api_endpoint = api_endpoint.rstrip("/")
         self.api_key = api_key
         self.timeout = timeout
         self.proxy = proxy
@@ -371,9 +371,9 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
         # Initialize cache manager
         cache_params = cache_config or {}
-        cache_dir = cache_params.get('cache_dir', os.path.join(os.path.dirname(__file__), "..", "cache", repository_name))
-        ttl_seconds = cache_params.get('ttl', 3600)
-        max_size_mb = cache_params.get('max_size_mb', 100)
+        cache_dir = cache_params.get("cache_dir", os.path.join(os.path.dirname(__file__), "..", "cache", repository_name))
+        ttl_seconds = cache_params.get("ttl", 3600)
+        max_size_mb = cache_params.get("max_size_mb", 100)
         self.cache_manager = CacheManager(cache_dir, ttl_seconds, max_size_mb)
 
         # Create download directory
@@ -386,8 +386,8 @@ class APIRepositoryBase(ModelRepositoryInterface):
         # Set up proxy if provided
         if proxy:
             self.session.proxies = {
-                'http': proxy,
-                'https': proxy
+                "http": proxy,
+                "https": proxy
             }
 
     # pylint: disable=too-many-locals
@@ -527,14 +527,14 @@ class APIRepositoryBase(ModelRepositoryInterface):
                 response.raise_for_status()
 
                 # Get total file size if available
-                total_size = int(response.headers.get('content-length', 0))
+                total_size = int(response.headers.get("content-length", 0))
 
                 # Create a temporary file
                 temp_path = f"{destination_path}.download"
 
                 # Download the file in chunks
                 downloaded_bytes = 0
-                with open(temp_path, 'wb') as f:
+                with open(temp_path, "wb") as f:
                     for chunk in response.iter_content(chunk_size=8192):
                         if chunk:
                             f.write(chunk)

@@ -49,10 +49,10 @@ def find_all_pattern_occurrences(binary_data: bytes, pattern: bytes,
             break
 
         results.append({
-            'address': base_address + pos,
-            'offset': pos,
-            'pattern': pattern,
-            'pattern_hex': pattern.hex()
+            "address": base_address + pos,
+            "offset": pos,
+            "pattern": pattern,
+            "pattern_hex": pattern.hex()
         })
 
         if max_results and len(results) >= max_results:
@@ -81,7 +81,7 @@ def search_patterns_in_binary(binary_data: bytes, patterns: List[bytes],
     for i, pattern in enumerate(patterns):
         pattern_results = find_all_pattern_occurrences(binary_data, pattern, base_address)
         for result in pattern_results:
-            result['pattern_index'] = i
+            result["pattern_index"] = i
             results.append(result)
 
     return results
@@ -100,19 +100,19 @@ def find_function_prologues(binary_data: bytes, base_address: int = 0) -> List[D
     """
     # Common function prologues
     prologues = [
-        b'\\x55\\x8B\\xEC',  # push ebp; mov ebp, esp (32-bit)
-        b'\\x55\\x89\\xE5',  # push ebp; mov ebp, esp (AT&T)
-        b'\\x48\\x89\\x5C\\x24',  # mov [rsp+xx], rbx (64-bit)
-        b'\\x40\\x53',  # push rbx (64-bit)
-        b'\\x48\\x83\\xEC',  # sub rsp, xx (64-bit)
+        b"\\x55\\x8B\\xEC",  # push ebp; mov ebp, esp (32-bit)
+        b"\\x55\\x89\\xE5",  # push ebp; mov ebp, esp (AT&T)
+        b"\\x48\\x89\\x5C\\x24",  # mov [rsp+xx], rbx (64-bit)
+        b"\\x40\\x53",  # push rbx (64-bit)
+        b"\\x48\\x83\\xEC",  # sub rsp, xx (64-bit)
     ]
 
     results = search_patterns_in_binary(binary_data, prologues, base_address)
 
     # Add function-specific metadata
     for result in results:
-        result['type'] = 'function_prologue'
-        result['confidence'] = 0.7 + (result['pattern_index'] * 0.05)
+        result["type"] = "function_prologue"
+        result["confidence"] = 0.7 + (result["pattern_index"] * 0.05)
 
     return results
 
@@ -133,9 +133,9 @@ def find_license_patterns(binary_data: bytes, base_address: int = 0x400000,
     """
     # Common license/validation function patterns
     license_patterns = [
-        b'license', b'LICENSE', b'key', b'KEY', b'serial', b'SERIAL',
-        b'valid', b'VALID', b'check', b'CHECK', b'verify', b'VERIFY',
-        b'auth', b'AUTH', b'activate', b'ACTIVATE', b'trial', b'TRIAL'
+        b"license", b"LICENSE", b"key", b"KEY", b"serial", b"SERIAL",
+        b"valid", b"VALID", b"check", b"CHECK", b"verify", b"VERIFY",
+        b"auth", b"AUTH", b"activate", b"ACTIVATE", b"trial", b"TRIAL"
     ]
 
     interesting_patterns = []
@@ -145,11 +145,11 @@ def find_license_patterns(binary_data: bytes, base_address: int = 0x400000,
 
         for result in pattern_results:
             interesting_patterns.append({
-                'type': 'license_keyword',
-                'pattern': pattern.decode('ascii', errors='ignore'),
-                'address': hex(result['address']),
-                'offset': result['offset'],
-                'context': binary_data[max(0, result['offset']-context_size):result['offset']+len(pattern)+context_size].hex()
+                "type": "license_keyword",
+                "pattern": pattern.decode("ascii", errors="ignore"),
+                "address": hex(result["address"]),
+                "offset": result["offset"],
+                "context": binary_data[max(0, result["offset"]-context_size):result["offset"]+len(pattern)+context_size].hex()
             })
 
         if len(interesting_patterns) >= max_results:

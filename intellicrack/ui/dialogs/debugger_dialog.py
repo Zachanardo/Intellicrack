@@ -295,7 +295,7 @@ class DebuggerDialog(QDialog):
         self.file_label.setText(os.path.basename(path))
 
         # Load code into editor
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             code = f.read()
 
         self.code_editor.set_code(code)
@@ -426,8 +426,8 @@ class DebuggerDialog(QDialog):
             self.start_debugging()
         else:
             # Continue execution
-            self.debugger.command_queue.put({'type': 'continue'})
-            self.update_ui_state('running')
+            self.debugger.command_queue.put({"type": "continue"})
+            self.update_ui_state("running")
 
     def start_debugging(self):
         """Start debugging session"""
@@ -453,15 +453,15 @@ class DebuggerDialog(QDialog):
         self.debugger_thread.start()
 
         # Update UI
-        self.update_ui_state('running')
+        self.update_ui_state("running")
 
     def pause_execution(self):
         """Pause execution"""
-        self.debugger.command_queue.put({'type': 'pause'})
+        self.debugger.command_queue.put({"type": "pause"})
 
     def stop_debugging(self):
         """Stop debugging session"""
-        self.debugger.command_queue.put({'type': 'terminate'})
+        self.debugger.command_queue.put({"type": "terminate"})
 
         # Wait for threads
         if self.debugger_thread:
@@ -475,28 +475,28 @@ class DebuggerDialog(QDialog):
         self.clear_debug_info()
 
         # Update UI
-        self.update_ui_state('idle')
+        self.update_ui_state("idle")
 
         self.console.append("\n🛑 Debug session terminated.")
 
     def step_over(self):
         """Step over"""
-        self.debugger.command_queue.put({'type': 'step_over'})
-        self.update_ui_state('running')
+        self.debugger.command_queue.put({"type": "step_over"})
+        self.update_ui_state("running")
 
     def step_into(self):
         """Step into"""
-        self.debugger.command_queue.put({'type': 'step_into'})
-        self.update_ui_state('running')
+        self.debugger.command_queue.put({"type": "step_into"})
+        self.update_ui_state("running")
 
     def step_out(self):
         """Step out"""
-        self.debugger.command_queue.put({'type': 'step_out'})
-        self.update_ui_state('running')
+        self.debugger.command_queue.put({"type": "step_out"})
+        self.update_ui_state("running")
 
     def update_ui_state(self, state: str):
         """Update UI based on debugger state"""
-        if state == 'idle':
+        if state == "idle":
             self.run_action.setEnabled(True)
             self.run_action.setText("▶️ Run")
             self.pause_action.setEnabled(False)
@@ -505,7 +505,7 @@ class DebuggerDialog(QDialog):
             self.step_into_action.setEnabled(False)
             self.step_out_action.setEnabled(False)
 
-        elif state == 'running':
+        elif state == "running":
             self.run_action.setEnabled(False)
             self.pause_action.setEnabled(True)
             self.stop_action.setEnabled(True)
@@ -513,7 +513,7 @@ class DebuggerDialog(QDialog):
             self.step_into_action.setEnabled(False)
             self.step_out_action.setEnabled(False)
 
-        elif state == 'paused':
+        elif state == "paused":
             self.run_action.setEnabled(True)
             self.run_action.setText("▶️ Continue")
             self.pause_action.setEnabled(False)
@@ -524,35 +524,35 @@ class DebuggerDialog(QDialog):
 
     def handle_debugger_output(self, msg_type: str, data: Any):
         """Handle debugger output messages"""
-        if msg_type == 'paused':
-            self.update_ui_state('paused')
-            self.current_line = data['line']
+        if msg_type == "paused":
+            self.update_ui_state("paused")
+            self.current_line = data["line"]
             self.code_editor.highlight_line(self.current_line)
             self.console.append(f"⏸️ Paused at {data['file']}:{data['line']} in {data['function']}")
 
-        elif msg_type == 'breakpoint':
+        elif msg_type == "breakpoint":
             self.console.append(f"🔴 Breakpoint hit: {data['file']}:{data['line']} (hit count: {data['hit_count']})")
 
-        elif msg_type == 'stack':
+        elif msg_type == "stack":
             self.update_stack_display(data)
 
-        elif msg_type == 'watches':
+        elif msg_type == "watches":
             self.update_watch_display(data)
 
-        elif msg_type == 'eval_result':
-            if 'error' in data:
+        elif msg_type == "eval_result":
+            if "error" in data:
                 self.console.append(f"❌ Error evaluating '{data['expression']}': {data['error']}")
             else:
                 self.console.append(f"✅ {data['expression']} = {data['value']}")
 
-        elif msg_type == 'exception_break':
+        elif msg_type == "exception_break":
             self.console.append(f"⚠️ Exception: {data['type']}: {data['message']}")
-            self.console.append(data['traceback'])
+            self.console.append(data["traceback"])
 
-        elif msg_type == 'result':
+        elif msg_type == "result":
             self.console.append(f"\n📤 Plugin returned: {data}")
 
-        elif msg_type == 'error':
+        elif msg_type == "error":
             self.console.append(f"❌ Error: {data}")
 
     def update_stack_display(self, stack_frames: List[Dict[str, Any]]):
@@ -589,20 +589,20 @@ class DebuggerDialog(QDialog):
         global_root = QTreeWidgetItem(self.variables_tree, ["Global Variables", "", ""])
 
         for name, info in sorted(variables.items()):
-            parent = local_root if info['scope'] == 'local' else global_root
+            parent = local_root if info["scope"] == "local" else global_root
 
             item = QTreeWidgetItem(parent, [
                 name,
-                str(info['value']),
-                info['type']
+                str(info["value"]),
+                info["type"]
             ])
 
             # Add children for complex types
-            if isinstance(info['value'], dict):
-                for k, v in info['value'].items():
+            if isinstance(info["value"], dict):
+                for k, v in info["value"].items():
                     QTreeWidgetItem(item, [str(k), str(v), type(v).__name__])
-            elif isinstance(info['value'], list):
-                for i, v in enumerate(info['value']):
+            elif isinstance(info["value"], list):
+                for i, v in enumerate(info["value"]):
                     QTreeWidgetItem(item, [f"[{i}]", str(v), type(v).__name__])
 
         # Expand local variables by default
@@ -625,8 +625,8 @@ class DebuggerDialog(QDialog):
 
         # Add to debugger
         self.debugger.command_queue.put({
-            'type': 'watch',
-            'expression': expr
+            "type": "watch",
+            "expression": expr
         })
 
         # Add to UI
@@ -644,8 +644,8 @@ class DebuggerDialog(QDialog):
         self.console.append(f"\n>>> {expr}")
 
         self.debugger.command_queue.put({
-            'type': 'evaluate',
-            'expression': expr
+            "type": "evaluate",
+            "expression": expr
         })
 
         # Clear input
@@ -704,7 +704,7 @@ class CodeEditorWidget(QTextEdit):
             max_num /= 10
             digits += 1
 
-        space = 3 + self.fontMetrics().horizontalAdvance('9') * (digits + 1)
+        space = 3 + self.fontMetrics().horizontalAdvance("9") * (digits + 1)
         return space
 
     def update_line_number_area_width(self, new_block_count):

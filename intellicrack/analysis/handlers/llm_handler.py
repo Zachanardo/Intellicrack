@@ -116,9 +116,9 @@ class LLMAnalysisWorker(QRunnable):
             "architecture": result.architecture,
             "protections": [
                 {
-                    "name": p['name'],
-                    "type": p['type'],
-                    "confidence": p.get('confidence', 0)
+                    "name": p["name"],
+                    "type": p["type"],
+                    "confidence": p.get("confidence", 0)
                 }
                 for p in result.protections
             ],
@@ -135,8 +135,8 @@ class LLMAnalysisWorker(QRunnable):
         if result.bypass_strategies:
             context["bypass_strategies"] = [
                 {
-                    "name": s['name'],
-                    "difficulty": s.get('difficulty', 'Unknown')
+                    "name": s["name"],
+                    "difficulty": s.get("difficulty", "Unknown")
                 }
                 for s in result.bypass_strategies
             ]
@@ -278,34 +278,34 @@ class LLMHandler(QObject):
 
     def _on_context_registered(self, result: dict):
         """Handle context registration completion"""
-        if result['success']:
+        if result["success"]:
             logger.info("Protection analysis context registered with LLM")
             self.llm_result_ready.emit({
                 "type": "context_registered",
-                "context": result['context']
+                "context": result["context"]
             })
         else:
-            self.llm_error.emit(result.get('error', 'Unknown error'))
+            self.llm_error.emit(result.get("error", "Unknown error"))
 
     def _on_summary_ready(self, result: dict):
         """Handle summary generation completion"""
-        if result['success']:
+        if result["success"]:
             self.llm_result_ready.emit({
                 "type": "summary",
-                "content": result['summary']
+                "content": result["summary"]
             })
         else:
-            self.llm_error.emit(result.get('error', 'Unknown error'))
+            self.llm_error.emit(result.get("error", "Unknown error"))
 
     def _on_bypass_suggestions_ready(self, result: dict):
         """Handle bypass suggestions completion"""
-        if result['success']:
+        if result["success"]:
             self.llm_result_ready.emit({
                 "type": "bypass_suggestions",
-                "content": result['suggestions']
+                "content": result["suggestions"]
             })
         else:
-            self.llm_error.emit(result.get('error', 'Unknown error'))
+            self.llm_error.emit(result.get("error", "Unknown error"))
 
     def _on_worker_error(self, error_tuple):
         """Handle worker thread errors"""

@@ -97,7 +97,7 @@ class ProtectionKnowledgeBase:
         schemes = {}
 
         # Sentinel HASP
-        schemes['sentinel_hasp'] = ProtectionSchemeInfo(
+        schemes["sentinel_hasp"] = ProtectionSchemeInfo(
             name="Sentinel HASP",
             vendor="Thales (formerly SafeNet)",
             category=ProtectionCategory.HARDWARE_DONGLE,
@@ -161,7 +161,7 @@ class ProtectionKnowledgeBase:
         )
 
         # FlexLM/FlexNet
-        schemes['flexlm'] = ProtectionSchemeInfo(
+        schemes["flexlm"] = ProtectionSchemeInfo(
             name="FlexLM/FlexNet Publisher",
             vendor="Flexera Software",
             category=ProtectionCategory.NETWORK_LICENSE,
@@ -225,7 +225,7 @@ class ProtectionKnowledgeBase:
         )
 
         # WinLicense/Themida
-        schemes['winlicense'] = ProtectionSchemeInfo(
+        schemes["winlicense"] = ProtectionSchemeInfo(
             name="WinLicense/Themida",
             vendor="Oreans Technologies",
             category=ProtectionCategory.SOFTWARE_PROTECTION,
@@ -289,7 +289,7 @@ class ProtectionKnowledgeBase:
         )
 
         # VMProtect
-        schemes['vmprotect'] = ProtectionSchemeInfo(
+        schemes["vmprotect"] = ProtectionSchemeInfo(
             name="VMProtect",
             vendor="VMProtect Software",
             category=ProtectionCategory.VIRTUALIZATION,
@@ -353,7 +353,7 @@ class ProtectionKnowledgeBase:
         )
 
         # Steam CEG
-        schemes['steam_ceg'] = ProtectionSchemeInfo(
+        schemes["steam_ceg"] = ProtectionSchemeInfo(
             name="Steam CEG",
             vendor="Valve Corporation",
             category=ProtectionCategory.GAMING_DRM,
@@ -417,7 +417,7 @@ class ProtectionKnowledgeBase:
         )
 
         # Denuvo
-        schemes['denuvo'] = ProtectionSchemeInfo(
+        schemes["denuvo"] = ProtectionSchemeInfo(
             name="Denuvo Anti-Tamper",
             vendor="Denuvo Software Solutions GmbH",
             category=ProtectionCategory.GAMING_DRM,
@@ -471,7 +471,7 @@ class ProtectionKnowledgeBase:
         )
 
         # Microsoft Activation
-        schemes['microsoft_activation'] = ProtectionSchemeInfo(
+        schemes["microsoft_activation"] = ProtectionSchemeInfo(
             name="Microsoft Activation Technologies",
             vendor="Microsoft Corporation",
             category=ProtectionCategory.ENTERPRISE,
@@ -761,7 +761,7 @@ class ProtectionKnowledgeBase:
 
             data["protection_schemes"][name] = scheme_dict
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(data, f, indent=2)
 
 

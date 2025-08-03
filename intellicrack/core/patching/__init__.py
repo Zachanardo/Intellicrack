@@ -68,30 +68,30 @@ except ImportError as e:
 # Define package exports
 __all__ = [
     # From payload_generator
-    'PayloadGenerator',
-    'apply_patch',
-    'create_nop_sled',
-    'inject_shellcode',
-    'generate_complete_api_hooking_script',
+    "PayloadGenerator",
+    "apply_patch",
+    "create_nop_sled",
+    "inject_shellcode",
+    "generate_complete_api_hooking_script",
 
     # From adobe_injector
-    'AdobeInjector',
-    'create_adobe_injector',
-    'inject_running_adobe_processes',
-    'start_adobe_monitoring',
+    "AdobeInjector",
+    "create_adobe_injector",
+    "inject_running_adobe_processes",
+    "start_adobe_monitoring",
 
     # From windows_activator
-    'WindowsActivator',
-    'ActivationMethod',
-    'ActivationStatus',
-    'create_windows_activator',
-    'check_windows_activation',
-    'activate_windows_hwid',
-    'activate_windows_kms',
+    "WindowsActivator",
+    "ActivationMethod",
+    "ActivationStatus",
+    "create_windows_activator",
+    "check_windows_activation",
+    "activate_windows_hwid",
+    "activate_windows_kms",
 
     # From memory_patcher
-    'generate_launcher_script',
-    'setup_memory_patching',
+    "generate_launcher_script",
+    "setup_memory_patching",
 ]
 
 # Package metadata

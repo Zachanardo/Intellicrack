@@ -69,7 +69,7 @@ class LLMConfigManager:
             return default
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load {file_path}: {e}")
@@ -78,7 +78,7 @@ class LLMConfigManager:
     def _save_json_file(self, file_path: Path, data: Any):
         """Save data to a JSON file."""
         try:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, default=str)
             logger.info(f"Saved configuration to {file_path}")
         except Exception as e:
@@ -419,7 +419,7 @@ class LLMConfigManager:
             export_data["configs"][model_id] = config_copy
 
         try:
-            with open(export_path, 'w', encoding='utf-8') as f:
+            with open(export_path, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, default=str)
             logger.info(f"Exported configuration to {export_path}")
         except Exception as e:
@@ -433,7 +433,7 @@ class LLMConfigManager:
             merge: Whether to merge with existing configs
         """
         try:
-            with open(import_path, 'r', encoding='utf-8') as f:
+            with open(import_path, "r", encoding="utf-8") as f:
                 import_data = json.load(f)
 
             if not merge:

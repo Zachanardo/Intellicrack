@@ -81,59 +81,59 @@ except ImportError as e:
 # Public API - explicitly export all imported components
 __all__ = [
     # Core components
-    'AIBinaryBridge',
-    'BinaryContextBuilder',
-    'ChunkManager',
-    'VirtualFileAccess',
-    'HexViewerDialog',
-    'HexHighlighter',
-    'HighlightType',
-    'HexViewRenderer',
-    'ViewMode',
-    'parse_hex_view',
-    'HexViewerWidget',
+    "AIBinaryBridge",
+    "BinaryContextBuilder",
+    "ChunkManager",
+    "VirtualFileAccess",
+    "HexViewerDialog",
+    "HexHighlighter",
+    "HighlightType",
+    "HexViewRenderer",
+    "ViewMode",
+    "parse_hex_view",
+    "HexViewerWidget",
 
     # API functions
-    'add_hex_viewer_to_application',
-    'analyze_binary_data',
-    'bytes_to_hex_string',
-    'create_binary_context',
-    'create_hex_viewer_dialog',
-    'create_hex_viewer_widget',
-    'hex_string_to_bytes',
-    'integrate_with_intellicrack',
-    'launch_hex_viewer',
-    'open_hex_file',
-    'read_hex_region',
-    'register_ai_tools',
-    'search_binary_pattern',
-    'suggest_binary_edits',
-    'write_hex_region',
+    "add_hex_viewer_to_application",
+    "analyze_binary_data",
+    "bytes_to_hex_string",
+    "create_binary_context",
+    "create_hex_viewer_dialog",
+    "create_hex_viewer_widget",
+    "hex_string_to_bytes",
+    "integrate_with_intellicrack",
+    "launch_hex_viewer",
+    "open_hex_file",
+    "read_hex_region",
+    "register_ai_tools",
+    "search_binary_pattern",
+    "suggest_binary_edits",
+    "write_hex_region",
 
     # Integration functions
-    'initialize_hex_viewer',
-    'integrate_enhanced_hex_viewer',
-    'register_hex_viewer_ai_tools',
-    'restore_standard_hex_viewer',
-    'show_enhanced_hex_viewer',
+    "initialize_hex_viewer",
+    "integrate_enhanced_hex_viewer",
+    "register_hex_viewer_ai_tools",
+    "restore_standard_hex_viewer",
+    "show_enhanced_hex_viewer",
 
     # Convenience aliases
-    'show_hex_viewer',
-    'integrate',
-    'HexViewer',
+    "show_hex_viewer",
+    "integrate",
+    "HexViewer",
 
     # Large file optimization (conditionally available)
-    'LARGE_FILE_SUPPORT',
+    "LARGE_FILE_SUPPORT",
 ]
 
 # Conditionally add large file components to __all__ if available
 if LARGE_FILE_SUPPORT:
     __all__.extend([
-        'LargeFileHandler',
-        'MemoryConfig',
-        'MemoryStrategy',
-        'PerformanceMonitor',
-        'PerformanceWidget',
+        "LargeFileHandler",
+        "MemoryConfig",
+        "MemoryStrategy",
+        "PerformanceMonitor",
+        "PerformanceWidget",
     ])
 
 # Convenience aliases

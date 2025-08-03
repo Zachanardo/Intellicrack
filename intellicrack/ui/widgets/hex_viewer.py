@@ -23,7 +23,7 @@ class HexViewerWidget(QWidget):
     def __init__(self, parent=None):
         """Initialize hex viewer widget with binary data visualization and editing capabilities."""
         super().__init__(parent)
-        self.data = b''
+        self.data = b""
         self.selected_start = -1
         self.selected_end = -1
         self.bytes_per_row = 16
@@ -117,7 +117,7 @@ class HexViewerWidget(QWidget):
 
         # Convert hex string to bytes
         try:
-            search_bytes = bytes.fromhex(pattern.replace(' ', ''))
+            search_bytes = bytes.fromhex(pattern.replace(" ", ""))
         except ValueError:
             self.status_label.setText("Invalid hex pattern")
             return
@@ -170,7 +170,7 @@ class HexViewerWidget(QWidget):
             return
 
         byte_val = self.data[offset]
-        ascii_val = chr(byte_val) if 32 <= byte_val <= 126 else '.'
+        ascii_val = chr(byte_val) if 32 <= byte_val <= 126 else "."
 
         selection_info = "None"
         if self.selection_start != -1 and self.selection_end != -1:
@@ -189,14 +189,14 @@ class HexDisplay(QWidget):
     def __init__(self, parent=None):
         """Initialize hex display widget with scrollable hex and ASCII data view."""
         super().__init__(parent)
-        self.data = b''
+        self.data = b""
         self.bytes_per_row = 16
         self.selected_start = -1
         self.selected_end = -1
         self.current_offset = 0
 
         # Use monospace font for proper alignment
-        font = QFont('Courier', 10)
+        font = QFont("Courier", 10)
         font.setStyleHint(QFont.StyleHint.TypeWriter)
         self.setFont(font)
 
@@ -273,7 +273,7 @@ class HexDisplay(QWidget):
                     break
 
                 byte_val = self.hex_viewer.data[byte_offset]
-                ascii_char = chr(byte_val) if 32 <= byte_val <= 126 else '.'
+                ascii_char = chr(byte_val) if 32 <= byte_val <= 126 else "."
 
                 # Highlight selection
                 if (self.hex_viewer.selection_start <= byte_offset < self.hex_viewer.selection_end):
@@ -350,7 +350,7 @@ class HexDisplay(QWidget):
         # Editing (if enabled)
         elif self.hex_viewer.edit_mode and event.text():
             char = event.text().upper()
-            if char in '0123456789ABCDEF':
+            if char in "0123456789ABCDEF":
                 # Hex input mode
                 self.input_hex_nibble(char)
 

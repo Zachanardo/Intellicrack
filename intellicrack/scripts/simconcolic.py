@@ -40,10 +40,10 @@ class Plugin:
         self.analysis_start_time = time.time()
         self.total_states_analyzed = 0
         self.analysis_metadata = {
-            'start_time': self.analysis_start_time,
-            'initial_memory_usage': self._get_memory_usage(),
-            'callback_args': args,
-            'callback_kwargs': kwargs
+            "start_time": self.analysis_start_time,
+            "initial_memory_usage": self._get_memory_usage(),
+            "callback_args": args,
+            "callback_kwargs": kwargs
         }
         logger.info(f"Starting analysis at {datetime.fromtimestamp(self.analysis_start_time)}")
 
@@ -51,24 +51,24 @@ class Plugin:
         """Called after analysis finishes"""
         # Calculate analysis statistics
         end_time = time.time()
-        duration = end_time - getattr(self, 'analysis_start_time', end_time)
+        duration = end_time - getattr(self, "analysis_start_time", end_time)
         
         # Log completion statistics
         logger.info(f"Analysis completed in {duration:.2f} seconds")
         logger.info(f"Total states analyzed: {getattr(self, 'total_states_analyzed', 0)}")
         
         # Store final metrics
-        if hasattr(self, 'analysis_metadata'):
-            self.analysis_metadata['end_time'] = end_time
-            self.analysis_metadata['duration'] = duration
-            self.analysis_metadata['final_memory_usage'] = self._get_memory_usage()
-            self.analysis_metadata['completion_args'] = args
-            self.analysis_metadata['completion_kwargs'] = kwargs
+        if hasattr(self, "analysis_metadata"):
+            self.analysis_metadata["end_time"] = end_time
+            self.analysis_metadata["duration"] = duration
+            self.analysis_metadata["final_memory_usage"] = self._get_memory_usage()
+            self.analysis_metadata["completion_args"] = args
+            self.analysis_metadata["completion_kwargs"] = kwargs
 
     def will_fork_state_callback(self, state, *args, **kwargs):
         """Called before a state is forked"""
         # Track state forking for analysis
-        if not hasattr(self, 'fork_count'):
+        if not hasattr(self, "fork_count"):
             self.fork_count = 0
         self.fork_count += 1
         
@@ -76,28 +76,28 @@ class Plugin:
         logger.debug(f"Forking state at address 0x{state.address:x} (fork #{self.fork_count})")
         
         # Store fork metadata
-        if not hasattr(self, 'fork_history'):
+        if not hasattr(self, "fork_history"):
             self.fork_history = []
         self.fork_history.append({
-            'timestamp': time.time(),
-            'state_address': state.address,
-            'fork_number': self.fork_count,
-            'parent_constraints': len(state.constraints) if hasattr(state, 'constraints') else 0
+            "timestamp": time.time(),
+            "state_address": state.address,
+            "fork_number": self.fork_count,
+            "parent_constraints": len(state.constraints) if hasattr(state, "constraints") else 0
         })
 
     def will_terminate_state_callback(self, state, *args, **kwargs):
         """Called before a state is terminated"""
         # Track termination reasons
-        if not hasattr(self, 'termination_pending'):
+        if not hasattr(self, "termination_pending"):
             self.termination_pending = {}
         
         # Store pending termination info
-        state_id = getattr(state, 'state_id', id(state))
+        state_id = getattr(state, "state_id", id(state))
         self.termination_pending[state_id] = {
-            'timestamp': time.time(),
-            'address': state.address,
-            'reason': kwargs.get('reason', 'unknown'),
-            'constraints_count': len(state.constraints) if hasattr(state, 'constraints') else 0
+            "timestamp": time.time(),
+            "address": state.address,
+            "reason": kwargs.get("reason", "unknown"),
+            "constraints_count": len(state.constraints) if hasattr(state, "constraints") else 0
         }
         
         logger.debug(f"State at 0x{state.address:x} pending termination")
@@ -105,27 +105,27 @@ class Plugin:
     def did_terminate_state_callback(self, state, *args, **kwargs):
         """Called after a state is terminated"""
         # Update termination statistics
-        if not hasattr(self, 'terminated_states'):
+        if not hasattr(self, "terminated_states"):
             self.terminated_states = []
         
-        state_id = getattr(state, 'state_id', id(state))
-        termination_info = getattr(self, 'termination_pending', {}).get(state_id, {})
+        state_id = getattr(state, "state_id", id(state))
+        termination_info = getattr(self, "termination_pending", {}).get(state_id, {})
         
         # Record terminated state
         self.terminated_states.append({
-            'timestamp': time.time(),
-            'address': state.address,
-            'state_id': state_id,
-            'reason': termination_info.get('reason', 'unknown'),
-            'duration': time.time() - termination_info.get('timestamp', time.time())
+            "timestamp": time.time(),
+            "address": state.address,
+            "state_id": state_id,
+            "reason": termination_info.get("reason", "unknown"),
+            "duration": time.time() - termination_info.get("timestamp", time.time())
         })
         
         # Clean up pending termination
-        if hasattr(self, 'termination_pending') and state_id in self.termination_pending:
+        if hasattr(self, "termination_pending") and state_id in self.termination_pending:
             del self.termination_pending[state_id]
         
         # Update total states analyzed
-        self.total_states_analyzed = getattr(self, 'total_states_analyzed', 0) + 1
+        self.total_states_analyzed = getattr(self, "total_states_analyzed", 0) + 1
         
         logger.debug(f"State at 0x{state.address:x} terminated (total: {self.total_states_analyzed})")
     
@@ -142,7 +142,7 @@ class Plugin:
 class State:
     """Represents an execution state in the binary"""
 
-    def __init__(self, address: int, analyzer: 'BinaryAnalyzer', state_id: str = None):
+    def __init__(self, address: int, analyzer: "BinaryAnalyzer", state_id: str = None):
         """
         Initialize a state
 
@@ -155,17 +155,17 @@ class State:
         self.terminated = False
         self.termination_reason = "running"  # Initial state is "running"
         self.input_symbols = {
-            'stdin': b'',
-            'argv': []
+            "stdin": b"",
+            "argv": []
         }
         self.id = state_id or f"state_{address:x}"
 
         # Create CPU with instruction pointer
-        self.cpu = type('CPU', (object,), {
-            'instruction_pointer': address,
-            'PC': address,  # Alias for instruction_pointer
-            'memory': {},
-            'registers': {}
+        self.cpu = type("CPU", (object,), {
+            "instruction_pointer": address,
+            "PC": address,  # Alias for instruction_pointer
+            "memory": {},
+            "registers": {}
         })
 
     def abandon(self):
@@ -212,7 +212,7 @@ class BinaryAnalyzer:
             callback: The callback function to call when the address is reached
         """
         # Convert address to int if it's in hex string format
-        if isinstance(address, str) and address.startswith('0x'):
+        if isinstance(address, str) and address.startswith("0x"):
             address = int(address, 16)
 
         if address not in self.hooks:
@@ -257,7 +257,7 @@ class BinaryAnalyzer:
 
         # Notify plugins that we're starting
         for plugin in self.plugins:
-            if hasattr(plugin, 'will_run_callback'):
+            if hasattr(plugin, "will_run_callback"):
                 plugin.will_run_callback()
 
         # Create initial state for execution
@@ -270,8 +270,8 @@ class BinaryAnalyzer:
         explored_states = []
 
         # Generate some random input symbols for the states
-        initial_state.input_symbols['stdin'] = b'AAAA'
-        initial_state.input_symbols['argv'] = [b'./program', b'arg1', b'arg2']
+        initial_state.input_symbols["stdin"] = b"AAAA"
+        initial_state.input_symbols["argv"] = [b"./program", b"arg1", b"arg2"]
 
         state_counter = 1
 
@@ -289,13 +289,13 @@ class BinaryAnalyzer:
             self._states[state.id] = state
 
             # Add some symbolic inputs
-            state.input_symbols['stdin'] = f"input_for_addr_{address:x}".encode()
-            state.input_symbols['argv'] = [b'./program', f"arg_for_addr_{address:x}".encode()]
+            state.input_symbols["stdin"] = f"input_for_addr_{address:x}".encode()
+            state.input_symbols["argv"] = [b"./program", f"arg_for_addr_{address:x}".encode()]
 
             # Simulate some forking to create more states
             if len(self._states) < 10 and len(remaining_hooks) > 0:
                 for plugin in self.plugins:
-                    if hasattr(plugin, 'will_fork_state_callback'):
+                    if hasattr(plugin, "will_fork_state_callback"):
                         plugin.will_fork_state_callback(state)
 
                 # Create a forked state
@@ -303,8 +303,8 @@ class BinaryAnalyzer:
                 fork_state_id = f"state_{state_counter}"
                 state_counter += 1
                 forked_state = State(forked_address, self, fork_state_id)
-                forked_state.input_symbols['stdin'] = f"fork_input_for_addr_{forked_address:x}".encode()
-                forked_state.input_symbols['argv'] = [b'./program', f"fork_arg_for_addr_{forked_address:x}".encode()]
+                forked_state.input_symbols["stdin"] = f"fork_input_for_addr_{forked_address:x}".encode()
+                forked_state.input_symbols["argv"] = [b"./program", f"fork_arg_for_addr_{forked_address:x}".encode()]
                 self._states[forked_state.id] = forked_state
 
             # Execute the hook callbacks
@@ -336,7 +336,7 @@ class BinaryAnalyzer:
 
         # Notify plugins that we're done
         for plugin in self.plugins:
-            if hasattr(plugin, 'did_finish_run_callback'):
+            if hasattr(plugin, "did_finish_run_callback"):
                 plugin.did_finish_run_callback()
 
         return explored_states
@@ -351,7 +351,7 @@ class BinaryAnalyzer:
     def _handle_state_termination(self, state: State):
         """Handle the termination of a state"""
         for plugin in self.plugins:
-            if hasattr(plugin, 'will_terminate_state_callback'):
+            if hasattr(plugin, "will_terminate_state_callback"):
                 plugin.will_terminate_state_callback(state)
 
         # Mark the state as terminated
@@ -362,7 +362,7 @@ class BinaryAnalyzer:
             state.termination_reason = "abandoned"
 
         for plugin in self.plugins:
-            if hasattr(plugin, 'did_terminate_state_callback'):
+            if hasattr(plugin, "did_terminate_state_callback"):
                 plugin.did_terminate_state_callback(state)
 
     @property

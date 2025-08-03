@@ -119,20 +119,20 @@ class R2AnalysisWorker(QThread):
     def _run_comprehensive_analysis(self) -> Dict[str, Any]:
         """Run comprehensive radare2 analysis"""
         results = {
-            'binary_path': self.binary_path,
-            'analysis_type': 'comprehensive',
-            'components': {}
+            "binary_path": self.binary_path,
+            "analysis_type": "comprehensive",
+            "components": {}
         }
 
         # Initialize all engines
         engines = {
-            'decompiler': R2DecompilationEngine(self.binary_path),
-            'vulnerability': R2VulnerabilityEngine(self.binary_path),
-            'strings': R2StringAnalyzer(self.binary_path),
-            'imports': R2ImportExportAnalyzer(self.binary_path),
-            'ai': R2AIEngine(self.binary_path),
-            'cfg': CFGExplorer(self.binary_path),
-            'scripting': R2ScriptingEngine(self.binary_path)
+            "decompiler": R2DecompilationEngine(self.binary_path),
+            "vulnerability": R2VulnerabilityEngine(self.binary_path),
+            "strings": R2StringAnalyzer(self.binary_path),
+            "imports": R2ImportExportAnalyzer(self.binary_path),
+            "ai": R2AIEngine(self.binary_path),
+            "cfg": CFGExplorer(self.binary_path),
+            "scripting": R2ScriptingEngine(self.binary_path)
         }
 
         total_components = len(engines)
@@ -143,24 +143,24 @@ class R2AnalysisWorker(QThread):
                 self.status_updated.emit(f"Running {name} analysis...")
 
                 result = None  # Initialize result
-                if name == 'decompiler':
+                if name == "decompiler":
                     result = engine.analyze_license_functions()
-                elif name == 'vulnerability':
+                elif name == "vulnerability":
                     result = engine.analyze_vulnerabilities()
-                elif name == 'strings':
+                elif name == "strings":
                     result = engine.analyze_all_strings()
-                elif name == 'imports':
+                elif name == "imports":
                     result = engine.analyze_imports_exports()
-                elif name == 'ai':
+                elif name == "ai":
                     result = engine.analyze_with_ai()
-                elif name == 'cfg':
+                elif name == "cfg":
                     result = engine.analyze_cfg()
-                elif name == 'scripting':
+                elif name == "scripting":
                     result = engine.execute_license_analysis_workflow()
                 else:
                     result = f"Unknown analysis component: {name}"
 
-                results['components'][name] = result
+                results["components"][name] = result
 
                 # Update progress
                 current_progress = 10 + int((i + 1) / total_components * 80)
@@ -168,7 +168,7 @@ class R2AnalysisWorker(QThread):
 
             except Exception as e:
                 self.logger.warning(f"Component {name} failed: {e}")
-                results['components'][name] = {'error': str(e)}
+                results["components"][name] = {"error": str(e)}
 
         return results
 
@@ -309,18 +309,18 @@ class R2ConfigurationDialog(QDialog):
     def get_configuration(self) -> Dict[str, Any]:
         """Get configuration from dialog"""
         return {
-            'analysis_depth': self.analysis_depth.currentText(),
-            'max_functions': self.max_functions.value(),
-            'timeout_seconds': self.timeout_seconds.value(),
-            'enable_decompilation': self.enable_decompilation.isChecked(),
-            'enable_vulnerability': self.enable_vulnerability.isChecked(),
-            'enable_strings': self.enable_strings.isChecked(),
-            'enable_imports': self.enable_imports.isChecked(),
-            'enable_cfg': self.enable_cfg.isChecked(),
-            'enable_ai': self.enable_ai.isChecked(),
-            'enable_bypass': self.enable_bypass.isChecked(),
-            'radare2_path': self.radare2_path.text().strip() or None,
-            'custom_flags': self.custom_flags.text().strip() or None
+            "analysis_depth": self.analysis_depth.currentText(),
+            "max_functions": self.max_functions.value(),
+            "timeout_seconds": self.timeout_seconds.value(),
+            "enable_decompilation": self.enable_decompilation.isChecked(),
+            "enable_vulnerability": self.enable_vulnerability.isChecked(),
+            "enable_strings": self.enable_strings.isChecked(),
+            "enable_imports": self.enable_imports.isChecked(),
+            "enable_cfg": self.enable_cfg.isChecked(),
+            "enable_ai": self.enable_ai.isChecked(),
+            "enable_bypass": self.enable_bypass.isChecked(),
+            "radare2_path": self.radare2_path.text().strip() or None,
+            "custom_flags": self.custom_flags.text().strip() or None
         }
 
 
@@ -365,9 +365,9 @@ class R2ResultsViewer(QWidget):
         self.component_selector.clear()
         self.results_tabs.clear()
 
-        if 'components' in results:
+        if "components" in results:
             # Multi-component results
-            for component, data in results['components'].items():
+            for component, data in results["components"].items():
                 self.component_selector.addItem(component.title())
                 self._create_component_tab(component, data)
         else:
@@ -414,34 +414,34 @@ class R2ResultsViewer(QWidget):
 
     def _generate_summary(self, data: Dict[str, Any]) -> str:
         """Generate summary text for component"""
-        if 'error' in data:
+        if "error" in data:
             return f"Analysis failed: {data['error']}"
 
         summary_parts = []
 
         # Count various result types
-        if 'license_functions' in data:
-            count = len(data['license_functions'])
+        if "license_functions" in data:
+            count = len(data["license_functions"])
             summary_parts.append(f"License functions: {count}")
 
-        if 'vulnerabilities' in data:
-            count = len(data['vulnerabilities'])
+        if "vulnerabilities" in data:
+            count = len(data["vulnerabilities"])
             summary_parts.append(f"Vulnerabilities: {count}")
 
-        if 'buffer_overflows' in data:
-            count = len(data['buffer_overflows'])
+        if "buffer_overflows" in data:
+            count = len(data["buffer_overflows"])
             summary_parts.append(f"Buffer overflows: {count}")
 
-        if 'license_strings' in data:
-            count = len(data['license_strings'])
+        if "license_strings" in data:
+            count = len(data["license_strings"])
             summary_parts.append(f"License strings: {count}")
 
-        if 'imports' in data:
-            count = len(data['imports'])
+        if "imports" in data:
+            count = len(data["imports"])
             summary_parts.append(f"Imports: {count}")
 
-        if 'functions_analyzed' in data:
-            count = data['functions_analyzed']
+        if "functions_analyzed" in data:
+            count = data["functions_analyzed"]
             summary_parts.append(f"Functions analyzed: {count}")
 
         return " | ".join(summary_parts) if summary_parts else "Analysis completed"
@@ -455,24 +455,24 @@ class R2ResultsViewer(QWidget):
         vulnerabilities = []
 
         # Collect vulnerabilities from different categories
-        for category in ['buffer_overflows', 'format_string_bugs', 'integer_overflows',
-                        'use_after_free', 'double_free', 'code_injection']:
+        for category in ["buffer_overflows", "format_string_bugs", "integer_overflows",
+                        "use_after_free", "double_free", "code_injection"]:
             if category in data:
                 for vuln in data[category]:
                     vulnerabilities.append({
-                        'type': category.replace('_', ' ').title(),
-                        'function': vuln.get('function', 'Unknown'),
-                        'address': vuln.get('address', 'Unknown'),
-                        'severity': vuln.get('severity', 'Medium')
+                        "type": category.replace("_", " ").title(),
+                        "function": vuln.get("function", "Unknown"),
+                        "address": vuln.get("address", "Unknown"),
+                        "severity": vuln.get("severity", "Medium")
                     })
 
         table.setRowCount(len(vulnerabilities))
 
         for i, vuln in enumerate(vulnerabilities):
-            table.setItem(i, 0, QTableWidgetItem(vuln['type']))
-            table.setItem(i, 1, QTableWidgetItem(vuln['function']))
-            table.setItem(i, 2, QTableWidgetItem(str(vuln['address'])))
-            table.setItem(i, 3, QTableWidgetItem(vuln['severity']))
+            table.setItem(i, 0, QTableWidgetItem(vuln["type"]))
+            table.setItem(i, 1, QTableWidgetItem(vuln["function"]))
+            table.setItem(i, 2, QTableWidgetItem(str(vuln["address"])))
+            table.setItem(i, 3, QTableWidgetItem(vuln["severity"]))
 
         table.resizeColumnsToContents()
         layout.addWidget(table)
@@ -482,8 +482,8 @@ class R2ResultsViewer(QWidget):
         # String categories tabs
         strings_tabs = QTabWidget()
 
-        categories = ['license_strings', 'crypto_strings', 'error_message_strings',
-                     'debug_strings', 'suspicious_patterns']
+        categories = ["license_strings", "crypto_strings", "error_message_strings",
+                     "debug_strings", "suspicious_patterns"]
 
         for category in categories:
             if category in data:
@@ -495,7 +495,7 @@ class R2ResultsViewer(QWidget):
                         item_text = str(string_data)
                     strings_widget.addItem(item_text)
 
-                strings_tabs.addTab(strings_widget, category.replace('_', ' ').title())
+                strings_tabs.addTab(strings_widget, category.replace("_", " ").title())
 
         layout.addWidget(strings_tabs)
 
@@ -507,12 +507,12 @@ class R2ResultsViewer(QWidget):
         imports_widget = QTreeWidget()
         imports_widget.setHeaderLabels(["Import", "Library", "Category"])
 
-        if 'imports' in data:
-            for imp in data['imports']:
+        if "imports" in data:
+            for imp in data["imports"]:
                 item = QTreeWidgetItem([
-                    imp.get('name', 'Unknown'),
-                    imp.get('library', 'Unknown'),
-                    imp.get('category', 'Unknown')
+                    imp.get("name", "Unknown"),
+                    imp.get("library", "Unknown"),
+                    imp.get("category", "Unknown")
                 ])
                 imports_widget.addTopLevelItem(item)
 
@@ -520,9 +520,9 @@ class R2ResultsViewer(QWidget):
         categories_widget = QTreeWidget()
         categories_widget.setHeaderLabels(["Category", "Count"])
 
-        if 'api_categories' in data:
-            for category, apis in data['api_categories'].items():
-                item = QTreeWidgetItem([category.replace('_', ' ').title(), str(len(apis))])
+        if "api_categories" in data:
+            for category, apis in data["api_categories"].items():
+                item = QTreeWidgetItem([category.replace("_", " ").title(), str(len(apis))])
                 categories_widget.addTopLevelItem(item)
 
         splitter.addWidget(imports_widget)
@@ -537,10 +537,10 @@ class R2ResultsViewer(QWidget):
         metrics_text.setReadOnly(True)
 
         metrics_info = []
-        if 'functions_analyzed' in data:
+        if "functions_analyzed" in data:
             metrics_info.append(f"Functions analyzed: {data['functions_analyzed']}")
-        if 'complexity_metrics' in data:
-            complexity = data['complexity_metrics']
+        if "complexity_metrics" in data:
+            complexity = data["complexity_metrics"]
             metrics_info.append(f"Nodes: {complexity.get('nodes', 0)}")
             metrics_info.append(f"Edges: {complexity.get('edges', 0)}")
             metrics_info.append(f"Cyclomatic complexity: {complexity.get('cyclomatic_complexity', 0)}")
@@ -549,18 +549,18 @@ class R2ResultsViewer(QWidget):
         layout.addWidget(metrics_text)
 
         # License patterns
-        if 'license_patterns' in data:
+        if "license_patterns" in data:
             patterns_widget = QTableWidget()
             patterns_widget.setColumnCount(3)
             patterns_widget.setHorizontalHeaderLabels(["Type", "Address", "Disassembly"])
 
-            patterns = data['license_patterns']
+            patterns = data["license_patterns"]
             patterns_widget.setRowCount(len(patterns))
 
             for i, pattern in enumerate(patterns):
-                patterns_widget.setItem(i, 0, QTableWidgetItem(pattern.get('type', 'Unknown')))
-                patterns_widget.setItem(i, 1, QTableWidgetItem(str(pattern.get('op_addr', 'Unknown'))))
-                patterns_widget.setItem(i, 2, QTableWidgetItem(pattern.get('disasm', 'Unknown')))
+                patterns_widget.setItem(i, 0, QTableWidgetItem(pattern.get("type", "Unknown")))
+                patterns_widget.setItem(i, 1, QTableWidgetItem(str(pattern.get("op_addr", "Unknown"))))
+                patterns_widget.setItem(i, 2, QTableWidgetItem(pattern.get("disasm", "Unknown")))
 
             layout.addWidget(patterns_widget)
 
@@ -569,10 +569,10 @@ class R2ResultsViewer(QWidget):
         ai_tabs = QTabWidget()
 
         # License detection
-        if 'ai_license_detection' in data:
+        if "ai_license_detection" in data:
             license_widget = QTextEdit()
             license_widget.setReadOnly(True)
-            license_data = data['ai_license_detection']
+            license_data = data["ai_license_detection"]
             license_text = f"""
 Has License Validation: {license_data.get('has_license_validation', False)}
 Confidence: {license_data.get('confidence', 0):.2f}
@@ -584,17 +584,17 @@ Validation Methods: {', '.join(license_data.get('validation_methods', []))}
             ai_tabs.addTab(license_widget, "License Detection")
 
         # Vulnerability prediction
-        if 'ai_vulnerability_prediction' in data:
+        if "ai_vulnerability_prediction" in data:
             vuln_widget = QTreeWidget()
             vuln_widget.setHeaderLabels(["Vulnerability Type", "Probability", "Predicted"])
 
-            vuln_data = data['ai_vulnerability_prediction']
-            if 'vulnerability_predictions' in vuln_data:
-                for vuln_type, prediction in vuln_data['vulnerability_predictions'].items():
+            vuln_data = data["ai_vulnerability_prediction"]
+            if "vulnerability_predictions" in vuln_data:
+                for vuln_type, prediction in vuln_data["vulnerability_predictions"].items():
                     item = QTreeWidgetItem([
-                        vuln_type.replace('_', ' ').title(),
+                        vuln_type.replace("_", " ").title(),
                         f"{prediction.get('probability', 0):.3f}",
-                        str(prediction.get('predicted', False))
+                        str(prediction.get("predicted", False))
                     ])
                     vuln_widget.addTopLevelItem(item)
 
@@ -637,7 +637,7 @@ Validation Methods: {', '.join(license_data.get('validation_methods', []))}
 
         if file_path:
             try:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     json.dump(self.results_data, f, indent=2, default=str)
                 QMessageBox.information(self, "Export", f"Results exported to {file_path}")
             except Exception as e:
@@ -823,12 +823,12 @@ def integrate_with_main_app(main_app):
     """Integrate radare2 UI with main application"""
     try:
         # Add radare2 tab to main application
-        if hasattr(main_app, 'tab_widget'):
+        if hasattr(main_app, "tab_widget"):
             r2_widget = R2IntegrationWidget(main_app)
             main_app.tab_widget.addTab(r2_widget, "Radare2 Analysis")
 
             # Connect binary path updates
-            if hasattr(main_app, 'binary_path'):
+            if hasattr(main_app, "binary_path"):
                 r2_widget.set_binary_path(main_app.binary_path)
 
             # Store reference for future updates
@@ -843,10 +843,10 @@ def integrate_with_main_app(main_app):
 
 
 __all__ = [
-    'R2IntegrationWidget',
-    'R2ConfigurationDialog',
-    'R2ResultsViewer',
-    'R2AnalysisWorker',
-    'create_radare2_tab',
-    'integrate_with_main_app'
+    "R2IntegrationWidget",
+    "R2ConfigurationDialog",
+    "R2ResultsViewer",
+    "R2AnalysisWorker",
+    "create_radare2_tab",
+    "integrate_with_main_app"
 ]

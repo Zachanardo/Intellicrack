@@ -314,7 +314,7 @@ class MemoryForensicsEngine:
 
             # Try using subprocess to gather system information about the dump
             try:
-                file_result = subprocess.run(['file', dump_path], capture_output=True, text=True, timeout=10)
+                file_result = subprocess.run(["file", dump_path], capture_output=True, text=True, timeout=10)
                 if file_result.returncode == 0:
                     result.analysis_profile = file_result.stdout.strip()
                     logger.debug(f"File command output: {file_result.stdout}")
@@ -351,51 +351,51 @@ class MemoryForensicsEngine:
 
             # Analyze dump file header for OS signatures
             if os.path.exists(dump_path):
-                with open(dump_path, 'rb') as f:
+                with open(dump_path, "rb") as f:
                     # Read first 4KB for signatures
                     header_data = f.read(4096)
 
                     # Parse potential crash dump header using struct
                     if len(header_data) >= 32:
                         # Check for Windows crash dump signature (first 8 bytes)
-                        signature = struct.unpack('<Q', header_data[:8])[0]
+                        signature = struct.unpack("<Q", header_data[:8])[0]
                         if signature == 0x45474150:  # 'PAGE' in little-endian
                             # Parse Windows dump header
-                            dump_type = struct.unpack('<I', header_data[0xF88:0xF8C])[0] if len(header_data) > 0xF8C else 0
+                            dump_type = struct.unpack("<I", header_data[0xF88:0xF8C])[0] if len(header_data) > 0xF8C else 0
                             logger.info(f"Windows crash dump detected, type: {dump_type}")
 
                     # Look for common Windows signatures
-                    if b'PAGEFILEDATA' in header_data or b'HIBERFIL' in header_data:
+                    if b"PAGEFILEDATA" in header_data or b"HIBERFIL" in header_data:
                         # Check for Windows version indicators
-                        if b'Windows 11' in header_data or b'22H2' in header_data:
+                        if b"Windows 11" in header_data or b"22H2" in header_data:
                             logger.info(f"Detected Windows 11 from dump file: {dump_path}")
                             return AnalysisProfile.WINDOWS_11.value
-                        elif b'Windows 10' in header_data or b'2004' in header_data or b'21H1' in header_data:
+                        elif b"Windows 10" in header_data or b"2004" in header_data or b"21H1" in header_data:
                             logger.info(f"Detected Windows 10 from dump file: {dump_path}")
                             return AnalysisProfile.WINDOWS_10.value
-                        elif b'Windows 7' in header_data:
+                        elif b"Windows 7" in header_data:
                             logger.info(f"Detected Windows 7 from dump file: {dump_path}")
                             return AnalysisProfile.WINDOWS_7.value
 
                     # Look for Linux signatures
-                    elif b'Linux' in header_data or b'vmlinux' in header_data:
+                    elif b"Linux" in header_data or b"vmlinux" in header_data:
                         # Check for ELF header using struct
                         if len(header_data) >= 16:
-                            elf_magic = struct.unpack('4s', header_data[:4])[0]
-                            if elf_magic == b'\x7fELF':
+                            elf_magic = struct.unpack("4s", header_data[:4])[0]
+                            if elf_magic == b"\x7fELF":
                                 # Parse ELF header
-                                e_machine = struct.unpack('<H', header_data[18:20])[0] if len(header_data) > 20 else 0
+                                e_machine = struct.unpack("<H", header_data[18:20])[0] if len(header_data) > 20 else 0
                                 logger.info(f"ELF binary detected in dump, machine type: {e_machine}")
                         logger.info(f"Detected Linux from dump file: {dump_path}")
                         return AnalysisProfile.LINUX_GENERIC.value
 
                     # Look for macOS signatures
-                    elif b'Darwin' in header_data or b'MacOS' in header_data or b'mach_kernel' in header_data:
+                    elif b"Darwin" in header_data or b"MacOS" in header_data or b"mach_kernel" in header_data:
                         # Check for Mach-O header using struct
                         if len(header_data) >= 8:
-                            mach_magic = struct.unpack('<I', header_data[:4])[0]
+                            mach_magic = struct.unpack("<I", header_data[:4])[0]
                             if mach_magic in [0xfeedface, 0xfeedfacf, 0xcefaedfe, 0xcffaedfe]:  # Mach-O magic numbers
-                                cpu_type = struct.unpack('<I', header_data[4:8])[0] if len(header_data) >= 8 else 0
+                                cpu_type = struct.unpack("<I", header_data[4:8])[0] if len(header_data) >= 8 else 0
                                 logger.info(f"Mach-O binary detected in dump, CPU type: {cpu_type}")
                         logger.info(f"Detected macOS from dump file: {dump_path}")
                         return AnalysisProfile.MAC_OSX.value
@@ -454,8 +454,8 @@ class MemoryForensicsEngine:
                 logger.warning(f"Plugin {plugin_name} not available")
                 return []
 
-            plugin_class = getattr(volatility3.framework.plugins, plugin_name.split('.')[0])
-            plugin_class = getattr(plugin_class, plugin_name.split('.')[1])
+            plugin_class = getattr(volatility3.framework.plugins, plugin_name.split(".")[0])
+            plugin_class = getattr(plugin_class, plugin_name.split(".")[1])
 
             # Create plugin instance using requirements framework
             plugin_requirements = requirements.TranslationLayerRequirement(
@@ -555,16 +555,16 @@ class MemoryForensicsEngine:
             for process_data in pslist_results:
                 # Extract process information
                 process = MemoryProcess(
-                    pid=getattr(process_data, 'PID', 0),
-                    ppid=getattr(process_data, 'PPID', 0),
-                    name=getattr(process_data, 'ImageFileName', '').strip(),
-                    create_time=str(getattr(process_data, 'CreateTime', '')),
-                    exit_time=str(getattr(process_data, 'ExitTime', '')),
-                    image_base=getattr(process_data, 'ImageBase', 0),
-                    session_id=getattr(process_data, 'SessionId', 0),
-                    handle_count=getattr(process_data, 'HandleCount', 0),
-                    thread_count=getattr(process_data, 'ThreadCount', 0),
-                    wow64=getattr(process_data, 'Wow64', False)
+                    pid=getattr(process_data, "PID", 0),
+                    ppid=getattr(process_data, "PPID", 0),
+                    name=getattr(process_data, "ImageFileName", "").strip(),
+                    create_time=str(getattr(process_data, "CreateTime", "")),
+                    exit_time=str(getattr(process_data, "ExitTime", "")),
+                    image_base=getattr(process_data, "ImageBase", 0),
+                    session_id=getattr(process_data, "SessionId", 0),
+                    handle_count=getattr(process_data, "HandleCount", 0),
+                    thread_count=getattr(process_data, "ThreadCount", 0),
+                    wow64=getattr(process_data, "Wow64", False)
                 )
 
                 # Check for suspicious indicators
@@ -590,10 +590,10 @@ class MemoryForensicsEngine:
 
             for module_data in module_results:
                 module = MemoryModule(
-                    base_address=getattr(module_data, 'BaseAddress', 0),
-                    size=getattr(module_data, 'SizeOfImage', 0),
-                    name=getattr(module_data, 'BaseDllName', '').strip(),
-                    path=getattr(module_data, 'FullDllName', '').strip(),
+                    base_address=getattr(module_data, "BaseAddress", 0),
+                    size=getattr(module_data, "SizeOfImage", 0),
+                    name=getattr(module_data, "BaseDllName", "").strip(),
+                    path=getattr(module_data, "FullDllName", "").strip(),
                     is_suspicious=self._is_module_suspicious(module_data)
                 )
 
@@ -614,14 +614,14 @@ class MemoryForensicsEngine:
 
             for conn_data in netscan_results:
                 connection = NetworkConnection(
-                    local_addr=getattr(conn_data, 'LocalAddr', ''),
-                    local_port=getattr(conn_data, 'LocalPort', 0),
-                    remote_addr=getattr(conn_data, 'ForeignAddr', ''),
-                    remote_port=getattr(conn_data, 'ForeignPort', 0),
-                    protocol=getattr(conn_data, 'Protocol', ''),
-                    state=getattr(conn_data, 'State', ''),
-                    pid=getattr(conn_data, 'PID', 0),
-                    create_time=str(getattr(conn_data, 'CreateTime', ''))
+                    local_addr=getattr(conn_data, "LocalAddr", ""),
+                    local_port=getattr(conn_data, "LocalPort", 0),
+                    remote_addr=getattr(conn_data, "ForeignAddr", ""),
+                    remote_port=getattr(conn_data, "ForeignPort", 0),
+                    protocol=getattr(conn_data, "Protocol", ""),
+                    state=getattr(conn_data, "State", ""),
+                    pid=getattr(conn_data, "PID", 0),
+                    create_time=str(getattr(conn_data, "CreateTime", ""))
                 )
 
                 connections.append(connection)
@@ -641,10 +641,10 @@ class MemoryForensicsEngine:
 
             for hive_data in hivelist_results:
                 artifact = {
-                    "hive_offset": getattr(hive_data, 'Offset', 0),
-                    "hive_name": getattr(hive_data, 'HiveName', ''),
-                    "file_full_path": getattr(hive_data, 'FileFullPath', ''),
-                    "file_user_name": getattr(hive_data, 'FileUserName', '')
+                    "hive_offset": getattr(hive_data, "Offset", 0),
+                    "hive_name": getattr(hive_data, "HiveName", ""),
+                    "file_full_path": getattr(hive_data, "FileFullPath", ""),
+                    "file_user_name": getattr(hive_data, "FileUserName", "")
                 }
                 registry_artifacts.append(artifact)
 
@@ -662,13 +662,13 @@ class MemoryForensicsEngine:
             handles_results = self._run_volatility_plugin("windows.handles.Handles", {})
 
             for handle_data in handles_results:
-                if getattr(handle_data, 'HandleType', '') == 'File':
+                if getattr(handle_data, "HandleType", "") == "File":
                     handle = {
-                        "pid": getattr(handle_data, 'PID', 0),
-                        "handle_value": getattr(handle_data, 'HandleValue', 0),
-                        "access_mask": getattr(handle_data, 'AccessMask', 0),
-                        "object_name": getattr(handle_data, 'ObjectName', ''),
-                        "handle_type": getattr(handle_data, 'HandleType', '')
+                        "pid": getattr(handle_data, "PID", 0),
+                        "handle_value": getattr(handle_data, "HandleValue", 0),
+                        "access_mask": getattr(handle_data, "AccessMask", 0),
+                        "object_name": getattr(handle_data, "ObjectName", ""),
+                        "handle_type": getattr(handle_data, "HandleType", "")
                     }
                     file_handles.append(handle)
 
@@ -707,7 +707,7 @@ class MemoryForensicsEngine:
         strings = []
 
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 # Read file in chunks to handle large dumps
                 chunk_size = 1024 * 1024  # 1MB chunks
                 current_string = ""
@@ -753,18 +753,18 @@ class MemoryForensicsEngine:
             # Additional checks for legitimate vs suspicious instances
             # Check process path and signature to distinguish from legitimate system processes
             try:
-                if hasattr(process, 'image_file_name') and process.image_file_name:
+                if hasattr(process, "image_file_name") and process.image_file_name:
                     image_path = str(process.image_file_name).lower()
 
                     # Legitimate system processes should be in system directories
                     legitimate_paths = [
-                        'c:\\windows\\system32\\',
-                        'c:\\windows\\syswow64\\',
-                        'c:\\windows\\',
-                        '/usr/bin/',
-                        '/usr/sbin/',
-                        '/bin/',
-                        '/sbin/'
+                        "c:\\windows\\system32\\",
+                        "c:\\windows\\syswow64\\",
+                        "c:\\windows\\",
+                        "/usr/bin/",
+                        "/usr/sbin/",
+                        "/bin/",
+                        "/sbin/"
                     ]
 
                     is_in_system_dir = any(image_path.startswith(path) for path in legitimate_paths)
@@ -773,7 +773,7 @@ class MemoryForensicsEngine:
                         indicators.append(f"System process name in non-system location: {image_path}")
 
                     # Check for suspicious file extensions
-                    suspicious_extensions = ['.tmp', '.dat', '.bin', '.exe~', '.scr']
+                    suspicious_extensions = [".tmp", ".dat", ".bin", ".exe~", ".scr"]
                     if any(image_path.endswith(ext) for ext in suspicious_extensions):
                         indicators.append(f"Suspicious file extension for system process: {image_path}")
 
@@ -809,14 +809,14 @@ class MemoryForensicsEngine:
     def _is_module_suspicious(self, module_data: Any) -> bool:
         """Check if a module appears suspicious"""
         try:
-            module_name = getattr(module_data, 'BaseDllName', '').lower()
-            module_path = getattr(module_data, 'FullDllName', '').lower()
+            module_name = getattr(module_data, "BaseDllName", "").lower()
+            module_path = getattr(module_data, "FullDllName", "").lower()
 
             # Check for suspicious module names
             suspicious_module_names = [
-                'keylogger', 'rootkit', 'backdoor', 'trojan', 'virus',
-                'malware', 'hack', 'crack', 'exploit', 'inject',
-                'stealer', 'rat', 'bot', 'miner', 'dropper'
+                "keylogger", "rootkit", "backdoor", "trojan", "virus",
+                "malware", "hack", "crack", "exploit", "inject",
+                "stealer", "rat", "bot", "miner", "dropper"
             ]
 
             # Check if module name contains suspicious keywords
@@ -826,10 +826,10 @@ class MemoryForensicsEngine:
 
             # Check for DLL masquerading (common system DLL names with slight variations)
             masquerading_patterns = {
-                'kernel32.dll': ['kernal32.dll', 'kernel33.dll', 'kernell32.dll'],
-                'ntdll.dll': ['ntdl.dll', 'ntdlll.dll', 'ntddll.dll'],
-                'user32.dll': ['user33.dll', 'users32.dll', 'user322.dll'],
-                'advapi32.dll': ['advapi33.dll', 'advapii32.dll', 'advapi322.dll']
+                "kernel32.dll": ["kernal32.dll", "kernel33.dll", "kernell32.dll"],
+                "ntdll.dll": ["ntdl.dll", "ntdlll.dll", "ntddll.dll"],
+                "user32.dll": ["user33.dll", "users32.dll", "user322.dll"],
+                "advapi32.dll": ["advapi33.dll", "advapii32.dll", "advapi322.dll"]
             }
 
             for legitimate_dll, variants in masquerading_patterns.items():
@@ -838,12 +838,12 @@ class MemoryForensicsEngine:
                     return True
 
             # Check for unsigned modules in system directories
-            if any(sys_dir in module_path for sys_dir in ['system32', 'syswow64']):
+            if any(sys_dir in module_path for sys_dir in ["system32", "syswow64"]):
                 # In real implementation, check digital signature
                 return False
 
             # Check for modules loaded from unusual locations
-            suspicious_paths = ['temp', 'appdata', 'downloads', 'desktop']
+            suspicious_paths = ["temp", "appdata", "downloads", "desktop"]
             if any(path in module_path for path in suspicious_paths):
                 return True
 
@@ -885,7 +885,7 @@ class MemoryForensicsEngine:
             # Check for unusual network connections
             external_connections = [
                 c for c in analysis_result.network_connections
-                if not c.remote_addr.startswith(('127.', '192.168.', '10.', '172.'))
+                if not c.remote_addr.startswith(("127.", "192.168.", "10.", "172."))
             ]
             if len(external_connections) > 10:
                 findings.append({
@@ -898,7 +898,7 @@ class MemoryForensicsEngine:
             # Check for credential-related strings
             credential_strings = [
                 s for s in analysis_result.memory_strings
-                if any(keyword in s.value.lower() for keyword in ['password', 'credential', 'token', 'key'])
+                if any(keyword in s.value.lower() for keyword in ["password", "credential", "token", "key"])
             ]
             if credential_strings:
                 findings.append({
@@ -1057,7 +1057,7 @@ class MemoryForensicsEngine:
                             "strings_found": len(strings),
                             "interesting_strings": [s for s in strings if any(
                                 keyword in s.lower() for keyword in
-                                ['password', 'token', 'key', 'secret', 'api', 'credential']
+                                ["password", "token", "key", "secret", "api", "credential"]
                             )][:10]  # Limit to 10 interesting strings
                         })
 
@@ -1076,7 +1076,7 @@ class MemoryForensicsEngine:
                         handles.append({
                             "type": "file",
                             "path": file_obj.path,
-                            "fd": getattr(file_obj, 'fd', 'N/A')
+                            "fd": getattr(file_obj, "fd", "N/A")
                         })
                 except (psutil.AccessDenied, AttributeError):
                     pass
@@ -1085,11 +1085,11 @@ class MemoryForensicsEngine:
                 try:
                     memory_maps = proc.memory_maps()
                     for mmap in memory_maps:
-                        if hasattr(mmap, 'path') and mmap.path:
+                        if hasattr(mmap, "path") and mmap.path:
                             handles.append({
                                 "type": "memory_map",
                                 "path": mmap.path,
-                                "size": getattr(mmap, 'rss', 0)
+                                "size": getattr(mmap, "rss", 0)
                             })
                 except (psutil.AccessDenied, AttributeError):
                     pass
@@ -1159,10 +1159,10 @@ class MemoryForensicsEngine:
             memory_regions = []
             modules = []
 
-            with open(maps_path, 'r') as f:
+            with open(maps_path, "r") as f:
                 for line in f:
                     # Parse memory mapping
-                    match = re.match(r'([0-9a-f]+)-([0-9a-f]+) ([-rwxp]{4}) ([0-9a-f]+) ([\d:]+) (\d+)\s*(.*)?', line)
+                    match = re.match(r"([0-9a-f]+)-([0-9a-f]+) ([-rwxp]{4}) ([0-9a-f]+) ([\d:]+) (\d+)\s*(.*)?", line)
                     if match:
                         start = int(match.group(1), 16)
                         end = int(match.group(2), 16)
@@ -1173,7 +1173,7 @@ class MemoryForensicsEngine:
                         pathname = match.group(7) if match.group(7) else ""
 
                         # Skip non-readable regions
-                        if 'r' not in perms:
+                        if "r" not in perms:
                             continue
 
                         region_info = {
@@ -1189,7 +1189,7 @@ class MemoryForensicsEngine:
 
                         # Read memory content
                         try:
-                            with open(mem_path, 'rb') as mem_file:
+                            with open(mem_path, "rb") as mem_file:
                                 mem_file.seek(start)
                                 memory_data = mem_file.read(min(end - start, 0x10000))  # Read up to 64KB
 
@@ -1198,7 +1198,7 @@ class MemoryForensicsEngine:
                                 region_info["strings_found"] = len(strings)
                                 region_info["interesting_strings"] = [s for s in strings if any(
                                     keyword in s.lower() for keyword in
-                                    ['password', 'token', 'key', 'secret', 'api', 'credential', 'ssh', 'private']
+                                    ["password", "token", "key", "secret", "api", "credential", "ssh", "private"]
                                 )][:10]
 
                                 # Look for specific patterns
@@ -1217,10 +1217,10 @@ class MemoryForensicsEngine:
             # Get process info
             status_info = {}
             try:
-                with open(f"/proc/{process_id}/status", 'r') as f:
+                with open(f"/proc/{process_id}/status", "r") as f:
                     for line in f:
-                        if ':' in line:
-                            key, value = line.split(':', 1)
+                        if ":" in line:
+                            key, value = line.split(":", 1)
                             status_info[key.strip()] = value.strip()
             except:
                 pass
@@ -1231,7 +1231,7 @@ class MemoryForensicsEngine:
                 # Parse /proc/net/tcp and /proc/net/tcp6
                 for proto, path in [("tcp", "/proc/net/tcp"), ("tcp6", "/proc/net/tcp6")]:
                     if os.path.exists(path):
-                        with open(path, 'r') as f:
+                        with open(path, "r") as f:
                             lines = f.readlines()[1:]  # Skip header
                             for line in lines:
                                 fields = line.split()
@@ -1311,15 +1311,15 @@ class MemoryForensicsEngine:
     def _parse_linux_addr(self, addr_str: str) -> str:
         """Parse Linux /proc/net address format."""
         try:
-            host, port = addr_str.split(':')
+            host, port = addr_str.split(":")
             # Convert from hex and reverse byte order
             host_bytes = bytes.fromhex(host)
             if len(host_bytes) == 4:
                 # IPv4
-                host_ip = '.'.join(str(b) for b in reversed(host_bytes))
+                host_ip = ".".join(str(b) for b in reversed(host_bytes))
             else:
                 # IPv6
-                host_ip = ':'.join(host[i:i+4] for i in range(0, len(host), 4))
+                host_ip = ":".join(host[i:i+4] for i in range(0, len(host), 4))
             port_num = int(port, 16)
             return f"{host_ip}:{port_num}"
         except:
@@ -1410,7 +1410,7 @@ class MemoryForensicsEngine:
 
         # Process network connections
         for conn in analysis_result.network_connections:
-            if not conn.remote_addr.startswith(('127.', '192.168.', '10.')):
+            if not conn.remote_addr.startswith(("127.", "192.168.", "10.")):
                 supplemental_data["network_indicators"].append({
                     "local_endpoint": f"{conn.local_addr}:{conn.local_port}",
                     "remote_endpoint": f"{conn.remote_addr}:{conn.remote_port}",
@@ -1507,7 +1507,7 @@ class MemoryForensicsEngine:
                 "error": analysis_result.error
             }
 
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 json.dump(report_data, f, indent=2, default=str)
 
             return True, f"Memory analysis report exported to {output_path}"

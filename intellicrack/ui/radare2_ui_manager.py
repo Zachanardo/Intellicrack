@@ -82,16 +82,16 @@ class R2UIManager(QObject):
         """Initialize all UI components"""
         try:
             # Core radare2 integration widget
-            self.ui_components['r2_widget'] = R2IntegrationWidget(self.main_app)
+            self.ui_components["r2_widget"] = R2IntegrationWidget(self.main_app)
 
             # Enhanced dashboard
-            self.ui_components['enhanced_dashboard'] = EnhancedAnalysisDashboard(self.main_app)
+            self.ui_components["enhanced_dashboard"] = EnhancedAnalysisDashboard(self.main_app)
 
             # Results viewer
-            self.ui_components['results_viewer'] = R2ResultsViewer(self.main_app)
+            self.ui_components["results_viewer"] = R2ResultsViewer(self.main_app)
 
             # Configuration dialog
-            self.ui_components['config_dialog'] = R2ConfigurationDialog(self.main_app)
+            self.ui_components["config_dialog"] = R2ConfigurationDialog(self.main_app)
 
             self.logger.info("UI components initialized successfully")
 
@@ -108,10 +108,10 @@ class R2UIManager(QObject):
             self.analysis_failed.connect(self._on_analysis_failed)
 
             # Connect UI component signals if they exist
-            if 'r2_widget' in self.ui_components:
-                r2_widget = self.ui_components['r2_widget']
+            if "r2_widget" in self.ui_components:
+                r2_widget = self.ui_components["r2_widget"]
                 # Connect internal signals if available
-                if hasattr(r2_widget, 'current_worker'):
+                if hasattr(r2_widget, "current_worker"):
                     # These will be connected when worker is created
                     pass
 
@@ -135,44 +135,44 @@ class R2UIManager(QObject):
             integration_success = True
 
             # Method 1: Try direct tab widget integration
-            if hasattr(main_app, 'tab_widget') and main_app.tab_widget:
+            if hasattr(main_app, "tab_widget") and main_app.tab_widget:
                 self.logger.info("Integrating with existing tab widget")
 
                 # Add radare2 analysis tab
                 main_app.tab_widget.addTab(
-                    self.ui_components['r2_widget'],
+                    self.ui_components["r2_widget"],
                     "Radare2 Analysis"
                 )
 
                 # Add enhanced dashboard tab
                 main_app.tab_widget.addTab(
-                    self.ui_components['enhanced_dashboard'],
+                    self.ui_components["enhanced_dashboard"],
                     "Enhanced Analysis"
                 )
 
                 # Store references in main app
                 main_app.r2_ui_manager = self
-                main_app.r2_widget = self.ui_components['r2_widget']
-                main_app.enhanced_dashboard = self.ui_components['enhanced_dashboard']
+                main_app.r2_widget = self.ui_components["r2_widget"]
+                main_app.enhanced_dashboard = self.ui_components["enhanced_dashboard"]
 
                 self.logger.info("Successfully integrated with tab widget")
 
             # Method 2: Try central widget integration
-            elif hasattr(main_app, 'setCentralWidget'):
+            elif hasattr(main_app, "setCentralWidget"):
                 self.logger.info("Integrating with central widget")
 
                 # Create tab widget if it doesn't exist
-                if not hasattr(main_app, 'tab_widget'):
+                if not hasattr(main_app, "tab_widget"):
                     main_app.tab_widget = QTabWidget()
                     main_app.setCentralWidget(main_app.tab_widget)
 
                 # Add our components
                 main_app.tab_widget.addTab(
-                    self.ui_components['r2_widget'],
+                    self.ui_components["r2_widget"],
                     "Radare2 Analysis"
                 )
                 main_app.tab_widget.addTab(
-                    self.ui_components['enhanced_dashboard'],
+                    self.ui_components["enhanced_dashboard"],
                     "Enhanced Analysis"
                 )
 
@@ -221,7 +221,7 @@ class R2UIManager(QObject):
     def _integrate_menu_items(self, main_app):
         """Integrate radare2 menu items with main application"""
         try:
-            if hasattr(main_app, 'menuBar') and main_app.menuBar():
+            if hasattr(main_app, "menuBar") and main_app.menuBar():
                 from .menu_utils import find_or_create_menu
 
                 menu_bar = main_app.menuBar()
@@ -257,12 +257,12 @@ class R2UIManager(QObject):
         """Setup binary path synchronization"""
         try:
             # Connect to main app's binary path changes
-            if hasattr(main_app, 'binary_path'):
+            if hasattr(main_app, "binary_path"):
                 if main_app.binary_path:
                     self.set_binary_path(main_app.binary_path)
 
             # Setup signal connection if main app emits binary path changes
-            if hasattr(main_app, 'binary_path_changed'):
+            if hasattr(main_app, "binary_path_changed"):
                 main_app.binary_path_changed.connect(self.set_binary_path)
 
             self.logger.info("Binary path synchronization setup completed")
@@ -273,7 +273,7 @@ class R2UIManager(QObject):
     def _integrate_status_bar(self, main_app):
         """Integrate with main application status bar"""
         try:
-            if hasattr(main_app, 'statusBar') and main_app.statusBar():
+            if hasattr(main_app, "statusBar") and main_app.statusBar():
                 # Connect our status updates to main app status bar
                 self.status_updated.connect(
                     lambda msg: main_app.statusBar().showMessage(f"R2: {msg}")
@@ -290,12 +290,12 @@ class R2UIManager(QObject):
             self.binary_path = path
 
             # Update all UI components
-            if 'r2_widget' in self.ui_components:
-                self.ui_components['r2_widget'].set_binary_path(path)
+            if "r2_widget" in self.ui_components:
+                self.ui_components["r2_widget"].set_binary_path(path)
 
-            if 'enhanced_dashboard' in self.ui_components:
-                if hasattr(self.ui_components['enhanced_dashboard'], 'r2_widget'):
-                    self.ui_components['enhanced_dashboard'].r2_widget.set_binary_path(path)
+            if "enhanced_dashboard" in self.ui_components:
+                if hasattr(self.ui_components["enhanced_dashboard"], "r2_widget"):
+                    self.ui_components["enhanced_dashboard"].r2_widget.set_binary_path(path)
 
             # Emit signal
             self.binary_loaded.emit(path)
@@ -317,15 +317,15 @@ class R2UIManager(QObject):
                 return False
 
             # Use r2_widget to start analysis
-            if 'r2_widget' in self.ui_components:
-                self.ui_components['r2_widget']._start_analysis(analysis_type)
+            if "r2_widget" in self.ui_components:
+                self.ui_components["r2_widget"]._start_analysis(analysis_type)
 
                 # Add to analysis history
                 self.analysis_history.append({
-                    'type': analysis_type,
-                    'binary': self.binary_path,
-                    'timestamp': self._get_timestamp(),
-                    'options': options or {}
+                    "type": analysis_type,
+                    "binary": self.binary_path,
+                    "timestamp": self._get_timestamp(),
+                    "options": options or {}
                 })
 
                 # Emit signal
@@ -345,8 +345,8 @@ class R2UIManager(QObject):
     def show_configuration(self):
         """Show radare2 configuration dialog"""
         try:
-            if 'config_dialog' in self.ui_components:
-                dialog = self.ui_components['config_dialog']
+            if "config_dialog" in self.ui_components:
+                dialog = self.ui_components["config_dialog"]
                 if dialog.exec() == dialog.Accepted:
                     config = dialog.get_configuration()
                     self._apply_configuration(config)
@@ -362,8 +362,8 @@ class R2UIManager(QObject):
             self.analysis_config = config
 
             # Apply to r2_widget if available
-            if 'r2_widget' in self.ui_components:
-                self.ui_components['r2_widget'].analysis_config = config
+            if "r2_widget" in self.ui_components:
+                self.ui_components["r2_widget"].analysis_config = config
 
             self.logger.info("Configuration applied to all components")
 
@@ -395,16 +395,16 @@ class R2UIManager(QObject):
                 self.logger.info(f"Using default export path: {export_path}")
 
             # Use results viewer to export with specified path
-            if 'results_viewer' in self.ui_components:
-                self.ui_components['results_viewer'].results_data = self.current_results
+            if "results_viewer" in self.ui_components:
+                self.ui_components["results_viewer"].results_data = self.current_results
 
                 # Check if the results_viewer has a method to export to specific path
-                if hasattr(self.ui_components['results_viewer'], 'export_to_file'):
-                    self.ui_components['results_viewer'].export_to_file(export_path)
+                if hasattr(self.ui_components["results_viewer"], "export_to_file"):
+                    self.ui_components["results_viewer"].export_to_file(export_path)
                 else:
                     # Fallback: Set default path and use standard export
-                    self.ui_components['results_viewer'].default_export_path = export_path
-                    self.ui_components['results_viewer']._export_results()
+                    self.ui_components["results_viewer"].default_export_path = export_path
+                    self.ui_components["results_viewer"]._export_results()
 
                 # Log export details
                 self.logger.info(f"Results exported to: {export_path}")
@@ -414,18 +414,18 @@ class R2UIManager(QObject):
 
                 # Track in history
                 self.analysis_history.append({
-                    'timestamp': self._get_timestamp(),
-                    'action': 'export',
-                    'file_path': export_path,
-                    'binary': self.binary_path,
-                    'results_count': len(self.current_results)
+                    "timestamp": self._get_timestamp(),
+                    "action": "export",
+                    "file_path": export_path,
+                    "binary": self.binary_path,
+                    "results_count": len(self.current_results)
                 })
 
                 return True
             else:
                 # Direct export if no viewer available
                 import json
-                with open(export_path, 'w') as f:
+                with open(export_path, "w") as f:
                     json.dump(self.current_results, f, indent=2)
 
                 self.logger.info(f"Results exported directly to: {export_path}")
@@ -449,8 +449,8 @@ class R2UIManager(QObject):
         self.current_results = {}
 
         # Clear results viewer
-        if 'results_viewer' in self.ui_components:
-            self.ui_components['results_viewer'].results_data = {}
+        if "results_viewer" in self.ui_components:
+            self.ui_components["results_viewer"].results_data = {}
 
     def _get_timestamp(self) -> str:
         """Get current timestamp"""
@@ -472,8 +472,8 @@ class R2UIManager(QObject):
         self.status_updated.emit("Analysis completed successfully")
 
         # Update results viewer
-        if 'results_viewer' in self.ui_components:
-            self.ui_components['results_viewer'].display_results(results)
+        if "results_viewer" in self.ui_components:
+            self.ui_components["results_viewer"].display_results(results)
 
     def _on_analysis_failed(self, error: str):
         """Handle analysis failed signal"""
@@ -488,9 +488,9 @@ class R2UIManager(QObject):
         """Cleanup resources"""
         try:
             # Stop any running analysis
-            if 'r2_widget' in self.ui_components:
-                r2_widget = self.ui_components['r2_widget']
-                if hasattr(r2_widget, 'current_worker') and r2_widget.current_worker:
+            if "r2_widget" in self.ui_components:
+                r2_widget = self.ui_components["r2_widget"]
+                if hasattr(r2_widget, "current_worker") and r2_widget.current_worker:
                     if r2_widget.current_worker.isRunning():
                         r2_widget.current_worker.terminate()
                         r2_widget.current_worker.wait()
@@ -542,7 +542,7 @@ def integrate_radare2_ui_comprehensive(main_app) -> R2UIManager:
 
 
 __all__ = [
-    'R2UIManager',
-    'create_r2_ui_manager',
-    'integrate_radare2_ui_comprehensive'
+    "R2UIManager",
+    "create_r2_ui_manager",
+    "integrate_radare2_ui_comprehensive"
 ]

@@ -167,7 +167,7 @@ class BaseAgent(ABC):
         self.last_activity = datetime.now()
 
         # Communication
-        self.collaboration_system: Optional['MultiAgentSystem'] = None
+        self.collaboration_system: Optional["MultiAgentSystem"] = None
         self.trusted_agents: Set[str] = set()
 
         # Learning engine
@@ -607,7 +607,7 @@ class StaticAnalysisAgent(BaseAgent):
 
         analysis_result = {
             "language": language,
-            "lines_of_code": len(code.split('\n')),
+            "lines_of_code": len(code.split("\n")),
             "functions_detected": 5,
             "classes_detected": 2,
             "potential_vulnerabilities": [
@@ -709,7 +709,7 @@ class DynamicAnalysisAgent(BaseAgent):
                 {"type": "write", "file": "output.log"}
             ],
             "network_connections": [
-                {"host": os.environ.get('API_SERVER_HOST', 'api.internal'), "port": 443, "protocol": "HTTPS"}
+                {"host": os.environ.get("API_SERVER_HOST", "api.internal"), "port": 443, "protocol": "HTTPS"}
             ],
             "registry_operations": [
                 {"operation": "read", "key": "HKLM\\Software\\Example"}
@@ -762,7 +762,7 @@ class DynamicAnalysisAgent(BaseAgent):
                 {"function": "RegOpenKeyExA", "args": [
                     "HKLM\\Software"], "result": "success"},
                 {"function": "InternetConnectA", "args": [
-                    os.environ.get('API_SERVER_HOST', 'api.internal')], "result": "success"}
+                    os.environ.get("API_SERVER_HOST", "api.internal")], "result": "success"}
             ],
             "suspicious_apis": [
                 {"function": "VirtualAlloc", "reason": "executable_memory"},
@@ -1434,7 +1434,7 @@ class LoadBalancer:
         if not available_agents:
             return None
 
-        min_load = float('inf')
+        min_load = float("inf")
         best_agent = None
 
         for agent_id in available_agents:

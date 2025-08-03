@@ -13,38 +13,38 @@ from typing import List, Tuple
 # Patterns that indicate mock usage
 MOCK_PATTERNS = [
     # Direct mock imports
-    r'from\s+unittest\.mock\s+import',
-    r'from\s+mock\s+import',
-    r'import\s+unittest\.mock',
-    r'import\s+mock',
+    r"from\s+unittest\.mock\s+import",
+    r"from\s+mock\s+import",
+    r"import\s+unittest\.mock",
+    r"import\s+mock",
     
     # Mock creation
-    r'Mock\s*\(',
-    r'MagicMock\s*\(',
-    r'PropertyMock\s*\(',
-    r'AsyncMock\s*\(',
-    r'patch\s*\(',
-    r'@patch',
+    r"Mock\s*\(",
+    r"MagicMock\s*\(",
+    r"PropertyMock\s*\(",
+    r"AsyncMock\s*\(",
+    r"patch\s*\(",
+    r"@patch",
     
     # Mock configuration
-    r'return_value\s*=',
-    r'side_effect\s*=',
-    r'\.assert_called',
-    r'\.assert_not_called',
-    r'\.assert_any_call',
-    r'\.call_count',
+    r"return_value\s*=",
+    r"side_effect\s*=",
+    r"\.assert_called",
+    r"\.assert_not_called",
+    r"\.assert_any_call",
+    r"\.call_count",
     
     # Fake data indicators
-    r'fake_[a-zA-Z_]+\s*=',
-    r'dummy_[a-zA-Z_]+\s*=',
-    r'mock_[a-zA-Z_]+\s*=',
-    r'placeholder_[a-zA-Z_]+\s*=',
+    r"fake_[a-zA-Z_]+\s*=",
+    r"dummy_[a-zA-Z_]+\s*=",
+    r"mock_[a-zA-Z_]+\s*=",
+    r"placeholder_[a-zA-Z_]+\s*=",
     
     # Common test doubles
-    r'class\s+Fake[A-Z]',
-    r'class\s+Mock[A-Z]',
-    r'class\s+Stub[A-Z]',
-    r'class\s+Dummy[A-Z]',
+    r"class\s+Fake[A-Z]",
+    r"class\s+Mock[A-Z]",
+    r"class\s+Stub[A-Z]",
+    r"class\s+Dummy[A-Z]",
     
     # Hardcoded test data
     r'["\']test123["\']',
@@ -57,16 +57,16 @@ MOCK_PATTERNS = [
 
 # Files to exclude from checking
 EXCLUDE_FILES = [
-    'conftest.py',
-    '__init__.py',
-    'base_test.py',  # Base test class is allowed to mention mocks in validation
+    "conftest.py",
+    "__init__.py",
+    "base_test.py",  # Base test class is allowed to mention mocks in validation
 ]
 
 # Directories to exclude
 EXCLUDE_DIRS = [
-    '__pycache__',
-    '.pytest_cache',
-    'legacy_tests',
+    "__pycache__",
+    ".pytest_cache",
+    "legacy_tests",
 ]
 
 
@@ -78,7 +78,7 @@ def find_mock_usage(file_path: Path) -> List[Tuple[int, str, str]]:
     violations = []
     
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
             
         for line_num, line in enumerate(lines, 1):
@@ -104,7 +104,7 @@ def scan_test_directory(test_dir: Path) -> dict:
         dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
         
         for file in files:
-            if not file.endswith('.py'):
+            if not file.endswith(".py"):
                 continue
                 
             if file in EXCLUDE_FILES:
@@ -164,7 +164,7 @@ def main():
     # Find test directory
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
-    test_dir = project_root / 'tests'
+    test_dir = project_root / "tests"
     
     if not test_dir.exists():
         print(f"Error: Test directory not found at {test_dir}")
@@ -177,5 +177,5 @@ def main():
     return print_report(violations)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

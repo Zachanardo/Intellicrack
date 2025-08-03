@@ -33,7 +33,7 @@ class GPUAutoLoader:
     def setup(self) -> bool:
         """Main setup function that tries different GPU configurations"""
         # Check if GPU is disabled via environment variable
-        if os.environ.get('INTELLICRACK_NO_GPU', '').lower() in ('1', 'true', 'yes'):
+        if os.environ.get("INTELLICRACK_NO_GPU", "").lower() in ("1", "true", "yes"):
             logger.info("GPU disabled via environment variable")
             self._try_cpu_fallback()
             return True
@@ -73,18 +73,18 @@ class GPUAutoLoader:
                 logger.info(f"Found {len(conda_envs)} conda environment(s) with Intel Extension for PyTorch")
                 # Try to use the first one
                 conda_env = conda_envs[0]
-                python_path = os.path.join(conda_env['path'], 'python.exe' if sys.platform == 'win32' else 'python')
+                python_path = os.path.join(conda_env["path"], "python.exe" if sys.platform == "win32" else "python")
 
                 # Test if we can import from that environment
                 result = subprocess.run(
-                    [python_path, '-c', 'import torch; import intel_extension_for_pytorch as ipex; print(torch.xpu.is_available())'],
+                    [python_path, "-c", "import torch; import intel_extension_for_pytorch as ipex; print(torch.xpu.is_available())"],
                     capture_output=True,
                     text=True
                 )
 
-                if result.returncode == 0 and 'True' in result.stdout:
+                if result.returncode == 0 and "True" in result.stdout:
                     # Inject the conda environment's packages
-                    self._inject_conda_packages(conda_env['path'])
+                    self._inject_conda_packages(conda_env["path"])
 
             # Try to import
             import torch
@@ -99,7 +99,7 @@ class GPUAutoLoader:
                 return False
 
             # Check XPU availability
-            if hasattr(torch, 'xpu') and torch.xpu.is_available():
+            if hasattr(torch, "xpu") and torch.xpu.is_available():
                 self.gpu_available = True
                 self.gpu_type = "intel_xpu"
                 self._device = torch.device("xpu")
@@ -108,16 +108,16 @@ class GPUAutoLoader:
                 # Get detailed info
                 device_count = torch.xpu.device_count()
                 self.gpu_info = {
-                    'device_count': device_count,
-                    'backend': 'Intel Extension for PyTorch',
-                    'driver_version': torch.xpu.get_driver_version() if hasattr(torch.xpu, 'get_driver_version') else 'Unknown'
+                    "device_count": device_count,
+                    "backend": "Intel Extension for PyTorch",
+                    "driver_version": torch.xpu.get_driver_version() if hasattr(torch.xpu, "get_driver_version") else "Unknown"
                 }
 
                 # Get info for first device
                 if device_count > 0:
-                    self.gpu_info['device_name'] = torch.xpu.get_device_name(0)
+                    self.gpu_info["device_name"] = torch.xpu.get_device_name(0)
                     props = torch.xpu.get_device_properties(0)
-                    self.gpu_info['total_memory'] = f"{props.total_memory / (1024**3):.1f} GB" if hasattr(props, 'total_memory') else 'Unknown'
+                    self.gpu_info["total_memory"] = f"{props.total_memory / (1024**3):.1f} GB" if hasattr(props, "total_memory") else "Unknown"
 
                 return True
 
@@ -142,17 +142,17 @@ class GPUAutoLoader:
                 # Get detailed info
                 device_count = torch.cuda.device_count()
                 self.gpu_info = {
-                    'device_count': device_count,
-                    'backend': 'NVIDIA CUDA',
-                    'cuda_version': torch.version.cuda
+                    "device_count": device_count,
+                    "backend": "NVIDIA CUDA",
+                    "cuda_version": torch.version.cuda
                 }
 
                 # Get info for first device
                 if device_count > 0:
                     props = torch.cuda.get_device_properties(0)
-                    self.gpu_info['device_name'] = props.name
-                    self.gpu_info['total_memory'] = f"{props.total_memory / (1024**3):.1f} GB"
-                    self.gpu_info['compute_capability'] = f"{props.major}.{props.minor}"
+                    self.gpu_info["device_name"] = props.name
+                    self.gpu_info["total_memory"] = f"{props.total_memory / (1024**3):.1f} GB"
+                    self.gpu_info["compute_capability"] = f"{props.major}.{props.minor}"
 
                 return True
 
@@ -169,7 +169,7 @@ class GPUAutoLoader:
             self._torch = torch
 
             # Check for ROCm support
-            if hasattr(torch, 'hip') and torch.hip.is_available():
+            if hasattr(torch, "hip") and torch.hip.is_available():
                 self.gpu_available = True
                 self.gpu_type = "amd_rocm"
                 self._device = torch.device("hip")
@@ -178,16 +178,16 @@ class GPUAutoLoader:
                 # Get detailed info
                 device_count = torch.hip.device_count()
                 self.gpu_info = {
-                    'device_count': device_count,
-                    'backend': 'AMD ROCm',
-                    'hip_version': torch.version.hip if hasattr(torch.version, 'hip') else 'Unknown'
+                    "device_count": device_count,
+                    "backend": "AMD ROCm",
+                    "hip_version": torch.version.hip if hasattr(torch.version, "hip") else "Unknown"
                 }
 
                 # Get info for first device
                 if device_count > 0:
-                    self.gpu_info['device_name'] = torch.hip.get_device_name(0)
+                    self.gpu_info["device_name"] = torch.hip.get_device_name(0)
                     props = torch.hip.get_device_properties(0)
-                    self.gpu_info['total_memory'] = f"{props.total_memory / (1024**3):.1f} GB" if hasattr(props, 'total_memory') else 'Unknown'
+                    self.gpu_info["total_memory"] = f"{props.total_memory / (1024**3):.1f} GB" if hasattr(props, "total_memory") else "Unknown"
 
                 return True
 
@@ -208,9 +208,9 @@ class GPUAutoLoader:
             self._device_string = "cpu"  # DirectML operations happen through CPU API
 
             self.gpu_info = {
-                'backend': 'DirectML',
-                'platform': 'Windows',
-                'note': 'GPU acceleration through DirectML'
+                "backend": "DirectML",
+                "platform": "Windows",
+                "note": "GPU acceleration through DirectML"
             }
 
             return True
@@ -230,8 +230,8 @@ class GPUAutoLoader:
             self._device_string = "cpu"
 
             self.gpu_info = {
-                'backend': 'CPU',
-                'cores': os.cpu_count()
+                "backend": "CPU",
+                "cores": os.cpu_count()
             }
 
             return True
@@ -274,9 +274,9 @@ class GPUAutoLoader:
                     for indicator in ipex_indicators:
                         if os.path.exists(indicator):
                             conda_envs.append({
-                                'name': env_name,
-                                'path': env_path,
-                                'base': base
+                                "name": env_name,
+                                "path": env_path,
+                                "base": base
                             })
                             break
 
@@ -312,7 +312,7 @@ class GPUAutoLoader:
 
     def to_device(self, tensor_or_model: Any) -> Any:
         """Move a tensor or model to the configured device"""
-        if self._device and hasattr(tensor_or_model, 'to'):
+        if self._device and hasattr(tensor_or_model, "to"):
             return tensor_or_model.to(self._device)
         return tensor_or_model
 
@@ -335,21 +335,21 @@ class GPUAutoLoader:
         try:
             if self.gpu_type == "nvidia_cuda":
                 return {
-                    'allocated': f"{self._torch.cuda.memory_allocated() / (1024**3):.2f} GB",
-                    'reserved': f"{self._torch.cuda.memory_reserved() / (1024**3):.2f} GB",
-                    'free': f"{(self._torch.cuda.get_device_properties(0).total_memory - self._torch.cuda.memory_allocated()) / (1024**3):.2f} GB"
+                    "allocated": f"{self._torch.cuda.memory_allocated() / (1024**3):.2f} GB",
+                    "reserved": f"{self._torch.cuda.memory_reserved() / (1024**3):.2f} GB",
+                    "free": f"{(self._torch.cuda.get_device_properties(0).total_memory - self._torch.cuda.memory_allocated()) / (1024**3):.2f} GB"
                 }
             elif self.gpu_type == "intel_xpu":
-                if hasattr(self._torch.xpu, 'memory_allocated'):
+                if hasattr(self._torch.xpu, "memory_allocated"):
                     return {
-                        'allocated': f"{self._torch.xpu.memory_allocated() / (1024**3):.2f} GB",
-                        'reserved': f"{self._torch.xpu.memory_reserved() / (1024**3):.2f} GB" if hasattr(self._torch.xpu, 'memory_reserved') else 'N/A'
+                        "allocated": f"{self._torch.xpu.memory_allocated() / (1024**3):.2f} GB",
+                        "reserved": f"{self._torch.xpu.memory_reserved() / (1024**3):.2f} GB" if hasattr(self._torch.xpu, "memory_reserved") else "N/A"
                     }
             elif self.gpu_type == "amd_rocm":
-                if hasattr(self._torch.hip, 'memory_allocated'):
+                if hasattr(self._torch.hip, "memory_allocated"):
                     return {
-                        'allocated': f"{self._torch.hip.memory_allocated() / (1024**3):.2f} GB",
-                        'reserved': f"{self._torch.hip.memory_reserved() / (1024**3):.2f} GB" if hasattr(self._torch.hip, 'memory_reserved') else 'N/A'
+                        "allocated": f"{self._torch.hip.memory_allocated() / (1024**3):.2f} GB",
+                        "reserved": f"{self._torch.hip.memory_reserved() / (1024**3):.2f} GB" if hasattr(self._torch.hip, "memory_reserved") else "N/A"
                     }
         except Exception as e:
             logger.debug(f"Failed to get memory info: {e}")
@@ -365,10 +365,10 @@ class GPUAutoLoader:
             if self.gpu_type == "nvidia_cuda":
                 self._torch.cuda.synchronize()
             elif self.gpu_type == "intel_xpu":
-                if hasattr(self._torch.xpu, 'synchronize'):
+                if hasattr(self._torch.xpu, "synchronize"):
                     self._torch.xpu.synchronize()
             elif self.gpu_type == "amd_rocm":
-                if hasattr(self._torch.hip, 'synchronize'):
+                if hasattr(self._torch.hip, "synchronize"):
                     self._torch.hip.synchronize()
         except Exception as e:
             logger.debug(f"Synchronization failed: {e}")
@@ -386,11 +386,11 @@ def get_device():
 def get_gpu_info() -> Dict[str, Any]:
     """Get GPU information"""
     return {
-        'available': gpu_autoloader.gpu_available,
-        'type': gpu_autoloader.gpu_type,
-        'device': gpu_autoloader.get_device_string(),
-        'info': gpu_autoloader.gpu_info,
-        'memory': gpu_autoloader.get_memory_info()
+        "available": gpu_autoloader.gpu_available,
+        "type": gpu_autoloader.gpu_type,
+        "device": gpu_autoloader.get_device_string(),
+        "info": gpu_autoloader.gpu_info,
+        "memory": gpu_autoloader.get_memory_info()
     }
 
 

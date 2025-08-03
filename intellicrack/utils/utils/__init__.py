@@ -21,4 +21,4 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 from .logger import log_message, setup_logger
 
-__all__ = ['log_message', 'setup_logger']
+__all__ = ["log_message", "setup_logger"]

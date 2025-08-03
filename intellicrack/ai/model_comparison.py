@@ -349,17 +349,17 @@ class ModelComparison:
 
             # Inference time bar chart
             ax1.bar(model_ids, inference_times)
-            ax1.set_xlabel('Model')
-            ax1.set_ylabel('Inference Time (s)')
-            ax1.set_title('Inference Time Comparison')
-            ax1.tick_params(axis='x', rotation=45)
+            ax1.set_xlabel("Model")
+            ax1.set_ylabel("Inference Time (s)")
+            ax1.set_title("Inference Time Comparison")
+            ax1.tick_params(axis="x", rotation=45)
 
             # Tokens per second bar chart
-            ax2.bar(model_ids, tokens_per_second, color='green')
-            ax2.set_xlabel('Model')
-            ax2.set_ylabel('Tokens per Second')
-            ax2.set_title('Generation Speed Comparison')
-            ax2.tick_params(axis='x', rotation=45)
+            ax2.bar(model_ids, tokens_per_second, color="green")
+            ax2.set_xlabel("Model")
+            ax2.set_ylabel("Tokens per Second")
+            ax2.set_title("Generation Speed Comparison")
+            ax2.tick_params(axis="x", rotation=45)
 
             plt.tight_layout()
 
@@ -375,11 +375,11 @@ class ModelComparison:
 
             memory_usage = [r.memory_used_mb for r in results]
 
-            ax.bar(model_ids, memory_usage, color='orange')
-            ax.set_xlabel('Model')
-            ax.set_ylabel('Memory Usage (MB)')
-            ax.set_title('Memory Usage Comparison')
-            ax.tick_params(axis='x', rotation=45)
+            ax.bar(model_ids, memory_usage, color="orange")
+            ax.set_xlabel("Model")
+            ax.set_ylabel("Memory Usage (MB)")
+            ax.set_title("Memory Usage Comparison")
+            ax.tick_params(axis="x", rotation=45)
 
             plt.tight_layout()
 
@@ -402,7 +402,7 @@ class ModelComparison:
                         if i != j and other_result.model_id in result.similarity_scores:
                             sim_matrix[i][j] = result.similarity_scores[other_result.model_id]
 
-                im = ax.imshow(sim_matrix, cmap='YlOrRd', aspect='auto')
+                im = ax.imshow(sim_matrix, cmap="YlOrRd", aspect="auto")
 
                 ax.set_xticks(np.arange(n))
                 ax.set_yticks(np.arange(n))
@@ -414,9 +414,9 @@ class ModelComparison:
 
                 # Add colorbar
                 cbar = plt.colorbar(im, ax=ax)
-                cbar.set_label('Cosine Similarity')
+                cbar.set_label("Cosine Similarity")
 
-                ax.set_title('Output Similarity Matrix')
+                ax.set_title("Output Similarity Matrix")
 
                 plt.tight_layout()
 
@@ -497,7 +497,7 @@ class ModelComparison:
                         metric, 0)
                 else:
                     value = benchmark_results["models"][model_id]["resource_usage"].get(
-                        metric, float('inf'))
+                        metric, float("inf"))
                 values.append((model_id, value))
 
             values.sort(key=lambda x: x[1], reverse=higher_better)
@@ -556,7 +556,7 @@ class ModelComparison:
             "visualizations": {k: str(v) for k, v in report.visualizations.items()}
         }
 
-        with open(report_file, 'w') as f:
+        with open(report_file, "w") as f:
             json.dump(report_data, f, indent=2)
 
         logger.info(f"Saved comparison report to {report_file}")
@@ -577,7 +577,7 @@ class ModelComparison:
         for name, path in report.visualizations.items():
             if path.exists():
                 import base64
-                with open(path, 'rb') as f:
+                with open(path, "rb") as f:
                     img_data = base64.b64encode(f.read()).decode()
                     embedded_images[name] = f"data:image/png;base64,{img_data}"
 
@@ -674,7 +674,7 @@ class ModelComparison:
 </html>
 """
 
-        with open(html_file, 'w') as f:
+        with open(html_file, "w") as f:
             f.write(html)
 
         logger.info(f"Generated HTML report: {html_file}")

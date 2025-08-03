@@ -141,7 +141,7 @@ def get_system_path(path_type: str) -> Optional[str]:
         if path_type == "logs":
             return str(config.get_logs_dir())
         if path_type == "temp":
-            return config.get('directories.temp')
+            return config.get("directories.temp")
         return None
     except (AttributeError, KeyError, ValueError, TypeError) as e:
         logger.warning("System path lookup failed for %s: %s",
@@ -242,31 +242,31 @@ class ConfigManager:
             # Paths - mapped from modern directories
             "log_dir": str(config.get_logs_dir()),
             "output_dir": str(config.get_output_dir()),
-            "temp_dir": config.get('directories.temp', str(config.get_cache_dir())),
+            "temp_dir": config.get("directories.temp", str(config.get_cache_dir())),
             "plugin_directory": "intellicrack/plugins",
             "download_directory": str(config.get_cache_dir() / "downloads"),
 
             # Tool paths
-            "ghidra_path": config.get_tool_path('ghidra'),
-            "radare2_path": config.get_tool_path('radare2'),
-            "frida_path": config.get_tool_path('frida'),
+            "ghidra_path": config.get_tool_path("ghidra"),
+            "radare2_path": config.get_tool_path("radare2"),
+            "frida_path": config.get_tool_path("frida"),
 
             # Analysis settings
-            "analysis": config.get('analysis', {}),
+            "analysis": config.get("analysis", {}),
 
             # Other sections from modern config
-            "patching": config.get('patching', {}),
-            "network": config.get('network', {}),
-            "ui": config.get('ui', {}),
+            "patching": config.get("patching", {}),
+            "network": config.get("network", {}),
+            "ui": config.get("ui", {}),
             "logging": {
-                "level": config.get('preferences.log_level', 'INFO'),
+                "level": config.get("preferences.log_level", "INFO"),
                 "enable_file_logging": True,
                 "enable_console_logging": True,
                 "max_log_size": 10 * 1024 * 1024,
                 "log_rotation": 5,
-                "verbose_logging": config.get('preferences.log_level') == 'DEBUG'
+                "verbose_logging": config.get("preferences.log_level") == "DEBUG"
             },
-            "security": config.get('security', {}),
+            "security": config.get("security", {}),
             "performance": {
                 "max_memory_usage": 2048,
                 "enable_gpu_acceleration": True,
@@ -278,20 +278,20 @@ class ConfigManager:
             "plugins": {
                 "default_plugins": [],
                 "auto_load": True,
-                "check_updates": config.get('preferences.check_for_updates', True),
+                "check_updates": config.get("preferences.check_for_updates", True),
                 "allow_third_party": True
             },
             "general": {
                 "first_run_completed": True,
-                "auto_backup": config.get('preferences.auto_backup_results', True),
-                "auto_save_results": config.get('preferences.auto_backup_results', True),
-                "check_for_updates": config.get('preferences.check_for_updates', True),
+                "auto_backup": config.get("preferences.auto_backup_results", True),
+                "auto_save_results": config.get("preferences.auto_backup_results", True),
+                "check_for_updates": config.get("preferences.check_for_updates", True),
                 "send_analytics": False,
                 "language": "en"
             },
-            "ai": config.get('ai', {}),
+            "ai": config.get("ai", {}),
             "ml": {
-                "enable_ml_features": config.get('analysis.enable_ml_analysis', True),
+                "enable_ml_features": config.get("analysis.enable_ml_analysis", True),
                 "model_cache_size": 100,
                 "prediction_threshold": 0.7,
                 "auto_load_models": True
@@ -330,17 +330,17 @@ class ConfigManager:
         """Get configuration value with legacy key support."""
         # Handle legacy key mappings
         if key == "ghidra_path":
-            return self._modern_config.get_tool_path('ghidra') or default
+            return self._modern_config.get_tool_path("ghidra") or default
         if key == "radare2_path":
-            return self._modern_config.get_tool_path('radare2') or default
+            return self._modern_config.get_tool_path("radare2") or default
         if key == "frida_path":
-            return self._modern_config.get_tool_path('frida') or default
+            return self._modern_config.get_tool_path("frida") or default
         if key == "log_dir":
             return str(self._modern_config.get_logs_dir())
         if key == "output_dir":
             return str(self._modern_config.get_output_dir())
         if key == "temp_dir":
-            return self._modern_config.get('directories.temp', str(self._modern_config.get_cache_dir()))
+            return self._modern_config.get("directories.temp", str(self._modern_config.get_cache_dir()))
 
         # Try modern config first, then legacy structure
         result = self._modern_config.get(key, None)
@@ -370,7 +370,7 @@ class ConfigManager:
 
     def get_ghidra_path(self) -> Optional[str]:
         """Get the Ghidra installation path."""
-        return self._modern_config.get_tool_path('ghidra')
+        return self._modern_config.get_tool_path("ghidra")
 
     def get_tool_path(self, tool_name: str) -> Optional[str]:
         """Get path for any tool."""
@@ -498,12 +498,12 @@ DEFAULT_CONFIG = CONFIG
 
 # Export main components
 __all__ = [
-    'ConfigManager',
-    'load_config',
-    'get_config',
-    'save_config',
-    'CONFIG',
-    'DEFAULT_CONFIG',
-    'find_tool',
-    'get_system_path'
+    "ConfigManager",
+    "load_config",
+    "get_config",
+    "save_config",
+    "CONFIG",
+    "DEFAULT_CONFIG",
+    "find_tool",
+    "get_system_path"
 ]

@@ -33,11 +33,11 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'PerformanceOptimizer',
-    'BinaryChunker',
-    'MemoryManager',
-    'CacheManager',
-    'AdaptiveAnalyzer'
+    "PerformanceOptimizer",
+    "BinaryChunker",
+    "MemoryManager",
+    "CacheManager",
+    "AdaptiveAnalyzer"
 ]
 
 
@@ -152,7 +152,7 @@ class BinaryChunker:
     def read_chunk(self, chunk_info: Dict[str, Any]) -> bytes:
         """Read a specific chunk from the binary."""
         try:
-            with open(chunk_info["file_path"], 'rb') as f:
+            with open(chunk_info["file_path"], "rb") as f:
                 f.seek(chunk_info["offset"])
                 return f.read(chunk_info["size"])
         except (OSError, ValueError, RuntimeError) as e:
@@ -220,7 +220,7 @@ class CacheManager:
     def get_file_hash(self, file_path: str) -> str:
         """Get hash of file for cache key."""
         hasher = hashlib.sha256()
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             # Hash first and last 64KB + file size for speed
             hasher.update(f.read(65536))  # First 64KB
             f.seek(-min(65536, f.tell()), 2)  # Last 64KB
@@ -250,7 +250,7 @@ class CacheManager:
         if cache_file.exists():
             try:
                 import json
-                with open(cache_file, 'r', encoding='utf-8') as f:
+                with open(cache_file, "r", encoding="utf-8") as f:
                     result = json.load(f)
 
                 # Add to memory cache
@@ -275,7 +275,7 @@ class CacheManager:
         cache_file = self.cache_dir / f"{cache_key}.json"
         try:
             import json
-            with open(cache_file, 'w', encoding='utf-8') as f:
+            with open(cache_file, "w", encoding="utf-8") as f:
                 json.dump(result, f, indent=2, default=str)
         except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Error writing cache file %s: %s", cache_file, e)
@@ -361,11 +361,11 @@ class AdaptiveAnalyzer:
 
         try:
             # Quick scan for important sections
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 # PE header area
                 f.seek(0)
                 header_data = f.read(1024)
-                if header_data.startswith(b'MZ'):
+                if header_data.startswith(b"MZ"):
                     priority_sections.append({
                         "name": "PE_Header",
                         "offset": 0,
@@ -380,7 +380,7 @@ class AdaptiveAnalyzer:
                     end_data = f.read(10000)
 
                     # Check for license strings
-                    license_keywords = [b'license', b'serial', b'key', b'activation', b'trial']
+                    license_keywords = [b"license", b"serial", b"key", b"activation", b"trial"]
                     for keyword in license_keywords:
                         if keyword in end_data.lower():
                             offset = max(0, file_size - 10000)
@@ -539,13 +539,13 @@ class PerformanceOptimizer:
         _ = strategy
         try:
             # Use memory mapping for large files
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
                     return analysis_func(mm)
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in performance_optimizer: %s", e)
             # Fallback to regular file reading
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 data = f.read()
                 return analysis_func(data)
 
@@ -592,7 +592,7 @@ def example_string_analysis(data, chunk_info=None) -> Dict[str, Any]:
         result_metadata = {
             "chunk_id": chunk_info.get("id", "unknown"),
             "chunk_offset": chunk_info.get("offset", 0),
-            "chunk_size": chunk_info.get("size", len(data) if hasattr(data, '__len__') else 0)
+            "chunk_size": chunk_info.get("size", len(data) if hasattr(data, "__len__") else 0)
         }
 
     if isinstance(data, mmap.mmap):
@@ -633,7 +633,7 @@ def example_entropy_analysis(data, chunk_info=None) -> Dict[str, Any]:
         result_metadata = {
             "chunk_id": chunk_info.get("id", "unknown"),
             "chunk_offset": chunk_info.get("offset", 0),
-            "chunk_size": chunk_info.get("size", len(data) if hasattr(data, '__len__') else 0),
+            "chunk_size": chunk_info.get("size", len(data) if hasattr(data, "__len__") else 0),
             "analysis_region": f"Offset {chunk_info.get('offset', 0)} - {chunk_info.get('end_offset', 'unknown')}"
         }
 

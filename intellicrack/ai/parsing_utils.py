@@ -50,7 +50,7 @@ class ResponseLineParser:
         sections = {section: [] for section in section_keywords.keys()}
         current_section = None
 
-        lines = response.split('\n')
+        lines = response.split("\n")
 
         for line in lines:
             line = line.strip()
@@ -81,7 +81,7 @@ class ResponseLineParser:
     @staticmethod
     def parse_lines_with_categorization(response: str,
                                         category_keywords: Dict[str, List[str]],
-                                        default_category: str = 'other') -> Dict[str, List[str]]:
+                                        default_category: str = "other") -> Dict[str, List[str]]:
         """
         Parse response lines and categorize them based on content.
 
@@ -97,7 +97,7 @@ class ResponseLineParser:
         if default_category not in categories:
             categories[default_category] = []
 
-        lines = response.split('\n')
+        lines = response.split("\n")
 
         for line in lines:
             line = line.strip()
@@ -131,8 +131,8 @@ class ResponseLineParser:
             List of dictionaries containing matched content
         """
         extracted = []
-        lines = response.split('\n')
-        current_section = 'content'
+        lines = response.split("\n")
+        current_section = "content"
 
         for line in lines:
             line = line.strip()
@@ -151,11 +151,11 @@ class ResponseLineParser:
                 match = re.search(pattern, line, re.IGNORECASE)
                 if match:
                     content = {
-                        'pattern_index': i,
-                        'section': current_section,
-                        'line': line,
-                        'match': match.group(),
-                        'groups': match.groups() if match.groups() else []
+                        "pattern_index": i,
+                        "section": current_section,
+                        "line": line,
+                        "match": match.group(),
+                        "groups": match.groups() if match.groups() else []
                     }
                     extracted.append(content)
 

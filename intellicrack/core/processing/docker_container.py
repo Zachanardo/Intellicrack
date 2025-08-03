@@ -483,12 +483,12 @@ class DockerContainer(BaseSnapshotHandler):
             for _p in processes1:
                 parts = _p.split()
                 if len(parts) > 10:
-                    proc1.add(' '.join(parts[10:]))
+                    proc1.add(" ".join(parts[10:]))
 
             for _p in processes2:
                 parts = _p.split()
                 if len(parts) > 10:
-                    proc2.add(' '.join(parts[10:]))
+                    proc2.add(" ".join(parts[10:]))
 
             new_processes = list(proc2 - proc1)
             ended_processes = list(proc1 - proc2)
@@ -666,4 +666,4 @@ class DockerContainer(BaseSnapshotHandler):
 
 
 # Export main class
-__all__ = ['DockerContainer']
+__all__ = ["DockerContainer"]

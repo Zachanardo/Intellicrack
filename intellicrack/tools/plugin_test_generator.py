@@ -108,15 +108,15 @@ if __name__ == '__main__':
         import os
         from datetime import datetime
 
-        plugin_name = os.path.basename(file_path).replace('.py', '')
-        class_name = ''.join(word.capitalize() for word in plugin_name.split('_'))
+        plugin_name = os.path.basename(file_path).replace(".py", "")
+        class_name = "".join(word.capitalize() for word in plugin_name.split("_"))
 
         # Parse actual file to extract methods and generate real tests
         test_methods = self._extract_and_generate_tests(file_path, plugin_name, class_name)
 
         return self.test_template.format(
             plugin_name=plugin_name,
-            date=datetime.now().strftime('%Y-%m-%d'),
+            date=datetime.now().strftime("%Y-%m-%d"),
             imports=f"from {plugin_name} import {class_name}",
             class_name=class_name,
             test_methods=test_methods
@@ -125,17 +125,15 @@ if __name__ == '__main__':
     def _extract_and_generate_tests(self, file_path, plugin_name, class_name):
         """Extract methods from plugin file and generate appropriate tests with comprehensive analysis"""
         import ast
-        import inspect
         
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
                 tree = ast.parse(content, filename=file_path)
             
             test_methods = []
             class_node = None
             parent_classes = []
-            class_docstring = None
             imports = []
             
             # First pass: collect imports and find the main class
@@ -148,9 +146,9 @@ if __name__ == '__main__':
                         imports.append(node.module)
                 elif isinstance(node, ast.ClassDef):
                     # Find the main plugin class or any class matching the expected name
-                    if node.name == class_name or (class_name == '' and 'Plugin' in node.name):
+                    if node.name == class_name or (class_name == "" and "Plugin" in node.name):
                         class_node = node
-                        class_docstring = ast.get_docstring(node)
+                        ast.get_docstring(node)
                         # Extract parent classes
                         for base in node.bases:
                             if isinstance(base, ast.Name):
@@ -161,10 +159,10 @@ if __name__ == '__main__':
             # If no class found, try to find any class with Plugin in the name
             if not class_node:
                 for node in ast.walk(tree):
-                    if isinstance(node, ast.ClassDef) and 'Plugin' in node.name:
+                    if isinstance(node, ast.ClassDef) and "Plugin" in node.name:
                         class_node = node
                         class_name = node.name
-                        class_docstring = ast.get_docstring(node)
+                        ast.get_docstring(node)
                         break
             
             # Always include basic initialization test
@@ -191,29 +189,29 @@ if __name__ == '__main__':
                                 if isinstance(item.value, ast.Constant):
                                     class_attributes[attr_name] = type(item.value.value).__name__
                                 elif isinstance(item.value, ast.List):
-                                    class_attributes[attr_name] = 'list'
+                                    class_attributes[attr_name] = "list"
                                 elif isinstance(item.value, ast.Dict):
-                                    class_attributes[attr_name] = 'dict'
+                                    class_attributes[attr_name] = "dict"
                                 elif isinstance(item.value, ast.Call):
-                                    if hasattr(item.value.func, 'id'):
+                                    if hasattr(item.value.func, "id"):
                                         class_attributes[attr_name] = item.value.func.id
                     
                     elif isinstance(item, ast.FunctionDef):
                         # Methods
                         method_info = {
-                            'name': item.name,
-                            'args': [arg.arg for arg in item.args.args],
-                            'defaults': [self._get_default_value(d) for d in item.args.defaults],
-                            'docstring': ast.get_docstring(item),
-                            'is_async': isinstance(item, ast.AsyncFunctionDef),
-                            'decorators': [self._get_decorator_name(d) for d in item.decorator_list],
-                            'returns': self._analyze_return_type(item),
-                            'raises': self._analyze_exceptions(item)
+                            "name": item.name,
+                            "args": [arg.arg for arg in item.args.args],
+                            "defaults": [self._get_default_value(d) for d in item.args.defaults],
+                            "docstring": ast.get_docstring(item),
+                            "is_async": isinstance(item, ast.AsyncFunctionDef),
+                            "decorators": [self._get_decorator_name(d) for d in item.decorator_list],
+                            "returns": self._analyze_return_type(item),
+                            "raises": self._analyze_exceptions(item)
                         }
                         methods_info.append(method_info)
                         
                         # Generate test for each public method
-                        if not item.name.startswith('_'):
+                        if not item.name.startswith("_"):
                             test_method = self._generate_comprehensive_test_for_method(
                                 method_info, class_attributes, imports
                             )
@@ -237,7 +235,7 @@ if __name__ == '__main__':
                 # No class found, generate comprehensive fallback tests
                 test_methods.extend(self._generate_comprehensive_fallback_tests())
             
-            return '\n'.join(test_methods)
+            return "\n".join(test_methods)
             
         except Exception as e:
             # Enhanced fallback with error information
@@ -255,30 +253,30 @@ if __name__ == '__main__':
         # Generate appropriate test parameters based on parameter names
         test_params = []
         for param in params:
-            if 'binary' in param or 'file' in param:
-                test_params.append('self.test_binary')
-            elif 'options' in param or 'config' in param:
-                test_params.append('self.test_options')
-            elif 'data' in param:
+            if "binary" in param or "file" in param:
+                test_params.append("self.test_binary")
+            elif "options" in param or "config" in param:
+                test_params.append("self.test_options")
+            elif "data" in param:
                 test_params.append('b"\\x00\\x01\\x02\\x03"')
-            elif 'string' in param or 'text' in param:
+            elif "string" in param or "text" in param:
                 test_params.append('"test_string"')
-            elif 'int' in param or 'number' in param:
-                test_params.append('42')
+            elif "int" in param or "number" in param:
+                test_params.append("42")
             else:
-                test_params.append('None')
+                test_params.append("None")
         
         # Generate method call
         if test_params:
-            params_str = ', '.join(test_params)
-            test_body.append(f'        result = self.plugin.{method_name}({params_str})')
+            params_str = ", ".join(test_params)
+            test_body.append(f"        result = self.plugin.{method_name}({params_str})")
         else:
-            test_body.append(f'        result = self.plugin.{method_name}()')
+            test_body.append(f"        result = self.plugin.{method_name}()")
         
         # Add assertions
-        test_body.append('        self.assertIsNotNone(result)')
+        test_body.append("        self.assertIsNotNone(result)")
         
-        return '\n'.join(test_body)
+        return "\n".join(test_body)
     
     def _get_default_value(self, node):
         """Extract default value from AST node"""
@@ -287,13 +285,13 @@ if __name__ == '__main__':
         elif isinstance(node, ast.Name):
             return node.id
         elif isinstance(node, ast.List):
-            return '[]'
+            return "[]"
         elif isinstance(node, ast.Dict):
-            return '{}'
+            return "{}"
         elif node is None:
             return None
         else:
-            return 'None'
+            return "None"
     
     def _get_decorator_name(self, decorator):
         """Extract decorator name from AST node"""
@@ -306,7 +304,7 @@ if __name__ == '__main__':
                 return decorator.func.id
             elif isinstance(decorator.func, ast.Attribute):
                 return f"{decorator.func.value.id}.{decorator.func.attr}"
-        return 'unknown_decorator'
+        return "unknown_decorator"
     
     def _analyze_return_type(self, func_node):
         """Analyze function return type from AST"""
@@ -319,15 +317,15 @@ if __name__ == '__main__':
                     elif isinstance(node.value, ast.Name):
                         returns.append(node.value.id)
                     elif isinstance(node.value, ast.Dict):
-                        returns.append('dict')
+                        returns.append("dict")
                     elif isinstance(node.value, ast.List):
-                        returns.append('list')
+                        returns.append("list")
                     elif isinstance(node.value, ast.Call):
-                        if hasattr(node.value.func, 'id'):
+                        if hasattr(node.value.func, "id"):
                             returns.append(node.value.func.id)
                 else:
-                    returns.append('None')
-        return list(set(returns)) if returns else ['unknown']
+                    returns.append("None")
+        return list(set(returns)) if returns else ["unknown"]
     
     def _analyze_exceptions(self, func_node):
         """Analyze exceptions that might be raised"""
@@ -335,7 +333,7 @@ if __name__ == '__main__':
         for node in ast.walk(func_node):
             if isinstance(node, ast.Raise):
                 if node.exc:
-                    if isinstance(node.exc, ast.Call) and hasattr(node.exc.func, 'id'):
+                    if isinstance(node.exc, ast.Call) and hasattr(node.exc.func, "id"):
                         exceptions.append(node.exc.func.id)
                     elif isinstance(node.exc, ast.Name):
                         exceptions.append(node.exc.id)
@@ -343,13 +341,12 @@ if __name__ == '__main__':
     
     def _generate_comprehensive_test_for_method(self, method_info, class_attributes, imports):
         """Generate comprehensive test for a method based on its analysis"""
-        method_name = method_info['name']
-        args = method_info['args'][1:]  # Skip self
-        docstring = method_info['docstring'] or f"Test {method_name} method"
-        is_async = method_info['is_async']
-        decorators = method_info['decorators']
-        returns = method_info['returns']
-        raises = method_info['raises']
+        method_name = method_info["name"]
+        args = method_info["args"][1:]  # Skip self
+        docstring = method_info["docstring"] or f"Test {method_name} method"
+        is_async = method_info["is_async"]
+        returns = method_info["returns"]
+        raises = method_info["raises"]
         
         test_lines = []
         test_name = f"test_{method_name}"
@@ -370,29 +367,29 @@ if __name__ == '__main__':
         
         # Method call
         if test_params:
-            params_str = ', '.join(test_params)
+            params_str = ", ".join(test_params)
             if is_async:
-                test_lines.append(f'        result = await self.plugin.{method_name}({params_str})')
+                test_lines.append(f"        result = await self.plugin.{method_name}({params_str})")
             else:
-                test_lines.append(f'        result = self.plugin.{method_name}({params_str})')
+                test_lines.append(f"        result = self.plugin.{method_name}({params_str})")
         else:
             if is_async:
-                test_lines.append(f'        result = await self.plugin.{method_name}()')
+                test_lines.append(f"        result = await self.plugin.{method_name}()")
             else:
-                test_lines.append(f'        result = self.plugin.{method_name}()')
+                test_lines.append(f"        result = self.plugin.{method_name}()")
         
         # Generate assertions based on return type analysis
-        if 'None' not in returns:
-            test_lines.append('        self.assertIsNotNone(result)')
+        if "None" not in returns:
+            test_lines.append("        self.assertIsNotNone(result)")
         
-        if 'dict' in returns:
-            test_lines.append('        self.assertIsInstance(result, dict)')
-        elif 'list' in returns:
-            test_lines.append('        self.assertIsInstance(result, list)')
-        elif 'str' in returns:
-            test_lines.append('        self.assertIsInstance(result, str)')
-        elif 'int' in returns or 'float' in returns:
-            test_lines.append('        self.assertIsInstance(result, (int, float))')
+        if "dict" in returns:
+            test_lines.append("        self.assertIsInstance(result, dict)")
+        elif "list" in returns:
+            test_lines.append("        self.assertIsInstance(result, list)")
+        elif "str" in returns:
+            test_lines.append("        self.assertIsInstance(result, str)")
+        elif "int" in returns or "float" in returns:
+            test_lines.append("        self.assertIsInstance(result, (int, float))")
         
         # Add edge case tests
         if args:
@@ -402,92 +399,91 @@ if __name__ == '__main__':
         if raises:
             test_lines.extend(self._generate_exception_test(method_name, args, raises, is_async))
         
-        return '\n'.join(test_lines)
+        return "\n".join(test_lines)
     
     def _generate_smart_test_param(self, param_name, class_attributes, imports):
         """Generate intelligent test parameters based on name and context"""
         param_lower = param_name.lower()
         
         # Binary/file parameters
-        if any(word in param_lower for word in ['binary', 'file', 'path', 'exe', 'dll']):
-            return 'self.test_binary'
+        if any(word in param_lower for word in ["binary", "file", "path", "exe", "dll"]):
+            return "self.test_binary"
         
         # Configuration parameters
-        elif any(word in param_lower for word in ['options', 'config', 'settings', 'params']):
-            return 'self.test_options'
+        elif any(word in param_lower for word in ["options", "config", "settings", "params"]):
+            return "self.test_options"
         
         # Data/buffer parameters
-        elif any(word in param_lower for word in ['data', 'buffer', 'bytes', 'payload']):
+        elif any(word in param_lower for word in ["data", "buffer", "bytes", "payload"]):
             return 'b"\\x4d\\x5a\\x90\\x00\\x03\\x00\\x00\\x00"  # MZ header'
         
         # String parameters
-        elif any(word in param_lower for word in ['string', 'text', 'name', 'message']):
+        elif any(word in param_lower for word in ["string", "text", "name", "message"]):
             return f'"{param_name}_test"'
         
         # Numeric parameters
-        elif any(word in param_lower for word in ['size', 'length', 'count', 'number', 'int']):
-            return '1024'
+        elif any(word in param_lower for word in ["size", "length", "count", "number", "int"]):
+            return "1024"
         
         # Address parameters
-        elif any(word in param_lower for word in ['address', 'addr', 'offset', 'rva']):
-            return '0x401000'
+        elif any(word in param_lower for word in ["address", "addr", "offset", "rva"]):
+            return "0x401000"
         
         # Boolean parameters
-        elif any(word in param_lower for word in ['enable', 'disable', 'is_', 'has_', 'should_']):
-            return 'True'
+        elif any(word in param_lower for word in ["enable", "disable", "is_", "has_", "should_"]):
+            return "True"
         
         # List parameters
-        elif any(word in param_lower for word in ['list', 'array', 'items']):
-            return '[]'
+        elif any(word in param_lower for word in ["list", "array", "items"]):
+            return "[]"
         
         # Dictionary parameters
-        elif any(word in param_lower for word in ['dict', 'map', 'props', 'attributes']):
-            return '{}'
+        elif any(word in param_lower for word in ["dict", "map", "props", "attributes"]):
+            return "{}"
         
         # Module/plugin specific
-        elif 'frida' in imports or 'frida' in param_lower:
-            return 'self.mock_frida_session'
-        elif 'ghidra' in imports or 'ghidra' in param_lower:
-            return 'self.mock_ghidra_project'
+        elif "frida" in imports or "frida" in param_lower:
+            return "self.mock_frida_session"
+        elif "ghidra" in imports or "ghidra" in param_lower:
+            return "self.mock_ghidra_project"
         
         # Default
         else:
-            return 'None'
+            return "None"
     
     def _generate_edge_case_test(self, method_name, args, is_async):
         """Generate edge case tests for method"""
         test_lines = []
         async_prefix = "async " if is_async else ""
-        await_prefix = "await " if is_async else ""
         
         test_lines.append(f"\n    {async_prefix}def test_{method_name}_edge_cases(self):")
         test_lines.append(f'        """Test {method_name} with edge case inputs"""')
         
         # Test with None parameters
-        none_params = ', '.join(['None'] * len(args))
-        test_lines.append('        # Test with None parameters')
-        test_lines.append('        with self.assertRaises((TypeError, ValueError, AttributeError)):')
-        test_lines.append(f'            {await_prefix}self.plugin.{method_name}({none_params})')
+        none_params = ", ".join(["None"] * len(args))
+        test_lines.append("        # Test with None parameters")
+        test_lines.append("        with self.assertRaises((TypeError, ValueError, AttributeError)):")
+        test_lines.append(f"            {await_prefix}self.plugin.{method_name}({none_params})")
         
         # Test with empty parameters
-        test_lines.append('        # Test with empty parameters')
+        test_lines.append("        # Test with empty parameters")
         empty_params = []
         for arg in args:
-            if 'string' in arg.lower() or 'text' in arg.lower():
+            if "string" in arg.lower() or "text" in arg.lower():
                 empty_params.append('""')
-            elif 'list' in arg.lower() or 'array' in arg.lower():
-                empty_params.append('[]')
-            elif 'dict' in arg.lower():
-                empty_params.append('{}')
-            elif 'data' in arg.lower() or 'bytes' in arg.lower():
+            elif "list" in arg.lower() or "array" in arg.lower():
+                empty_params.append("[]")
+            elif "dict" in arg.lower():
+                empty_params.append("{}")
+            elif "data" in arg.lower() or "bytes" in arg.lower():
                 empty_params.append('b""')
             else:
-                empty_params.append('0')
+                empty_params.append("0")
         
         if empty_params:
-            empty_str = ', '.join(empty_params)
-            test_lines.append(f'        result = {await_prefix}self.plugin.{method_name}({empty_str})')
-            test_lines.append('        # Should handle empty inputs gracefully')
+            empty_str = ", ".join(empty_params)
+            test_lines.append(f"        result = {await_prefix}self.plugin.{method_name}({empty_str})")
+            test_lines.append("        # Should handle empty inputs gracefully")
         
         return test_lines
     
@@ -495,14 +491,13 @@ if __name__ == '__main__':
         """Generate exception handling tests"""
         test_lines = []
         async_prefix = "async " if is_async else ""
-        await_prefix = "await " if is_async else ""
         
         test_lines.append(f"\n    {async_prefix}def test_{method_name}_exceptions(self):")
         test_lines.append(f'        """Test {method_name} exception handling"""')
         
         for exc in exceptions:
-            test_lines.append(f'        # Test {exc} handling')
-            test_lines.append(f'        # Create conditions that should raise {exc}')
+            test_lines.append(f"        # Test {exc} handling")
+            test_lines.append(f"        # Create conditions that should raise {exc}")
             
         return test_lines
     
@@ -512,41 +507,41 @@ if __name__ == '__main__':
         
         for attr, attr_type in class_attributes.items():
             test_lines.append(f'        self.assertTrue(hasattr(self.plugin, "{attr}"))')
-            if attr_type != 'unknown':
-                test_lines.append(f'        # Expected type: {attr_type}')
+            if attr_type != "unknown":
+                test_lines.append(f"        # Expected type: {attr_type}")
         
-        return '\n'.join(test_lines)
+        return "\n".join(test_lines)
     
     def _generate_inheritance_tests(self, parent_classes):
         """Generate tests for class inheritance"""
         test_lines = ["\n    def test_inheritance(self):", '        """Test plugin inheritance"""']
         
         for parent in parent_classes:
-            if '.' in parent:
-                module, cls = parent.rsplit('.', 1)
-                test_lines.append(f'        # Should inherit from {parent}')
+            if "." in parent:
+                module, cls = parent.rsplit(".", 1)
+                test_lines.append(f"        # Should inherit from {parent}")
             else:
-                test_lines.append(f'        # Should inherit from {parent}')
+                test_lines.append(f"        # Should inherit from {parent}")
         
-        return '\n'.join(test_lines)
+        return "\n".join(test_lines)
     
     def _generate_plugin_specific_tests(self, methods_info, imports):
         """Generate plugin-specific tests based on detected patterns"""
         tests = []
         
         # Check for common plugin patterns
-        method_names = [m['name'] for m in methods_info]
+        method_names = [m["name"] for m in methods_info]
         
         # Frida plugin tests
-        if any('frida' in imp.lower() for imp in imports):
+        if any("frida" in imp.lower() for imp in imports):
             tests.append(self._generate_frida_plugin_tests(method_names))
         
         # Ghidra plugin tests
-        if any('ghidra' in imp.lower() for imp in imports):
+        if any("ghidra" in imp.lower() for imp in imports):
             tests.append(self._generate_ghidra_plugin_tests(method_names))
         
         # Analysis plugin tests
-        if any(name in method_names for name in ['analyze', 'scan', 'detect']):
+        if any(name in method_names for name in ["analyze", "scan", "detect"]):
             tests.append(self._generate_analysis_plugin_tests(method_names))
         
         return tests
@@ -746,9 +741,9 @@ class MockDataGenerator:
 
         return elf_header
 
-    def create_mock_binary(self, binary_type='pe'):
+    def create_mock_binary(self, binary_type="pe"):
         """Create a mock binary file with real structure"""
-        if binary_type.lower() == 'pe':
+        if binary_type.lower() == "pe":
             base = bytearray(self.pe_template)
 
             # Add some sections
@@ -779,7 +774,7 @@ class MockDataGenerator:
 
             return bytes(base)
 
-        elif binary_type.lower() == 'elf':
+        elif binary_type.lower() == "elf":
             base = bytearray(self.elf_template)
 
             # Add program header
@@ -809,7 +804,7 @@ class MockDataGenerator:
 
         else:
             # Generic binary
-            return b'BINARY\x00\x00' + bytes(range(256)) + b'\x00' * 256
+            return b"BINARY\x00\x00" + bytes(range(256)) + b"\x00" * 256
 
     def create_mock_network_data(self):
         """Create realistic network capture data"""
@@ -819,117 +814,117 @@ class MockDataGenerator:
 
         # TCP handshake
         syn_packet = {
-            'timestamp': time.time(),
-            'src': '192.168.1.100',
-            'dst': '93.184.216.34',
-            'sport': 54321,
-            'dport': 443,
-            'protocol': 'TCP',
-            'flags': 'SYN',
-            'length': 74,
-            'payload': ''
+            "timestamp": time.time(),
+            "src": "192.168.1.100",
+            "dst": "93.184.216.34",
+            "sport": 54321,
+            "dport": 443,
+            "protocol": "TCP",
+            "flags": "SYN",
+            "length": 74,
+            "payload": ""
         }
         packets.append(syn_packet)
 
         # SYN-ACK
         syn_ack_packet = {
-            'timestamp': time.time() + 0.05,
-            'src': '93.184.216.34',
-            'dst': '192.168.1.100',
-            'sport': 443,
-            'dport': 54321,
-            'protocol': 'TCP',
-            'flags': 'SYN,ACK',
-            'length': 74,
-            'payload': ''
+            "timestamp": time.time() + 0.05,
+            "src": "93.184.216.34",
+            "dst": "192.168.1.100",
+            "sport": 443,
+            "dport": 54321,
+            "protocol": "TCP",
+            "flags": "SYN,ACK",
+            "length": 74,
+            "payload": ""
         }
         packets.append(syn_ack_packet)
 
         # ACK
         ack_packet = {
-            'timestamp': time.time() + 0.051,
-            'src': '192.168.1.100',
-            'dst': '93.184.216.34',
-            'sport': 54321,
-            'dport': 443,
-            'protocol': 'TCP',
-            'flags': 'ACK',
-            'length': 66,
-            'payload': ''
+            "timestamp": time.time() + 0.051,
+            "src": "192.168.1.100",
+            "dst": "93.184.216.34",
+            "sport": 54321,
+            "dport": 443,
+            "protocol": "TCP",
+            "flags": "ACK",
+            "length": 66,
+            "payload": ""
         }
         packets.append(ack_packet)
 
         # TLS Client Hello
         tls_hello = {
-            'timestamp': time.time() + 0.052,
-            'src': '192.168.1.100',
-            'dst': '93.184.216.34',
-            'sport': 54321,
-            'dport': 443,
-            'protocol': 'TLS',
-            'flags': 'PSH,ACK',
-            'length': 517,
-            'payload': '16030100fd010000f90303...',  # Truncated TLS data
-            'tls_info': {
-                'version': 'TLS 1.2',
-                'handshake_type': 'Client Hello',
-                'cipher_suites': [
-                    'TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256',
-                    'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384',
-                    'TLS_RSA_WITH_AES_128_GCM_SHA256'
+            "timestamp": time.time() + 0.052,
+            "src": "192.168.1.100",
+            "dst": "93.184.216.34",
+            "sport": 54321,
+            "dport": 443,
+            "protocol": "TLS",
+            "flags": "PSH,ACK",
+            "length": 517,
+            "payload": "16030100fd010000f90303...",  # Truncated TLS data
+            "tls_info": {
+                "version": "TLS 1.2",
+                "handshake_type": "Client Hello",
+                "cipher_suites": [
+                    "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+                    "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+                    "TLS_RSA_WITH_AES_128_GCM_SHA256"
                 ]
             }
         }
         packets.append(tls_hello)
 
         return {
-            'capture_start': time.time() - 60,
-            'capture_end': time.time(),
-            'total_packets': len(packets),
-            'protocols': {'TCP': 3, 'TLS': 1},
-            'conversations': [
+            "capture_start": time.time() - 60,
+            "capture_end": time.time(),
+            "total_packets": len(packets),
+            "protocols": {"TCP": 3, "TLS": 1},
+            "conversations": [
                 {
-                    'src': '192.168.1.100:54321',
-                    'dst': '93.184.216.34:443',
-                    'protocol': 'HTTPS',
-                    'packets': 4,
-                    'bytes': 731
+                    "src": "192.168.1.100:54321",
+                    "dst": "93.184.216.34:443",
+                    "protocol": "HTTPS",
+                    "packets": 4,
+                    "bytes": 731
                 }
             ],
-            'packets': packets
+            "packets": packets
         }
 
     def create_mock_registry_data(self):
         """Create realistic Windows registry data"""
         return {
-            'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion': {
-                'ProgramFilesDir': 'C:\\Program Files',
-                'CommonFilesDir': 'C:\\Program Files\\Common Files',
-                'ProductName': 'Windows 10 Pro',
-                'RegisteredOwner': 'Test User',
-                'RegisteredOrganization': 'Test Organization',
-                'CurrentVersion': '6.3',
-                'CurrentBuild': '19043',
-                'InstallDate': 1609459200  # 2021-01-01
+            "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion": {
+                "ProgramFilesDir": "C:\\Program Files",
+                "CommonFilesDir": "C:\\Program Files\\Common Files",
+                "ProductName": "Windows 10 Pro",
+                "RegisteredOwner": "Test User",
+                "RegisteredOrganization": "Test Organization",
+                "CurrentVersion": "6.3",
+                "CurrentBuild": "19043",
+                "InstallDate": 1609459200  # 2021-01-01
             },
-            'HKEY_LOCAL_MACHINE\\SOFTWARE\\TestApp': {
-                'InstallPath': 'C:\\Program Files\\TestApp',
-                'Version': '1.0.0.0',
-                'License': 'TRIAL',
-                'ExpiryDate': '2025-12-31',
-                'Features': {
-                    'Feature1': 1,
-                    'Feature2': 0,
-                    'Feature3': 1
+            "HKEY_LOCAL_MACHINE\\SOFTWARE\\TestApp": {
+                "InstallPath": "C:\\Program Files\\TestApp",
+                "Version": "1.0.0.0",
+                "License": "TRIAL",
+                "ExpiryDate": "2025-12-31",
+                "Features": {
+                    "Feature1": 1,
+                    "Feature2": 0,
+                    "Feature3": 1
                 }
             },
-            'HKEY_CURRENT_USER\\Software\\TestApp': {
-                'LastRun': '2025-01-19 10:30:00',
-                'UsageCount': 42,
-                'Settings': {
-                    'Theme': 'dark',
-                    'AutoUpdate': True,
-                    'Language': 'en-US'
+            "HKEY_CURRENT_USER\\Software\\TestApp": {
+                "LastRun": "2025-01-19 10:30:00",
+                "UsageCount": 42,
+                "Settings": {
+                    "Theme": "dark",
+                    "AutoUpdate": True,
+                    "Language": "en-US"
                 }
             }
         }
@@ -945,12 +940,12 @@ class PluginTestRunner:
         """Run tests from a test file"""
         # Implementation would actually run the tests
         return {
-            'total': 10,
-            'passed': 8,
-            'failed': 1,
-            'skipped': 1,
-            'duration': 2.5,
-            'details': []
+            "total": 10,
+            "passed": 8,
+            "failed": 1,
+            "skipped": 1,
+            "duration": 2.5,
+            "details": []
         }
 
 
@@ -964,9 +959,9 @@ class TestCoverageAnalyzer:
         """Analyze test coverage"""
         # Implementation would use coverage.py or similar
         return {
-            'total_coverage': 75.5,
-            'line_coverage': 80.0,
-            'branch_coverage': 71.0,
-            'missing_lines': [45, 67, 89, 101],
-            'uncovered_functions': ['complex_function', 'error_handler']
+            "total_coverage": 75.5,
+            "line_coverage": 80.0,
+            "branch_coverage": 71.0,
+            "missing_lines": [45, 67, 89, 101],
+            "uncovered_functions": ["complex_function", "error_handler"]
         }

@@ -36,7 +36,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
-__all__ = ['DistributedProcessingConfigDialog']
+__all__ = ["DistributedProcessingConfigDialog"]
 
 
 class DistributedProcessingConfigDialog(QDialog):
@@ -203,7 +203,7 @@ class DistributedProcessingConfigDialog(QDialog):
         # Parse any custom patterns
         custom_patterns = []
         if self.custom_patterns_edit.text().strip():
-            custom_patterns = [_p.strip() for _p in self.custom_patterns_edit.text().split(',')]
+            custom_patterns = [_p.strip() for _p in self.custom_patterns_edit.text().split(",")]
 
         # Map backend selection to value
         backend_map = {
@@ -216,27 +216,27 @@ class DistributedProcessingConfigDialog(QDialog):
 
         return {
             # Processing options
-            'num_workers': self.workers_spin.value(),
-            'chunk_size': self.chunk_size_spin.value() * 1024 * 1024,  # Convert MB to bytes
-            'window_size_kb': self.window_size_spin.value(),
-            'timeout': self.timeout_spin.value(),
-            'preferred_backend': preferred_backend,
-            'use_convenience_methods': self.convenience_check.isChecked(),
+            "num_workers": self.workers_spin.value(),
+            "chunk_size": self.chunk_size_spin.value() * 1024 * 1024,  # Convert MB to bytes
+            "window_size_kb": self.window_size_spin.value(),
+            "timeout": self.timeout_spin.value(),
+            "preferred_backend": preferred_backend,
+            "use_convenience_methods": self.convenience_check.isChecked(),
 
             # Analysis options
-            'run_section_analysis': self.section_check.isChecked(),
-            'run_pattern_search': self.pattern_check.isChecked(),
-            'run_entropy_analysis': self.entropy_check.isChecked(),
-            'run_symbolic_execution': self.symbolic_check.isChecked(),
+            "run_section_analysis": self.section_check.isChecked(),
+            "run_pattern_search": self.pattern_check.isChecked(),
+            "run_entropy_analysis": self.entropy_check.isChecked(),
+            "run_symbolic_execution": self.symbolic_check.isChecked(),
 
             # Pattern types
-            'search_license_patterns': self.license_check.isChecked(),
-            'search_hardware_patterns': self.hardware_check.isChecked(),
-            'search_crypto_patterns': self.crypto_check.isChecked(),
-            'custom_patterns': custom_patterns,
+            "search_license_patterns": self.license_check.isChecked(),
+            "search_hardware_patterns": self.hardware_check.isChecked(),
+            "search_crypto_patterns": self.crypto_check.isChecked(),
+            "custom_patterns": custom_patterns,
 
             # Binary path
-            'binary_path': self.binary_path
+            "binary_path": self.binary_path
         }
 
     def set_defaults(self, config: Dict[str, Any]) -> None:
@@ -246,57 +246,57 @@ class DistributedProcessingConfigDialog(QDialog):
         Args:
             config: Configuration dictionary to apply
         """
-        if 'num_workers' in config:
-            self.workers_spin.setValue(config['num_workers'])
+        if "num_workers" in config:
+            self.workers_spin.setValue(config["num_workers"])
 
-        if 'chunk_size' in config:
+        if "chunk_size" in config:
             # Convert bytes to MB
-            chunk_size_mb = config['chunk_size'] // (1024 * 1024)
+            chunk_size_mb = config["chunk_size"] // (1024 * 1024)
             self.chunk_size_spin.setValue(chunk_size_mb)
 
-        if 'window_size_kb' in config:
-            self.window_size_spin.setValue(config['window_size_kb'])
+        if "window_size_kb" in config:
+            self.window_size_spin.setValue(config["window_size_kb"])
 
-        if 'timeout' in config:
-            self.timeout_spin.setValue(config['timeout'])
+        if "timeout" in config:
+            self.timeout_spin.setValue(config["timeout"])
 
-        if 'preferred_backend' in config:
+        if "preferred_backend" in config:
             backend_index = {
                 "auto": 0,
                 "ray": 1,
                 "dask": 2,
                 "multiprocessing": 3
-            }.get(config['preferred_backend'], 0)
+            }.get(config["preferred_backend"], 0)
             self.backend_combo.setCurrentIndex(backend_index)
 
-        if 'use_convenience_methods' in config:
-            self.convenience_check.setChecked(config['use_convenience_methods'])
+        if "use_convenience_methods" in config:
+            self.convenience_check.setChecked(config["use_convenience_methods"])
 
         # Analysis options
-        if 'run_section_analysis' in config:
-            self.section_check.setChecked(config['run_section_analysis'])
+        if "run_section_analysis" in config:
+            self.section_check.setChecked(config["run_section_analysis"])
 
-        if 'run_pattern_search' in config:
-            self.pattern_check.setChecked(config['run_pattern_search'])
+        if "run_pattern_search" in config:
+            self.pattern_check.setChecked(config["run_pattern_search"])
 
-        if 'run_entropy_analysis' in config:
-            self.entropy_check.setChecked(config['run_entropy_analysis'])
+        if "run_entropy_analysis" in config:
+            self.entropy_check.setChecked(config["run_entropy_analysis"])
 
-        if 'run_symbolic_execution' in config:
-            self.symbolic_check.setChecked(config['run_symbolic_execution'])
+        if "run_symbolic_execution" in config:
+            self.symbolic_check.setChecked(config["run_symbolic_execution"])
 
         # Pattern types
-        if 'search_license_patterns' in config:
-            self.license_check.setChecked(config['search_license_patterns'])
+        if "search_license_patterns" in config:
+            self.license_check.setChecked(config["search_license_patterns"])
 
-        if 'search_hardware_patterns' in config:
-            self.hardware_check.setChecked(config['search_hardware_patterns'])
+        if "search_hardware_patterns" in config:
+            self.hardware_check.setChecked(config["search_hardware_patterns"])
 
-        if 'search_crypto_patterns' in config:
-            self.crypto_check.setChecked(config['search_crypto_patterns'])
+        if "search_crypto_patterns" in config:
+            self.crypto_check.setChecked(config["search_crypto_patterns"])
 
-        if 'custom_patterns' in config and config['custom_patterns']:
-            self.custom_patterns_edit.setText(', '.join(config['custom_patterns']))
+        if "custom_patterns" in config and config["custom_patterns"]:
+            self.custom_patterns_edit.setText(", ".join(config["custom_patterns"]))
 
     def validate_config(self) -> bool:
         """

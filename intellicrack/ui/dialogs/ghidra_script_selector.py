@@ -444,7 +444,7 @@ class GhidraScriptSelector(QDialog):
         """Handle search text change."""
         _ = text
         # Debounce search with timer
-        if hasattr(self, '_search_timer'):
+        if hasattr(self, "_search_timer"):
             self._search_timer.stop()
 
         self._search_timer = QTimer()
@@ -528,7 +528,7 @@ class GhidraScriptSelector(QDialog):
 
         system = platform.system()
         try:
-            if system == "Windows" and hasattr(os, 'startfile'):
+            if system == "Windows" and hasattr(os, "startfile"):
                 os.startfile(user_scripts_dir)  # pylint: disable=no-member
             elif system == "Darwin":  # macOS
                 subprocess.run(["open", user_scripts_dir])

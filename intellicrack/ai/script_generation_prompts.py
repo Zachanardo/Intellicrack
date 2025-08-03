@@ -495,7 +495,7 @@ Return validation results in structured JSON format."""
 
         # Extract format placeholders
         import re
-        placeholders = re.findall(r'\{(\w+)\}', template)
+        placeholders = re.findall(r"\{(\w+)\}", template)
         return list(set(placeholders))
 
 

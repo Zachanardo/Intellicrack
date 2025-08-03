@@ -16,7 +16,7 @@ class SecurityError(Exception):
     """Raised when a security policy is violated"""
     pass
 
-def secure_hash(data: Union[str, bytes], algorithm: str = 'sha256') -> str:
+def secure_hash(data: Union[str, bytes], algorithm: str = "sha256") -> str:
     """
     Generate a secure hash of the given data
 
@@ -28,14 +28,14 @@ def secure_hash(data: Union[str, bytes], algorithm: str = 'sha256') -> str:
         Hex digest of the hash
     """
     if isinstance(data, str):
-        data = data.encode('utf-8')
+        data = data.encode("utf-8")
 
-    if algorithm == 'md5':
+    if algorithm == "md5":
         # MD5 only for non-security purposes
         return hashlib.md5(data, usedforsecurity=False).hexdigest()
-    elif algorithm == 'sha256':
+    elif algorithm == "sha256":
         return hashlib.sha256(data).hexdigest()
-    elif algorithm == 'sha512':
+    elif algorithm == "sha512":
         return hashlib.sha512(data).hexdigest()
     else:
         raise ValueError(f"Unsupported algorithm: {algorithm}")
@@ -119,7 +119,7 @@ def validate_file_path(path: str, allowed_extensions: Optional[List[str]] = None
     import os
 
     # Prevent path traversal
-    if '..' in path or path.startswith('/'):
+    if ".." in path or path.startswith("/"):
         raise SecurityError(f"Potentially malicious path: {path}")
 
     # Check file extension
@@ -142,13 +142,13 @@ def sanitize_input(text: str, max_length: int = 1024) -> str:
         Sanitized text
     """
     # Remove null bytes
-    text = text.replace('\x00', '')
+    text = text.replace("\x00", "")
 
     # Limit length
     text = text[:max_length]
 
     # Remove control characters
     import re
-    text = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', text)
+    text = re.sub(r"[\x00-\x1F\x7F-\x9F]", "", text)
 
     return text.strip()

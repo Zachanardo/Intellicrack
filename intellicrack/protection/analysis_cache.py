@@ -25,7 +25,7 @@ logger = get_logger(__name__)
 import hmac
 
 # Security configuration for pickle
-PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
+PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe classes."""
 
@@ -33,16 +33,16 @@ class RestrictedUnpickler(pickle.Unpickler):
         """Override find_class to restrict allowed classes."""
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
-            'numpy', 'numpy.core.multiarray', 'numpy.core.numeric',
-            'pandas', 'pandas.core.frame', 'pandas.core.series',
-            'sklearn', 'torch', 'tensorflow',
-            '__builtin__', 'builtins',
-            'collections', 'collections.abc',
-            'datetime'
+            "numpy", "numpy.core.multiarray", "numpy.core.numeric",
+            "pandas", "pandas.core.frame", "pandas.core.series",
+            "sklearn", "torch", "tensorflow",
+            "__builtin__", "builtins",
+            "collections", "collections.abc",
+            "datetime"
         }
 
         # Allow model classes from our own modules
-        if module.startswith('intellicrack.'):
+        if module.startswith("intellicrack."):
             return super().find_class(module, name)
 
         # Check if module is in allowed list
@@ -61,7 +61,7 @@ def secure_pickle_dump(obj, file_path):
     mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
 
     # Write MAC + data
-    with open(file_path, 'wb') as f:
+    with open(file_path, "wb") as f:
         f.write(mac)
         f.write(data)
 
@@ -75,7 +75,7 @@ def secure_pickle_load(file_path):
         # Fallback to pickle with restricted unpickler
         pass
 
-    with open(file_path, 'rb') as f:
+    with open(file_path, "rb") as f:
         # Read MAC
         stored_mac = f.read(32)  # SHA256 produces 32 bytes
         data = f.read()
@@ -345,7 +345,7 @@ class AnalysisCache:
 
             for cache_key, entry in self._cache.items():
                 # Extract file path from cache key
-                file_path = cache_key.split(':')[0]
+                file_path = cache_key.split(":")[0]
                 if not entry.is_valid(file_path):
                     invalid_keys.append(cache_key)
 
@@ -382,21 +382,21 @@ class AnalysisCache:
 
             top_entries = []
             for cache_key, entry in sorted_entries[:5]:
-                file_path = cache_key.split(':')[0]
+                file_path = cache_key.split(":")[0]
                 top_entries.append({
-                    'file': os.path.basename(file_path),
-                    'access_count': entry.access_count,
-                    'size_kb': len(str(entry.data)) / 1024,
-                    'age_hours': (time.time() - entry.timestamp) / 3600
+                    "file": os.path.basename(file_path),
+                    "access_count": entry.access_count,
+                    "size_kb": len(str(entry.data)) / 1024,
+                    "age_hours": (time.time() - entry.timestamp) / 3600
                 })
 
         return {
-            'stats': stats.to_dict(),
-            'cache_size_mb': self._get_cache_size_mb(),
-            'cache_directory': str(self.cache_dir),
-            'max_entries': self.max_entries,
-            'max_size_mb': self.max_size_bytes / (1024 * 1024),
-            'top_entries': top_entries
+            "stats": stats.to_dict(),
+            "cache_size_mb": self._get_cache_size_mb(),
+            "cache_directory": str(self.cache_dir),
+            "max_entries": self.max_entries,
+            "max_size_mb": self.max_size_bytes / (1024 * 1024),
+            "top_entries": top_entries
         }
 
     def save_cache(self) -> None:
@@ -407,7 +407,7 @@ class AnalysisCache:
                 secure_pickle_dump(self._cache, self.cache_file)
 
                 # Save statistics
-                with open(self.stats_file, 'w') as f:
+                with open(self.stats_file, "w") as f:
                     json.dump(self._stats.to_dict(), f, indent=2)
 
                 logger.debug(f"Cache saved: {len(self._cache)} entries")
@@ -476,7 +476,7 @@ class AnalysisCache:
 
             # Load statistics
             if self.stats_file.exists():
-                with open(self.stats_file, 'r') as f:
+                with open(self.stats_file, "r") as f:
                     stats_data = json.load(f)
                     self._stats = CacheStats(**stats_data)
 

@@ -145,7 +145,7 @@ class QEMUExecutionThread(QThread):
         duration = time.time() - self.start_time
 
         # Parse output for specific patterns
-        output_lines = result.output.split('\n')
+        output_lines = result.output.split("\n")
         memory_changes = []
         api_calls = []
         warnings = []
@@ -154,20 +154,20 @@ class QEMUExecutionThread(QThread):
             # Parse real Frida output patterns
             if "Found" in line and "at 0x" in line:
                 # Extract real memory addresses
-                addr_match = re.search(r'at (0x[0-9a-fA-F]+)', line)
+                addr_match = re.search(r"at (0x[0-9a-fA-F]+)", line)
                 if addr_match:
                     memory_changes.append({
-                        'type': 'discovery',
-                        'address': addr_match.group(1),
-                        'description': line
+                        "type": "discovery",
+                        "address": addr_match.group(1),
+                        "description": line
                     })
 
             elif "Patched" in line or "Hooked" in line:
                 # Extract patching/hooking info
                 api_calls.append({
-                    'type': 'hook',
-                    'description': line,
-                    'timestamp': datetime.now().isoformat()
+                    "type": "hook",
+                    "description": line,
+                    "timestamp": datetime.now().isoformat()
                 })
 
             elif "WARNING" in line or "Warning" in line:
@@ -342,17 +342,17 @@ class QEMUTestResultsDialog(QDialog):
         """Start script execution in QEMU."""
         # Create snapshot for testing
         snapshot_id = self.qemu_manager.create_script_test_snapshot(
-            self.script_info.get('binary_path', ''),
-            self.script_info.get('platform', 'windows')
+            self.script_info.get("binary_path", ""),
+            self.script_info.get("platform", "windows")
         )
 
         # Start execution thread
         self.execution_thread = QEMUExecutionThread(
             self.qemu_manager,
             snapshot_id,
-            self.script_info.get('script_content', ''),
-            self.script_info.get('binary_path', ''),
-            self.script_info.get('script_type', 'frida')
+            self.script_info.get("script_content", ""),
+            self.script_info.get("binary_path", ""),
+            self.script_info.get("script_type", "frida")
         )
 
         # Connect signals
@@ -443,10 +443,10 @@ class QEMUTestResultsDialog(QDialog):
 
         for change in results.memory_changes:
             item = QTreeWidgetItem([
-                change.get('address', 'Unknown'),
-                change.get('original', 'N/A'),
-                change.get('patched', 'N/A'),
-                change.get('description', '')
+                change.get("address", "Unknown"),
+                change.get("original", "N/A"),
+                change.get("patched", "N/A"),
+                change.get("description", "")
             ])
             self.memory_tree.addTopLevelItem(item)
 
@@ -456,10 +456,10 @@ class QEMUTestResultsDialog(QDialog):
 
         for call in results.api_calls:
             item = QTreeWidgetItem([
-                call.get('timestamp', 'N/A'),
-                call.get('api', 'Unknown'),
-                call.get('parameters', ''),
-                call.get('result', '')
+                call.get("timestamp", "N/A"),
+                call.get("api", "Unknown"),
+                call.get("parameters", ""),
+                call.get("result", "")
             ])
             self.api_tree.addTopLevelItem(item)
 
@@ -481,18 +481,18 @@ class QEMUTestResultsDialog(QDialog):
 
         # Export as JSON with all real data
         export_data = {
-            'timestamp': datetime.now().isoformat(),
-            'script_info': self.script_info,
-            'results': {
-                'success': self.test_results.success,
-                'duration': self.test_results.duration,
-                'output': self.test_results.output,
-                'errors': self.test_results.errors,
-                'warnings': self.test_results.warnings,
-                'memory_changes': self.test_results.memory_changes,
-                'api_calls': self.test_results.api_calls,
-                'process_state': self.test_results.process_state,
-                'exit_code': self.test_results.exit_code
+            "timestamp": datetime.now().isoformat(),
+            "script_info": self.script_info,
+            "results": {
+                "success": self.test_results.success,
+                "duration": self.test_results.duration,
+                "output": self.test_results.output,
+                "errors": self.test_results.errors,
+                "warnings": self.test_results.warnings,
+                "memory_changes": self.test_results.memory_changes,
+                "api_calls": self.test_results.api_calls,
+                "process_state": self.test_results.process_state,
+                "exit_code": self.test_results.exit_code
             }
         }
 
@@ -505,6 +505,6 @@ class QEMUTestResultsDialog(QDialog):
         )
 
         if filename:
-            with open(filename, 'w') as f:
+            with open(filename, "w") as f:
                 json.dump(export_data, f, indent=2)
             logger.info(f"Exported test results to {filename}")

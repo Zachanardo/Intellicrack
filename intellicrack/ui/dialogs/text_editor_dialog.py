@@ -86,15 +86,15 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
         keyword_format.setFontWeight(QFont.Bold)
 
         keywords = [
-            'and', 'as', 'assert', 'break', 'class', 'continue', 'def',
-            'del', 'elif', 'else', 'except', 'exec', 'finally', 'for',
-            'from', 'global', 'if', 'import', 'in', 'is', 'lambda',
-            'not', 'or', 'pass', 'print', 'raise', 'return', 'try',
-            'while', 'with', 'yield', 'True', 'False', 'None'
+            "and", "as", "assert", "break", "class", "continue", "def",
+            "del", "elif", "else", "except", "exec", "finally", "for",
+            "from", "global", "if", "import", "in", "is", "lambda",
+            "not", "or", "pass", "print", "raise", "return", "try",
+            "while", "with", "yield", "True", "False", "None"
         ]
 
         for _keyword in keywords:
-            pattern = r'\b' + _keyword + r'\b'
+            pattern = r"\b" + _keyword + r"\b"
             self.highlighting_rules.append((re.compile(pattern), keyword_format))
 
         # String literals
@@ -107,18 +107,18 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
         comment_format = QTextCharFormat()
         comment_format.setColor(QColor(128, 128, 128))
         comment_format.setFontItalic(True)
-        self.highlighting_rules.append((re.compile(r'#.*'), comment_format))
+        self.highlighting_rules.append((re.compile(r"#.*"), comment_format))
 
         # Numbers
         number_format = QTextCharFormat()
         number_format.setColor(QColor(255, 0, 255))
-        self.highlighting_rules.append((re.compile(r'\b\d+\b'), number_format))
+        self.highlighting_rules.append((re.compile(r"\b\d+\b"), number_format))
 
         # Functions
         function_format = QTextCharFormat()
         function_format.setColor(QColor(0, 0, 255))
         function_format.setFontWeight(QFont.Bold)
-        self.highlighting_rules.append((re.compile(r'\bdef\s+(\w+)'), function_format))
+        self.highlighting_rules.append((re.compile(r"\bdef\s+(\w+)"), function_format))
 
     def highlightBlock(self, text: str):
         """Apply syntax highlighting to a block of text."""
@@ -209,22 +209,22 @@ class FindReplaceDialog(QDialog):
 
     def find_next(self):
         """Find next occurrence."""
-        if self.text_editor and hasattr(self.text_editor, 'find_text'):
+        if self.text_editor and hasattr(self.text_editor, "find_text"):
             self.text_editor.find_text(self.find_edit.text(), forward=True)
 
     def find_previous(self):
         """Find previous occurrence."""
-        if self.text_editor and hasattr(self.text_editor, 'find_text'):
+        if self.text_editor and hasattr(self.text_editor, "find_text"):
             self.text_editor.find_text(self.find_edit.text(), forward=False)
 
     def replace_current(self):
         """Replace current selection."""
-        if self.text_editor and hasattr(self.text_editor, 'replace_text'):
+        if self.text_editor and hasattr(self.text_editor, "replace_text"):
             self.text_editor.replace_text(self.find_edit.text(), self.replace_edit.text())
 
     def replace_all(self):
         """Replace all occurrences."""
-        if self.text_editor and hasattr(self.text_editor, 'replace_all_text'):
+        if self.text_editor and hasattr(self.text_editor, "replace_all_text"):
             count = self.text_editor.replace_all_text(self.find_edit.text(), self.replace_edit.text())
             if HAS_PYQT:
                 QMessageBox.information(self, "Replace All", f"Replaced {count} occurrences")
@@ -286,7 +286,7 @@ class TextEditorDialog(QDialog):
         self.text_edit.textChanged.connect(self.on_content_changed)
 
         # Enable syntax highlighting for Python files
-        if self.file_path and self.file_path.endswith('.py'):
+        if self.file_path and self.file_path.endswith(".py"):
             self.highlighter = PythonSyntaxHighlighter(self.text_edit.document())
 
         main_layout.addWidget(self.text_edit)
@@ -520,7 +520,7 @@ class TextEditorDialog(QDialog):
     def load_file(self, file_path: str):
         """Load a file into the editor."""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             self.text_edit.setPlainText(content)
@@ -534,7 +534,7 @@ class TextEditorDialog(QDialog):
             self.reload_btn.setEnabled(True)
 
             # Enable syntax highlighting for Python files
-            if file_path.endswith('.py'):
+            if file_path.endswith(".py"):
                 self.highlighter = PythonSyntaxHighlighter(self.text_edit.document())
 
             # Watch for external changes
@@ -555,7 +555,7 @@ class TextEditorDialog(QDialog):
         try:
             content = self.text_edit.toPlainText()
 
-            with open(self.file_path, 'w', encoding='utf-8') as f:
+            with open(self.file_path, "w", encoding="utf-8") as f:
                 f.write(content)
 
             self.original_content = content
@@ -690,10 +690,10 @@ class TextEditorDialog(QDialog):
                 self._export_to_json(file_path, content)
             else:
                 # Plain text export
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     if include_line_numbers:
-                        lines = content.split('\n')
-                        numbered_content = '\n'.join(f"{i+1:4d}: {line}" for i, line in enumerate(lines))
+                        lines = content.split("\n")
+                        numbered_content = "\n".join(f"{i+1:4d}: {line}" for i, line in enumerate(lines))
                         f.write(numbered_content)
                     else:
                         f.write(content)
@@ -731,20 +731,20 @@ class TextEditorDialog(QDialog):
 
         title = os.path.basename(self.file_path or "Untitled")
 
-        if include_highlighting and self.file_path and self.file_path.endswith('.py'):
+        if include_highlighting and self.file_path and self.file_path.endswith(".py"):
             # Simple Python syntax highlighting
             formatted_content = self._apply_python_highlighting(content, include_line_numbers)
         else:
             if include_line_numbers:
-                lines = content.split('\n')
-                formatted_content = '\n'.join(
+                lines = content.split("\n")
+                formatted_content = "\n".join(
                     f'<span class="line-number">{i+1:4d}:</span> {self._escape_html(line)}'
                     for i, line in enumerate(lines)
                 )
             else:
                 formatted_content = self._escape_html(content)
 
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(html_content.format(title=title, content=formatted_content))
 
     def _export_to_pdf(self, file_path, content, include_highlighting, include_line_numbers):
@@ -765,13 +765,13 @@ class TextEditorDialog(QDialog):
 
             # Format content
             if include_line_numbers:
-                lines = content.split('\n')
-                formatted_content = '\n'.join(f"{i+1:4d}: {line}" for i, line in enumerate(lines))
+                lines = content.split("\n")
+                formatted_content = "\n".join(f"{i+1:4d}: {line}" for i, line in enumerate(lines))
             else:
                 formatted_content = content
 
             # Apply highlighting if requested
-            if include_highlighting and self.file_path and self.file_path.endswith('.py'):
+            if include_highlighting and self.file_path and self.file_path.endswith(".py"):
                 document.setHtml(self._get_highlighted_html(formatted_content))
             else:
                 document.setPlainText(formatted_content)
@@ -782,7 +782,7 @@ class TextEditorDialog(QDialog):
             # Fallback if PyQt6.QtPrintSupport is not available
             QMessageBox.warning(self, "PDF Export",
                                "PDF export requires PyQt6.QtPrintSupport. Saving as text instead.")
-            with open(file_path.replace('.pdf', '.txt'), 'w', encoding='utf-8') as f:
+            with open(file_path.replace(".pdf", ".txt"), "w", encoding="utf-8") as f:
                 f.write(content)
 
     def _export_to_rtf(self, file_path, content, include_line_numbers):
@@ -791,14 +791,14 @@ class TextEditorDialog(QDialog):
         rtf_footer = "}"
 
         # Escape RTF special characters
-        rtf_content = content.replace('\\', '\\\\').replace('{', '\\{').replace('}', '\\}')
-        rtf_content = rtf_content.replace('\n', '\\par\n')
+        rtf_content = content.replace("\\", "\\\\").replace("{", "\\{").replace("}", "\\}")
+        rtf_content = rtf_content.replace("\n", "\\par\n")
 
         if include_line_numbers:
-            lines = rtf_content.split('\\par\n')
-            rtf_content = '\\par\n'.join(f"{i+1:4d}: {line}" for i, line in enumerate(lines))
+            lines = rtf_content.split("\\par\n")
+            rtf_content = "\\par\n".join(f"{i+1:4d}: {line}" for i, line in enumerate(lines))
 
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(rtf_header + rtf_content + rtf_footer)
 
     def _export_to_markdown(self, file_path, content):
@@ -808,26 +808,26 @@ class TextEditorDialog(QDialog):
         if self.file_path:
             ext = os.path.splitext(self.file_path)[1].lower()
             lang_map = {
-                '.py': 'python', '.js': 'javascript', '.java': 'java',
-                '.cpp': 'cpp', '.c': 'c', '.cs': 'csharp',
-                '.html': 'html', '.css': 'css', '.json': 'json'
+                ".py": "python", ".js": "javascript", ".java": "java",
+                ".cpp": "cpp", ".c": "c", ".cs": "csharp",
+                ".html": "html", ".css": "css", ".json": "json"
             }
-            lang = lang_map.get(ext, '')
+            lang = lang_map.get(ext, "")
 
         md_content = f"# {os.path.basename(self.file_path or 'Code Export')}\n\n"
         md_content += f"```{lang}\n{content}\n```\n"
 
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(md_content)
 
     def _export_to_csv(self, file_path, content):
         """Export content to CSV format (line by line)."""
         import csv
 
-        lines = content.split('\n')
-        with open(file_path, 'w', newline='', encoding='utf-8') as f:
+        lines = content.split("\n")
+        with open(file_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
-            writer.writerow(['Line Number', 'Content'])
+            writer.writerow(["Line Number", "Content"])
             for i, line in enumerate(lines, 1):
                 writer.writerow([i, line])
 
@@ -836,20 +836,20 @@ class TextEditorDialog(QDialog):
         import json
 
         data = {
-            'filename': os.path.basename(self.file_path or 'untitled'),
-            'content': content,
-            'lines': content.split('\n'),
-            'line_count': len(content.split('\n')),
-            'character_count': len(content),
-            'export_date': QDateTime.currentDateTime().toString(Qt.DateFormat.ISODate)
+            "filename": os.path.basename(self.file_path or "untitled"),
+            "content": content,
+            "lines": content.split("\n"),
+            "line_count": len(content.split("\n")),
+            "character_count": len(content),
+            "export_date": QDateTime.currentDateTime().toString(Qt.DateFormat.ISODate)
         }
 
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
     def _escape_html(self, text):
         """Escape HTML special characters."""
-        return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
     def _apply_python_highlighting(self, content, include_line_numbers):
         """Apply simple Python syntax highlighting for HTML export."""
@@ -859,20 +859,20 @@ class TextEditorDialog(QDialog):
         content = self._escape_html(content)
 
         # Python keywords
-        keywords = r'\b(and|as|assert|break|class|continue|def|del|elif|else|except|' \
-                  r'finally|for|from|global|if|import|in|is|lambda|not|or|pass|raise|' \
-                  r'return|try|while|with|yield|None|True|False)\b'
+        keywords = r"\b(and|as|assert|break|class|continue|def|del|elif|else|except|" \
+                  r"finally|for|from|global|if|import|in|is|lambda|not|or|pass|raise|" \
+                  r"return|try|while|with|yield|None|True|False)\b"
 
         # Apply highlighting
         content = re.sub(keywords, r'<span class="keyword">\1</span>', content)
-        content = re.sub(r'#.*$', lambda m: f'<span class="comment">{m.group()}</span>', content, flags=re.MULTILINE)
+        content = re.sub(r"#.*$", lambda m: f'<span class="comment">{m.group()}</span>', content, flags=re.MULTILINE)
         content = re.sub(r'"[^"]*"|\'[^\']*\'', lambda m: f'<span class="string">{m.group()}</span>', content)
-        content = re.sub(r'\b\d+\b', lambda m: f'<span class="number">{m.group()}</span>', content)
-        content = re.sub(r'\bdef\s+(\w+)', r'def <span class="function">\1</span>', content)
+        content = re.sub(r"\b\d+\b", lambda m: f'<span class="number">{m.group()}</span>', content)
+        content = re.sub(r"\bdef\s+(\w+)", r'def <span class="function">\1</span>', content)
 
         if include_line_numbers:
-            lines = content.split('\n')
-            content = '\n'.join(
+            lines = content.split("\n")
+            content = "\n".join(
                 f'<span class="line-number">{i+1:4d}:</span> {line}'
                 for i, line in enumerate(lines)
             )
@@ -1007,4 +1007,4 @@ class TextEditorDialog(QDialog):
 
 
 # Export for external use
-__all__ = ['TextEditorDialog', 'PythonSyntaxHighlighter', 'FindReplaceDialog']
+__all__ = ["TextEditorDialog", "PythonSyntaxHighlighter", "FindReplaceDialog"]

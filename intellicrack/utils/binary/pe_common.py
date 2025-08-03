@@ -41,11 +41,11 @@ def extract_pe_imports(pe_obj) -> List[str]:
     imports = []
 
     try:
-        if hasattr(pe_obj, 'DIRECTORY_ENTRY_IMPORT'):
+        if hasattr(pe_obj, "DIRECTORY_ENTRY_IMPORT"):
             for entry in pe_obj.DIRECTORY_ENTRY_IMPORT:
                 for imp in entry.imports:
                     if imp.name:
-                        func_name = imp.name.decode('utf-8', errors='ignore')
+                        func_name = imp.name.decode("utf-8", errors="ignore")
                         imports.append(func_name)
     except (AttributeError, ValueError) as e:
         logger.debug("Error extracting PE imports: %s", e)
@@ -67,12 +67,12 @@ def iterate_pe_imports_with_dll(pe_obj, callback, include_import_obj=False):
         Results from callback function
     """
     try:
-        if hasattr(pe_obj, 'DIRECTORY_ENTRY_IMPORT'):
+        if hasattr(pe_obj, "DIRECTORY_ENTRY_IMPORT"):
             for entry in pe_obj.DIRECTORY_ENTRY_IMPORT:
-                dll_name = entry.dll.decode('utf-8', errors='ignore')
+                dll_name = entry.dll.decode("utf-8", errors="ignore")
                 for imp in entry.imports:
                     if imp.name:
-                        func_name = imp.name.decode('utf-8', errors='ignore')
+                        func_name = imp.name.decode("utf-8", errors="ignore")
                         if include_import_obj:
                             result = callback(dll_name, func_name, imp)
                         else:
@@ -94,11 +94,11 @@ def analyze_pe_import_security(pe_obj) -> dict:
         Dictionary with security analysis results
     """
     security_apis = {
-        'crypto': ['CryptAcquireContext', 'CryptCreateHash', 'CryptDecrypt', 'CryptEncrypt'],
-        'network': ['socket', 'connect', 'send', 'recv', 'WSAStartup', 'InternetOpen'],
-        'process': ['CreateProcess', 'OpenProcess', 'TerminateProcess', 'ReadProcessMemory'],
-        'registry': ['RegOpenKey', 'RegQueryValue', 'RegSetValue', 'RegCreateKey'],
-        'file': ['CreateFile', 'ReadFile', 'WriteFile', 'DeleteFile']
+        "crypto": ["CryptAcquireContext", "CryptCreateHash", "CryptDecrypt", "CryptEncrypt"],
+        "network": ["socket", "connect", "send", "recv", "WSAStartup", "InternetOpen"],
+        "process": ["CreateProcess", "OpenProcess", "TerminateProcess", "ReadProcessMemory"],
+        "registry": ["RegOpenKey", "RegQueryValue", "RegSetValue", "RegCreateKey"],
+        "file": ["CreateFile", "ReadFile", "WriteFile", "DeleteFile"]
     }
 
     results = {category: [] for category in security_apis}

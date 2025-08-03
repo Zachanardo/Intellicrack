@@ -133,14 +133,14 @@ class UnifiedProtectionEngine:
 
             # Submit protection analysis
             if self.protection_detector:
-                futures['protection'] = executor.submit(
+                futures["protection"] = executor.submit(
                     self._run_protection_analysis,
                     file_path,
                     deep_scan
                 )
 
             # Submit ICP analysis
-            futures['icp'] = executor.submit(
+            futures["icp"] = executor.submit(
                 self._run_icp_analysis,
                 file_path,
                 deep_scan
@@ -148,7 +148,7 @@ class UnifiedProtectionEngine:
 
             # Submit heuristic analysis
             if self.enable_heuristics:
-                futures['heuristic'] = executor.submit(
+                futures["heuristic"] = executor.submit(
                     self._run_heuristic_analysis,
                     file_path
                 )
@@ -156,21 +156,21 @@ class UnifiedProtectionEngine:
             # Collect results with timeout
             for name, future in futures.items():
                 try:
-                    if name == 'protection':
+                    if name == "protection":
                         protection_result = future.result(timeout=timeout)
                         if protection_result:
                             result.protection_analysis = protection_result
                             result.engines_used.append("Protection Analysis")
                             self._merge_protection_results(result, protection_result)
 
-                    elif name == 'icp':
+                    elif name == "icp":
                         icp_result = future.result(timeout=timeout)
                         if icp_result and not icp_result.error:
                             result.icp_analysis = icp_result
                             result.engines_used.append("ICP Engine")
                             self._merge_icp_results(result, icp_result)
 
-                    elif name == 'heuristic':
+                    elif name == "heuristic":
                         heur_result = future.result(timeout=timeout//3)
                         if heur_result:
                             result.engines_used.append("Heuristic")
@@ -221,19 +221,19 @@ class UnifiedProtectionEngine:
             # File size heuristics
             file_size = os.path.getsize(file_path)
             if file_size < 10240:  # Less than 10KB
-                heuristics['small_file'] = True
-                heuristics['possible_dropper'] = True
+                heuristics["small_file"] = True
+                heuristics["possible_dropper"] = True
 
             # Read file header
             header = None
             try:
                 from ..ai.ai_file_tools import get_ai_file_tools
-                ai_file_tools = get_ai_file_tools(getattr(self, 'app_instance', None))
+                ai_file_tools = get_ai_file_tools(getattr(self, "app_instance", None))
                 file_data = ai_file_tools.read_file(file_path, purpose="Protection analysis - read file header for pattern detection")
                 if file_data.get("status") == "success" and file_data.get("content"):
                     content = file_data["content"]
                     if isinstance(content, str):
-                        header = content.encode('latin-1', errors='ignore')[:1024]
+                        header = content.encode("latin-1", errors="ignore")[:1024]
                     else:
                         header = content[:1024]
             except (ImportError, AttributeError, KeyError):
@@ -241,27 +241,27 @@ class UnifiedProtectionEngine:
 
             # Fallback to direct file reading if AIFileTools not available
             if header is None:
-                with open(file_path, 'rb') as f:
+                with open(file_path, "rb") as f:
                     header = f.read(1024)
 
             # Check for suspicious patterns
             suspicious_patterns = [
-                b'This program cannot be run in DOS mode',
-                b'kernel32.dll',
-                b'VirtualProtect',
-                b'IsDebuggerPresent',
-                b'GetTickCount',
-                b'LoadLibrary',
-                b'GetProcAddress'
+                b"This program cannot be run in DOS mode",
+                b"kernel32.dll",
+                b"VirtualProtect",
+                b"IsDebuggerPresent",
+                b"GetTickCount",
+                b"LoadLibrary",
+                b"GetProcAddress"
             ]
 
             found_patterns = []
             for pattern in suspicious_patterns:
                 if pattern in header:
-                    found_patterns.append(pattern.decode('utf-8', errors='ignore'))
+                    found_patterns.append(pattern.decode("utf-8", errors="ignore"))
 
             if found_patterns:
-                heuristics['suspicious_imports'] = found_patterns
+                heuristics["suspicious_imports"] = found_patterns
 
             # Check for high entropy sections (possible packing)
             import math
@@ -278,8 +278,8 @@ class UnifiedProtectionEngine:
 
             entropy = calculate_entropy(header)
             if entropy > 7.5:
-                heuristics['high_entropy_header'] = True
-                heuristics['likely_packed'] = True
+                heuristics["high_entropy_header"] = True
+                heuristics["likely_packed"] = True
 
             return heuristics
 
@@ -297,47 +297,47 @@ class UnifiedProtectionEngine:
         # Convert detections to unified format
         for detection in protection_analysis.detections:
             protection = {
-                'name': detection.name,
-                'type': detection.type.value,
-                'source': AnalysisSource.PROTECTION_ENGINE,
-                'confidence': detection.confidence,
-                'version': detection.version,
-                'details': detection.details,
-                'bypass_recommendations': detection.bypass_recommendations
+                "name": detection.name,
+                "type": detection.type.value,
+                "source": AnalysisSource.PROTECTION_ENGINE,
+                "confidence": detection.confidence,
+                "version": detection.version,
+                "details": detection.details,
+                "bypass_recommendations": detection.bypass_recommendations
             }
             result.protections.append(protection)
 
         # Check for specific protection types
         for detection in protection_analysis.detections:
-            if 'debug' in detection.type.value.lower():
+            if "debug" in detection.type.value.lower():
                 result.has_anti_debug = True
-            elif 'vm' in detection.type.value.lower():
+            elif "vm" in detection.type.value.lower():
                 result.has_anti_vm = True
-            elif 'license' in detection.type.value.lower() or 'dongle' in detection.type.value.lower():
+            elif "license" in detection.type.value.lower() or "dongle" in detection.type.value.lower():
                 result.has_licensing = True
 
 
     def _merge_heuristic_results(self, result: UnifiedProtectionResult, heuristics: Dict[str, Any]):
         """Merge heuristic results into unified result"""
-        if heuristics.get('likely_packed'):
+        if heuristics.get("likely_packed"):
             result.is_packed = True
             protection = {
-                'name': 'Heuristic Packing Detection',
-                'type': 'packer',
-                'source': AnalysisSource.HEURISTIC,
-                'confidence': 70.0,
-                'details': heuristics
+                "name": "Heuristic Packing Detection",
+                "type": "packer",
+                "source": AnalysisSource.HEURISTIC,
+                "confidence": 70.0,
+                "details": heuristics
             }
             result.protections.append(protection)
 
-        if heuristics.get('suspicious_imports'):
+        if heuristics.get("suspicious_imports"):
             result.has_anti_debug = True
             protection = {
-                'name': 'Suspicious API Usage',
-                'type': 'anti-analysis',
-                'source': AnalysisSource.HEURISTIC,
-                'confidence': 60.0,
-                'details': {'apis': heuristics['suspicious_imports']}
+                "name": "Suspicious API Usage",
+                "type": "anti-analysis",
+                "source": AnalysisSource.HEURISTIC,
+                "confidence": 60.0,
+                "details": {"apis": heuristics["suspicious_imports"]}
             }
             result.protections.append(protection)
 
@@ -380,50 +380,50 @@ class UnifiedProtectionEngine:
             protection_type = self._map_icp_type(detection.type)
 
             protection = {
-                'name': detection.name,
-                'type': protection_type,
-                'source': AnalysisSource.SIGNATURE,
-                'confidence': detection.confidence * 100,
-                'version': detection.version,
-                'details': {
-                    'icp_type': detection.type,
-                    'info': detection.info,
-                    'string': detection.string
+                "name": detection.name,
+                "type": protection_type,
+                "source": AnalysisSource.SIGNATURE,
+                "confidence": detection.confidence * 100,
+                "version": detection.version,
+                "details": {
+                    "icp_type": detection.type,
+                    "info": detection.info,
+                    "string": detection.string
                 }
             }
             result.protections.append(protection)
 
             # Update feature flags based on type
-            if protection_type == 'anti-debug':
+            if protection_type == "anti-debug":
                 result.has_anti_debug = True
-            elif protection_type == 'anti-vm':
+            elif protection_type == "anti-vm":
                 result.has_anti_vm = True
-            elif protection_type == 'license':
+            elif protection_type == "license":
                 result.has_licensing = True
 
     def _map_icp_type(self, icp_type: str) -> str:
         """Map ICP detection types to our unified types"""
         type_mapping = {
-            'Packer': 'packer',
-            'Protector': 'protector',
-            'Cryptor': 'cryptor',
-            'Obfuscator': 'obfuscator',
-            'License': 'license',
-            'DRM': 'drm',
-            'Anti-Debug': 'anti-debug',
-            'Anti-Dump': 'anti-dump',
-            'Anti-VM': 'anti-vm',
-            'Dongle': 'dongle',
-            'Unknown': 'unknown'
+            "Packer": "packer",
+            "Protector": "protector",
+            "Cryptor": "cryptor",
+            "Obfuscator": "obfuscator",
+            "License": "license",
+            "DRM": "drm",
+            "Anti-Debug": "anti-debug",
+            "Anti-Dump": "anti-dump",
+            "Anti-VM": "anti-vm",
+            "Dongle": "dongle",
+            "Unknown": "unknown"
         }
-        return type_mapping.get(icp_type, 'unknown')
+        return type_mapping.get(icp_type, "unknown")
 
     def _consolidate_results(self, result: UnifiedProtectionResult):
         """Consolidate and deduplicate results from multiple sources"""
         # Group protections by name
         protection_groups = {}
         for protection in result.protections:
-            name = protection['name']
+            name = protection["name"]
             if name not in protection_groups:
                 protection_groups[name] = []
             protection_groups[name].append(protection)
@@ -436,22 +436,22 @@ class UnifiedProtectionEngine:
             else:
                 # Merge multiple detections of same protection
                 merged = {
-                    'name': name,
-                    'type': group[0]['type'],
-                    'source': AnalysisSource.HYBRID,
-                    'confidence': max(p['confidence'] for p in group),
-                    'sources': [p['source'] for p in group],
-                    'details': {}
+                    "name": name,
+                    "type": group[0]["type"],
+                    "source": AnalysisSource.HYBRID,
+                    "confidence": max(p["confidence"] for p in group),
+                    "sources": [p["source"] for p in group],
+                    "details": {}
                 }
 
                 # Merge bypass recommendations
                 bypass_recs = []
                 for p in group:
-                    if 'bypass_recommendations' in p:
-                        bypass_recs.extend(p.get('bypass_recommendations', []))
+                    if "bypass_recommendations" in p:
+                        bypass_recs.extend(p.get("bypass_recommendations", []))
 
                 if bypass_recs:
-                    merged['bypass_recommendations'] = list(set(bypass_recs))
+                    merged["bypass_recommendations"] = list(set(bypass_recs))
 
                 consolidated.append(merged)
 
@@ -462,65 +462,65 @@ class UnifiedProtectionEngine:
         strategies = []
 
         # Analyze protection combinations
-        protection_types = set(p['type'] for p in result.protections)
+        protection_types = set(p["type"] for p in result.protections)
 
         # Packer bypass strategies
-        if 'packer' in protection_types or result.is_packed:
+        if "packer" in protection_types or result.is_packed:
             strategies.append({
-                'name': 'Dynamic Unpacking',
-                'description': 'Use dynamic analysis to dump unpacked memory',
-                'tools': ['x64dbg', 'ScyllaHide', 'Process Dump'],
-                'difficulty': 'Medium',
-                'steps': [
-                    'Run in debugger with anti-anti-debug plugins',
-                    'Set breakpoint at OEP (Original Entry Point)',
-                    'Dump process memory after unpacking',
-                    'Fix imports with Scylla'
+                "name": "Dynamic Unpacking",
+                "description": "Use dynamic analysis to dump unpacked memory",
+                "tools": ["x64dbg", "ScyllaHide", "Process Dump"],
+                "difficulty": "Medium",
+                "steps": [
+                    "Run in debugger with anti-anti-debug plugins",
+                    "Set breakpoint at OEP (Original Entry Point)",
+                    "Dump process memory after unpacking",
+                    "Fix imports with Scylla"
                 ]
             })
 
         # Anti-debug bypass strategies
-        if result.has_anti_debug or 'antidebug' in protection_types:
+        if result.has_anti_debug or "antidebug" in protection_types:
             strategies.append({
-                'name': 'Anti-Debug Bypass',
-                'description': 'Bypass debugger detection mechanisms',
-                'tools': ['ScyllaHide', 'TitanHide', 'x64dbg plugins'],
-                'difficulty': 'Medium',
-                'steps': [
-                    'Enable ScyllaHide with all options',
-                    'Use kernel-mode hiding if necessary',
-                    'Patch IsDebuggerPresent checks',
-                    'Handle timing-based detection'
+                "name": "Anti-Debug Bypass",
+                "description": "Bypass debugger detection mechanisms",
+                "tools": ["ScyllaHide", "TitanHide", "x64dbg plugins"],
+                "difficulty": "Medium",
+                "steps": [
+                    "Enable ScyllaHide with all options",
+                    "Use kernel-mode hiding if necessary",
+                    "Patch IsDebuggerPresent checks",
+                    "Handle timing-based detection"
                 ]
             })
 
         # License/DRM bypass strategies
-        if result.has_licensing or 'license' in protection_types:
+        if result.has_licensing or "license" in protection_types:
             strategies.append({
-                'name': 'License Validation Bypass',
-                'description': 'Bypass license checking routines',
-                'tools': ['IDA Pro', 'x64dbg', 'API Monitor'],
-                'difficulty': 'Hard',
-                'steps': [
-                    'Trace license validation calls',
-                    'Identify key decision points',
-                    'Patch conditional jumps',
-                    'Emulate valid license responses'
+                "name": "License Validation Bypass",
+                "description": "Bypass license checking routines",
+                "tools": ["IDA Pro", "x64dbg", "API Monitor"],
+                "difficulty": "Hard",
+                "steps": [
+                    "Trace license validation calls",
+                    "Identify key decision points",
+                    "Patch conditional jumps",
+                    "Emulate valid license responses"
                 ]
             })
 
         # Obfuscation strategies
-        if result.is_obfuscated or 'obfuscator' in protection_types:
+        if result.is_obfuscated or "obfuscator" in protection_types:
             strategies.append({
-                'name': 'Deobfuscation',
-                'description': 'Remove code obfuscation',
-                'tools': ['de4dot', 'IDA Pro', 'Custom scripts'],
-                'difficulty': 'Hard',
-                'steps': [
-                    'Identify obfuscation type',
-                    'Use automated deobfuscators',
-                    'Manual pattern analysis',
-                    'Reconstruct control flow'
+                "name": "Deobfuscation",
+                "description": "Remove code obfuscation",
+                "tools": ["de4dot", "IDA Pro", "Custom scripts"],
+                "difficulty": "Hard",
+                "steps": [
+                    "Identify obfuscation type",
+                    "Use automated deobfuscators",
+                    "Manual pattern analysis",
+                    "Reconstruct control flow"
                 ]
             })
 
@@ -544,9 +544,9 @@ class UnifiedProtectionEngine:
         total_weight = 0.0
 
         for protection in result.protections:
-            source = protection.get('source', AnalysisSource.PROTECTION_ENGINE)
+            source = protection.get("source", AnalysisSource.PROTECTION_ENGINE)
             weight = source_weights.get(source, 0.5)
-            confidence = protection.get('confidence', 50.0)
+            confidence = protection.get("confidence", 50.0)
 
             total_weighted_confidence += confidence * weight
             total_weight += weight
@@ -566,10 +566,10 @@ class UnifiedProtectionEngine:
 
         if cached_result is not None:
             return {
-                'protected': bool(cached_result.protections),
-                'protection_count': len(cached_result.protections),
-                'main_protection': cached_result.protections[0]['name'] if cached_result.protections else None,
-                'confidence': cached_result.confidence_score
+                "protected": bool(cached_result.protections),
+                "protection_count": len(cached_result.protections),
+                "main_protection": cached_result.protections[0]["name"] if cached_result.protections else None,
+                "confidence": cached_result.confidence_score
             }
 
         # Quick protection scan
@@ -582,19 +582,19 @@ class UnifiedProtectionEngine:
                 )
 
                 return {
-                    'protected': bool(analysis.detections),
-                    'protection_count': len(analysis.detections),
-                    'main_protection': analysis.detections[0].name if analysis.detections else None,
-                    'confidence': 80.0
+                    "protected": bool(analysis.detections),
+                    "protection_count": len(analysis.detections),
+                    "main_protection": analysis.detections[0].name if analysis.detections else None,
+                    "confidence": 80.0
                 }
             except Exception as e:
                 logger.debug(f"Quick protection scan failed: {e}")
 
         return {
-            'protected': False,
-            'protection_count': 0,
-            'main_protection': None,
-            'confidence': 0.0
+            "protected": False,
+            "protection_count": 0,
+            "main_protection": None,
+            "confidence": 0.0
         }
 
     def analyze_file(self, file_path: str, deep_scan: bool = True, timeout: int = 60) -> UnifiedProtectionResult:

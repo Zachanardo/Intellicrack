@@ -152,7 +152,7 @@ def load_certificate_from_file(cert_path: str) -> Optional[x509.Certificate]:
         return None
 
     try:
-        with open(cert_path, 'rb') as f:
+        with open(cert_path, "rb") as f:
             cert_data = f.read()
 
         cert = x509.load_pem_x509_certificate(cert_data)
@@ -195,43 +195,43 @@ def get_certificate_info(cert: x509.Certificate) -> dict:
     """
     try:
         info = {
-            'subject': {},
-            'issuer': {},
-            'serial_number': str(cert.serial_number),
-            'not_valid_before': cert.not_valid_before.isoformat(),
-            'not_valid_after': cert.not_valid_after.isoformat(),
-            'is_valid': verify_certificate_validity(cert),
-            'signature_algorithm': cert.signature_algorithm_oid._name,
-            'extensions': []
+            "subject": {},
+            "issuer": {},
+            "serial_number": str(cert.serial_number),
+            "not_valid_before": cert.not_valid_before.isoformat(),
+            "not_valid_after": cert.not_valid_after.isoformat(),
+            "is_valid": verify_certificate_validity(cert),
+            "signature_algorithm": cert.signature_algorithm_oid._name,
+            "extensions": []
         }
 
         # Extract subject information
         for attribute in cert.subject:
-            info['subject'][attribute.oid._name] = attribute.value
+            info["subject"][attribute.oid._name] = attribute.value
 
         # Extract issuer information
         for attribute in cert.issuer:
-            info['issuer'][attribute.oid._name] = attribute.value
+            info["issuer"][attribute.oid._name] = attribute.value
 
         # Extract extensions
         for extension in cert.extensions:
             ext_info = {
-                'oid': extension.oid._name,
-                'critical': extension.critical,
-                'value': str(extension.value)
+                "oid": extension.oid._name,
+                "critical": extension.critical,
+                "value": str(extension.value)
             }
-            info['extensions'].append(ext_info)
+            info["extensions"].append(ext_info)
 
         return info
 
     except Exception as e:
         logger.error("Exception in certificate_utils: %s", e)
-        return {'error': str(e)}
+        return {"error": str(e)}
 
 
 __all__ = [
-    'generate_self_signed_cert',
-    'load_certificate_from_file',
-    'verify_certificate_validity',
-    'get_certificate_info'
+    "generate_self_signed_cert",
+    "load_certificate_from_file",
+    "verify_certificate_validity",
+    "get_certificate_info"
 ]

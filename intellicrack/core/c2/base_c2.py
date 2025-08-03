@@ -38,7 +38,7 @@ class BaseC2:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.protocols = []
         self.running = False
-        self.stats = {'start_time': None}
+        self.stats = {"start_time": None}
 
     def initialize_protocols(self, protocols_config: List[Dict[str, Any]],
                            encryption_manager: Any) -> None:
@@ -51,41 +51,41 @@ class BaseC2:
         """
         try:
             for proto_config in protocols_config:
-                protocol_type = proto_config['type']
+                protocol_type = proto_config["type"]
 
-                if protocol_type == 'https':
+                if protocol_type == "https":
                     from .communication_protocols import HttpsProtocol
                     protocol = HttpsProtocol(
                         encryption_manager,
-                        proto_config.get('server_url', 'https://localhost:8443'),
-                        proto_config.get('headers', {})
+                        proto_config.get("server_url", "https://localhost:8443"),
+                        proto_config.get("headers", {})
                     )
-                elif protocol_type == 'dns':
+                elif protocol_type == "dns":
                     from .communication_protocols import DnsProtocol
                     protocol = DnsProtocol(
                         encryption_manager,
-                        proto_config.get('domain', 'localhost'),
-                        proto_config.get('dns_server', '8.8.8.8')
+                        proto_config.get("domain", "localhost"),
+                        proto_config.get("dns_server", "8.8.8.8")
                     )
-                elif protocol_type == 'tcp':
+                elif protocol_type == "tcp":
                     from .communication_protocols import TcpProtocol
                     protocol = TcpProtocol(
                         encryption_manager,
-                        proto_config.get('host', 'localhost'),
-                        proto_config.get('port', 9999)
+                        proto_config.get("host", "localhost"),
+                        proto_config.get("port", 9999)
                     )
                 else:
                     self.logger.warning(f"Unknown protocol type: {protocol_type}")
                     continue
 
                 self.protocols.append({
-                    'type': protocol_type,
-                    'handler': protocol,
-                    'priority': proto_config.get('priority', 99)
+                    "type": protocol_type,
+                    "handler": protocol,
+                    "priority": proto_config.get("priority", 99)
                 })
 
             # Sort by priority
-            self.protocols.sort(key=lambda x: x['priority'])
+            self.protocols.sort(key=lambda x: x["priority"])
 
             self.logger.info(f"Initialized {len(self.protocols)} communication protocols")
 
@@ -109,5 +109,5 @@ class BaseC2:
 
         self.logger.info(f"Starting {component_name}...")
         self.running = True
-        self.stats['start_time'] = time.time()
+        self.stats["start_time"] = time.time()
         return True

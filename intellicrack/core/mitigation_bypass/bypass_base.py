@@ -141,91 +141,91 @@ class MitigationBypassBase(ABC):
 
         # Check architecture compatibility
         tech_info = self.get_technique_info(technique_name)
-        if tech_info and 'supported_architectures' in tech_info:
-            binary_arch = binary_info.get('architecture', 'unknown').lower()
-            supported_archs = [arch.lower() for arch in tech_info['supported_architectures']]
-            if binary_arch not in supported_archs and 'all' not in supported_archs:
+        if tech_info and "supported_architectures" in tech_info:
+            binary_arch = binary_info.get("architecture", "unknown").lower()
+            supported_archs = [arch.lower() for arch in tech_info["supported_architectures"]]
+            if binary_arch not in supported_archs and "all" not in supported_archs:
                 return False
 
         # Check OS compatibility
-        if tech_info and 'supported_os' in tech_info:
-            binary_os = binary_info.get('os', 'unknown').lower()
-            supported_os = [os.lower() for os in tech_info['supported_os']]
-            if binary_os not in supported_os and 'all' not in supported_os:
+        if tech_info and "supported_os" in tech_info:
+            binary_os = binary_info.get("os", "unknown").lower()
+            supported_os = [os.lower() for os in tech_info["supported_os"]]
+            if binary_os not in supported_os and "all" not in supported_os:
                 return False
 
         # Check security feature requirements
-        security_features = binary_info.get('security_features', [])
+        security_features = binary_info.get("security_features", [])
 
         # ROP-based techniques require executable memory regions
-        if technique_name in ['rop_chain', 'jop_chain', 'ret2libc']:
-            if not binary_info.get('has_executable_sections', True):
+        if technique_name in ["rop_chain", "jop_chain", "ret2libc"]:
+            if not binary_info.get("has_executable_sections", True):
                 return False
             # ROP is less effective with CFG/CET
-            if 'cfg' in security_features or 'cet' in security_features:
+            if "cfg" in security_features or "cet" in security_features:
                 return False
 
         # Stack-based techniques require writable stack
-        if technique_name in ['stack_pivot', 'stack_spray']:
-            if not binary_info.get('has_writable_stack', True):
+        if technique_name in ["stack_pivot", "stack_spray"]:
+            if not binary_info.get("has_writable_stack", True):
                 return False
-            if 'stack_guard' in security_features:
+            if "stack_guard" in security_features:
                 return False
 
         # Heap-based techniques require heap execution
-        if technique_name in ['heap_spray', 'heap_feng_shui']:
-            if not binary_info.get('has_heap', True):
+        if technique_name in ["heap_spray", "heap_feng_shui"]:
+            if not binary_info.get("has_heap", True):
                 return False
-            if 'heap_protection' in security_features:
+            if "heap_protection" in security_features:
                 return False
 
         # Code injection techniques require writable+executable memory
-        if technique_name in ['code_injection', 'dll_injection']:
-            if 'dep' in security_features or 'nx' in security_features:
-                if not binary_info.get('has_rwx_sections', False):
+        if technique_name in ["code_injection", "dll_injection"]:
+            if "dep" in security_features or "nx" in security_features:
+                if not binary_info.get("has_rwx_sections", False):
                     return False
 
         # Process hollowing requires specific OS features
-        if technique_name == 'process_hollowing':
-            if binary_info.get('os', '').lower() not in ['windows', 'win32', 'win64']:
+        if technique_name == "process_hollowing":
+            if binary_info.get("os", "").lower() not in ["windows", "win32", "win64"]:
                 return False
 
         # Shared library techniques require dynamic linking
-        if technique_name in ['got_overwrite', 'plt_redirect']:
-            if binary_info.get('is_static', False):
+        if technique_name in ["got_overwrite", "plt_redirect"]:
+            if binary_info.get("is_static", False):
                 return False
-            if not binary_info.get('has_dynamic_symbols', True):
+            if not binary_info.get("has_dynamic_symbols", True):
                 return False
 
         # Check minimum binary size requirements
-        if tech_info and 'min_binary_size' in tech_info:
-            binary_size = binary_info.get('size', 0)
-            if binary_size < tech_info['min_binary_size']:
+        if tech_info and "min_binary_size" in tech_info:
+            binary_size = binary_info.get("size", 0)
+            if binary_size < tech_info["min_binary_size"]:
                 return False
 
         # Check for required binary features
-        if tech_info and 'required_features' in tech_info:
-            for feature in tech_info['required_features']:
+        if tech_info and "required_features" in tech_info:
+            for feature in tech_info["required_features"]:
                 if not binary_info.get(feature, False):
                     return False
 
         # Check for incompatible features
-        if tech_info and 'incompatible_features' in tech_info:
-            for feature in tech_info['incompatible_features']:
+        if tech_info and "incompatible_features" in tech_info:
+            for feature in tech_info["incompatible_features"]:
                 if binary_info.get(feature, False):
                     return False
 
         # Additional checks based on binary type
-        binary_type = binary_info.get('type', '').lower()
+        binary_type = binary_info.get("type", "").lower()
 
         # Kernel exploits only work on kernel binaries
-        if technique_name in ['kernel_exploit', 'driver_exploit']:
-            if binary_type not in ['kernel', 'driver', 'kext']:
+        if technique_name in ["kernel_exploit", "driver_exploit"]:
+            if binary_type not in ["kernel", "driver", "kext"]:
                 return False
 
         # Service exploits require service binaries
-        if technique_name in ['service_exploit', 'privilege_escalation']:
-            if binary_type not in ['service', 'daemon', 'suid']:
+        if technique_name in ["service_exploit", "privilege_escalation"]:
+            if binary_type not in ["service", "daemon", "suid"]:
                 return False
 
         # All checks passed

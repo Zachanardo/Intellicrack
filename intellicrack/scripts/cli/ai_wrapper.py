@@ -40,13 +40,13 @@ from typing import Any, Dict, List, Optional
 
 # Add parent directories to path
 script_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
+project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
 sys.path.insert(0, project_root)
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -119,23 +119,23 @@ class ConfirmationManager:
                 response = input("Allow this action? [y/N/d(etails)]: ").lower().strip()
 
                 # Validate input - only allow specific characters
-                if not response or response not in ['y', 'n', 'd', '']:
+                if not response or response not in ["y", "n", "d", ""]:
                     print("Invalid input. Please enter 'y', 'n', or 'd'.")
                     continue
 
             except (EOFError, KeyboardInterrupt):
                 # Handle Ctrl+C or EOF gracefully
-                response = 'n'
+                response = "n"
                 print("\nOperation cancelled.")
 
-            if response == 'd':
+            if response == "d":
                 # Show detailed command breakdown
                 print("\nDetailed Command Breakdown:")
                 for i, arg in enumerate(action.command):
                     print(f"  [{i}] {arg}")
                 continue
 
-            elif response == 'y':
+            elif response == "y":
                 self.action_history.append({
                     "action": action,
                     "approved": True,

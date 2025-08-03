@@ -52,19 +52,19 @@ class ICPDetection:
     confidence: float = 1.0  # Default to 100% if not provided
 
     @classmethod
-    def from_die_result(cls, result) -> 'ICPDetection':
+    def from_die_result(cls, result) -> "ICPDetection":
         """Create from die-python scan result"""
         return cls(
-            name=getattr(result, 'name', 'Unknown'),
-            type=getattr(result, 'type', 'Unknown'),
-            version=getattr(result, 'version', ''),
-            info=getattr(result, 'info', ''),
-            string=getattr(result, 'string', ''),
+            name=getattr(result, "name", "Unknown"),
+            type=getattr(result, "type", "Unknown"),
+            version=getattr(result, "version", ""),
+            info=getattr(result, "info", ""),
+            string=getattr(result, "string", ""),
             confidence=1.0  # die-python doesn't provide confidence scores
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ICPDetection':
+    def from_dict(cls, data: Dict[str, Any]) -> "ICPDetection":
         """Create from ICP engine JSON output (legacy compatibility)"""
         return cls(
             name=data.get("name", "Unknown"),
@@ -85,7 +85,7 @@ class ICPFileInfo:
     detections: List[ICPDetection] = field(default_factory=list)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ICPFileInfo':
+    def from_dict(cls, data: Dict[str, Any]) -> "ICPFileInfo":
         """Create from ICP engine JSON output (legacy compatibility)"""
         obj = cls(
             filetype=data.get("filetype", "Unknown"),
@@ -139,7 +139,7 @@ class ICPScanResult:
         return detections
 
     @classmethod
-    def from_json(cls, file_path: str, json_data: Dict[str, Any]) -> 'ICPScanResult':
+    def from_json(cls, file_path: str, json_data: Dict[str, Any]) -> "ICPScanResult":
         """Create from ICP engine JSON output (legacy compatibility)"""
         obj = cls(file_path=file_path, raw_json=json_data)
 
@@ -150,7 +150,7 @@ class ICPScanResult:
         return obj
 
     @classmethod
-    def from_die_results(cls, file_path: str, die_results: List) -> 'ICPScanResult':
+    def from_die_results(cls, file_path: str, die_results: List) -> "ICPScanResult":
         """Create from die-python scan results"""
         obj = cls(file_path=file_path)
 
@@ -178,7 +178,7 @@ class ICPScanResult:
         return obj
 
     @classmethod
-    def from_die_text(cls, file_path: str, die_text: str) -> 'ICPScanResult':
+    def from_die_text(cls, file_path: str, die_text: str) -> "ICPScanResult":
         """Create from die-python text output
 
         Args:
@@ -200,7 +200,7 @@ class ICPScanResult:
             obj.file_infos.append(file_info)
             return obj
 
-        lines = die_text.strip().split('\n')
+        lines = die_text.strip().split("\n")
         if not lines:
             return obj
 
@@ -220,8 +220,8 @@ class ICPScanResult:
                 continue
 
             # Parse "Type: Name" format
-            if ':' in line:
-                type_part, name_part = line.split(':', 1)
+            if ":" in line:
+                type_part, name_part = line.split(":", 1)
                 detection_type = type_part.strip()
                 detection_name = name_part.strip()
 
@@ -402,7 +402,7 @@ class ICPBackend:
                 try:
                     # Calculate file entropy
                     import math
-                    with open(file_path, 'rb') as f:
+                    with open(file_path, "rb") as f:
                         data = f.read(1024 * 1024)  # Read first MB for entropy
                         if data:
                             # Calculate entropy
@@ -418,10 +418,10 @@ class ICPBackend:
                                     entropy -= probability * math.log2(probability)
 
                             # Add entropy to scan result
-                            if not hasattr(scan_result, 'metadata'):
+                            if not hasattr(scan_result, "metadata"):
                                 scan_result.metadata = {}
-                            scan_result.metadata['entropy'] = round(entropy, 4)
-                            scan_result.metadata['entropy_high'] = entropy > 7.5  # High entropy indicates encryption/compression
+                            scan_result.metadata["entropy"] = round(entropy, 4)
+                            scan_result.metadata["entropy_high"] = entropy > 7.5  # High entropy indicates encryption/compression
                 except Exception as e:
                     logger.debug(f"Could not calculate entropy: {e}")
 
@@ -429,13 +429,13 @@ class ICPBackend:
             if show_info and os.path.exists(file_path):
                 try:
                     stat_info = os.stat(file_path)
-                    if not hasattr(scan_result, 'file_info'):
+                    if not hasattr(scan_result, "file_info"):
                         scan_result.file_info = {}
                     scan_result.file_info.update({
-                        'size': stat_info.st_size,
-                        'modified': stat_info.st_mtime,
-                        'created': getattr(stat_info, 'st_birthtime', stat_info.st_ctime),
-                        'permissions': oct(stat_info.st_mode),
+                        "size": stat_info.st_size,
+                        "modified": stat_info.st_mtime,
+                        "created": getattr(stat_info, "st_birthtime", stat_info.st_ctime),
+                        "permissions": oct(stat_info.st_mode),
                     })
                 except Exception as e:
                     logger.debug(f"Could not get file info: {e}")
@@ -495,7 +495,7 @@ class ICPBackend:
     def is_die_python_available(self) -> bool:
         """Check if die-python is available and working"""
         try:
-            return hasattr(self, 'die') and self.die is not None
+            return hasattr(self, "die") and self.die is not None
         except Exception:
             return False
 
@@ -510,7 +510,7 @@ class ICPBackend:
         """
         try:
             result = self.die.scan_file(str(file_path), 0)
-            lines = result.strip().split('\n')
+            lines = result.strip().split("\n")
             return lines[0] if lines else "Unknown"
         except Exception as e:
             logger.error(f"Error getting file type: {e}")
@@ -531,7 +531,7 @@ class ICPBackend:
         """
         try:
             import math
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 data = f.read()
                 if not data:
                     return 0.0
@@ -572,7 +572,7 @@ class ICPBackend:
         """
         try:
             strings = []
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 data = f.read()
 
             # Extract ASCII strings
@@ -587,20 +587,20 @@ class ICPBackend:
                 else:
                     if len(current_string) >= min_length:
                         strings.append({
-                            'offset': current_offset,
-                            'string': current_string,
-                            'length': len(current_string),
-                            'type': 'ASCII'
+                            "offset": current_offset,
+                            "string": current_string,
+                            "length": len(current_string),
+                            "type": "ASCII"
                         })
                     current_string = ""
 
             # Don't forget the last string
             if len(current_string) >= min_length:
                 strings.append({
-                    'offset': current_offset,
-                    'string': current_string,
-                    'length': len(current_string),
-                    'type': 'ASCII'
+                    "offset": current_offset,
+                    "string": current_string,
+                    "length": len(current_string),
+                    "type": "ASCII"
                 })
 
             return strings
@@ -636,13 +636,13 @@ class ICPBackend:
                 pe = pefile.PE(file_path)
                 for section in pe.sections:
                     section_info = {
-                        'name': section.Name.decode('utf-8').rstrip('\x00'),
-                        'virtual_address': section.VirtualAddress,
-                        'virtual_size': section.Misc_VirtualSize,
-                        'raw_size': section.SizeOfRawData,
-                        'raw_offset': section.PointerToRawData,
-                        'characteristics': section.Characteristics,
-                        'entropy': 0.0  # Will calculate if needed
+                        "name": section.Name.decode("utf-8").rstrip("\x00"),
+                        "virtual_address": section.VirtualAddress,
+                        "virtual_size": section.Misc_VirtualSize,
+                        "raw_size": section.SizeOfRawData,
+                        "raw_offset": section.PointerToRawData,
+                        "characteristics": section.Characteristics,
+                        "entropy": 0.0  # Will calculate if needed
                     }
                     sections.append(section_info)
             except:
@@ -653,13 +653,13 @@ class ICPBackend:
             if not sections:
                 file_size = os.path.getsize(file_path)
                 sections.append({
-                    'name': '.data',
-                    'virtual_address': 0,
-                    'virtual_size': file_size,
-                    'raw_size': file_size,
-                    'raw_offset': 0,
-                    'characteristics': 0,
-                    'entropy': self.get_file_entropy(file_path)
+                    "name": ".data",
+                    "virtual_address": 0,
+                    "virtual_size": file_size,
+                    "raw_size": file_size,
+                    "raw_offset": 0,
+                    "characteristics": 0,
+                    "entropy": self.get_file_entropy(file_path)
                 })
 
             return sections
@@ -681,17 +681,17 @@ class ICPBackend:
         """
         try:
             result = self.die.scan_file(str(file_path), 0)
-            lines = result.strip().split('\n')
+            lines = result.strip().split("\n")
 
             packers = []
             for line in lines[1:]:  # Skip file type line
                 line = line.strip()
-                if ':' in line:
-                    type_part, name_part = line.split(':', 1)
+                if ":" in line:
+                    type_part, name_part = line.split(":", 1)
                     type_part = type_part.strip()
                     name_part = name_part.strip()
 
-                    if 'pack' in type_part.lower():
+                    if "pack" in type_part.lower():
                         packers.append(name_part)
 
             return packers
@@ -721,17 +721,17 @@ class ICPBackend:
         """Merge supplemental analysis findings into ICP detections"""
         try:
             # Process YARA pattern findings
-            if 'yara_analysis' in supplemental_data:
-                yara_data = supplemental_data['yara_analysis']
-                for pattern in yara_data.get('pattern_matches', []):
+            if "yara_analysis" in supplemental_data:
+                yara_data = supplemental_data["yara_analysis"]
+                for pattern in yara_data.get("pattern_matches", []):
                     # Create detection for YARA match
                     detection = ICPDetection(
-                        name=pattern.get('rule_name', 'YARA Pattern'),
+                        name=pattern.get("rule_name", "YARA Pattern"),
                         type="Pattern",
                         version="",
                         info=f"YARA: {pattern.get('category', 'Unknown')}",
-                        string=pattern.get('description', ''),
-                        confidence=pattern.get('confidence', 0.8)
+                        string=pattern.get("description", ""),
+                        confidence=pattern.get("confidence", 0.8)
                     )
 
                     # Add to first file info or create new one
@@ -746,17 +746,17 @@ class ICPBackend:
                         scan_result.file_infos.append(file_info)
 
             # Process firmware analysis findings
-            if 'firmware_analysis' in supplemental_data:
-                firmware_data = supplemental_data['firmware_analysis']
-                for component in firmware_data.get('embedded_components', []):
-                    if component.get('is_executable') or component.get('is_filesystem'):
+            if "firmware_analysis" in supplemental_data:
+                firmware_data = supplemental_data["firmware_analysis"]
+                for component in firmware_data.get("embedded_components", []):
+                    if component.get("is_executable") or component.get("is_filesystem"):
                         detection = ICPDetection(
-                            name=component.get('name', 'Embedded Component'),
+                            name=component.get("name", "Embedded Component"),
                             type="Firmware",
                             version="",
                             info=f"Firmware: {component.get('type', 'Unknown')} at offset {component.get('offset', 0)}",
                             string=f"Size: {component.get('size', 0)} bytes",
-                            confidence=component.get('confidence', 0.9)
+                            confidence=component.get("confidence", 0.9)
                         )
 
                         if scan_result.file_infos:
@@ -770,10 +770,10 @@ class ICPBackend:
                             scan_result.file_infos.append(file_info)
 
             # Process memory forensics findings
-            if 'memory_forensics' in supplemental_data:
-                memory_data = supplemental_data['memory_forensics']
-                for indicator in memory_data.get('process_indicators', []):
-                    if indicator.get('is_hidden') or indicator.get('indicators'):
+            if "memory_forensics" in supplemental_data:
+                memory_data = supplemental_data["memory_forensics"]
+                for indicator in memory_data.get("process_indicators", []):
+                    if indicator.get("is_hidden") or indicator.get("indicators"):
                         detection = ICPDetection(
                             name=f"Process {indicator.get('name', 'Unknown')}",
                             type="Memory",
@@ -818,34 +818,34 @@ class ICPBackend:
             supplemental_data = {}
 
             if yara_data:
-                supplemental_data['yara_analysis'] = yara_data
+                supplemental_data["yara_analysis"] = yara_data
 
             if firmware_data:
-                supplemental_data['firmware_analysis'] = firmware_data
+                supplemental_data["firmware_analysis"] = firmware_data
 
             if memory_data:
-                supplemental_data['memory_forensics'] = memory_data
+                supplemental_data["memory_forensics"] = memory_data
 
             # Merge supplemental data into base analysis
             if supplemental_data:
-                base_analysis['supplemental_analysis'] = supplemental_data
+                base_analysis["supplemental_analysis"] = supplemental_data
 
                 # Enhanced threat assessment with supplemental data
-                base_analysis['threat_assessment'] = self._calculate_threat_score(base_analysis, supplemental_data)
+                base_analysis["threat_assessment"] = self._calculate_threat_score(base_analysis, supplemental_data)
 
                 # Combined security indicators
-                base_analysis['security_indicators'] = self._extract_security_indicators(supplemental_data)
+                base_analysis["security_indicators"] = self._extract_security_indicators(supplemental_data)
 
                 # Enhanced protection bypass recommendations
-                base_analysis['bypass_recommendations'] = self._generate_bypass_recommendations(base_analysis, supplemental_data)
+                base_analysis["bypass_recommendations"] = self._generate_bypass_recommendations(base_analysis, supplemental_data)
 
             return base_analysis
 
         except Exception as e:
             logger.error(f"Error merging analysis engines data: {e}")
             return {
-                'file_path': file_path,
-                'error': str(e)
+                "file_path": file_path,
+                "error": str(e)
             }
 
     def _calculate_threat_score(self, base_analysis: Dict[str, Any], supplemental_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -855,29 +855,29 @@ class ICPBackend:
             threat_indicators = []
 
             # Base ICP analysis scoring
-            if base_analysis.get('is_packed'):
+            if base_analysis.get("is_packed"):
                 threat_score += 2.0
                 threat_indicators.append("File is packed/protected")
 
-            if base_analysis.get('is_encrypted') or base_analysis.get('entropy', 0) > 7.5:
+            if base_analysis.get("is_encrypted") or base_analysis.get("entropy", 0) > 7.5:
                 threat_score += 1.5
                 threat_indicators.append("High entropy - possible encryption")
 
             # YARA analysis scoring
-            yara_data = supplemental_data.get('yara_analysis', {})
-            if yara_data.get('security_findings'):
-                threat_score += len(yara_data['security_findings']) * 0.5
+            yara_data = supplemental_data.get("yara_analysis", {})
+            if yara_data.get("security_findings"):
+                threat_score += len(yara_data["security_findings"]) * 0.5
                 threat_indicators.append(f"YARA: {len(yara_data['security_findings'])} security patterns found")
 
             # Firmware analysis scoring
-            firmware_data = supplemental_data.get('firmware_analysis', {})
-            if firmware_data.get('security_findings'):
-                threat_score += len(firmware_data['security_findings']) * 0.3
+            firmware_data = supplemental_data.get("firmware_analysis", {})
+            if firmware_data.get("security_findings"):
+                threat_score += len(firmware_data["security_findings"]) * 0.3
                 threat_indicators.append(f"Firmware: {len(firmware_data['security_findings'])} security issues found")
 
             # Memory forensics scoring
-            memory_data = supplemental_data.get('memory_forensics', {})
-            if memory_data.get('has_suspicious_activity'):
+            memory_data = supplemental_data.get("memory_forensics", {})
+            if memory_data.get("has_suspicious_activity"):
                 threat_score += 2.0
                 threat_indicators.append("Memory: Suspicious activity detected")
 
@@ -885,15 +885,15 @@ class ICPBackend:
             threat_score = min(threat_score, 10.0)
 
             return {
-                'score': round(threat_score, 2),
-                'level': 'critical' if threat_score >= 7.0 else 'high' if threat_score >= 5.0 else 'medium' if threat_score >= 3.0 else 'low',
-                'indicators': threat_indicators,
-                'assessment': f"Threat level: {threat_score:.1f}/10.0"
+                "score": round(threat_score, 2),
+                "level": "critical" if threat_score >= 7.0 else "high" if threat_score >= 5.0 else "medium" if threat_score >= 3.0 else "low",
+                "indicators": threat_indicators,
+                "assessment": f"Threat level: {threat_score:.1f}/10.0"
             }
 
         except Exception as e:
             logger.error(f"Error calculating threat score: {e}")
-            return {'score': 0.0, 'level': 'unknown', 'indicators': [], 'assessment': 'Assessment failed'}
+            return {"score": 0.0, "level": "unknown", "indicators": [], "assessment": "Assessment failed"}
 
     def _extract_security_indicators(self, supplemental_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Extract unified security indicators from all analysis engines"""
@@ -901,37 +901,37 @@ class ICPBackend:
 
         try:
             # YARA security indicators
-            yara_data = supplemental_data.get('yara_analysis', {})
-            for indicator in yara_data.get('security_indicators', []):
+            yara_data = supplemental_data.get("yara_analysis", {})
+            for indicator in yara_data.get("security_indicators", []):
                 indicators.append({
-                    'source': 'YARA',
-                    'type': indicator.get('type', 'unknown'),
-                    'severity': indicator.get('severity', 'low'),
-                    'description': indicator.get('description', ''),
-                    'confidence': indicator.get('confidence', 0.5)
+                    "source": "YARA",
+                    "type": indicator.get("type", "unknown"),
+                    "severity": indicator.get("severity", "low"),
+                    "description": indicator.get("description", ""),
+                    "confidence": indicator.get("confidence", 0.5)
                 })
 
             # Firmware security indicators
-            firmware_data = supplemental_data.get('firmware_analysis', {})
-            for indicator in firmware_data.get('security_indicators', []):
+            firmware_data = supplemental_data.get("firmware_analysis", {})
+            for indicator in firmware_data.get("security_indicators", []):
                 indicators.append({
-                    'source': 'Firmware',
-                    'type': indicator.get('type', 'unknown'),
-                    'severity': indicator.get('severity', 'low'),
-                    'description': indicator.get('description', ''),
-                    'file': indicator.get('file', ''),
-                    'remediation': indicator.get('remediation', '')
+                    "source": "Firmware",
+                    "type": indicator.get("type", "unknown"),
+                    "severity": indicator.get("severity", "low"),
+                    "description": indicator.get("description", ""),
+                    "file": indicator.get("file", ""),
+                    "remediation": indicator.get("remediation", "")
                 })
 
             # Memory forensics security indicators
-            memory_data = supplemental_data.get('memory_forensics', {})
-            for indicator in memory_data.get('security_indicators', []):
+            memory_data = supplemental_data.get("memory_forensics", {})
+            for indicator in memory_data.get("security_indicators", []):
                 indicators.append({
-                    'source': 'Memory',
-                    'type': indicator.get('type', 'unknown'),
-                    'severity': indicator.get('severity', 'low'),
-                    'description': indicator.get('description', ''),
-                    'evidence': indicator.get('evidence', {})
+                    "source": "Memory",
+                    "type": indicator.get("type", "unknown"),
+                    "severity": indicator.get("severity", "low"),
+                    "description": indicator.get("description", ""),
+                    "evidence": indicator.get("evidence", {})
                 })
 
         except Exception as e:
@@ -945,50 +945,50 @@ class ICPBackend:
 
         try:
             # Base ICP recommendations
-            if base_analysis.get('is_packed'):
-                packers = base_analysis.get('packers', [])
+            if base_analysis.get("is_packed"):
+                packers = base_analysis.get("packers", [])
                 for packer in packers:
                     recommendations.append({
-                        'target': f"Packer: {packer}",
-                        'method': 'Unpacking',
-                        'tools': ['UPX', 'PEiD', 'Universal Unpacker'],
-                        'difficulty': 'medium',
-                        'description': f"Use specialized unpacker for {packer}"
+                        "target": f"Packer: {packer}",
+                        "method": "Unpacking",
+                        "tools": ["UPX", "PEiD", "Universal Unpacker"],
+                        "difficulty": "medium",
+                        "description": f"Use specialized unpacker for {packer}"
                     })
 
             # YARA-based recommendations
-            yara_data = supplemental_data.get('yara_analysis', {})
-            for pattern in yara_data.get('pattern_matches', []):
-                if pattern.get('category') in ['ANTI_DEBUG', 'PROTECTION']:
+            yara_data = supplemental_data.get("yara_analysis", {})
+            for pattern in yara_data.get("pattern_matches", []):
+                if pattern.get("category") in ["ANTI_DEBUG", "PROTECTION"]:
                     recommendations.append({
-                        'target': f"Protection: {pattern.get('rule_name', 'Unknown')}",
-                        'method': 'Pattern Bypass',
-                        'tools': ['Debugger', 'Hex Editor', 'Patch Tool'],
-                        'difficulty': 'high',
-                        'description': f"Patch or bypass {pattern.get('description', 'protection mechanism')}"
+                        "target": f"Protection: {pattern.get('rule_name', 'Unknown')}",
+                        "method": "Pattern Bypass",
+                        "tools": ["Debugger", "Hex Editor", "Patch Tool"],
+                        "difficulty": "high",
+                        "description": f"Patch or bypass {pattern.get('description', 'protection mechanism')}"
                     })
 
             # Firmware-based recommendations
-            firmware_data = supplemental_data.get('firmware_analysis', {})
-            for component in firmware_data.get('embedded_components', []):
-                if component.get('is_executable'):
+            firmware_data = supplemental_data.get("firmware_analysis", {})
+            for component in firmware_data.get("embedded_components", []):
+                if component.get("is_executable"):
                     recommendations.append({
-                        'target': f"Embedded Executable: {component.get('name', 'Unknown')}",
-                        'method': 'Extraction & Analysis',
-                        'tools': ['Binwalk', 'Ghidra', 'IDA Pro'],
-                        'difficulty': 'medium',
-                        'description': f"Extract and analyze embedded component at offset {component.get('offset', 0)}"
+                        "target": f"Embedded Executable: {component.get('name', 'Unknown')}",
+                        "method": "Extraction & Analysis",
+                        "tools": ["Binwalk", "Ghidra", "IDA Pro"],
+                        "difficulty": "medium",
+                        "description": f"Extract and analyze embedded component at offset {component.get('offset', 0)}"
                     })
 
             # Memory-based recommendations
-            memory_data = supplemental_data.get('memory_forensics', {})
-            if memory_data.get('has_suspicious_activity'):
+            memory_data = supplemental_data.get("memory_forensics", {})
+            if memory_data.get("has_suspicious_activity"):
                 recommendations.append({
-                    'target': 'Runtime Protection',
-                    'method': 'Memory Analysis',
-                    'tools': ['Volatility', 'Process Hacker', 'Debugging'],
-                    'difficulty': 'high',
-                    'description': 'Analyze runtime behavior and memory layout for bypass opportunities'
+                    "target": "Runtime Protection",
+                    "method": "Memory Analysis",
+                    "tools": ["Volatility", "Process Hacker", "Debugging"],
+                    "difficulty": "high",
+                    "description": "Analyze runtime behavior and memory layout for bypass opportunities"
                 })
 
         except Exception as e:
@@ -1032,20 +1032,20 @@ class ICPBackend:
         """
         try:
             analysis = {
-                'file_path': file_path,
-                'file_type': self.get_file_type(file_path),
-                'file_size': os.path.getsize(file_path),
-                'entropy': self.get_file_entropy(file_path),
-                'sections': self.get_file_sections(file_path),
-                'strings': self.extract_strings(file_path),
-                'packers': self.detect_packers(file_path),
-                'is_packed': False,
-                'is_encrypted': False
+                "file_path": file_path,
+                "file_type": self.get_file_type(file_path),
+                "file_size": os.path.getsize(file_path),
+                "entropy": self.get_file_entropy(file_path),
+                "sections": self.get_file_sections(file_path),
+                "strings": self.extract_strings(file_path),
+                "packers": self.detect_packers(file_path),
+                "is_packed": False,
+                "is_encrypted": False
             }
 
             # Determine if file is packed/encrypted
-            analysis['is_packed'] = len(analysis['packers']) > 0
-            analysis['is_encrypted'] = analysis['entropy'] > 7.5
+            analysis["is_packed"] = len(analysis["packers"]) > 0
+            analysis["is_encrypted"] = analysis["entropy"] > 7.5
 
             # Include supplemental analysis if requested
             if include_supplemental and any([yara_data, firmware_data, memory_data]):
@@ -1055,8 +1055,8 @@ class ICPBackend:
         except Exception as e:
             logger.error(f"Error in detailed analysis: {e}")
             return {
-                'file_path': file_path,
-                'error': str(e)
+                "file_path": file_path,
+                "error": str(e)
             }
 
     async def _run_supplemental_analysis(self, file_path: str) -> Dict[str, Any]:
@@ -1130,8 +1130,8 @@ class ICPBackend:
                 # Heuristics for memory dump detection
                 is_memory_dump = (
                     file_size > 100 * 1024 * 1024 or  # > 100MB
-                    any(keyword in filename for keyword in ['dump', 'mem', 'vmem', 'raw', 'dmp']) or
-                    filename.endswith(('.vmem', '.raw', '.dmp', '.mem'))
+                    any(keyword in filename for keyword in ["dump", "mem", "vmem", "raw", "dmp"]) or
+                    filename.endswith((".vmem", ".raw", ".dmp", ".mem"))
                 )
 
                 if is_memory_dump:

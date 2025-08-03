@@ -74,7 +74,7 @@ def analyze_binary_for_strings(binary_path: str, search_strings: list) -> Dict[s
         return results
 
     try:
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             data = f.read()
 
         # Search for strings

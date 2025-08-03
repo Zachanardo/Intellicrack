@@ -59,7 +59,7 @@ from .hex_highlighter import HexHighlight, HexHighlighter, HighlightType
 from .hex_renderer import HexViewRenderer, ViewMode, parse_hex_view
 from .performance_monitor import PerformanceMonitor
 
-logger = logging.getLogger('Intellicrack.HexView')
+logger = logging.getLogger("Intellicrack.HexView")
 
 
 class HexViewerWidget(QAbstractScrollArea):
@@ -147,7 +147,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         # Calculate sizes based on font
         fm = QFontMetrics(font)
-        self.char_width = fm.horizontalAdvance('0')
+        self.char_width = fm.horizontalAdvance("0")
         self.char_height = fm.height()
 
         # Set viewport size, we will adjust it later
@@ -261,7 +261,7 @@ class HexViewerWidget(QAbstractScrollArea):
             return True
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error loading file: %s", e)
-            if hasattr(self, 'file_handler') and self.file_handler:
+            if hasattr(self, "file_handler") and self.file_handler:
                 del self.file_handler
                 self.file_handler = None
             return False
@@ -320,7 +320,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
     def close(self):
         """Close the current file and clean up resources."""
-        if hasattr(self, 'file_handler') and self.file_handler:
+        if hasattr(self, "file_handler") and self.file_handler:
             del self.file_handler
             self.file_handler = None
 
@@ -1032,7 +1032,7 @@ class HexViewerWidget(QAbstractScrollArea):
             except ValueError as e:
                 logger.error("Value error in hex_widget: %s", e)
                 # Treat as regular string
-                pattern_bytes = pattern.encode('utf-8')
+                pattern_bytes = pattern.encode("utf-8")
         else:
             pattern_bytes = pattern
 
@@ -1066,7 +1066,7 @@ class HexViewerWidget(QAbstractScrollArea):
                     # Highlight the match
                     self.highlighter.add_search_result(
                         match_offset, match_offset + len(pattern_bytes),
-                        query=pattern if isinstance(pattern, str) else pattern_bytes.hex(' ')
+                        query=pattern if isinstance(pattern, str) else pattern_bytes.hex(" ")
                     )
 
                     # Select the match
@@ -1108,7 +1108,7 @@ class HexViewerWidget(QAbstractScrollArea):
                     # Highlight the match
                     self.highlighter.add_search_result(
                         match_offset, match_offset + len(pattern_bytes),
-                        query=pattern if isinstance(pattern, str) else pattern_bytes.hex(' ')
+                        query=pattern if isinstance(pattern, str) else pattern_bytes.hex(" ")
                     )
 
                     # Select the match
@@ -1382,7 +1382,7 @@ class HexViewerWidget(QAbstractScrollArea):
                                        "Please enter a valid hex pattern (e.g., 'FF 00 AB').")
                     return
             else:  # Text or ASCII
-                pattern_bytes = pattern.encode('utf-8')
+                pattern_bytes = pattern.encode("utf-8")
 
             # Start search from current selection or offset
             if self.selection_end > self.selection_start:
@@ -1479,7 +1479,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         # Try to decode as UTF-8, falling back to escaped string
         try:
-            text = data.decode('utf-8')
+            text = data.decode("utf-8")
         except UnicodeDecodeError as e:
             self.logger.error("UnicodeDecodeError in hex_widget: %s", e)
             # Fall back to printable ASCII
@@ -1651,7 +1651,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 target_offset = 0
             else:
                 # Home: Jump to start of current line
-                current_offset = getattr(self, 'current_offset', 0)
+                current_offset = getattr(self, "current_offset", 0)
                 target_offset = (current_offset // 16) * 16
 
             if shift_pressed:
@@ -1669,7 +1669,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
             else:
                 # End: Jump to end of current line
-                current_offset = getattr(self, 'current_offset', 0)
+                current_offset = getattr(self, "current_offset", 0)
                 line_end = min(file_size - 1, ((current_offset // 16) + 1) * 16 - 1)
                 self.jump_to_offset(line_end)
 
@@ -1922,9 +1922,9 @@ class HexViewerWidget(QAbstractScrollArea):
 
     def optimize_for_large_files(self):
         """Optimize settings for large file handling."""
-        if self.file_handler and hasattr(self.file_handler, 'large_file_handler'):
+        if self.file_handler and hasattr(self.file_handler, "large_file_handler"):
             # Auto-optimize based on access patterns
-            if hasattr(self.file_handler, 'optimize_for_sequential_access'):
+            if hasattr(self.file_handler, "optimize_for_sequential_access"):
                 self.file_handler.optimize_for_sequential_access()
 
             logger.info("Optimized hex viewer for large file handling")

@@ -114,8 +114,8 @@ class SystemUtilitiesWorker(QThread):
         try:
             from ...utils.system.system_utils import extract_executable_icon
 
-            file_path = self.kwargs.get('file_path', '')
-            output_path = self.kwargs.get('output_path', '')
+            file_path = self.kwargs.get("file_path", "")
+            output_path = self.kwargs.get("output_path", "")
 
             self.progress_updated.emit(25, "Analyzing executable...")
 
@@ -153,9 +153,9 @@ class SystemUtilitiesWorker(QThread):
 
             # Provide a default set of dependencies to check
             default_deps = {
-                'python': 'python3',
-                'pip': 'pip3',
-                'git': 'git'
+                "python": "python3",
+                "pip": "pip3",
+                "git": "git"
             }
             result = check_dependencies(dependencies=default_deps)
 
@@ -176,7 +176,7 @@ class SystemUtilitiesWorker(QThread):
             result = get_process_list()
 
             self.progress_updated.emit(100, "Process enumeration completed")
-            self.operation_completed.emit({'processes': result})
+            self.operation_completed.emit({"processes": result})
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in system_utilities_dialog: %s", e)
@@ -538,60 +538,60 @@ class SystemUtilitiesDialog(QDialog):
     def connect_signals(self):
         """Connect internal signals."""
         # Connect tool signals
-        if hasattr(self, 'icon_browser_btn') and hasattr(self, 'browse_icon_file'):
+        if hasattr(self, "icon_browser_btn") and hasattr(self, "browse_icon_file"):
             self.icon_browser_btn.clicked.connect(self.browse_icon_file)
 
-        if hasattr(self, 'icon_extract_btn') and hasattr(self, 'extract_icon'):
+        if hasattr(self, "icon_extract_btn") and hasattr(self, "extract_icon"):
             self.icon_extract_btn.clicked.connect(self.extract_icon)
 
-        if hasattr(self, 'sysinfo_refresh_btn') and hasattr(self, 'refresh_system_info'):
+        if hasattr(self, "sysinfo_refresh_btn") and hasattr(self, "refresh_system_info"):
             self.sysinfo_refresh_btn.clicked.connect(self.refresh_system_info)
 
-        if hasattr(self, 'dependency_check_btn') and hasattr(self, 'check_dependencies'):
+        if hasattr(self, "dependency_check_btn") and hasattr(self, "check_dependencies"):
             self.dependency_check_btn.clicked.connect(self.check_dependencies)
 
-        if hasattr(self, 'process_refresh_btn') and hasattr(self, 'refresh_process_list'):
+        if hasattr(self, "process_refresh_btn") and hasattr(self, "refresh_process_list"):
             self.process_refresh_btn.clicked.connect(self.refresh_process_list)
 
-        if hasattr(self, 'process_filter') and hasattr(self, 'filter_processes'):
+        if hasattr(self, "process_filter") and hasattr(self, "filter_processes"):
             self.process_filter.textChanged.connect(self.filter_processes)
 
-        if hasattr(self, 'process_kill_btn') and hasattr(self, 'kill_selected_process'):
+        if hasattr(self, "process_kill_btn") and hasattr(self, "kill_selected_process"):
             self.process_kill_btn.clicked.connect(self.kill_selected_process)
 
-        if hasattr(self, 'file_monitor_btn') and hasattr(self, 'toggle_file_monitor'):
+        if hasattr(self, "file_monitor_btn") and hasattr(self, "toggle_file_monitor"):
             self.file_monitor_btn.clicked.connect(self.toggle_file_monitor)
 
-        if hasattr(self, 'file_monitor_path') and hasattr(self, 'browse_monitor_path'):
+        if hasattr(self, "file_monitor_path") and hasattr(self, "browse_monitor_path"):
             self.file_monitor_browse_btn.clicked.connect(self.browse_monitor_path)
 
-        if hasattr(self, 'registry_search_btn') and hasattr(self, 'search_registry'):
+        if hasattr(self, "registry_search_btn") and hasattr(self, "search_registry"):
             self.registry_search_btn.clicked.connect(self.search_registry)
 
-        if hasattr(self, 'registry_delete_btn') and hasattr(self, 'delete_registry_key'):
+        if hasattr(self, "registry_delete_btn") and hasattr(self, "delete_registry_key"):
             self.registry_delete_btn.clicked.connect(self.delete_registry_key)
 
-        if hasattr(self, 'file_shredder_browse_btn') and hasattr(self, 'browse_shred_file'):
+        if hasattr(self, "file_shredder_browse_btn") and hasattr(self, "browse_shred_file"):
             self.file_shredder_browse_btn.clicked.connect(self.browse_shred_file)
 
-        if hasattr(self, 'file_shredder_shred_btn') and hasattr(self, 'shred_file'):
+        if hasattr(self, "file_shredder_shred_btn") and hasattr(self, "shred_file"):
             self.file_shredder_shred_btn.clicked.connect(self.shred_file)
 
-        if hasattr(self, 'env_editor_add_btn') and hasattr(self, 'add_env_variable'):
+        if hasattr(self, "env_editor_add_btn") and hasattr(self, "add_env_variable"):
             self.env_editor_add_btn.clicked.connect(self.add_env_variable)
 
-        if hasattr(self, 'env_editor_delete_btn') and hasattr(self, 'delete_env_variable'):
+        if hasattr(self, "env_editor_delete_btn") and hasattr(self, "delete_env_variable"):
             self.env_editor_delete_btn.clicked.connect(self.delete_env_variable)
 
-        if hasattr(self, 'env_editor_save_btn') and hasattr(self, 'save_env_variables'):
+        if hasattr(self, "env_editor_save_btn") and hasattr(self, "save_env_variables"):
             self.env_editor_save_btn.clicked.connect(self.save_env_variables)
 
         # Connect close button
-        if hasattr(self, 'close_btn'):
+        if hasattr(self, "close_btn"):
             self.close_btn.clicked.connect(self.close)
 
         # Connect worker signals
-        if hasattr(self, 'worker_thread'):
+        if hasattr(self, "worker_thread"):
             self.worker_thread.operation_completed.connect(self.handle_operation_completed)
             self.worker_thread.progress_updated.connect(self.update_progress)
             self.worker_thread.error_occurred.connect(self.handle_error)
@@ -643,12 +643,12 @@ class SystemUtilitiesDialog(QDialog):
 
     def on_icon_extracted(self, result):
         """Handle icon extraction completion."""
-        self.current_results['icon_extraction'] = result
+        self.current_results["icon_extraction"] = result
 
         # Try to display the extracted icon
-        if 'output_path' in result and os.path.exists(result['output_path']):
+        if "output_path" in result and os.path.exists(result["output_path"]):
             try:
-                pixmap = QPixmap(result['output_path'])
+                pixmap = QPixmap(result["output_path"])
                 if not pixmap.isNull():
                     # Scale to preview size
                     scaled_pixmap = pixmap.scaled(128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation)
@@ -680,7 +680,7 @@ class SystemUtilitiesDialog(QDialog):
 
     def on_system_info_received(self, result):
         """Handle system information reception."""
-        self.current_results['system_info'] = result
+        self.current_results["system_info"] = result
 
         # Format and display the information
         info_text = self.format_system_info(result)
@@ -702,8 +702,8 @@ class SystemUtilitiesDialog(QDialog):
         text += f"Username: {info.get('username', 'Unknown')}\n\n"
 
         # Hardware info
-        if 'hardware' in info:
-            hw = info['hardware']
+        if "hardware" in info:
+            hw = info["hardware"]
             text += "Hardware Information:\n"
             text += f"  Processor: {hw.get('processor', 'Unknown')}\n"
             text += f"  Cores: {hw.get('cores', 'Unknown')}\n"
@@ -711,16 +711,16 @@ class SystemUtilitiesDialog(QDialog):
             text += f"  Disk Space: {hw.get('disk', 'Unknown')}\n\n"
 
         # Python info
-        if 'python' in info:
-            py = info['python']
+        if "python" in info:
+            py = info["python"]
             text += "Python Information:\n"
             text += f"  Version: {py.get('version', 'Unknown')}\n"
             text += f"  Executable: {py.get('executable', 'Unknown')}\n"
             text += f"  Platform: {py.get('platform', 'Unknown')}\n\n"
 
         # Network info
-        if 'network' in info:
-            net = info['network']
+        if "network" in info:
+            net = info["network"]
             text += "Network Information:\n"
             for interface, details in net.items():
                 text += f"  {interface}: {details}\n"
@@ -730,7 +730,7 @@ class SystemUtilitiesDialog(QDialog):
 
     def export_system_info(self):
         """Export system information to file."""
-        if 'system_info' not in self.current_results:
+        if "system_info" not in self.current_results:
             QMessageBox.warning(self, "Warning", "No system information to export. Refresh first.")
             return
 
@@ -742,11 +742,11 @@ class SystemUtilitiesDialog(QDialog):
 
         if file_path:
             try:
-                if file_path.endswith('.json'):
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        json.dump(self.current_results['system_info'], f, indent=2)
+                if file_path.endswith(".json"):
+                    with open(file_path, "w", encoding="utf-8") as f:
+                        json.dump(self.current_results["system_info"], f, indent=2)
                 else:
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.write(self.sysinfo_display.toPlainText())
 
                 self.status_label.setText(f"System info exported to {os.path.basename(file_path)}")
@@ -769,19 +769,19 @@ class SystemUtilitiesDialog(QDialog):
 
     def on_dependencies_checked(self, result):
         """Handle dependency check completion."""
-        self.current_results['dependencies'] = result
+        self.current_results["dependencies"] = result
 
         # Populate dependencies table
-        dependencies = result.get('dependencies', {})
+        dependencies = result.get("dependencies", {})
         self.deps_table.setRowCount(len(dependencies))
 
         missing_count = 0
         for i, (name, info) in enumerate(dependencies.items()):
             self.deps_table.setItem(i, 0, QTableWidgetItem(name))
-            self.deps_table.setItem(i, 1, QTableWidgetItem(info.get('required', 'Unknown')))
-            self.deps_table.setItem(i, 2, QTableWidgetItem(info.get('installed', 'Not Found')))
+            self.deps_table.setItem(i, 1, QTableWidgetItem(info.get("required", "Unknown")))
+            self.deps_table.setItem(i, 2, QTableWidgetItem(info.get("installed", "Not Found")))
 
-            status = "OK" if info.get('available', False) else "Missing"
+            status = "OK" if info.get("available", False) else "Missing"
             if status == "Missing":
                 missing_count += 1
 
@@ -826,18 +826,18 @@ class SystemUtilitiesDialog(QDialog):
 
     def on_process_list_received(self, result):
         """Handle process list reception."""
-        self.current_results['processes'] = result
+        self.current_results["processes"] = result
 
         # Populate process table
-        processes = result.get('processes', [])
+        processes = result.get("processes", [])
         self.process_table.setRowCount(len(processes))
 
         for i, proc in enumerate(processes):
-            self.process_table.setItem(i, 0, QTableWidgetItem(str(proc.get('pid', ''))))
-            self.process_table.setItem(i, 1, QTableWidgetItem(proc.get('name', '')))
+            self.process_table.setItem(i, 0, QTableWidgetItem(str(proc.get("pid", ""))))
+            self.process_table.setItem(i, 1, QTableWidgetItem(proc.get("name", "")))
             self.process_table.setItem(i, 2, QTableWidgetItem(f"{proc.get('cpu_percent', 0):.1f}"))
-            self.process_table.setItem(i, 3, QTableWidgetItem(proc.get('memory_info', '')))
-            self.process_table.setItem(i, 4, QTableWidgetItem(proc.get('status', '')))
+            self.process_table.setItem(i, 3, QTableWidgetItem(proc.get("memory_info", "")))
+            self.process_table.setItem(i, 4, QTableWidgetItem(proc.get("status", "")))
 
         self.status_label.setText(f"Found {len(processes)} running processes")
         self.progress_bar.setVisible(False)
@@ -911,7 +911,7 @@ class SystemUtilitiesDialog(QDialog):
 
     def on_memory_optimized(self, result):
         """Handle memory optimization completion."""
-        self.current_results['memory_optimization'] = result
+        self.current_results["memory_optimization"] = result
 
         # Display results
         results_text = "Memory Optimization Results:\n"

@@ -55,12 +55,12 @@ class BeaconManager:
 
         # Statistics
         self.stats = {
-            'total_beacons': 0,
-            'missed_beacons': 0,
-            'active_sessions': 0,
-            'inactive_sessions': 0,
-            'average_response_time': 0.0,
-            'last_update': time.time()
+            "total_beacons": 0,
+            "missed_beacons": 0,
+            "active_sessions": 0,
+            "inactive_sessions": 0,
+            "average_response_time": 0.0,
+            "last_update": time.time()
         }
 
         # Adaptive intervals
@@ -73,23 +73,23 @@ class BeaconManager:
             config = initial_config or {}
 
             self.sessions[session_id] = {
-                'session_id': session_id,
-                'registered_at': time.time(),
-                'last_beacon': None,
-                'beacon_interval': config.get('beacon_interval', self.default_beacon_interval),
-                'jitter_percent': config.get('jitter_percent', 20),
-                'missed_beacons': 0,
-                'total_beacons': 0,
-                'status': 'active',
-                'client_info': config.get('client_info', {}),
-                'performance_score': 1.0
+                "session_id": session_id,
+                "registered_at": time.time(),
+                "last_beacon": None,
+                "beacon_interval": config.get("beacon_interval", self.default_beacon_interval),
+                "jitter_percent": config.get("jitter_percent", 20),
+                "missed_beacons": 0,
+                "total_beacons": 0,
+                "status": "active",
+                "client_info": config.get("client_info", {}),
+                "performance_score": 1.0
             }
 
             self.session_health[session_id] = {
-                'last_seen': time.time(),
-                'response_times': [],
-                'connection_quality': 'good',
-                'adaptive_interval': self.default_beacon_interval
+                "last_seen": time.time(),
+                "response_times": [],
+                "connection_quality": "good",
+                "adaptive_interval": self.default_beacon_interval
             }
 
             self.adaptive_intervals[session_id] = self.default_beacon_interval
@@ -135,28 +135,28 @@ class BeaconManager:
             health = self.session_health[session_id]
 
             # Calculate response time if previous beacon exists
-            if session['last_beacon']:
-                response_time = current_time - session['last_beacon']
-                health['response_times'].append(response_time)
+            if session["last_beacon"]:
+                response_time = current_time - session["last_beacon"]
+                health["response_times"].append(response_time)
 
                 # Keep only last 10 response times
-                if len(health['response_times']) > 10:
-                    health['response_times'] = health['response_times'][-10:]
+                if len(health["response_times"]) > 10:
+                    health["response_times"] = health["response_times"][-10:]
 
             # Update session data
-            session['last_beacon'] = current_time
-            session['total_beacons'] += 1
-            session['missed_beacons'] = 0  # Reset missed beacon counter
-            session['status'] = 'active'
+            session["last_beacon"] = current_time
+            session["total_beacons"] += 1
+            session["missed_beacons"] = 0  # Reset missed beacon counter
+            session["status"] = "active"
 
             # Update health data
-            health['last_seen'] = current_time
+            health["last_seen"] = current_time
 
             # Store beacon data for analysis
             self.beacon_data[session_id].append({
-                'timestamp': current_time,
-                'data': beacon_data,
-                'response_time': health['response_times'][-1] if health['response_times'] else 0
+                "timestamp": current_time,
+                "data": beacon_data,
+                "response_time": health["response_times"][-1] if health["response_times"] else 0
             })
 
             # Keep only last 50 beacon records per session
@@ -170,7 +170,7 @@ class BeaconManager:
             self._update_adaptive_interval(session_id)
 
             # Update global statistics
-            self.stats['total_beacons'] += 1
+            self.stats["total_beacons"] += 1
 
             self.logger.debug(f"Updated beacon for session {session_id}")
 
@@ -184,22 +184,22 @@ class BeaconManager:
 
         try:
             for session_id, session in self.sessions.items():
-                if session['status'] == 'inactive':
+                if session["status"] == "inactive":
                     continue
 
                 # Calculate expected next beacon time
-                last_beacon = session['last_beacon'] or session['registered_at']
-                expected_interval = self.adaptive_intervals.get(session_id, session['beacon_interval'])
+                last_beacon = session["last_beacon"] or session["registered_at"]
+                expected_interval = self.adaptive_intervals.get(session_id, session["beacon_interval"])
                 time_since_last = current_time - last_beacon
 
                 # Account for jitter (add 50% tolerance)
                 tolerance = expected_interval * 1.5
 
                 if time_since_last > tolerance:
-                    session['missed_beacons'] += 1
+                    session["missed_beacons"] += 1
 
-                    if session['missed_beacons'] >= self.max_missed_beacons:
-                        session['status'] = 'inactive'
+                    if session["missed_beacons"] >= self.max_missed_beacons:
+                        session["status"] = "inactive"
                         inactive_sessions.append(session_id)
                         self.logger.warning(f"Session {session_id} marked as inactive after {session['missed_beacons']} missed beacons")
 
@@ -220,25 +220,25 @@ class BeaconManager:
 
             # Calculate average response time
             avg_response_time = 0.0
-            if health['response_times']:
-                avg_response_time = sum(health['response_times']) / len(health['response_times'])
+            if health["response_times"]:
+                avg_response_time = sum(health["response_times"]) / len(health["response_times"])
 
             # Calculate uptime
-            uptime = time.time() - session['registered_at']
+            uptime = time.time() - session["registered_at"]
 
             return {
-                'session_id': session_id,
-                'status': session['status'],
-                'last_beacon': session['last_beacon'],
-                'total_beacons': session['total_beacons'],
-                'missed_beacons': session['missed_beacons'],
-                'beacon_interval': session['beacon_interval'],
-                'adaptive_interval': self.adaptive_intervals.get(session_id),
-                'uptime_seconds': uptime,
-                'average_response_time': avg_response_time,
-                'connection_quality': health['connection_quality'],
-                'performance_score': session['performance_score'],
-                'last_seen': health['last_seen']
+                "session_id": session_id,
+                "status": session["status"],
+                "last_beacon": session["last_beacon"],
+                "total_beacons": session["total_beacons"],
+                "missed_beacons": session["missed_beacons"],
+                "beacon_interval": session["beacon_interval"],
+                "adaptive_interval": self.adaptive_intervals.get(session_id),
+                "uptime_seconds": uptime,
+                "average_response_time": avg_response_time,
+                "connection_quality": health["connection_quality"],
+                "performance_score": session["performance_score"],
+                "last_seen": health["last_seen"]
             }
 
         except Exception as e:
@@ -250,7 +250,7 @@ class BeaconManager:
         try:
             return [
                 session_id for session_id, session in self.sessions.items()
-                if session['status'] == 'active'
+                if session["status"] == "active"
             ]
         except Exception as e:
             self.logger.error(f"Error getting active sessions: {e}")
@@ -260,7 +260,7 @@ class BeaconManager:
         """Update beacon interval for a specific session."""
         try:
             if session_id in self.sessions:
-                self.sessions[session_id]['beacon_interval'] = new_interval
+                self.sessions[session_id]["beacon_interval"] = new_interval
                 self.adaptive_intervals[session_id] = new_interval
                 self.logger.info(f"Updated beacon interval for session {session_id} to {new_interval}s")
             else:
@@ -279,14 +279,14 @@ class BeaconManager:
             session = self.sessions[session_id]
 
             # Base interval
-            base_interval = session['beacon_interval']
+            base_interval = session["beacon_interval"]
 
             # Adjust based on connection quality
-            if health['connection_quality'] == 'excellent':
+            if health["connection_quality"] == "excellent":
                 return max(base_interval // 2, 30)  # Minimum 30 seconds
-            elif health['connection_quality'] == 'good':
+            elif health["connection_quality"] == "good":
                 return base_interval
-            elif health['connection_quality'] == 'poor':
+            elif health["connection_quality"] == "poor":
                 return min(base_interval * 2, 300)  # Maximum 5 minutes
             else:  # bad
                 return min(base_interval * 3, 600)  # Maximum 10 minutes
@@ -301,13 +301,13 @@ class BeaconManager:
             current_time = time.time()
 
             # Count active/inactive sessions
-            active_count = len([s for s in self.sessions.values() if s['status'] == 'active'])
-            inactive_count = len([s for s in self.sessions.values() if s['status'] == 'inactive'])
+            active_count = len([s for s in self.sessions.values() if s["status"] == "active"])
+            inactive_count = len([s for s in self.sessions.values() if s["status"] == "inactive"])
 
             # Calculate average response time across all sessions
             all_response_times = []
             for health in self.session_health.values():
-                all_response_times.extend(health['response_times'])
+                all_response_times.extend(health["response_times"])
 
             avg_response_time = 0.0
             if all_response_times:
@@ -315,10 +315,10 @@ class BeaconManager:
 
             # Update statistics
             self.stats.update({
-                'active_sessions': active_count,
-                'inactive_sessions': inactive_count,
-                'average_response_time': avg_response_time,
-                'last_update': current_time
+                "active_sessions": active_count,
+                "inactive_sessions": inactive_count,
+                "average_response_time": avg_response_time,
+                "last_update": current_time
             })
 
         except Exception as e:
@@ -340,15 +340,15 @@ class BeaconManager:
             current_time = time.time()
 
             # Extract performance data from beacon
-            cpu_usage = beacon_data.get('system_status', {}).get('cpu_percent', 0)
-            memory_usage = beacon_data.get('system_status', {}).get('memory_percent', 0)
+            cpu_usage = beacon_data.get("system_status", {}).get("cpu_percent", 0)
+            memory_usage = beacon_data.get("system_status", {}).get("memory_percent", 0)
 
             # Store performance metric
             metrics.append({
-                'timestamp': current_time,
-                'cpu_usage': cpu_usage,
-                'memory_usage': memory_usage,
-                'beacon_size': len(str(beacon_data))
+                "timestamp": current_time,
+                "cpu_usage": cpu_usage,
+                "memory_usage": memory_usage,
+                "beacon_size": len(str(beacon_data))
             })
 
             # Keep only last 20 metrics
@@ -368,7 +368,7 @@ class BeaconManager:
             session = self.sessions[session_id]
 
             # Analyze recent response times
-            response_times = health['response_times']
+            response_times = health["response_times"]
             if len(response_times) < 3:
                 return  # Need more data
 
@@ -377,19 +377,19 @@ class BeaconManager:
 
             # Determine connection quality
             if avg_response_time < 1.0 and response_variance < 0.5:
-                connection_quality = 'excellent'
+                connection_quality = "excellent"
             elif avg_response_time < 2.0 and response_variance < 1.0:
-                connection_quality = 'good'
+                connection_quality = "good"
             elif avg_response_time < 5.0 and response_variance < 3.0:
-                connection_quality = 'poor'
+                connection_quality = "poor"
             else:
-                connection_quality = 'bad'
+                connection_quality = "bad"
 
-            health['connection_quality'] = connection_quality
+            health["connection_quality"] = connection_quality
 
             # Calculate performance score
             performance_score = max(0.1, min(1.0, 1.0 / (1.0 + avg_response_time)))
-            session['performance_score'] = performance_score
+            session["performance_score"] = performance_score
 
             # Update adaptive interval
             recommended_interval = self.get_recommended_interval(session_id)
@@ -420,7 +420,7 @@ class BeaconManager:
             for session_id in list(self.beacon_data.keys()):
                 self.beacon_data[session_id] = [
                     beacon for beacon in self.beacon_data[session_id]
-                    if beacon['timestamp'] > cutoff_time
+                    if beacon["timestamp"] > cutoff_time
                 ]
 
                 # Remove empty entries
@@ -431,7 +431,7 @@ class BeaconManager:
             for session_id in list(self.performance_metrics.keys()):
                 self.performance_metrics[session_id] = [
                     metric for metric in self.performance_metrics[session_id]
-                    if metric['timestamp'] > cutoff_time
+                    if metric["timestamp"] > cutoff_time
                 ]
 
                 # Remove empty entries

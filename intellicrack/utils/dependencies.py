@@ -40,7 +40,7 @@ def check_weasyprint_dependencies() -> List[str]:
     try:
         import cffi
         # Store CFFI version for debugging
-        cffi_version = getattr(cffi, '__version__', 'unknown')
+        cffi_version = getattr(cffi, "__version__", "unknown")
         logger.info(f"✓ CFFI dependency found (version: {cffi_version})")
     except ImportError as e:
         logger.error("✗ CFFI import error: %s", e)
@@ -49,7 +49,7 @@ def check_weasyprint_dependencies() -> List[str]:
     try:
         import cairocffi
         # Store Cairo version for debugging
-        cairo_version = getattr(cairocffi, '__version__', 'unknown')
+        cairo_version = getattr(cairocffi, "__version__", "unknown")
         logger.info(f"✓ Cairo dependency found (version: {cairo_version})")
     except ImportError as e:
         logger.error("✗ Cairo import error: %s", e)
@@ -58,16 +58,16 @@ def check_weasyprint_dependencies() -> List[str]:
     try:
         import tinycss2
         # Store TinyCSS2 version for debugging
-        css_version = getattr(tinycss2, '__version__', 'unknown')
+        css_version = getattr(tinycss2, "__version__", "unknown")
         logger.info(f"✓ TinyCSS2 dependency found (version: {css_version})")
     except ImportError as e:
         logger.error("✗ TinyCSS2 import error: %s", e)
         missing_deps.append("tinycss2")
 
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         try:
             gtk_paths = [
-                os.path.join(os.environ.get('ProgramFiles', r'C:\Program Files'), 'GTK3-Runtime Win64', 'bin'),
+                os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"), "GTK3-Runtime Win64", "bin"),
                 r"C:\GTK\bin",
                 os.environ.get("GTK_BASEPATH", "") + "\\bin"
             ]
@@ -193,7 +193,7 @@ def setup_required_environment() -> Dict[str, Any]:
     try:
         import PyQt6.QtCore
         # Get PyQt6 version for logging
-        pyqt_version = getattr(PyQt6.QtCore, 'PYQT_VERSION_STR', 'unknown')
+        pyqt_version = getattr(PyQt6.QtCore, "PYQT_VERSION_STR", "unknown")
         env_status["gui_available"] = True
         logger.info(f"✓ GUI interface available (PyQt6 {pyqt_version})")
     except ImportError:
@@ -205,8 +205,8 @@ def setup_required_environment() -> Dict[str, Any]:
         import numpy
         import sklearn
         # Get versions for logging
-        numpy_version = getattr(numpy, '__version__', 'unknown')
-        sklearn_version = getattr(sklearn, '__version__', 'unknown')
+        numpy_version = getattr(numpy, "__version__", "unknown")
+        sklearn_version = getattr(sklearn, "__version__", "unknown")
         env_status["ml_available"] = True
         logger.info(f"✓ Machine learning features available (numpy {numpy_version}, sklearn {sklearn_version})")
     except ImportError:
@@ -217,7 +217,7 @@ def setup_required_environment() -> Dict[str, Any]:
     try:
         import frida
         # Get Frida version for logging
-        frida_version = getattr(frida, '__version__', 'unknown')
+        frida_version = getattr(frida, "__version__", "unknown")
         env_status["dynamic_analysis_available"] = True
         logger.info(f"✓ Dynamic analysis (Frida {frida_version}) available")
     except ImportError:
@@ -228,7 +228,7 @@ def setup_required_environment() -> Dict[str, Any]:
     try:
         import angr
         # Get angr version for logging
-        angr_version = getattr(angr, '__version__', 'unknown')
+        angr_version = getattr(angr, "__version__", "unknown")
         env_status["symbolic_execution_available"] = True
         logger.info(f"✓ Symbolic execution (angr {angr_version}) available")
     except ImportError:

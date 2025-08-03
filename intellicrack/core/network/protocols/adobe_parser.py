@@ -160,28 +160,28 @@ class AdobeLicensingParser:
         """
         try:
             # Parse HTTP headers and body
-            lines = http_data.split('\r\n')
+            lines = http_data.split("\r\n")
             if not lines:
                 return None
 
             # Parse request line
             request_line = lines[0]
-            if not any(method in request_line for method in ['POST', 'GET', 'PUT']):
+            if not any(method in request_line for method in ["POST", "GET", "PUT"]):
                 return None
 
             # Parse headers
             headers = {}
             body_start = 0
             for i, line in enumerate(lines[1:], 1):
-                if line == '':
+                if line == "":
                     body_start = i + 1
                     break
-                if ':' in line:
-                    key, value = line.split(':', 1)
+                if ":" in line:
+                    key, value = line.split(":", 1)
                     headers[key.strip().lower()] = value.strip()
 
             # Parse body (usually JSON for Adobe requests)
-            body = '\r\n'.join(lines[body_start:]) if body_start < len(lines) else ''
+            body = "\r\n".join(lines[body_start:]) if body_start < len(lines) else ""
             request_data = {}
 
             if body:
@@ -196,27 +196,27 @@ class AdobeLicensingParser:
             request_type = self._determine_request_type(request_line, headers, request_data)
 
             # Extract Adobe-specific fields
-            client_id = self._extract_field(request_data, headers, ['client_id', 'clientId', 'adobeId'])
-            machine_id = self._extract_field(request_data, headers, ['machine_id', 'machineId', 'deviceId'])
-            product_id = self._extract_field(request_data, headers, ['product_id', 'productId', 'appId'])
-            serial_number = self._extract_field(request_data, headers, ['serial_number', 'serialNumber', 'ngl_serial'])
-            activation_id = self._extract_field(request_data, headers, ['activation_id', 'activationId', 'licenseId'])
-            auth_token = self._extract_field(request_data, headers, ['authorization', 'auth_token', 'bearer_token'])
+            client_id = self._extract_field(request_data, headers, ["client_id", "clientId", "adobeId"])
+            machine_id = self._extract_field(request_data, headers, ["machine_id", "machineId", "deviceId"])
+            product_id = self._extract_field(request_data, headers, ["product_id", "productId", "appId"])
+            serial_number = self._extract_field(request_data, headers, ["serial_number", "serialNumber", "ngl_serial"])
+            activation_id = self._extract_field(request_data, headers, ["activation_id", "activationId", "licenseId"])
+            auth_token = self._extract_field(request_data, headers, ["authorization", "auth_token", "bearer_token"])
 
             # Remove 'Bearer ' prefix if present
-            if auth_token and auth_token.startswith('Bearer '):
+            if auth_token and auth_token.startswith("Bearer "):
                 auth_token = auth_token[7:]
 
             request = AdobeRequest(
                 request_type=request_type,
-                client_id=client_id or '',
-                machine_id=machine_id or '',
-                product_id=product_id or '',
-                serial_number=serial_number or '',
-                activation_id=activation_id or '',
+                client_id=client_id or "",
+                machine_id=machine_id or "",
+                product_id=product_id or "",
+                serial_number=serial_number or "",
+                activation_id=activation_id or "",
                 request_data=request_data,
                 headers=headers,
-                auth_token=auth_token or ''
+                auth_token=auth_token or ""
             )
 
             self.logger.info(f"Parsed Adobe {request_type} request for product {product_id}")
@@ -232,47 +232,47 @@ class AdobeLicensingParser:
         request_line_lower = request_line.lower()
 
         # Check headers for additional context
-        user_agent = headers.get('User-Agent', '').lower()
-        content_type = headers.get('Content-Type', '').lower()
-        authorization = headers.get('Authorization', '')
-        x_adobe_app = headers.get('X-Adobe-App', '').lower()
+        user_agent = headers.get("User-Agent", "").lower()
+        content_type = headers.get("Content-Type", "").lower()
+        authorization = headers.get("Authorization", "")
+        x_adobe_app = headers.get("X-Adobe-App", "").lower()
 
         # Adobe-specific header analysis
-        is_creative_cloud = 'creative' in user_agent or 'adobe' in user_agent
-        is_subscription_check = 'subscription' in x_adobe_app or authorization.startswith('Bearer')
-        is_legacy_activation = 'application/x-amf' in content_type
+        is_creative_cloud = "creative" in user_agent or "adobe" in user_agent
+        is_subscription_check = "subscription" in x_adobe_app or authorization.startswith("Bearer")
+        is_legacy_activation = "application/x-amf" in content_type
 
         # Check URL patterns
-        if '/activate' in request_line_lower or 'activation' in request_line_lower:
+        if "/activate" in request_line_lower or "activation" in request_line_lower:
             if is_legacy_activation:
-                return 'legacy_activation'
-            return 'subscription_activation' if is_subscription_check else 'activation'
-        elif '/verify' in request_line_lower or 'verification' in request_line_lower:
-            return 'subscription_verification' if is_creative_cloud else 'verification'
-        elif '/deactivate' in request_line_lower or 'deactivation' in request_line_lower:
-            return 'deactivation'
-        elif '/heartbeat' in request_line_lower or '/ping' in request_line_lower:
-            return 'heartbeat'
-        elif '/feature' in request_line_lower:
-            return 'feature_check'
-        elif '/trial' in request_line_lower:
-            return 'trial_conversion'
-        elif '/recovery' in request_line_lower:
-            return 'license_recovery'
-        elif '/bind' in request_line_lower or '/machine' in request_line_lower:
-            return 'machine_binding'
-        elif '/subscription' in request_line_lower:
-            return 'subscription_check'
-        elif '/usage' in request_line_lower or '/report' in request_line_lower:
-            return 'usage_report'
+                return "legacy_activation"
+            return "subscription_activation" if is_subscription_check else "activation"
+        elif "/verify" in request_line_lower or "verification" in request_line_lower:
+            return "subscription_verification" if is_creative_cloud else "verification"
+        elif "/deactivate" in request_line_lower or "deactivation" in request_line_lower:
+            return "deactivation"
+        elif "/heartbeat" in request_line_lower or "/ping" in request_line_lower:
+            return "heartbeat"
+        elif "/feature" in request_line_lower:
+            return "feature_check"
+        elif "/trial" in request_line_lower:
+            return "trial_conversion"
+        elif "/recovery" in request_line_lower:
+            return "license_recovery"
+        elif "/bind" in request_line_lower or "/machine" in request_line_lower:
+            return "machine_binding"
+        elif "/subscription" in request_line_lower:
+            return "subscription_check"
+        elif "/usage" in request_line_lower or "/report" in request_line_lower:
+            return "usage_report"
 
         # Check data content
-        action = data.get('action', data.get('request_type', data.get('operation', '')))
+        action = data.get("action", data.get("request_type", data.get("operation", "")))
         if action:
             return action.lower()
 
         # Default to verification
-        return 'verification'
+        return "verification"
 
     def _extract_field(self, data: Dict[str, Any], headers: Dict[str, str],
                       field_names: List[str]) -> Optional[str]:
@@ -293,10 +293,10 @@ class AdobeLicensingParser:
         """Parse form-encoded data"""
         data = {}
         try:
-            pairs = body.split('&')
+            pairs = body.split("&")
             for pair in pairs:
-                if '=' in pair:
-                    key, value = pair.split('=', 1)
+                if "=" in pair:
+                    key, value = pair.split("=", 1)
                     data[key] = value
         except (ValueError, AttributeError, Exception) as e:
             self.logger.error("Error in adobe_parser: %s", e)
@@ -315,32 +315,32 @@ class AdobeLicensingParser:
         """
         self.logger.info(f"Generating response for Adobe {request.request_type} request")
 
-        if request.request_type == 'activation':
+        if request.request_type == "activation":
             return self._handle_activation(request)
-        elif request.request_type == 'verification':
+        elif request.request_type == "verification":
             return self._handle_verification(request)
-        elif request.request_type == 'deactivation':
+        elif request.request_type == "deactivation":
             return self._handle_deactivation(request)
-        elif request.request_type == 'heartbeat':
+        elif request.request_type == "heartbeat":
             return self._handle_heartbeat(request)
-        elif request.request_type == 'feature_check':
+        elif request.request_type == "feature_check":
             return self._handle_feature_check(request)
-        elif request.request_type == 'trial_conversion':
+        elif request.request_type == "trial_conversion":
             return self._handle_trial_conversion(request)
-        elif request.request_type == 'license_recovery':
+        elif request.request_type == "license_recovery":
             return self._handle_license_recovery(request)
-        elif request.request_type == 'machine_binding':
+        elif request.request_type == "machine_binding":
             return self._handle_machine_binding(request)
-        elif request.request_type == 'subscription_check':
+        elif request.request_type == "subscription_check":
             return self._handle_subscription_check(request)
-        elif request.request_type == 'usage_report':
+        elif request.request_type == "usage_report":
             return self._handle_usage_report(request)
         else:
             return self._handle_unknown_request(request)
 
     def _handle_activation(self, request: AdobeRequest) -> AdobeResponse:
         """Handle Adobe product activation"""
-        product_id = request.product_id or 'UNKNOWN'
+        product_id = request.product_id or "UNKNOWN"
 
         # Validate product
         if product_id not in self.ADOBE_PRODUCTS:
@@ -490,15 +490,15 @@ class AdobeLicensingParser:
     def _handle_heartbeat(self, request: AdobeRequest) -> AdobeResponse:
         """Handle license heartbeat"""
         # Extract heartbeat-specific information from request
-        app_version = request.license_data.get('app_version', '1.0')
-        client_id = request.activation_data.get('client_id', 'unknown')
-        last_sync = request.license_data.get('last_sync', 0)
+        app_version = request.license_data.get("app_version", "1.0")
+        client_id = request.activation_data.get("client_id", "unknown")
+        last_sync = request.license_data.get("last_sync", 0)
 
         # Calculate appropriate heartbeat interval based on request data
         heartbeat_interval = 3600  # Default 1 hour
-        if 'subscription' in request.request_type:
+        if "subscription" in request.request_type:
             heartbeat_interval = 1800  # 30 minutes for subscription checks
-        elif 'trial' in str(request.license_data.get('license_type', '')):
+        elif "trial" in str(request.license_data.get("license_type", "")):
             heartbeat_interval = 900   # 15 minutes for trial licenses
 
         return AdobeResponse(
@@ -524,7 +524,7 @@ class AdobeLicensingParser:
 
     def _handle_feature_check(self, request: AdobeRequest) -> AdobeResponse:
         """Handle feature availability check"""
-        product_id = request.product_id or 'UNKNOWN'
+        product_id = request.product_id or "UNKNOWN"
 
         if product_id in self.ADOBE_PRODUCTS:
             features = self.ADOBE_PRODUCTS[product_id]["features"]
@@ -606,15 +606,15 @@ class AdobeLicensingParser:
     def _handle_subscription_check(self, request: AdobeRequest) -> AdobeResponse:
         """Handle subscription status check"""
         # Extract subscription information from request
-        user_id = request.activation_data.get('user_id', str(uuid.uuid4()))
-        app_id = request.license_data.get('app_id', request.product_id)
-        subscription_tier = request.license_data.get('subscription_tier', 'individual')
+        user_id = request.activation_data.get("user_id", str(uuid.uuid4()))
+        app_id = request.license_data.get("app_id", request.product_id)
+        subscription_tier = request.license_data.get("subscription_tier", "individual")
 
         # Determine subscription type based on request data
-        if 'business' in str(subscription_tier).lower() or 'team' in str(subscription_tier).lower():
+        if "business" in str(subscription_tier).lower() or "team" in str(subscription_tier).lower():
             sub_type = "business"
             billing_cycle = 2592000  # 30 days for business
-        elif 'student' in str(subscription_tier).lower():
+        elif "student" in str(subscription_tier).lower():
             sub_type = "student"
             billing_cycle = 31536000  # 365 days for student
         else:
@@ -647,9 +647,9 @@ class AdobeLicensingParser:
     def _handle_usage_report(self, request: AdobeRequest) -> AdobeResponse:
         """Handle usage reporting"""
         # Extract usage data from request
-        app_usage = request.license_data.get('usage_data', {})
-        feature_usage = request.activation_data.get('features_used', [])
-        session_duration = request.license_data.get('session_duration', 0)
+        app_usage = request.license_data.get("usage_data", {})
+        feature_usage = request.activation_data.get("features_used", [])
+        session_duration = request.license_data.get("session_duration", 0)
 
         # Process usage statistics
         usage_stats = {

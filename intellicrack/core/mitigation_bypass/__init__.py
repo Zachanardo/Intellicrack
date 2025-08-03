@@ -46,20 +46,20 @@ class BypassEngine:
         bypasses = []
 
         # Check ASLR bypass
-        if target_info.get('aslr_enabled'):
-            bypasses.append('aslr_bypass')
+        if target_info.get("aslr_enabled"):
+            bypasses.append("aslr_bypass")
 
         # Check DEP bypass
-        if target_info.get('dep_enabled'):
-            bypasses.append('dep_bypass')
+        if target_info.get("dep_enabled"):
+            bypasses.append("dep_bypass")
 
         # Check CFI bypass
-        if target_info.get('cfi_enabled'):
-            bypasses.append('cfi_bypass')
+        if target_info.get("cfi_enabled"):
+            bypasses.append("cfi_bypass")
 
         return {
-            'bypasses_available': bypasses,
-            'target_info': target_info
+            "bypasses_available": bypasses,
+            "target_info": target_info
         }
 
 
@@ -73,6 +73,6 @@ class DEPBypass:
     pass
 
 # Export available classes
-__all__ = ['BypassEngine', 'ASLRBypass', 'DEPBypass']
+__all__ = ["BypassEngine", "ASLRBypass", "DEPBypass"]
 if HAS_CFI_BYPASS:
-    __all__.append('CFIBypass')
+    __all__.append("CFIBypass")

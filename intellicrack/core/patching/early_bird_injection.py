@@ -45,7 +45,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
     def get_required_libraries(self) -> list:
         """Get list of required Windows libraries for this patcher."""
-        return ['kernel32']
+        return ["kernel32"]
 
     def inject_early_bird(self, target_exe: str, dll_path: str,
                          command_line: str = None) -> bool:
@@ -70,7 +70,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             try:
                 # Allocate memory for DLL path
                 dll_path_addr = self._allocate_and_write_dll_path(
-                    process_info['process_handle'],
+                    process_info["process_handle"],
                     dll_path
                 )
 
@@ -86,7 +86,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
                 # Queue APC to main thread
                 if not self._queue_user_apc(
-                    process_info['thread_handle'],
+                    process_info["thread_handle"],
                     load_library_addr,
                     dll_path_addr
                 ):
@@ -94,7 +94,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                     return False
 
                 # Resume thread - APC will execute before main entry point
-                self.kernel32.ResumeThread(process_info['thread_handle'])
+                self.kernel32.ResumeThread(process_info["thread_handle"])
 
                 logger.info("Early Bird injection successful")
                 return True
@@ -131,7 +131,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             try:
                 # Allocate memory for shellcode
                 shellcode_addr = self._allocate_and_write_shellcode(
-                    process_info['process_handle'],
+                    process_info["process_handle"],
                     shellcode
                 )
 
@@ -141,7 +141,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
                 # Queue APC to execute shellcode
                 if not self._queue_user_apc(
-                    process_info['thread_handle'],
+                    process_info["thread_handle"],
                     shellcode_addr,
                     0  # No parameter for shellcode
                 ):
@@ -149,7 +149,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                     return False
 
                 # Resume thread - shellcode executes before main
-                self.kernel32.ResumeThread(process_info['thread_handle'])
+                self.kernel32.ResumeThread(process_info["thread_handle"])
 
                 logger.info("Early Bird shellcode injection successful")
                 return True
@@ -186,7 +186,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
                 # Allocate memory for injection stub
                 stub_addr = self._create_injection_stub(
-                    process_info['process_handle'],
+                    process_info["process_handle"],
                     dll_path,
                     context
                 )
@@ -201,7 +201,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
                     # Set thread context
                     if not self._set_thread_context(
-                        process_info['thread_handle'],
+                        process_info["thread_handle"],
                         context
                     ):
                         logger.error("Failed to set thread context")
@@ -210,19 +210,19 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                     # Just queue APC
                     load_library_addr = self._get_load_library_address()
                     dll_path_addr = self._allocate_and_write_dll_path(
-                        process_info['process_handle'],
+                        process_info["process_handle"],
                         dll_path
                     )
 
                     if not self._queue_user_apc(
-                        process_info['thread_handle'],
+                        process_info["thread_handle"],
                         load_library_addr,
                         dll_path_addr
                     ):
                         return False
 
                 # Resume thread
-                self.kernel32.ResumeThread(process_info['thread_handle'])
+                self.kernel32.ResumeThread(process_info["thread_handle"])
 
                 logger.info("Advanced Early Bird injection successful")
                 return True
@@ -247,7 +247,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                                      dll_path: str) -> int:
         """Allocate memory and write DLL path"""
         try:
-            dll_path_bytes = dll_path.encode('utf-8') + b'\x00'
+            dll_path_bytes = dll_path.encode("utf-8") + b"\x00"
             path_size = len(dll_path_bytes)
 
             # Allocate memory
@@ -398,45 +398,45 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                 stub = bytearray()
 
                 # Save registers
-                stub += b'\x50'                      # push rax
-                stub += b'\x51'                      # push rcx
-                stub += b'\x52'                      # push rdx
-                stub += b'\x41\x50'                  # push r8
-                stub += b'\x41\x51'                  # push r9
+                stub += b"\x50"                      # push rax
+                stub += b"\x51"                      # push rcx
+                stub += b"\x52"                      # push rdx
+                stub += b"\x41\x50"                  # push r8
+                stub += b"\x41\x51"                  # push r9
 
                 # Load DLL
-                stub += b'\x48\xB9' + struct.pack('<Q', dll_path_addr)     # mov rcx, dll_path_addr
-                stub += b'\x48\xB8' + struct.pack('<Q', load_library_addr) # mov rax, LoadLibraryA
-                stub += b'\xFF\xD0'                  # call rax
+                stub += b"\x48\xB9" + struct.pack("<Q", dll_path_addr)     # mov rcx, dll_path_addr
+                stub += b"\x48\xB8" + struct.pack("<Q", load_library_addr) # mov rax, LoadLibraryA
+                stub += b"\xFF\xD0"                  # call rax
 
                 # Restore registers
-                stub += b'\x41\x59'                  # pop r9
-                stub += b'\x41\x58'                  # pop r8
-                stub += b'\x5A'                      # pop rdx
-                stub += b'\x59'                      # pop rcx
-                stub += b'\x58'                      # pop rax
+                stub += b"\x41\x59"                  # pop r9
+                stub += b"\x41\x58"                  # pop r8
+                stub += b"\x5A"                      # pop rdx
+                stub += b"\x59"                      # pop rcx
+                stub += b"\x58"                      # pop rax
 
                 # Jump to original entry
-                stub += b'\x48\xB8' + struct.pack('<Q', original_entry)    # mov rax, original_entry
-                stub += b'\xFF\xE0'                  # jmp rax
+                stub += b"\x48\xB8" + struct.pack("<Q", original_entry)    # mov rax, original_entry
+                stub += b"\xFF\xE0"                  # jmp rax
 
             else:  # 32-bit
                 stub = bytearray()
 
                 # Save registers
-                stub += b'\x60'                      # pushad
+                stub += b"\x60"                      # pushad
 
                 # Load DLL
-                stub += b'\x68' + struct.pack('<I', dll_path_addr)     # push dll_path_addr
-                stub += b'\xB8' + struct.pack('<I', load_library_addr) # mov eax, LoadLibraryA
-                stub += b'\xFF\xD0'                  # call eax
+                stub += b"\x68" + struct.pack("<I", dll_path_addr)     # push dll_path_addr
+                stub += b"\xB8" + struct.pack("<I", load_library_addr) # mov eax, LoadLibraryA
+                stub += b"\xFF\xD0"                  # call eax
 
                 # Restore registers
-                stub += b'\x61'                      # popad
+                stub += b"\x61"                      # popad
 
                 # Jump to original entry
-                stub += b'\xB8' + struct.pack('<I', original_entry)    # mov eax, original_entry
-                stub += b'\xFF\xE0'                  # jmp eax
+                stub += b"\xB8" + struct.pack("<I", original_entry)    # mov eax, original_entry
+                stub += b"\xFF\xE0"                  # jmp eax
 
             # Allocate and write stub
             stub_addr = self._allocate_and_write_shellcode(process_handle, bytes(stub))

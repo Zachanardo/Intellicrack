@@ -41,7 +41,7 @@ import hmac
 import pickle
 
 # Security configuration for pickle
-PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
+PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 
 class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe classes."""
@@ -50,16 +50,16 @@ class RestrictedUnpickler(pickle.Unpickler):
         """Override find_class to restrict allowed classes."""
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
-            'numpy', 'numpy.core.multiarray', 'numpy.core.numeric',
-            'pandas', 'pandas.core.frame', 'pandas.core.series',
-            'sklearn', 'torch', 'tensorflow',
-            '__builtin__', 'builtins',
-            'collections', 'collections.abc',
-            'traceback', 'types'
+            "numpy", "numpy.core.multiarray", "numpy.core.numeric",
+            "pandas", "pandas.core.frame", "pandas.core.series",
+            "sklearn", "torch", "tensorflow",
+            "__builtin__", "builtins",
+            "collections", "collections.abc",
+            "traceback", "types"
         }
 
         # Allow model classes from our own modules
-        if module.startswith('intellicrack.'):
+        if module.startswith("intellicrack."):
             return super().find_class(module, name)
 
         # Check if module is in allowed list
@@ -78,7 +78,7 @@ def secure_pickle_dump(obj, file_path):
     mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
 
     # Write MAC + data
-    with open(file_path, 'wb') as f:
+    with open(file_path, "wb") as f:
         f.write(mac)
         f.write(data)
 
@@ -92,7 +92,7 @@ def secure_pickle_load(file_path):
         # Fallback to pickle with restricted unpickler
         pass
 
-    with open(file_path, 'rb') as f:
+    with open(file_path, "rb") as f:
         # Read MAC
         stored_mac = f.read(32)  # SHA256 produces 32 bytes
         data = f.read()
@@ -267,7 +267,7 @@ def setup_file_logging(log_file: str = "intellicrack.log",
 
         # Set up formatter
         formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
         file_handler.setFormatter(formatter)
 
@@ -376,7 +376,7 @@ def load_ai_model(model_path: str) -> Optional[Any]:
             return None
 
         # Try different model formats
-        if model_path.endswith('.joblib'):
+        if model_path.endswith(".joblib"):
             try:
                 import joblib
                 model = joblib.load(model_path)
@@ -385,12 +385,12 @@ def load_ai_model(model_path: str) -> Optional[Any]:
             except ImportError:
                 logger.warning("joblib not available for model loading")
 
-        elif model_path.endswith('.pkl'):
+        elif model_path.endswith(".pkl"):
             try:
                 logger.warning("Loading model with pickle - ensure file is from trusted source")
 
                 # Additional validation for pickle files
-                if hasattr(os, 'stat'):
+                if hasattr(os, "stat"):
                     stat_info = os.stat(model_path)
                     # Check file permissions - warn if world-writable
                     if stat_info.st_mode & 0o002:
@@ -402,7 +402,7 @@ def load_ai_model(model_path: str) -> Optional[Any]:
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Failed to load pickle model: %s", e)
 
-        elif model_path.endswith('.onnx'):
+        elif model_path.endswith(".onnx"):
             try:
                 import onnxruntime
                 model = onnxruntime.InferenceSession(model_path)

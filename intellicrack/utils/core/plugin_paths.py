@@ -82,7 +82,7 @@ def get_project_root() -> Path:
     """
     try:
         # Use resource helper to find the package root
-        intellicrack_root = Path(get_resource_path(''))
+        intellicrack_root = Path(get_resource_path(""))
         return intellicrack_root.parent
     except Exception as e:
         logger.error("Exception in plugin_paths: %s", e)
@@ -99,7 +99,7 @@ def get_scripts_dir() -> Path:
     Returns:
         Path: Absolute path to the scripts directory
     """
-    return Path(get_resource_path('scripts'))
+    return Path(get_resource_path("scripts"))
 
 
 def get_frida_scripts_dir() -> Path:
@@ -109,7 +109,7 @@ def get_frida_scripts_dir() -> Path:
     Returns:
         Path: Absolute path to the Frida scripts directory
     """
-    return Path(get_resource_path('plugins/frida_scripts'))
+    return Path(get_resource_path("plugins/frida_scripts"))
 
 
 def get_ghidra_scripts_dir() -> Path:
@@ -119,7 +119,7 @@ def get_ghidra_scripts_dir() -> Path:
     Returns:
         Path: Absolute path to the Ghidra scripts directory
     """
-    return Path(get_resource_path('plugins/ghidra_scripts'))
+    return Path(get_resource_path("plugins/ghidra_scripts"))
 
 
 def get_plugin_modules_dir() -> Path:

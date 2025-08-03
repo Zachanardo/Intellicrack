@@ -72,7 +72,7 @@ except ImportError:
 
 # Add parent directory to path
 script_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
+project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
 sys.path.insert(0, project_root)
 
 # Import Intellicrack modules
@@ -199,7 +199,7 @@ class IntellicrackShell(cmd.Cmd):
 ╚══════════════════════════════════════════════════════════════════╝
     """
 
-    prompt = '🔍 intellicrack> '
+    prompt = "🔍 intellicrack> "
 
     def __init__(self):
         """Initialize interactive shell with console, binary analysis state, and readline setup."""
@@ -220,10 +220,10 @@ class IntellicrackShell(cmd.Cmd):
     def setup_readline(self):
         """Configure readline for better UX."""
         # Enable tab completion
-        readline.parse_and_bind('tab: complete')
+        readline.parse_and_bind("tab: complete")
 
         # Load history
-        self.histfile = os.path.expanduser('~/.intellicrack_history')
+        self.histfile = os.path.expanduser("~/.intellicrack_history")
         try:
             readline.read_history_file(self.histfile)
         except FileNotFoundError:
@@ -277,15 +277,15 @@ class IntellicrackShell(cmd.Cmd):
 
         args = arg.split()
 
-        if not args or '--quick' in args:
+        if not args or "--quick" in args:
             self._run_quick_analysis()
-        elif '--full' in args:
+        elif "--full" in args:
             self._run_full_analysis()
-        elif '--vuln' in args:
+        elif "--vuln" in args:
             self._run_vulnerability_scan()
-        elif '--symbols' in args:
+        elif "--symbols" in args:
             self._run_symbolic_execution()
-        elif '--cfg' in args:
+        elif "--cfg" in args:
             self._run_cfg_analysis()
         else:
             self.error(f"Unknown option: {arg}")
@@ -300,23 +300,23 @@ class IntellicrackShell(cmd.Cmd):
             self.error("No analysis results. Run 'analyze' first")
             return
 
-        category = arg.strip() or 'summary'
+        category = arg.strip() or "summary"
 
-        if category == 'all':
+        if category == "all":
             self._show_all_results()
-        elif category == 'summary':
+        elif category == "summary":
             self._show_summary()
-        elif category == 'vulnerabilities':
+        elif category == "vulnerabilities":
             self._show_vulnerabilities()
-        elif category == 'protections':
+        elif category == "protections":
             self._show_protections()
-        elif category == 'strings':
+        elif category == "strings":
             self._show_strings()
-        elif category == 'imports':
+        elif category == "imports":
             self._show_imports()
-        elif category == 'charts':
+        elif category == "charts":
             self._show_charts()
-        elif category == 'dashboard':
+        elif category == "dashboard":
             self._show_dashboard()
         else:
             self.error(f"Unknown category: {category}")
@@ -348,10 +348,10 @@ class IntellicrackShell(cmd.Cmd):
 
         # Parse options
         export_options = {
-            'include_raw_data': '--raw-data' in options,
-            'detailed': '--detailed' in options,
-            'summary_only': '--summary-only' in options,
-            'data_type': 'vulnerabilities' if '--vuln-only' in options else 'all'
+            "include_raw_data": "--raw-data" in options,
+            "detailed": "--detailed" in options,
+            "summary_only": "--summary-only" in options,
+            "data_type": "vulnerabilities" if "--vuln-only" in options else "all"
         }
 
         if not self.analysis_results:
@@ -408,11 +408,11 @@ class IntellicrackShell(cmd.Cmd):
             return
 
         command = args[0]
-        if command == 'suggest':
+        if command == "suggest":
             self._suggest_patches()
-        elif command == 'apply' and len(args) > 1:
+        elif command == "apply" and len(args) > 1:
             self._apply_patch(args[1])
-        elif command == 'create':
+        elif command == "create":
             self._create_patch_interactive()
         else:
             self.error(f"Unknown patch command: {command}")
@@ -433,7 +433,7 @@ class IntellicrackShell(cmd.Cmd):
             table.add_column("Match", style="green")
 
             for result in results:
-                table.add_row(result['category'], result['location'], result['match'])
+                table.add_row(result["category"], result["location"], result["match"])
 
             self.console.print(table)
         elif not results:
@@ -487,37 +487,37 @@ class IntellicrackShell(cmd.Cmd):
             # Import advanced config manager
             from .config_manager import get_config_manager
 
-            if not hasattr(self, '_config_manager'):
+            if not hasattr(self, "_config_manager"):
                 self._config_manager = get_config_manager()
 
-            if not args or args[0] == 'list':
+            if not args or args[0] == "list":
                 category = args[1] if len(args) > 1 else None
                 self._list_advanced_config(category)
-            elif args[0] == 'get' and len(args) > 1:
+            elif args[0] == "get" and len(args) > 1:
                 self._get_advanced_config(args[1])
-            elif args[0] == 'set' and len(args) > 2:
-                self._set_advanced_config(args[1], ' '.join(args[2:]))
-            elif args[0] == 'reset':
+            elif args[0] == "set" and len(args) > 2:
+                self._set_advanced_config(args[1], " ".join(args[2:]))
+            elif args[0] == "reset":
                 category = args[1] if len(args) > 1 else None
                 self._reset_config(category)
-            elif args[0] == 'categories':
+            elif args[0] == "categories":
                 self._list_config_categories()
-            elif args[0] == 'advanced':
+            elif args[0] == "advanced":
                 self._show_advanced_config()
-            elif args[0] == 'export':
+            elif args[0] == "export":
                 if len(args) < 2:
                     self.error("Usage: config export <file> [format]")
                 else:
                     format_type = args[2] if len(args) > 2 else "json"
                     self._export_config(args[1], format_type)
-            elif args[0] == 'import':
+            elif args[0] == "import":
                 if len(args) < 2:
                     self.error("Usage: config import <file>")
                 else:
                     self._import_config(args[1])
-            elif args[0] == 'backup':
+            elif args[0] == "backup":
                 self._backup_config()
-            elif args[0] == 'validate':
+            elif args[0] == "validate":
                 self._validate_config()
             else:
                 self.error(f"Unknown config command: {args[0]}")
@@ -536,11 +536,11 @@ class IntellicrackShell(cmd.Cmd):
         Usage: plugin [list|run|install] [name]
         """
         args = arg.split()
-        if not args or args[0] == 'list':
+        if not args or args[0] == "list":
             self._list_plugins()
-        elif args[0] == 'run' and len(args) > 1:
+        elif args[0] == "run" and len(args) > 1:
             self._run_plugin(args[1])
-        elif args[0] == 'install' and len(args) > 1:
+        elif args[0] == "install" and len(args) > 1:
             self._install_plugin(args[1])
         else:
             self.error("Usage: plugin [list|run|install] [name]")
@@ -598,45 +598,45 @@ class IntellicrackShell(cmd.Cmd):
             from .tutorial_system import create_tutorial_system
 
             # Initialize tutorial system if not exists
-            if not hasattr(self, '_tutorial_system'):
+            if not hasattr(self, "_tutorial_system"):
                 self._tutorial_system = create_tutorial_system(self)
 
-            if not args or args[0] == 'list':
+            if not args or args[0] == "list":
                 self._tutorial_system.list_tutorials()
-            elif args[0] == 'start' and len(args) > 1:
+            elif args[0] == "start" and len(args) > 1:
                 tutorial_name = args[1]
                 if self._tutorial_system.start_tutorial(tutorial_name):
                     self.success(f"Started tutorial: {tutorial_name}")
                 else:
                     self.error(f"Tutorial not found or prerequisites not met: {tutorial_name}")
-            elif args[0] == 'progress':
+            elif args[0] == "progress":
                 self._tutorial_system.show_progress()
-            elif args[0] == 'resume':
+            elif args[0] == "resume":
                 if self._tutorial_system.resume_tutorial():
                     self.success("Resumed tutorial")
                 else:
                     self.info("No tutorial to resume")
-            elif args[0] == 'next':
+            elif args[0] == "next":
                 if self._tutorial_system.next_step():
                     pass  # Step change handled by tutorial system
                 else:
                     self.error("No active tutorial or cannot advance")
-            elif args[0] == 'prev':
+            elif args[0] == "prev":
                 if self._tutorial_system.prev_step():
                     pass  # Step change handled by tutorial system
                 else:
                     self.error("No active tutorial or cannot go back")
-            elif args[0] == 'skip':
+            elif args[0] == "skip":
                 if self._tutorial_system.skip_step():
                     self.info("Step skipped")
                 else:
                     self.error("Cannot skip this step")
-            elif args[0] == 'quit':
+            elif args[0] == "quit":
                 if self._tutorial_system.quit_tutorial():
                     self.info("Tutorial paused")
                 else:
                     self.error("No active tutorial")
-            elif args[0] == 'help':
+            elif args[0] == "help":
                 self._tutorial_system.show_help()
             else:
                 self.error(f"Unknown tutorial command: {args[0]}")
@@ -689,7 +689,7 @@ Let's start by loading a binary file!""",
             self.error("No analysis results. Run 'analyze' first")
             return
 
-        chart_type = arg.strip() or 'summary'
+        chart_type = arg.strip() or "summary"
         self._generate_chart(chart_type)
 
     def do_graph(self, arg):
@@ -716,7 +716,7 @@ Let's start by loading a binary file!""",
 
     def do_clear(self, arg):
         """Clear the screen"""
-        os.system('cls' if os.name == 'nt' else 'clear')
+        os.system("cls" if os.name == "nt" else "clear")
 
     def do_formats(self, arg):
         """List available export formats and their descriptions"""
@@ -731,19 +731,19 @@ Let's start by loading a binary file!""",
                 table.add_column("Use Case", style="green")
 
                 format_info = {
-                    'json': ('Detailed JSON with metadata', 'Complete analysis data'),
-                    'markdown': ('Executive summary (Markdown)', 'Documentation, reports'),
-                    'html': ('Executive summary (HTML)', 'Web viewing, presentations'),
-                    'txt': ('Plain text summary', 'Simple reports, email'),
-                    'csv': ('Comma-separated values', 'Data analysis, Excel import'),
-                    'xml': ('Structured XML report', 'System integration'),
-                    'yaml': ('YAML configuration format', 'Configuration management'),
-                    'xlsx': ('Excel workbook (multiple sheets)', 'Comprehensive reporting'),
-                    'vulnerability': ('Detailed vulnerability report', 'Security assessment')
+                    "json": ("Detailed JSON with metadata", "Complete analysis data"),
+                    "markdown": ("Executive summary (Markdown)", "Documentation, reports"),
+                    "html": ("Executive summary (HTML)", "Web viewing, presentations"),
+                    "txt": ("Plain text summary", "Simple reports, email"),
+                    "csv": ("Comma-separated values", "Data analysis, Excel import"),
+                    "xml": ("Structured XML report", "System integration"),
+                    "yaml": ("YAML configuration format", "Configuration management"),
+                    "xlsx": ("Excel workbook (multiple sheets)", "Comprehensive reporting"),
+                    "vulnerability": ("Detailed vulnerability report", "Security assessment")
                 }
 
                 for fmt in formats:
-                    desc, use_case = format_info.get(fmt, ('Advanced format', 'Specialized use'))
+                    desc, use_case = format_info.get(fmt, ("Advanced format", "Specialized use"))
                     table.add_row(fmt, desc, use_case)
 
                 self.console.print(table)
@@ -767,12 +767,12 @@ Let's start by loading a binary file!""",
 
         command = args[0]
 
-        if command == 'create':
-            filename = args[1] if len(args) > 1 else 'sample_script.txt'
+        if command == "create":
+            filename = args[1] if len(args) > 1 else "sample_script.txt"
             self._create_sample_batch_script(filename)
-        elif command == 'list':
+        elif command == "list":
             self._list_batch_scripts()
-        elif command == 'run':
+        elif command == "run":
             if len(args) < 2:
                 self.error("Usage: script run <script_file>")
                 return
@@ -817,26 +817,26 @@ Let's start by loading a binary file!""",
             # Import project manager
             from .project_manager import ProjectManager
 
-            if not hasattr(self, '_project_manager'):
+            if not hasattr(self, "_project_manager"):
                 self._project_manager = ProjectManager()
 
-            if command == 'create':
+            if command == "create":
                 self._create_project(args[1:])
-            elif command == 'load':
+            elif command == "load":
                 self._load_project(args[1:])
-            elif command == 'save':
+            elif command == "save":
                 self._save_current_project()
-            elif command == 'list':
+            elif command == "list":
                 self._list_projects()
-            elif command == 'import':
+            elif command == "import":
                 self._import_project(args[1:])
-            elif command == 'export':
+            elif command == "export":
                 self._export_project(args[1:])
-            elif command == 'delete':
+            elif command == "delete":
                 self._delete_project(args[1:])
-            elif command == 'add-binary':
+            elif command == "add-binary":
                 self._add_binary_to_project(args[1:])
-            elif command == 'show':
+            elif command == "show":
                 self._show_current_project()
             else:
                 self.error(f"Unknown project command: {command}")
@@ -906,11 +906,11 @@ Let's start by loading a binary file!""",
     def _list_batch_scripts(self):
         """List available batch script files."""
         try:
-            script_extensions = ['.txt', '.bat', '.script', '.intellicrack']
+            script_extensions = [".txt", ".bat", ".script", ".intellicrack"]
             scripts = []
 
             # Look in current directory
-            for file in os.listdir('.'):
+            for file in os.listdir("."):
                 if any(file.endswith(ext) for ext in script_extensions):
                     scripts.append(file)
 
@@ -929,7 +929,7 @@ Let's start by loading a binary file!""",
                     try:
                         stat = os.stat(script)
                         size = f"{stat.st_size} bytes"
-                        modified = time.strftime('%Y-%m-%d %H:%M', time.localtime(stat.st_mtime))
+                        modified = time.strftime("%Y-%m-%d %H:%M", time.localtime(stat.st_mtime))
                         table.add_row(script, size, modified)
                     except OSError:
                         table.add_row(script, "Unknown", "Unknown")
@@ -990,7 +990,7 @@ Let's start by loading a binary file!""",
         try:
             from .ascii_charts import create_analysis_charts
 
-            valid_types = ['summary', 'bar', 'pie', 'vulnerability', 'dashboard']
+            valid_types = ["summary", "bar", "pie", "vulnerability", "dashboard"]
 
             if chart_type not in valid_types:
                 self.error(f"Unknown chart type: {chart_type}")
@@ -999,7 +999,7 @@ Let's start by loading a binary file!""",
 
             self.info(f"Generating {chart_type} chart...")
 
-            if chart_type == 'dashboard' and self.console:
+            if chart_type == "dashboard" and self.console:
                 create_analysis_charts(self.analysis_results, chart_type, use_rich=True)
                 input("\nPress Enter to continue...")
             else:
@@ -1034,7 +1034,7 @@ Let's start by loading a binary file!""",
             return
 
         args = arg.split() if arg else []
-        format_type = args[0] if args else 'html'
+        format_type = args[0] if args else "html"
         output_path = args[1] if len(args) > 1 else f"report_{int(time.time())}.{format_type}"
 
         # Generate comprehensive report with all available data
@@ -1045,9 +1045,9 @@ Let's start by loading a binary file!""",
 
             self.info(f"Generating comprehensive {format_type.upper()} report...")
 
-            if format_type.lower() == 'xlsx':
+            if format_type.lower() == "xlsx":
                 success = exporter.export_excel_workbook(output_path)
-            elif format_type.lower() == 'vulnerability':
+            elif format_type.lower() == "vulnerability":
                 success = exporter.export_vulnerability_report(output_path)
             else:
                 success = exporter.export_executive_summary(output_path, format_type)
@@ -1080,26 +1080,26 @@ Let's start by loading a binary file!""",
 
             # Generate statistics
             stats = {
-                'Categories': len(self.analysis_results),
-                'Total Items': sum(
+                "Categories": len(self.analysis_results),
+                "Total Items": sum(
                     len(data) if isinstance(data, (dict, list)) else 1
                     for data in self.analysis_results.values()
                 )
             }
 
             # Add vulnerability stats if available
-            vuln_data = self.analysis_results.get('vulnerabilities', {})
-            if isinstance(vuln_data, dict) and 'vulnerabilities' in vuln_data:
-                vulns = vuln_data['vulnerabilities']
+            vuln_data = self.analysis_results.get("vulnerabilities", {})
+            if isinstance(vuln_data, dict) and "vulnerabilities" in vuln_data:
+                vulns = vuln_data["vulnerabilities"]
                 if isinstance(vulns, list):
-                    stats['Vulnerabilities'] = len(vulns)
+                    stats["Vulnerabilities"] = len(vulns)
 
                     # Count by severity
                     from collections import Counter
                     severity_counts = Counter()
                     for vuln in vulns:
                         if isinstance(vuln, dict):
-                            severity = vuln.get('severity', 'Unknown')
+                            severity = vuln.get("severity", "Unknown")
                             severity_counts[severity.title()] += 1
 
                     if severity_counts:
@@ -1134,14 +1134,14 @@ Let's start by loading a binary file!""",
         try:
             from .project_manager import ProjectManager
 
-            if not hasattr(self, '_project_manager'):
+            if not hasattr(self, "_project_manager"):
                 self._project_manager = ProjectManager()
 
-            if not args or args[0] == 'info':
+            if not args or args[0] == "info":
                 self._show_workspace_info()
-            elif args[0] == 'clean':
+            elif args[0] == "clean":
                 self._clean_workspace()
-            elif args[0] == 'backup':
+            elif args[0] == "backup":
                 self._backup_workspace()
             else:
                 self.error(f"Unknown workspace command: {args[0]}")
@@ -1167,7 +1167,7 @@ Let's start by loading a binary file!""",
             from .terminal_dashboard import create_dashboard
 
             # Initialize dashboard if not exists
-            if not hasattr(self, '_dashboard'):
+            if not hasattr(self, "_dashboard"):
                 self._dashboard = create_dashboard()
 
                 # Update dashboard with current session info
@@ -1175,12 +1175,12 @@ Let's start by loading a binary file!""",
 
             # Parse arguments
             duration = None
-            basic_mode = '--basic' in args
+            basic_mode = "--basic" in args
 
             for arg_item in args:
                 if arg_item.isdigit():
                     duration = int(arg_item)
-                elif arg_item.replace('.', '').isdigit():
+                elif arg_item.replace(".", "").isdigit():
                     duration = float(arg_item)
 
             # Update dashboard with latest data
@@ -1208,7 +1208,7 @@ Let's start by loading a binary file!""",
         try:
             from .terminal_dashboard import create_dashboard
 
-            if not hasattr(self, '_dashboard'):
+            if not hasattr(self, "_dashboard"):
                 self._dashboard = create_dashboard()
                 self._update_dashboard_session()
 
@@ -1245,19 +1245,19 @@ Let's start by loading a binary file!""",
         """
         args = arg.split() if arg else []
 
-        metric = args[0] if args else 'all'
-        duration = float(args[1]) if len(args) > 1 and args[1].replace('.', '').isdigit() else None
+        metric = args[0] if args else "all"
+        duration = float(args[1]) if len(args) > 1 and args[1].replace(".", "").isdigit() else None
 
         try:
             from .terminal_dashboard import create_dashboard
 
-            if not hasattr(self, '_dashboard'):
+            if not hasattr(self, "_dashboard"):
                 self._dashboard = create_dashboard()
                 self._update_dashboard_session()
 
             self.info(f"Monitoring {metric}... Press Ctrl+C to stop")
 
-            if metric == 'all':
+            if metric == "all":
                 self._dashboard.show_dashboard(duration)
             else:
                 self._monitor_specific_metric(metric, duration)
@@ -1278,7 +1278,7 @@ Let's start by loading a binary file!""",
             while True:
                 self._dashboard._update_system_metrics()
 
-                if metric == 'cpu':
+                if metric == "cpu":
                     if self.console:
                         cpu_bar = self._dashboard._create_progress_bar(
                             self._dashboard.system_metrics.cpu_percent,
@@ -1290,9 +1290,9 @@ Let's start by loading a binary file!""",
                         self.console.clear()
                         self.console.print(panel)
                     else:
-                        print(f"\rCPU: {self._dashboard.system_metrics.cpu_percent:5.1f}%", end='', flush=True)
+                        print(f"\rCPU: {self._dashboard.system_metrics.cpu_percent:5.1f}%", end="", flush=True)
 
-                elif metric == 'memory':
+                elif metric == "memory":
                     if self.console:
                         memory_bar = self._dashboard._create_progress_bar(
                             self._dashboard.system_metrics.memory_percent,
@@ -1304,7 +1304,7 @@ Let's start by loading a binary file!""",
                         self.console.clear()
                         self.console.print(panel)
                     else:
-                        print(f"\rMemory: {self._dashboard.system_metrics.memory_percent:5.1f}%", end='', flush=True)
+                        print(f"\rMemory: {self._dashboard.system_metrics.memory_percent:5.1f}%", end="", flush=True)
 
                 # Check duration
                 if duration and (time.time() - start_time) >= duration:
@@ -1317,26 +1317,26 @@ Let's start by loading a binary file!""",
 
     def _update_dashboard_session(self):
         """Update dashboard with current session information."""
-        if hasattr(self, '_dashboard'):
+        if hasattr(self, "_dashboard"):
             self._dashboard.update_session_info(
                 current_binary=self.current_binary,
-                current_project=getattr(self, '_current_project', None),
+                current_project=getattr(self, "_current_project", None),
                 commands_executed=len(self.history)
             )
 
     def _update_dashboard_stats(self):
         """Update dashboard with current analysis statistics."""
-        if hasattr(self, '_dashboard'):
+        if hasattr(self, "_dashboard"):
             # Calculate analysis stats from current results
             total_vulns = 0
-            if 'vulnerabilities' in self.analysis_results:
-                vuln_data = self.analysis_results['vulnerabilities']
-                if isinstance(vuln_data, dict) and 'vulnerabilities' in vuln_data:
-                    total_vulns = len(vuln_data['vulnerabilities'])
+            if "vulnerabilities" in self.analysis_results:
+                vuln_data = self.analysis_results["vulnerabilities"]
+                if isinstance(vuln_data, dict) and "vulnerabilities" in vuln_data:
+                    total_vulns = len(vuln_data["vulnerabilities"])
 
             # Count active projects
             active_projects = 0
-            if hasattr(self, '_project_manager'):
+            if hasattr(self, "_project_manager"):
                 active_projects = len(self._project_manager.list_projects())
 
             self._dashboard.update_analysis_stats(
@@ -1351,7 +1351,7 @@ Let's start by loading a binary file!""",
             self._dashboard.update_session_info(
                 commands_executed=len(self.history),
                 current_binary=self.current_binary,
-                current_project=getattr(self, '_current_project', None).name if hasattr(self, '_current_project') and self._current_project else None
+                current_project=getattr(self, "_current_project", None).name if hasattr(self, "_current_project") and self._current_project else None
             )
 
     def _show_workspace_info(self):
@@ -1483,7 +1483,7 @@ Let's start by loading a binary file!""",
         # Parse value based on type
         try:
             if option.data_type == bool:
-                value = value_str.lower() in ('true', '1', 'yes', 'on', 'enabled')
+                value = value_str.lower() in ("true", "1", "yes", "on", "enabled")
             elif option.data_type == int:
                 value = int(value_str)
             elif option.data_type == float:
@@ -1531,7 +1531,7 @@ Let's start by loading a binary file!""",
                     return
             else:
                 confirm = input(f"Reset category '{category}' to defaults? (y/N): ").strip().lower()
-                if confirm != 'y':
+                if confirm != "y":
                     print("Reset cancelled")
                     return
 
@@ -1546,7 +1546,7 @@ Let's start by loading a binary file!""",
                     return
             else:
                 confirm = input("Reset ALL configuration to defaults? (y/N): ").strip().lower()
-                if confirm != 'y':
+                if confirm != "y":
                     print("Reset cancelled")
                     return
 
@@ -1630,7 +1630,7 @@ Let's start by loading a binary file!""",
                 return
         else:
             confirm = input(f"Import configuration from '{filename}'? (y/N): ").strip().lower()
-            if confirm != 'y':
+            if confirm != "y":
                 print("Import cancelled")
                 return
 
@@ -1682,11 +1682,11 @@ Let's start by loading a binary file!""",
         """Handle basic configuration as fallback."""
         if not args:
             self._list_config()
-        elif args[0] == 'get' and len(args) > 1:
+        elif args[0] == "get" and len(args) > 1:
             self._get_config(args[1])
-        elif args[0] == 'set' and len(args) > 2:
-            self._set_config(args[1], ' '.join(args[2:]))
-        elif args[0] == 'list':
+        elif args[0] == "set" and len(args) > 2:
+            self._set_config(args[1], " ".join(args[2:]))
+        elif args[0] == "list":
             self._list_config()
         else:
             self.error("Usage: config [get|set|list] [key] [value]")
@@ -1694,7 +1694,7 @@ Let's start by loading a binary file!""",
     def do_exit(self, arg):
         """Exit the interactive shell"""
         # Check if there are unsaved results
-        if self.analysis_results and not getattr(self, '_results_exported', False):
+        if self.analysis_results and not getattr(self, "_results_exported", False):
             if self.console:
                 from rich.prompt import Confirm
                 save_results = Confirm.ask("Export analysis results before exiting?", default=False)
@@ -1714,8 +1714,8 @@ Let's start by loading a binary file!""",
 
                 # Quick summary stats
                 stats = {
-                    'Categories': len(self.analysis_results),
-                    'Total Data Points': sum(
+                    "Categories": len(self.analysis_results),
+                    "Total Data Points": sum(
                         len(data) if isinstance(data, (dict, list)) else 1
                         for data in self.analysis_results.values()
                     )
@@ -1823,7 +1823,7 @@ Let's start by loading a binary file!""",
 
     def _save_current_project(self):
         """Save the current project."""
-        if not hasattr(self, '_current_project') or not self._current_project:
+        if not hasattr(self, "_current_project") or not self._current_project:
             self.error("No project currently loaded")
             return
 
@@ -1900,7 +1900,7 @@ Let's start by loading a binary file!""",
                 return
         else:
             confirm = input(f"Delete project '{name}'? (y/N): ").strip().lower()
-            if confirm != 'y':
+            if confirm != "y":
                 print("Deletion cancelled")
                 return
 
@@ -1908,14 +1908,14 @@ Let's start by loading a binary file!""",
             self.success(f"Deleted project: {name}")
 
             # Clear current project if it was deleted
-            if hasattr(self, '_current_project') and self._current_project and self._current_project.name == name:
+            if hasattr(self, "_current_project") and self._current_project and self._current_project.name == name:
                 self._current_project = None
         else:
             self.error(f"Failed to delete project: {name}")
 
     def _add_binary_to_project(self, args):
         """Add binary to current project."""
-        if not hasattr(self, '_current_project') or not self._current_project:
+        if not hasattr(self, "_current_project") or not self._current_project:
             self.error("No project currently loaded. Use 'project load <name>' first")
             return
 
@@ -1954,7 +1954,7 @@ Let's start by loading a binary file!""",
 
     def _show_current_project(self):
         """Show current project information."""
-        if not hasattr(self, '_current_project') or not self._current_project:
+        if not hasattr(self, "_current_project") or not self._current_project:
             self.info("No project currently loaded")
             return
 
@@ -2008,7 +2008,7 @@ Let's start by loading a binary file!""",
 
     def _format_size(self, size_bytes):
         """Format file size in human readable format."""
-        for unit in ['B', 'KB', 'MB', 'GB']:
+        for unit in ["B", "KB", "MB", "GB"]:
             if size_bytes < 1024.0:
                 return f"{size_bytes:.1f} {unit}"
             size_bytes /= 1024.0
@@ -2024,9 +2024,9 @@ Let's start by loading a binary file!""",
             print(f"❌ Error: {msg}")
 
         # Log to dashboard if available
-        if hasattr(self, '_dashboard'):
+        if hasattr(self, "_dashboard"):
             self._dashboard.log_activity(f"Error: {msg}", "error")
-            self._dashboard.increment_counter('errors_encountered')
+            self._dashboard.increment_counter("errors_encountered")
 
     def success(self, msg):
         """Display success message."""
@@ -2047,26 +2047,26 @@ Let's start by loading a binary file!""",
         try:
             stat = os.stat(self.current_binary)
             return {
-                'path': self.current_binary,
-                'size': stat.st_size,
-                'modified': time.ctime(stat.st_mtime),
-                'type': self._detect_binary_type()
+                "path": self.current_binary,
+                "size": stat.st_size,
+                "modified": time.ctime(stat.st_mtime),
+                "type": self._detect_binary_type()
             }
         except Exception as e:
-            return {'error': str(e)}
+            return {"error": str(e)}
 
     def _detect_binary_type(self) -> str:
         """Detect binary file type."""
-        with open(self.current_binary, 'rb') as f:
+        with open(self.current_binary, "rb") as f:
             magic = f.read(4)
-            if magic[:2] == b'MZ':
-                return 'PE (Windows Executable)'
-            elif magic == b'\x7fELF':
-                return 'ELF (Linux Executable)'
-            elif magic[:4] == b'\xca\xfe\xba\xbe':
-                return 'Mach-O (macOS Executable)'
+            if magic[:2] == b"MZ":
+                return "PE (Windows Executable)"
+            elif magic == b"\x7fELF":
+                return "ELF (Linux Executable)"
+            elif magic[:4] == b"\xca\xfe\xba\xbe":
+                return "Mach-O (macOS Executable)"
             else:
-                return 'Unknown'
+                return "Unknown"
 
     def _display_binary_info(self, info: Dict[str, Any]):
         """Display binary information."""
@@ -2089,7 +2089,7 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
         if not self.console:
             print("Running quick analysis...")
             results = analyze_binary(self.current_binary)
-            self.analysis_results['quick'] = results
+            self.analysis_results["quick"] = results
             print("Analysis complete!")
             return
 
@@ -2126,7 +2126,7 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
             # Run actual analysis
             progress.update(main_task, description="[bold green]Processing results...")
             results = analyze_binary(self.current_binary)
-            self.analysis_results['quick'] = results
+            self.analysis_results["quick"] = results
 
         self.success("Quick analysis complete!")
 
@@ -2135,7 +2135,7 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
         if not self.console:
             print("Running full analysis... This may take a while.")
             results = run_comprehensive_analysis(self.current_binary)
-            self.analysis_results['full'] = results
+            self.analysis_results["full"] = results
             print("Analysis complete!")
             return
 
@@ -2164,7 +2164,7 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
             # Base analysis
             progress.update(main_task, description="Basic binary analysis")
             results = run_comprehensive_analysis(self.current_binary)
-            self.analysis_results['full'] = results
+            self.analysis_results["full"] = results
             progress.advance(main_task, 1)
             time.sleep(0.5)
 
@@ -2187,7 +2187,7 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
             # Vulnerability scanning
             if include_vuln:
                 progress.update(main_task, description="[yellow]Vulnerability scanning - Static analysis")
-                self.analysis_results['vulnerabilities'] = run_vulnerability_scan(self.current_binary)
+                self.analysis_results["vulnerabilities"] = run_vulnerability_scan(self.current_binary)
                 progress.advance(main_task, 1)
                 time.sleep(0.8)
 
@@ -2210,7 +2210,7 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
                 time.sleep(2.0)
 
                 progress.update(main_task, description="[red]Symbolic execution - Constraint solving")
-                self.analysis_results['symbolic'] = run_symbolic_execution(self.current_binary)
+                self.analysis_results["symbolic"] = run_symbolic_execution(self.current_binary)
                 progress.advance(main_task, 1)
                 time.sleep(1.5)
 
@@ -2242,13 +2242,13 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
 
     def _show_vulnerabilities(self):
         """Show vulnerability results."""
-        vulns = self.analysis_results.get('vulnerabilities', {})
+        vulns = self.analysis_results.get("vulnerabilities", {})
 
         # If no vulns from previous analysis, do real-time detection
         if not vulns and self.current_binary:
             self.info("Performing real-time vulnerability detection...")
             vulns = self._detect_vulnerabilities_realtime()
-            self.analysis_results['vulnerabilities'] = vulns
+            self.analysis_results["vulnerabilities"] = vulns
 
         if not vulns:
             self.info("No vulnerabilities detected in this binary")
@@ -2267,17 +2267,17 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
         # Display actual detected vulnerabilities
         for vuln in vulns:
             severity_color = {
-                'HIGH': '[red]HIGH[/red]',
-                'MEDIUM': '[yellow]MEDIUM[/yellow]',
-                'LOW': '[green]LOW[/green]',
-                'INFO': '[blue]INFO[/blue]'
-            }.get(vuln.get('severity', 'INFO'), '[dim]UNKNOWN[/dim]')
+                "HIGH": "[red]HIGH[/red]",
+                "MEDIUM": "[yellow]MEDIUM[/yellow]",
+                "LOW": "[green]LOW[/green]",
+                "INFO": "[blue]INFO[/blue]"
+            }.get(vuln.get("severity", "INFO"), "[dim]UNKNOWN[/dim]")
 
             table.add_row(
                 severity_color,
-                vuln.get('type', 'Unknown'),
-                vuln.get('location', 'N/A'),
-                vuln.get('description', 'No description available')
+                vuln.get("type", "Unknown"),
+                vuln.get("location", "N/A"),
+                vuln.get("description", "No description available")
             )
 
         self.console.print(table)
@@ -2306,46 +2306,46 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
                 scan_results = engine.scan_binary(self.current_binary)
 
                 # Convert to our format
-                issues = scan_results.get('issues', []) if isinstance(scan_results, dict) else scan_results
+                issues = scan_results.get("issues", []) if isinstance(scan_results, dict) else scan_results
                 for issue in issues if isinstance(issues, list) else []:
                     vulns.append({
-                        'severity': issue.get('severity', 'INFO').upper(),
-                        'type': issue.get('category', 'Unknown'),
-                        'location': issue.get('address', 'N/A'),
-                        'description': issue.get('description', 'No description')
+                        "severity": issue.get("severity", "INFO").upper(),
+                        "type": issue.get("category", "Unknown"),
+                        "location": issue.get("address", "N/A"),
+                        "description": issue.get("description", "No description")
                     })
 
             except ImportError:
                 # Fallback to basic analysis
-                with open(self.current_binary, 'rb') as f:
+                with open(self.current_binary, "rb") as f:
                     data = f.read()
 
                 # Check for common vulnerability patterns
                 patterns = [
                     # Buffer overflow indicators
-                    (b'strcpy', 'HIGH', 'Buffer Overflow', 'Unsafe strcpy usage detected'),
-                    (b'strcat', 'HIGH', 'Buffer Overflow', 'Unsafe strcat usage detected'),
-                    (b'gets', 'HIGH', 'Buffer Overflow', 'Dangerous gets() function detected'),
-                    (b'sprintf', 'MEDIUM', 'Buffer Overflow', 'Potentially unsafe sprintf usage'),
+                    (b"strcpy", "HIGH", "Buffer Overflow", "Unsafe strcpy usage detected"),
+                    (b"strcat", "HIGH", "Buffer Overflow", "Unsafe strcat usage detected"),
+                    (b"gets", "HIGH", "Buffer Overflow", "Dangerous gets() function detected"),
+                    (b"sprintf", "MEDIUM", "Buffer Overflow", "Potentially unsafe sprintf usage"),
 
                     # Format string vulnerabilities
-                    (b'printf', 'MEDIUM', 'Format String', 'Direct printf usage detected'),
-                    (b'fprintf', 'MEDIUM', 'Format String', 'Direct fprintf usage detected'),
-                    (b'syslog', 'MEDIUM', 'Format String', 'Syslog format string risk'),
+                    (b"printf", "MEDIUM", "Format String", "Direct printf usage detected"),
+                    (b"fprintf", "MEDIUM", "Format String", "Direct fprintf usage detected"),
+                    (b"syslog", "MEDIUM", "Format String", "Syslog format string risk"),
 
                     # Command injection
-                    (b'system', 'HIGH', 'Command Injection', 'System() call detected'),
-                    (b'popen', 'HIGH', 'Command Injection', 'popen() call detected'),
-                    (b'exec', 'HIGH', 'Command Injection', 'exec() family function detected'),
+                    (b"system", "HIGH", "Command Injection", "System() call detected"),
+                    (b"popen", "HIGH", "Command Injection", "popen() call detected"),
+                    (b"exec", "HIGH", "Command Injection", "exec() family function detected"),
 
                     # Crypto weaknesses
-                    (b'rand', 'LOW', 'Weak Crypto', 'Weak random number generator'),
-                    (b'MD5', 'MEDIUM', 'Weak Crypto', 'Deprecated MD5 hash detected'),
-                    (b'SHA1', 'LOW', 'Weak Crypto', 'SHA1 hash (consider SHA256+)'),
+                    (b"rand", "LOW", "Weak Crypto", "Weak random number generator"),
+                    (b"MD5", "MEDIUM", "Weak Crypto", "Deprecated MD5 hash detected"),
+                    (b"SHA1", "LOW", "Weak Crypto", "SHA1 hash (consider SHA256+)"),
 
                     # Memory issues
-                    (b'malloc', 'INFO', 'Memory Management', 'Dynamic memory allocation'),
-                    (b'free', 'INFO', 'Memory Management', 'Memory deallocation'),
+                    (b"malloc", "INFO", "Memory Management", "Dynamic memory allocation"),
+                    (b"free", "INFO", "Memory Management", "Memory deallocation"),
                 ]
 
                 # Search for patterns
@@ -2357,33 +2357,33 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
                             break
 
                         vulns.append({
-                            'severity': severity,
-                            'type': vuln_type,
-                            'location': f'0x{pos:08x}',
-                            'description': description
+                            "severity": severity,
+                            "type": vuln_type,
+                            "location": f"0x{pos:08x}",
+                            "description": description
                         })
 
                         # Only report first instance of each pattern
                         break
 
                 # Check for missing security features
-                if not any(p in data for p in [b'__stack_chk_fail', b'__fortify_fail']):
+                if not any(p in data for p in [b"__stack_chk_fail", b"__fortify_fail"]):
                     vulns.append({
-                        'severity': 'MEDIUM',
-                        'type': 'Missing Protection',
-                        'location': 'Binary',
-                        'description': 'No stack canary protection detected'
+                        "severity": "MEDIUM",
+                        "type": "Missing Protection",
+                        "location": "Binary",
+                        "description": "No stack canary protection detected"
                     })
 
                 # Check for ASLR/PIE
-                if data[:4] == b'\x7fELF':  # ELF binary
-                    e_type = int.from_bytes(data[16:18], 'little')
+                if data[:4] == b"\x7fELF":  # ELF binary
+                    e_type = int.from_bytes(data[16:18], "little")
                     if e_type != 3:  # ET_DYN
                         vulns.append({
-                            'severity': 'MEDIUM',
-                            'type': 'Missing Protection',
-                            'location': 'Binary',
-                            'description': 'Position Independent Executable (PIE) not enabled'
+                            "severity": "MEDIUM",
+                            "type": "Missing Protection",
+                            "location": "Binary",
+                            "description": "Position Independent Executable (PIE) not enabled"
                         })
 
         except Exception as e:
@@ -2393,28 +2393,28 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
 
     def _calculate_vuln_stats(self, vulns):
         """Calculate vulnerability statistics."""
-        stats = {'total': len(vulns), 'high': 0, 'medium': 0, 'low': 0, 'info': 0}
+        stats = {"total": len(vulns), "high": 0, "medium": 0, "low": 0, "info": 0}
         for vuln in vulns:
-            severity = vuln.get('severity', 'INFO').upper()
-            if severity == 'HIGH':
-                stats['high'] += 1
-            elif severity == 'MEDIUM':
-                stats['medium'] += 1
-            elif severity == 'LOW':
-                stats['low'] += 1
+            severity = vuln.get("severity", "INFO").upper()
+            if severity == "HIGH":
+                stats["high"] += 1
+            elif severity == "MEDIUM":
+                stats["medium"] += 1
+            elif severity == "LOW":
+                stats["low"] += 1
             else:
-                stats['info'] += 1
+                stats["info"] += 1
         return stats
 
     def _export_basic(self, format_type: str, output_path: str):
         """Basic export fallback when advanced export unavailable."""
-        if format_type == 'json':
+        if format_type == "json":
             self._export_json(output_path)
-        elif format_type == 'html':
+        elif format_type == "html":
             self._export_html(output_path)
-        elif format_type == 'pdf':
+        elif format_type == "pdf":
             self._export_pdf(output_path)
-        elif format_type == 'markdown':
+        elif format_type == "markdown":
             self._export_markdown(output_path)
         else:
             self.error(f"Format '{format_type}' not supported in basic mode")
@@ -2423,14 +2423,14 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
         """Export results as JSON."""
         try:
             export_data = {
-                'metadata': {
-                    'export_time': time.strftime('%Y-%m-%d %H:%M:%S'),
-                    'binary_path': self.current_binary,
-                    'tool': 'Intellicrack CLI'
+                "metadata": {
+                    "export_time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "binary_path": self.current_binary,
+                    "tool": "Intellicrack CLI"
                 },
-                'analysis_results': self.analysis_results
+                "analysis_results": self.analysis_results
             }
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, default=str, ensure_ascii=False)
             self.success(f"Exported to {output_path}")
         except Exception as e:
@@ -2463,7 +2463,7 @@ Let's start by loading a binary file!""",
             print("Running vulnerability scan...")
             try:
                 results = run_vulnerability_scan(self.current_binary)
-                self.analysis_results['vulnerabilities'] = results
+                self.analysis_results["vulnerabilities"] = results
                 print("Vulnerability scan complete!")
             except Exception as e:
                 print(f"Vulnerability scan failed: {e}")
@@ -2501,11 +2501,11 @@ Let's start by loading a binary file!""",
                         progress.update(task, advance=1)
 
                 results = run_vulnerability_scan(self.current_binary)
-                self.analysis_results['vulnerabilities'] = results
+                self.analysis_results["vulnerabilities"] = results
 
                 # Show scan results summary
                 if results and isinstance(results, dict):
-                    vuln_count = len(results.get('vulnerabilities', []))
+                    vuln_count = len(results.get("vulnerabilities", []))
                     if vuln_count > 0:
                         self.console.print(f"[red]Found {vuln_count} potential vulnerabilities[/red]")
                     else:
@@ -2521,7 +2521,7 @@ Let's start by loading a binary file!""",
             print("Running symbolic execution...")
             try:
                 results = run_symbolic_execution(self.current_binary)
-                self.analysis_results['symbolic'] = results
+                self.analysis_results["symbolic"] = results
                 print("Symbolic execution complete!")
             except Exception as e:
                 print(f"Symbolic execution failed: {e}")
@@ -2568,12 +2568,12 @@ Let's start by loading a binary file!""",
                             progress.update(task, advance=1)
 
                 results = run_symbolic_execution(self.current_binary)
-                self.analysis_results['symbolic'] = results
+                self.analysis_results["symbolic"] = results
 
                 # Show execution results summary
                 if results and isinstance(results, dict):
-                    paths_found = results.get('paths_explored', 0)
-                    constraints = results.get('constraints_generated', 0)
+                    paths_found = results.get("paths_explored", 0)
+                    constraints = results.get("constraints_generated", 0)
                     self.console.print(f"[magenta]Explored {paths_found} paths, generated {constraints} constraints[/magenta]")
 
                 self.success("Symbolic execution complete!")
@@ -2588,7 +2588,7 @@ Let's start by loading a binary file!""",
                 from intellicrack.core.analysis.cfg_explorer import CFGExplorer
                 explorer = CFGExplorer()
                 results = explorer.analyze(self.current_binary)
-                self.analysis_results['cfg'] = results
+                self.analysis_results["cfg"] = results
                 print("CFG analysis complete!")
             except Exception as e:
                 print(f"CFG analysis failed: {e}")
@@ -2610,7 +2610,7 @@ Let's start by loading a binary file!""",
                 from intellicrack.core.analysis.cfg_explorer import CFGExplorer
                 explorer = CFGExplorer()
                 results = explorer.analyze(self.current_binary)
-                self.analysis_results['cfg'] = results
+                self.analysis_results["cfg"] = results
                 self.success("CFG analysis complete!")
             except Exception as e:
                 self.error(f"CFG analysis failed: {e}")
@@ -2649,8 +2649,8 @@ Let's start by loading a binary file!""",
 
     def _show_protections(self):
         """Show detected protections."""
-        protections = self.analysis_results.get('protections',
-                     self.analysis_results.get('quick', {}).get('protections', {}))
+        protections = self.analysis_results.get("protections",
+                     self.analysis_results.get("quick", {}).get("protections", {}))
 
         if not protections:
             self.info("No protection data available")
@@ -2669,13 +2669,13 @@ Let's start by loading a binary file!""",
 
         # Common protections to check
         protection_map = {
-            'aslr': ('ASLR', 'Address Space Layout Randomization'),
-            'dep': ('DEP/NX', 'Data Execution Prevention'),
-            'canary': ('Stack Canary', 'Stack buffer overflow protection'),
-            'pie': ('PIE', 'Position Independent Executable'),
-            'fortify': ('FORTIFY', 'Fortified functions'),
-            'relro': ('RELRO', 'Relocation Read-Only'),
-            'seh': ('SEH', 'Structured Exception Handler')
+            "aslr": ("ASLR", "Address Space Layout Randomization"),
+            "dep": ("DEP/NX", "Data Execution Prevention"),
+            "canary": ("Stack Canary", "Stack buffer overflow protection"),
+            "pie": ("PIE", "Position Independent Executable"),
+            "fortify": ("FORTIFY", "Fortified functions"),
+            "relro": ("RELRO", "Relocation Read-Only"),
+            "seh": ("SEH", "Structured Exception Handler")
         }
 
         for key, (name, desc) in protection_map.items():
@@ -2692,8 +2692,8 @@ Let's start by loading a binary file!""",
 
     def _show_strings(self):
         """Show extracted strings."""
-        strings = self.analysis_results.get('strings',
-                 self.analysis_results.get('quick', {}).get('strings', []))
+        strings = self.analysis_results.get("strings",
+                 self.analysis_results.get("quick", {}).get("strings", []))
 
         if not strings:
             self.info("No string data available")
@@ -2711,7 +2711,7 @@ Let's start by loading a binary file!""",
         interesting = [
             s for s in strings
             if len(s) > 5 and any(kw in s.lower() for kw in
-                ['password', 'key', 'license', 'serial', 'crack', 'patch', 'http', 'api'])
+                ["password", "key", "license", "serial", "crack", "patch", "http", "api"])
         ]
 
         table = Table(title="📝 Extracted Strings")
@@ -2722,11 +2722,11 @@ Let's start by loading a binary file!""",
         # Categorize strings
         for i, s in enumerate(interesting[:30], 1):
             category = "General"
-            if any(kw in s.lower() for kw in ['password', 'key', 'license', 'serial']):
+            if any(kw in s.lower() for kw in ["password", "key", "license", "serial"]):
                 category = "Security"
-            elif any(kw in s.lower() for kw in ['http', 'https', 'ftp', 'api']):
+            elif any(kw in s.lower() for kw in ["http", "https", "ftp", "api"]):
                 category = "Network"
-            elif any(kw in s.lower() for kw in ['crack', 'patch', 'keygen']):
+            elif any(kw in s.lower() for kw in ["crack", "patch", "keygen"]):
                 category = "Protection"
 
             table.add_row(str(i), s[:80] + "..." if len(s) > 80 else s, category)
@@ -2737,8 +2737,8 @@ Let's start by loading a binary file!""",
 
     def _show_imports(self):
         """Show imported functions."""
-        imports = self.analysis_results.get('imports',
-                 self.analysis_results.get('quick', {}).get('imports', {}))
+        imports = self.analysis_results.get("imports",
+                 self.analysis_results.get("quick", {}).get("imports", {}))
 
         if not imports:
             self.info("No import data available")
@@ -2758,10 +2758,10 @@ Let's start by loading a binary file!""",
 
         # Categorize DLLs
         categories = {
-            'System': ['kernel32.dll', 'ntdll.dll', 'user32.dll', 'advapi32.dll'],
-            'Network': ['ws2_32.dll', 'wininet.dll', 'winhttp.dll'],
-            'Crypto': ['crypt32.dll', 'bcrypt.dll'],
-            'Other': []
+            "System": ["kernel32.dll", "ntdll.dll", "user32.dll", "advapi32.dll"],
+            "Network": ["ws2_32.dll", "wininet.dll", "winhttp.dll"],
+            "Crypto": ["crypt32.dll", "bcrypt.dll"],
+            "Other": []
         }
 
         categorized = {cat: {} for cat in categories}
@@ -2769,12 +2769,12 @@ Let's start by loading a binary file!""",
         for dll, funcs in imports.items():
             found = False
             for cat, dlls in categories.items():
-                if cat != 'Other' and dll.lower() in dlls:
+                if cat != "Other" and dll.lower() in dlls:
                     categorized[cat][dll] = funcs
                     found = True
                     break
             if not found:
-                categorized['Other'][dll] = funcs
+                categorized["Other"][dll] = funcs
 
         for category, dlls in categorized.items():
             if dlls:
@@ -2785,7 +2785,7 @@ Let's start by loading a binary file!""",
                     interesting_funcs = [
                         f for f in funcs
                         if any(kw in f.lower() for kw in
-                            ['create', 'open', 'read', 'write', 'crypt', 'protect', 'virtual'])
+                            ["create", "open", "read", "write", "crypt", "protect", "virtual"])
                     ]
                     for func in interesting_funcs[:5]:
                         dll_branch.add(f"[green]{func}[/green]")
@@ -2805,7 +2805,7 @@ Let's start by loading a binary file!""",
                 self.analysis_results
             )
 
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 f.write(html_content)
 
             self.success(f"Exported HTML report to {output_path}")
@@ -2855,7 +2855,7 @@ Let's start by loading a binary file!""",
 
                 content += "\n"
 
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 f.write(content)
 
             self.success(f"Exported Markdown report to {output_path}")
@@ -2864,11 +2864,11 @@ Let's start by loading a binary file!""",
 
     def _suggest_patches(self):
         """Suggest possible patches based on analysis."""
-        if 'vulnerabilities' not in self.analysis_results:
+        if "vulnerabilities" not in self.analysis_results:
             self.error("Run vulnerability analysis first")
             return
 
-        vulns = self.analysis_results.get('vulnerabilities', {})
+        vulns = self.analysis_results.get("vulnerabilities", {})
 
         # Generate real patch suggestions based on actual vulnerabilities
         suggestions = self._generate_patch_suggestions(vulns)
@@ -2908,13 +2908,13 @@ Let's start by loading a binary file!""",
         # Check for specific vulnerability types and suggest fixes
         if isinstance(vulns, dict):
             # Process vulnerability list
-            vuln_list = vulns.get('vulnerabilities', [])
+            vuln_list = vulns.get("vulnerabilities", [])
             if isinstance(vuln_list, list):
                 for vuln in vuln_list:
                     if isinstance(vuln, dict):
-                        vuln_type = vuln.get('type', '')
-                        location = vuln.get('location', vuln.get('address', 'Unknown'))
-                        severity = vuln.get('severity', vuln.get('risk', 'MEDIUM')).upper()
+                        vuln_type = vuln.get("type", "")
+                        location = vuln.get("location", vuln.get("address", "Unknown"))
+                        severity = vuln.get("severity", vuln.get("risk", "MEDIUM")).upper()
 
                         # Generate fix based on vulnerability type
                         fix = self._get_fix_for_vulnerability(vuln_type, vuln)
@@ -2923,19 +2923,19 @@ Let's start by loading a binary file!""",
                             suggestions.append((severity, str(location), vuln_type, fix))
 
             # Check for patterns in analysis results
-            if 'quick' in self.analysis_results:
-                quick = self.analysis_results['quick']
+            if "quick" in self.analysis_results:
+                quick = self.analysis_results["quick"]
 
                 # Check for dangerous imports
-                imports = quick.get('imports', {})
+                imports = quick.get("imports", {})
                 dangerous_funcs = {
-                    'strcpy': ('HIGH', 'Buffer Overflow Risk', 'Replace with strncpy or strcpy_s'),
-                    'strcat': ('HIGH', 'Buffer Overflow Risk', 'Replace with strncat or strcat_s'),
-                    'gets': ('CRITICAL', 'Buffer Overflow Risk', 'Replace with fgets or gets_s'),
-                    'sprintf': ('MEDIUM', 'Format String Risk', 'Replace with snprintf'),
-                    'vsprintf': ('MEDIUM', 'Format String Risk', 'Replace with vsnprintf'),
-                    'scanf': ('MEDIUM', 'Input Validation Risk', 'Add length specifiers or use safer alternatives'),
-                    'rand': ('LOW', 'Weak Random Number', 'Use cryptographic RNG (CryptGenRandom on Windows)')
+                    "strcpy": ("HIGH", "Buffer Overflow Risk", "Replace with strncpy or strcpy_s"),
+                    "strcat": ("HIGH", "Buffer Overflow Risk", "Replace with strncat or strcat_s"),
+                    "gets": ("CRITICAL", "Buffer Overflow Risk", "Replace with fgets or gets_s"),
+                    "sprintf": ("MEDIUM", "Format String Risk", "Replace with snprintf"),
+                    "vsprintf": ("MEDIUM", "Format String Risk", "Replace with vsnprintf"),
+                    "scanf": ("MEDIUM", "Input Validation Risk", "Add length specifiers or use safer alternatives"),
+                    "rand": ("LOW", "Weak Random Number", "Use cryptographic RNG (CryptGenRandom on Windows)")
                 }
 
                 for dll, funcs in imports.items():
@@ -2945,37 +2945,37 @@ Let's start by loading a binary file!""",
                             suggestions.append((severity, f"{dll}!{func}", issue, fix))
 
                 # Check for missing security features
-                pe_header = quick.get('pe_header', {})
+                pe_header = quick.get("pe_header", {})
                 if pe_header:
                     # Check for DEP
-                    if not pe_header.get('nx_compatible', True):
+                    if not pe_header.get("nx_compatible", True):
                         suggestions.append((
-                            'HIGH',
-                            'PE Header',
-                            'DEP Not Enabled',
-                            'Enable DEP/NX bit in PE header flags'
+                            "HIGH",
+                            "PE Header",
+                            "DEP Not Enabled",
+                            "Enable DEP/NX bit in PE header flags"
                         ))
 
                     # Check for ASLR
-                    if not pe_header.get('dynamic_base', True):
+                    if not pe_header.get("dynamic_base", True):
                         suggestions.append((
-                            'MEDIUM',
-                            'PE Header',
-                            'ASLR Not Enabled',
-                            'Enable DYNAMICBASE flag for ASLR support'
+                            "MEDIUM",
+                            "PE Header",
+                            "ASLR Not Enabled",
+                            "Enable DYNAMICBASE flag for ASLR support"
                         ))
 
                     # Check for SafeSEH
-                    if pe_header.get('architecture', '') == 'x86' and not pe_header.get('safe_seh', True):
+                    if pe_header.get("architecture", "") == "x86" and not pe_header.get("safe_seh", True):
                         suggestions.append((
-                            'MEDIUM',
-                            'PE Header',
-                            'SafeSEH Not Enabled',
-                            'Rebuild with /SAFESEH linker flag'
+                            "MEDIUM",
+                            "PE Header",
+                            "SafeSEH Not Enabled",
+                            "Rebuild with /SAFESEH linker flag"
                         ))
 
         # Sort by priority
-        priority_order = {'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3}
+        priority_order = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
         suggestions.sort(key=lambda x: priority_order.get(x[0], 99))
 
         return suggestions[:10]  # Return top 10 suggestions
@@ -2985,28 +2985,28 @@ Let's start by loading a binary file!""",
         vuln_type_lower = vuln_type.lower()
 
         fix_map = {
-            'buffer overflow': 'Add bounds checking or use safer string functions',
-            'stack overflow': 'Increase stack size or reduce local variable usage',
-            'heap overflow': 'Validate allocation sizes and use heap protection',
-            'use after free': 'Set pointers to NULL after free and check before use',
-            'double free': 'Track freed pointers and prevent duplicate frees',
-            'format string': 'Use format string literals or validate user input',
-            'integer overflow': 'Add overflow checks before arithmetic operations',
-            'null pointer': 'Add NULL checks before pointer dereference',
-            'race condition': 'Add proper synchronization (mutexes/critical sections)',
-            'path traversal': 'Sanitize file paths and restrict directory access',
-            'command injection': 'Validate and escape shell command arguments',
-            'sql injection': 'Use parameterized queries instead of string concatenation',
-            'weak crypto': 'Use strong cryptographic algorithms (AES, SHA-256+)',
-            'hardcoded key': 'Move keys to secure storage or use key derivation',
-            'weak random': 'Replace with cryptographically secure RNG'
+            "buffer overflow": "Add bounds checking or use safer string functions",
+            "stack overflow": "Increase stack size or reduce local variable usage",
+            "heap overflow": "Validate allocation sizes and use heap protection",
+            "use after free": "Set pointers to NULL after free and check before use",
+            "double free": "Track freed pointers and prevent duplicate frees",
+            "format string": "Use format string literals or validate user input",
+            "integer overflow": "Add overflow checks before arithmetic operations",
+            "null pointer": "Add NULL checks before pointer dereference",
+            "race condition": "Add proper synchronization (mutexes/critical sections)",
+            "path traversal": "Sanitize file paths and restrict directory access",
+            "command injection": "Validate and escape shell command arguments",
+            "sql injection": "Use parameterized queries instead of string concatenation",
+            "weak crypto": "Use strong cryptographic algorithms (AES, SHA-256+)",
+            "hardcoded key": "Move keys to secure storage or use key derivation",
+            "weak random": "Replace with cryptographically secure RNG"
         }
 
         # Check for matches
         for pattern, fix in fix_map.items():
             if pattern in vuln_type_lower:
                 # Add specific details if available
-                if 'function' in vuln_details:
+                if "function" in vuln_details:
                     fix = f"{fix} in function {vuln_details['function']}"
                 return fix
 
@@ -3020,20 +3020,20 @@ Let's start by loading a binary file!""",
         patches = []
         for priority, location, issue, fix in suggestions:
             patches.append({
-                'priority': priority,
-                'location': location,
-                'issue': issue,
-                'fix': fix,
-                'status': 'pending'
+                "priority": priority,
+                "location": location,
+                "issue": issue,
+                "fix": fix,
+                "status": "pending"
             })
 
         patch_data = {
-            'binary': self.current_binary,
-            'created': time.strftime('%Y-%m-%d %H:%M:%S'),
-            'patches': patches
+            "binary": self.current_binary,
+            "created": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "patches": patches
         }
 
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(patch_data, f, indent=2)
 
         self.success(f"Created patch file: {filename}")
@@ -3046,7 +3046,7 @@ Let's start by loading a binary file!""",
 
         try:
             # Read patch file
-            with open(patch_file, 'r') as f:
+            with open(patch_file, "r") as f:
                 patch_data = json.load(f)
 
             self.info(f"Applying patch from {patch_file}")
@@ -3078,16 +3078,16 @@ Let's start by loading a binary file!""",
         description = Prompt.ask("Description", default="Custom patch")
 
         patch = {
-            'offset': offset,
-            'original': original,
-            'replacement': replacement,
-            'description': description,
-            'created': time.strftime('%Y-%m-%d %H:%M:%S')
+            "offset": offset,
+            "original": original,
+            "replacement": replacement,
+            "description": description,
+            "created": time.strftime("%Y-%m-%d %H:%M:%S")
         }
 
         # Save patch
         filename = Prompt.ask("Save patch as", default="patch.json")
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(patch, f, indent=2)
 
         self.success(f"Patch saved to {filename}")
@@ -3102,17 +3102,17 @@ Let's start by loading a binary file!""",
                 for key, value in data.items():
                     if pattern_lower in str(key).lower() or pattern_lower in str(value).lower():
                         results.append({
-                            'category': category,
-                            'location': key,
-                            'match': str(value)[:100]
+                            "category": category,
+                            "location": key,
+                            "match": str(value)[:100]
                         })
             elif isinstance(data, list):
                 for i, item in enumerate(data):
                     if pattern_lower in str(item).lower():
                         results.append({
-                            'category': category,
-                            'location': f"Index {i}",
-                            'match': str(item)[:100]
+                            "category": category,
+                            "location": f"Index {i}",
+                            "match": str(item)[:100]
                         })
 
         return results
@@ -3145,12 +3145,12 @@ Let's start by loading a binary file!""",
             table.add_column("Match", style="bold")
 
             # Compare basic attributes
-            current = self.analysis_results.get('quick', {})
+            current = self.analysis_results.get("quick", {})
 
             attributes = [
-                ('File Size', current.get('size', 'N/A'), other_results.get('size', 'N/A')),
-                ('Architecture', current.get('arch', 'N/A'), other_results.get('arch', 'N/A')),
-                ('Entry Point', current.get('entry_point', 'N/A'), other_results.get('entry_point', 'N/A'))
+                ("File Size", current.get("size", "N/A"), other_results.get("size", "N/A")),
+                ("Architecture", current.get("arch", "N/A"), other_results.get("arch", "N/A")),
+                ("Entry Point", current.get("entry_point", "N/A"), other_results.get("entry_point", "N/A"))
             ]
 
             for attr, val1, val2 in attributes:
@@ -3192,8 +3192,8 @@ Let's start by loading a binary file!""",
         """Set a configuration value."""
         try:
             # Try to parse value as appropriate type
-            if value.lower() in ('true', 'false'):
-                parsed_value = value.lower() == 'true'
+            if value.lower() in ("true", "false"):
+                parsed_value = value.lower() == "true"
             elif value.isdigit():
                 parsed_value = int(value)
             else:
@@ -3229,11 +3229,11 @@ Let's start by loading a binary file!""",
             table.add_column("Status", style="bold")
 
             for plugin in plugins:
-                status = "[green]Active[/green]" if plugin.get('active') else "[dim]Inactive[/dim]"
+                status = "[green]Active[/green]" if plugin.get("active") else "[dim]Inactive[/dim]"
                 table.add_row(
-                    plugin['name'],
-                    plugin.get('version', 'N/A'),
-                    plugin.get('description', 'No description'),
+                    plugin["name"],
+                    plugin.get("version", "N/A"),
+                    plugin.get("description", "No description"),
                     status
                 )
 
@@ -3258,7 +3258,7 @@ Let's start by loading a binary file!""",
             result = plugin_system.run_plugin(plugin_name, self.current_binary)  # pylint: disable=assignment-from-no-return
 
             if result is not None:
-                self.analysis_results[f'plugin_{plugin_name}'] = result
+                self.analysis_results[f"plugin_{plugin_name}"] = result
                 self.success(f"Plugin {plugin_name} completed successfully")
             else:
                 # Plugin executed but returned no result (which may be normal)
@@ -3291,7 +3291,7 @@ Let's start by loading a binary file!""",
     def _execute_batch_script(self, script_path: str):
         """Execute a batch script file with commands."""
         try:
-            with open(script_path, 'r', encoding='utf-8') as f:
+            with open(script_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             self.info(f"Executing batch script: {script_path}")
@@ -3314,7 +3314,7 @@ Let's start by loading a binary file!""",
                         line = line.strip()
 
                         # Skip empty lines and comments
-                        if not line or line.startswith('#'):
+                        if not line or line.startswith("#"):
                             progress.advance(task, 1)
                             continue
 
@@ -3338,7 +3338,7 @@ Let's start by loading a binary file!""",
                 for line_num, line in enumerate(lines, 1):
                     line = line.strip()
 
-                    if not line or line.startswith('#'):
+                    if not line or line.startswith("#"):
                         continue
 
                     print(f"Executing: {line}")
@@ -3365,23 +3365,23 @@ Let's start by loading a binary file!""",
             self.history.append((line, time.strftime("%Y-%m-%d %H:%M:%S")))
 
             # Update dashboard if available
-            if hasattr(self, '_dashboard'):
+            if hasattr(self, "_dashboard"):
                 command = line.split()[0] if line.strip() else ""
-                self._dashboard.increment_counter('commands_executed')
+                self._dashboard.increment_counter("commands_executed")
 
                 # Log specific activities
-                if command == 'analyze':
+                if command == "analyze":
                     self._dashboard.log_activity(f"Started analysis: {command}", "info")
-                elif command == 'load':
+                elif command == "load":
                     binary_name = line.split()[1] if len(line.split()) > 1 else "binary"
                     self._dashboard.log_activity(f"Loaded binary: {binary_name}", "success")
-                elif command == 'export':
+                elif command == "export":
                     self._dashboard.log_activity("Exported analysis results", "success")
-                    self._dashboard.increment_counter('exports_created')
-                elif command == 'ai':
+                    self._dashboard.increment_counter("exports_created")
+                elif command == "ai":
                     self._dashboard.log_activity("AI query executed", "info")
-                    self._dashboard.increment_counter('ai_queries')
-                elif command in ['project', 'config', 'hex', 'patch']:
+                    self._dashboard.increment_counter("ai_queries")
+                elif command in ["project", "config", "hex", "patch"]:
                     self._dashboard.log_activity(f"Executed {command} command", "info")
 
         return line
@@ -3425,7 +3425,7 @@ show summary
 """
 
         try:
-            with open(filename, 'w', encoding='utf-8') as f:
+            with open(filename, "w", encoding="utf-8") as f:
                 f.write(sample_script)
             self.success(f"Sample batch script created: {filename}")
         except Exception as e:
@@ -3475,8 +3475,8 @@ show summary
         layout["header"].update(Panel(header_content, border_style="blue"))
 
         # Left column - vulnerabilities
-        vuln_data = self.analysis_results.get('vulnerabilities', {})
-        vuln_count = len(vuln_data.get('vulnerabilities', [])) if isinstance(vuln_data, dict) else 0
+        vuln_data = self.analysis_results.get("vulnerabilities", {})
+        vuln_count = len(vuln_data.get("vulnerabilities", [])) if isinstance(vuln_data, dict) else 0
         vuln_panel = Panel(f"[red]Found {vuln_count} vulnerabilities[/red]", title="Security", border_style="red")
         layout["left"].update(vuln_panel)
 
@@ -3503,17 +3503,17 @@ show summary
         panels = []
 
         # Vulnerabilities panel
-        vuln_data = self.analysis_results.get('vulnerabilities', {})
-        vuln_count = len(vuln_data.get('vulnerabilities', [])) if isinstance(vuln_data, dict) else 0
+        vuln_data = self.analysis_results.get("vulnerabilities", {})
+        vuln_count = len(vuln_data.get("vulnerabilities", [])) if isinstance(vuln_data, dict) else 0
         panels.append(Panel(f"[red]{vuln_count}[/red]\nvulnerabilities", title="Security Issues", border_style="red"))
 
         # Protection analysis panel
-        protection_data = self.analysis_results.get('protections', {})
+        protection_data = self.analysis_results.get("protections", {})
         protection_count = len(protection_data) if isinstance(protection_data, (list, dict)) else 0
         panels.append(Panel(f"[yellow]{protection_count}[/yellow]\nprotections", title="Protections", border_style="yellow"))
 
         # String analysis panel
-        strings_data = self.analysis_results.get('strings', [])
+        strings_data = self.analysis_results.get("strings", [])
         string_count = len(strings_data) if isinstance(strings_data, list) else 0
         panels.append(Panel(f"[blue]{string_count}[/blue]\nstrings found", title="String Analysis", border_style="blue"))
 
@@ -3585,10 +3585,10 @@ def main():
         main()
     except Exception as e:
         print(f"Error: {e}")
-        if '--debug' in sys.argv:
+        if "--debug" in sys.argv:
             import traceback
             traceback.print_exc()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

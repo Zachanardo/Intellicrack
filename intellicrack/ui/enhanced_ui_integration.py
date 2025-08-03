@@ -378,7 +378,7 @@ class EnhancedAnalysisDashboard(QWidget):
             self, "Save Report", "", "Text Files (*.txt);;All Files (*)"
         )
         if file_path:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(self.report_editor.toPlainText())
             self.add_activity(f"Saved report: {os.path.basename(file_path)}")
 
@@ -579,7 +579,7 @@ class EnhancedMainWindow(QMainWindow):
 
     def _save_results(self):
         """Save analysis results"""
-        if not hasattr(self.dashboard.r2_widget.results_viewer, 'results_data'):
+        if not hasattr(self.dashboard.r2_widget.results_viewer, "results_data"):
             QMessageBox.information(self, "No Results", "No analysis results to save")
             return
 
@@ -639,7 +639,7 @@ def integrate_enhanced_ui_with_existing_app(existing_app):
     """Integrate enhanced UI features with existing application"""
     try:
         # Add enhanced dashboard if main app has tab widget
-        if hasattr(existing_app, 'tab_widget'):
+        if hasattr(existing_app, "tab_widget"):
             enhanced_dashboard = EnhancedAnalysisDashboard(existing_app)
             existing_app.tab_widget.addTab(enhanced_dashboard, "Enhanced Dashboard")
 
@@ -647,11 +647,11 @@ def integrate_enhanced_ui_with_existing_app(existing_app):
             existing_app.enhanced_dashboard = enhanced_dashboard
 
             # Connect binary path updates
-            if hasattr(existing_app, 'binary_path'):
+            if hasattr(existing_app, "binary_path"):
                 enhanced_dashboard.r2_widget.set_binary_path(existing_app.binary_path)
 
         # Add enhanced menu items if main app has menu bar
-        if hasattr(existing_app, 'menuBar'):
+        if hasattr(existing_app, "menuBar"):
             enhanced_menu = existing_app.menuBar().addMenu("Enhanced Analysis")
 
             # Add enhanced analysis actions
@@ -673,8 +673,8 @@ def integrate_enhanced_ui_with_existing_app(existing_app):
 
 
 __all__ = [
-    'EnhancedAnalysisDashboard',
-    'EnhancedMainWindow',
-    'create_enhanced_application',
-    'integrate_enhanced_ui_with_existing_app'
+    "EnhancedAnalysisDashboard",
+    "EnhancedMainWindow",
+    "create_enhanced_application",
+    "integrate_enhanced_ui_with_existing_app"
 ]

@@ -57,18 +57,18 @@ def find_process_by_name(process_name: str, exact_match: bool = False) -> Option
 
     try:
         target_name = process_name.lower()
-        for proc in psutil.process_iter(['pid', 'name']):
+        for proc in psutil.process_iter(["pid", "name"]):
             try:
-                if proc.info['name']:
-                    proc_name_lower = proc.info['name'].lower()
+                if proc.info["name"]:
+                    proc_name_lower = proc.info["name"].lower()
                     if exact_match:
                         if proc_name_lower == target_name:
                             logger.info(f"Found exact process match: {process_name} with PID: {proc.info['pid']}")
-                            return proc.info['pid']
+                            return proc.info["pid"]
                     else:
                         if target_name in proc_name_lower:
                             logger.info(f"Found process match: {process_name} with PID: {proc.info['pid']}")
-                            return proc.info['pid']
+                            return proc.info["pid"]
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                 logger.error("Error in process_utils: %s", e)
                 continue
@@ -93,7 +93,7 @@ def get_all_processes(fields: Optional[List[str]] = None) -> List[Dict[str, Any]
         return []
 
     if fields is None:
-        fields = ['pid', 'name', 'cpu_percent', 'memory_percent']
+        fields = ["pid", "name", "cpu_percent", "memory_percent"]
 
     processes = []
     try:
@@ -124,7 +124,7 @@ def find_processes_matching_names(target_names: List[str]) -> List[str]:
         return []
 
     try:
-        running_processes = [p.info['name'] for p in psutil.process_iter(['name']) if p.info['name']]
+        running_processes = [p.info["name"] for p in psutil.process_iter(["name"]) if p.info["name"]]
         target_names_lower = [name.lower() for name in target_names]
 
         matches = []
@@ -148,12 +148,12 @@ def _get_system_path(path_type: str) -> Optional[str]:
     except ImportError as e:
         logger.error("Import error in process_utils: %s", e)
         # Fallback
-        if path_type == 'windows_system':
-            return os.environ.get('SystemRoot', r'C:\Windows')
-        elif path_type == 'windows_system32':
-            return os.path.join(os.environ.get('SystemRoot', r'C:\Windows'), 'System32')
-        elif path_type == 'windows_drivers':
-            return os.path.join(os.environ.get('SystemRoot', r'C:\Windows'), 'System32', 'drivers')
+        if path_type == "windows_system":
+            return os.environ.get("SystemRoot", r"C:\Windows")
+        elif path_type == "windows_system32":
+            return os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32")
+        elif path_type == "windows_drivers":
+            return os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "drivers")
         return None
 
 
@@ -175,7 +175,7 @@ def get_target_process_pid(process_name: str) -> Optional[int]:
     return find_process_by_name(process_name, exact_match=False)
 
 
-def compute_file_hash(file_path: str, algorithm: str = 'sha256') -> Optional[str]:
+def compute_file_hash(file_path: str, algorithm: str = "sha256") -> Optional[str]:
     """
     Compute hash of a file.
 
@@ -193,7 +193,7 @@ def compute_file_hash(file_path: str, algorithm: str = 'sha256') -> Optional[str
 
         hasher = hashlib.new(algorithm)
 
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 hasher.update(chunk)
 
@@ -221,9 +221,9 @@ def detect_hardware_dongles(app=None) -> List[str]:
     results = []
 
     # Update app instance with progress if provided
-    if app and hasattr(app, 'update_output'):
+    if app and hasattr(app, "update_output"):
         progress_message = "Starting hardware dongle detection..."
-        if hasattr(app.update_output, 'emit'):
+        if hasattr(app.update_output, "emit"):
             app.update_output.emit(progress_message)
         elif callable(app.update_output):
             app.update_output(progress_message)
@@ -242,10 +242,10 @@ def detect_hardware_dongles(app=None) -> List[str]:
 
     # Check installed drivers in system directories
     system_dirs = [
-        _get_system_path('windows_system'),
-        _get_system_path('windows_system32'),
-        os.path.join(_get_system_path('windows_system') or "C:\\Windows", "SysWOW64"),
-        _get_system_path('windows_drivers')
+        _get_system_path("windows_system"),
+        _get_system_path("windows_system32"),
+        os.path.join(_get_system_path("windows_system") or "C:\\Windows", "SysWOW64"),
+        _get_system_path("windows_drivers")
     ]
 
     results.append("Scanning for hardware dongle drivers...")
@@ -267,8 +267,8 @@ def detect_hardware_dongles(app=None) -> List[str]:
                     results.append(detection_message)
 
                     # Update app instance with real-time detection
-                    if app and hasattr(app, 'update_output'):
-                        if hasattr(app.update_output, 'emit'):
+                    if app and hasattr(app, "update_output"):
+                        if hasattr(app.update_output, "emit"):
                             app.update_output.emit(f"DETECTED: {detection_message}")
                         elif callable(app.update_output):
                             app.update_output(f"DETECTED: {detection_message}")
@@ -285,8 +285,8 @@ def detect_hardware_dongles(app=None) -> List[str]:
         results.append("Checking for dongle service processes...")
         try:
             # Get all process names
-            all_processes = get_all_processes(['name'])
-            running_processes = [p['name'] for p in all_processes if p.get('name')]
+            all_processes = get_all_processes(["name"])
+            running_processes = [p["name"] for p in all_processes if p.get("name")]
 
             for dongle, processes in dongle_processes.items():
                 for process in processes:
@@ -302,7 +302,7 @@ def detect_hardware_dongles(app=None) -> List[str]:
         results.append("psutil not available - cannot check running processes")
 
     # Check registry for dongle entries (Windows only)
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         try:
             import winreg
 
@@ -361,7 +361,7 @@ def detect_tpm_protection() -> Dict[str, Any]:
         logger.info("Starting TPM detection")
 
         # Check for TPM device on Windows
-        if sys.platform == 'win32':
+        if sys.platform == "win32":
             try:
                 # Check WMI for _TPM info
                 import wmi
@@ -373,11 +373,11 @@ def detect_tpm_protection() -> Dict[str, Any]:
                     results["detection_methods"].append("WMI Win32_Tpm")
 
                     for tmp in tpm_instances:
-                        if hasattr(tmp, 'IsEnabled_InitialValue'):
+                        if hasattr(tmp, "IsEnabled_InitialValue"):
                             results["tpm_enabled"] = bool(tmp.IsEnabled_InitialValue)
-                        if hasattr(tmp, 'IsOwned_InitialValue'):
+                        if hasattr(tmp, "IsOwned_InitialValue"):
                             results["tpm_owned"] = bool(tmp.IsOwned_InitialValue)
-                        if hasattr(tmp, 'SpecVersion'):
+                        if hasattr(tmp, "SpecVersion"):
                             results["tpm_version"] = tmp.SpecVersion
 
             except ImportError:
@@ -386,8 +386,8 @@ def detect_tpm_protection() -> Dict[str, Any]:
                 logger.warning("WMI TPM detection failed: %s", e)
 
         # Check TPM device files on Linux
-        elif sys.platform.startswith('linux'):
-            tpm_devices = ['/dev/tpm0', '/dev/tpmrm0']
+        elif sys.platform.startswith("linux"):
+            tpm_devices = ["/dev/tpm0", "/dev/tpmrm0"]
             for device in tpm_devices:
                 if os.path.exists(device):
                     results["tpm_present"] = True
@@ -396,17 +396,17 @@ def detect_tpm_protection() -> Dict[str, Any]:
 
         # Check for TPM-related processes
         if psutil:
-            tpm_processes = ['tpm2-abrmd', 'tcsd', 'trousers']
-            for proc in psutil.process_iter(['name']):
-                if proc.info['name'] and any(tmp_proc_name in proc.info['name'].lower() for tmp_proc_name in tpm_processes):
+            tpm_processes = ["tpm2-abrmd", "tcsd", "trousers"]
+            for proc in psutil.process_iter(["name"]):
+                if proc.info["name"] and any(tmp_proc_name in proc.info["name"].lower() for tmp_proc_name in tpm_processes):
                     results["detection_methods"].append(f"TPM process: {proc.info['name']}")
 
         # Check for TPM kernel modules on Linux
-        if sys.platform.startswith('linux'):
+        if sys.platform.startswith("linux"):
             try:
-                with open('/proc/modules', 'r', encoding='utf-8') as f:
+                with open("/proc/modules", "r", encoding="utf-8") as f:
                     modules = f.read()
-                    tpm_modules = ['tpm', 'tpm_tis', 'tpm_crb', 'tpm2']
+                    tpm_modules = ["tpm", "tpm_tis", "tpm_crb", "tpm2"]
                     for module in tpm_modules:
                         if module in modules:
                             results["detection_methods"].append(f"Kernel module: {module}")
@@ -437,13 +437,13 @@ def get_system_processes() -> List[Dict[str, Any]]:
         return processes
 
     try:
-        for proc in psutil.process_iter(['pid', 'name', 'cmdline', 'create_time']):
+        for proc in psutil.process_iter(["pid", "name", "cmdline", "create_time"]):
             try:
                 processes.append({
-                    'pid': proc.info['pid'],
-                    'name': proc.info['name'],
-                    'cmdline': ' '.join(proc.info['cmdline']) if proc.info['cmdline'] else '',
-                    'create_time': proc.info['create_time']
+                    "pid": proc.info["pid"],
+                    "name": proc.info["name"],
+                    "cmdline": " ".join(proc.info["cmdline"]) if proc.info["cmdline"] else "",
+                    "create_time": proc.info["create_time"]
                 })
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                 logger.error("Error in process_utils: %s", e)

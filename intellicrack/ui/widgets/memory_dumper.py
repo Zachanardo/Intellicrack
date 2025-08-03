@@ -181,10 +181,10 @@ class MemoryDumperWidget(QWidget):
         try:
             import psutil
 
-            for proc in psutil.process_iter(['pid', 'name']):
+            for proc in psutil.process_iter(["pid", "name"]):
                 try:
                     info = proc.info
-                    self.process_combo.addItem(f"{info['name']} (PID: {info['pid']})", info['pid'])
+                    self.process_combo.addItem(f"{info['name']} (PID: {info['pid']})", info["pid"])
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
 
@@ -193,8 +193,8 @@ class MemoryDumperWidget(QWidget):
             # Fallback to WMI or basic enumeration
             try:
                 import subprocess
-                result = subprocess.run(['tasklist', '/fo', 'csv'], capture_output=True, text=True)
-                lines = result.stdout.strip().split('\n')[1:]  # Skip header
+                result = subprocess.run(["tasklist", "/fo", "csv"], capture_output=True, text=True)
+                lines = result.stdout.strip().split("\n")[1:]  # Skip header
                 for line in lines:
                     parts = line.split('","')
                     if len(parts) >= 2:
@@ -209,20 +209,20 @@ class MemoryDumperWidget(QWidget):
         try:
             import psutil
 
-            for proc in psutil.process_iter(['pid', 'name']):
+            for proc in psutil.process_iter(["pid", "name"]):
                 try:
                     info = proc.info
-                    self.process_combo.addItem(f"{info['name']} (PID: {info['pid']})", info['pid'])
+                    self.process_combo.addItem(f"{info['name']} (PID: {info['pid']})", info["pid"])
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
 
         except ImportError:
             # Fallback to /proc
             try:
-                for pid_dir in os.listdir('/proc'):
+                for pid_dir in os.listdir("/proc"):
                     if pid_dir.isdigit():
                         try:
-                            with open(f'/proc/{pid_dir}/comm', 'r') as f:
+                            with open(f"/proc/{pid_dir}/comm", "r") as f:
                                 name = f.read().strip()
                             self.process_combo.addItem(f"{name} (PID: {pid_dir})", int(pid_dir))
                         except:
@@ -339,12 +339,12 @@ class MemoryDumperWidget(QWidget):
         """Scan Linux process memory regions."""
         try:
             maps_file = f"/proc/{self.current_process}/maps"
-            with open(maps_file, 'r') as f:
+            with open(maps_file, "r") as f:
                 for line in f:
                     parts = line.strip().split()
                     if len(parts) >= 5:
                         # Parse address range
-                        addr_range = parts[0].split('-')
+                        addr_range = parts[0].split("-")
                         start_addr = int(addr_range[0], 16)
                         end_addr = int(addr_range[1], 16)
                         size = end_addr - start_addr
@@ -411,13 +411,13 @@ class MemoryDumperWidget(QWidget):
 
     def _should_include_region_linux(self, perms):
         """Check if Linux region should be included based on filters."""
-        if self.readable_check.isChecked() and 'r' not in perms:
+        if self.readable_check.isChecked() and "r" not in perms:
             return False
-        if self.writable_check.isChecked() and 'w' not in perms:
+        if self.writable_check.isChecked() and "w" not in perms:
             return False
-        if self.executable_check.isChecked() and 'x' not in perms:
+        if self.executable_check.isChecked() and "x" not in perms:
             return False
-        if self.private_check.isChecked() and 'p' not in perms:
+        if self.private_check.isChecked() and "p" not in perms:
             return False
 
         return True
@@ -484,12 +484,12 @@ class MemoryDumperWidget(QWidget):
     def get_dump_options(self):
         """Get current dump options."""
         return {
-            'raw': self.raw_dump_check.isChecked(),
-            'minidump': self.minidump_check.isChecked(),
-            'full': self.full_dump_check.isChecked(),
-            'compress': self.compress_check.isChecked(),
-            'metadata': self.metadata_check.isChecked(),
-            'strings': self.strings_check.isChecked()
+            "raw": self.raw_dump_check.isChecked(),
+            "minidump": self.minidump_check.isChecked(),
+            "full": self.full_dump_check.isChecked(),
+            "compress": self.compress_check.isChecked(),
+            "metadata": self.metadata_check.isChecked(),
+            "strings": self.strings_check.isChecked()
         }
 
     def update_progress(self, value):
@@ -527,7 +527,7 @@ class MemoryDumpThread(QThread):
             size_text = self.table.item(row, 1).text()
 
             addr = int(addr_text, 16)
-            size = int(size_text.replace(',', '').replace(' bytes', ''))
+            size = int(size_text.replace(",", "").replace(" bytes", ""))
 
             self.log.emit(f"Dumping region 0x{addr:016X} ({size:,} bytes)")
 
@@ -571,13 +571,13 @@ class MemoryDumpThread(QThread):
             if result:
                 # Save to file
                 filename = os.path.join(self.output_dir, f"dump_0x{addr:016X}.bin")
-                with open(filename, 'wb') as f:
+                with open(filename, "wb") as f:
                     f.write(buffer.raw[:bytes_read.value])
 
                 self.log.emit(f"Saved {bytes_read.value:,} bytes to {filename}")
 
                 # Extract strings if requested
-                if self.options['strings']:
+                if self.options["strings"]:
                     self._extract_strings(buffer.raw[:bytes_read.value], addr)
 
             else:
@@ -591,19 +591,19 @@ class MemoryDumpThread(QThread):
         mem_file = f"/proc/{self.pid}/mem"
 
         try:
-            with open(mem_file, 'rb') as f:
+            with open(mem_file, "rb") as f:
                 f.seek(addr)
                 data = f.read(size)
 
                 # Save to file
                 filename = os.path.join(self.output_dir, f"dump_0x{addr:016X}.bin")
-                with open(filename, 'wb') as out:
+                with open(filename, "wb") as out:
                     out.write(data)
 
                 self.log.emit(f"Saved {len(data):,} bytes to {filename}")
 
                 # Extract strings if requested
-                if self.options['strings']:
+                if self.options["strings"]:
                     self._extract_strings(data, addr)
 
         except Exception as e:
@@ -619,13 +619,13 @@ class MemoryDumpThread(QThread):
                 current_string.append(byte)
             else:
                 if len(current_string) >= 4:  # Minimum string length
-                    strings.append((base_addr + i - len(current_string), current_string.decode('ascii', errors='ignore')))
+                    strings.append((base_addr + i - len(current_string), current_string.decode("ascii", errors="ignore")))
                 current_string = bytearray()
 
         # Save strings to file
         if strings:
             filename = os.path.join(self.output_dir, f"strings_0x{base_addr:016X}.txt")
-            with open(filename, 'w', encoding='utf-8') as f:
+            with open(filename, "w", encoding="utf-8") as f:
                 for addr, string in strings:
                     f.write(f"0x{addr:016X}: {string}\n")
 

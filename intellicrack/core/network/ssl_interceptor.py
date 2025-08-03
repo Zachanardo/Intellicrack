@@ -64,13 +64,13 @@ class SSLTLSInterceptor:
         # Default configuration
         from ...utils.system.windows_structures import COMMON_LICENSE_DOMAINS
         self.config = {
-            'listen_ip': '127.0.0.1',
-            'listen_port': 8443,
-            'target_hosts': COMMON_LICENSE_DOMAINS,
-            'ca_cert_path': get_resource_path('ssl_certificates/ca.crt'),
-            'ca_key_path': get_resource_path('ssl_certificates/ca.key'),
-            'record_traffic': True,
-            'auto_respond': True
+            "listen_ip": "127.0.0.1",
+            "listen_port": 8443,
+            "target_hosts": COMMON_LICENSE_DOMAINS,
+            "ca_cert_path": get_resource_path("ssl_certificates/ca.crt"),
+            "ca_key_path": get_resource_path("ssl_certificates/ca.key"),
+            "record_traffic": True,
+            "auto_respond": True
         }
 
         # Update with provided configuration
@@ -137,17 +137,17 @@ class SSLTLSInterceptor:
         """
         try:
             # Generate CA certificate if needed
-            if not os.path.exists(self.config['ca_cert_path']) or not os.path.exists(self.config['ca_key_path']):
+            if not os.path.exists(self.config["ca_cert_path"]) or not os.path.exists(self.config["ca_key_path"]):
                 self.logger.info("Generating CA certificate...")
                 cert_pem, key_pem = self.generate_ca_certificate()
                 if cert_pem and key_pem:
                     # Create directory if it doesn't exist
-                    os.makedirs(os.path.dirname(os.path.abspath(self.config['ca_cert_path'])), exist_ok=True)
+                    os.makedirs(os.path.dirname(os.path.abspath(self.config["ca_cert_path"])), exist_ok=True)
 
                     # Save certificate and key
-                    with open(self.config['ca_cert_path'], 'wb') as f:
+                    with open(self.config["ca_cert_path"], "wb") as f:
                         f.write(cert_pem)
-                    with open(self.config['ca_key_path'], 'wb') as f:
+                    with open(self.config["ca_key_path"], "wb") as f:
                         f.write(key_pem)
 
                     self.logger.info(f"CA certificate saved to {self.config['ca_cert_path']}")
@@ -156,11 +156,11 @@ class SSLTLSInterceptor:
                     return False
 
             # Check if mitmproxy is available
-            mitmdump_path = self._find_executable('mitmdump')
+            mitmdump_path = self._find_executable("mitmdump")
             if mitmdump_path:
                 # Create script for intercepting license verification
-                script_fd, script_path = tempfile.mkstemp(suffix='.py', prefix='intellicrack_mitm_')
-                with os.fdopen(script_fd, 'w', encoding='utf-8') as f:
+                script_fd, script_path = tempfile.mkstemp(suffix=".py", prefix="intellicrack_mitm_")
+                with os.fdopen(script_fd, "w", encoding="utf-8") as f:
                     f.write(f"""
 import json
 from mitmproxy import http
@@ -239,11 +239,11 @@ def response(flow: http.HTTPFlow) -> None:
                 # Start mitmproxy
                 cmd = [
                     mitmdump_path,
-                    '-s', script_path,
-                    '--listen-host', self.config['listen_ip'],
-                    '--listen-port', str(self.config['listen_port']),
-                    '--set', 'block_global=false',
-                    '--set', 'ssl_insecure=true'
+                    "-s", script_path,
+                    "--listen-host", self.config["listen_ip"],
+                    "--listen-port", str(self.config["listen_port"]),
+                    "--set", "block_global=false",
+                    "--set", "ssl_insecure=true"
                 ]
 
                 self.proxy_process = subprocess.Popen(
@@ -258,12 +258,12 @@ def response(flow: http.HTTPFlow) -> None:
                 self.logger.warning("mitmproxy not found. SSL/TLS interception will be limited.")
                 # Implement a basic proxy server here if needed
 
-            self.logger.info("SSL/TLS interceptor started on %s:%s", self.config['listen_ip'], self.config['listen_port'])
+            self.logger.info("SSL/TLS interceptor started on %s:%s", self.config["listen_ip"], self.config["listen_port"])
 
             # Print instructions
             self.logger.info("To use the SSL/TLS interceptor:")
-            self.logger.info("1. Configure the application to use %s:%s as proxy", self.config['listen_ip'], self.config['listen_port'])
-            self.logger.info("2. Install the CA certificate (%s) in the system trust store", self.config['ca_cert_path'])
+            self.logger.info("1. Configure the application to use %s:%s as proxy", self.config["listen_ip"], self.config["listen_port"])
+            self.logger.info("2. Install the CA certificate (%s) in the system trust store", self.config["ca_cert_path"])
 
             return True
 
@@ -329,8 +329,8 @@ def response(flow: http.HTTPFlow) -> None:
         Args:
             host: Hostname to intercept
         """
-        if host not in self.config['target_hosts']:
-            self.config['target_hosts'].append(host)
+        if host not in self.config["target_hosts"]:
+            self.config["target_hosts"].append(host)
             self.logger.info("Added target host: %s", host)
 
     def remove_target_host(self, host: str):
@@ -340,8 +340,8 @@ def response(flow: http.HTTPFlow) -> None:
         Args:
             host: Hostname to remove
         """
-        if host in self.config['target_hosts']:
-            self.config['target_hosts'].remove(host)
+        if host in self.config["target_hosts"]:
+            self.config["target_hosts"].remove(host)
             self.logger.info("Removed target host: %s", host)
 
     def get_target_hosts(self) -> List[str]:
@@ -351,7 +351,7 @@ def response(flow: http.HTTPFlow) -> None:
         Returns:
             list: List of target hostnames
         """
-        return self.config['target_hosts'].copy()
+        return self.config["target_hosts"].copy()
 
     def configure(self, config: Dict[str, Any]) -> bool:
         """
@@ -371,9 +371,9 @@ def response(flow: http.HTTPFlow) -> None:
 
             # Validate configuration
             valid_keys = {
-                'listen_ip', 'listen_port', 'target_hosts', 'ca_cert_path',
-                'ca_key_path', 'record_traffic', 'auto_respond', 'proxy_timeout',
-                'max_connections', 'log_level', 'response_delay', 'inject_headers'
+                "listen_ip", "listen_port", "target_hosts", "ca_cert_path",
+                "ca_key_path", "record_traffic", "auto_respond", "proxy_timeout",
+                "max_connections", "log_level", "response_delay", "inject_headers"
             }
 
             invalid_keys = set(config.keys()) - valid_keys
@@ -381,14 +381,14 @@ def response(flow: http.HTTPFlow) -> None:
                 self.logger.warning(f"Ignoring invalid configuration keys: {invalid_keys}")
 
             # Validate specific settings
-            if 'listen_port' in config:
-                port = config['listen_port']
+            if "listen_port" in config:
+                port = config["listen_port"]
                 if not isinstance(port, int) or port < 1 or port > 65535:
                     self.logger.error(f"Invalid port number: {port}")
                     return False
 
-            if 'listen_ip' in config:
-                ip = config['listen_ip']
+            if "listen_ip" in config:
+                ip = config["listen_ip"]
                 # Basic IP validation
                 import socket
                 try:
@@ -397,8 +397,8 @@ def response(flow: http.HTTPFlow) -> None:
                     self.logger.error(f"Invalid IP address: {ip}")
                     return False
 
-            if 'target_hosts' in config:
-                if not isinstance(config['target_hosts'], list):
+            if "target_hosts" in config:
+                if not isinstance(config["target_hosts"], list):
                     self.logger.error("target_hosts must be a list")
                     return False
 
@@ -413,8 +413,8 @@ def response(flow: http.HTTPFlow) -> None:
             self.config.update(config)
 
             # Validate certificate paths if changed
-            if 'ca_cert_path' in config or 'ca_key_path' in config:
-                if not os.path.exists(self.config['ca_cert_path']):
+            if "ca_cert_path" in config or "ca_key_path" in config:
+                if not os.path.exists(self.config["ca_cert_path"]):
                     self.logger.warning(f"CA certificate not found at {self.config['ca_cert_path']}")
                     # Generate new certificate if needed
                     self.logger.info("Generating new CA certificate")
@@ -424,20 +424,20 @@ def response(flow: http.HTTPFlow) -> None:
                         self.config = old_config  # Restore old config
                         return False
 
-                if not os.path.exists(self.config['ca_key_path']):
+                if not os.path.exists(self.config["ca_key_path"]):
                     self.logger.error(f"CA key not found at {self.config['ca_key_path']}")
                     self.config = old_config  # Restore old config
                     return False
 
             # Apply runtime configuration changes
-            if 'log_level' in config:
+            if "log_level" in config:
                 log_levels = {
-                    'DEBUG': logging.DEBUG,
-                    'INFO': logging.INFO,
-                    'WARNING': logging.WARNING,
-                    'ERROR': logging.ERROR
+                    "DEBUG": logging.DEBUG,
+                    "INFO": logging.INFO,
+                    "WARNING": logging.WARNING,
+                    "ERROR": logging.ERROR
                 }
-                level = log_levels.get(config['log_level'].upper(), logging.INFO)
+                level = log_levels.get(config["log_level"].upper(), logging.INFO)
                 self.logger.setLevel(level)
 
             # Restart if was running
@@ -477,19 +477,19 @@ def response(flow: http.HTTPFlow) -> None:
         safe_config = self.config.copy()
 
         # Redact sensitive information
-        if 'ca_key_path' in safe_config:
-            safe_config['ca_key_path'] = '<redacted>' if os.path.exists(self.config['ca_key_path']) else 'not found'
+        if "ca_key_path" in safe_config:
+            safe_config["ca_key_path"] = "<redacted>" if os.path.exists(self.config["ca_key_path"]) else "not found"
 
         # Add runtime status
-        safe_config['status'] = {
-            'running': self.proxy_process is not None,
-            'traffic_captured': len(self.traffic_log),
-            'response_templates_loaded': len(self.response_templates),
-            'ca_cert_exists': os.path.exists(self.config['ca_cert_path']),
-            'ca_key_exists': os.path.exists(self.config['ca_key_path'])
+        safe_config["status"] = {
+            "running": self.proxy_process is not None,
+            "traffic_captured": len(self.traffic_log),
+            "response_templates_loaded": len(self.response_templates),
+            "ca_cert_exists": os.path.exists(self.config["ca_cert_path"]),
+            "ca_key_exists": os.path.exists(self.config["ca_key_path"])
         }
 
         return safe_config
 
 
-__all__ = ['SSLTLSInterceptor']
+__all__ = ["SSLTLSInterceptor"]

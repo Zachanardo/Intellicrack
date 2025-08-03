@@ -91,18 +91,18 @@ class SignatureSyntaxHighlighter(QSyntaxHighlighter):
         comment_format = QTextCharFormat()
         comment_format.setForeground(comment_color)
         comment_format.setFontItalic(True)
-        self.highlighting_rules.append((re.compile(r'//.*'), comment_format))
-        self.highlighting_rules.append((re.compile(r'/\*.*\*/'), comment_format))
+        self.highlighting_rules.append((re.compile(r"//.*"), comment_format))
+        self.highlighting_rules.append((re.compile(r"/\*.*\*/"), comment_format))
 
         # Hex patterns
         hex_format = QTextCharFormat()
         hex_format.setForeground(number_color)
-        self.highlighting_rules.append((re.compile(r'\b[0-9A-Fa-f]{2,}\b'), hex_format))
+        self.highlighting_rules.append((re.compile(r"\b[0-9A-Fa-f]{2,}\b"), hex_format))
 
         # Operators
         operator_format = QTextCharFormat()
         operator_format.setForeground(operator_color)
-        operators = ['=', ':', '{', '}', '(', ')', '[', ']', '|', '&', '!']
+        operators = ["=", ":", "{", "}", "(", ")", "[", "]", "|", "&", "!"]
         for op in operators:
             escaped_op = re.escape(op)
             self.highlighting_rules.append((re.compile(escaped_op), operator_format))
@@ -140,7 +140,7 @@ class SignatureTestWorker(QThread):
                 result = self._test_signature_on_file(file_path)
 
                 # Emit result
-                self.test_completed.emit(file_path, result['success'], result['message'])
+                self.test_completed.emit(file_path, result["success"], result["message"])
 
             except Exception as e:
                 self.logger.error("Exception in signature_editor_dialog: %s", e)
@@ -155,7 +155,7 @@ class SignatureTestWorker(QThread):
             # Create temporary signature file
             temp_sig_path = os.path.join(os.path.dirname(file_path), "temp_test_signature.sg")
 
-            with open(temp_sig_path, 'w', encoding='utf-8') as f:
+            with open(temp_sig_path, "w", encoding="utf-8") as f:
                 f.write(self.signature_content)
 
             # Analyze file with custom signature
@@ -176,20 +176,20 @@ class SignatureTestWorker(QThread):
                 for detection in result.icp_analysis.all_detections:
                     if detection.name != "Unknown":
                         return {
-                            'success': True,
-                            'message': f"Detected: {detection.name} (confidence: {detection.confidence:.1%})"
+                            "success": True,
+                            "message": f"Detected: {detection.name} (confidence: {detection.confidence:.1%})"
                         }
 
             return {
-                'success': False,
-                'message': "Signature did not match this file"
+                "success": False,
+                "message": "Signature did not match this file"
             }
 
         except Exception as e:
             logger.error("Exception in signature_editor_dialog: %s", e)
             return {
-                'success': False,
-                'message': f"Test failed: {str(e)}"
+                "success": False,
+                "message": f"Test failed: {str(e)}"
             }
 
 
@@ -607,7 +607,7 @@ class SignatureEditorDialog(QDialog):
         db_path = self.signature_databases[db_name]
 
         try:
-            with open(db_path, 'r', encoding='utf-8') as f:
+            with open(db_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # Parse signatures from file
@@ -623,34 +623,34 @@ class SignatureEditorDialog(QDialog):
         signatures = []
 
         # Split content by signature blocks
-        blocks = re.split(r'\n\s*\n', content.strip())
+        blocks = re.split(r"\n\s*\n", content.strip())
 
         for block in blocks:
             if not block.strip():
                 continue
 
             sig_data = {
-                'name': 'Unknown',
-                'type': 'Other',
-                'version': '',
-                'description': '',
-                'content': block.strip()
+                "name": "Unknown",
+                "type": "Other",
+                "version": "",
+                "description": "",
+                "content": block.strip()
             }
 
             # Extract metadata from comments
-            lines = block.split('\n')
+            lines = block.split("\n")
             for line in lines:
                 line = line.strip()
-                if line.startswith('//'):
+                if line.startswith("//"):
                     comment = line[2:].strip()
-                    if comment.startswith('Name:'):
-                        sig_data['name'] = comment[5:].strip()
-                    elif comment.startswith('Type:'):
-                        sig_data['type'] = comment[5:].strip()
-                    elif comment.startswith('Version:'):
-                        sig_data['version'] = comment[8:].strip()
-                    elif comment.startswith('Description:'):
-                        sig_data['description'] = comment[12:].strip()
+                    if comment.startswith("Name:"):
+                        sig_data["name"] = comment[5:].strip()
+                    elif comment.startswith("Type:"):
+                        sig_data["type"] = comment[5:].strip()
+                    elif comment.startswith("Version:"):
+                        sig_data["version"] = comment[8:].strip()
+                    elif comment.startswith("Description:"):
+                        sig_data["description"] = comment[12:].strip()
 
             signatures.append(sig_data)
 
@@ -664,18 +664,18 @@ class SignatureEditorDialog(QDialog):
 
         for sig in self.current_signatures:
             # Filter by search term
-            if search_term and search_term not in sig['name'].lower():
+            if search_term and search_term not in sig["name"].lower():
                 continue
 
             item = QListWidgetItem(f"{sig['name']} ({sig['type']})")
             item.setData(Qt.UserRole, sig)
 
             # Color code by type
-            if sig['type'].lower() in ['packer', 'protector']:
+            if sig["type"].lower() in ["packer", "protector"]:
                 item.setBackground(QColor(255, 200, 200, 50))
-            elif sig['type'].lower() in ['virus', 'trojan']:
+            elif sig["type"].lower() in ["virus", "trojan"]:
                 item.setBackground(QColor(255, 150, 150, 80))
-            elif sig['type'].lower() == 'compiler':
+            elif sig["type"].lower() == "compiler":
                 item.setBackground(QColor(200, 255, 200, 50))
 
             self.signature_list.addItem(item)
@@ -691,11 +691,11 @@ class SignatureEditorDialog(QDialog):
             return
 
         # Load into editor
-        self.sig_name_input.setText(sig_data['name'])
-        self.sig_type_combo.setCurrentText(sig_data['type'])
-        self.sig_version_input.setText(sig_data['version'])
-        self.sig_description_input.setText(sig_data['description'])
-        self.signature_editor.setPlainText(sig_data['content'])
+        self.sig_name_input.setText(sig_data["name"])
+        self.sig_type_combo.setCurrentText(sig_data["type"])
+        self.sig_version_input.setText(sig_data["version"])
+        self.sig_description_input.setText(sig_data["description"])
+        self.signature_editor.setPlainText(sig_data["content"])
 
         # Update info display
         self._update_signature_info(sig_data)
@@ -757,7 +757,7 @@ ep:
 
         if file_path:
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 self.current_signature_path = file_path
@@ -772,22 +772,22 @@ ep:
 
     def _extract_metadata_from_content(self, content: str):
         """Extract metadata from signature content"""
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         for line in lines:
             line = line.strip()
-            if line.startswith('//'):
+            if line.startswith("//"):
                 comment = line[2:].strip()
-                if comment.startswith('Name:'):
+                if comment.startswith("Name:"):
                     self.sig_name_input.setText(comment[5:].strip())
-                elif comment.startswith('Type:'):
+                elif comment.startswith("Type:"):
                     type_val = comment[5:].strip()
                     index = self.sig_type_combo.findText(type_val)
                     if index >= 0:
                         self.sig_type_combo.setCurrentIndex(index)
-                elif comment.startswith('Version:'):
+                elif comment.startswith("Version:"):
                     self.sig_version_input.setText(comment[8:].strip())
-                elif comment.startswith('Description:'):
+                elif comment.startswith("Description:"):
                     self.sig_description_input.setText(comment[12:].strip())
 
     def save_signature(self):
@@ -811,7 +811,7 @@ ep:
                 # Build complete signature content
                 content = self._build_signature_content()
 
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
 
                 self.current_signature_path = file_path
@@ -833,18 +833,18 @@ ep:
         signature_body = self.signature_editor.toPlainText()
 
         # Remove existing metadata comments to avoid duplication
-        lines = signature_body.split('\n')
+        lines = signature_body.split("\n")
         filtered_lines = []
 
         for line in lines:
             stripped = line.strip()
-            if not (stripped.startswith('// Name:') or
-                   stripped.startswith('// Type:') or
-                   stripped.startswith('// Version:') or
-                   stripped.startswith('// Description:')):
+            if not (stripped.startswith("// Name:") or
+                   stripped.startswith("// Type:") or
+                   stripped.startswith("// Version:") or
+                   stripped.startswith("// Description:")):
                 filtered_lines.append(line)
 
-        return metadata_header + '\n'.join(filtered_lines)
+        return metadata_header + "\n".join(filtered_lines)
 
     def validate_signature_syntax(self):
         """Validate signature syntax"""
@@ -858,19 +858,19 @@ ep:
         errors = []
 
         # Check for required sections
-        if 'init:' not in content:
+        if "init:" not in content:
             errors.append("Missing 'init:' section")
 
         # Check for balanced braces
-        open_braces = content.count('{')
-        close_braces = content.count('}')
+        open_braces = content.count("{")
+        close_braces = content.count("}")
         if open_braces != close_braces:
             errors.append(f"Unbalanced braces: {open_braces} open, {close_braces} close")
 
         # Check for hex pattern format
         hex_patterns = re.findall(r'hex\s*=\s*"([^"]*)"', content)
         for pattern in hex_patterns:
-            if not re.match(r'^[0-9A-Fa-f\s?*]*$', pattern):
+            if not re.match(r"^[0-9A-Fa-f\s?*]*$", pattern):
                 errors.append(f"Invalid hex pattern: {pattern}")
 
         if errors:
@@ -883,23 +883,23 @@ ep:
         content = self.signature_editor.toPlainText()
 
         # Basic formatting
-        lines = content.split('\n')
+        lines = content.split("\n")
         formatted_lines = []
         indent_level = 0
 
         for line in lines:
             stripped = line.strip()
 
-            if stripped.endswith('{'):
-                formatted_lines.append('    ' * indent_level + stripped)
+            if stripped.endswith("{"):
+                formatted_lines.append("    " * indent_level + stripped)
                 indent_level += 1
-            elif stripped.startswith('}'):
+            elif stripped.startswith("}"):
                 indent_level = max(0, indent_level - 1)
-                formatted_lines.append('    ' * indent_level + stripped)
+                formatted_lines.append("    " * indent_level + stripped)
             else:
-                formatted_lines.append('    ' * indent_level + stripped)
+                formatted_lines.append("    " * indent_level + stripped)
 
-        self.signature_editor.setPlainText('\n'.join(formatted_lines))
+        self.signature_editor.setPlainText("\n".join(formatted_lines))
 
     def show_template_menu(self):
         """Show template insertion menu"""
@@ -917,14 +917,14 @@ ep:
             return
 
         # Save state from previous category if needed
-        if previous_item and hasattr(self, 'template_list'):
+        if previous_item and hasattr(self, "template_list"):
             previous_category = previous_item.text()
             selected_template = None
             if self.template_list.currentItem():
                 selected_template = self.template_list.currentItem().text()
 
             # Store the last selected template for this category
-            if not hasattr(self, '_category_selections'):
+            if not hasattr(self, "_category_selections"):
                 self._category_selections = {}
             if selected_template:
                 self._category_selections[previous_category] = selected_template
@@ -939,7 +939,7 @@ ep:
             self.template_list.addItem(template_name)
 
         # Restore previous selection for this category if available
-        if hasattr(self, '_category_selections') and category in self._category_selections:
+        if hasattr(self, "_category_selections") and category in self._category_selections:
             previous_selection = self._category_selections[category]
             for i in range(self.template_list.count()):
                 if self.template_list.item(i).text() == previous_selection:
@@ -1022,7 +1022,7 @@ ep:
         template_content = self.template_preview.toPlainText()
         if template_content:
             cursor = self.signature_editor.textCursor()
-            cursor.insertText(template_content + '\n\n')
+            cursor.insertText(template_content + "\n\n")
 
     def add_test_file(self):
         """Add individual test file"""
@@ -1047,7 +1047,7 @@ ep:
             # Add all executable files from folder
             folder = Path(folder_path)
             for file_path in folder.rglob("*"):
-                if file_path.is_file() and file_path.suffix.lower() in ['.exe', '.dll', '.sys']:
+                if file_path.is_file() and file_path.suffix.lower() in [".exe", ".dll", ".sys"]:
                     self.test_files_list.addItem(str(file_path))
 
     def clear_test_files(self):

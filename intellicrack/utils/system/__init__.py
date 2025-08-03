@@ -32,12 +32,12 @@ from .os_detection import (
 from .os_detection_mixin import OSDetectionMixin
 
 __all__ = [
-    'detect_operating_system',
-    'is_windows',
-    'is_linux_like',
-    'is_unix_like',
-    'get_platform_details',
-    'get_default_persistence_method',
-    'get_platform_specific_paths',
-    'OSDetectionMixin'
+    "detect_operating_system",
+    "is_windows",
+    "is_linux_like",
+    "is_unix_like",
+    "get_platform_details",
+    "get_default_persistence_method",
+    "get_platform_specific_paths",
+    "OSDetectionMixin"
 ]

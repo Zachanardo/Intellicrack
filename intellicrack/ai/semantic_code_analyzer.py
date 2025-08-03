@@ -325,12 +325,12 @@ class NLPCodeProcessor:
     def _normalize_code(self, code: str) -> str:
         """Normalize code for analysis."""
         # Remove comments
-        code = re.sub(r'#.*$', '', code, flags=re.MULTILINE)
-        code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)
-        code = re.sub(r'//.*$', '', code, flags=re.MULTILINE)
+        code = re.sub(r"#.*$", "", code, flags=re.MULTILINE)
+        code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)
+        code = re.sub(r"//.*$", "", code, flags=re.MULTILINE)
 
         # Normalize whitespace
-        code = re.sub(r'\s+', ' ', code)
+        code = re.sub(r"\s+", " ", code)
 
         # Convert to lowercase for keyword matching
         return code.strip()
@@ -338,11 +338,11 @@ class NLPCodeProcessor:
     def _extract_complexity_indicators(self, code: str) -> Dict[str, int]:
         """Extract complexity indicators from code."""
         indicators = {
-            "conditional_statements": len(re.findall(r'\bif\b', code, re.IGNORECASE)),
-            "loop_statements": len(re.findall(r'\b(for|while)\b', code, re.IGNORECASE)),
-            "function_calls": len(re.findall(r'\w+\s*\(', code)),
-            "return_statements": len(re.findall(r'\breturn\b', code, re.IGNORECASE)),
-            "exception_handling": len(re.findall(r'\b(try|catch|except|finally)\b', code, re.IGNORECASE)),
+            "conditional_statements": len(re.findall(r"\bif\b", code, re.IGNORECASE)),
+            "loop_statements": len(re.findall(r"\b(for|while)\b", code, re.IGNORECASE)),
+            "function_calls": len(re.findall(r"\w+\s*\(", code)),
+            "return_statements": len(re.findall(r"\breturn\b", code, re.IGNORECASE)),
+            "exception_handling": len(re.findall(r"\b(try|catch|except|finally)\b", code, re.IGNORECASE)),
             "nested_blocks": self._count_nested_blocks(code)
         }
 
@@ -354,10 +354,10 @@ class NLPCodeProcessor:
         current_depth = 0
 
         for char in code:
-            if char == '{' or char == '(':
+            if char == "{" or char == "(":
                 current_depth += 1
                 max_depth = max(max_depth, current_depth)
-            elif char == '}' or char == ')':
+            elif char == "}" or char == ")":
                 current_depth = max(0, current_depth - 1)
 
         return max_depth
@@ -371,7 +371,7 @@ class NLPCodeProcessor:
             tokens.extend(self._split_camel_case(function_name))
 
         # Extract meaningful identifiers
-        identifiers = re.findall(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b', code)
+        identifiers = re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b", code)
         for identifier in identifiers:
             if len(identifier) > 2 and not identifier.isupper():  # Skip constants
                 tokens.extend(self._split_camel_case(identifier))
@@ -380,7 +380,7 @@ class NLPCodeProcessor:
         meaningful_tokens = [
             token.lower() for token in tokens
             if len(token) > 2 and token.lower() not in {
-                'the', 'and', 'for', 'get', 'set', 'new', 'old', 'tmp', 'temp'
+                "the", "and", "for", "get", "set", "new", "old", "tmp", "temp"
             }
         ]
 
@@ -389,12 +389,12 @@ class NLPCodeProcessor:
     def _split_camel_case(self, text: str) -> List[str]:
         """Split camelCase or snake_case text into words."""
         # Handle camelCase
-        camel_split = re.sub(r'([a-z])([A-Z])', r'\1 \2', text).split()
+        camel_split = re.sub(r"([a-z])([A-Z])", r"\1 \2", text).split()
 
         # Handle snake_case
         result = []
         for word in camel_split:
-            result.extend(word.split('_'))
+            result.extend(word.split("_"))
 
         return [w for w in result if w]
 
@@ -439,18 +439,18 @@ class SemanticCodeAnalyzer:
             # Try to use AIFileTools for file reading if available
             try:
                 from .ai_file_tools import get_ai_file_tools
-                ai_file_tools = get_ai_file_tools(getattr(self, 'app_instance', None))
+                ai_file_tools = get_ai_file_tools(getattr(self, "app_instance", None))
                 file_data = ai_file_tools.read_file(file_path, purpose="Semantic code analysis for protection patterns")
                 if file_data.get("status") == "success" and file_data.get("content"):
                     content = file_data["content"]
                 else:
                     # Fallback to direct file reading
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
             except (ImportError, AttributeError, KeyError):
                 # AIFileTools not available, use direct file reading
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
                 except Exception as e:
                     logger.error(f"Failed to read file {file_path}: {e}")
@@ -562,7 +562,7 @@ class SemanticCodeAnalyzer:
         ast_nodes = []
 
         try:
-            if file_path.endswith('.py'):
+            if file_path.endswith(".py"):
                 tree = ast.parse(content)
 
                 for node in ast.walk(tree):
@@ -595,41 +595,41 @@ class SemanticCodeAnalyzer:
         ast_nodes = []
 
         # JavaScript/TypeScript function patterns
-        if file_path.endswith(('.js', '.ts', '.jsx', '.tsx')):
+        if file_path.endswith((".js", ".ts", ".jsx", ".tsx")):
             # Function declarations
-            function_pattern = r'function\s+(\w+)\s*\([^)]*\)\s*\{'
+            function_pattern = r"function\s+(\w+)\s*\([^)]*\)\s*\{"
             for match in re.finditer(function_pattern, content):
                 ast_nodes.append({
                     "type": "Function",
                     "name": match.group(1),
-                    "line": content[:match.start()].count('\n') + 1,
-                    "col": match.start() - content.rfind('\n', 0, match.start()),
+                    "line": content[:match.start()].count("\n") + 1,
+                    "col": match.start() - content.rfind("\n", 0, match.start()),
                     "content": self._extract_function_body(content, match.start()),
                     "docstring": None
                 })
 
             # Class declarations
-            class_pattern = r'class\s+(\w+)(?:\s+extends\s+\w+)?\s*\{'
+            class_pattern = r"class\s+(\w+)(?:\s+extends\s+\w+)?\s*\{"
             for match in re.finditer(class_pattern, content):
                 ast_nodes.append({
                     "type": "Class",
                     "name": match.group(1),
-                    "line": content[:match.start()].count('\n') + 1,
-                    "col": match.start() - content.rfind('\n', 0, match.start()),
+                    "line": content[:match.start()].count("\n") + 1,
+                    "col": match.start() - content.rfind("\n", 0, match.start()),
                     "content": self._extract_class_body(content, match.start()),
                     "docstring": None
                 })
 
         # C/C++ function patterns
-        elif file_path.endswith(('.c', '.cpp', '.h', '.hpp')):
+        elif file_path.endswith((".c", ".cpp", ".h", ".hpp")):
             # Function definitions
-            func_pattern = r'(?:[\w\s\*]+\s+)?(\w+)\s*\([^)]*\)\s*\{'
+            func_pattern = r"(?:[\w\s\*]+\s+)?(\w+)\s*\([^)]*\)\s*\{"
             for match in re.finditer(func_pattern, content):
                 ast_nodes.append({
                     "type": "Function",
                     "name": match.group(1),
-                    "line": content[:match.start()].count('\n') + 1,
-                    "col": match.start() - content.rfind('\n', 0, match.start()),
+                    "line": content[:match.start()].count("\n") + 1,
+                    "col": match.start() - content.rfind("\n", 0, match.start()),
                     "content": self._extract_function_body(content, match.start()),
                     "docstring": None
                 })
@@ -638,12 +638,12 @@ class SemanticCodeAnalyzer:
 
     def _extract_node_content(self, content: str, node: ast.AST) -> str:
         """Extract content for AST node."""
-        lines = content.split('\n')
+        lines = content.split("\n")
 
-        if hasattr(node, 'lineno') and hasattr(node, 'end_lineno'):
+        if hasattr(node, "lineno") and hasattr(node, "end_lineno"):
             start_line = node.lineno - 1
             end_line = node.end_lineno if node.end_lineno else start_line + 1
-            return '\n'.join(lines[start_line:end_line])
+            return "\n".join(lines[start_line:end_line])
 
         return ""
 
@@ -654,10 +654,10 @@ class SemanticCodeAnalyzer:
         end_pos = start_pos
 
         for i, char in enumerate(content[start_pos:]):
-            if char == '{':
+            if char == "{":
                 brace_count += 1
                 in_function = True
-            elif char == '}':
+            elif char == "}":
                 brace_count -= 1
                 if in_function and brace_count == 0:
                     end_pos = start_pos + i + 1
@@ -927,10 +927,10 @@ class SemanticCodeAnalyzer:
         """Check if validation is trivial."""
         # Look for patterns indicating trivial validation
         trivial_patterns = [
-            r'return\s+True',
-            r'return\s+1',
+            r"return\s+True",
+            r"return\s+1",
             r'return\s+"ok"',
-            r'pass\s*$'
+            r"pass\s*$"
         ]
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in trivial_patterns)
@@ -939,8 +939,8 @@ class SemanticCodeAnalyzer:
         """Check if authentication is weak."""
         weak_patterns = [
             r'password\s*==\s*["\']',  # Plain text password comparison
-            r'if\s+password\s*:',  # Just checking if password exists
-            r'return\s+True',  # Always returns true
+            r"if\s+password\s*:",  # Just checking if password exists
+            r"return\s+True",  # Always returns true
         ]
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in weak_patterns)
@@ -949,10 +949,10 @@ class SemanticCodeAnalyzer:
         """Find trivial validation patterns."""
         patterns = []
 
-        if re.search(r'return\s+True', content, re.IGNORECASE):
+        if re.search(r"return\s+True", content, re.IGNORECASE):
             patterns.append("always_returns_true")
 
-        if re.search(r'pass\s*$', content, re.MULTILINE):
+        if re.search(r"pass\s*$", content, re.MULTILINE):
             patterns.append("empty_implementation")
 
         return patterns
@@ -961,13 +961,13 @@ class SemanticCodeAnalyzer:
         """Find missing validation checks."""
         missing = []
 
-        if not re.search(r'if\s+not\s+', content):
+        if not re.search(r"if\s+not\s+", content):
             missing.append("null_check")
 
-        if not re.search(r'len\s*\(', content):
+        if not re.search(r"len\s*\(", content):
             missing.append("length_check")
 
-        if not re.search(r'isinstance\s*\(', content):
+        if not re.search(r"isinstance\s*\(", content):
             missing.append("type_check")
 
         return missing
@@ -979,7 +979,7 @@ class SemanticCodeAnalyzer:
         if re.search(r'password\s*==\s*["\']', content):
             patterns.append("plaintext_comparison")
 
-        if not re.search(r'hash|encrypt|bcrypt|scrypt', content, re.IGNORECASE):
+        if not re.search(r"hash|encrypt|bcrypt|scrypt", content, re.IGNORECASE):
             patterns.append("no_hashing")
 
         return patterns
@@ -1056,18 +1056,18 @@ class SemanticCodeAnalyzer:
         if content is None:
             try:
                 from .ai_file_tools import get_ai_file_tools
-                ai_file_tools = get_ai_file_tools(getattr(self, 'app_instance', None))
+                ai_file_tools = get_ai_file_tools(getattr(self, "app_instance", None))
                 file_data = ai_file_tools.read_file(file_path, purpose="File hash calculation for caching")
                 if file_data.get("status") == "success" and file_data.get("content"):
                     content = file_data["content"]
                 else:
                     # Fallback to direct file reading
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
             except (ImportError, AttributeError, KeyError):
                 # AIFileTools not available, use direct file reading
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
                 except Exception as e:
                     self.logger.error("Exception in semantic_code_analyzer: %s", e)

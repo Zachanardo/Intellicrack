@@ -64,7 +64,7 @@ class HexViewerThread(QThread):
             if self.size is None or self.size > max_size:
                 self.size = min(file_size - self.offset, max_size)
 
-            with open(self.file_path, 'rb') as f:
+            with open(self.file_path, "rb") as f:
                 f.seek(self.offset)
 
                 # Read in chunks
@@ -535,9 +535,9 @@ class HexViewerWidget(QWidget):
                 # Convert hex string to bytes
                 pattern_bytes = bytes.fromhex(pattern.replace(" ", ""))
             elif search_type == "ASCII":
-                pattern_bytes = pattern.encode('ascii')
+                pattern_bytes = pattern.encode("ascii")
             else:  # Unicode
-                pattern_bytes = pattern.encode('utf-16le')
+                pattern_bytes = pattern.encode("utf-16le")
 
             # Search for pattern
             index = self.file_data.find(pattern_bytes)
@@ -626,34 +626,34 @@ class HexViewerWidget(QWidget):
         if available >= 1:
             byte_val = self.file_data[offset]
             interpretations.append(("UInt8", str(byte_val)))
-            interpretations.append(("Int8", str(struct.unpack('b', bytes([byte_val]))[0])))
+            interpretations.append(("Int8", str(struct.unpack("b", bytes([byte_val]))[0])))
             interpretations.append(("Char", repr(chr(byte_val)) if 32 <= byte_val <= 126 else "N/A"))
 
         # 16-bit values
         if available >= 2:
             data = self.file_data[offset:offset+2]
-            interpretations.append(("UInt16 LE", str(struct.unpack('<H', data)[0])))
-            interpretations.append(("UInt16 BE", str(struct.unpack('>H', data)[0])))
-            interpretations.append(("Int16 LE", str(struct.unpack('<h', data)[0])))
-            interpretations.append(("Int16 BE", str(struct.unpack('>h', data)[0])))
+            interpretations.append(("UInt16 LE", str(struct.unpack("<H", data)[0])))
+            interpretations.append(("UInt16 BE", str(struct.unpack(">H", data)[0])))
+            interpretations.append(("Int16 LE", str(struct.unpack("<h", data)[0])))
+            interpretations.append(("Int16 BE", str(struct.unpack(">h", data)[0])))
 
         # 32-bit values
         if available >= 4:
             data = self.file_data[offset:offset+4]
-            interpretations.append(("UInt32 LE", str(struct.unpack('<I', data)[0])))
-            interpretations.append(("UInt32 BE", str(struct.unpack('>I', data)[0])))
-            interpretations.append(("Int32 LE", str(struct.unpack('<i', data)[0])))
-            interpretations.append(("Int32 BE", str(struct.unpack('>i', data)[0])))
+            interpretations.append(("UInt32 LE", str(struct.unpack("<I", data)[0])))
+            interpretations.append(("UInt32 BE", str(struct.unpack(">I", data)[0])))
+            interpretations.append(("Int32 LE", str(struct.unpack("<i", data)[0])))
+            interpretations.append(("Int32 BE", str(struct.unpack(">i", data)[0])))
             interpretations.append(("Float LE", f"{struct.unpack('<f', data)[0]:.6f}"))
             interpretations.append(("Float BE", f"{struct.unpack('>f', data)[0]:.6f}"))
 
         # 64-bit values
         if available >= 8:
             data = self.file_data[offset:offset+8]
-            interpretations.append(("UInt64 LE", str(struct.unpack('<Q', data)[0])))
-            interpretations.append(("UInt64 BE", str(struct.unpack('>Q', data)[0])))
-            interpretations.append(("Int64 LE", str(struct.unpack('<q', data)[0])))
-            interpretations.append(("Int64 BE", str(struct.unpack('>q', data)[0])))
+            interpretations.append(("UInt64 LE", str(struct.unpack("<Q", data)[0])))
+            interpretations.append(("UInt64 BE", str(struct.unpack(">Q", data)[0])))
+            interpretations.append(("Int64 LE", str(struct.unpack("<q", data)[0])))
+            interpretations.append(("Int64 BE", str(struct.unpack(">q", data)[0])))
             interpretations.append(("Double LE", f"{struct.unpack('<d', data)[0]:.10f}"))
             interpretations.append(("Double BE", f"{struct.unpack('>d', data)[0]:.10f}"))
 
@@ -678,7 +678,7 @@ class HexViewerWidget(QWidget):
         # Parse hex values from selected text
         try:
             hex_bytes = []
-            lines = selected_text.split('\n')
+            lines = selected_text.split("\n")
 
             for line in lines:
                 # Skip empty lines
@@ -686,7 +686,7 @@ class HexViewerWidget(QWidget):
                     continue
 
                 # Find the colon that separates offset from hex data
-                colon_pos = line.find(':')
+                colon_pos = line.find(":")
                 if colon_pos == -1:
                     # No offset, assume entire line is hex data
                     hex_part = line
@@ -695,14 +695,14 @@ class HexViewerWidget(QWidget):
                     hex_part = line[colon_pos + 1:]
 
                 # Remove all spaces and extract hex pairs
-                hex_part = hex_part.replace(' ', '')
+                hex_part = hex_part.replace(" ", "")
 
                 # Process hex pairs (2 characters at a time)
                 for i in range(0, len(hex_part), 2):
                     if i + 1 < len(hex_part):
                         hex_pair = hex_part[i:i+2]
                         # Validate hex characters
-                        if all(c in '0123456789ABCDEFabcdef' for c in hex_pair):
+                        if all(c in "0123456789ABCDEFabcdef" for c in hex_pair):
                             hex_bytes.append(hex_pair)
 
             if not hex_bytes:
@@ -710,7 +710,7 @@ class HexViewerWidget(QWidget):
                 return
 
             # Convert hex strings to bytes
-            binary_data = bytes.fromhex(''.join(hex_bytes))
+            binary_data = bytes.fromhex("".join(hex_bytes))
 
             # Get save file path
             file_path, _ = QFileDialog.getSaveFileName(
@@ -722,7 +722,7 @@ class HexViewerWidget(QWidget):
 
             if file_path:
                 # Write bytes to file
-                with open(file_path, 'wb') as f:
+                with open(file_path, "wb") as f:
                     f.write(binary_data)
 
                 # Show success message
@@ -802,7 +802,7 @@ class HexViewerWidget(QWidget):
             # Add temporary highlight for clicked structure
             self.highlighted_regions = [
                 region for region in self.highlighted_regions
-                if not hasattr(region, '_temporary')
+                if not hasattr(region, "_temporary")
             ]
 
             # Add new temporary highlight

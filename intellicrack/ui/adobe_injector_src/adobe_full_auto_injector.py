@@ -81,9 +81,9 @@ def get_running_adobe_apps():
     ADOBE_PROCESSES that haven't already been marked as injected.
     """
     running = []
-    for _proc in psutil.process_iter(attrs=['name']):
+    for _proc in psutil.process_iter(attrs=["name"]):
         try:
-            pname = _proc.info['name']
+            pname = _proc.info["name"]
             if pname in ADOBE_PROCESSES and pname not in injected:
                 running.append(pname)
         except (psutil.NoSuchProcess, psutil.AccessDenied) as e:

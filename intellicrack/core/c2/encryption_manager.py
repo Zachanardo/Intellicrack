@@ -63,7 +63,7 @@ class EncryptionManager:
     and perfect forward secrecy for C2 communications.
     """
 
-    def __init__(self, encryption_type='AES256', key_file=None):
+    def __init__(self, encryption_type="AES256", key_file=None):
         """Initialize the encryption manager with specified encryption type and key configuration."""
         self.encryption_type = encryption_type.upper()
         self.key_file = key_file
@@ -75,7 +75,7 @@ class EncryptionManager:
         self.iv = None
 
         # Supported encryption types
-        self.supported_types = ['AES128', 'AES256', 'CHACHA20', 'RSA2048', 'RSA4096']
+        self.supported_types = ["AES128", "AES256", "CHACHA20", "RSA2048", "RSA4096"]
 
         if self.encryption_type not in self.supported_types:
             raise ValueError(f"Unsupported encryption type: {self.encryption_type}")
@@ -99,10 +99,10 @@ class EncryptionManager:
 
         # Statistics
         self.stats = {
-            'encryptions': 0,
-            'decryptions': 0,
-            'key_rotations': 0,
-            'last_key_rotation': time.time()
+            "encryptions": 0,
+            "decryptions": 0,
+            "key_rotations": 0,
+            "last_key_rotation": time.time()
         }
 
     def _initialize_encryption(self):
@@ -164,7 +164,7 @@ class EncryptionManager:
             encryptor = cipher.encryptor()
 
             # PKCS7 padding
-            padded_data = self._pkcs7_pad(plaintext.encode('utf-8'))
+            padded_data = self._pkcs7_pad(plaintext.encode("utf-8"))
             ciphertext = encryptor.update(padded_data) + encryptor.finalize()
 
             # Generate HMAC for authentication
@@ -223,7 +223,7 @@ class EncryptionManager:
             # Remove PKCS7 padding
             plaintext = self._pkcs7_unpad(padded_plaintext)
 
-            return plaintext.decode('utf-8')
+            return plaintext.decode("utf-8")
 
         except Exception as e:
             self.logger.error(f"Decryption failed: {e}")
@@ -237,9 +237,9 @@ class EncryptionManager:
 
             # Store session key
             self.session_keys[session_id] = {
-                'key': session_key,
-                'created_at': time.time(),
-                'used_count': 0
+                "key": session_key,
+                "created_at": time.time(),
+                "used_count": 0
             }
 
             self.logger.info(f"Created session key for {session_id}")
@@ -282,9 +282,9 @@ class EncryptionManager:
 
             # Store session key
             self.session_keys[session_id] = {
-                'key': session_key,
-                'created_at': time.time(),
-                'used_count': 0
+                "key": session_key,
+                "created_at": time.time(),
+                "used_count": 0
             }
 
             # Get our public key for client
@@ -294,10 +294,10 @@ class EncryptionManager:
             )
 
             return {
-                'session_id': session_id,
-                'encrypted_session_key': base64.b64encode(encrypted_session_key).decode('utf-8'),
-                'server_public_key': server_public_key_pem.decode('utf-8'),
-                'timestamp': time.time()
+                "session_id": session_id,
+                "encrypted_session_key": base64.b64encode(encrypted_session_key).decode("utf-8"),
+                "server_public_key": server_public_key_pem.decode("utf-8"),
+                "timestamp": time.time()
             }
 
         except Exception as e:
@@ -319,7 +319,7 @@ class EncryptionManager:
             # Securely clear old master key
             if old_master_key:
                 # Overwrite old key data for security
-                old_master_key = b'\x00' * len(old_master_key)
+                old_master_key = b"\x00" * len(old_master_key)
 
             # Generate new RSA keypair
             self._generate_rsa_keypair()
@@ -328,7 +328,7 @@ class EncryptionManager:
             cutoff_time = current_time - 3600
             expired_sessions = [
                 session_id for session_id, info in self.session_keys.items()
-                if info['created_at'] < cutoff_time
+                if info["created_at"] < cutoff_time
             ]
 
             for session_id in expired_sessions:
@@ -348,7 +348,7 @@ class EncryptionManager:
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PublicFormat.SubjectPublicKeyInfo
             )
-            return public_key_pem.decode('utf-8')
+            return public_key_pem.decode("utf-8")
 
         except Exception as e:
             self.logger.error(f"Failed to get public key: {e}")
@@ -368,17 +368,17 @@ class EncryptionManager:
         """
         try:
             if not output_path:
-                output_path = file_path + '.enc'
+                output_path = file_path + ".enc"
 
             # Read file
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 file_data = f.read()
 
             # Encrypt file data
-            encrypted_data = self.encrypt(base64.b64encode(file_data).decode('utf-8'), session_id)
+            encrypted_data = self.encrypt(base64.b64encode(file_data).decode("utf-8"), session_id)
 
             # Write encrypted file
-            with open(output_path, 'wb') as f:
+            with open(output_path, "wb") as f:
                 f.write(encrypted_data)
 
             self.logger.info(f"Encrypted file: {file_path} -> {output_path}")
@@ -402,10 +402,10 @@ class EncryptionManager:
         """
         try:
             if not output_path:
-                output_path = encrypted_file_path.replace('.enc', '')
+                output_path = encrypted_file_path.replace(".enc", "")
 
             # Read encrypted file
-            with open(encrypted_file_path, 'rb') as f:
+            with open(encrypted_file_path, "rb") as f:
                 encrypted_data = f.read()
 
             # Decrypt file data
@@ -413,7 +413,7 @@ class EncryptionManager:
             file_data = base64.b64decode(decrypted_data)
 
             # Write decrypted file
-            with open(output_path, 'wb') as f:
+            with open(output_path, "wb") as f:
                 f.write(file_data)
 
             self.logger.info(f"Decrypted file: {encrypted_file_path} -> {output_path}")
@@ -430,15 +430,15 @@ class EncryptionManager:
             return self.create_session_key(session_id)
 
         session_info = self.session_keys[session_id]
-        session_info['used_count'] += 1
+        session_info["used_count"] += 1
 
-        return session_info['key']
+        return session_info["key"]
 
     def _derive_hmac_key(self, encryption_key: bytes) -> bytes:
         """Derive HMAC key from encryption key."""
         # Use a proper salt derived from the encryption key itself
         # This ensures each key has a unique salt while remaining deterministic
-        salt = hashlib.sha256(encryption_key + b'hmac_derivation').digest()[:16]
+        salt = hashlib.sha256(encryption_key + b"hmac_derivation").digest()[:16]
 
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
@@ -489,7 +489,7 @@ class EncryptionManager:
                 backend=default_backend()
             )
 
-            return kdf.derive(password.encode('utf-8'))
+            return kdf.derive(password.encode("utf-8"))
 
         except Exception as e:
             self.logger.error(f"Key derivation failed: {e}")
@@ -501,18 +501,18 @@ class EncryptionManager:
             current_time = time.time()
 
             stats = {
-                'total_sessions': len(self.session_keys),
-                'active_sessions': 0,
-                'total_encryptions': 0,
-                'last_key_rotation': self.last_key_rotation,
-                'time_until_rotation': max(0, self.key_rotation_interval - (current_time - self.last_key_rotation))
+                "total_sessions": len(self.session_keys),
+                "active_sessions": 0,
+                "total_encryptions": 0,
+                "last_key_rotation": self.last_key_rotation,
+                "time_until_rotation": max(0, self.key_rotation_interval - (current_time - self.last_key_rotation))
             }
 
             # Calculate active sessions and usage
             for session_info in self.session_keys.values():
-                if (current_time - session_info['created_at']) < 3600:  # Active if < 1 hour old
-                    stats['active_sessions'] += 1
-                stats['total_encryptions'] += session_info['used_count']
+                if (current_time - session_info["created_at"]) < 3600:  # Active if < 1 hour old
+                    stats["active_sessions"] += 1
+                stats["total_encryptions"] += session_info["used_count"]
 
             return stats
 
@@ -528,7 +528,7 @@ class EncryptionManager:
 
             expired_sessions = [
                 session_id for session_id, info in self.session_keys.items()
-                if info['created_at'] < cutoff_time
+                if info["created_at"] < cutoff_time
             ]
 
             for session_id in expired_sessions:
@@ -548,13 +548,13 @@ class EncryptionManager:
 
             key_data = self.session_keys[session_id]
             exported_key = {
-                'session_id': session_id,
-                'key': base64.b64encode(key_data['key']).decode('utf-8'),
-                'created_at': key_data['created_at'],
-                'used_count': key_data['used_count']
+                "session_id": session_id,
+                "key": base64.b64encode(key_data["key"]).decode("utf-8"),
+                "created_at": key_data["created_at"],
+                "used_count": key_data["used_count"]
             }
 
-            return base64.b64encode(json.dumps(exported_key).encode()).decode('utf-8')
+            return base64.b64encode(json.dumps(exported_key).encode()).decode("utf-8")
 
         except Exception as e:
             self.logger.error(f"Failed to export session key: {e}")
@@ -564,16 +564,16 @@ class EncryptionManager:
         """Import session key from backup/transfer."""
         try:
             # Decode and parse exported key - use json.loads instead of eval for security
-            key_data = json.loads(base64.b64decode(exported_key_data).decode('utf-8'))
+            key_data = json.loads(base64.b64decode(exported_key_data).decode("utf-8"))
 
-            session_id = key_data['session_id']
-            session_key = base64.b64decode(key_data['key'])
+            session_id = key_data["session_id"]
+            session_key = base64.b64decode(key_data["key"])
 
             # Import session key
             self.session_keys[session_id] = {
-                'key': session_key,
-                'created_at': key_data['created_at'],
-                'used_count': key_data['used_count']
+                "key": session_key,
+                "created_at": key_data["created_at"],
+                "used_count": key_data["used_count"]
             }
 
             self.logger.info(f"Imported session key for {session_id}")

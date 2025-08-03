@@ -106,11 +106,11 @@ def get_pefile():
 def get_capstone():
     """Get capstone module components if available."""
     return {
-        'Cs': Cs,
-        'CS_ARCH_X86': CS_ARCH_X86,
-        'CS_MODE_32': CS_MODE_32,
-        'CS_MODE_64': CS_MODE_64,
-        'available': CAPSTONE_AVAILABLE
+        "Cs": Cs,
+        "CS_ARCH_X86": CS_ARCH_X86,
+        "CS_MODE_32": CS_MODE_32,
+        "CS_MODE_64": CS_MODE_64,
+        "available": CAPSTONE_AVAILABLE
     }
 
 
@@ -122,32 +122,32 @@ def get_lief():
 def get_elftools():
     """Get elftools components if available."""
     return {
-        'ELFFile': ELFFile,
-        'available': PYELFTOOLS_AVAILABLE
+        "ELFFile": ELFFile,
+        "available": PYELFTOOLS_AVAILABLE
     }
 
 
 def get_macholib():
     """Get macholib components if available."""
     return {
-        'MachO': MachO,
-        'available': MACHOLIB_AVAILABLE
+        "MachO": MachO,
+        "available": MACHOLIB_AVAILABLE
     }
 
 
 def get_zipfile():
     """Get zipfile module if available."""
     return {
-        'zipfile': zipfile,
-        'available': ZIPFILE_AVAILABLE
+        "zipfile": zipfile,
+        "available": ZIPFILE_AVAILABLE
     }
 
 
 def get_xml():
     """Get XML parsing components if available."""
     return {
-        'ET': ET,
-        'available': XML_AVAILABLE
+        "ET": ET,
+        "available": XML_AVAILABLE
     }
 
 
@@ -158,12 +158,12 @@ def get_psutil():
 
 # Export all
 __all__ = [
-    'PEFILE_AVAILABLE', 'pefile', 'get_pefile',
-    'CAPSTONE_AVAILABLE', 'CS_ARCH_X86', 'CS_MODE_32', 'CS_MODE_64', 'Cs', 'get_capstone',
-    'LIEF_AVAILABLE', 'lief', 'get_lief',
-    'PYELFTOOLS_AVAILABLE', 'ELFFile', 'get_elftools',
-    'MACHOLIB_AVAILABLE', 'MachO', 'get_macholib',
-    'ZIPFILE_AVAILABLE', 'zipfile', 'get_zipfile',
-    'XML_AVAILABLE', 'ET', 'get_xml',
-    'PSUTIL_AVAILABLE', 'psutil', 'get_psutil',
+    "PEFILE_AVAILABLE", "pefile", "get_pefile",
+    "CAPSTONE_AVAILABLE", "CS_ARCH_X86", "CS_MODE_32", "CS_MODE_64", "Cs", "get_capstone",
+    "LIEF_AVAILABLE", "lief", "get_lief",
+    "PYELFTOOLS_AVAILABLE", "ELFFile", "get_elftools",
+    "MACHOLIB_AVAILABLE", "MachO", "get_macholib",
+    "ZIPFILE_AVAILABLE", "zipfile", "get_zipfile",
+    "XML_AVAILABLE", "ET", "get_xml",
+    "PSUTIL_AVAILABLE", "psutil", "get_psutil",
 ]

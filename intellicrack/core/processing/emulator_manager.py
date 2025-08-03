@@ -68,12 +68,12 @@ class EmulatorManager(QObject):
         self.emulators = {}
         self.is_running = False
         self.stats = {
-            'total_executions': 0,
-            'successful_executions': 0,
-            'failed_executions': 0,
-            'qiling_executions': 0,
-            'qemu_executions': 0,
-            'unicorn_executions': 0
+            "total_executions": 0,
+            "successful_executions": 0,
+            "failed_executions": 0,
+            "qiling_executions": 0,
+            "qemu_executions": 0,
+            "unicorn_executions": 0
         }
 
     def ensure_qemu_running(self, binary_path: str, config: Optional[Dict[str, Any]] = None) -> bool:
@@ -106,7 +106,7 @@ class EmulatorManager(QObject):
             # Check if already running
             if self.qemu_running and self.qemu_instance:
                 # Check if we're using the same binary
-                if hasattr(self.qemu_instance, 'binary_path') and self.qemu_instance.binary_path == binary_path:
+                if hasattr(self.qemu_instance, "binary_path") and self.qemu_instance.binary_path == binary_path:
                     self.logger.debug(f"QEMU already running for binary: {binary_path}")
                     return True
                 else:
@@ -129,13 +129,13 @@ class EmulatorManager(QObject):
                 config = {}
 
             # Add binary path to configuration
-            config['binary_path'] = binary_path
+            config["binary_path"] = binary_path
 
             # Create QEMU instance if needed
             if not self.qemu_instance:
                 self.qemu_instance = QemuEmulator(config=config)
                 # Store binary path for future reference
-                if hasattr(self.qemu_instance, '__dict__'):
+                if hasattr(self.qemu_instance, "__dict__"):
                     self.qemu_instance.binary_path = binary_path
 
             # Start the system

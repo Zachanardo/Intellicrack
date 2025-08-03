@@ -106,21 +106,21 @@ except ImportError as e:
 
 __all__ = [
     # Core analysis functions
-    'calculate_entropy',
-    'analyze_binary_internal',
-    'enhanced_deep_license_analysis',
-    'detect_packing',
+    "calculate_entropy",
+    "analyze_binary_internal",
+    "enhanced_deep_license_analysis",
+    "detect_packing",
     # Analysis engines
-    'VulnerabilityEngine',
-    'DynamicAnalyzer',
-    'AdvancedDynamicAnalyzer',
-    'SymbolicExecutionEngine',
-    'ConcolicExecutionEngine',
-    'TaintAnalysisEngine',
-    'run_taint_analysis',
-    'ROPChainGenerator',
-    'MultiFormatBinaryAnalyzer',
-    'CFGExplorer',
-    'IncrementalAnalysisManager',
-    'SimilaritySearcher'
+    "VulnerabilityEngine",
+    "DynamicAnalyzer",
+    "AdvancedDynamicAnalyzer",
+    "SymbolicExecutionEngine",
+    "ConcolicExecutionEngine",
+    "TaintAnalysisEngine",
+    "run_taint_analysis",
+    "ROPChainGenerator",
+    "MultiFormatBinaryAnalyzer",
+    "CFGExplorer",
+    "IncrementalAnalysisManager",
+    "SimilaritySearcher"
 ]

@@ -61,7 +61,7 @@ except ImportError as e:
     logger.error("Import error in visual_patch_editor: %s", e)
     HAS_CAPSTONE = False
 
-__all__ = ['VisualPatchEditorDialog']
+__all__ = ["VisualPatchEditorDialog"]
 
 
 class VisualPatchEditorDialog(QDialog):
@@ -349,7 +349,7 @@ class VisualPatchEditorDialog(QDialog):
             pe = pefile.PE(self.binary_path)
 
             # Determine if 32 or 64 bit
-            is_64bit = getattr(pe.FILE_HEADER, 'Machine', 0) == 0x8664
+            is_64bit = getattr(pe.FILE_HEADER, "Machine", 0) == 0x8664
             mode = CS_MODE_64 if is_64bit else CS_MODE_32
 
             # Get section containing address

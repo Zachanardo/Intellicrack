@@ -69,7 +69,7 @@ class DashboardManager:
         self.logger.debug("Updating dashboard statistics")
 
         # Initialize stats dict if needed
-        if not hasattr(self, 'stats'):
+        if not hasattr(self, "stats"):
             self.logger.debug("Initializing stats dictionary")
             self.stats = {}
 
@@ -238,7 +238,7 @@ class DashboardManager:
         self.logger.info(f"Updating dashboard statistics: {list(stats_dict.keys())}")
 
         # Initialize stats dict if needed
-        if not hasattr(self, 'stats'):
+        if not hasattr(self, "stats"):
             self.stats = {}
 
         # Update the stats with the provided values
@@ -351,7 +351,7 @@ class DashboardManager:
                 "recent_activities": self.get_recent_activities()
             }
 
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, default=str)
 
             self.logger.info("Statistics exported to %s", filepath)
@@ -363,4 +363,4 @@ class DashboardManager:
 
 
 # Export main class
-__all__ = ['DashboardManager']
+__all__ = ["DashboardManager"]

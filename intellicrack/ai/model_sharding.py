@@ -82,13 +82,13 @@ class ModelShardingManager:
         # Use unified GPU system if available
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_info = get_gpu_info()
-            self.device_count = gpu_info['info'].get('device_count', 0) if gpu_info['available'] else 0
-            self.gpu_type = gpu_info['type']
+            self.device_count = gpu_info["info"].get("device_count", 0) if gpu_info["available"] else 0
+            self.gpu_type = gpu_info["type"]
             self.unified_device = get_device()
         else:
             self.device_count = torch.cuda.device_count(
             ) if HAS_TORCH and torch.cuda.is_available() else 0
-            self.gpu_type = 'cuda' if self.device_count > 0 else 'cpu'
+            self.gpu_type = "cuda" if self.device_count > 0 else "cpu"
             self.unified_device = None
 
         self.device_properties = {}
@@ -96,7 +96,7 @@ class ModelShardingManager:
 
         if self.device_count > 0 and HAS_TORCH:
             for i in range(self.device_count):
-                if self.gpu_type == 'nvidia_cuda':
+                if self.gpu_type == "nvidia_cuda":
                     props = torch.cuda.get_device_properties(i)
                     self.device_properties[i] = {
                         "name": props.name,
@@ -105,18 +105,18 @@ class ModelShardingManager:
                         "minor": props.minor,
                         "multi_processor_count": props.multi_processor_count,
                     }
-                elif self.gpu_type == 'intel_xpu' and hasattr(torch, 'xpu'):
+                elif self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
                     # Intel XPU properties
                     self.device_properties[i] = {
-                        "name": torch.xpu.get_device_name(i) if hasattr(torch.xpu, 'get_device_name') else f"Intel XPU {i}",
+                        "name": torch.xpu.get_device_name(i) if hasattr(torch.xpu, "get_device_name") else f"Intel XPU {i}",
                         "total_memory": 0,  # Will be filled if available
                         "device_type": "xpu"
                     }
                     # Try to get memory info
-                    if hasattr(torch.xpu, 'get_device_properties'):
+                    if hasattr(torch.xpu, "get_device_properties"):
                         try:
                             props = torch.xpu.get_device_properties(i)
-                            if hasattr(props, 'total_memory'):
+                            if hasattr(props, "total_memory"):
                                 self.device_properties[i]["total_memory"] = props.total_memory
                         except (AttributeError, RuntimeError):
                             pass
@@ -138,7 +138,7 @@ class ModelShardingManager:
         # Add memory info
         if self.device_count > 0 and HAS_TORCH:
             for i in range(self.device_count):
-                if self.gpu_type == 'nvidia_cuda':
+                if self.gpu_type == "nvidia_cuda":
                     torch.cuda.set_device(i)
                     info["devices"][i]["allocated_memory"] = torch.cuda.memory_allocated(i)
                     info["devices"][i]["reserved_memory"] = torch.cuda.memory_reserved(i)
@@ -146,12 +146,12 @@ class ModelShardingManager:
                         info["devices"][i]["total_memory"] -
                         torch.cuda.memory_allocated(i)
                     )
-                elif self.gpu_type == 'intel_xpu' and hasattr(torch, 'xpu'):
-                    if hasattr(torch.xpu, 'set_device'):
+                elif self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
+                    if hasattr(torch.xpu, "set_device"):
                         torch.xpu.set_device(i)
-                    if hasattr(torch.xpu, 'memory_allocated'):
+                    if hasattr(torch.xpu, "memory_allocated"):
                         info["devices"][i]["allocated_memory"] = torch.xpu.memory_allocated(i)
-                    if hasattr(torch.xpu, 'memory_reserved'):
+                    if hasattr(torch.xpu, "memory_reserved"):
                         info["devices"][i]["reserved_memory"] = torch.xpu.memory_reserved(i)
 
         return info
@@ -161,13 +161,13 @@ class ModelShardingManager:
         if GPU_AUTOLOADER_AVAILABLE and self.unified_device:
             # Extract device index from unified device
             device_str = str(self.unified_device)
-            if ':' in device_str:
-                return int(device_str.split(':')[1])
+            if ":" in device_str:
+                return int(device_str.split(":")[1])
             return 0
-        elif self.gpu_type == 'nvidia_cuda' and torch.cuda.is_available():
+        elif self.gpu_type == "nvidia_cuda" and torch.cuda.is_available():
             return torch.cuda.current_device()
-        elif self.gpu_type == 'intel_xpu' and hasattr(torch, 'xpu'):
-            if hasattr(torch.xpu, 'current_device'):
+        elif self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
+            if hasattr(torch.xpu, "current_device"):
                 return torch.xpu.current_device()
         return 0
 
@@ -572,7 +572,7 @@ class ModelShardingManager:
             return memory_info
 
         for i in range(self.device_count):
-            if self.gpu_type == 'nvidia_cuda':
+            if self.gpu_type == "nvidia_cuda":
                 allocated = torch.cuda.memory_allocated(i) / (1024**3)
                 reserved = torch.cuda.memory_reserved(i) / (1024**3)
                 total = self.device_properties[i]["total_memory"] / (1024**3)
@@ -584,12 +584,12 @@ class ModelShardingManager:
                     "total_gb": total,
                     "usage_percent": (allocated / total) * 100
                 }
-            elif self.gpu_type == 'intel_xpu' and hasattr(torch, 'xpu'):
+            elif self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
                 memory_info[i] = {"device_type": "xpu", "device_id": i}
-                if hasattr(torch.xpu, 'memory_allocated'):
+                if hasattr(torch.xpu, "memory_allocated"):
                     allocated = torch.xpu.memory_allocated(i) / (1024**3)
                     memory_info[i]["allocated_gb"] = allocated
-                if hasattr(torch.xpu, 'memory_reserved'):
+                if hasattr(torch.xpu, "memory_reserved"):
                     reserved = torch.xpu.memory_reserved(i) / (1024**3)
                     memory_info[i]["reserved_gb"] = reserved
                 if i in self.device_properties and self.device_properties[i].get("total_memory"):
@@ -607,13 +607,13 @@ class ModelShardingManager:
             return
 
         for i in range(self.device_count):
-            if self.gpu_type == 'nvidia_cuda':
+            if self.gpu_type == "nvidia_cuda":
                 torch.cuda.set_device(i)
                 torch.cuda.empty_cache()
-            elif self.gpu_type == 'intel_xpu' and hasattr(torch, 'xpu'):
-                if hasattr(torch.xpu, 'set_device'):
+            elif self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
+                if hasattr(torch.xpu, "set_device"):
                     torch.xpu.set_device(i)
-                if hasattr(torch.xpu, 'empty_cache'):
+                if hasattr(torch.xpu, "empty_cache"):
                     torch.xpu.empty_cache()
 
         gc.collect()
@@ -722,8 +722,8 @@ class ModelShardingManager:
         if GPU_AUTOLOADER_AVAILABLE:
             inputs = to_device(sample_input)
         else:
-            device_type = self.gpu_type.split('_')[0] if '_' in self.gpu_type else 'cuda'
-            if hasattr(sample_input, 'to') and self.device_count > 0:
+            device_type = self.gpu_type.split("_")[0] if "_" in self.gpu_type else "cuda"
+            if hasattr(sample_input, "to") and self.device_count > 0:
                 inputs = sample_input.to(device_type)
             else:
                 inputs = sample_input
@@ -736,7 +736,7 @@ class ModelShardingManager:
         forward_times = []
         memory_usage = []
 
-        if self.gpu_type == 'nvidia_cuda':
+        if self.gpu_type == "nvidia_cuda":
             torch.cuda.synchronize()
             start_memory = sum(
                 torch.cuda.memory_allocated(i)
@@ -747,7 +747,7 @@ class ModelShardingManager:
 
         for i in range(num_iterations):
             # Measure memory before forward pass
-            if self.gpu_type == 'nvidia_cuda':
+            if self.gpu_type == "nvidia_cuda":
                 iter_start_memory = sum(
                     torch.cuda.memory_allocated(j)
                     for j in range(self.device_count)
@@ -756,9 +756,9 @@ class ModelShardingManager:
                 iter_start_memory = 0
 
             # Forward pass
-            if self.gpu_type == 'nvidia_cuda':
+            if self.gpu_type == "nvidia_cuda":
                 torch.cuda.synchronize()
-            elif self.gpu_type == 'intel_xpu' and hasattr(torch.xpu, 'synchronize'):
+            elif self.gpu_type == "intel_xpu" and hasattr(torch.xpu, "synchronize"):
                 torch.xpu.synchronize()
 
             start_time = time.time()
@@ -766,40 +766,40 @@ class ModelShardingManager:
             with torch.no_grad():
                 _ = model(inputs)
 
-            if self.gpu_type == 'nvidia_cuda':
+            if self.gpu_type == "nvidia_cuda":
                 torch.cuda.synchronize()
-            elif self.gpu_type == 'intel_xpu' and hasattr(torch.xpu, 'synchronize'):
+            elif self.gpu_type == "intel_xpu" and hasattr(torch.xpu, "synchronize"):
                 torch.xpu.synchronize()
 
             forward_times.append((time.time() - start_time) * 1000)
 
             # Measure memory after forward pass
-            if self.gpu_type == 'nvidia_cuda':
+            if self.gpu_type == "nvidia_cuda":
                 iter_end_memory = sum(
                     torch.cuda.memory_allocated(j)
                     for j in range(self.device_count)
                 )
                 memory_usage.append({
-                    'iteration': i,
-                    'memory_before': iter_start_memory,
-                    'memory_after': iter_end_memory,
-                    'memory_delta': iter_end_memory - iter_start_memory,
-                    'per_device': [
+                    "iteration": i,
+                    "memory_before": iter_start_memory,
+                    "memory_after": iter_end_memory,
+                    "memory_delta": iter_end_memory - iter_start_memory,
+                    "per_device": [
                         torch.cuda.memory_allocated(j)
                         for j in range(self.device_count)
                     ]
                 })
             else:
                 memory_usage.append({
-                    'iteration': i,
-                    'memory_before': iter_start_memory,
-                    'memory_after': iter_start_memory,
-                    'memory_delta': 0,
-                    'per_device': []
+                    "iteration": i,
+                    "memory_before": iter_start_memory,
+                    "memory_after": iter_start_memory,
+                    "memory_delta": 0,
+                    "per_device": []
                 })
 
         # Calculate memory usage
-        if self.gpu_type == 'nvidia_cuda':
+        if self.gpu_type == "nvidia_cuda":
             end_memory = sum(
                 torch.cuda.memory_allocated(i)
                 for i in range(self.device_count)
@@ -818,7 +818,7 @@ class ModelShardingManager:
         max_time = max(forward_times)
 
         # Calculate memory usage statistics
-        memory_deltas = [usage['memory_delta'] for usage in memory_usage]
+        memory_deltas = [usage["memory_delta"] for usage in memory_usage]
         avg_memory_delta = sum(memory_deltas) / len(memory_deltas) if memory_deltas else 0
         max_memory_delta = max(memory_deltas) if memory_deltas else 0
 

@@ -39,7 +39,7 @@ class AnalysisExporter:
 
     @staticmethod
     def export_analysis(result: Dict[str, Any], output_file: str,
-                       format: str = 'json', analysis_type: str = 'generic') -> bool:
+                       format: str = "json", analysis_type: str = "generic") -> bool:
         """
         Export analysis results to file in specified format.
 
@@ -53,13 +53,13 @@ class AnalysisExporter:
             True if export successful, False otherwise
         """
         try:
-            if format == 'json':
+            if format == "json":
                 return AnalysisExporter._export_json(result, output_file)
-            elif format == 'html':
+            elif format == "html":
                 return AnalysisExporter._export_html(result, output_file, analysis_type)
-            elif format == 'csv':
+            elif format == "csv":
                 return AnalysisExporter._export_csv(result, output_file, analysis_type)
-            elif format == 'text':
+            elif format == "text":
                 return AnalysisExporter._export_text(result, output_file)
             else:
                 logger.error(f"Unsupported export format: {format}")
@@ -73,7 +73,7 @@ class AnalysisExporter:
     def _export_json(result: Dict[str, Any], output_file: str) -> bool:
         """Export results as JSON."""
         try:
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 json.dump(result, f, indent=2, default=str)
             return True
         except Exception as e:
@@ -84,14 +84,14 @@ class AnalysisExporter:
     def _export_html(result: Dict[str, Any], output_file: str, analysis_type: str) -> bool:
         """Export results as HTML."""
         try:
-            if analysis_type == 'vulnerability':
+            if analysis_type == "vulnerability":
                 html_content = AnalysisExporter._generate_vulnerability_html(result)
-            elif analysis_type == 'binary_diff':
+            elif analysis_type == "binary_diff":
                 html_content = AnalysisExporter._generate_diff_html(result)
             else:
                 html_content = AnalysisExporter._generate_generic_html(result)
 
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 f.write(html_content)
             return True
         except Exception as e:
@@ -102,12 +102,12 @@ class AnalysisExporter:
     def _export_csv(result: Dict[str, Any], output_file: str, analysis_type: str) -> bool:
         """Export results as CSV."""
         try:
-            with open(output_file, 'w', newline='') as f:
+            with open(output_file, "w", newline="") as f:
                 writer = csv.writer(f)
 
-                if analysis_type == 'vulnerability':
+                if analysis_type == "vulnerability":
                     AnalysisExporter._write_vulnerability_csv(writer, result)
-                elif analysis_type == 'binary_diff':
+                elif analysis_type == "binary_diff":
                     AnalysisExporter._write_diff_csv(writer, result)
                 else:
                     AnalysisExporter._write_generic_csv(writer, result)
@@ -121,7 +121,7 @@ class AnalysisExporter:
     def _export_text(result: Dict[str, Any], output_file: str) -> bool:
         """Export results as plain text."""
         try:
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 f.write(str(result))
             return True
         except Exception as e:
@@ -131,30 +131,30 @@ class AnalysisExporter:
     @staticmethod
     def _write_vulnerability_csv(writer, result: Dict[str, Any]) -> None:
         """Write vulnerability-specific CSV format."""
-        writer.writerow(['Type', 'File', 'Line', 'Severity', 'Confidence', 'Description'])
+        writer.writerow(["Type", "File", "Line", "Severity", "Confidence", "Description"])
 
-        for vuln in result.get('vulnerabilities', []):
+        for vuln in result.get("vulnerabilities", []):
             writer.writerow([
-                vuln.get('type', ''),
-                vuln.get('file', ''),
-                vuln.get('line', ''),
-                vuln.get('severity', ''),
-                vuln.get('confidence', ''),
-                vuln.get('description', '')
+                vuln.get("type", ""),
+                vuln.get("file", ""),
+                vuln.get("line", ""),
+                vuln.get("severity", ""),
+                vuln.get("confidence", ""),
+                vuln.get("description", "")
             ])
 
     @staticmethod
     def _write_diff_csv(writer, result: Dict[str, Any]) -> None:
         """Write binary diff-specific CSV format."""
-        writer.writerow(['Type', 'Old_Value', 'New_Value', 'Severity', 'Description'])
+        writer.writerow(["Type", "Old_Value", "New_Value", "Severity", "Description"])
 
-        for diff in result.get('differences', []):
+        for diff in result.get("differences", []):
             writer.writerow([
-                diff.get('type', ''),
-                diff.get('old_value', ''),
-                diff.get('new_value', ''),
-                diff.get('severity', ''),
-                diff.get('description', '')
+                diff.get("type", ""),
+                diff.get("old_value", ""),
+                diff.get("new_value", ""),
+                diff.get("severity", ""),
+                diff.get("description", "")
             ])
 
     @staticmethod
@@ -174,7 +174,7 @@ class AnalysisExporter:
 
                 for key, value in result.items():
                     if isinstance(value, dict):
-                        row = [value.get(h, '') for h in headers]
+                        row = [value.get(h, "") for h in headers]
                         writer.writerow([key] + row)
 
     @staticmethod
@@ -219,21 +219,21 @@ class AnalysisExporter:
 
         # Extract data for template
         import time
-        vulns = result.get('vulnerabilities', [])
-        stats = result.get('statistics', {})
+        vulns = result.get("vulnerabilities", [])
+        stats = result.get("statistics", {})
 
         logger.debug("Exporting HTML report with %d vulnerabilities and stats: %s",
                     len(vulns), stats)
 
         # Count by severity
-        high_count = len([v for v in vulns if v.get('severity') == 'high'])
-        medium_count = len([v for v in vulns if v.get('severity') == 'medium'])
-        low_count = len([v for v in vulns if v.get('severity') == 'low'])
+        high_count = len([v for v in vulns if v.get("severity") == "high"])
+        medium_count = len([v for v in vulns if v.get("severity") == "medium"])
+        low_count = len([v for v in vulns if v.get("severity") == "low"])
 
         # Generate vulnerability list
         vuln_html = ""
         for vuln in vulns:
-            severity = vuln.get('severity', 'low')
+            severity = vuln.get("severity", "low")
             vuln_html += f"""
             <div class="vulnerability {severity}">
                 <h3>{vuln.get('type', 'Unknown')}</h3>
@@ -246,7 +246,7 @@ class AnalysisExporter:
             """
 
         return html.format(
-            timestamp=time.strftime('%Y-%m-%d %H:%M:%S'),
+            timestamp=time.strftime("%Y-%m-%d %H:%M:%S"),
             total_vulns=len(vulns),
             high_count=high_count,
             medium_count=medium_count,
@@ -296,18 +296,18 @@ class AnalysisExporter:
 
         # Extract data for template
         import time
-        diffs = result.get('differences', [])
+        diffs = result.get("differences", [])
 
         # Count by type
-        added_count = len([d for d in diffs if d.get('type') == 'function_added'])
-        removed_count = len([d for d in diffs if d.get('type') == 'function_removed'])
-        modified_count = len([d for d in diffs if d.get('type') == 'function_modified'])
+        added_count = len([d for d in diffs if d.get("type") == "function_added"])
+        removed_count = len([d for d in diffs if d.get("type") == "function_removed"])
+        modified_count = len([d for d in diffs if d.get("type") == "function_modified"])
 
         # Generate difference list
         diff_html = ""
         for diff in diffs:
-            diff_type = diff.get('type', 'unknown')
-            css_class = 'added' if 'added' in diff_type else 'removed' if 'removed' in diff_type else 'modified'
+            diff_type = diff.get("type", "unknown")
+            css_class = "added" if "added" in diff_type else "removed" if "removed" in diff_type else "modified"
 
             diff_html += f"""
             <div class="difference {css_class}">
@@ -319,7 +319,7 @@ class AnalysisExporter:
             """
 
         return html.format(
-            timestamp=time.strftime('%Y-%m-%d %H:%M:%S'),
+            timestamp=time.strftime("%Y-%m-%d %H:%M:%S"),
             total_diffs=len(diffs),
             added_count=added_count,
             removed_count=removed_count,
@@ -358,4 +358,4 @@ class AnalysisExporter:
 
 
 # Export main class
-__all__ = ['AnalysisExporter']
+__all__ = ["AnalysisExporter"]

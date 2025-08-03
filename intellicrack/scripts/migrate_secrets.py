@@ -52,28 +52,28 @@ def migrate_llm_configs():
     secrets_manager = get_secrets_manager()
 
     try:
-        with open(llm_config_path, 'r') as f:
+        with open(llm_config_path, "r") as f:
             config = json.load(f)
 
         migrated_count = 0
 
         # Process each model configuration
         for model_id, model_config in config.items():
-            if 'api_key' in model_config and model_config['api_key']:
-                api_key = model_config['api_key']
+            if "api_key" in model_config and model_config["api_key"]:
+                api_key = model_config["api_key"]
 
                 # Determine the appropriate secret key based on provider
-                provider = model_config.get('provider', '').lower()
-                if provider == 'openai':
-                    secret_key = 'OPENAI_API_KEY'
-                elif provider == 'anthropic':
-                    secret_key = 'ANTHROPIC_API_KEY'
-                elif provider == 'google':
-                    secret_key = 'GOOGLE_API_KEY'
-                elif provider == 'cohere':
-                    secret_key = 'COHERE_API_KEY'
-                elif provider == 'groq':
-                    secret_key = 'GROQ_API_KEY'
+                provider = model_config.get("provider", "").lower()
+                if provider == "openai":
+                    secret_key = "OPENAI_API_KEY"
+                elif provider == "anthropic":
+                    secret_key = "ANTHROPIC_API_KEY"
+                elif provider == "google":
+                    secret_key = "GOOGLE_API_KEY"
+                elif provider == "cohere":
+                    secret_key = "COHERE_API_KEY"
+                elif provider == "groq":
+                    secret_key = "GROQ_API_KEY"
                 else:
                     secret_key = f"{provider.upper()}_API_KEY"
 
@@ -81,18 +81,18 @@ def migrate_llm_configs():
                 secrets_manager.set(secret_key, api_key)
 
                 # Remove from config
-                model_config['api_key'] = ""
+                model_config["api_key"] = ""
 
                 logger.info(f"Migrated API key for {model_id} to {secret_key}")
                 migrated_count += 1
 
         if migrated_count > 0:
             # Save updated config without API keys
-            backup_path = llm_config_path.with_suffix('.json.backup')
+            backup_path = llm_config_path.with_suffix(".json.backup")
             llm_config_path.rename(backup_path)
             logger.info(f"Created backup at {backup_path}")
 
-            with open(llm_config_path, 'w') as f:
+            with open(llm_config_path, "w") as f:
                 json.dump(config, f, indent=2)
 
             logger.info(f"Migrated {migrated_count} API keys to secure storage")
@@ -105,9 +105,9 @@ def migrate_llm_configs():
 
 def migrate_env_files():
     """Check for .env files and provide guidance."""
-    env_files = ['.env', '.env.local', '.env.production']
+    env_files = [".env", ".env.local", ".env.production"]
     project_root = Path.cwd()
-    config_dir = project_root / 'config'
+    config_dir = project_root / "config"
 
     found_env_files = []
     for env_file in env_files:
@@ -138,11 +138,11 @@ def check_code_for_secrets():
     logger.info("\nScanning for potential hardcoded secrets...")
 
     patterns = [
-        ('api_key = "', 'API key assignment'),
-        ('API_KEY = "', 'API key constant'),
-        ('secret = "', 'Secret assignment'),
-        ('token = "', 'Token assignment'),
-        ('password = "', 'Password assignment'),
+        ('api_key = "', "API key assignment"),
+        ('API_KEY = "', "API key constant"),
+        ('secret = "', "Secret assignment"),
+        ('token = "', "Token assignment"),
+        ('password = "', "Password assignment"),
     ]
 
     issues_found = []
@@ -153,7 +153,7 @@ def check_code_for_secrets():
             content = py_file.read_text()
             for pattern, description in patterns:
                 if pattern in content and pattern + '"' not in content:  # Not empty string
-                    line_no = content[:content.index(pattern)].count('\n') + 1
+                    line_no = content[:content.index(pattern)].count("\n") + 1
                     issues_found.append(f"{py_file}:{line_no} - {description}")
         except Exception as e:
             logger.debug(f"Failed to scan file {py_file}: {e}")

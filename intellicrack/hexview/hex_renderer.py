@@ -140,13 +140,13 @@ class HexViewRenderer:
                     for start, end, color in highlight_ranges:
                         if start <= current_pos < end:
                             # Apply highlighting (using ANSI color codes or markers)
-                            if color == 'red':
+                            if color == "red":
                                 highlight_prefix = "["
                                 highlight_suffix = "]"
-                            elif color == 'blue':
+                            elif color == "blue":
                                 highlight_prefix = "<"
                                 highlight_suffix = ">"
-                            elif color == 'green':
+                            elif color == "green":
                                 highlight_prefix = "{"
                                 highlight_suffix = "}"
                             break
@@ -323,9 +323,9 @@ class HexViewRenderer:
 
         # Process each field in the structure
         for field_name, field_info in structure_def.items():
-            field_type = field_info.get('type', 'uint8')
-            field_size = field_info.get('size', 1)
-            field_count = field_info.get('count', 1)
+            field_type = field_info.get("type", "uint8")
+            field_size = field_info.get("size", 1)
+            field_count = field_info.get("count", 1)
 
             field_offset = offset + current_offset
 
@@ -355,7 +355,7 @@ class HexViewRenderer:
         try:
             if count > 1:
                 # Handle array types
-                if field_type == 'char' and count > 0:
+                if field_type == "char" and count > 0:
                     # Try to decode as a string
                     try:
                         # Find null terminator
@@ -379,37 +379,37 @@ class HexViewRenderer:
                 return "[" + ", ".join(results) + "]"
 
             # Handle various scalar types
-            if field_type == 'uint8':
+            if field_type == "uint8":
                 return f"{data[0]} (0x{data[0]:02X})"
-            elif field_type == 'int8':
-                val = struct.unpack('b', data)[0]
+            elif field_type == "int8":
+                val = struct.unpack("b", data)[0]
                 return f"{val} (0x{data[0]:02X})"
-            elif field_type == 'uint16':
-                val = struct.unpack('<H', data)[0]
+            elif field_type == "uint16":
+                val = struct.unpack("<H", data)[0]
                 return f"{val} (0x{val:04X})"
-            elif field_type == 'int16':
-                val = struct.unpack('<h', data)[0]
+            elif field_type == "int16":
+                val = struct.unpack("<h", data)[0]
                 return f"{val} (0x{val & 0xFFFF:04X})"
-            elif field_type == 'uint32':
-                val = struct.unpack('<I', data)[0]
+            elif field_type == "uint32":
+                val = struct.unpack("<I", data)[0]
                 return f"{val} (0x{val:08X})"
-            elif field_type == 'int32':
-                val = struct.unpack('<i', data)[0]
+            elif field_type == "int32":
+                val = struct.unpack("<i", data)[0]
                 return f"{val} (0x{val & 0xFFFFFFFF:08X})"
-            elif field_type == 'uint64':
-                val = struct.unpack('<Q', data)[0]
+            elif field_type == "uint64":
+                val = struct.unpack("<Q", data)[0]
                 return f"{val} (0x{val:016X})"
-            elif field_type == 'int64':
-                val = struct.unpack('<q', data)[0]
+            elif field_type == "int64":
+                val = struct.unpack("<q", data)[0]
                 return f"{val} (0x{val & 0xFFFFFFFFFFFFFFFF:016X})"
-            elif field_type == 'float':
-                val = struct.unpack('<f', data)[0]
+            elif field_type == "float":
+                val = struct.unpack("<f", data)[0]
                 return f"{val}"
-            elif field_type == 'double':
-                val = struct.unpack('<d', data)[0]
+            elif field_type == "double":
+                val = struct.unpack("<d", data)[0]
                 return f"{val}"
-            elif field_type == 'char':
-                c = chr(data[0]) if 32 <= data[0] <= 126 else '.'
+            elif field_type == "char":
+                c = chr(data[0]) if 32 <= data[0] <= 126 else "."
                 return f"'{c}' (0x{data[0]:02X})"
             else:
                 # Default to hex representation
@@ -436,9 +436,9 @@ def parse_hex_view(hex_view: str, bytes_per_row: int = 16, offset_radix: int = 1
 
     # Define a regex for matching offset and hex data
     if offset_radix == 16:
-        line_pattern = re.compile(r'^([0-9A-Fa-f]+):\s+((?:[0-9A-Fa-f]{2}\s*)+)')
+        line_pattern = re.compile(r"^([0-9A-Fa-f]+):\s+((?:[0-9A-Fa-f]{2}\s*)+)")
     else:
-        line_pattern = re.compile(r'^(\d+):\s+((?:[0-9A-Fa-f]{2}\s*)+)')
+        line_pattern = re.compile(r"^(\d+):\s+((?:[0-9A-Fa-f]{2}\s*)+)")
 
     for line in hex_view.splitlines():
         match = line_pattern.match(line)
@@ -452,7 +452,7 @@ def parse_hex_view(hex_view: str, bytes_per_row: int = 16, offset_radix: int = 1
                 start_offset = offset
 
             # Parse hex data
-            hex_values = re.findall(r'[0-9A-Fa-f]{2}', hex_data_str)
+            hex_values = re.findall(r"[0-9A-Fa-f]{2}", hex_data_str)
             for hex_val in hex_values:
                 result.append(int(hex_val, 16))
 

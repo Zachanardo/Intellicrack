@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 WINDOWS_AVAILABLE = False
 ctypes = None
 
-if sys.platform == 'win32':
+if sys.platform == "win32":
     try:
         import ctypes
         import ctypes.wintypes
@@ -50,7 +50,7 @@ def get_windows_kernel32():
     if not WINDOWS_AVAILABLE or ctypes is None:
         return None
     try:
-        return ctypes.WinDLL('kernel32', use_last_error=True)
+        return ctypes.WinDLL("kernel32", use_last_error=True)
     except Exception as e:
         logger.error("Failed to load kernel32: %s", e)
         return None
@@ -60,7 +60,7 @@ def get_windows_ntdll():
     if not WINDOWS_AVAILABLE or ctypes is None:
         return None
     try:
-        return ctypes.WinDLL('ntdll.dll')
+        return ctypes.WinDLL("ntdll.dll")
     except Exception as e:
         logger.error("Failed to load ntdll: %s", e)
         return None
@@ -85,10 +85,10 @@ def cleanup_process_handles(kernel32, process_info: dict, logger_instance=None) 
         logger_instance: Optional logger for error reporting
     """
     try:
-        if 'thread_handle' in process_info and process_info['thread_handle']:
-            kernel32.CloseHandle(process_info['thread_handle'])
-        if 'process_handle' in process_info and process_info['process_handle']:
-            kernel32.CloseHandle(process_info['process_handle'])
+        if "thread_handle" in process_info and process_info["thread_handle"]:
+            kernel32.CloseHandle(process_info["thread_handle"])
+        if "process_handle" in process_info and process_info["process_handle"]:
+            kernel32.CloseHandle(process_info["process_handle"])
     except Exception as e:
         if logger_instance:
             logger_instance.warning(f"Error cleaning up handles: {e}")

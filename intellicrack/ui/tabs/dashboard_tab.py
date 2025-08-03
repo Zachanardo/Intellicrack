@@ -315,18 +315,18 @@ class DashboardTab(BaseTab):
         if project_file:
             try:
                 # Load project data from JSON
-                with open(project_file, 'r', encoding='utf-8') as f:
+                with open(project_file, "r", encoding="utf-8") as f:
                     project_data = json.load(f)
 
                 # Validate project data structure
-                if not isinstance(project_data, dict) or 'name' not in project_data:
+                if not isinstance(project_data, dict) or "name" not in project_data:
                     raise ValueError("Invalid project file format")
 
                 # Set project information
-                self.current_project = project_data.get('name', 'Untitled')
-                self.current_binary = project_data.get('binary', None)
-                self.project_files = project_data.get('files', [])
-                self.analysis_results = project_data.get('analysis_results', {})
+                self.current_project = project_data.get("name", "Untitled")
+                self.current_binary = project_data.get("binary", None)
+                self.project_files = project_data.get("files", [])
+                self.analysis_results = project_data.get("analysis_results", {})
 
                 # Validate file existence and update metadata
                 self._validate_project_files()
@@ -385,7 +385,7 @@ class DashboardTab(BaseTab):
                 }
 
                 # Write JSON with pretty formatting
-                with open(project_file, 'w', encoding='utf-8') as f:
+                with open(project_file, "w", encoding="utf-8") as f:
                     json.dump(project_data, f, indent=2, ensure_ascii=False)
 
                 self.log_activity(f"Saved project: {self.current_project}")
@@ -428,8 +428,8 @@ class DashboardTab(BaseTab):
 
     def on_binary_loaded(self, binary_info):
         """Handle binary loaded signal from AppContext"""
-        self.display_binary_info(binary_info['path'])
-        self.add_to_recent_files(binary_info['path'])
+        self.display_binary_info(binary_info["path"])
+        self.add_to_recent_files(binary_info["path"])
         self.log_activity(f"Binary loaded: {binary_info['name']} ({binary_info['size']} bytes)")
 
     def on_analysis_completed(self, analysis_type, results):
@@ -444,9 +444,9 @@ class DashboardTab(BaseTab):
             result_text += f"- Entropy: {results.get('entropy', 0)} ({results.get('entropy_status', 'Unknown')})\n"
 
             # Store in local results
-            if 'file_path' in results:
-                self.analysis_results[results['file_path']] = result_text
-                self.analysis_saved.emit(results['file_path'])
+            if "file_path" in results:
+                self.analysis_results[results["file_path"]] = result_text
+                self.analysis_saved.emit(results["file_path"])
 
             self.log_activity(f"Analysis completed: {analysis_type}")
 
@@ -472,16 +472,16 @@ class DashboardTab(BaseTab):
         ext = os.path.splitext(file_path)[1].lower()
 
         type_map = {
-            '.exe': 'Windows Executable',
-            '.dll': 'Windows Dynamic Library',
-            '.so': 'Linux Shared Object',
-            '.dylib': 'macOS Dynamic Library',
-            '.app': 'macOS Application Bundle',
-            '.bin': 'Binary File',
-            '.elf': 'ELF Executable'
+            ".exe": "Windows Executable",
+            ".dll": "Windows Dynamic Library",
+            ".so": "Linux Shared Object",
+            ".dylib": "macOS Dynamic Library",
+            ".app": "macOS Application Bundle",
+            ".bin": "Binary File",
+            ".elf": "ELF Executable"
         }
 
-        return type_map.get(ext, 'Unknown Binary')
+        return type_map.get(ext, "Unknown Binary")
 
     def quick_analyze_binary(self):
         """Perform quick analysis of the selected binary"""
@@ -652,7 +652,7 @@ class DashboardTab(BaseTab):
 
         if log_file:
             try:
-                with open(log_file, 'w') as f:
+                with open(log_file, "w") as f:
                     f.write(self.activity_log.toPlainText())
                 self.log_activity(f"Activity log saved to: {log_file}")
             except Exception as e:
@@ -665,17 +665,17 @@ class DashboardTab(BaseTab):
         if self.current_project and self.project_files:
             # Display actual project files
             for file_info in self.project_files:
-                name = file_info.get('name', 'Unknown')
-                file_type = file_info.get('type', 'File')
-                size = file_info.get('size', '0 B')
-                modified = file_info.get('modified', '')
-                exists = file_info.get('exists', True)
+                name = file_info.get("name", "Unknown")
+                file_type = file_info.get("type", "File")
+                size = file_info.get("size", "0 B")
+                modified = file_info.get("modified", "")
+                exists = file_info.get("exists", True)
 
                 # Format modified date for display
                 if modified:
                     try:
                         mod_date = datetime.fromisoformat(modified)
-                        modified = mod_date.strftime('%Y-%m-%d %H:%M')
+                        modified = mod_date.strftime("%Y-%m-%d %H:%M")
                     except:
                         pass
 
@@ -689,7 +689,7 @@ class DashboardTab(BaseTab):
                     item.setToolTip(0, "File not found at original location")
 
                 # Store full path in item data for context menu actions
-                item.setData(0, Qt.ItemDataRole.UserRole, file_info.get('path', ''))
+                item.setData(0, Qt.ItemDataRole.UserRole, file_info.get("path", ""))
 
                 self.file_tree.addTopLevelItem(item)
 
@@ -716,7 +716,7 @@ class DashboardTab(BaseTab):
                 # Open file based on type
                 file_ext = os.path.splitext(file_path)[1].lower()
 
-                if file_ext in ['.exe', '.dll', '.so', '.bin']:
+                if file_ext in [".exe", ".dll", ".so", ".bin"]:
                     # Load as binary for analysis
                     self.binary_path_edit.setText(file_path)
                     self.current_binary = file_path
@@ -729,7 +729,7 @@ class DashboardTab(BaseTab):
                 else:
                     # Open with default system application
                     try:
-                        os.startfile(file_path) if os.name == 'nt' else os.system(f'open "{file_path}"')
+                        os.startfile(file_path) if os.name == "nt" else os.system(f'open "{file_path}"')
                         self.log_activity(f"Opened file: {os.path.basename(file_path)}")
                     except Exception as e:
                         QMessageBox.warning(self, "Open Error", f"Failed to open file: {str(e)}")
@@ -754,7 +754,7 @@ class DashboardTab(BaseTab):
 
             if reply == QMessageBox.StandardButton.Yes:
                 # Remove from project_files list
-                self.project_files = [f for f in self.project_files if f.get('path') != file_path]
+                self.project_files = [f for f in self.project_files if f.get("path") != file_path]
 
                 # Remove from tree
                 self.file_tree.takeTopLevelItem(self.file_tree.indexOfTopLevelItem(current_item))
@@ -763,17 +763,17 @@ class DashboardTab(BaseTab):
     def cleanup(self):
         """Cleanup resources when tab is closed"""
         # Stop system monitoring
-        if hasattr(self, 'system_monitor'):
+        if hasattr(self, "system_monitor"):
             self.system_monitor.stop_monitoring()
             self.log_activity("System monitoring stopped")
 
         # Stop GPU monitoring
-        if hasattr(self, 'gpu_status'):
+        if hasattr(self, "gpu_status"):
             self.gpu_status.stop_monitoring()
             self.log_activity("GPU monitoring stopped")
 
         # Stop CPU monitoring
-        if hasattr(self, 'cpu_status'):
+        if hasattr(self, "cpu_status"):
             self.cpu_status.stop_monitoring()
             self.log_activity("CPU monitoring stopped")
 
@@ -819,9 +819,9 @@ class DashboardTab(BaseTab):
 
         # Check file extension
         supported_extensions = [
-            '.exe', '.dll', '.so', '.dylib', '.elf', '.bin',
-            '.sys', '.drv', '.ocx', '.app', '.apk', '.ipa',
-            '.dex', '.jar', '.class', '.pyc', '.pyd'
+            ".exe", ".dll", ".so", ".dylib", ".elf", ".bin",
+            ".sys", ".drv", ".ocx", ".app", ".apk", ".ipa",
+            ".dex", ".jar", ".class", ".pyc", ".pyd"
         ]
 
         ext = os.path.splitext(file_path)[1].lower()
@@ -866,36 +866,36 @@ class DashboardTab(BaseTab):
             # Determine file type
             mime_type, _ = mimetypes.guess_type(file_path)
             if mime_type:
-                file_type = mime_type.split('/')[0].title()
+                file_type = mime_type.split("/")[0].title()
             else:
                 ext = os.path.splitext(file_path)[1].lower()
                 type_mapping = {
-                    '.exe': 'Executable',
-                    '.dll': 'Library',
-                    '.so': 'Library',
-                    '.js': 'JavaScript',
-                    '.py': 'Python',
-                    '.pdf': 'Document',
-                    '.txt': 'Text',
-                    '.bin': 'Binary',
-                    '.json': 'JSON',
-                    '.xml': 'XML',
-                    '.gpr': 'Ghidra Project'
+                    ".exe": "Executable",
+                    ".dll": "Library",
+                    ".so": "Library",
+                    ".js": "JavaScript",
+                    ".py": "Python",
+                    ".pdf": "Document",
+                    ".txt": "Text",
+                    ".bin": "Binary",
+                    ".json": "JSON",
+                    ".xml": "XML",
+                    ".gpr": "Ghidra Project"
                 }
-                file_type = type_mapping.get(ext, 'File')
+                file_type = type_mapping.get(ext, "File")
 
             # Calculate MD5 hash for deduplication
             md5_hash = self._calculate_file_hash(file_path)
 
             return {
-                'path': os.path.abspath(file_path),
-                'name': os.path.basename(file_path),
-                'type': file_type,
-                'size': self._format_file_size(file_size),
-                'size_bytes': file_size,
-                'modified': modified_time,
-                'md5': md5_hash,
-                'exists': True
+                "path": os.path.abspath(file_path),
+                "name": os.path.basename(file_path),
+                "type": file_type,
+                "size": self._format_file_size(file_size),
+                "size_bytes": file_size,
+                "modified": modified_time,
+                "md5": md5_hash,
+                "exists": True
             }
         except Exception as e:
             self.logger.error(f"Error getting metadata for {file_path}: {e}")
@@ -905,7 +905,7 @@ class DashboardTab(BaseTab):
         """Calculate MD5 hash of a file"""
         md5 = hashlib.md5()
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 while chunk := f.read(chunk_size):
                     md5.update(chunk)
             return md5.hexdigest()
@@ -914,9 +914,9 @@ class DashboardTab(BaseTab):
 
     def _format_file_size(self, size_bytes: int) -> str:
         """Format file size in human-readable format"""
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        for unit in ["B", "KB", "MB", "GB", "TB"]:
             if size_bytes < 1024.0:
-                if unit == 'B':
+                if unit == "B":
                     return f"{size_bytes} {unit}"
                 return f"{size_bytes:.1f} {unit}"
             size_bytes /= 1024.0
@@ -926,18 +926,18 @@ class DashboardTab(BaseTab):
         """Validate that project files still exist and update metadata"""
         valid_files = []
         for file_info in self.project_files:
-            file_path = file_info.get('path', '')
+            file_path = file_info.get("path", "")
             if os.path.exists(file_path):
                 # Update metadata for existing files
                 updated_info = self._get_file_metadata(file_path)
                 if updated_info:
                     # Preserve original addition time if available
-                    updated_info['added'] = file_info.get('added', updated_info['modified'])
+                    updated_info["added"] = file_info.get("added", updated_info["modified"])
                     valid_files.append(updated_info)
             else:
                 # Mark file as missing but keep in project
-                file_info['exists'] = False
-                file_info['type'] = file_info.get('type', 'Missing')
+                file_info["exists"] = False
+                file_info["type"] = file_info.get("type", "Missing")
                 valid_files.append(file_info)
                 self.log_activity(f"File missing: {file_info.get('name', 'Unknown')}")
 
@@ -984,11 +984,11 @@ class DashboardTab(BaseTab):
         if file_path and os.path.exists(file_path):
             # Find and update the file in project_files
             for i, file_info in enumerate(self.project_files):
-                if file_info.get('path') == file_path:
+                if file_info.get("path") == file_path:
                     updated_info = self._get_file_metadata(file_path)
                     if updated_info:
                         # Preserve added time
-                        updated_info['added'] = file_info.get('added', updated_info['modified'])
+                        updated_info["added"] = file_info.get("added", updated_info["modified"])
                         self.project_files[i] = updated_info
                         break
 
@@ -999,9 +999,9 @@ class DashboardTab(BaseTab):
     def _show_in_explorer(self, file_path):
         """Show file in system file explorer"""
         if file_path and os.path.exists(file_path):
-            if os.name == 'nt':  # Windows
+            if os.name == "nt":  # Windows
                 os.startfile(os.path.dirname(file_path))
-            elif os.name == 'posix':  # macOS and Linux
+            elif os.name == "posix":  # macOS and Linux
                 os.system(f'open "{os.path.dirname(file_path)}"')
             self.log_activity(f"Opened folder: {os.path.dirname(file_path)}")
 
@@ -1012,7 +1012,7 @@ class DashboardTab(BaseTab):
             return
 
         added_count = 0
-        existing_paths = {f['path'] for f in self.project_files}
+        existing_paths = {f["path"] for f in self.project_files}
 
         for file_path in file_paths:
             # Skip if file already in project

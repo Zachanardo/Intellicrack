@@ -78,7 +78,7 @@ class StringExtractionThread(QThread):
             file_size = os.path.getsize(self.file_path)
             self.logger.debug("Processing file of size: %d bytes", file_size)
 
-            with open(self.file_path, 'rb') as f:
+            with open(self.file_path, "rb") as f:
                 data = f.read()
 
             # Extract ASCII strings
@@ -104,11 +104,11 @@ class StringExtractionThread(QThread):
     def _extract_ascii_strings(self, data: bytes) -> List[Tuple[int, str]]:
         """Extract ASCII strings from binary data"""
         strings = []
-        pattern = rb'[\x20-\x7E]{' + str(self.min_length).encode() + rb',}'
+        pattern = rb"[\x20-\x7E]{" + str(self.min_length).encode() + rb",}"
 
         for match in re.finditer(pattern, data):
             try:
-                string = match.group().decode('ascii')
+                string = match.group().decode("ascii")
                 offset = match.start()
                 strings.append((offset, string))
             except Exception as e:
@@ -120,11 +120,11 @@ class StringExtractionThread(QThread):
         """Extract Unicode (UTF-16LE) strings from binary data"""
         strings = []
         # Look for UTF-16LE patterns (ASCII chars with null bytes)
-        pattern = rb'(?:[\x20-\x7E]\x00){' + str(self.min_length).encode() + rb',}'
+        pattern = rb"(?:[\x20-\x7E]\x00){" + str(self.min_length).encode() + rb",}"
 
         for match in re.finditer(pattern, data):
             try:
-                string = match.group().decode('utf-16le')
+                string = match.group().decode("utf-16le")
                 offset = match.start()
                 strings.append((offset, string))
             except Exception as e:
@@ -643,7 +643,7 @@ class StringExtractionWidget(QWidget):
 
     def _export_as_text(self, file_path: str):
         """Export strings as text"""
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write("String Extraction Report\n")
             f.write(f"File: {self.file_path}\n")
             f.write(f"Total Strings: {len(self.filtered_strings)}\n")
@@ -661,7 +661,7 @@ class StringExtractionWidget(QWidget):
         """Export strings as CSV"""
         import csv
 
-        with open(file_path, 'w', newline='', encoding='utf-8') as f:
+        with open(file_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(["Offset", "String", "Length", "Encoding", "Category"])
 
@@ -694,5 +694,5 @@ class StringExtractionWidget(QWidget):
                 "category": category
             })
 
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)

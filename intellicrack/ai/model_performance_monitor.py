@@ -155,15 +155,15 @@ class ModelPerformanceMonitor:
         # GPU monitoring
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_info = get_gpu_info()
-            self.has_gpu = gpu_info['available']
-            self.gpu_type = gpu_info.get('gpu_type', 'unknown')
-            self.gpu_count = gpu_info.get('device_count', 0)
+            self.has_gpu = gpu_info["available"]
+            self.gpu_type = gpu_info.get("gpu_type", "unknown")
+            self.gpu_count = gpu_info.get("device_count", 0)
         else:
             self.has_gpu = HAS_TORCH and torch.cuda.is_available()
-            self.gpu_type = 'nvidia_cuda' if self.has_gpu else 'cpu'
+            self.gpu_type = "nvidia_cuda" if self.has_gpu else "cpu"
             self.gpu_count = torch.cuda.device_count() if self.has_gpu else 0
 
-        if self.has_gpu and self.gpu_type == 'nvidia_cuda':
+        if self.has_gpu and self.gpu_type == "nvidia_cuda":
             try:
                 if HAS_PYNVML and pynvml:
                     pynvml.nvmlInit()
@@ -181,7 +181,7 @@ class ModelPerformanceMonitor:
         benchmark_file = self.save_dir / "benchmarks.json"
         if benchmark_file.exists():
             try:
-                with open(benchmark_file, 'r') as f:
+                with open(benchmark_file, "r") as f:
                     data = json.load(f)
                     for model_id, bench_data in data.items():
                         self.benchmarks[model_id] = ModelBenchmark(
@@ -224,7 +224,7 @@ class ModelPerformanceMonitor:
                     "benchmark_date": benchmark.benchmark_date.isoformat()
                 }
 
-            with open(benchmark_file, 'w') as f:
+            with open(benchmark_file, "w") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
             logger.error(f"Failed to save benchmarks: {e}")
@@ -551,14 +551,14 @@ class ModelPerformanceMonitor:
                 best_model = min(
                     comparison["models"].items(),
                     key=lambda x: x[1]["value"] if x[1]["value"] is not None else float(
-                        'inf')
+                        "inf")
                 )
             else:
                 # Higher is better
                 best_model = max(
                     comparison["models"].items(),
                     key=lambda x: x[1]["value"] if x[1]["value"] is not None else -
-                    float('inf')
+                    float("inf")
                 )
 
             comparison["best_model"] = best_model[0]
@@ -657,7 +657,7 @@ class ModelPerformanceMonitor:
                         for m in history
                     ]
 
-            with open(filepath, 'w') as f:
+            with open(filepath, "w") as f:
                 json.dump(data, f, indent=2)
 
             return filepath
@@ -668,7 +668,7 @@ class ModelPerformanceMonitor:
             filename = f"metrics_{model_id or 'all'}_{timestamp}.csv"
             filepath = self.save_dir / filename
 
-            with open(filepath, 'w', newline='') as f:
+            with open(filepath, "w", newline="") as f:
                 writer = csv.writer(f)
                 writer.writerow([
                     "model_id", "timestamp", "inference_time", "tokens_generated",

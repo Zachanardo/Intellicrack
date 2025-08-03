@@ -249,7 +249,7 @@ class {info['name'].replace(' ', '')}(GhidraScript):
         """Generate code snippets for selected features"""
         code_snippets = []
 
-        if 'binary_analysis' in features:
+        if "binary_analysis" in features:
             code_snippets.append("""
             # Analyze binary structure
             with open(binary_path, 'rb') as f:
@@ -260,7 +260,7 @@ class {info['name'].replace(' ', '')}(GhidraScript):
                     'details': f'File size: {len(data)} bytes'
                 })""")
 
-        if 'pattern_search' in features:
+        if "pattern_search" in features:
             code_snippets.append("""
             # Search for patterns
             patterns = [b'LICENSE', b'TRIAL', b'EXPIRED']
@@ -272,13 +272,13 @@ class {info['name'].replace(' ', '')}(GhidraScript):
                         'offset': data.find(pattern)
                     })""")
 
-        return '\n'.join(code_snippets)
+        return "\n".join(code_snippets)
 
     def _generate_frida_feature_code(self, features):
         """Generate Frida code for features"""
         code_snippets = []
 
-        if 'function_hooking' in features:
+        if "function_hooking" in features:
             code_snippets.append("""
     // Hook common license check functions
     const functions = ['IsLicensed', 'CheckLicense', 'VerifyLicense'];
@@ -297,20 +297,20 @@ class {info['name'].replace(' ', '')}(GhidraScript):
         }
     });""")
 
-        return '\n'.join(code_snippets)
+        return "\n".join(code_snippets)
 
     def _generate_ghidra_feature_code(self, features):
         """Generate Ghidra code for features"""
         code_snippets = []
 
-        if 'function_analysis' in features:
+        if "function_analysis" in features:
             code_snippets.append("""
         # Analyze all functions
         function_manager = program.getFunctionManager()
         for function in function_manager.getFunctions(True):
             print(f"Function: {function.getName()} at {function.getEntryPoint()}")""")
 
-        return '\n'.join(code_snippets)
+        return "\n".join(code_snippets)
 
     def update_summary(self):
         """Update the summary page"""
@@ -325,10 +325,10 @@ class {info['name'].replace(' ', '')}(GhidraScript):
         """Handle wizard completion"""
         # Get all plugin data
         plugin_data = {
-            'info': self.info_page.get_plugin_info(),
-            'template': self.template_page.get_selected_template(),
-            'features': self.features_page.get_selected_features(),
-            'code': self.code_page.get_code()
+            "info": self.info_page.get_plugin_info(),
+            "template": self.template_page.get_selected_template(),
+            "features": self.features_page.get_selected_features(),
+            "code": self.code_page.get_code()
         }
 
         # Save the plugin
@@ -338,8 +338,8 @@ class {info['name'].replace(' ', '')}(GhidraScript):
 
     def save_plugin(self, plugin_data):
         """Save the plugin to disk"""
-        info = plugin_data['info']
-        code = plugin_data['code']
+        info = plugin_data["info"]
+        code = plugin_data["code"]
 
         # Determine file extension
         if self.plugin_type == "frida":
@@ -350,7 +350,7 @@ class {info['name'].replace(' ', '')}(GhidraScript):
             ext = ".py"
 
         # Generate filename
-        filename = info['name'].lower().replace(' ', '_') + ext
+        filename = info["name"].lower().replace(" ", "_") + ext
 
         # Ask user for save location
         save_path, _ = QFileDialog.getSaveFileName(
@@ -362,13 +362,13 @@ class {info['name'].replace(' ', '')}(GhidraScript):
 
         if save_path:
             try:
-                with open(save_path, 'w') as f:
+                with open(save_path, "w") as f:
                     f.write(code)
 
                 # Save metadata
-                metadata_path = save_path.replace(ext, '_metadata.json')
-                with open(metadata_path, 'w') as f:
-                    json.dump(plugin_data['info'], f, indent=2)
+                metadata_path = save_path.replace(ext, "_metadata.json")
+                with open(metadata_path, "w") as f:
+                    json.dump(plugin_data["info"], f, indent=2)
 
                 QMessageBox.information(
                     self,
@@ -437,11 +437,11 @@ class PluginInfoPage(QWizardPage):
     def get_plugin_info(self):
         """Get the plugin information"""
         return {
-            'name': self.name_edit.text(),
-            'version': self.version_edit.text(),
-            'author': self.author_edit.text(),
-            'description': self.description_edit.toPlainText(),
-            'category': self.category_combo.currentText()
+            "name": self.name_edit.text(),
+            "version": self.version_edit.text(),
+            "author": self.author_edit.text(),
+            "description": self.description_edit.toPlainText(),
+            "category": self.category_combo.currentText()
         }
 
 
@@ -483,7 +483,7 @@ class TemplateSelectionPage(QWizardPage):
         templates = self.get_templates_for_type(self.plugin_type)
 
         for template in templates:
-            item = QListWidgetItem(template['name'])
+            item = QListWidgetItem(template["name"])
             item.setData(Qt.UserRole, template)
             self.template_list.addItem(item)
 
@@ -492,50 +492,50 @@ class TemplateSelectionPage(QWizardPage):
         if plugin_type == "frida":
             return [
                 {
-                    'name': 'Basic Function Hooking',
-                    'description': 'Hook and modify function calls at runtime',
-                    'features': ['function_hooking', 'parameter_modification']
+                    "name": "Basic Function Hooking",
+                    "description": "Hook and modify function calls at runtime",
+                    "features": ["function_hooking", "parameter_modification"]
                 },
                 {
-                    'name': 'License Bypass Template',
-                    'description': 'Template for bypassing common license checks',
-                    'features': ['function_hooking', 'return_value_modification', 'string_replacement']
+                    "name": "License Bypass Template",
+                    "description": "Template for bypassing common license checks",
+                    "features": ["function_hooking", "return_value_modification", "string_replacement"]
                 },
                 {
-                    'name': 'Anti-Debug Bypass',
-                    'description': 'Bypass anti-debugging protections',
-                    'features': ['api_hooking', 'flag_modification']
+                    "name": "Anti-Debug Bypass",
+                    "description": "Bypass anti-debugging protections",
+                    "features": ["api_hooking", "flag_modification"]
                 }
             ]
         elif plugin_type == "ghidra":
             return [
                 {
-                    'name': 'Function Analysis',
-                    'description': 'Analyze and annotate functions in the binary',
-                    'features': ['function_analysis', 'cross_references']
+                    "name": "Function Analysis",
+                    "description": "Analyze and annotate functions in the binary",
+                    "features": ["function_analysis", "cross_references"]
                 },
                 {
-                    'name': 'String Decryption',
-                    'description': 'Decrypt and annotate obfuscated strings',
-                    'features': ['string_analysis', 'decryption']
+                    "name": "String Decryption",
+                    "description": "Decrypt and annotate obfuscated strings",
+                    "features": ["string_analysis", "decryption"]
                 }
             ]
         else:
             return [
                 {
-                    'name': 'Binary Analysis',
-                    'description': 'Basic binary analysis and information extraction',
-                    'features': ['binary_analysis', 'header_parsing']
+                    "name": "Binary Analysis",
+                    "description": "Basic binary analysis and information extraction",
+                    "features": ["binary_analysis", "header_parsing"]
                 },
                 {
-                    'name': 'Pattern Scanner',
-                    'description': 'Search for patterns and signatures in binaries',
-                    'features': ['pattern_search', 'signature_matching']
+                    "name": "Pattern Scanner",
+                    "description": "Search for patterns and signatures in binaries",
+                    "features": ["pattern_search", "signature_matching"]
                 },
                 {
-                    'name': 'Patch Generator',
-                    'description': 'Generate patches for specific binary modifications',
-                    'features': ['patch_generation', 'binary_modification']
+                    "name": "Patch Generator",
+                    "description": "Generate patches for specific binary modifications",
+                    "features": ["patch_generation", "binary_modification"]
                 }
             ]
 
@@ -544,7 +544,7 @@ class TemplateSelectionPage(QWizardPage):
         _ = previous
         if current:
             template = current.data(Qt.UserRole)
-            self.description_label.setText(template['description'])
+            self.description_label.setText(template["description"])
 
     def get_selected_template(self):
         """Get the selected template"""
@@ -569,14 +569,14 @@ class PluginFeaturesPage(QWizardPage):
         self.feature_checks = {}
 
         features = [
-            ('binary_analysis', 'Binary structure analysis'),
-            ('pattern_search', 'Pattern and signature searching'),
-            ('function_hooking', 'Function hooking (Frida)'),
-            ('memory_modification', 'Memory modification'),
-            ('network_analysis', 'Network traffic analysis'),
-            ('encryption_detection', 'Encryption/obfuscation detection'),
-            ('patch_generation', 'Automated patch generation'),
-            ('reporting', 'Generate detailed reports')
+            ("binary_analysis", "Binary structure analysis"),
+            ("pattern_search", "Pattern and signature searching"),
+            ("function_hooking", "Function hooking (Frida)"),
+            ("memory_modification", "Memory modification"),
+            ("network_analysis", "Network traffic analysis"),
+            ("encryption_detection", "Encryption/obfuscation detection"),
+            ("patch_generation", "Automated patch generation"),
+            ("reporting", "Generate detailed reports")
         ]
 
         for feature_id, feature_name in features:
@@ -663,7 +663,7 @@ class CodeGenerationPage(QWizardPage):
 
         try:
             # Basic syntax check for Python
-            if code.strip().startswith('/*'):
+            if code.strip().startswith("/*"):
                 # JavaScript/Frida code
                 QMessageBox.information(
                     self,
@@ -672,7 +672,7 @@ class CodeGenerationPage(QWizardPage):
                 )
             else:
                 # Python code
-                compile(code, '<plugin>', 'exec')
+                compile(code, "<plugin>", "exec")
                 QMessageBox.information(
                     self,
                     "Validation Passed",

@@ -34,8 +34,8 @@ except ImportError as e:
 # Define package exports
 __all__ = [
     # From pdf_generator
-    'PDFReportGenerator',
-    'run_report_generation',
+    "PDFReportGenerator",
+    "run_report_generation",
 ]
 
 # Package metadata

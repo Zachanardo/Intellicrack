@@ -491,10 +491,10 @@ rule Basic_PE_Detection
         # This is a simplified implementation
         for rule in self.compiled_rules:
             self.rule_metadata[rule.identifier] = {
-                'namespace': rule.namespace,
-                'tags': list(rule.tags),
-                'category': 'unknown',
-                'confidence': 0.5
+                "namespace": rule.namespace,
+                "tags": list(rule.tags),
+                "category": "unknown",
+                "confidence": 0.5
             }
 
     def _count_total_rules(self) -> int:
@@ -550,7 +550,7 @@ rule Basic_PE_Detection
         # Generate file hash for tracking and metadata
         file_hash = ""
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 file_data = f.read(8192)  # Read first 8KB for hash
                 file_hash = hashlib.sha256(file_data).hexdigest()[:16]
         except Exception:
@@ -583,7 +583,7 @@ rule Basic_PE_Detection
                         length=string_match.length,
                         identifier=string_match.identifier,
                         string_data=string_match.instances[0] if string_match.instances else "",
-                        metadata=dict(match.meta) if hasattr(match, 'meta') else {}
+                        metadata=dict(match.meta) if hasattr(match, "meta") else {}
                     )
                     matches.append(yara_match)
 
@@ -598,7 +598,7 @@ rule Basic_PE_Detection
                         offset=0,
                         length=0,
                         identifier="rule_match",
-                        metadata=dict(match.meta) if hasattr(match, 'meta') else {}
+                        metadata=dict(match.meta) if hasattr(match, "meta") else {}
                     )
                     matches.append(yara_match)
 
@@ -612,7 +612,7 @@ rule Basic_PE_Detection
             )
 
             # Add file hash to result metadata if available
-            if hasattr(result, 'metadata'):
+            if hasattr(result, "metadata"):
                 result.metadata = {"file_hash": file_hash}
 
             return result
@@ -639,19 +639,19 @@ rule Basic_PE_Detection
         # Check rule name first
         rule_name = match.rule.lower()
 
-        if any(keyword in rule_name for keyword in ['protection', 'protect', 'vmprotect', 'themida', 'enigma']):
+        if any(keyword in rule_name for keyword in ["protection", "protect", "vmprotect", "themida", "enigma"]):
             return PatternCategory.PROTECTION
-        elif any(keyword in rule_name for keyword in ['pack', 'upx', 'aspack', 'pecompact']):
+        elif any(keyword in rule_name for keyword in ["pack", "upx", "aspack", "pecompact"]):
             return PatternCategory.PACKER
-        elif any(keyword in rule_name for keyword in ['license', 'flexlm', 'hasp', 'dongle', 'activation']):
+        elif any(keyword in rule_name for keyword in ["license", "flexlm", "hasp", "dongle", "activation"]):
             return PatternCategory.LICENSING
-        elif any(keyword in rule_name for keyword in ['debug', 'antidebug', 'anti_debug']):
+        elif any(keyword in rule_name for keyword in ["debug", "antidebug", "anti_debug"]):
             return PatternCategory.ANTI_DEBUG
-        elif any(keyword in rule_name for keyword in ['vm', 'antivm', 'anti_vm', 'virtual']):
+        elif any(keyword in rule_name for keyword in ["vm", "antivm", "anti_vm", "virtual"]):
             return PatternCategory.ANTI_VM
-        elif any(keyword in rule_name for keyword in ['compiler', 'msvc', 'gcc', 'delphi']):
+        elif any(keyword in rule_name for keyword in ["compiler", "msvc", "gcc", "delphi"]):
             return PatternCategory.COMPILER
-        elif any(keyword in rule_name for keyword in ['malware', 'trojan', 'virus']):
+        elif any(keyword in rule_name for keyword in ["malware", "trojan", "virus"]):
             return PatternCategory.MALWARE
         else:
             return PatternCategory.SUSPICIOUS
@@ -659,9 +659,9 @@ rule Basic_PE_Detection
     def _calculate_confidence(self, match) -> float:
         """Calculate confidence score for a match"""
         # Check metadata first
-        if hasattr(match, 'meta') and 'confidence' in match.meta:
+        if hasattr(match, "meta") and "confidence" in match.meta:
             try:
-                return float(match.meta['confidence'])
+                return float(match.meta["confidence"])
             except (ValueError, TypeError):
                 pass
 
@@ -669,7 +669,7 @@ rule Basic_PE_Detection
         base_confidence = 0.7
 
         # Adjust based on number of string matches
-        if hasattr(match, 'strings') and match.strings:
+        if hasattr(match, "strings") and match.strings:
             string_count = len(match.strings)
             if string_count > 3:
                 base_confidence += 0.2
@@ -677,10 +677,10 @@ rule Basic_PE_Detection
                 base_confidence += 0.1
 
         # Adjust based on tags
-        if hasattr(match, 'tags'):
-            if 'high_confidence' in match.tags:
+        if hasattr(match, "tags"):
+            if "high_confidence" in match.tags:
                 base_confidence += 0.15
-            elif 'low_confidence' in match.tags:
+            elif "low_confidence" in match.tags:
                 base_confidence -= 0.15
 
         return min(1.0, max(0.1, base_confidence))
@@ -732,7 +732,7 @@ rule Basic_PE_Detection
                         length=string_match.length,
                         identifier=string_match.identifier,
                         string_data=string_match.instances[0] if string_match.instances else "",
-                        metadata=dict(match.meta) if hasattr(match, 'meta') else {}
+                        metadata=dict(match.meta) if hasattr(match, "meta") else {}
                     )
                     matches.append(yara_match)
 
@@ -791,7 +791,7 @@ rule Basic_PE_Detection
 
         categories = {}
         for rule_id, metadata in self.rule_metadata.items():
-            category = metadata.get('category', 'unknown')
+            category = metadata.get("category", "unknown")
             if category not in categories:
                 categories[category] = 0
             categories[category] += 1
@@ -799,7 +799,7 @@ rule Basic_PE_Detection
         # Calculate namespace distribution with counts
         namespace_dist: Dict[str, Tuple[int, List[str]]] = {}
         for rule_id, metadata in self.rule_metadata.items():
-            namespace = metadata.get('namespace', 'unknown')
+            namespace = metadata.get("namespace", "unknown")
             if namespace not in namespace_dist:
                 namespace_dist[namespace] = (0, [])
             count, rules = namespace_dist[namespace]
@@ -808,7 +808,7 @@ rule Basic_PE_Detection
         return {
             "total_rules": self._count_total_rules(),
             "categories": categories,
-            "namespaces": list(set(meta.get('namespace', 'unknown') for meta in self.rule_metadata.values())),
+            "namespaces": list(set(meta.get("namespace", "unknown") for meta in self.rule_metadata.values())),
             "namespace_distribution": namespace_dist,
             "yara_available": YARA_AVAILABLE
         }

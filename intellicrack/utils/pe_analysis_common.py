@@ -20,4 +20,4 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 # Import all functions from the binary pe_analysis_common module
 from .binary.pe_analysis_common import analyze_pe_imports, get_pe_sections_info
 
-__all__ = ['analyze_pe_imports', 'get_pe_sections_info']
+__all__ = ["analyze_pe_imports", "get_pe_sections_info"]

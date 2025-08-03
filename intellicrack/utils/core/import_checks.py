@@ -102,15 +102,15 @@ except ImportError as e:
 try:
     # Configure TensorFlow to prevent GPU initialization issues
     import os
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
-    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
 
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
-    os.environ['MKL_THREADING_LAYER'] = 'GNU'
+    os.environ["MKL_THREADING_LAYER"] = "GNU"
 
     import tensorflow as tf
     # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
-    tf.config.set_visible_devices([], 'GPU')
+    tf.config.set_visible_devices([], "GPU")
     TENSORFLOW_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
@@ -155,16 +155,16 @@ except ImportError as e:
 
 # Export all availability flags
 __all__ = [
-    'PEFILE_AVAILABLE', 'pefile',
-    'LIEF_AVAILABLE', 'lief',
-    'CAPSTONE_AVAILABLE', 'capstone',
-    'PYELFTOOLS_AVAILABLE', 'ELFFile',
-    'PSUTIL_AVAILABLE', 'psutil',
-    'FRIDA_AVAILABLE', 'frida',
-    'MATPLOTLIB_AVAILABLE', 'plt',
-    'PDFKIT_AVAILABLE', 'pdfkit',
-    'TENSORFLOW_AVAILABLE', 'tf',
-    'HAS_PYQT', 'QThread', 'QTimer', 'pyqtSignal', 'QApplication', 'QWidget',
-    'HAS_NUMPY', 'np',
-    'WINREG_AVAILABLE', 'winreg'
+    "PEFILE_AVAILABLE", "pefile",
+    "LIEF_AVAILABLE", "lief",
+    "CAPSTONE_AVAILABLE", "capstone",
+    "PYELFTOOLS_AVAILABLE", "ELFFile",
+    "PSUTIL_AVAILABLE", "psutil",
+    "FRIDA_AVAILABLE", "frida",
+    "MATPLOTLIB_AVAILABLE", "plt",
+    "PDFKIT_AVAILABLE", "pdfkit",
+    "TENSORFLOW_AVAILABLE", "tf",
+    "HAS_PYQT", "QThread", "QTimer", "pyqtSignal", "QApplication", "QWidget",
+    "HAS_NUMPY", "np",
+    "WINREG_AVAILABLE", "winreg"
 ]

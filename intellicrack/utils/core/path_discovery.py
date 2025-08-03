@@ -46,267 +46,267 @@ class PathDiscovery:
         self.config_manager = config_manager
         self.cache = {}
         self.platform = sys.platform
-        self.is_windows = self.platform.startswith('win')
-        self.is_linux = self.platform.startswith('linux')
-        self.is_mac = self.platform.startswith('darwin')
+        self.is_windows = self.platform.startswith("win")
+        self.is_linux = self.platform.startswith("linux")
+        self.is_mac = self.platform.startswith("darwin")
 
         # Define tool specifications
         self.tool_specs = {
-            'ghidra': {
-                'executables': {
-                    'win32': ['ghidraRun.bat', 'ghidra.bat'],
-                    'linux': ['ghidra', 'ghidraRun'],
-                    'darwin': ['ghidra', 'ghidraRun']
+            "ghidra": {
+                "executables": {
+                    "win32": ["ghidraRun.bat", "ghidra.bat"],
+                    "linux": ["ghidra", "ghidraRun"],
+                    "darwin": ["ghidra", "ghidraRun"]
                 },
-                'search_paths': {
-                    'win32': [
-                        r'C:\Program Files\Ghidra',
-                        r'C:\ghidra',
-                        r'C:\Tools\ghidra',
-                        r'C:\ProgramData\chocolatey\lib\ghidra\tools',
+                "search_paths": {
+                    "win32": [
+                        r"C:\Program Files\Ghidra",
+                        r"C:\ghidra",
+                        r"C:\Tools\ghidra",
+                        r"C:\ProgramData\chocolatey\lib\ghidra\tools",
                     ],
-                    'linux': [
-                        '/opt/ghidra',
-                        '/usr/local/ghidra',
-                        '/usr/share/ghidra',
-                        os.path.expanduser('~/ghidra'),
+                    "linux": [
+                        "/opt/ghidra",
+                        "/usr/local/ghidra",
+                        "/usr/share/ghidra",
+                        os.path.expanduser("~/ghidra"),
                     ],
-                    'darwin': [
-                        '/Applications/ghidra',
-                        '/opt/ghidra',
-                        '/usr/local/ghidra',
-                        os.path.expanduser('~/ghidra'),
+                    "darwin": [
+                        "/Applications/ghidra",
+                        "/opt/ghidra",
+                        "/usr/local/ghidra",
+                        os.path.expanduser("~/ghidra"),
                     ]
                 },
-                'env_vars': ['GHIDRA_HOME', 'GHIDRA_PATH', 'GHIDRA_INSTALL_DIR'],
-                'validation': self._validate_ghidra
+                "env_vars": ["GHIDRA_HOME", "GHIDRA_PATH", "GHIDRA_INSTALL_DIR"],
+                "validation": self._validate_ghidra
             },
 
-            'radare2': {
-                'executables': {
-                    'win32': ['radare2.exe', 'r2.exe'],
-                    'linux': ['radare2', 'r2'],
-                    'darwin': ['radare2', 'r2']
+            "radare2": {
+                "executables": {
+                    "win32": ["radare2.exe", "r2.exe"],
+                    "linux": ["radare2", "r2"],
+                    "darwin": ["radare2", "r2"]
                 },
-                'search_paths': {
-                    'win32': [
-                        r'C:\Program Files\radare2',
-                        r'C:\radare2',
-                        r'C:\Tools\radare2',
-                        os.path.join(os.path.dirname(__file__ or os.getcwd()), '..', '..', 'radare2', 'radare2-5.9.8-w64', 'bin') if __file__ else os.path.join(os.getcwd(), 'radare2', 'radare2-5.9.8-w64', 'bin'),
+                "search_paths": {
+                    "win32": [
+                        r"C:\Program Files\radare2",
+                        r"C:\radare2",
+                        r"C:\Tools\radare2",
+                        os.path.join(os.path.dirname(__file__ or os.getcwd()), "..", "..", "radare2", "radare2-5.9.8-w64", "bin") if __file__ else os.path.join(os.getcwd(), "radare2", "radare2-5.9.8-w64", "bin"),
                     ],
-                    'linux': [
-                        '/usr/bin',
-                        '/usr/local/bin',
-                        '/opt/radare2/bin',
+                    "linux": [
+                        "/usr/bin",
+                        "/usr/local/bin",
+                        "/opt/radare2/bin",
                     ],
-                    'darwin': [
-                        '/usr/local/bin',
-                        '/opt/homebrew/bin',
-                        '/opt/radare2/bin',
+                    "darwin": [
+                        "/usr/local/bin",
+                        "/opt/homebrew/bin",
+                        "/opt/radare2/bin",
                     ]
                 },
-                'env_vars': ['RADARE2_HOME', 'RADARE2_PATH'],
-                'validation': self._validate_radare2
+                "env_vars": ["RADARE2_HOME", "RADARE2_PATH"],
+                "validation": self._validate_radare2
             },
 
-            'frida': {
-                'executables': {
-                    'win32': ['frida.exe', 'frida-server.exe'],
-                    'linux': ['frida', 'frida-server'],
-                    'darwin': ['frida', 'frida-server']
+            "frida": {
+                "executables": {
+                    "win32": ["frida.exe", "frida-server.exe"],
+                    "linux": ["frida", "frida-server"],
+                    "darwin": ["frida", "frida-server"]
                 },
-                'search_paths': {
-                    'win32': [
-                        os.path.join(sys.prefix, 'Scripts'),
-                        r'C:\Python\Scripts',
-                        r'C:\Program Files\Python\Scripts',
+                "search_paths": {
+                    "win32": [
+                        os.path.join(sys.prefix, "Scripts"),
+                        r"C:\Python\Scripts",
+                        r"C:\Program Files\Python\Scripts",
                     ],
-                    'linux': [
-                        '/usr/local/bin',
-                        '/usr/bin',
-                        os.path.expanduser('~/.local/bin'),
+                    "linux": [
+                        "/usr/local/bin",
+                        "/usr/bin",
+                        os.path.expanduser("~/.local/bin"),
                     ],
-                    'darwin': [
-                        '/usr/local/bin',
-                        '/opt/homebrew/bin',
-                        os.path.expanduser('~/.local/bin'),
+                    "darwin": [
+                        "/usr/local/bin",
+                        "/opt/homebrew/bin",
+                        os.path.expanduser("~/.local/bin"),
                     ]
                 },
-                'env_vars': ['FRIDA_PATH'],
-                'validation': self._validate_frida
+                "env_vars": ["FRIDA_PATH"],
+                "validation": self._validate_frida
             },
 
-            'python': {
-                'executables': {
-                    'win32': ['python.exe', 'python3.exe', 'python311.exe', 'python310.exe', 'python39.exe'],
-                    'linux': ['python3', 'python', 'python3.11', 'python3.10', 'python3.9'],
-                    'darwin': ['python3', 'python', 'python3.11', 'python3.10', 'python3.9']
+            "python": {
+                "executables": {
+                    "win32": ["python.exe", "python3.exe", "python311.exe", "python310.exe", "python39.exe"],
+                    "linux": ["python3", "python", "python3.11", "python3.10", "python3.9"],
+                    "darwin": ["python3", "python", "python3.11", "python3.10", "python3.9"]
                 },
-                'search_paths': {
-                    'win32': [
-                        r'C:\Program Files\Python311',
-                        r'C:\Program Files\Python310',
-                        r'C:\Program Files\Python39',
-                        r'C:\Program Files (x86)\Python311',
-                        r'C:\Python311',
-                        r'C:\Python310',
-                        r'C:\Python39',
+                "search_paths": {
+                    "win32": [
+                        r"C:\Program Files\Python311",
+                        r"C:\Program Files\Python310",
+                        r"C:\Program Files\Python39",
+                        r"C:\Program Files (x86)\Python311",
+                        r"C:\Python311",
+                        r"C:\Python310",
+                        r"C:\Python39",
                         os.path.join(sys.prefix),
                     ],
-                    'linux': [
-                        '/usr/bin',
-                        '/usr/local/bin',
-                        '/opt/python/bin',
+                    "linux": [
+                        "/usr/bin",
+                        "/usr/local/bin",
+                        "/opt/python/bin",
                     ],
-                    'darwin': [
-                        '/usr/local/bin',
-                        '/opt/homebrew/bin',
-                        '/usr/bin',
+                    "darwin": [
+                        "/usr/local/bin",
+                        "/opt/homebrew/bin",
+                        "/usr/bin",
                     ]
                 },
-                'env_vars': ['PYTHON_HOME', 'PYTHON_PATH'],
-                'validation': self._validate_python
+                "env_vars": ["PYTHON_HOME", "PYTHON_PATH"],
+                "validation": self._validate_python
             },
 
-            'docker': {
-                'executables': {
-                    'win32': ['docker.exe', 'Docker Desktop.exe'],
-                    'linux': ['docker'],
-                    'darwin': ['docker']
+            "docker": {
+                "executables": {
+                    "win32": ["docker.exe", "Docker Desktop.exe"],
+                    "linux": ["docker"],
+                    "darwin": ["docker"]
                 },
-                'search_paths': {
-                    'win32': [
-                        r'C:\Program Files\Docker\Docker\resources\bin',
-                        r'C:\Program Files\Docker\Docker',
+                "search_paths": {
+                    "win32": [
+                        r"C:\Program Files\Docker\Docker\resources\bin",
+                        r"C:\Program Files\Docker\Docker",
                     ],
-                    'linux': [
-                        '/usr/bin',
-                        '/usr/local/bin',
+                    "linux": [
+                        "/usr/bin",
+                        "/usr/local/bin",
                     ],
-                    'darwin': [
-                        '/usr/local/bin',
-                        '/opt/homebrew/bin',
+                    "darwin": [
+                        "/usr/local/bin",
+                        "/opt/homebrew/bin",
                     ]
                 },
-                'env_vars': ['DOCKER_PATH'],
-                'validation': self._validate_docker
+                "env_vars": ["DOCKER_PATH"],
+                "validation": self._validate_docker
             },
 
-            'wireshark': {
-                'executables': {
-                    'win32': ['Wireshark.exe', 'tshark.exe'],
-                    'linux': ['wireshark', 'tshark'],
-                    'darwin': ['wireshark', 'tshark']
+            "wireshark": {
+                "executables": {
+                    "win32": ["Wireshark.exe", "tshark.exe"],
+                    "linux": ["wireshark", "tshark"],
+                    "darwin": ["wireshark", "tshark"]
                 },
-                'search_paths': {
-                    'win32': [
-                        r'C:\Program Files\Wireshark',
-                        r'C:\Program Files (x86)\Wireshark',
+                "search_paths": {
+                    "win32": [
+                        r"C:\Program Files\Wireshark",
+                        r"C:\Program Files (x86)\Wireshark",
                     ],
-                    'linux': [
-                        '/usr/bin',
-                        '/usr/local/bin',
+                    "linux": [
+                        "/usr/bin",
+                        "/usr/local/bin",
                     ],
-                    'darwin': [
-                        '/Applications/Wireshark.app/Contents/MacOS',
-                        '/usr/local/bin',
+                    "darwin": [
+                        "/Applications/Wireshark.app/Contents/MacOS",
+                        "/usr/local/bin",
                     ]
                 },
-                'env_vars': ['WIRESHARK_PATH'],
-                'validation': self._validate_wireshark
+                "env_vars": ["WIRESHARK_PATH"],
+                "validation": self._validate_wireshark
             },
 
-            'qemu': {
-                'executables': {
-                    'win32': ['qemu-system-x86_64.exe', 'qemu-system-i386.exe'],
-                    'linux': ['qemu-system-x86_64', 'qemu-system-i386'],
-                    'darwin': ['qemu-system-x86_64', 'qemu-system-i386']
+            "qemu": {
+                "executables": {
+                    "win32": ["qemu-system-x86_64.exe", "qemu-system-i386.exe"],
+                    "linux": ["qemu-system-x86_64", "qemu-system-i386"],
+                    "darwin": ["qemu-system-x86_64", "qemu-system-i386"]
                 },
-                'search_paths': {
-                    'win32': [
-                        r'C:\Program Files\qemu',
-                        r'C:\qemu',
-                        r'C:\Tools\qemu',
+                "search_paths": {
+                    "win32": [
+                        r"C:\Program Files\qemu",
+                        r"C:\qemu",
+                        r"C:\Tools\qemu",
                     ],
-                    'linux': [
-                        '/usr/bin',
-                        '/usr/local/bin',
+                    "linux": [
+                        "/usr/bin",
+                        "/usr/local/bin",
                     ],
-                    'darwin': [
-                        '/usr/local/bin',
-                        '/opt/homebrew/bin',
+                    "darwin": [
+                        "/usr/local/bin",
+                        "/opt/homebrew/bin",
                     ]
                 },
-                'env_vars': ['QEMU_PATH', 'QEMU_HOME'],
-                'validation': None
+                "env_vars": ["QEMU_PATH", "QEMU_HOME"],
+                "validation": None
             },
 
-            'git': {
-                'executables': {
-                    'win32': ['git.exe'],
-                    'linux': ['git'],
-                    'darwin': ['git']
+            "git": {
+                "executables": {
+                    "win32": ["git.exe"],
+                    "linux": ["git"],
+                    "darwin": ["git"]
                 },
-                'search_paths': {
-                    'win32': [
-                        r'C:\Program Files\Git\bin',
-                        r'C:\Program Files (x86)\Git\bin',
-                        r'C:\Program Files\Git\cmd',
+                "search_paths": {
+                    "win32": [
+                        r"C:\Program Files\Git\bin",
+                        r"C:\Program Files (x86)\Git\bin",
+                        r"C:\Program Files\Git\cmd",
                     ],
-                    'linux': [
-                        '/usr/bin',
-                        '/usr/local/bin',
+                    "linux": [
+                        "/usr/bin",
+                        "/usr/local/bin",
                     ],
-                    'darwin': [
-                        '/usr/bin',
-                        '/usr/local/bin',
-                        '/opt/homebrew/bin',
+                    "darwin": [
+                        "/usr/bin",
+                        "/usr/local/bin",
+                        "/opt/homebrew/bin",
                     ]
                 },
-                'env_vars': ['GIT_PATH'],
-                'validation': None
+                "env_vars": ["GIT_PATH"],
+                "validation": None
             },
 
-            'wkhtmltopdf': {
-                'executables': {
-                    'win32': ['wkhtmltopdf.exe'],
-                    'linux': ['wkhtmltopdf'],
-                    'darwin': ['wkhtmltopdf']
+            "wkhtmltopdf": {
+                "executables": {
+                    "win32": ["wkhtmltopdf.exe"],
+                    "linux": ["wkhtmltopdf"],
+                    "darwin": ["wkhtmltopdf"]
                 },
-                'search_paths': {
-                    'win32': [
-                        r'C:\Program Files\wkhtmltopdf\bin',
-                        r'C:\Program Files (x86)\wkhtmltopdf\bin',
-                        r'C:\wkhtmltopdf\bin',
+                "search_paths": {
+                    "win32": [
+                        r"C:\Program Files\wkhtmltopdf\bin",
+                        r"C:\Program Files (x86)\wkhtmltopdf\bin",
+                        r"C:\wkhtmltopdf\bin",
                     ],
-                    'linux': [
-                        '/usr/bin',
-                        '/usr/local/bin',
+                    "linux": [
+                        "/usr/bin",
+                        "/usr/local/bin",
                     ],
-                    'darwin': [
-                        '/usr/local/bin',
-                        '/opt/homebrew/bin',
+                    "darwin": [
+                        "/usr/local/bin",
+                        "/opt/homebrew/bin",
                     ]
                 },
-                'env_vars': ['WKHTMLTOPDF_PATH'],
-                'validation': None
+                "env_vars": ["WKHTMLTOPDF_PATH"],
+                "validation": None
             }
         }
 
         # System paths
         self.system_paths = {
-            'windows_system': self._get_windows_system_dir,
-            'windows_system32': self._get_windows_system32_dir,
-            'windows_drivers': self._get_windows_drivers_dir,
-            'program_files': self._get_program_files_dir,
-            'program_files_x86': self._get_program_files_x86_dir,
-            'appdata': self._get_appdata_dir,
-            'localappdata': self._get_localappdata_dir,
-            'programdata': self._get_programdata_dir,
-            'user_home': self._get_user_home,
-            'temp': self._get_temp_dir,
-            'startup': self._get_startup_dir,
+            "windows_system": self._get_windows_system_dir,
+            "windows_system32": self._get_windows_system32_dir,
+            "windows_drivers": self._get_windows_drivers_dir,
+            "program_files": self._get_program_files_dir,
+            "program_files_x86": self._get_program_files_x86_dir,
+            "appdata": self._get_appdata_dir,
+            "localappdata": self._get_localappdata_dir,
+            "programdata": self._get_programdata_dir,
+            "user_home": self._get_user_home,
+            "temp": self._get_temp_dir,
+            "startup": self._get_startup_dir,
         }
 
     def find_tool(self, tool_name: str, required_executables: Optional[List[str]] = None) -> Optional[str]:
@@ -345,8 +345,8 @@ class PathDiscovery:
 
         # Try discovery strategies
         strategies = [
-            (self._search_env_vars, spec.get('env_vars', [])),
-            (self._search_path, required_executables or spec['executables'].get(self.platform, [])),
+            (self._search_env_vars, spec.get("env_vars", [])),
+            (self._search_path, required_executables or spec["executables"].get(self.platform, [])),
             (self._search_common_locations, spec),
             (self._search_registry, tool_name) if self.is_windows else (None, None),
         ]
@@ -362,7 +362,7 @@ class PathDiscovery:
 
             if path:
                 # Validate if validator exists
-                validator = spec.get('validation')
+                validator = spec.get("validation")
                 if validator and not validator(path):
                     continue
 
@@ -391,8 +391,8 @@ class PathDiscovery:
         search_dirs = []
         if self.is_windows:
             search_dirs.extend([
-                os.path.join(self.get_system_path('program_files'), tool_name),
-                os.path.join(self.get_system_path('program_files_x86'), tool_name),
+                os.path.join(self.get_system_path("program_files"), tool_name),
+                os.path.join(self.get_system_path("program_files_x86"), tool_name),
                 f"C:\\{tool_name}",
                 f"C:\\Tools\\{tool_name}",
             ])
@@ -412,7 +412,7 @@ class PathDiscovery:
                         return exe_path
 
                     # Check bin subdirectory
-                    bin_path = os.path.join(directory, 'bin', exe)
+                    bin_path = os.path.join(directory, "bin", exe)
                     if os.path.isfile(bin_path):
                         return bin_path
 
@@ -442,8 +442,8 @@ class PathDiscovery:
 
     def _search_common_locations(self, spec: Dict) -> Optional[str]:
         """Search in common installation locations."""
-        search_paths = spec.get('search_paths', {}).get(self.platform, [])
-        executables = spec.get('executables', {}).get(self.platform, [])
+        search_paths = spec.get("search_paths", {}).get(self.platform, [])
+        executables = spec.get("executables", {}).get(self.platform, [])
 
         for directory in search_paths:
             directory = os.path.expanduser(directory)
@@ -454,7 +454,7 @@ class PathDiscovery:
                         return exe_path
 
                     # Check subdirectories
-                    for subdir in ['bin', 'scripts', 'Scripts']:
+                    for subdir in ["bin", "scripts", "Scripts"]:
                         sub_path = os.path.join(directory, subdir, exe)
                         if os.path.isfile(sub_path):
                             return sub_path
@@ -489,7 +489,7 @@ class PathDiscovery:
                                             if install_location and os.path.exists(install_location):
                                                 # Look for executable
                                                 spec = self.tool_specs.get(tool_name.lower(), {})
-                                                executables = spec.get('executables', {}).get('win32', [tool_name + '.exe'])
+                                                executables = spec.get("executables", {}).get("win32", [tool_name + ".exe"])
 
                                                 for exe in executables:
                                                     exe_path = os.path.join(install_location, exe)
@@ -497,7 +497,7 @@ class PathDiscovery:
                                                         return exe_path
 
                                                     # Check bin subdirectory
-                                                    bin_path = os.path.join(install_location, 'bin', exe)
+                                                    bin_path = os.path.join(install_location, "bin", exe)
                                                     if os.path.isfile(bin_path):
                                                         return bin_path
                                     except OSError as e:
@@ -533,55 +533,55 @@ class PathDiscovery:
         """Get Windows system directory."""
         if not self.is_windows:
             return None
-        return os.environ.get('SystemRoot', r'C:\Windows')
+        return os.environ.get("SystemRoot", r"C:\Windows")
 
     def _get_windows_system32_dir(self) -> Optional[str]:
         """Get Windows System32 directory."""
         if not self.is_windows:
             return None
         system_root = self._get_windows_system_dir()
-        return os.path.join(system_root, 'System32') if system_root else None
+        return os.path.join(system_root, "System32") if system_root else None
 
     def _get_windows_drivers_dir(self) -> Optional[str]:
         """Get Windows drivers directory."""
         if not self.is_windows:
             return None
         system32 = self._get_windows_system32_dir()
-        return os.path.join(system32, 'drivers') if system32 else None
+        return os.path.join(system32, "drivers") if system32 else None
 
     def _get_program_files_dir(self) -> Optional[str]:
         """Get Program Files directory."""
         if not self.is_windows:
             return None
-        return os.environ.get('ProgramFiles', r'C:\Program Files')
+        return os.environ.get("ProgramFiles", r"C:\Program Files")
 
     def _get_program_files_x86_dir(self) -> Optional[str]:
         """Get Program Files (x86) directory."""
         if not self.is_windows:
             return None
-        return os.environ.get('ProgramFiles(x86)', r'C:\Program Files (x86)')
+        return os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")
 
     def _get_appdata_dir(self) -> Optional[str]:
         """Get AppData directory."""
         if not self.is_windows:
             return None
-        return os.environ.get('APPDATA')
+        return os.environ.get("APPDATA")
 
     def _get_localappdata_dir(self) -> Optional[str]:
         """Get LocalAppData directory."""
         if not self.is_windows:
             return None
-        return os.environ.get('LOCALAPPDATA')
+        return os.environ.get("LOCALAPPDATA")
 
     def _get_programdata_dir(self) -> Optional[str]:
         """Get ProgramData directory."""
         if not self.is_windows:
             return None
-        return os.environ.get('PROGRAMDATA', r'C:\ProgramData')
+        return os.environ.get("PROGRAMDATA", r"C:\ProgramData")
 
     def _get_user_home(self) -> str:
         """Get user home directory."""
-        return os.path.expanduser('~')
+        return os.path.expanduser("~")
 
     def _get_temp_dir(self) -> str:
         """Get temporary directory."""
@@ -593,7 +593,7 @@ class PathDiscovery:
         if self.is_windows:
             appdata = self._get_appdata_dir()
             if appdata:
-                return os.path.join(appdata, 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
+                return os.path.join(appdata, "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
         return None
 
     # Validation methods
@@ -605,7 +605,7 @@ class PathDiscovery:
             ghidra_dir = path
 
         # Check for Ghidra-specific directories
-        required_dirs = ['support', 'Ghidra']
+        required_dirs = ["support", "Ghidra"]
         for req_dir in required_dirs:
             if not os.path.exists(os.path.join(ghidra_dir, req_dir)):
                 # Try parent directory
@@ -618,8 +618,8 @@ class PathDiscovery:
     def _validate_radare2(self, path: str) -> bool:
         """Validate radare2 installation."""
         try:
-            result = subprocess.run([path, '-v'], capture_output=True, text=True, timeout=5, check=False)
-            return 'radare2' in result.stdout.lower()
+            result = subprocess.run([path, "-v"], capture_output=True, text=True, timeout=5, check=False)
+            return "radare2" in result.stdout.lower()
         except Exception as e:
             logger.error("Exception in path_discovery: %s", e)
             return False
@@ -627,8 +627,8 @@ class PathDiscovery:
     def _validate_frida(self, path: str) -> bool:
         """Validate Frida installation."""
         try:
-            result = subprocess.run([path, '--version'], capture_output=True, text=True, timeout=5, check=False)
-            return 'frida' in result.stdout.lower() or result.returncode == 0
+            result = subprocess.run([path, "--version"], capture_output=True, text=True, timeout=5, check=False)
+            return "frida" in result.stdout.lower() or result.returncode == 0
         except Exception as e:
             logger.error("Exception in path_discovery: %s", e)
             return False
@@ -636,8 +636,8 @@ class PathDiscovery:
     def _validate_python(self, path: str) -> bool:
         """Validate Python installation."""
         try:
-            result = subprocess.run([path, '--version'], capture_output=True, text=True, timeout=5, check=False)
-            return 'python' in result.stdout.lower() or 'python' in result.stderr.lower()
+            result = subprocess.run([path, "--version"], capture_output=True, text=True, timeout=5, check=False)
+            return "python" in result.stdout.lower() or "python" in result.stderr.lower()
         except Exception as e:
             logger.error("Exception in path_discovery: %s", e)
             return False
@@ -645,8 +645,8 @@ class PathDiscovery:
     def _validate_docker(self, path: str) -> bool:
         """Validate Docker installation."""
         try:
-            result = subprocess.run([path, '--version'], capture_output=True, text=True, timeout=5, check=False)
-            return 'docker' in result.stdout.lower()
+            result = subprocess.run([path, "--version"], capture_output=True, text=True, timeout=5, check=False)
+            return "docker" in result.stdout.lower()
         except Exception as e:
             logger.error("Exception in path_discovery: %s", e)
             return False
@@ -661,20 +661,20 @@ class PathDiscovery:
         if not self.is_windows:
             # Linux/Mac CUDA paths
             cuda_paths = [
-                '/usr/local/cuda',
-                '/opt/cuda',
+                "/usr/local/cuda",
+                "/opt/cuda",
             ]
             for path in cuda_paths:
                 if os.path.exists(path):
                     return path
         else:
             # Windows CUDA paths
-            cuda_base = r'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA'
+            cuda_base = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
             if os.path.exists(cuda_base):
                 # Find latest version
                 versions = []
                 for item in os.listdir(cuda_base):
-                    if item.startswith('v') and os.path.isdir(os.path.join(cuda_base, item)):
+                    if item.startswith("v") and os.path.isdir(os.path.join(cuda_base, item)):
                         versions.append(item)
 
                 if versions:
@@ -683,7 +683,7 @@ class PathDiscovery:
                     return os.path.join(cuda_base, versions[0])
 
         # Check environment variable
-        cuda_path = os.environ.get('CUDA_PATH') or os.environ.get('CUDA_HOME')
+        cuda_path = os.environ.get("CUDA_PATH") or os.environ.get("CUDA_HOME")
         if cuda_path and os.path.exists(cuda_path):
             return cuda_path
 
@@ -737,13 +737,13 @@ class PathDiscovery:
                         return None
                     # Validate and sanitize path input
                     # Remove potentially dangerous characters
-                    path = user_input.replace('\0', '').replace('\n', '').replace('\r', '')
+                    path = user_input.replace("\0", "").replace("\n", "").replace("\r", "")
                     # Normalize path
                     path = os.path.normpath(path)
                     # Validate path exists and is safe
                     if os.path.exists(path) and os.path.isfile(path):
                         # Additional validation: ensure it's an executable or expected file type
-                        if os.access(path, os.X_OK) or path.endswith(('.exe', '.bat', '.sh', '.py')):
+                        if os.access(path, os.X_OK) or path.endswith((".exe", ".bat", ".sh", ".py")):
                             self.cache[tool_name] = path
                             if self.config_manager:
                                 self.config_manager.set(f"{tool_name}_path", path)

@@ -43,7 +43,7 @@ class GenericProtocolHandler(LicenseProtocolHandler):
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """Initialize the generic protocol handler."""
         super().__init__(config)
-        self.protocol = config.get('protocol', 'tcp') if config else 'tcp'
+        self.protocol = config.get("protocol", "tcp") if config else "tcp"
         self.captured_requests = []
         self.captured_responses = []
         self.active_connections = {}
@@ -55,7 +55,7 @@ class GenericProtocolHandler(LicenseProtocolHandler):
         Args:
             port: Port number to bind to
         """
-        if self.protocol.lower() == 'udp':
+        if self.protocol.lower() == "udp":
             self._run_udp_proxy(port)
         else:
             self._run_tcp_proxy(port)
@@ -138,9 +138,9 @@ class GenericProtocolHandler(LicenseProtocolHandler):
             # Track connection
             conn_id = f"{client_addr[0]}:{client_addr[1]}_{time.time()}"
             self.active_connections[conn_id] = {
-                'socket': client_socket,
-                'address': client_addr,
-                'start_time': time.time()
+                "socket": client_socket,
+                "address": client_addr,
+                "start_time": time.time()
             }
 
             # Receive initial data
@@ -179,14 +179,14 @@ class GenericProtocolHandler(LicenseProtocolHandler):
             initial_data: Initial data received from client
         """
         # Log the request
-        self.log_request(initial_data, str(client_socket.getpeername() if hasattr(client_socket, 'getpeername') else 'unknown'))
+        self.log_request(initial_data, str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"))
 
         # Store request for analysis
         self.captured_requests.append({
-            'timestamp': time.time(),
-            'data': initial_data,
-            'hex': initial_data.hex(),
-            'source': str(client_socket.getpeername() if hasattr(client_socket, 'getpeername') else 'unknown')
+            "timestamp": time.time(),
+            "data": initial_data,
+            "hex": initial_data.hex(),
+            "source": str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown")
         })
 
         # Generate response
@@ -195,20 +195,20 @@ class GenericProtocolHandler(LicenseProtocolHandler):
         # Send response
         if response:
             try:
-                if hasattr(client_socket, 'send'):
+                if hasattr(client_socket, "send"):
                     client_socket.send(response)
-                elif hasattr(client_socket, 'sendto'):
+                elif hasattr(client_socket, "sendto"):
                     # For UDP-like sockets
                     client_socket.sendto(response, client_socket.getpeername())
 
-                self.log_response(response, str(client_socket.getpeername() if hasattr(client_socket, 'getpeername') else 'unknown'))
+                self.log_response(response, str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"))
 
                 # Store response
                 self.captured_responses.append({
-                    'timestamp': time.time(),
-                    'data': response,
-                    'hex': response.hex(),
-                    'destination': str(client_socket.getpeername() if hasattr(client_socket, 'getpeername') else 'unknown')
+                    "timestamp": time.time(),
+                    "data": response,
+                    "hex": response.hex(),
+                    "destination": str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown")
                 })
 
             except Exception as e:
@@ -228,28 +228,28 @@ class GenericProtocolHandler(LicenseProtocolHandler):
             Generic response data
         """
         # Try to detect request type
-        request_str = request_data.decode('utf-8', errors='ignore').lower()
+        request_str = request_data.decode("utf-8", errors="ignore").lower()
 
         # Check for common license verification patterns
-        if any(keyword in request_str for keyword in ['license', 'verify', 'check', 'auth']):
+        if any(keyword in request_str for keyword in ["license", "verify", "check", "auth"]):
             # Generic success response
             return b"OK\x00LICENSE_VALID\x00"
 
-        elif any(keyword in request_str for keyword in ['status', 'ping', 'heartbeat']):
+        elif any(keyword in request_str for keyword in ["status", "ping", "heartbeat"]):
             # Status/heartbeat response
             return b"OK\x00SERVER_ACTIVE\x00"
 
-        elif any(keyword in request_str for keyword in ['version', 'info']):
+        elif any(keyword in request_str for keyword in ["version", "info"]):
             # Version information
             return b"GENERIC_LICENSE_SERVER_V1.0\x00"
 
         elif len(request_data) >= 4:
             # Binary protocol - check for common patterns
-            if request_data[:4] == b'\x00\x00\x00\x01':  # Common init sequence
-                return b'\x00\x00\x00\x00\x00\x00\x00\x01'  # Success + handle
+            if request_data[:4] == b"\x00\x00\x00\x01":  # Common init sequence
+                return b"\x00\x00\x00\x00\x00\x00\x00\x01"  # Success + handle
 
-            elif request_data[:2] == b'\x02\x00':  # Common query
-                return b'\x00\x00\xFF\xFF\xFF\xFF'  # Max licenses available
+            elif request_data[:2] == b"\x02\x00":  # Common query
+                return b"\x00\x00\xFF\xFF\xFF\xFF"  # Max licenses available
 
         # Default response for unknown requests
         return b"OK\x00"

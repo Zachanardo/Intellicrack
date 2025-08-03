@@ -134,88 +134,88 @@ def get_available_imports(module_list: List[str]) -> Dict[str, bool]:
 
 
 # Common import checks for frequently used modules
-NUMPY_AVAILABLE = check_import('numpy')
-PANDAS_AVAILABLE = check_import('pandas')
-SKLEARN_AVAILABLE = check_import('sklearn')
-MATPLOTLIB_AVAILABLE = check_import('matplotlib')
-PILLOW_AVAILABLE = check_import('PIL')
-REQUESTS_AVAILABLE = check_import('requests')
-PSUTIL_AVAILABLE = check_import('psutil')
-LIEF_AVAILABLE = check_import('lief')
-PEFILE_AVAILABLE = check_import('pefile')
-CAPSTONE_AVAILABLE = check_import('capstone')
-UNICORN_AVAILABLE = check_import('unicorn')
-ANGR_AVAILABLE = check_import('angr')
-RADARE2_AVAILABLE = check_import('r2pipe')
-GHIDRA_AVAILABLE = check_import('ghidra_bridge')
-FRIDA_AVAILABLE = check_import('frida')
-SCAPY_AVAILABLE = check_import('scapy')
-TENSORFLOW_AVAILABLE = check_import('tensorflow')
-TORCH_AVAILABLE = check_import('torch')
-KERAS_AVAILABLE = check_import('keras')
+NUMPY_AVAILABLE = check_import("numpy")
+PANDAS_AVAILABLE = check_import("pandas")
+SKLEARN_AVAILABLE = check_import("sklearn")
+MATPLOTLIB_AVAILABLE = check_import("matplotlib")
+PILLOW_AVAILABLE = check_import("PIL")
+REQUESTS_AVAILABLE = check_import("requests")
+PSUTIL_AVAILABLE = check_import("psutil")
+LIEF_AVAILABLE = check_import("lief")
+PEFILE_AVAILABLE = check_import("pefile")
+CAPSTONE_AVAILABLE = check_import("capstone")
+UNICORN_AVAILABLE = check_import("unicorn")
+ANGR_AVAILABLE = check_import("angr")
+RADARE2_AVAILABLE = check_import("r2pipe")
+GHIDRA_AVAILABLE = check_import("ghidra_bridge")
+FRIDA_AVAILABLE = check_import("frida")
+SCAPY_AVAILABLE = check_import("scapy")
+TENSORFLOW_AVAILABLE = check_import("tensorflow")
+TORCH_AVAILABLE = check_import("torch")
+KERAS_AVAILABLE = check_import("keras")
 
 # PyQt availability check
-PYQT5_AVAILABLE = check_import('PyQt5')
-PYQT6_AVAILABLE = check_import('PyQt6')
-PYSIDE2_AVAILABLE = check_import('PySide2')
-PYSIDE6_AVAILABLE = check_import('PySide6')
+PYQT5_AVAILABLE = check_import("PyQt5")
+PYQT6_AVAILABLE = check_import("PyQt6")
+PYSIDE2_AVAILABLE = check_import("PySide2")
+PYSIDE6_AVAILABLE = check_import("PySide6")
 
 # Determine which Qt library is available
 QT_AVAILABLE = any([PYQT5_AVAILABLE, PYQT6_AVAILABLE, PYSIDE2_AVAILABLE, PYSIDE6_AVAILABLE])
 PREFERRED_QT = None
 if PYQT6_AVAILABLE:
-    PREFERRED_QT = 'PyQt6'
+    PREFERRED_QT = "PyQt6"
 elif PYQT5_AVAILABLE:
-    PREFERRED_QT = 'PyQt5'
+    PREFERRED_QT = "PyQt5"
 elif PYSIDE6_AVAILABLE:
-    PREFERRED_QT = 'PySide6'
+    PREFERRED_QT = "PySide6"
 elif PYSIDE2_AVAILABLE:
-    PREFERRED_QT = 'PySide2'
+    PREFERRED_QT = "PySide2"
 
 # Cryptography libraries
-CRYPTODOME_AVAILABLE = check_import('Cryptodome')
-CRYPTOGRAPHY_AVAILABLE = check_import('cryptography')
+CRYPTODOME_AVAILABLE = check_import("Cryptodome")
+CRYPTOGRAPHY_AVAILABLE = check_import("cryptography")
 CRYPTO_AVAILABLE = CRYPTODOME_AVAILABLE or CRYPTOGRAPHY_AVAILABLE
 
 # Network libraries
-SOCKET_AVAILABLE = check_import('socket')
-SSL_AVAILABLE = check_import('ssl')
-HTTP_CLIENT_AVAILABLE = check_import('http.client')
+SOCKET_AVAILABLE = check_import("socket")
+SSL_AVAILABLE = check_import("ssl")
+HTTP_CLIENT_AVAILABLE = check_import("http.client")
 
 # System libraries
-OS_AVAILABLE = check_import('os')
-SYS_AVAILABLE = check_import('sys')
-SUBPROCESS_AVAILABLE = check_import('subprocess')
-THREADING_AVAILABLE = check_import('threading')
-MULTIPROCESSING_AVAILABLE = check_import('multiprocessing')
+OS_AVAILABLE = check_import("os")
+SYS_AVAILABLE = check_import("sys")
+SUBPROCESS_AVAILABLE = check_import("subprocess")
+THREADING_AVAILABLE = check_import("threading")
+MULTIPROCESSING_AVAILABLE = check_import("multiprocessing")
 
 # Specialized security libraries
-VOLATILITY_AVAILABLE = check_import('volatility')
-VOLATILITY3_AVAILABLE = check_import('volatility3')
-BINWALK_AVAILABLE = check_import('binwalk')
-YARA_AVAILABLE = check_import('yara')
-YARA_PYTHON_AVAILABLE = check_import('yara')  # yara-python installs as 'yara'
-PYNACL_AVAILABLE = check_import('nacl')
+VOLATILITY_AVAILABLE = check_import("volatility")
+VOLATILITY3_AVAILABLE = check_import("volatility3")
+BINWALK_AVAILABLE = check_import("binwalk")
+YARA_AVAILABLE = check_import("yara")
+YARA_PYTHON_AVAILABLE = check_import("yara")  # yara-python installs as 'yara'
+PYNACL_AVAILABLE = check_import("nacl")
 
 # Database libraries
-SQLITE3_AVAILABLE = check_import('sqlite3')
-SQLALCHEMY_AVAILABLE = check_import('sqlalchemy')
+SQLITE3_AVAILABLE = check_import("sqlite3")
+SQLALCHEMY_AVAILABLE = check_import("sqlalchemy")
 
 # Compression libraries
-ZLIB_AVAILABLE = check_import('zlib')
-GZIP_AVAILABLE = check_import('gzip')
-BROTLI_AVAILABLE = check_import('brotli')
+ZLIB_AVAILABLE = check_import("zlib")
+GZIP_AVAILABLE = check_import("gzip")
+BROTLI_AVAILABLE = check_import("brotli")
 
 # Data format libraries
-JSON_AVAILABLE = check_import('json')
-YAML_AVAILABLE = check_import('yaml')
-XML_AVAILABLE = check_import('xml')
-TOML_AVAILABLE = check_import('toml')
+JSON_AVAILABLE = check_import("json")
+YAML_AVAILABLE = check_import("yaml")
+XML_AVAILABLE = check_import("xml")
+TOML_AVAILABLE = check_import("toml")
 
 # Virtualization and emulation
-QEMU_AVAILABLE = check_import('qemu')
-DOCKER_AVAILABLE = check_import('docker')
-VIRTUALBOX_AVAILABLE = check_import('virtualbox')
+QEMU_AVAILABLE = check_import("qemu")
+DOCKER_AVAILABLE = check_import("docker")
+VIRTUALBOX_AVAILABLE = check_import("virtualbox")
 
 
 def get_import_summary() -> Dict[str, Any]:
@@ -226,70 +226,70 @@ def get_import_summary() -> Dict[str, Any]:
         Dictionary with categorized import availability
     """
     return {
-        'data_science': {
-            'numpy': NUMPY_AVAILABLE,
-            'pandas': PANDAS_AVAILABLE,
-            'sklearn': SKLEARN_AVAILABLE,
-            'matplotlib': MATPLOTLIB_AVAILABLE
+        "data_science": {
+            "numpy": NUMPY_AVAILABLE,
+            "pandas": PANDAS_AVAILABLE,
+            "sklearn": SKLEARN_AVAILABLE,
+            "matplotlib": MATPLOTLIB_AVAILABLE
         },
-        'machine_learning': {
-            'tensorflow': TENSORFLOW_AVAILABLE,
-            'torch': TORCH_AVAILABLE,
-            'keras': KERAS_AVAILABLE
+        "machine_learning": {
+            "tensorflow": TENSORFLOW_AVAILABLE,
+            "torch": TORCH_AVAILABLE,
+            "keras": KERAS_AVAILABLE
         },
-        'gui_frameworks': {
-            'pyqt5': PYQT5_AVAILABLE,
-            'pyqt6': PYQT6_AVAILABLE,
-            'pyside2': PYSIDE2_AVAILABLE,
-            'pyside6': PYSIDE6_AVAILABLE,
-            'preferred_qt': PREFERRED_QT
+        "gui_frameworks": {
+            "pyqt5": PYQT5_AVAILABLE,
+            "pyqt6": PYQT6_AVAILABLE,
+            "pyside2": PYSIDE2_AVAILABLE,
+            "pyside6": PYSIDE6_AVAILABLE,
+            "preferred_qt": PREFERRED_QT
         },
-        'security_tools': {
-            'lief': LIEF_AVAILABLE,
-            'pefile': PEFILE_AVAILABLE,
-            'capstone': CAPSTONE_AVAILABLE,
-            'unicorn': UNICORN_AVAILABLE,
-            'angr': ANGR_AVAILABLE,
-            'radare2': RADARE2_AVAILABLE,
-            'ghidra': GHIDRA_AVAILABLE,
-            'frida': FRIDA_AVAILABLE,
-            'yara': YARA_AVAILABLE,
-            'yara_python': YARA_PYTHON_AVAILABLE,
-            'volatility': VOLATILITY_AVAILABLE,
-            'volatility3': VOLATILITY3_AVAILABLE,
-            'binwalk': BINWALK_AVAILABLE
+        "security_tools": {
+            "lief": LIEF_AVAILABLE,
+            "pefile": PEFILE_AVAILABLE,
+            "capstone": CAPSTONE_AVAILABLE,
+            "unicorn": UNICORN_AVAILABLE,
+            "angr": ANGR_AVAILABLE,
+            "radare2": RADARE2_AVAILABLE,
+            "ghidra": GHIDRA_AVAILABLE,
+            "frida": FRIDA_AVAILABLE,
+            "yara": YARA_AVAILABLE,
+            "yara_python": YARA_PYTHON_AVAILABLE,
+            "volatility": VOLATILITY_AVAILABLE,
+            "volatility3": VOLATILITY3_AVAILABLE,
+            "binwalk": BINWALK_AVAILABLE
         },
-        'cryptography': {
-            'cryptodome': CRYPTODOME_AVAILABLE,
-            'cryptography': CRYPTOGRAPHY_AVAILABLE,
-            'pynacl': PYNACL_AVAILABLE,
-            'crypto_available': CRYPTO_AVAILABLE
+        "cryptography": {
+            "cryptodome": CRYPTODOME_AVAILABLE,
+            "cryptography": CRYPTOGRAPHY_AVAILABLE,
+            "pynacl": PYNACL_AVAILABLE,
+            "crypto_available": CRYPTO_AVAILABLE
         },
-        'network': {
-            'scapy': SCAPY_AVAILABLE,
-            'requests': REQUESTS_AVAILABLE,
-            'socket': SOCKET_AVAILABLE,
-            'ssl': SSL_AVAILABLE,
-            'http_client': HTTP_CLIENT_AVAILABLE
+        "network": {
+            "scapy": SCAPY_AVAILABLE,
+            "requests": REQUESTS_AVAILABLE,
+            "socket": SOCKET_AVAILABLE,
+            "ssl": SSL_AVAILABLE,
+            "http_client": HTTP_CLIENT_AVAILABLE
         },
-        'system': {
-            'psutil': PSUTIL_AVAILABLE,
-            'os': OS_AVAILABLE,
-            'sys': SYS_AVAILABLE,
-            'subprocess': SUBPROCESS_AVAILABLE,
-            'threading': THREADING_AVAILABLE,
-            'multiprocessing': MULTIPROCESSING_AVAILABLE
+        "system": {
+            "psutil": PSUTIL_AVAILABLE,
+            "os": OS_AVAILABLE,
+            "sys": SYS_AVAILABLE,
+            "subprocess": SUBPROCESS_AVAILABLE,
+            "threading": THREADING_AVAILABLE,
+            "multiprocessing": MULTIPROCESSING_AVAILABLE
         },
-        'data_formats': {
-            'json': JSON_AVAILABLE,
-            'yaml': YAML_AVAILABLE,
-            'xml': XML_AVAILABLE,
-            'toml': TOML_AVAILABLE
+        "data_formats": {
+            "json": JSON_AVAILABLE,
+            "yaml": YAML_AVAILABLE,
+            "xml": XML_AVAILABLE,
+            "toml": TOML_AVAILABLE
         },
-        'virtualization': {
-            'docker': DOCKER_AVAILABLE,
-            'qemu': QEMU_AVAILABLE,
-            'virtualbox': VIRTUALBOX_AVAILABLE
+        "virtualization": {
+            "docker": DOCKER_AVAILABLE,
+            "qemu": QEMU_AVAILABLE,
+            "virtualbox": VIRTUALBOX_AVAILABLE
         }
     }
 
@@ -352,7 +352,7 @@ def get_fallback_implementations() -> Dict[str, Any]:
             @staticmethod
             def array(data):
                 """Convert data to array-like structure."""
-                return list(data) if hasattr(data, '__iter__') else [data]
+                return list(data) if hasattr(data, "__iter__") else [data]
 
             @staticmethod
             def mean(data):
@@ -368,7 +368,7 @@ def get_fallback_implementations() -> Dict[str, Any]:
                 variance = sum((x - mean_val) ** 2 for x in data) / len(data)
                 return variance ** 0.5
 
-        fallbacks['numpy'] = NumpyFallback()
+        fallbacks["numpy"] = NumpyFallback()
 
     # Simple requests-like functionality
     if not REQUESTS_AVAILABLE:
@@ -383,20 +383,20 @@ def get_fallback_implementations() -> Dict[str, Any]:
                 logger.debug(f"Fallback HTTP GET to {url} with {len(kwargs)} kwargs: {list(kwargs.keys())}")
                 try:
                     response = urllib.request.urlopen(url)
-                    return type('Response', (), {
-                        'status_code': response.getcode(),
-                        'text': response.read().decode('utf-8'),
-                        'content': response.read()
+                    return type("Response", (), {
+                        "status_code": response.getcode(),
+                        "text": response.read().decode("utf-8"),
+                        "content": response.read()
                     })()
                 except Exception as e:
                     logger.error("Exception in import_checks: %s", e)
-                    return type('Response', (), {
-                        'status_code': 500,
-                        'text': str(e),
-                        'content': b''
+                    return type("Response", (), {
+                        "status_code": 500,
+                        "text": str(e),
+                        "content": b""
                     })()
 
-        fallbacks['requests'] = RequestsFallback()
+        fallbacks["requests"] = RequestsFallback()
 
     return fallbacks
 
@@ -414,7 +414,7 @@ def log_import_status():
             logger.info(f"  {category}: {available_count}/{total_count} available")
 
     # Log missing critical modules
-    critical_modules = ['os', 'sys', 'json']
+    critical_modules = ["os", "sys", "json"]
     all_critical, missing_critical = check_required_imports(critical_modules)
 
     if not all_critical:
@@ -425,34 +425,34 @@ def log_import_status():
 
 # Export commonly used functions and constants
 __all__ = [
-    'ImportChecker',
-    'check_import',
-    'safe_import',
-    'get_available_imports',
-    'get_import_summary',
-    'check_required_imports',
-    'get_fallback_implementations',
-    'log_import_status',
+    "ImportChecker",
+    "check_import",
+    "safe_import",
+    "get_available_imports",
+    "get_import_summary",
+    "check_required_imports",
+    "get_fallback_implementations",
+    "log_import_status",
     # Common availability flags
-    'NUMPY_AVAILABLE',
-    'PANDAS_AVAILABLE',
-    'SKLEARN_AVAILABLE',
-    'TENSORFLOW_AVAILABLE',
-    'TORCH_AVAILABLE',
-    'PYQT5_AVAILABLE',
-    'PYQT6_AVAILABLE',
-    'QT_AVAILABLE',
-    'PREFERRED_QT',
-    'LIEF_AVAILABLE',
-    'PEFILE_AVAILABLE',
-    'CAPSTONE_AVAILABLE',
-    'UNICORN_AVAILABLE',
-    'ANGR_AVAILABLE',
-    'FRIDA_AVAILABLE',
-    'SCAPY_AVAILABLE',
-    'REQUESTS_AVAILABLE',
-    'CRYPTO_AVAILABLE',
-    'VOLATILITY3_AVAILABLE',
-    'YARA_PYTHON_AVAILABLE',
-    'BINWALK_AVAILABLE'
+    "NUMPY_AVAILABLE",
+    "PANDAS_AVAILABLE",
+    "SKLEARN_AVAILABLE",
+    "TENSORFLOW_AVAILABLE",
+    "TORCH_AVAILABLE",
+    "PYQT5_AVAILABLE",
+    "PYQT6_AVAILABLE",
+    "QT_AVAILABLE",
+    "PREFERRED_QT",
+    "LIEF_AVAILABLE",
+    "PEFILE_AVAILABLE",
+    "CAPSTONE_AVAILABLE",
+    "UNICORN_AVAILABLE",
+    "ANGR_AVAILABLE",
+    "FRIDA_AVAILABLE",
+    "SCAPY_AVAILABLE",
+    "REQUESTS_AVAILABLE",
+    "CRYPTO_AVAILABLE",
+    "VOLATILITY3_AVAILABLE",
+    "YARA_PYTHON_AVAILABLE",
+    "BINWALK_AVAILABLE"
 ]

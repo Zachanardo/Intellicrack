@@ -62,7 +62,7 @@ class AnalysisTask:
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
     error: Optional[str] = None
-    subtasks: List['AnalysisTask'] = None
+    subtasks: List["AnalysisTask"] = None
 
     def __post_init__(self):
         """Initialize analysis task with empty subtasks list if not provided."""
@@ -231,7 +231,7 @@ class ProgressManager:
             summary_table.add_row(
                 task_name,
                 f"[{status_style}]{status_icon} {task.status.title()}[/{status_style}]",
-                str(duration).split('.')[0],
+                str(duration).split(".")[0],
                 task.error or "Success"
             )
 
@@ -370,17 +370,17 @@ def demo_progress():
                 for step_name, weight in steps:
                     # Perform real operations
                     if step_name == "Computing hashes":
-                        with open(binary_path, 'rb') as f:
+                        with open(binary_path, "rb") as f:
                             data = f.read(1024*1024)  # Read first MB
                             hashlib.md5(data).hexdigest()
                             hashlib.sha256(data).hexdigest()
 
                     elif step_name == "Extracting strings":
                         # Real string extraction
-                        cmd = ['strings', binary_path] if sys.platform != 'win32' else ['findstr', '/r', '[a-zA-Z]', binary_path]
+                        cmd = ["strings", binary_path] if sys.platform != "win32" else ["findstr", "/r", "[a-zA-Z]", binary_path]
                         try:
                             result = subprocess.run(cmd, capture_output=True, timeout=5)
-                            len(result.stdout.decode('utf-8', errors='ignore').split('\n'))
+                            len(result.stdout.decode("utf-8", errors="ignore").split("\n"))
                         except:
                             pass
 
@@ -416,7 +416,7 @@ def demo_progress():
                     elif step_name == "Tracking network activity":
                         # Real network monitoring
                         connections = psutil.net_connections()
-                        len([c for c in connections if c.status == 'ESTABLISHED'])
+                        len([c for c in connections if c.status == "ESTABLISHED"])
 
                     current_progress += weight
                     progress_percent = int((current_progress / total_weight) * 100)
@@ -485,10 +485,10 @@ def demo_progress():
                         # Real URL/IP extraction from binary
                         import re
                         try:
-                            with open(binary_path, 'rb') as f:
+                            with open(binary_path, "rb") as f:
                                 data = f.read(1024*1024)
                                 # Look for IP patterns
-                                ip_pattern = rb'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b'
+                                ip_pattern = rb"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"
                                 re.findall(ip_pattern, data)
                         except:
                             pass

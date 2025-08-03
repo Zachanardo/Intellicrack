@@ -445,20 +445,20 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
                 template_name = items[0].text()
 
             # Determine category based on current selection
-            category = self.category_combo.currentText().lower().replace(" ", "_") if hasattr(self, 'category_combo') else "shell"
+            category = self.category_combo.currentText().lower().replace(" ", "_") if hasattr(self, "category_combo") else "shell"
 
             # Get template details
             arch = Architecture.X86  # Default for getting template info
             template = self.template_engine.get_template(category, template_name, arch)
 
             if template:
-                self.template_name_label.setText(template.get('name', template_name))
-                self.template_desc_label.setText(template.get('description', ''))
+                self.template_name_label.setText(template.get("name", template_name))
+                self.template_desc_label.setText(template.get("description", ""))
 
                 # Clear and populate parameters
                 self.clear_template_params()
 
-                params = template.get('parameters', [])
+                params = template.get("parameters", [])
                 self.template_params = {}
 
                 for param in params:
@@ -535,17 +535,17 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
 
             # Get parameters
             params = {}
-            for param_name, param_widget in getattr(self, 'template_params', {}).items():
+            for param_name, param_widget in getattr(self, "template_params", {}).items():
                 value = param_widget.text()
                 if value:
                     params[param_name] = value
 
             config = {
-                'mode': 'template',
-                'category': category,
-                'template_name': template_name,
-                'architecture': Architecture[self.arch_combo.currentText().upper()],
-                'parameters': params
+                "mode": "template",
+                "category": category,
+                "template_name": template_name,
+                "architecture": Architecture[self.arch_combo.currentText().upper()],
+                "parameters": params
             }
 
         elif current_tab == 1:  # Custom tab
@@ -554,13 +554,13 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
                 return None
 
             config = {
-                'mode': 'custom',
-                'payload_type': PayloadType.CUSTOM,
-                'architecture': Architecture[self.custom_arch_combo.currentText().upper()],
-                'shellcode': shellcode,
-                'is_assembly': self.asm_radio.isChecked(),
-                'null_free': self.null_free_check.isChecked(),
-                'position_independent': self.position_independent_check.isChecked()
+                "mode": "custom",
+                "payload_type": PayloadType.CUSTOM,
+                "architecture": Architecture[self.custom_arch_combo.currentText().upper()],
+                "shellcode": shellcode,
+                "is_assembly": self.asm_radio.isChecked(),
+                "null_free": self.null_free_check.isChecked(),
+                "position_independent": self.position_independent_check.isChecked()
             }
 
         # Add encoding options
@@ -571,27 +571,27 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
                 selected_encoders.append(item.text())
 
         if selected_encoders:
-            config['encoding_schemes'] = selected_encoders
-            config['encoding_iterations'] = self.iterations_spin.value()
+            config["encoding_schemes"] = selected_encoders
+            config["encoding_iterations"] = self.iterations_spin.value()
 
             if self.xor_key_edit.text():
-                config['xor_key'] = self.xor_key_edit.text()
+                config["xor_key"] = self.xor_key_edit.text()
 
         # Add obfuscation options
         obfuscation = []
         if self.dead_code_check.isChecked():
-            obfuscation.append('dead_code')
+            obfuscation.append("dead_code")
         if self.code_reorder_check.isChecked():
-            obfuscation.append('code_reorder')
+            obfuscation.append("code_reorder")
         if self.register_rename_check.isChecked():
-            obfuscation.append('register_rename')
+            obfuscation.append("register_rename")
         if self.garbage_insertion_check.isChecked():
-            obfuscation.append('garbage_insertion')
+            obfuscation.append("garbage_insertion")
         if self.metamorphic_check.isChecked():
-            obfuscation.append('metamorphic')
+            obfuscation.append("metamorphic")
 
         if obfuscation:
-            config['obfuscation_techniques'] = obfuscation
+            config["obfuscation_techniques"] = obfuscation
 
         # Add evasion options
         evasion = []
@@ -607,7 +607,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
             evasion.append(EvasionTechnique.API_HOOK_DETECTION)
 
         if evasion:
-            config['evasion_techniques'] = evasion
+            config["evasion_techniques"] = evasion
 
         return config
 
@@ -627,7 +627,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
 
             # Update payload info
             import hashlib
-            payload_bytes = result.get('payload', b'')
+            payload_bytes = result.get("payload", b"")
 
             self.size_label.setText(f"Size: {len(payload_bytes)} bytes")
 
@@ -639,7 +639,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
             self.entropy_label.setText(f"Entropy: {entropy:.2f}")
 
             # Count null bytes
-            null_count = payload_bytes.count(b'\x00')
+            null_count = payload_bytes.count(b"\x00")
             self.null_bytes_label.setText(f"Null bytes: {null_count}")
 
             # Display payload
@@ -666,7 +666,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
             return
 
         try:
-            payload_bytes = self.current_payload.get('payload', b'')
+            payload_bytes = self.current_payload.get("payload", b"")
             format_type = self.output_format_combo.currentText()
 
             self.output_display.clear()
@@ -690,7 +690,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
 
             elif format_type == "Base64":
                 import base64
-                b64 = base64.b64encode(payload_bytes).decode('utf-8')
+                b64 = base64.b64encode(payload_bytes).decode("utf-8")
                 self.output_display.append(b64)
 
             elif format_type == "Hex String":
@@ -705,14 +705,14 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
         lines = []
         for i in range(0, len(data), 16):
             chunk = data[i:i+16]
-            hex_part = ' '.join(f'{b:02x}' for b in chunk)
+            hex_part = " ".join(f"{b:02x}" for b in chunk)
             hex_part = hex_part.ljust(48)  # 16 * 2 + 15 spaces
 
-            ascii_part = ''.join(chr(b) if 32 <= b < 127 else '.' for b in chunk)
+            ascii_part = "".join(chr(b) if 32 <= b < 127 else "." for b in chunk)
 
             lines.append(f"{i:08x}  {hex_part}  |{ascii_part}|")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def format_c_array(self, data: bytes) -> str:
         """Format payload as C array."""
@@ -720,43 +720,43 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
 
         for i in range(0, len(data), 16):
             chunk = data[i:i+16]
-            hex_bytes = ', '.join(f'0x{b:02x}' for b in chunk)
+            hex_bytes = ", ".join(f"0x{b:02x}" for b in chunk)
             if i + 16 < len(data):
-                hex_bytes += ','
+                hex_bytes += ","
             lines.append(f"    {hex_bytes}")
 
         lines.append("};")
         lines.append(f"unsigned int payload_len = {len(data)};")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def format_python_string(self, data: bytes) -> str:
         """Format payload as Python string."""
-        lines = ['payload = (']
+        lines = ["payload = ("]
 
         for i in range(0, len(data), 16):
             chunk = data[i:i+16]
-            escaped = ''.join(f'\\x{b:02x}' for b in chunk)
+            escaped = "".join(f"\\x{b:02x}" for b in chunk)
             lines.append(f'    "{escaped}"')
 
-        lines.append(')')
+        lines.append(")")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def format_powershell(self, data: bytes) -> str:
         """Format payload for PowerShell."""
-        lines = ['[Byte[]] $payload = @(']
+        lines = ["[Byte[]] $payload = @("]
 
         for i in range(0, len(data), 16):
             chunk = data[i:i+16]
-            hex_bytes = ', '.join(f'0x{b:02x}' for b in chunk)
+            hex_bytes = ", ".join(f"0x{b:02x}" for b in chunk)
             if i + 16 < len(data):
-                hex_bytes += ','
+                hex_bytes += ","
             lines.append(f"    {hex_bytes}")
 
-        lines.append(')')
+        lines.append(")")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
 
     def save_payload(self):
@@ -771,9 +771,9 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
             )
 
             if filename:
-                payload_bytes = self.current_payload.get('payload', b'')
+                payload_bytes = self.current_payload.get("payload", b"")
 
-                with open(filename, 'wb') as f:
+                with open(filename, "wb") as f:
                     f.write(payload_bytes)
 
                 QMessageBox.information(self, "Success", f"Payload saved to {filename}")

@@ -601,17 +601,17 @@ for crypto_func in crypto_functions:
         all_indicators = []
 
         # From strings
-        strings = analysis_results.get('strings', [])
+        strings = analysis_results.get("strings", [])
         all_indicators.extend(strings)
 
         # From function names
-        functions = analysis_results.get('functions', [])
+        functions = analysis_results.get("functions", [])
         for func in functions:
-            if isinstance(func, dict) and 'name' in func:
-                all_indicators.append(func['name'])
+            if isinstance(func, dict) and "name" in func:
+                all_indicators.append(func["name"])
 
         # From imports
-        imports = analysis_results.get('imports', [])
+        imports = analysis_results.get("imports", [])
         all_indicators.extend(imports)
 
         # Find matching patterns

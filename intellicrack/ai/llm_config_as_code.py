@@ -239,20 +239,20 @@ class ConfigAsCodeManager:
         suffix = file_path.suffix.lower()
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                if suffix in ['.yaml', '.yml']:
+            with open(file_path, "r", encoding="utf-8") as f:
+                if suffix in [".yaml", ".yml"]:
                     if not HAS_YAML:
                         raise ConfigValidationError(
                             "YAML support not available - install PyYAML")
                     config = yaml.safe_load(f)
-                elif suffix == '.json':
+                elif suffix == ".json":
                     config = json.load(f)
                 else:
                     # Try to auto-detect format
                     content = f.read()
                     f.seek(0)
 
-                    if content.strip().startswith('{'):
+                    if content.strip().startswith("{"):
                         config = json.load(f)
                     else:
                         if not HAS_YAML:
@@ -300,19 +300,19 @@ class ConfigAsCodeManager:
         # Determine format
         if format_type is None:
             suffix = file_path.suffix.lower()
-            if suffix in ['.yaml', '.yml']:
-                format_type = 'yaml'
-            elif suffix == '.json':
-                format_type = 'json'
+            if suffix in [".yaml", ".yml"]:
+                format_type = "yaml"
+            elif suffix == ".json":
+                format_type = "json"
             else:
-                format_type = 'yaml'  # Default to YAML
+                format_type = "yaml"  # Default to YAML
 
         # Ensure directory exists
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
         try:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                if format_type == 'yaml':
+            with open(file_path, "w", encoding="utf-8") as f:
+                if format_type == "yaml":
                     if not HAS_YAML:
                         raise ConfigValidationError(
                             "YAML support not available - install PyYAML")
@@ -345,7 +345,7 @@ class ConfigAsCodeManager:
     def _substitute_string_vars(self, text: str) -> str:
         """Substitute environment variables in a string."""
         # Pattern: ${VAR_NAME} or ${VAR_NAME:default}
-        pattern = r'\$\{([^}:]+)(?::([^}]*))?\}'
+        pattern = r"\$\{([^}:]+)(?::([^}]*))?\}"
 
         def replace_var(match):
             var_name = match.group(1)

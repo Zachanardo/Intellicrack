@@ -67,39 +67,39 @@ class FlexLMProtocolHandler:
     def parse_request(self, data: bytes) -> Optional[Dict[str, Any]]:
         """Parse FlexLM license request"""
         try:
-            text_data = data.decode('utf-8', errors='ignore')
+            text_data = data.decode("utf-8", errors="ignore")
 
             # Look for FlexLM command patterns
             request_info = {
-                'command': 'unknown',
-                'features': [],
-                'version': None,
-                'hostid': None,
-                'vendor': None
+                "command": "unknown",
+                "features": [],
+                "version": None,
+                "hostid": None,
+                "vendor": None
             }
 
             # Parse FEATURE lines
-            for line in text_data.split('\n'):
+            for line in text_data.split("\n"):
                 line = line.strip()
 
-                if line.startswith('FEATURE'):
+                if line.startswith("FEATURE"):
                     parts = line.split()
                     if len(parts) >= 4:
-                        request_info['features'].append({
-                            'name': parts[1],
-                            'vendor': parts[2],
-                            'version': parts[3]
+                        request_info["features"].append({
+                            "name": parts[1],
+                            "vendor": parts[2],
+                            "version": parts[3]
                         })
 
-                elif line.startswith('SERVER'):
+                elif line.startswith("SERVER"):
                     parts = line.split()
                     if len(parts) >= 2:
-                        request_info['hostid'] = parts[2] if len(parts) > 2 else None
+                        request_info["hostid"] = parts[2] if len(parts) > 2 else None
 
-                elif line.startswith('VENDOR'):
+                elif line.startswith("VENDOR"):
                     parts = line.split()
                     if len(parts) >= 2:
-                        request_info['vendor'] = parts[1]
+                        request_info["vendor"] = parts[1]
 
             return request_info
 
@@ -119,12 +119,12 @@ class FlexLMProtocolHandler:
             response_lines.append("SERVER this_host ANY 27000")
 
             # Vendor line
-            vendor = parsed.get('vendor', 'vendor') if parsed else 'vendor'
+            vendor = parsed.get("vendor", "vendor") if parsed else "vendor"
             response_lines.append(f"VENDOR {vendor}")
 
             # Feature lines
-            if parsed and parsed.get('features'):
-                for feature in parsed['features']:
+            if parsed and parsed.get("features"):
+                for feature in parsed["features"]:
                     feature_line = (
                         f"FEATURE {feature['name']} {feature['vendor']} "
                         f"{feature['version']} permanent uncounted "
@@ -138,8 +138,8 @@ class FlexLMProtocolHandler:
                     "HOSTID=ANY SIGN=VALID ck=123"
                 )
 
-            response_text = '\n'.join(response_lines) + '\n'
-            return response_text.encode('utf-8')
+            response_text = "\n".join(response_lines) + "\n"
+            return response_text.encode("utf-8")
 
         except Exception as e:
             self.logger.error(f"FlexLM response generation error: {e}")
@@ -157,25 +157,25 @@ class HASPProtocolHandler:
         """Parse HASP license request"""
         try:
             # Check if it's JSON format
-            if data.startswith(b'{'):
-                json_data = json.loads(data.decode('utf-8'))
+            if data.startswith(b"{"):
+                json_data = json.loads(data.decode("utf-8"))
                 return {
-                    'format': 'json',
-                    'data': json_data
+                    "format": "json",
+                    "data": json_data
                 }
 
             # Check if it's binary format
             if len(data) >= 4:
-                header = struct.unpack('<I', data[:4])[0]
+                header = struct.unpack("<I", data[:4])[0]
                 return {
-                    'format': 'binary',
-                    'header': header,
-                    'data': data[4:]
+                    "format": "binary",
+                    "header": header,
+                    "data": data[4:]
                 }
 
             return {
-                'format': 'text',
-                'data': data.decode('utf-8', errors='ignore')
+                "format": "text",
+                "data": data.decode("utf-8", errors="ignore")
             }
 
         except Exception as e:
@@ -187,7 +187,7 @@ class HASPProtocolHandler:
         try:
             parsed = self.parse_request(context.request_data)
 
-            if parsed and parsed.get('format') == 'json':
+            if parsed and parsed.get("format") == "json":
                 # JSON response
                 response = {
                     "status": "OK",
@@ -197,17 +197,17 @@ class HASPProtocolHandler:
                     "timestamp": int(time.time()),
                     "session_id": str(uuid.uuid4())
                 }
-                return json.dumps(response).encode('utf-8')
+                return json.dumps(response).encode("utf-8")
 
-            elif parsed and parsed.get('format') == 'binary':
+            elif parsed and parsed.get("format") == "binary":
                 # Binary response
-                response_header = struct.pack('<I', 0x12345678)  # Valid response header
-                response_data = b'\x01\x00\x00\x00'  # Success code
+                response_header = struct.pack("<I", 0x12345678)  # Valid response header
+                response_data = b"\x01\x00\x00\x00"  # Success code
                 return response_header + response_data
 
             else:
                 # Text response
-                return b'HASP_STATUS_OK'
+                return b"HASP_STATUS_OK"
 
         except Exception as e:
             self.logger.error(f"HASP response generation error: {e}")
@@ -222,46 +222,46 @@ class AdobeProtocolHandler:
     def parse_request(self, data: bytes) -> Optional[Dict[str, Any]]:
         """Parse Adobe license request"""
         try:
-            text_data = data.decode('utf-8', errors='ignore')
+            text_data = data.decode("utf-8", errors="ignore")
 
             # Look for Adobe activation patterns
             request_info = {
-                'type': 'unknown',
-                'product': None,
-                'serial': None,
-                'machine_id': None
+                "type": "unknown",
+                "product": None,
+                "serial": None,
+                "machine_id": None
             }
 
             # Parse JSON if present
-            if '{' in text_data and '}' in text_data:
+            if "{" in text_data and "}" in text_data:
                 try:
-                    json_start = text_data.find('{')
-                    json_end = text_data.rfind('}') + 1
+                    json_start = text_data.find("{")
+                    json_end = text_data.rfind("}") + 1
                     json_str = text_data[json_start:json_end]
                     json_data = json.loads(json_str)
 
                     request_info.update({
-                        'type': 'json',
-                        'data': json_data
+                        "type": "json",
+                        "data": json_data
                     })
 
                     # Extract common fields
-                    if 'serial' in json_data:
-                        request_info['serial'] = json_data['serial']
-                    if 'product' in json_data:
-                        request_info['product'] = json_data['product']
+                    if "serial" in json_data:
+                        request_info["serial"] = json_data["serial"]
+                    if "product" in json_data:
+                        request_info["product"] = json_data["product"]
 
                 except json.JSONDecodeError as e:
                     logger.error("json.JSONDecodeError in dynamic_response_generator: %s", e)
                     pass
 
             # Look for activation patterns
-            if 'activate' in text_data.lower():
-                request_info['type'] = 'activation'
-            elif 'deactivate' in text_data.lower():
-                request_info['type'] = 'deactivation'
-            elif 'verify' in text_data.lower():
-                request_info['type'] = 'verification'
+            if "activate" in text_data.lower():
+                request_info["type"] = "activation"
+            elif "deactivate" in text_data.lower():
+                request_info["type"] = "deactivation"
+            elif "verify" in text_data.lower():
+                request_info["type"] = "verification"
 
             return request_info
 
@@ -275,18 +275,18 @@ class AdobeProtocolHandler:
             parsed = self.parse_request(context.request_data)
 
             # Generate Adobe activation response
-            if parsed and parsed.get('type') == 'json':
+            if parsed and parsed.get("type") == "json":
                 response = {
                     "status": "SUCCESS",
                     "message": "License is valid",
                     "expiry": "never",
-                    "serial": parsed.get('serial', '1234-5678-9012-3456-7890'),
+                    "serial": parsed.get("serial", "1234-5678-9012-3456-7890"),
                     "activation_id": str(uuid.uuid4()),
                     "timestamp": time.time()
                 }
-                return json.dumps(response).encode('utf-8')
+                return json.dumps(response).encode("utf-8")
 
-            elif parsed and parsed.get('type') == 'activation':
+            elif parsed and parsed.get("type") == "activation":
                 # XML-style response
                 response = f"""<?xml version="1.0"?>
 <activationResponse>
@@ -295,11 +295,11 @@ class AdobeProtocolHandler:
     <expiry>never</expiry>
     <features>all</features>
 </activationResponse>"""
-                return response.encode('utf-8')
+                return response.encode("utf-8")
 
             else:
                 # Simple text response
-                return b'ACTIVATION_SUCCESS'
+                return b"ACTIVATION_SUCCESS"
 
         except Exception as e:
             self.logger.error(f"Adobe response generation error: {e}")
@@ -319,21 +319,21 @@ class MicrosoftKMSHandler:
             # KMS uses RPC protocol
             if len(data) >= 16:
                 # Parse RPC header
-                header = struct.unpack('<IIII', data[:16])
+                header = struct.unpack("<IIII", data[:16])
                 return {
-                    'format': 'rpc',
-                    'version': header[0],
-                    'packet_type': header[1],
-                    'fragment_flags': header[2],
-                    'data_length': header[3],
-                    'payload': data[16:]
+                    "format": "rpc",
+                    "version": header[0],
+                    "packet_type": header[1],
+                    "fragment_flags": header[2],
+                    "data_length": header[3],
+                    "payload": data[16:]
                 }
 
             # Fallback to text parsing
-            text_data = data.decode('utf-8', errors='ignore')
+            text_data = data.decode("utf-8", errors="ignore")
             return {
-                'format': 'text',
-                'data': text_data
+                "format": "text",
+                "data": text_data
             }
 
         except Exception as e:
@@ -345,19 +345,19 @@ class MicrosoftKMSHandler:
         try:
             parsed = self.parse_request(context.request_data)
 
-            if parsed and parsed.get('format') == 'rpc':
+            if parsed and parsed.get("format") == "rpc":
                 # Generate RPC response
-                response_header = struct.pack('<IIII', 5, 2, 3, 32)  # Version, response type, flags, length
-                response_payload = b'\x00' * 32  # Success response
+                response_header = struct.pack("<IIII", 5, 2, 3, 32)  # Version, response type, flags, length
+                response_payload = b"\x00" * 32  # Success response
                 return response_header + response_payload
 
             else:
                 # Simple activation response
-                return b'KMS_ACTIVATION_SUCCESS'
+                return b"KMS_ACTIVATION_SUCCESS"
 
         except Exception as e:
             self.logger.error(f"KMS response generation error: {e}")
-            return b'\x00\x00\x00\x00\x00\x00\x00\x00' * 4
+            return b"\x00\x00\x00\x00\x00\x00\x00\x00" * 4
 
 
 class AutodeskProtocolHandler:
@@ -370,23 +370,23 @@ class AutodeskProtocolHandler:
     def parse_request(self, data: bytes) -> Optional[Dict[str, Any]]:
         """Parse Autodesk license request"""
         try:
-            text_data = data.decode('utf-8', errors='ignore')
+            text_data = data.decode("utf-8", errors="ignore")
 
             request_info = {
-                'type': 'unknown',
-                'product': None,
-                'version': None
+                "type": "unknown",
+                "product": None,
+                "version": None
             }
 
             # Look for Autodesk patterns
-            if 'AdskNetworkLicenseManager' in text_data:
-                request_info['type'] = 'network_license'
+            if "AdskNetworkLicenseManager" in text_data:
+                request_info["type"] = "network_license"
 
             # Parse JSON if present
-            if '{' in text_data:
+            if "{" in text_data:
                 try:
-                    json_start = text_data.find('{')
-                    json_end = text_data.rfind('}') + 1
+                    json_start = text_data.find("{")
+                    json_end = text_data.rfind("}") + 1
                     json_str = text_data[json_start:json_end]
                     json_data = json.loads(json_str)
                     request_info.update(json_data)
@@ -423,12 +423,12 @@ class AutodeskProtocolHandler:
 
             # Customize response based on parsed request
             if parsed_request:
-                if parsed_request.get('product'):
-                    response['license']['product'] = parsed_request['product']
-                if parsed_request.get('version'):
-                    response['license']['version'] = parsed_request['version']
+                if parsed_request.get("product"):
+                    response["license"]["product"] = parsed_request["product"]
+                if parsed_request.get("version"):
+                    response["license"]["version"] = parsed_request["version"]
 
-            return json.dumps(response).encode('utf-8')
+            return json.dumps(response).encode("utf-8")
 
         except Exception as e:
             self.logger.error(f"Autodesk response generation error for {context.source_ip}: {e}")
@@ -447,20 +447,20 @@ class DynamicResponseGenerator:
 
         # Protocol handlers
         self.handlers = {
-            'flexlm': FlexLMProtocolHandler(),
-            'hasp': HASPProtocolHandler(),
-            'adobe': AdobeProtocolHandler(),
-            'microsoft': MicrosoftKMSHandler(),
-            'autodesk': AutodeskProtocolHandler()
+            "flexlm": FlexLMProtocolHandler(),
+            "hasp": HASPProtocolHandler(),
+            "adobe": AdobeProtocolHandler(),
+            "microsoft": MicrosoftKMSHandler(),
+            "autodesk": AutodeskProtocolHandler()
         }
 
         # Statistics
         self.stats = {
-            'total_requests': 0,
-            'successful_responses': 0,
-            'failed_responses': 0,
-            'protocols_handled': {},
-            'average_response_time': 0.0
+            "total_requests": 0,
+            "successful_responses": 0,
+            "failed_responses": 0,
+            "protocols_handled": {},
+            "average_response_time": 0.0
         }
 
         # Learning data
@@ -481,7 +481,7 @@ class DynamicResponseGenerator:
         start_time = time.time()
 
         try:
-            self.stats['total_requests'] += 1
+            self.stats["total_requests"] += 1
 
             # Check cache first
             cache_key = self._generate_cache_key(context)
@@ -489,10 +489,10 @@ class DynamicResponseGenerator:
             if cached_response:
                 return GeneratedResponse(
                     response_data=cached_response,
-                    response_type='cached',
-                    generation_method='cache_lookup',
+                    response_type="cached",
+                    generation_method="cache_lookup",
                     confidence=1.0,
-                    metadata={'cache_hit': True}
+                    metadata={"cache_hit": True}
                 )
 
             # Try protocol-specific handler
@@ -504,22 +504,22 @@ class DynamicResponseGenerator:
                 self._cache_response(cache_key, response_data)
 
                 # Update statistics
-                self.stats['successful_responses'] += 1
-                if context.protocol_type not in self.stats['protocols_handled']:
-                    self.stats['protocols_handled'][context.protocol_type] = 0
-                self.stats['protocols_handled'][context.protocol_type] += 1
+                self.stats["successful_responses"] += 1
+                if context.protocol_type not in self.stats["protocols_handled"]:
+                    self.stats["protocols_handled"][context.protocol_type] = 0
+                self.stats["protocols_handled"][context.protocol_type] += 1
 
                 # Learn from this request
                 self._learn_from_request(context, response_data)
 
                 return GeneratedResponse(
                     response_data=response_data,
-                    response_type='protocol_specific',
-                    generation_method=f'{context.protocol_type}_handler',
+                    response_type="protocol_specific",
+                    generation_method=f"{context.protocol_type}_handler",
                     confidence=0.9,
                     metadata={
-                        'protocol': context.protocol_type,
-                        'request_size': len(context.request_data)
+                        "protocol": context.protocol_type,
+                        "request_size": len(context.request_data)
                     }
                 )
 
@@ -527,48 +527,48 @@ class DynamicResponseGenerator:
             adaptive_response = self._generate_adaptive_response(context)
             if adaptive_response:
                 self._cache_response(cache_key, adaptive_response)
-                self.stats['successful_responses'] += 1
+                self.stats["successful_responses"] += 1
 
                 return GeneratedResponse(
                     response_data=adaptive_response,
-                    response_type='adaptive',
-                    generation_method='pattern_learning',
+                    response_type="adaptive",
+                    generation_method="pattern_learning",
                     confidence=0.7,
-                    metadata={'adaptive': True}
+                    metadata={"adaptive": True}
                 )
 
             # Fallback to generic response
             generic_response = self._generate_generic_response(context)
             self._cache_response(cache_key, generic_response)
-            self.stats['successful_responses'] += 1
+            self.stats["successful_responses"] += 1
 
             return GeneratedResponse(
                 response_data=generic_response,
-                response_type='generic',
-                generation_method='fallback',
+                response_type="generic",
+                generation_method="fallback",
                 confidence=0.5,
-                metadata={'fallback': True}
+                metadata={"fallback": True}
             )
 
         except Exception as e:
             self.logger.error(f"Response generation error: {e}")
-            self.stats['failed_responses'] += 1
+            self.stats["failed_responses"] += 1
 
             # Return error response
             return GeneratedResponse(
-                response_data=b'ERROR',
-                response_type='error',
-                generation_method='error_fallback',
+                response_data=b"ERROR",
+                response_type="error",
+                generation_method="error_fallback",
                 confidence=0.0,
-                metadata={'error': str(e)}
+                metadata={"error": str(e)}
             )
 
         finally:
             # Update average response time
             response_time = time.time() - start_time
-            current_avg = self.stats['average_response_time']
-            total_requests = self.stats['total_requests']
-            self.stats['average_response_time'] = (current_avg * (total_requests - 1) + response_time) / total_requests
+            current_avg = self.stats["average_response_time"]
+            total_requests = self.stats["total_requests"]
+            self.stats["average_response_time"] = (current_avg * (total_requests - 1) + response_time) / total_requests
 
     def _generate_cache_key(self, context: ResponseContext) -> str:
         """Generate cache key for request"""
@@ -611,13 +611,13 @@ class DynamicResponseGenerator:
             response_patterns = self._extract_patterns(response_data)
 
             learning_entry = {
-                'timestamp': context.timestamp,
-                'request_patterns': request_patterns,
-                'response_patterns': response_patterns,
-                'request_size': len(context.request_data),
-                'response_size': len(response_data),
-                'source_port': context.source_port,
-                'target_port': context.target_port
+                "timestamp": context.timestamp,
+                "request_patterns": request_patterns,
+                "response_patterns": response_patterns,
+                "request_size": len(context.request_data),
+                "response_size": len(response_data),
+                "source_port": context.source_port,
+                "target_port": context.target_port
             }
 
             self.learned_patterns[protocol].append(learning_entry)
@@ -635,18 +635,18 @@ class DynamicResponseGenerator:
 
         try:
             # Convert to text for pattern extraction
-            text_data = data.decode('utf-8', errors='ignore')
+            text_data = data.decode("utf-8", errors="ignore")
 
             # Extract JSON patterns
-            json_matches = re.findall(r'\{[^}]*\}', text_data)
+            json_matches = re.findall(r"\{[^}]*\}", text_data)
             patterns.extend(json_matches)
 
             # Extract key-value patterns
-            kv_matches = re.findall(r'(\w+)[:=]([^\s,}]+)', text_data)
+            kv_matches = re.findall(r"(\w+)[:=]([^\s,}]+)", text_data)
             patterns.extend([f"{k}:{v}" for k, v in kv_matches])
 
             # Extract common words
-            words = re.findall(r'\b[A-Za-z]{3,}\b', text_data)
+            words = re.findall(r"\b[A-Za-z]{3,}\b", text_data)
             patterns.extend(words[:10])  # Limit to first 10 words
 
             # Extract hex patterns from binary data
@@ -673,7 +673,7 @@ class DynamicResponseGenerator:
             best_score = 0
 
             for learned_entry in self.learned_patterns[protocol]:
-                score = self._calculate_similarity(request_patterns, learned_entry['request_patterns'])
+                score = self._calculate_similarity(request_patterns, learned_entry["request_patterns"])
                 if score > best_score:
                     best_score = score
                     best_match = learned_entry
@@ -681,7 +681,7 @@ class DynamicResponseGenerator:
             # Use best match if similarity is high enough
             if best_match and best_score > 0.5:
                 # Generate response based on learned response patterns
-                return self._synthesize_response(best_match['response_patterns'], context)
+                return self._synthesize_response(best_match["response_patterns"], context)
 
         except Exception as e:
             self.logger.debug(f"Adaptive generation error: {e}")
@@ -702,28 +702,28 @@ class DynamicResponseGenerator:
         """Synthesize response from learned patterns"""
         try:
             # Look for JSON patterns
-            json_patterns = [p for p in response_patterns if p.startswith('{')]
+            json_patterns = [p for p in response_patterns if p.startswith("{")]
             if json_patterns:
                 # Use first JSON pattern as template
                 template = json_patterns[0]
 
                 # Replace placeholders with context-specific values
-                response_text = template.replace('timestamp', str(int(context.timestamp)))
-                response_text = response_text.replace('uuid', str(uuid.uuid4()))
+                response_text = template.replace("timestamp", str(int(context.timestamp)))
+                response_text = response_text.replace("uuid", str(uuid.uuid4()))
 
-                return response_text.encode('utf-8')
+                return response_text.encode("utf-8")
 
             # Look for key-value patterns
-            kv_patterns = [p for p in response_patterns if ':' in p]
+            kv_patterns = [p for p in response_patterns if ":" in p]
             if kv_patterns:
                 # Build simple response
                 response_dict = {}
                 for pattern in kv_patterns:
-                    if ':' in pattern:
-                        key, value = pattern.split(':', 1)
+                    if ":" in pattern:
+                        key, value = pattern.split(":", 1)
                         response_dict[key] = value
 
-                return json.dumps(response_dict).encode('utf-8')
+                return json.dumps(response_dict).encode("utf-8")
 
             # Fallback to more appropriate response based on context
             return self._create_intelligent_fallback(context)
@@ -737,31 +737,31 @@ class DynamicResponseGenerator:
         """Generate generic response based on request characteristics"""
         try:
             # Analyze request data for clues
-            request_text = context.request_data.decode('utf-8', errors='ignore').lower()
+            request_text = context.request_data.decode("utf-8", errors="ignore").lower()
 
             # JSON-style response
-            if '{' in request_text or 'json' in request_text:
+            if "{" in request_text or "json" in request_text:
                 response = {
                     "status": "OK",
                     "license": "valid",
                     "timestamp": int(context.timestamp),
                     "response_id": str(uuid.uuid4())[:8]
                 }
-                return json.dumps(response).encode('utf-8')
+                return json.dumps(response).encode("utf-8")
 
             # XML-style response
-            elif '<' in request_text or 'xml' in request_text:
+            elif "<" in request_text or "xml" in request_text:
                 response = '<?xml version="1.0"?><response><status>OK</status><license>valid</license></response>'
-                return response.encode('utf-8')
+                return response.encode("utf-8")
 
             # Binary response for binary requests
-            elif len(context.request_data) > 0 and not context.request_data.decode('utf-8', errors='ignore').isprintable():
+            elif len(context.request_data) > 0 and not context.request_data.decode("utf-8", errors="ignore").isprintable():
                 # Simple binary OK response
-                return b'\x00\x00\x00\x01OK'
+                return b"\x00\x00\x00\x01OK"
 
             # Default text response
             else:
-                return b'LICENSE_OK'
+                return b"LICENSE_OK"
 
         except Exception as e:
             self.logger.error(f"Generic response generation error: {e}")
@@ -788,11 +788,11 @@ class DynamicResponseGenerator:
                 
                 # Check for content type preferences
                 if context.headers:
-                    accept = context.headers.get('accept', '').lower()
-                    if 'application/json' in accept:
+                    accept = context.headers.get("accept", "").lower()
+                    if "application/json" in accept:
                         headers[0] = b"Content-Type: application/json; charset=utf-8"
                         body = b'{"error": "Internal server error", "status": 500, "message": "Service temporarily unavailable"}'
-                    elif 'application/xml' in accept:
+                    elif "application/xml" in accept:
                         headers[0] = b"Content-Type: application/xml; charset=utf-8"
                         body = b'<?xml version="1.0" encoding="UTF-8"?><error><status>500</status><message>Service temporarily unavailable</message></error>'
                     else:
@@ -811,11 +811,11 @@ class DynamicResponseGenerator:
                     # Extract transaction ID from request
                     transaction_id = context.request_data[:2]
                     # DNS response with SERVFAIL (rcode=2)
-                    flags = b'\x81\x82'  # QR=1, RCODE=2 (SERVFAIL)
-                    return transaction_id + flags + b'\x00\x00' * 4  # Zero counts
+                    flags = b"\x81\x82"  # QR=1, RCODE=2 (SERVFAIL)
+                    return transaction_id + flags + b"\x00\x00" * 4  # Zero counts
                 else:
                     # Invalid DNS request, return empty
-                    return b''
+                    return b""
             
             # SMTP Protocol
             elif context.protocol_type.upper() == "SMTP" or context.target_port in [25, 587, 465]:
@@ -839,9 +839,9 @@ class DynamicResponseGenerator:
                 return b"ERROR: License service temporarily unavailable\n"
             
             # Binary protocols - return structured error
-            elif context.request_data and not context.request_data[:100].decode('utf-8', errors='ignore').isprintable():
+            elif context.request_data and not context.request_data[:100].decode("utf-8", errors="ignore").isprintable():
                 # Return a simple binary error pattern
-                return b'\x00\x00\x00\x04FAIL'
+                return b"\x00\x00\x00\x04FAIL"
             
             # Default text-based fallback
             else:
@@ -856,13 +856,13 @@ class DynamicResponseGenerator:
         """Create an intelligent fallback response based on context."""
         try:
             # Analyze request for protocol hints
-            request_str = context.request_data.decode('utf-8', errors='ignore')
+            request_str = context.request_data.decode("utf-8", errors="ignore")
 
             # Check content type from headers if available
-            content_type = context.headers.get('content-type', '').lower() if context.headers else ''
+            content_type = context.headers.get("content-type", "").lower() if context.headers else ""
 
             # XML response pattern
-            if '<' in request_str and '>' in request_str or 'xml' in content_type:
+            if "<" in request_str and ">" in request_str or "xml" in content_type:
                 return b'''<?xml version="1.0" encoding="UTF-8"?>
 <response>
     <status>success</status>
@@ -872,7 +872,7 @@ class DynamicResponseGenerator:
 </response>'''
 
             # JSON response pattern
-            elif '{' in request_str or 'json' in content_type:
+            elif "{" in request_str or "json" in content_type:
                 response = {
                     "status": "success",
                     "code": 200,
@@ -880,32 +880,32 @@ class DynamicResponseGenerator:
                     "timestamp": int(context.timestamp),
                     "data": {}
                 }
-                return json.dumps(response).encode('utf-8')
+                return json.dumps(response).encode("utf-8")
 
             # License-specific patterns
-            elif any(word in request_str.lower() for word in ['license', 'auth', 'validate', 'verify']):
+            elif any(word in request_str.lower() for word in ["license", "auth", "validate", "verify"]):
                 # Check if it looks like a product-specific request
-                if 'adobe' in request_str.lower():
-                    return b'ADOBE_LICENSE_VALID'
-                elif 'autodesk' in request_str.lower():
-                    return b'AUTODESK_LICENSE_VALID'
-                elif 'microsoft' in request_str.lower():
-                    return b'MICROSOFT_LICENSE_VALID'
+                if "adobe" in request_str.lower():
+                    return b"ADOBE_LICENSE_VALID"
+                elif "autodesk" in request_str.lower():
+                    return b"AUTODESK_LICENSE_VALID"
+                elif "microsoft" in request_str.lower():
+                    return b"MICROSOFT_LICENSE_VALID"
                 else:
-                    return b'LICENSE_VALID'
+                    return b"LICENSE_VALID"
 
             # HTTP-style response
-            elif context.protocol == 'HTTP':
-                return b'HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nOK'
+            elif context.protocol == "HTTP":
+                return b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nOK"
 
             # Binary protocol response
             elif not request_str.isprintable():
                 # Return a structured binary response
-                return b'\x00\x01' + b'\x00\x00\x00\x08' + b'SUCCESS\x00'
+                return b"\x00\x01" + b"\x00\x00\x00\x08" + b"SUCCESS\x00"
 
             # Default fallback with more context
             else:
-                return b'SUCCESS'
+                return b"SUCCESS"
 
         except Exception as e:
             self.logger.debug(f"Fallback generation error: {e}")
@@ -919,20 +919,20 @@ class DynamicResponseGenerator:
     def export_learning_data(self) -> Dict[str, Any]:
         """Export learning data for backup/analysis"""
         return {
-            'learned_patterns': self.learned_patterns,
-            'statistics': self.stats,
-            'cache_size': len(self.response_cache)
+            "learned_patterns": self.learned_patterns,
+            "statistics": self.stats,
+            "cache_size": len(self.response_cache)
         }
 
     def import_learning_data(self, data: Dict[str, Any]):
         """Import learning data from previous sessions"""
         try:
-            if 'learned_patterns' in data:
-                self.learned_patterns.update(data['learned_patterns'])
+            if "learned_patterns" in data:
+                self.learned_patterns.update(data["learned_patterns"])
                 self.logger.info(f"Imported learning data for {len(data['learned_patterns'])} protocols")
 
         except Exception as e:
             self.logger.error(f"Error importing learning data: {e}")
 
 
-__all__ = ['DynamicResponseGenerator', 'ResponseContext', 'GeneratedResponse']
+__all__ = ["DynamicResponseGenerator", "ResponseContext", "GeneratedResponse"]

@@ -163,61 +163,61 @@ __all__ = []
 
 # Add successfully imported classes to __all__
 if DistributedProcessingConfigDialog is not None:
-    __all__.append('DistributedProcessingConfigDialog')
+    __all__.append("DistributedProcessingConfigDialog")
 
 if GuidedWorkflowWizard is not None:
-    __all__.append('GuidedWorkflowWizard')
+    __all__.append("GuidedWorkflowWizard")
 
 if ModelFinetuningDialog is not None:
-    __all__.extend(['ModelFinetuningDialog', 'TrainingConfig', 'AugmentationConfig', 'TrainingThread'])
+    __all__.extend(["ModelFinetuningDialog", "TrainingConfig", "AugmentationConfig", "TrainingThread"])
 
 if PluginManagerDialog is not None:
-    __all__.append('PluginManagerDialog')
+    __all__.append("PluginManagerDialog")
 
 if ReportManagerDialog is not None:
-    __all__.extend(['ReportManagerDialog', 'ReportGenerationThread'])
+    __all__.extend(["ReportManagerDialog", "ReportGenerationThread"])
 
 if BinarySimilaritySearchDialog is not None:
-    __all__.append('BinarySimilaritySearchDialog')
+    __all__.append("BinarySimilaritySearchDialog")
 
 if BinarySelectionDialog is not None and BaseTemplateDialog is not None:
-    __all__.extend(['BinarySelectionDialog', 'BaseTemplateDialog'])
+    __all__.extend(["BinarySelectionDialog", "BaseTemplateDialog"])
 
 if SplashScreen is not None:
-    __all__.append('SplashScreen')
+    __all__.append("SplashScreen")
 
 if TextEditorDialog is not None:
-    __all__.extend(['TextEditorDialog', 'PythonSyntaxHighlighter', 'FindReplaceDialog'])
+    __all__.extend(["TextEditorDialog", "PythonSyntaxHighlighter", "FindReplaceDialog"])
 
 if VisualPatchEditorDialog is not None:
-    __all__.append('VisualPatchEditorDialog')
+    __all__.append("VisualPatchEditorDialog")
 
 if PayloadGeneratorDialog is not None:
-    __all__.append('PayloadGeneratorDialog')
+    __all__.append("PayloadGeneratorDialog")
 
 if C2ManagementDialog is not None:
-    __all__.append('C2ManagementDialog')
+    __all__.append("C2ManagementDialog")
 
 if FridaManagerDialog is not None:
-    __all__.append('FridaManagerDialog')
+    __all__.append("FridaManagerDialog")
 
 if PluginCreationWizard is not None:
-    __all__.append('PluginCreationWizard')
+    __all__.append("PluginCreationWizard")
 
 if PluginEditorDialog is not None:
-    __all__.append('PluginEditorDialog')
+    __all__.append("PluginEditorDialog")
 
 if TestGeneratorDialog is not None:
-    __all__.append('TestGeneratorDialog')
+    __all__.append("TestGeneratorDialog")
 
 if CICDDialog is not None:
-    __all__.append('CICDDialog')
+    __all__.append("CICDDialog")
 
 if DebuggerDialog is not None:
-    __all__.append('DebuggerDialog')
+    __all__.append("DebuggerDialog")
 
 if ProgramSelectorDialog is not None:
-    __all__.extend(['ProgramSelectorDialog', 'show_program_selector', 'show_smart_program_selector'])
+    __all__.extend(["ProgramSelectorDialog", "show_program_selector", "show_smart_program_selector"])
 
 # Package metadata
 __version__ = "0.1.0"

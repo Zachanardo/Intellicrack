@@ -159,8 +159,8 @@ class StructureVisualizerWidget(QWidget):
         # Memory map visualization
         if PYQTGRAPH_AVAILABLE:
             self.memory_map = pg.PlotWidget()
-            self.memory_map.setLabel('left', 'Section')
-            self.memory_map.setLabel('bottom', 'Memory Address')
+            self.memory_map.setLabel("left", "Section")
+            self.memory_map.setLabel("bottom", "Memory Address")
             self.structure_widget.addTab(self.memory_map, "Memory Map")
 
     def set_structure_data(self, data: Dict[str, Any]):
@@ -232,8 +232,8 @@ class StructureVisualizerWidget(QWidget):
             file_data = pe_data.get("file_header", {})
 
             QTreeWidgetItem(file_header, ["Machine", f"0x{file_data.get('machine', 0):04X}"])
-            QTreeWidgetItem(file_header, ["Number of Sections", str(file_data.get('number_of_sections', 0))])
-            QTreeWidgetItem(file_header, ["Time Date Stamp", str(file_data.get('time_date_stamp', 0))])
+            QTreeWidgetItem(file_header, ["Number of Sections", str(file_data.get("number_of_sections", 0))])
+            QTreeWidgetItem(file_header, ["Time Date Stamp", str(file_data.get("time_date_stamp", 0))])
 
             # Optional Header
             opt_header = QTreeWidgetItem(pe_item, ["Optional Header"])
@@ -395,12 +395,12 @@ class StructureVisualizerWidget(QWidget):
                 self.headers_table.insertRow(row)
                 self.headers_table.setItem(row, 0, QTableWidgetItem("Machine"))
                 self.headers_table.setItem(row, 1, QTableWidgetItem(f"0x{fh.get('machine', 0):04X}"))
-                self.headers_table.setItem(row, 2, QTableWidgetItem(self._get_machine_name(fh.get('machine', 0))))
+                self.headers_table.setItem(row, 2, QTableWidgetItem(self._get_machine_name(fh.get("machine", 0))))
                 row += 1
 
                 self.headers_table.insertRow(row)
                 self.headers_table.setItem(row, 0, QTableWidgetItem("Number of Sections"))
-                self.headers_table.setItem(row, 1, QTableWidgetItem(str(fh.get('number_of_sections', 0))))
+                self.headers_table.setItem(row, 1, QTableWidgetItem(str(fh.get("number_of_sections", 0))))
                 self.headers_table.setItem(row, 2, QTableWidgetItem("Total section count"))
                 row += 1
             # Optional header
@@ -421,8 +421,8 @@ class StructureVisualizerWidget(QWidget):
 
                 self.headers_table.insertRow(row)
                 self.headers_table.setItem(row, 0, QTableWidgetItem("Subsystem"))
-                self.headers_table.setItem(row, 1, QTableWidgetItem(str(oh.get('subsystem', 0))))
-                self.headers_table.setItem(row, 2, QTableWidgetItem(self._get_subsystem_name(oh.get('subsystem', 0))))
+                self.headers_table.setItem(row, 1, QTableWidgetItem(str(oh.get("subsystem", 0))))
+                self.headers_table.setItem(row, 2, QTableWidgetItem(self._get_subsystem_name(oh.get("subsystem", 0))))
                 row += 1
 
     def _update_sections_view(self):
@@ -536,12 +536,12 @@ class StructureVisualizerWidget(QWidget):
             self.memory_map.addItem(text)
 
         # Set axis labels
-        self.memory_map.setLabel('left', 'Sections')
-        self.memory_map.setLabel('bottom', 'Virtual Address')
+        self.memory_map.setLabel("left", "Sections")
+        self.memory_map.setLabel("bottom", "Virtual Address")
 
         # Set Y axis ticks to section names
         y_ticks = [(i, section.get("name", "")) for i, section in enumerate(sections)]
-        self.memory_map.getAxis('left').setTicks([y_ticks])
+        self.memory_map.getAxis("left").setTicks([y_ticks])
 
     def update_details(self):
         """Update the details panel"""
@@ -762,12 +762,12 @@ class StructureVisualizerWidget(QWidget):
 
         if filename:
             try:
-                if filename.endswith('.json'):
-                    with open(filename, 'w') as f:
+                if filename.endswith(".json"):
+                    with open(filename, "w") as f:
                         json.dump(self.structure_data, f, indent=2)
                 else:
                     # Export as formatted text
-                    with open(filename, 'w') as f:
+                    with open(filename, "w") as f:
                         f.write(self._format_structure_text())
 
                 # Show success message

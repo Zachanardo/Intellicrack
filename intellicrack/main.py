@@ -13,9 +13,9 @@ except ImportError as e:
     logger.warning(f"Security enforcement not available: {e}")
 
 # Configure TensorFlow to prevent GPU initialization issues with Intel Arc B580
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable GPU for TensorFlow
-os.environ['MKL_THREADING_LAYER'] = 'GNU'  # Fix PyTorch + TensorFlow import conflict
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow
+os.environ["MKL_THREADING_LAYER"] = "GNU"  # Fix PyTorch + TensorFlow import conflict
 
 """
 Main Entry Point for Intellicrack
@@ -38,39 +38,39 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
 # Set Qt to offscreen mode for WSL/headless environments if no display
-if 'DISPLAY' not in os.environ and 'QT_QPA_PLATFORM' not in os.environ:
+if "DISPLAY" not in os.environ and "QT_QPA_PLATFORM" not in os.environ:
     # Check if we're in WSL by examining /proc/version for Microsoft string
-    if os.path.exists('/proc/version'):
+    if os.path.exists("/proc/version"):
         try:
-            with open('/proc/version', 'r', encoding='utf-8') as f:
-                if 'microsoft' in f.read().lower():
-                    os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+            with open("/proc/version", "r", encoding="utf-8") as f:
+                if "microsoft" in f.read().lower():
+                    os.environ["QT_QPA_PLATFORM"] = "offscreen"
         except:
             pass
     # Don't set offscreen mode on Windows - use native rendering
-    elif os.name != 'nt':
-        os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+    elif os.name != "nt":
+        os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 # Configure Qt font handling for Windows
-if os.name == 'nt':
+if os.name == "nt":
     # Set Windows font directory for Qt to find system fonts
-    if 'QT_QPA_FONTDIR' not in os.environ:
-        windir = os.environ.get('WINDIR', 'C:\\Windows')
-        os.environ['QT_QPA_FONTDIR'] = os.path.join(windir, 'Fonts')
+    if "QT_QPA_FONTDIR" not in os.environ:
+        windir = os.environ.get("WINDIR", "C:\\Windows")
+        os.environ["QT_QPA_FONTDIR"] = os.path.join(windir, "Fonts")
 
     # Suppress Qt font warnings to reduce console noise
-    os.environ['QT_LOGGING_RULES'] = '*.debug=false;qt.qpa.fonts=false'
+    os.environ["QT_LOGGING_RULES"] = "*.debug=false;qt.qpa.fonts=false"
 
     # Force software rendering for Windows (especially Intel Arc compatibility)
-    if 'QT_OPENGL' not in os.environ:
-        os.environ['QT_OPENGL'] = 'software'
+    if "QT_OPENGL" not in os.environ:
+        os.environ["QT_OPENGL"] = "software"
 
     # Additional Intel Arc compatibility settings
-    gpu_vendor = os.environ.get('INTELLICRACK_GPU_VENDOR', 'Unknown')
-    if gpu_vendor == 'Intel':
-        os.environ['QT_OPENGL'] = 'software'  # Always force software for Intel
-        os.environ['QT_QUICK_BACKEND'] = 'software'
-        os.environ['QT_ANGLE_PLATFORM'] = 'warp'
+    gpu_vendor = os.environ.get("INTELLICRACK_GPU_VENDOR", "Unknown")
+    if gpu_vendor == "Intel":
+        os.environ["QT_OPENGL"] = "software"  # Always force software for Intel
+        os.environ["QT_QUICK_BACKEND"] = "software"
+        os.environ["QT_ANGLE_PLATFORM"] = "warp"
 
 # Comprehensive logging disabled for Qt compatibility
 # The comprehensive logging system interferes with Qt's window display mechanisms

@@ -33,10 +33,10 @@ class APIClient:
         """Initialize the API client with configuration from environment or defaults."""
         if not HAS_AIOHTTP:
             logger.warning("aiohttp not available - API client will use fallback implementation")
-        self.base_url = base_url or get_secret('API_BASE_URL', 'https://api.intellicrack.com')
-        self.timeout = int(get_secret('API_TIMEOUT', '60'))
-        self.retry_attempts = int(get_secret('API_RETRY_ATTEMPTS', '3'))
-        self.retry_delay = int(get_secret('API_RETRY_DELAY', '1000')) / 1000  # Convert ms to seconds
+        self.base_url = base_url or get_secret("API_BASE_URL", "https://api.intellicrack.com")
+        self.timeout = int(get_secret("API_TIMEOUT", "60"))
+        self.retry_attempts = int(get_secret("API_RETRY_ATTEMPTS", "3"))
+        self.retry_delay = int(get_secret("API_RETRY_DELAY", "1000")) / 1000  # Convert ms to seconds
         self.session = None
 
     async def __aenter__(self):
@@ -52,7 +52,7 @@ class APIClient:
         if self.session and HAS_AIOHTTP:
             await self.session.close()
 
-    async def fetch(self, endpoint: str, method: str = 'GET',
+    async def fetch(self, endpoint: str, method: str = "GET",
                    data: Optional[Dict[str, Any]] = None,
                    headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
         """
@@ -75,24 +75,24 @@ class APIClient:
             # Fallback implementation using requests or urllib
             logger.warning(f"API call to {endpoint} skipped - aiohttp not available")
             return {
-                'error': 'aiohttp not available',
-                'fallback': True,
-                'endpoint': endpoint,
-                'method': method
+                "error": "aiohttp not available",
+                "fallback": True,
+                "endpoint": endpoint,
+                "method": method
             }
 
         url = f"{self.base_url}{endpoint}"
 
         # Default headers
         default_headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            "Content-Type": "application/json",
+            "Accept": "application/json"
         }
 
         # Add API key if available
-        api_key = get_secret('API_KEY')
+        api_key = get_secret("API_KEY")
         if api_key:
-            default_headers['Authorization'] = f'Bearer {api_key}'
+            default_headers["Authorization"] = f"Bearer {api_key}"
 
         if headers:
             default_headers.update(headers)
@@ -140,7 +140,7 @@ class APIClient:
         raise RuntimeError("Max retry attempts exceeded")
 
 
-async def make_api_call(endpoint: str, method: str = 'GET',
+async def make_api_call(endpoint: str, method: str = "GET",
                        data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Convenience function for making API calls.
@@ -158,7 +158,7 @@ async def make_api_call(endpoint: str, method: str = 'GET',
 
 
 # Synchronous wrapper for compatibility
-def sync_api_call(endpoint: str, method: str = 'GET',
+def sync_api_call(endpoint: str, method: str = "GET",
                   data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Synchronous wrapper for API calls.

@@ -72,7 +72,7 @@ class UnifiedAnalysisThread(QThread):
             self.analysis_progress.emit("Performing quick scan...", 20)
             quick_summary = self.engine.get_quick_summary(self.file_path)
 
-            if quick_summary['protected']:
+            if quick_summary["protected"]:
                 self.analysis_progress.emit(
                     f"Detected {quick_summary['protection_count']} protection(s), analyzing...",
                     40
@@ -122,7 +122,7 @@ class ProtectionCard(QFrame):
         layout = QVBoxLayout()
 
         # Protection name
-        name_label = QLabel(self.protection_data['name'])
+        name_label = QLabel(self.protection_data["name"])
         name_label.setFont(QFont("Arial", 11, QFont.Bold))
         layout.addWidget(name_label)
 
@@ -133,7 +133,7 @@ class ProtectionCard(QFrame):
         type_label.setStyleSheet("color: #666;")
         info_layout.addWidget(type_label)
 
-        confidence = self.protection_data.get('confidence', 0)
+        confidence = self.protection_data.get("confidence", 0)
         conf_label = QLabel(f"Confidence: {confidence:.0f}%")
 
         if confidence >= 90:
@@ -149,7 +149,7 @@ class ProtectionCard(QFrame):
         layout.addLayout(info_layout)
 
         # Source indicator
-        source = self.protection_data.get('source', AnalysisSource.DIE)
+        source = self.protection_data.get("source", AnalysisSource.DIE)
         source_text = self._get_source_text(source)
         source_label = QLabel(source_text)
         source_label.setStyleSheet("color: #999; font-size: 9px;")
@@ -424,17 +424,17 @@ class UnifiedProtectionWidget(QWidget):
             from PyQt6.QtWidgets import QApplication
             main_window = None
             for widget in QApplication.allWidgets():
-                if hasattr(widget, 'ai_coordinator') and widget.ai_coordinator:
+                if hasattr(widget, "ai_coordinator") and widget.ai_coordinator:
                     main_window = widget
                     break
 
-            if main_window and hasattr(main_window.ai_coordinator, 'suggest_strategy'):
+            if main_window and hasattr(main_window.ai_coordinator, "suggest_strategy"):
                 analysis_type = "complex_patterns" if deep_scan else "quick_check"
                 suggested_strategy = main_window.ai_coordinator.suggest_strategy(file_path, analysis_type)
                 logger.info(f"AI coordinator suggests strategy: {suggested_strategy} for {analysis_type}")
 
                 # Update status to show strategy
-                strategy_text = str(suggested_strategy).replace('AnalysisStrategy.', '').replace('_', ' ').title()
+                strategy_text = str(suggested_strategy).replace("AnalysisStrategy.", "").replace("_", " ").title()
                 self.status_label.setText(f"Using {strategy_text} strategy for analysis")
             else:
                 self.status_label.setText("Starting analysis...")
@@ -466,7 +466,7 @@ class UnifiedProtectionWidget(QWidget):
         self.display_results(result)
 
         # Load file in hex viewer and string extractor
-        if hasattr(self, '_current_file_path') and self._current_file_path:
+        if hasattr(self, "_current_file_path") and self._current_file_path:
             self.hex_viewer.load_file(self._current_file_path)
             self.string_extractor.load_file(self._current_file_path)
 
@@ -549,7 +549,7 @@ Analysis Time: {result.analysis_time:.2f}s</p>
 <p style="color: #4CAF50;">This file appears to be unprotected.</p>
 """
         else:
-            protection_types = set(p['type'] for p in result.protections)
+            protection_types = set(p["type"] for p in result.protections)
             summary = f"""
 <h3>Protection Summary</h3>
 <p>File Type: {result.file_type}<br>
@@ -604,17 +604,17 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
 
 """
 
-        if 'version' in protection and protection['version']:
+        if "version" in protection and protection["version"]:
             details += f"Version: {protection['version']}\n"
 
-        if 'details' in protection:
+        if "details" in protection:
             details += "\nAdditional Details:\n"
-            for key, value in protection['details'].items():
+            for key, value in protection["details"].items():
                 details += f"  {key}: {value}\n"
 
-        if 'bypass_recommendations' in protection:
+        if "bypass_recommendations" in protection:
             details += "\nBypass Recommendations:\n"
-            for rec in protection['bypass_recommendations']:
+            for rec in protection["bypass_recommendations"]:
                 details += f"  • {rec}\n"
 
         self.details_text.setPlainText(details)
@@ -655,11 +655,11 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
 
     def _create_strategy_card(self, strategy: Dict[str, Any]):
         """Create a bypass strategy card"""
-        card = QGroupBox(strategy['name'])
+        card = QGroupBox(strategy["name"])
         layout = QVBoxLayout()
 
         # Description
-        desc_label = QLabel(strategy['description'])
+        desc_label = QLabel(strategy["description"])
         desc_label.setWordWrap(True)
         layout.addWidget(desc_label)
 
@@ -667,14 +667,14 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
         diff_layout = QHBoxLayout()
         diff_layout.addWidget(QLabel("Difficulty:"))
 
-        difficulty = strategy.get('difficulty', 'Unknown')
+        difficulty = strategy.get("difficulty", "Unknown")
         diff_label = QLabel(difficulty)
 
-        if difficulty == 'Easy':
+        if difficulty == "Easy":
             diff_label.setStyleSheet("color: #4CAF50; font-weight: bold;")
-        elif difficulty == 'Medium':
+        elif difficulty == "Medium":
             diff_label.setStyleSheet("color: #FF9800; font-weight: bold;")
-        elif difficulty == 'Hard':
+        elif difficulty == "Hard":
             diff_label.setStyleSheet("color: #F44336; font-weight: bold;")
 
         diff_layout.addWidget(diff_label)
@@ -682,18 +682,18 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
         layout.addLayout(diff_layout)
 
         # Tools
-        if 'tools' in strategy:
+        if "tools" in strategy:
             tools_label = QLabel(f"Tools: {', '.join(strategy['tools'])}")
             tools_label.setStyleSheet("color: #666;")
             layout.addWidget(tools_label)
 
         # Steps
-        if 'steps' in strategy:
+        if "steps" in strategy:
             steps_label = QLabel("Steps:")
             steps_label.setStyleSheet("font-weight: bold; margin-top: 5px;")
             layout.addWidget(steps_label)
 
-            for i, step in enumerate(strategy['steps'], 1):
+            for i, step in enumerate(strategy["steps"], 1):
                 step_label = QLabel(f"{i}. {step}")
                 step_label.setWordWrap(True)
                 step_label.setStyleSheet("margin-left: 20px;")
@@ -728,8 +728,8 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
             if die.sections:
                 tech_info += f"  Sections: {len(die.sections)}\n"
                 for section in die.sections[:5]:
-                    name = section.get('name', 'Unknown')
-                    size = section.get('size', 0)
+                    name = section.get("name", "Unknown")
+                    size = section.get("size", 0)
                     tech_info += f"    - {name}: {size} bytes\n"
 
             if die.entropy_info:
@@ -746,7 +746,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
 
     def update_entropy_graph(self, result: UnifiedProtectionResult):
         """Update entropy visualization with analysis data"""
-        if result.die_analysis and hasattr(result.die_analysis, 'entropy_analysis'):
+        if result.die_analysis and hasattr(result.die_analysis, "entropy_analysis"):
             # Update the entropy graph with DIE entropy data
             self.entropy_graph.update_entropy_data(result.die_analysis.entropy_analysis)
         else:
@@ -776,7 +776,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
         perf_info += "Detection Sources:\n"
         source_counts = {}
         for protection in result.protections:
-            source = protection.get('source', AnalysisSource.DIE)
+            source = protection.get("source", AnalysisSource.DIE)
             source_counts[source] = source_counts.get(source, 0) + 1
 
         for source, count in source_counts.items():
@@ -825,7 +825,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
 
         try:
             content = self._generate_bypass_guide()
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
 
             QMessageBox.information(
@@ -853,7 +853,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
         for protection in result.protections:
             guide += f"- **{protection['name']}** ({protection['type']})\n"
             guide += f"  - Confidence: {protection.get('confidence', 0):.0f}%\n"
-            if 'version' in protection and protection['version']:
+            if "version" in protection and protection["version"]:
                 guide += f"  - Version: {protection['version']}\n"
 
         guide += "\n## Bypass Strategies\n\n"
@@ -864,12 +864,12 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
 
             guide += f"**Difficulty:** {strategy.get('difficulty', 'Unknown')}\n\n"
 
-            if 'tools' in strategy:
+            if "tools" in strategy:
                 guide += f"**Required Tools:** {', '.join(strategy['tools'])}\n\n"
 
-            if 'steps' in strategy:
+            if "steps" in strategy:
                 guide += "**Steps:**\n\n"
-                for j, step in enumerate(strategy['steps'], 1):
+                for j, step in enumerate(strategy["steps"], 1):
                     guide += f"{j}. {step}\n"
                 guide += "\n"
 
@@ -898,7 +898,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
 
         The analysis runs in a background thread to avoid blocking the UI.
         """
-        if not hasattr(self, '_current_file_path') or not self._current_file_path:
+        if not hasattr(self, "_current_file_path") or not self._current_file_path:
             QMessageBox.information(
                 self,
                 "No File Loaded",
@@ -989,12 +989,12 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
                     self.analysis_complete.emit(analysis)
                 except Exception as e:
                     logger.error(f"ICP analysis error: {e}")
-                    self.analysis_complete.emit({'error': str(e)})
+                    self.analysis_complete.emit({"error": str(e)})
 
         def update_analysis(analysis_data):
             progress.setVisible(False)
 
-            if 'error' in analysis_data:
+            if "error" in analysis_data:
                 sig_text.setPlainText(f"Error: {analysis_data['error']}")
                 return
 
@@ -1004,7 +1004,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
             sig_content += f"File Size: {analysis_data.get('file_size', 0)} bytes\n"
             sig_content += f"Overall Entropy: {analysis_data.get('entropy', 0.0):.4f}\n\n"
 
-            packers = analysis_data.get('packers', [])
+            packers = analysis_data.get("packers", [])
             if packers:
                 sig_content += "Detected Packers/Protectors:\n"
                 for packer in packers:
@@ -1018,7 +1018,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
             sig_text.setPlainText(sig_content)
 
             # Section Analysis
-            sections = analysis_data.get('sections', [])
+            sections = analysis_data.get("sections", [])
             section_content = "=== Section Analysis ===\n\n"
             section_content += f"Total Sections: {len(sections)}\n\n"
 
@@ -1037,9 +1037,9 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
             entropy_content = "=== Entropy Analysis ===\n\n"
             entropy_content += f"Overall File Entropy: {analysis_data.get('entropy', 0.0):.6f}\n\n"
 
-            if analysis_data.get('entropy', 0.0) > 7.5:
+            if analysis_data.get("entropy", 0.0) > 7.5:
                 entropy_content += "🔴 HIGH ENTROPY - Likely encrypted or compressed\n"
-            elif analysis_data.get('entropy', 0.0) > 6.0:
+            elif analysis_data.get("entropy", 0.0) > 6.0:
                 entropy_content += "🟡 MEDIUM ENTROPY - Possible obfuscation\n"
             else:
                 entropy_content += "🟢 LOW ENTROPY - Normal code/data\n"
@@ -1053,23 +1053,23 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
             # Per-section entropy
             entropy_content += "Per-Section Entropy:\n"
             for section in sections:
-                name = section.get('name', 'Unknown')
-                ent = section.get('entropy', 0.0)
+                name = section.get("name", "Unknown")
+                ent = section.get("entropy", 0.0)
                 entropy_content += f"  {name}: {ent:.4f}\n"
 
             entropy_text.setPlainText(entropy_content)
 
             # String Analysis
-            strings = analysis_data.get('strings', [])
+            strings = analysis_data.get("strings", [])
             string_content = "=== String Analysis ===\n\n"
             string_content += f"Total Strings Found: {len(strings)}\n\n"
 
             if strings:
                 string_content += "Sample Strings (first 50):\n\n"
                 for i, string_info in enumerate(strings[:50]):
-                    offset = string_info.get('offset', 0)
-                    string_val = string_info.get('string', '')
-                    string_type = string_info.get('type', 'ASCII')
+                    offset = string_info.get("offset", 0)
+                    string_val = string_info.get("string", "")
+                    string_type = string_info.get("type", "ASCII")
                     string_content += f"0x{offset:08X}: [{string_type}] {repr(string_val)}\n"
 
                 if len(strings) > 50:
@@ -1131,8 +1131,8 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
             # Find which section contains this offset
             if self.current_result.die_analysis.sections:
                 for section in self.current_result.die_analysis.sections:
-                    section_start = section.get('virtual_address', 0)
-                    section_size = section.get('virtual_size', 0)
+                    section_start = section.get("virtual_address", 0)
+                    section_size = section.get("virtual_size", 0)
                     if section_start <= offset < section_start + section_size:
                         info = f"\nOffset 0x{offset:X} is in section: {section.get('name', 'Unknown')}\n"
                         info += f"Section start: 0x{section_start:X}\n"

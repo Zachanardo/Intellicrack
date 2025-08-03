@@ -98,7 +98,7 @@ class LoadingTask:
     def __init__(self,
                  model_id: str,
                  backend_class: type,
-                 config: 'LLMConfig',
+                 config: "LLMConfig",
                  priority: int = 0,
                  callback: Optional[ProgressCallback] = None):
         """Initialize a model loading task.
@@ -120,7 +120,7 @@ class LoadingTask:
         self.message = "Queued for loading"
         self.start_time: Optional[float] = None
         self.end_time: Optional[float] = None
-        self.result: Optional['LLMBackend'] = None
+        self.result: Optional["LLMBackend"] = None
         self.error: Optional[str] = None
         self.cancelled = False
 
@@ -147,7 +147,7 @@ class LoadingTask:
             )
             self.callback.on_progress(progress_info)
 
-    def mark_completed(self, success: bool, result: Optional['LLMBackend'] = None, error: Optional[str] = None):
+    def mark_completed(self, success: bool, result: Optional["LLMBackend"] = None, error: Optional[str] = None):
         """Mark task as completed."""
         self.end_time = time.time()
         self.result = result
@@ -206,7 +206,7 @@ class BackgroundModelLoader:
     def submit_loading_task(self,
                             model_id: str,
                             backend_class: type,
-                            config: 'LLMConfig',
+                            config: "LLMConfig",
                             priority: int = 0,
                             callback: Optional[ProgressCallback] = None) -> LoadingTask:
         """Submit a model loading task."""
@@ -432,7 +432,7 @@ class IntegratedBackgroundLoader:
     def load_model_in_background(self,
                                  model_id: str,
                                  backend_class: type,
-                                 config: 'LLMConfig',
+                                 config: "LLMConfig",
                                  priority: int = 0) -> LoadingTask:
         """Load a model in the background with integrated callbacks."""
 
@@ -507,7 +507,7 @@ def get_background_loader(llm_manager=None) -> IntegratedBackgroundLoader:
 
 def load_model_with_progress(model_id: str,
                              backend_class: type,
-                             config: 'LLMConfig',
+                             config: "LLMConfig",
                              priority: int = 0,
                              callback: Optional[ProgressCallback] = None) -> LoadingTask:
     """Convenience function to load a model with progress."""
@@ -524,7 +524,7 @@ if __name__ == "__main__":
 
     # Add project root to path
     sys.path.insert(0, os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '..', '..')))
+        os.path.join(os.path.dirname(__file__), "..", "..")))
 
     from intellicrack.ai.llm_backends import LLMConfig, LLMProvider, OpenAIBackend
 

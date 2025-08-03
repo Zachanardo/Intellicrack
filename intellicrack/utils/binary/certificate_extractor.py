@@ -124,11 +124,11 @@ class CertificateExtractor:
             return CodeSigningInfo(
                 is_signed=True,
                 certificates=certificates,
-                signer_info=signing_info.get('signer'),
-                timestamp_info=signing_info.get('timestamp'),
-                certificate_chain_valid=signing_info.get('chain_valid', False),
-                signature_valid=signing_info.get('signature_valid', False),
-                trust_status=signing_info.get('trust_status', 'Unknown')
+                signer_info=signing_info.get("signer"),
+                timestamp_info=signing_info.get("timestamp"),
+                certificate_chain_valid=signing_info.get("chain_valid", False),
+                signature_valid=signing_info.get("signature_valid", False),
+                trust_status=signing_info.get("trust_status", "Unknown")
             )
 
         except Exception as e:
@@ -156,7 +156,7 @@ class CertificateExtractor:
             offset = cert_entry.VirtualAddress
             size = cert_entry.Size
 
-            with open(self.file_path, 'rb') as f:
+            with open(self.file_path, "rb") as f:
                 f.seek(offset)
                 return f.read(size)
 
@@ -176,7 +176,7 @@ class CertificateExtractor:
                     break
 
                 # dwLength (4 bytes) + wRevision (2 bytes) + wCertificateType (2 bytes)
-                length, revision, cert_type = struct.unpack('<LHH', cert_data[offset:offset+8])
+                length, revision, cert_type = struct.unpack("<LHH", cert_data[offset:offset+8])
 
                 if length < 8 or offset + length > len(cert_data):
                     break
@@ -206,7 +206,7 @@ class CertificateExtractor:
             # For production use, proper ASN.1 parsing library should be used
 
             # Look for certificate patterns in the data
-            cert_start_pattern = b'\x30\x82'  # ASN.1 SEQUENCE tag for X.509 cert
+            cert_start_pattern = b"\x30\x82"  # ASN.1 SEQUENCE tag for X.509 cert
 
             offset = 0
             while True:
@@ -219,7 +219,7 @@ class CertificateExtractor:
                 try:
                     # Read length (simplified - assumes short form)
                     if cert_pos + 4 < len(pkcs7_data):
-                        cert_len = struct.unpack('>H', pkcs7_data[cert_pos+2:cert_pos+4])[0] + 4
+                        cert_len = struct.unpack(">H", pkcs7_data[cert_pos+2:cert_pos+4])[0] + 4
 
                         if cert_pos + cert_len <= len(pkcs7_data):
                             cert_der = pkcs7_data[cert_pos:cert_pos+cert_len]
@@ -334,7 +334,7 @@ class CertificateExtractor:
                 # Extended key usage
                 eku = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.EXTENDED_KEY_USAGE).value
                 for usage in eku:
-                    usage_name = usage._name if hasattr(usage, '_name') else str(usage)
+                    usage_name = usage._name if hasattr(usage, "_name") else str(usage)
                     extended_key_usage.append(usage_name)
 
                     # Check for code signing
@@ -411,9 +411,9 @@ class CertificateExtractor:
     def _analyze_signing_info(self, cert_data: bytes, certificates: List[CertificateInfo]) -> Dict[str, Any]:
         """Analyze signing information and trust status"""
         info = {
-            'chain_valid': False,
-            'signature_valid': False,
-            'trust_status': 'Unknown'
+            "chain_valid": False,
+            "signature_valid": False,
+            "trust_status": "Unknown"
         }
 
         if not certificates:
@@ -421,21 +421,21 @@ class CertificateExtractor:
 
         # Check if we have a valid certificate chain
         if len(certificates) > 1:
-            info['chain_valid'] = self._validate_certificate_chain(certificates)
+            info["chain_valid"] = self._validate_certificate_chain(certificates)
 
         # Determine trust status based on issuer
         signing_cert = certificates[0]
         if signing_cert.is_self_signed:
-            info['trust_status'] = 'Self-Signed'
+            info["trust_status"] = "Self-Signed"
         elif any(issuer in signing_cert.issuer for issuer in [
-            'Microsoft', 'VeriSign', 'DigiCert', 'Symantec', 'Thawte', 'GeoTrust'
+            "Microsoft", "VeriSign", "DigiCert", "Symantec", "Thawte", "GeoTrust"
         ]):
-            info['trust_status'] = 'Trusted CA'
+            info["trust_status"] = "Trusted CA"
         else:
-            info['trust_status'] = 'Unknown CA'
+            info["trust_status"] = "Unknown CA"
 
         # Basic signature validation (simplified)
-        info['signature_valid'] = signing_cert.is_valid and signing_cert.is_code_signing
+        info["signature_valid"] = signing_cert.is_valid and signing_cert.is_code_signing
 
         return info
 
@@ -484,7 +484,7 @@ class CertificateExtractor:
                 if offset + 8 > len(cert_data):
                     break
 
-                length, revision, cert_type = struct.unpack('<LHH', cert_data[offset:offset+8])
+                length, revision, cert_type = struct.unpack("<LHH", cert_data[offset:offset+8])
                 if length < 8 or offset + length > len(cert_data):
                     break
 
@@ -492,7 +492,7 @@ class CertificateExtractor:
 
                 if cert_type == 0x0002:  # WIN_CERT_TYPE_PKCS_SIGNED_DATA
                     # Extract individual certificates from PKCS#7
-                    cert_start_pattern = b'\x30\x82'
+                    cert_start_pattern = b"\x30\x82"
                     cert_offset = 0
 
                     while True:
@@ -502,7 +502,7 @@ class CertificateExtractor:
 
                         try:
                             if cert_pos + 4 < len(cert_content):
-                                cert_len = struct.unpack('>H', cert_content[cert_pos+2:cert_pos+4])[0] + 4
+                                cert_len = struct.unpack(">H", cert_content[cert_pos+2:cert_pos+4])[0] + 4
 
                                 if cert_pos + cert_len <= len(cert_content):
                                     cert_der = cert_content[cert_pos:cert_pos+cert_len]
@@ -527,7 +527,7 @@ class CertificateExtractor:
                     # Use serialization.Encoding.PEM to export certificate
                     pem_bytes = cert.public_bytes(serialization.Encoding.PEM)
 
-                    with open(cert_path, 'wb') as f:
+                    with open(cert_path, "wb") as f:
                         f.write(pem_bytes)
 
                     exported_files[f"certificate_{i+1}"] = cert_path
@@ -551,54 +551,54 @@ def extract_pe_certificates(file_path: str) -> CodeSigningInfo:
 def get_certificate_security_assessment(signing_info: CodeSigningInfo) -> Dict[str, Any]:
     """Assess security implications of certificate information"""
     assessment = {
-        'security_level': 'Unknown',
-        'concerns': [],
-        'recommendations': [],
-        'risk_factors': []
+        "security_level": "Unknown",
+        "concerns": [],
+        "recommendations": [],
+        "risk_factors": []
     }
 
     if not signing_info.is_signed:
-        assessment['security_level'] = 'Low'
-        assessment['concerns'].append('File is not digitally signed')
-        assessment['recommendations'].append('Verify file authenticity through other means')
-        assessment['risk_factors'].append('No signature verification possible')
+        assessment["security_level"] = "Low"
+        assessment["concerns"].append("File is not digitally signed")
+        assessment["recommendations"].append("Verify file authenticity through other means")
+        assessment["risk_factors"].append("No signature verification possible")
         return assessment
 
     signing_cert = signing_info.signing_certificate
     if not signing_cert:
-        assessment['security_level'] = 'Low'
-        assessment['concerns'].append('No valid signing certificate found')
+        assessment["security_level"] = "Low"
+        assessment["concerns"].append("No valid signing certificate found")
         return assessment
 
     # Assess certificate validity
     if signing_cert.is_expired:
-        assessment['concerns'].append('Signing certificate has expired')
-        assessment['risk_factors'].append('Certificate expired')
+        assessment["concerns"].append("Signing certificate has expired")
+        assessment["risk_factors"].append("Certificate expired")
 
     if not signing_cert.is_code_signing:
-        assessment['concerns'].append('Certificate not intended for code signing')
-        assessment['risk_factors'].append('Invalid certificate purpose')
+        assessment["concerns"].append("Certificate not intended for code signing")
+        assessment["risk_factors"].append("Invalid certificate purpose")
 
     # Assess trust level
-    if signing_info.trust_status == 'Self-Signed':
-        assessment['concerns'].append('Certificate is self-signed')
-        assessment['risk_factors'].append('No third-party verification')
-        assessment['recommendations'].append('Verify publisher through other channels')
-    elif signing_info.trust_status == 'Unknown CA':
-        assessment['concerns'].append('Certificate issued by unknown CA')
-        assessment['risk_factors'].append('Untrusted certificate authority')
+    if signing_info.trust_status == "Self-Signed":
+        assessment["concerns"].append("Certificate is self-signed")
+        assessment["risk_factors"].append("No third-party verification")
+        assessment["recommendations"].append("Verify publisher through other channels")
+    elif signing_info.trust_status == "Unknown CA":
+        assessment["concerns"].append("Certificate issued by unknown CA")
+        assessment["risk_factors"].append("Untrusted certificate authority")
 
     # Assess key strength
     if signing_cert.public_key_size < 2048:
-        assessment['concerns'].append(f'Weak key size: {signing_cert.public_key_size} bits')
-        assessment['risk_factors'].append('Cryptographically weak signature')
+        assessment["concerns"].append(f"Weak key size: {signing_cert.public_key_size} bits")
+        assessment["risk_factors"].append("Cryptographically weak signature")
 
     # Determine overall security level
-    if len(assessment['concerns']) == 0:
-        assessment['security_level'] = 'High'
-    elif len(assessment['concerns']) <= 2:
-        assessment['security_level'] = 'Medium'
+    if len(assessment["concerns"]) == 0:
+        assessment["security_level"] = "High"
+    elif len(assessment["concerns"]) <= 2:
+        assessment["security_level"] = "Medium"
     else:
-        assessment['security_level'] = 'Low'
+        assessment["security_level"] = "Low"
 
     return assessment

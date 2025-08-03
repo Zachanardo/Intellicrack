@@ -35,7 +35,7 @@ except ImportError:
 
         """
         import torch
-        return torch.device('cpu')
+        return torch.device("cpu")
 
     def get_gpu_info():
         """Get GPU information (fallback to CPU info).
@@ -45,11 +45,11 @@ except ImportError:
 
         """
         return {
-            'available': False,
-            'type': 'cpu',
-            'device': 'cpu',
-            'info': {},
-            'memory': {}
+            "available": False,
+            "type": "cpu",
+            "device": "cpu",
+            "info": {},
+            "memory": {}
         }
 
     def to_device(tensor_or_model):
@@ -94,21 +94,21 @@ class GPUIntegration:
         if GPU_AUTOLOADER_AVAILABLE:
             try:
                 import torch
-                if self.gpu_info['type'] == 'intel_xpu' and hasattr(torch, 'xpu'):
-                    info['runtime'] = {
-                        'xpu_available': torch.xpu.is_available(),
-                        'device_count': torch.xpu.device_count() if torch.xpu.is_available() else 0
+                if self.gpu_info["type"] == "intel_xpu" and hasattr(torch, "xpu"):
+                    info["runtime"] = {
+                        "xpu_available": torch.xpu.is_available(),
+                        "device_count": torch.xpu.device_count() if torch.xpu.is_available() else 0
                     }
-                elif self.gpu_info['type'] == 'nvidia_cuda' and torch.cuda.is_available():
-                    info['runtime'] = {
-                        'cuda_available': True,
-                        'device_count': torch.cuda.device_count(),
-                        'current_device': torch.cuda.current_device()
+                elif self.gpu_info["type"] == "nvidia_cuda" and torch.cuda.is_available():
+                    info["runtime"] = {
+                        "cuda_available": True,
+                        "device_count": torch.cuda.device_count(),
+                        "current_device": torch.cuda.current_device()
                     }
-                elif self.gpu_info['type'] == 'amd_rocm' and hasattr(torch, 'hip'):
-                    info['runtime'] = {
-                        'hip_available': torch.hip.is_available() if hasattr(torch.hip, 'is_available') else False,
-                        'device_count': torch.hip.device_count() if hasattr(torch.hip, 'device_count') else 0
+                elif self.gpu_info["type"] == "amd_rocm" and hasattr(torch, "hip"):
+                    info["runtime"] = {
+                        "hip_available": torch.hip.is_available() if hasattr(torch.hip, "is_available") else False,
+                        "device_count": torch.hip.device_count() if hasattr(torch.hip, "device_count") else 0
                     }
             except Exception as e:
                 logger.debug(f"Failed to get runtime info: {e}")
@@ -143,11 +143,11 @@ class GPUIntegration:
 
     def is_available(self) -> bool:
         """Check if GPU acceleration is available"""
-        return self.gpu_info['available']
+        return self.gpu_info["available"]
 
     def get_backend_name(self) -> str:
         """Get the backend name"""
-        return self.gpu_info.get('info', {}).get('backend', 'Unknown')
+        return self.gpu_info.get("info", {}).get("backend", "Unknown")
 
 
 # Global instance

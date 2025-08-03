@@ -185,13 +185,13 @@ class EmulatorRequiredDecorator:
         def wrapper(self, *args, **kwargs):
             from ..core.processing.emulator_manager import get_emulator_manager
 
-            if not hasattr(self, 'binary_path') or not self.binary_path:
+            if not hasattr(self, "binary_path") or not self.binary_path:
                 QMessageBox.warning(self, "No Binary", "Please select a binary file first.")
                 return
 
             manager = get_emulator_manager()
             if not manager.qemu_running:
-                feature_name = func.__name__.replace('_', ' ').title()
+                feature_name = func.__name__.replace("_", " ").title()
                 if show_emulator_warning(self, "QEMU", feature_name):
                     if not manager.ensure_qemu_running(self.binary_path):
                         QMessageBox.critical(self, "QEMU Error",
@@ -209,7 +209,7 @@ class EmulatorRequiredDecorator:
         def wrapper(self, *args, **kwargs):
             from ..core.processing.emulator_manager import get_emulator_manager
 
-            if not hasattr(self, 'binary_path') or not self.binary_path:
+            if not hasattr(self, "binary_path") or not self.binary_path:
                 QMessageBox.warning(self, "No Binary", "Please select a binary file first.")
                 return
 

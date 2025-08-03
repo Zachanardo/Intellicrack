@@ -96,22 +96,22 @@ class ExtractedFile:
     security_analysis: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_path(cls, file_path: str, original_offset: int = 0) -> 'ExtractedFile':
+    def from_path(cls, file_path: str, original_offset: int = 0) -> "ExtractedFile":
         """Create ExtractedFile from filesystem path"""
         try:
             stat_info = os.stat(file_path)
 
             # Calculate file hash
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 file_hash = hashlib.sha256(f.read()).hexdigest()
 
             # Determine file type
             file_type = "unknown"
             if os.access(file_path, os.X_OK):
                 file_type = "executable"
-            elif file_path.endswith(('.txt', '.log', '.conf', '.cfg')):
+            elif file_path.endswith((".txt", ".log", ".conf", ".cfg")):
                 file_type = "text"
-            elif file_path.endswith(('.bin', '.fw', '.img')):
+            elif file_path.endswith((".bin", ".fw", ".img")):
                 file_type = "binary"
 
             return cls(
@@ -322,10 +322,10 @@ class FirmwareAnalyzer:
                 for result in module.results:
                     signature = FirmwareSignature(
                         offset=result.offset,
-                        signature_name=result.description.split(',')[0].strip(),
+                        signature_name=result.description.split(",")[0].strip(),
                         description=result.description,
                         file_type=self._extract_file_type(result.description),
-                        size=getattr(result, 'size', None)
+                        size=getattr(result, "size", None)
                     )
                     signatures.append(signature)
 
@@ -347,18 +347,18 @@ class FirmwareAnalyzer:
 
         # Map common descriptions to file types
         type_mappings = {
-            'elf': 'elf',
-            'pe32': 'pe',
-            'squashfs': 'squashfs',
-            'cramfs': 'cramfs',
-            'jffs2': 'jffs2',
-            'kernel': 'kernel',
-            'bootloader': 'bootloader',
-            'certificate': 'certificate',
-            'private key': 'private_key',
-            'zip': 'archive',
-            'gzip': 'archive',
-            'tar': 'archive'
+            "elf": "elf",
+            "pe32": "pe",
+            "squashfs": "squashfs",
+            "cramfs": "cramfs",
+            "jffs2": "jffs2",
+            "kernel": "kernel",
+            "bootloader": "bootloader",
+            "certificate": "certificate",
+            "private key": "private_key",
+            "zip": "archive",
+            "gzip": "archive",
+            "tar": "archive"
         }
 
         for keyword, file_type in type_mappings.items():
@@ -372,22 +372,22 @@ class FirmwareAnalyzer:
         filename = os.path.basename(file_path).lower()
 
         # Check filename patterns
-        if any(pattern in filename for pattern in ['router', 'openwrt', 'ddwrt']):
+        if any(pattern in filename for pattern in ["router", "openwrt", "ddwrt"]):
             return FirmwareType.ROUTER_FIRMWARE
-        elif any(pattern in filename for pattern in ['bios', 'uefi']):
+        elif any(pattern in filename for pattern in ["bios", "uefi"]):
             return FirmwareType.BIOS_UEFI
-        elif 'kernel' in filename or 'vmlinuz' in filename:
+        elif "kernel" in filename or "vmlinuz" in filename:
             return FirmwareType.KERNEL_IMAGE
-        elif 'boot' in filename:
+        elif "boot" in filename:
             return FirmwareType.BOOTLOADER
 
         # Check signatures
         for sig in signatures:
-            if 'kernel' in sig.description.lower():
+            if "kernel" in sig.description.lower():
                 return FirmwareType.KERNEL_IMAGE
-            elif 'bootloader' in sig.description.lower():
+            elif "bootloader" in sig.description.lower():
                 return FirmwareType.BOOTLOADER
-            elif any(fs in sig.description.lower() for fs in ['squashfs', 'cramfs', 'jffs2']):
+            elif any(fs in sig.description.lower() for fs in ["squashfs", "cramfs", "jffs2"]):
                 return FirmwareType.FILESYSTEM
 
         # Default based on file size and structure
@@ -417,13 +417,13 @@ class FirmwareAnalyzer:
                 for result in module.results:
                     block_info = {
                         "offset": result.offset,
-                        "entropy": getattr(result, 'entropy', 0.0),
+                        "entropy": getattr(result, "entropy", 0.0),
                         "description": result.description
                     }
                     entropy_analysis["analysis_blocks"].append(block_info)
 
                     # Classify high entropy regions
-                    entropy_val = getattr(result, 'entropy', 0.0)
+                    entropy_val = getattr(result, "entropy", 0.0)
                     if entropy_val > 7.5:
                         entropy_analysis["encrypted_regions"].append({
                             "offset": result.offset,
@@ -456,7 +456,7 @@ class FirmwareAnalyzer:
     def _calculate_basic_entropy(self, file_path: str) -> float:
         """Calculate basic Shannon entropy"""
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 data = f.read(1024 * 1024)  # Read first 1MB
 
             if not data:
@@ -554,7 +554,7 @@ class FirmwareAnalyzer:
         """Extract printable strings from file"""
         strings = []
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 data = f.read(1024 * 1024)  # Read up to 1MB
 
             current_string = ""
@@ -692,7 +692,7 @@ class FirmwareAnalyzer:
         findings = []
 
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 content = f.read()
 
             # Look for PEM-encoded keys
@@ -733,8 +733,8 @@ class FirmwareAnalyzer:
 
             # Use subprocess to check for additional system tools
             try:
-                result = subprocess.run(['file', file_path], capture_output=True, text=True, timeout=5)
-                if result.returncode == 0 and 'executable' in result.stdout.lower():
+                result = subprocess.run(["file", file_path], capture_output=True, text=True, timeout=5)
+                if result.returncode == 0 and "executable" in result.stdout.lower():
                     findings.append(SecurityFinding(
                         finding_type=SecurityFindingType.BACKDOOR_BINARY,
                         description="Executable file detected via system file command",
@@ -750,12 +750,12 @@ class FirmwareAnalyzer:
 
             # Suspicious string patterns that might indicate backdoors
             backdoor_patterns = [
-                (r'telnetd.*-l.*sh', "Telnet backdoor"),
-                (r'nc.*-l.*-e', "Netcat backdoor"),
-                (r'/bin/sh.*&', "Background shell"),
-                (r'busybox.*telnetd', "BusyBox telnet service"),
-                (r'debug.*interface', "Debug interface"),
-                (r'maintenance.*mode', "Maintenance mode"),
+                (r"telnetd.*-l.*sh", "Telnet backdoor"),
+                (r"nc.*-l.*-e", "Netcat backdoor"),
+                (r"/bin/sh.*&", "Background shell"),
+                (r"busybox.*telnetd", "BusyBox telnet service"),
+                (r"debug.*interface", "Debug interface"),
+                (r"maintenance.*mode", "Maintenance mode"),
             ]
 
             for string in strings:
@@ -940,7 +940,7 @@ class FirmwareAnalyzer:
                 "error": analysis_result.error
             }
 
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 json.dump(report_data, f, indent=2, default=str)
 
             return True, f"Report exported to {output_path}"

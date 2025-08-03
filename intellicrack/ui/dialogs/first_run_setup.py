@@ -115,16 +115,16 @@ class FirstRunSetupDialog(QDialog):
 
         self.component_checks = {}
 
-        if not self.missing_components.get('Flask', True):
+        if not self.missing_components.get("Flask", True):
             check = QCheckBox("Flask - Local GGUF model server")
             check.setChecked(True)
-            self.component_checks['install_flask'] = check
+            self.component_checks["install_flask"] = check
             components_layout.addWidget(check)
 
-        if not self.missing_components.get('llama-cpp-python', True):
+        if not self.missing_components.get("llama-cpp-python", True):
             check = QCheckBox("llama-cpp-python - LLM support")
             check.setChecked(True)
-            self.component_checks['install_llama'] = check
+            self.component_checks["install_llama"] = check
             components_layout.addWidget(check)
 
 

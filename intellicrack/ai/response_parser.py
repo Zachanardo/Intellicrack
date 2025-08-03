@@ -55,12 +55,12 @@ def parse_security_analysis_response(response: str) -> Tuple[List[str], List[str
         Tuple of (insights, suggestions) lists
     """
     section_keywords = {
-        'insights': ['vulnerabilit', 'security', 'risk', 'security issue', 'weakness'],
-        'suggestions': ['recommend', 'suggest', 'should', 'mitigation', 'fix']
+        "insights": ["vulnerabilit", "security", "risk", "security issue", "weakness"],
+        "suggestions": ["recommend", "suggest", "should", "mitigation", "fix"]
     }
 
     sections = parse_ai_response_sections(response, section_keywords)
-    return sections['insights'], sections['suggestions']
+    return sections["insights"], sections["suggestions"]
 
 
 def parse_attack_vector_response(response: str) -> Tuple[List[str], List[str], List[str]]:
@@ -74,13 +74,13 @@ def parse_attack_vector_response(response: str) -> Tuple[List[str], List[str], L
         Tuple of (vulnerabilities, recommendations, attack_vectors) lists
     """
     section_keywords = {
-        'vulnerabilities': ['vulnerabilit', 'security issue', 'weakness'],
-        'recommendations': ['recommend', 'suggest', 'should', 'mitigation'],
-        'attack_vectors': ['attack', 'exploit', 'vector', 'payload']
+        "vulnerabilities": ["vulnerabilit", "security issue", "weakness"],
+        "recommendations": ["recommend", "suggest", "should", "mitigation"],
+        "attack_vectors": ["attack", "exploit", "vector", "payload"]
     }
 
     sections = parse_ai_response_sections(response, section_keywords)
-    return sections['vulnerabilities'], sections['recommendations'], sections['attack_vectors']
+    return sections["vulnerabilities"], sections["recommendations"], sections["attack_vectors"]
 
 
 def parse_simple_response(response: str, finding_keywords: Optional[List[str]] = None,
@@ -97,14 +97,14 @@ def parse_simple_response(response: str, finding_keywords: Optional[List[str]] =
         Tuple of (findings, recommendations) lists
     """
     if finding_keywords is None:
-        finding_keywords = ['risk', 'vulnerability', 'threat', 'suspicious']
+        finding_keywords = ["risk", "vulnerability", "threat", "suspicious"]
     if recommendation_keywords is None:
-        recommendation_keywords = ['recommend', 'suggest', 'should', 'analyze']
+        recommendation_keywords = ["recommend", "suggest", "should", "analyze"]
 
     section_keywords = {
-        'findings': finding_keywords,
-        'recommendations': recommendation_keywords
+        "findings": finding_keywords,
+        "recommendations": recommendation_keywords
     }
 
     sections = parse_ai_response_sections(response, section_keywords)
-    return sections['findings'], sections['recommendations']
+    return sections["findings"], sections["recommendations"]

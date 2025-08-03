@@ -52,25 +52,25 @@ class ASCIIChartGenerator:
 
         # Chart symbols
         self.symbols = {
-            'bar_full': '█',
-            'bar_three_quarters': '▉',
-            'bar_half': '▌',
-            'bar_quarter': '▎',
-            'line_horizontal': '─',
-            'line_vertical': '│',
-            'corner_top_left': '┌',
-            'corner_top_right': '┐',
-            'corner_bottom_left': '└',
-            'corner_bottom_right': '┘',
-            'cross': '┼',
-            'tee_up': '┴',
-            'tee_down': '┬',
-            'tee_left': '┤',
-            'tee_right': '├',
-            'dot': '•',
-            'circle': '○',
-            'diamond': '◆',
-            'triangle': '▲'
+            "bar_full": "█",
+            "bar_three_quarters": "▉",
+            "bar_half": "▌",
+            "bar_quarter": "▎",
+            "line_horizontal": "─",
+            "line_vertical": "│",
+            "corner_top_left": "┌",
+            "corner_top_right": "┐",
+            "corner_bottom_left": "└",
+            "corner_bottom_right": "┘",
+            "cross": "┼",
+            "tee_up": "┴",
+            "tee_down": "┬",
+            "tee_left": "┤",
+            "tee_right": "├",
+            "dot": "•",
+            "circle": "○",
+            "diamond": "◆",
+            "triangle": "▲"
         }
 
     def generate_bar_chart(self, data: Dict[str, Union[int, float]],
@@ -113,7 +113,7 @@ class ASCIIChartGenerator:
 
             # Create bar
             full_bars = bar_len
-            bar = self.symbols['bar_full'] * full_bars
+            bar = self.symbols["bar_full"] * full_bars
 
             # Add value display
             if show_values:
@@ -205,7 +205,7 @@ class ASCIIChartGenerator:
         chart_width = min(len(labels) * 3, self.width - 10)
 
         # Create chart grid
-        chart = [[' ' for _ in range(chart_width)] for _ in range(chart_height)]
+        chart = [[" " for _ in range(chart_width)] for _ in range(chart_height)]
 
         # Plot points
         for i, value in enumerate(values):
@@ -216,7 +216,7 @@ class ASCIIChartGenerator:
                 x = i * 3
 
                 if 0 <= x < chart_width and 0 <= y < chart_height:
-                    chart[y][x] = self.symbols['dot']
+                    chart[y][x] = self.symbols["dot"]
 
                     # Connect to previous point
                     if i > 0 and (i - 1) * 3 < chart_width:
@@ -238,8 +238,8 @@ class ASCIIChartGenerator:
                                     intermediate_y = start_y + (end_y - start_y) * step // steps
                                     if (0 <= intermediate_x < chart_width and
                                         0 <= intermediate_y < chart_height):
-                                        if chart[intermediate_y][intermediate_x] == ' ':
-                                            chart[intermediate_y][intermediate_x] = '·'
+                                        if chart[intermediate_y][intermediate_x] == " ":
+                                            chart[intermediate_y][intermediate_x] = "·"
 
         # Add chart to lines
         for row in chart:
@@ -352,7 +352,7 @@ class ASCIIChartGenerator:
         sorted_data = sorted(percentages.items(), key=lambda x: x[1], reverse=True)
 
         # Generate pie slices using text representation
-        symbols = ['█', '▉', '▊', '▋', '▌', '▍', '▎', '▏']
+        symbols = ["█", "▉", "▊", "▋", "▌", "▍", "▎", "▏"]
 
         for label, percentage in sorted_data:
             # Create visual bar representing percentage
@@ -401,7 +401,7 @@ class ASCIIChartGenerator:
         chart_width = self.width - 10
 
         # Create chart grid
-        chart = [[' ' for _ in range(chart_width)] for _ in range(chart_height)]
+        chart = [[" " for _ in range(chart_width)] for _ in range(chart_height)]
 
         # Plot points
         for x, y in points:
@@ -411,7 +411,7 @@ class ASCIIChartGenerator:
             norm_y = chart_height - 1 - norm_y  # Flip y-axis
 
             if 0 <= norm_x < chart_width and 0 <= norm_y < chart_height:
-                chart[norm_y][norm_x] = self.symbols['dot']
+                chart[norm_y][norm_x] = self.symbols["dot"]
 
         # Add chart to lines
         for row in chart:
@@ -434,11 +434,11 @@ class ASCIIChartGenerator:
         category_counts = {}
         for category, data in analysis_results.items():
             if isinstance(data, dict):
-                category_counts[category.replace('_', ' ').title()] = len(data)
+                category_counts[category.replace("_", " ").title()] = len(data)
             elif isinstance(data, list):
-                category_counts[category.replace('_', ' ').title()] = len(data)
+                category_counts[category.replace("_", " ").title()] = len(data)
             else:
-                category_counts[category.replace('_', ' ').title()] = 1
+                category_counts[category.replace("_", " ").title()] = 1
 
         if category_counts:
             charts.append(self.generate_bar_chart(
@@ -447,14 +447,14 @@ class ASCIIChartGenerator:
             ))
 
         # 2. Vulnerability severity distribution
-        vuln_data = analysis_results.get('vulnerabilities', {})
-        if isinstance(vuln_data, dict) and 'vulnerabilities' in vuln_data:
-            vulns = vuln_data['vulnerabilities']
+        vuln_data = analysis_results.get("vulnerabilities", {})
+        if isinstance(vuln_data, dict) and "vulnerabilities" in vuln_data:
+            vulns = vuln_data["vulnerabilities"]
             if isinstance(vulns, list):
                 severity_counts = Counter()
                 for vuln in vulns:
                     if isinstance(vuln, dict):
-                        severity = vuln.get('severity', 'Unknown')
+                        severity = vuln.get("severity", "Unknown")
                         severity_counts[severity.title()] += 1
 
                 if severity_counts:
@@ -465,7 +465,7 @@ class ASCIIChartGenerator:
                     ))
 
         # 3. Protection status
-        prot_data = analysis_results.get('protections', {})
+        prot_data = analysis_results.get("protections", {})
         if isinstance(prot_data, dict):
             enabled_count = sum(1 for v in prot_data.values() if v)
             disabled_count = len(prot_data) - enabled_count
@@ -473,12 +473,12 @@ class ASCIIChartGenerator:
             if enabled_count + disabled_count > 0:
                 charts.append("\n" + "="*50 + "\n")
                 charts.append(self.generate_pie_chart(
-                    {'Enabled': enabled_count, 'Disabled': disabled_count},
+                    {"Enabled": enabled_count, "Disabled": disabled_count},
                     "Security Protections Status"
                 ))
 
         # 4. String analysis histogram
-        strings_data = analysis_results.get('strings', [])
+        strings_data = analysis_results.get("strings", [])
         if isinstance(strings_data, list) and strings_data:
             string_lengths = [len(s) for s in strings_data if isinstance(s, str)]
             if string_lengths:
@@ -531,7 +531,7 @@ class ASCIIChartGenerator:
                 details = "Single value"
 
             stats_table.add_row(
-                category.replace('_', ' ').title(),
+                category.replace("_", " ").title(),
                 str(count),
                 details
             )
@@ -539,9 +539,9 @@ class ASCIIChartGenerator:
         charts.append(Panel(stats_table, title="📊 Summary"))
 
         # Vulnerability chart
-        vuln_data = analysis_results.get('vulnerabilities', {})
-        if isinstance(vuln_data, dict) and 'vulnerabilities' in vuln_data:
-            vulns = vuln_data['vulnerabilities']
+        vuln_data = analysis_results.get("vulnerabilities", {})
+        if isinstance(vuln_data, dict) and "vulnerabilities" in vuln_data:
+            vulns = vuln_data["vulnerabilities"]
             if isinstance(vulns, list) and vulns:
                 vuln_table = Table(title="🔴 Vulnerabilities by Severity")
                 vuln_table.add_column("Severity", style="red")
@@ -551,7 +551,7 @@ class ASCIIChartGenerator:
                 severity_counts = Counter()
                 for vuln in vulns:
                     if isinstance(vuln, dict):
-                        severity = vuln.get('severity', 'Unknown')
+                        severity = vuln.get("severity", "Unknown")
                         severity_counts[severity.title()] += 1
 
                 total_vulns = sum(severity_counts.values())
@@ -566,7 +566,7 @@ class ASCIIChartGenerator:
                 charts.append(Panel(vuln_table, title="🔍 Security Issues"))
 
         # Protection status
-        prot_data = analysis_results.get('protections', {})
+        prot_data = analysis_results.get("protections", {})
         if isinstance(prot_data, dict) and prot_data:
             prot_table = Table(title="🛡️ Security Protections")
             prot_table.add_column("Protection", style="cyan")
@@ -574,11 +574,11 @@ class ASCIIChartGenerator:
             prot_table.add_column("Description", style="dim")
 
             prot_descriptions = {
-                'aslr': 'Address Space Layout Randomization',
-                'dep': 'Data Execution Prevention',
-                'canary': 'Stack Canary Protection',
-                'pie': 'Position Independent Executable',
-                'relro': 'Relocation Read-Only'
+                "aslr": "Address Space Layout Randomization",
+                "dep": "Data Execution Prevention",
+                "canary": "Stack Canary Protection",
+                "pie": "Position Independent Executable",
+                "relro": "Relocation Read-Only"
             }
 
             for prot, enabled in prot_data.items():
@@ -616,7 +616,7 @@ class ASCIIChartGenerator:
         severity_counts = Counter()
         for vuln in vulnerability_data:
             if isinstance(vuln, dict):
-                severity = vuln.get('severity', 'Unknown')
+                severity = vuln.get("severity", "Unknown")
                 severity_counts[severity.title()] += 1
 
         # Create bar chart
@@ -648,9 +648,9 @@ def create_analysis_charts(analysis_results: Dict[str, Any],
         generator.generate_rich_dashboard(analysis_results)
         return ""
     elif chart_type == "vulnerability":
-        vuln_data = analysis_results.get('vulnerabilities', {})
-        if isinstance(vuln_data, dict) and 'vulnerabilities' in vuln_data:
-            return generator.generate_vulnerability_trend_chart(vuln_data['vulnerabilities'])
+        vuln_data = analysis_results.get("vulnerabilities", {})
+        if isinstance(vuln_data, dict) and "vulnerabilities" in vuln_data:
+            return generator.generate_vulnerability_trend_chart(vuln_data["vulnerabilities"])
         else:
             return "No vulnerability data available"
     else:
@@ -660,21 +660,21 @@ def create_analysis_charts(analysis_results: Dict[str, Any],
 if __name__ == "__main__":
     # Test the chart generator
     test_data = {
-        'vulnerabilities': {
-            'vulnerabilities': [
-                {'severity': 'high', 'type': 'buffer_overflow'},
-                {'severity': 'medium', 'type': 'format_string'},
-                {'severity': 'low', 'type': 'info_leak'},
-                {'severity': 'high', 'type': 'injection'}
+        "vulnerabilities": {
+            "vulnerabilities": [
+                {"severity": "high", "type": "buffer_overflow"},
+                {"severity": "medium", "type": "format_string"},
+                {"severity": "low", "type": "info_leak"},
+                {"severity": "high", "type": "injection"}
             ]
         },
-        'protections': {
-            'aslr': True,
-            'dep': True,
-            'canary': False,
-            'pie': True
+        "protections": {
+            "aslr": True,
+            "dep": True,
+            "canary": False,
+            "pie": True
         },
-        'strings': ['test1', 'test2', 'longer_string_here', 'short']
+        "strings": ["test1", "test2", "longer_string_here", "short"]
     }
 
     print(create_analysis_charts(test_data, "summary"))

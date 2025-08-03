@@ -28,8 +28,8 @@ class EntropyVisualizer(QWidget):
 
         # Create plot widget
         self.plot_widget = pg.PlotWidget(title="File Entropy Analysis")
-        self.plot_widget.setLabel('left', 'Entropy', units='bits')
-        self.plot_widget.setLabel('bottom', 'File Position', units='%')
+        self.plot_widget.setLabel("left", "Entropy", units="bits")
+        self.plot_widget.setLabel("bottom", "File Position", units="%")
         self.plot_widget.setYRange(0, 8)
 
         # Configure plot appearance
@@ -46,30 +46,30 @@ class EntropyVisualizer(QWidget):
         self.high_entropy_line = pg.InfiniteLine(
             pos=7.5,
             angle=0,
-            pen=pg.mkPen('r', style=Qt.PenStyle.DashLine),
-            label='High Entropy (7.5)'
+            pen=pg.mkPen("r", style=Qt.PenStyle.DashLine),
+            label="High Entropy (7.5)"
         )
         self.plot_widget.addItem(self.high_entropy_line)
 
         self.low_entropy_line = pg.InfiniteLine(
             pos=1.0,
             angle=0,
-            pen=pg.mkPen('b', style=Qt.PenStyle.DashLine),
-            label='Low Entropy (1.0)'
+            pen=pg.mkPen("b", style=Qt.PenStyle.DashLine),
+            label="Low Entropy (1.0)"
         )
         self.plot_widget.addItem(self.low_entropy_line)
 
         # Add regions for different entropy levels
         self.high_entropy_region = pg.LinearRegionItem(
             values=(7.5, 8.0),
-            orientation='horizontal',
+            orientation="horizontal",
             brush=pg.mkBrush(255, 0, 0, 50)
         )
         self.plot_widget.addItem(self.high_entropy_region)
 
         self.low_entropy_region = pg.LinearRegionItem(
             values=(0, 1.0),
-            orientation='horizontal',
+            orientation="horizontal",
             brush=pg.mkBrush(0, 0, 255, 50)
         )
         self.plot_widget.addItem(self.low_entropy_region)

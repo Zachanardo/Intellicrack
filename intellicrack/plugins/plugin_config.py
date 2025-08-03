@@ -21,12 +21,12 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 # Shared plugin system function exports
 PLUGIN_SYSTEM_EXPORTS = [
-    'load_plugins',
-    'run_plugin',
-    'run_custom_plugin',
-    'run_frida_plugin_from_file',
-    'run_ghidra_plugin_from_file',
-    'create_sample_plugins',
-    'run_plugin_in_sandbox',
-    'run_plugin_remotely',
+    "load_plugins",
+    "run_plugin",
+    "run_custom_plugin",
+    "run_frida_plugin_from_file",
+    "run_ghidra_plugin_from_file",
+    "create_sample_plugins",
+    "run_plugin_in_sandbox",
+    "run_plugin_remotely",
 ]
